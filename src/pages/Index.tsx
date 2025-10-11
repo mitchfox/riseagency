@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import bannerHero from "@/assets/banner-hero-new.jpg";
 import marbleBg from "@/assets/marble-bg.png";
 import riseStarIcon from "@/assets/rise-star-icon.png";
+import marbleTexture from "@/assets/marble-texture.png";
 
 const Index = () => {
 
@@ -19,20 +20,81 @@ const Index = () => {
           />
           <div className="absolute inset-0 bg-black/40" />
           <div className="container mx-auto relative z-10 px-4">
-            <div className="max-w-7xl mx-auto text-center space-y-8">
-              <div className="overflow-hidden">
-                <h1 className="text-8xl md:text-[12rem] font-bebas font-bold uppercase tracking-wider text-white drop-shadow-2xl whitespace-nowrap animate-[slide-in-right_20s_linear_infinite]">
-                  RISE TOGETHER • RISE TOGETHER • RISE TOGETHER • RISE TOGETHER • RISE TOGETHER • RISE TOGETHER •
+            <div className="max-w-7xl mx-auto text-center space-y-6">
+              <div className="overflow-hidden relative w-full">
+                <h1 className="text-8xl md:text-[12rem] font-bebas font-bold uppercase tracking-wider text-white drop-shadow-2xl whitespace-nowrap inline-block animate-[scroll-left_30s_linear_infinite]">
+                  RISE TOGETHER • RISE TOGETHER • RISE TOGETHER • RISE TOGETHER • RISE TOGETHER • RISE TOGETHER • RISE TOGETHER • RISE TOGETHER •
                 </h1>
               </div>
               <Link to="/players">
                 <Button 
                   size="lg" 
-                  className="btn-shine text-2xl font-bebas uppercase tracking-widest px-12 py-8 hover:scale-105 transition-transform bg-primary hover:bg-primary/90"
+                  className="btn-shine text-lg font-bebas uppercase tracking-widest px-8 py-5 hover:scale-105 transition-transform bg-primary hover:bg-primary/90"
                 >
                   View Players
                 </Button>
               </Link>
+            </div>
+          </div>
+        </section>
+
+        {/* Inbound CTA Section - Moved to top */}
+        <section className="py-24 px-4 bg-secondary/30">
+          <div className="container mx-auto max-w-5xl">
+            <div className="text-center mb-16">
+              <h2 className="text-5xl md:text-7xl font-bebas uppercase tracking-wider text-foreground mb-4">
+                Join Our <span className="text-primary">Network</span>
+              </h2>
+              <p className="text-lg text-muted-foreground">
+                Whether you're a player, club, or scout - we want to hear from you
+              </p>
+            </div>
+            <div className="grid md:grid-cols-3 gap-8">
+              <div className="bg-background/50 backdrop-blur-sm p-8 rounded-lg text-center space-y-4 border border-primary/20 hover:border-primary transition-all">
+                <h3 className="text-3xl font-bebas uppercase tracking-wider text-primary">
+                  Players
+                </h3>
+                <p className="text-muted-foreground">
+                  Take your career to the next level with professional representation
+                </p>
+                <Button 
+                  asChild
+                  size="lg" 
+                  className="btn-shine w-full text-xl font-bebas uppercase tracking-wider"
+                >
+                  <Link to="/contact">Get In Touch</Link>
+                </Button>
+              </div>
+              <div className="bg-background/50 backdrop-blur-sm p-8 rounded-lg text-center space-y-4 border border-primary/20 hover:border-primary transition-all">
+                <h3 className="text-3xl font-bebas uppercase tracking-wider text-primary">
+                  Clubs
+                </h3>
+                <p className="text-muted-foreground">
+                  Discover top talent for your squad through our extensive network
+                </p>
+                <Button 
+                  asChild
+                  size="lg" 
+                  className="btn-shine w-full text-xl font-bebas uppercase tracking-wider"
+                >
+                  <Link to="/contact">Partner With Us</Link>
+                </Button>
+              </div>
+              <div className="bg-background/50 backdrop-blur-sm p-8 rounded-lg text-center space-y-4 border border-primary/20 hover:border-primary transition-all">
+                <h3 className="text-3xl font-bebas uppercase tracking-wider text-primary">
+                  Scouts
+                </h3>
+                <p className="text-muted-foreground">
+                  Collaborate with us to identify and develop emerging talent
+                </p>
+                <Button 
+                  asChild
+                  size="lg" 
+                  className="btn-shine w-full text-xl font-bebas uppercase tracking-wider"
+                >
+                  <Link to="/contact">Join Network</Link>
+                </Button>
+              </div>
             </div>
           </div>
         </section>
@@ -94,8 +156,12 @@ const Index = () => {
         </section>
 
         {/* Additional Services */}
-        <section className="py-24 px-4 bg-secondary/30">
-          <div className="container mx-auto max-w-4xl">
+        <section className="py-24 px-4 relative overflow-hidden">
+          <div 
+            className="absolute inset-0 opacity-30"
+            style={{ backgroundImage: `url(${marbleTexture})`, backgroundRepeat: "repeat" }}
+          />
+          <div className="container mx-auto max-w-4xl relative z-10">
             <div className="space-y-12">
               <div className="flex items-start gap-6 group">
                 <div className="flex-shrink-0 w-16 h-16 flex items-center justify-center">
@@ -137,67 +203,6 @@ const Index = () => {
                     Creating relationships with major brands and negotiating the best sponsorship opportunities
                   </p>
                 </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Inbound CTA Section */}
-        <section className="py-24 px-4 bg-secondary/30">
-          <div className="container mx-auto max-w-5xl">
-            <div className="text-center mb-16">
-              <h2 className="text-5xl md:text-7xl font-bebas uppercase tracking-wider text-foreground mb-4">
-                Join Our <span className="text-primary">Network</span>
-              </h2>
-              <p className="text-lg text-muted-foreground">
-                Whether you're a player, club, or scout - we want to hear from you
-              </p>
-            </div>
-            <div className="grid md:grid-cols-3 gap-8">
-              <div className="bg-background/50 backdrop-blur-sm p-8 rounded-lg text-center space-y-4 border border-primary/20 hover:border-primary transition-all">
-                <h3 className="text-3xl font-bebas uppercase tracking-wider text-primary">
-                  Players
-                </h3>
-                <p className="text-muted-foreground">
-                  Take your career to the next level with professional representation
-                </p>
-                <Button 
-                  asChild
-                  size="lg" 
-                  className="btn-shine w-full text-xl font-bebas uppercase tracking-wider"
-                >
-                  <Link to="/contact">Get In Touch</Link>
-                </Button>
-              </div>
-              <div className="bg-background/50 backdrop-blur-sm p-8 rounded-lg text-center space-y-4 border border-primary/20 hover:border-primary transition-all">
-                <h3 className="text-3xl font-bebas uppercase tracking-wider text-primary">
-                  Clubs
-                </h3>
-                <p className="text-muted-foreground">
-                  Discover top talent for your squad through our extensive network
-                </p>
-                <Button 
-                  asChild
-                  size="lg" 
-                  className="btn-shine w-full text-xl font-bebas uppercase tracking-wider"
-                >
-                  <Link to="/contact">Partner With Us</Link>
-                </Button>
-              </div>
-              <div className="bg-background/50 backdrop-blur-sm p-8 rounded-lg text-center space-y-4 border border-primary/20 hover:border-primary transition-all">
-                <h3 className="text-3xl font-bebas uppercase tracking-wider text-primary">
-                  Scouts
-                </h3>
-                <p className="text-muted-foreground">
-                  Collaborate with us to identify and develop emerging talent
-                </p>
-                <Button 
-                  asChild
-                  size="lg" 
-                  className="btn-shine w-full text-xl font-bebas uppercase tracking-wider"
-                >
-                  <Link to="/contact">Join Network</Link>
-                </Button>
               </div>
             </div>
           </div>

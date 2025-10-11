@@ -105,6 +105,15 @@ All colors MUST be HSL.
     }
   }
 
+  @keyframes scroll-left {
+    0% {
+      transform: translateX(0);
+    }
+    100% {
+      transform: translateX(-50%);
+    }
+  }
+
   .btn-shine {
     position: relative;
     overflow: hidden;

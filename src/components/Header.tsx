@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import logo from "@/assets/logo.png";
 import { X } from "lucide-react";
 import { TbMenu } from "react-icons/tb";
+import workingTogether from "@/assets/working-together.jpg";
 import {
   Drawer,
   DrawerClose,
@@ -27,11 +28,8 @@ export const Header = () => {
                 <TbMenu className="w-7 h-7 text-primary group-hover:text-foreground transition-colors" />
               </button>
             </DrawerTrigger>
-            <DrawerContent className="h-full w-[280px] left-0">
-              <DrawerHeader className="flex flex-row items-center justify-between">
-                <DrawerTitle className="text-2xl font-bebas uppercase tracking-wider text-primary">
-                  Menu
-                </DrawerTitle>
+            <DrawerContent className="h-full w-[280px] left-0 flex flex-col">
+              <div className="flex justify-end p-4">
                 <DrawerClose asChild>
                   <button
                     className="rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
@@ -40,8 +38,8 @@ export const Header = () => {
                     <X className="h-6 w-6" />
                   </button>
                 </DrawerClose>
-              </DrawerHeader>
-              <nav className="flex flex-col gap-2 px-4 py-6">
+              </div>
+              <nav className="flex flex-col gap-2 px-4 flex-1">
                 <DrawerClose asChild>
                   <Link
                     to="/"
@@ -83,6 +81,22 @@ export const Header = () => {
                   </Link>
                 </DrawerClose>
               </nav>
+              
+              {/* Working Together Box */}
+              <div className="px-4 pb-6 mt-auto">
+                <div className="relative overflow-hidden rounded-lg h-32">
+                  <div 
+                    className="absolute inset-0 bg-cover bg-center"
+                    style={{ backgroundImage: `url(${workingTogether})` }}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-l from-transparent via-black/40 to-black/70" />
+                  <div className="relative h-full flex items-center justify-start px-4">
+                    <h3 className="text-xl font-bebas uppercase tracking-wider text-white drop-shadow-lg">
+                      Working<br/>Together<br/>With Rise
+                    </h3>
+                  </div>
+                </div>
+              </div>
             </DrawerContent>
           </Drawer>
 
