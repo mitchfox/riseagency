@@ -1,8 +1,9 @@
 import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import bannerHero from "@/assets/banner-hero.jpg";
+import bannerHero from "@/assets/banner-hero-new.jpg";
 import marbleBg from "@/assets/marble-bg.png";
+import riseStarIcon from "@/assets/rise-star-icon.png";
 
 const Index = () => {
 
@@ -11,17 +12,17 @@ const Index = () => {
       <Header />
       <div className="min-h-screen bg-background">
         {/* Hero Banner Section */}
-        <section className="relative h-[50vh] min-h-[400px] flex items-center justify-center overflow-hidden pt-16">
+        <section className="relative h-[60vh] min-h-[500px] flex items-center justify-center overflow-hidden pt-16">
           <div 
             className="absolute inset-0 bg-cover bg-center"
             style={{ backgroundImage: `url(${bannerHero})` }}
           />
-          <div className="absolute inset-0 bg-black/50" />
+          <div className="absolute inset-0 bg-black/40" />
           <div className="container mx-auto relative z-10 px-4">
-            <div className="max-w-5xl mx-auto text-center space-y-8">
+            <div className="max-w-7xl mx-auto text-center space-y-8">
               <div className="overflow-hidden">
-                <h1 className="text-7xl md:text-9xl font-bebas uppercase tracking-wider text-white drop-shadow-2xl whitespace-nowrap animate-[slide-in-right_20s_linear_infinite]">
-                  RISE TOGETHER • RISE TOGETHER • RISE TOGETHER • RISE TOGETHER • RISE TOGETHER •
+                <h1 className="text-8xl md:text-[12rem] font-bebas font-bold uppercase tracking-wider text-white drop-shadow-2xl whitespace-nowrap animate-[slide-in-right_20s_linear_infinite]">
+                  RISE TOGETHER • RISE TOGETHER • RISE TOGETHER • RISE TOGETHER • RISE TOGETHER • RISE TOGETHER •
                 </h1>
               </div>
               <Link to="/players">
@@ -36,22 +37,6 @@ const Index = () => {
           </div>
         </section>
 
-        {/* Mission Section */}
-        <section className="py-24 px-4 relative">
-          <div 
-            className="absolute inset-0 opacity-5"
-            style={{ backgroundImage: `url(${marbleBg})`, backgroundRepeat: "repeat" }}
-          />
-          <div className="container mx-auto relative z-10">
-            <div className="max-w-4xl mx-auto">
-              <div className="bg-primary/90 backdrop-blur-sm p-8 md:p-12 rounded-lg text-center">
-                <p className="text-xl md:text-2xl text-background leading-relaxed font-medium">
-                  Your backing in the highly competitive football industry. We deliver premium service with unmatched efficiency while our innovative strategies realise your potential.
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
 
         {/* Services Section for Players */}
         <section className="py-24 px-4">
@@ -113,8 +98,8 @@ const Index = () => {
           <div className="container mx-auto max-w-4xl">
             <div className="space-y-12">
               <div className="flex items-start gap-6 group">
-                <div className="flex-shrink-0 w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center">
-                  <div className="w-8 h-8 rounded-full bg-primary" />
+                <div className="flex-shrink-0 w-16 h-16 flex items-center justify-center">
+                  <img src={riseStarIcon} alt="Rise Star" className="w-16 h-16 object-contain" />
                 </div>
                 <div>
                   <h3 className="text-2xl font-bebas uppercase tracking-wider text-foreground mb-2">
@@ -127,8 +112,8 @@ const Index = () => {
               </div>
 
               <div className="flex items-start gap-6 group">
-                <div className="flex-shrink-0 w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center">
-                  <div className="w-8 h-8 rounded-full bg-primary" />
+                <div className="flex-shrink-0 w-16 h-16 flex items-center justify-center">
+                  <img src={riseStarIcon} alt="Rise Star" className="w-16 h-16 object-contain" />
                 </div>
                 <div>
                   <h3 className="text-2xl font-bebas uppercase tracking-wider text-foreground mb-2">
@@ -141,8 +126,8 @@ const Index = () => {
               </div>
 
               <div className="flex items-start gap-6 group">
-                <div className="flex-shrink-0 w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center">
-                  <div className="w-8 h-8 rounded-full bg-primary" />
+                <div className="flex-shrink-0 w-16 h-16 flex items-center justify-center">
+                  <img src={riseStarIcon} alt="Rise Star" className="w-16 h-16 object-contain" />
                 </div>
                 <div>
                   <h3 className="text-2xl font-bebas uppercase tracking-wider text-foreground mb-2">
