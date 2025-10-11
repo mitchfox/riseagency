@@ -22,6 +22,16 @@ export interface Player {
     minutes: number;
   };
   bio: string;
+  whatsapp?: string;
+  externalLinks?: {
+    label: string;
+    url: string;
+  }[];
+  strengthsAndPlayStyle?: string[];
+  tacticalFormations?: {
+    club: string;
+    formation: string;
+  }[];
 }
 
 export const players: Player[] = [
@@ -40,6 +50,21 @@ export const players: Player[] = [
       minutes: 1620,
     },
     bio: "Marcus Silva joined the academy at age 16 and quickly established himself as a reliable goalkeeper. Known for his exceptional reflexes and commanding presence in the box, he's been a key player in the team's defensive success.",
+    whatsapp: "+447508342901",
+    externalLinks: [
+      { label: "Transfermarkt", url: "https://www.transfermarkt.com" },
+      { label: "Match Reports", url: "#" }
+    ],
+    strengthsAndPlayStyle: [
+      "Exceptional reflexes and shot-stopping ability",
+      "Commanding presence in the penalty area",
+      "Strong distribution and ball-playing skills",
+      "Excellent communication with defenders"
+    ],
+    tacticalFormations: [
+      { club: "Current Club", formation: "4-3-3" },
+      { club: "Previous Club", formation: "4-2-3-1" }
+    ]
   },
   {
     id: "alex-rodriguez",
