@@ -8,6 +8,7 @@ import marbleTexture from "@/assets/marble-texture.png";
 import playersNetwork from "@/assets/players-network.jpg";
 import clubsNetwork from "@/assets/clubs-network.jpg";
 import scoutsNetwork from "@/assets/scouts-network.jpg";
+import coachesNetwork from "@/assets/coaches-network.jpg";
 
 const Index = () => {
 
@@ -48,11 +49,11 @@ const Index = () => {
               <h2 className="text-5xl md:text-7xl font-bebas uppercase tracking-wider text-foreground mb-4">
                 Join Our <span className="text-primary">Network</span>
               </h2>
-              <p className="text-lg text-muted-foreground">
-                Whether you're a player, club, or scout - we want to hear from you
+              <p className="text-base text-muted-foreground tracking-normal max-w-2xl mx-auto">
+                Whether you're a player, club, scout, or coach - we want to hear from you
               </p>
             </div>
-            <div className="grid md:grid-cols-3 gap-8">
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
               {/* Players */}
               <div className="relative overflow-hidden rounded-lg group">
                 <div className="aspect-[4/5] relative">
@@ -130,6 +131,33 @@ const Index = () => {
                     className="btn-shine w-full text-lg font-bebas uppercase tracking-wider"
                   >
                     <Link to="/contact">Join Network</Link>
+                  </Button>
+                </div>
+              </div>
+
+              {/* Coaches */}
+              <div className="relative overflow-hidden rounded-lg group">
+                <div className="aspect-[4/5] relative">
+                  <img 
+                    src={coachesNetwork} 
+                    alt="Coaches" 
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
+                </div>
+                <div className="absolute bottom-0 left-0 right-0 p-6 space-y-3">
+                  <h3 className="text-3xl font-bebas uppercase tracking-wider text-white">
+                    Coaches
+                  </h3>
+                  <p className="text-white/80 text-sm">
+                    Connect with professional representation for your coaching career
+                  </p>
+                  <Button 
+                    asChild
+                    size="lg" 
+                    className="btn-shine w-full text-lg font-bebas uppercase tracking-wider"
+                  >
+                    <Link to="/contact">Connect With Us</Link>
                   </Button>
                 </div>
               </div>

@@ -96,10 +96,9 @@ export const Header = () => {
                     </h3>
                     <DrawerClose asChild>
                       <Button
-                        variant="outline"
-                        className="bg-white/10 text-white border-white/20 hover:bg-white/20 w-full"
+                        className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
                       >
-                        Learn More
+                        Get Started
                       </Button>
                     </DrawerClose>
                   </div>
