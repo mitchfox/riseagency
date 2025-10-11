@@ -1,5 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { players } from "@/data/players";
+import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 
@@ -24,20 +25,22 @@ const PlayerDetail = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Back Button */}
-      <div className="bg-background">
-        <div className="container mx-auto px-4 py-6">
-          <Button
-            variant="ghost"
-            onClick={() => navigate("/")}
-            className="group hover:bg-secondary uppercase tracking-wider font-semibold"
-          >
-            <ArrowLeft className="mr-2 h-4 w-4 group-hover:-translate-x-1 transition-transform" />
-            All Players
-          </Button>
+    <>
+      <Header />
+      <div className="min-h-screen bg-background pt-20">
+        {/* Back Button */}
+        <div className="bg-background border-b border-primary/20">
+          <div className="container mx-auto px-4 py-6">
+            <Button
+              variant="ghost"
+              onClick={() => navigate("/")}
+              className="group hover:bg-secondary uppercase tracking-wider font-semibold"
+            >
+              <ArrowLeft className="mr-2 h-4 w-4 group-hover:-translate-x-1 transition-transform" />
+              All Players
+            </Button>
+          </div>
         </div>
-      </div>
 
       {/* Player Profile */}
       <main className="container mx-auto px-4 py-12">
@@ -149,7 +152,8 @@ const PlayerDetail = () => {
           </div>
         </div>
       </main>
-    </div>
+      </div>
+    </>
   );
 };
 

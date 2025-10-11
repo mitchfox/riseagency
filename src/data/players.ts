@@ -28,7 +28,7 @@ export const players: Player[] = [
   {
     id: "marcus-silva",
     name: "Marcus Silva",
-    position: "Goalkeeper",
+    position: "GK",
     age: 22,
     nationality: "Brazil",
     number: 1,
@@ -44,7 +44,7 @@ export const players: Player[] = [
   {
     id: "alex-rodriguez",
     name: "Alex Rodriguez",
-    position: "Midfielder",
+    position: "CM",
     age: 21,
     nationality: "Spain",
     number: 8,
@@ -60,7 +60,7 @@ export const players: Player[] = [
   {
     id: "james-taylor",
     name: "James Taylor",
-    position: "Striker",
+    position: "ST",
     age: 23,
     nationality: "England",
     number: 9,
@@ -76,7 +76,7 @@ export const players: Player[] = [
   {
     id: "david-muller",
     name: "David Müller",
-    position: "Defender",
+    position: "CB",
     age: 24,
     nationality: "Germany",
     number: 4,
@@ -92,7 +92,7 @@ export const players: Player[] = [
   {
     id: "lucas-fernandez",
     name: "Lucas Fernández",
-    position: "Winger",
+    position: "RW",
     age: 20,
     nationality: "Argentina",
     number: 11,
@@ -108,7 +108,7 @@ export const players: Player[] = [
   {
     id: "thomas-dupont",
     name: "Thomas Dupont",
-    position: "Midfielder",
+    position: "CM",
     age: 22,
     nationality: "France",
     number: 6,

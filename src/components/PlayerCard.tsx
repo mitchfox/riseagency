@@ -35,10 +35,10 @@ export const PlayerCard = ({ player, viewMode = "grid" }: PlayerCardProps) => {
       <Link
         ref={cardRef}
         to={`/players/${player.id}`}
-        className="group relative flex items-center gap-8 p-8 overflow-hidden transition-all duration-300"
+        className="group relative flex items-center gap-8 p-8 overflow-hidden transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
       >
-        {/* Hover glow effect - desktop only */}
-        <div className="absolute inset-0 opacity-0 md:group-hover:opacity-100 transition-opacity duration-500">
+        {/* Hover and focus glow effect - desktop only */}
+        <div className="absolute inset-0 opacity-0 md:group-hover:opacity-100 md:group-focus-visible:opacity-100 transition-opacity duration-500">
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/5 to-transparent animate-slide-glow" />
         </div>
 
@@ -78,10 +78,10 @@ export const PlayerCard = ({ player, viewMode = "grid" }: PlayerCardProps) => {
     <Link
       ref={cardRef}
       to={`/players/${player.id}`}
-      className="group relative block overflow-hidden transition-all duration-300"
+      className="group relative block overflow-hidden transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
     >
-      {/* Hover glow effect - desktop only */}
-      <div className="absolute inset-0 opacity-0 md:group-hover:opacity-100 transition-opacity duration-500 pointer-events-none z-10">
+      {/* Hover and focus glow effect - desktop only */}
+      <div className="absolute inset-0 opacity-0 md:group-hover:opacity-100 md:group-focus-visible:opacity-100 transition-opacity duration-500 pointer-events-none z-10">
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-primary/5 to-transparent animate-slide-glow" />
       </div>
 
