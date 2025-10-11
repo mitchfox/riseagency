@@ -26,12 +26,12 @@ const PlayerDetail = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Back Button */}
-      <div className="bg-card">
+      <div className="bg-background">
         <div className="container mx-auto px-4 py-6">
           <Button
             variant="ghost"
             onClick={() => navigate("/")}
-            className="group hover:bg-secondary uppercase tracking-wider"
+            className="group hover:bg-secondary uppercase tracking-wider font-semibold"
           >
             <ArrowLeft className="mr-2 h-4 w-4 group-hover:-translate-x-1 transition-transform" />
             All Players
@@ -89,58 +89,58 @@ const PlayerDetail = () => {
               </h2>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                 {player.stats.goals !== undefined && (
-                  <div className="text-center p-6 bg-card">
+                  <div className="text-center p-6 bg-background">
                     <div className="text-5xl font-bebas text-primary mb-2">
                       {player.stats.goals}
                     </div>
-                    <div className="text-xs text-muted-foreground uppercase tracking-widest">
+                    <div className="text-xs text-muted-foreground uppercase tracking-widest font-semibold">
                       Goals
                     </div>
                   </div>
                 )}
                 {player.stats.assists !== undefined && (
-                  <div className="text-center p-6 bg-card">
+                  <div className="text-center p-6 bg-background">
                     <div className="text-5xl font-bebas text-primary mb-2">
                       {player.stats.assists}
                     </div>
-                    <div className="text-xs text-muted-foreground uppercase tracking-widest">
+                    <div className="text-xs text-muted-foreground uppercase tracking-widest font-semibold">
                       Assists
                     </div>
                   </div>
                 )}
                 {player.stats.cleanSheets !== undefined && (
-                  <div className="text-center p-6 bg-card">
+                  <div className="text-center p-6 bg-background">
                     <div className="text-5xl font-bebas text-primary mb-2">
                       {player.stats.cleanSheets}
                     </div>
-                    <div className="text-xs text-muted-foreground uppercase tracking-widest">
+                    <div className="text-xs text-muted-foreground uppercase tracking-widest font-semibold">
                       Clean Sheets
                     </div>
                   </div>
                 )}
                 {player.stats.saves !== undefined && (
-                  <div className="text-center p-6 bg-card">
+                  <div className="text-center p-6 bg-background">
                     <div className="text-5xl font-bebas text-primary mb-2">
                       {player.stats.saves}
                     </div>
-                    <div className="text-xs text-muted-foreground uppercase tracking-widest">
+                    <div className="text-xs text-muted-foreground uppercase tracking-widest font-semibold">
                       Saves
                     </div>
                   </div>
                 )}
-                <div className="text-center p-6 bg-card">
+                <div className="text-center p-6 bg-background">
                   <div className="text-5xl font-bebas text-primary mb-2">
                     {player.stats.matches}
                   </div>
-                  <div className="text-xs text-muted-foreground uppercase tracking-widest">
+                  <div className="text-xs text-muted-foreground uppercase tracking-widest font-semibold">
                     Matches
                   </div>
                 </div>
-                <div className="text-center p-6 bg-card">
+                <div className="text-center p-6 bg-background">
                   <div className="text-5xl font-bebas text-primary mb-2">
                     {player.stats.minutes}
                   </div>
-                  <div className="text-xs text-muted-foreground uppercase tracking-widest">
+                  <div className="text-xs text-muted-foreground uppercase tracking-widest font-semibold">
                     Minutes
                   </div>
                 </div>

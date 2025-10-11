@@ -10,14 +10,14 @@ const PlayerDirectory = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="bg-card">
+      <header className="bg-background">
         <div className="container mx-auto px-4 py-12">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-6xl md:text-7xl font-bebas uppercase text-foreground mb-2 tracking-wider">
                 Players
               </h1>
-              <p className="text-primary uppercase tracking-widest text-sm">
+              <p className="text-primary uppercase tracking-widest text-sm font-semibold">
                 Elite Squad
               </p>
             </div>
@@ -50,8 +50,8 @@ const PlayerDirectory = () => {
         <div
           className={
             viewMode === "grid"
-              ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-1"
-              : "flex flex-col gap-1 max-w-5xl"
+              ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8"
+              : "flex flex-col gap-2 max-w-5xl"
           }
         >
           {players.map((player) => (
