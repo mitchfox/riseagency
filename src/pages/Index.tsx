@@ -5,6 +5,9 @@ import bannerHero from "@/assets/banner-hero-new.jpg";
 import marbleBg from "@/assets/marble-bg.png";
 import riseStarIcon from "@/assets/rise-star-icon.png";
 import marbleTexture from "@/assets/marble-texture.png";
+import playersNetwork from "@/assets/players-network.jpg";
+import clubsNetwork from "@/assets/clubs-network.jpg";
+import scoutsNetwork from "@/assets/scouts-network.jpg";
 
 const Index = () => {
 
@@ -19,10 +22,10 @@ const Index = () => {
             style={{ backgroundImage: `url(${bannerHero})` }}
           />
           <div className="absolute inset-0 bg-black/40" />
-          <div className="container mx-auto relative z-10 px-4">
-            <div className="max-w-7xl mx-auto text-center space-y-6">
+          <div className="container mx-auto relative z-10 px-0">
+            <div className="max-w-full mx-auto text-center space-y-10">
               <div className="overflow-hidden relative w-full">
-                <h1 className="text-8xl md:text-[12rem] font-bebas font-bold uppercase tracking-wider text-white drop-shadow-2xl whitespace-nowrap inline-block animate-[scroll-left_30s_linear_infinite]">
+                <h1 className="text-9xl md:text-[14rem] font-bebas font-bold uppercase tracking-wider text-white drop-shadow-2xl whitespace-nowrap inline-block animate-[scroll-left_30s_linear_infinite]">
                   RISE TOGETHER • RISE TOGETHER • RISE TOGETHER • RISE TOGETHER • RISE TOGETHER • RISE TOGETHER • RISE TOGETHER • RISE TOGETHER •
                 </h1>
               </div>
@@ -40,7 +43,7 @@ const Index = () => {
 
         {/* Inbound CTA Section - Moved to top */}
         <section className="py-24 px-4 bg-secondary/30">
-          <div className="container mx-auto max-w-5xl">
+          <div className="container mx-auto max-w-6xl">
             <div className="text-center mb-16">
               <h2 className="text-5xl md:text-7xl font-bebas uppercase tracking-wider text-foreground mb-4">
                 Join Our <span className="text-primary">Network</span>
@@ -50,58 +53,93 @@ const Index = () => {
               </p>
             </div>
             <div className="grid md:grid-cols-3 gap-8">
-              <div className="bg-background/50 backdrop-blur-sm p-8 rounded-lg text-center space-y-4 border border-primary/20 hover:border-primary transition-all">
-                <h3 className="text-3xl font-bebas uppercase tracking-wider text-primary">
-                  Players
-                </h3>
-                <p className="text-muted-foreground">
-                  Take your career to the next level with professional representation
-                </p>
-                <Button 
-                  asChild
-                  size="lg" 
-                  className="btn-shine w-full text-xl font-bebas uppercase tracking-wider"
-                >
-                  <Link to="/contact">Get In Touch</Link>
-                </Button>
+              {/* Players */}
+              <div className="relative overflow-hidden rounded-lg group">
+                <div className="aspect-[16/9] relative">
+                  <img 
+                    src={playersNetwork} 
+                    alt="Players" 
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
+                </div>
+                <div className="absolute bottom-0 left-0 right-0 p-6 space-y-3">
+                  <h3 className="text-3xl font-bebas uppercase tracking-wider text-white">
+                    Players
+                  </h3>
+                  <p className="text-white/80 text-sm">
+                    Take your career to the next level with professional representation
+                  </p>
+                  <Button 
+                    asChild
+                    size="lg" 
+                    className="btn-shine w-full text-lg font-bebas uppercase tracking-wider"
+                  >
+                    <Link to="/contact">Get In Touch</Link>
+                  </Button>
+                </div>
               </div>
-              <div className="bg-background/50 backdrop-blur-sm p-8 rounded-lg text-center space-y-4 border border-primary/20 hover:border-primary transition-all">
-                <h3 className="text-3xl font-bebas uppercase tracking-wider text-primary">
-                  Clubs
-                </h3>
-                <p className="text-muted-foreground">
-                  Discover top talent for your squad through our extensive network
-                </p>
-                <Button 
-                  asChild
-                  size="lg" 
-                  className="btn-shine w-full text-xl font-bebas uppercase tracking-wider"
-                >
-                  <Link to="/contact">Partner With Us</Link>
-                </Button>
+
+              {/* Clubs */}
+              <div className="relative overflow-hidden rounded-lg group">
+                <div className="aspect-[16/9] relative">
+                  <img 
+                    src={clubsNetwork} 
+                    alt="Clubs" 
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
+                </div>
+                <div className="absolute bottom-0 left-0 right-0 p-6 space-y-3">
+                  <h3 className="text-3xl font-bebas uppercase tracking-wider text-white">
+                    Clubs
+                  </h3>
+                  <p className="text-white/80 text-sm">
+                    Discover top talent for your squad through our extensive network
+                  </p>
+                  <Button 
+                    asChild
+                    size="lg" 
+                    className="btn-shine w-full text-lg font-bebas uppercase tracking-wider"
+                  >
+                    <Link to="/contact">Partner With Us</Link>
+                  </Button>
+                </div>
               </div>
-              <div className="bg-background/50 backdrop-blur-sm p-8 rounded-lg text-center space-y-4 border border-primary/20 hover:border-primary transition-all">
-                <h3 className="text-3xl font-bebas uppercase tracking-wider text-primary">
-                  Scouts
-                </h3>
-                <p className="text-muted-foreground">
-                  Collaborate with us to identify and develop emerging talent
-                </p>
-                <Button 
-                  asChild
-                  size="lg" 
-                  className="btn-shine w-full text-xl font-bebas uppercase tracking-wider"
-                >
-                  <Link to="/contact">Join Network</Link>
-                </Button>
+
+              {/* Scouts */}
+              <div className="relative overflow-hidden rounded-lg group">
+                <div className="aspect-[16/9] relative">
+                  <img 
+                    src={scoutsNetwork} 
+                    alt="Scouts" 
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
+                </div>
+                <div className="absolute bottom-0 left-0 right-0 p-6 space-y-3">
+                  <h3 className="text-3xl font-bebas uppercase tracking-wider text-white">
+                    Scouts
+                  </h3>
+                  <p className="text-white/80 text-sm">
+                    Collaborate with us to identify and develop emerging talent
+                  </p>
+                  <Button 
+                    asChild
+                    size="lg" 
+                    className="btn-shine w-full text-lg font-bebas uppercase tracking-wider"
+                  >
+                    <Link to="/contact">Join Network</Link>
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
         </section>
 
 
-        {/* Services Section for Players */}
-        <section className="py-24 px-4">
+        {/* Services Section for Players - HIDDEN */}
+        <section className="hidden">
           <div className="container mx-auto">
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
               {/* Develop */}

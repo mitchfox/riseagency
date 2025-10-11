@@ -53,7 +53,7 @@ export const PlayerCard = ({ player, viewMode = "grid" }: PlayerCardProps) => {
           />
           {/* Position badge - top right */}
           <div className="absolute top-3 right-3">
-            <span className="text-3xl font-bebas text-primary tracking-wider">
+            <span className="text-5xl font-bebas text-primary tracking-wider" style={{ fontFamily: "'BBH Sans Bartle', 'Bebas Neue', sans-serif" }}>
               {player.position}
             </span>
           </div>
@@ -96,7 +96,7 @@ export const PlayerCard = ({ player, viewMode = "grid" }: PlayerCardProps) => {
         />
         {/* Position badge - top right */}
         <div className="absolute top-4 right-4">
-          <span className="text-4xl font-bebas text-primary tracking-wider">
+          <span className="text-6xl font-bebas text-primary tracking-wider" style={{ fontFamily: "'BBH Sans Bartle', 'Bebas Neue', sans-serif" }}>
             {player.position}
           </span>
         </div>

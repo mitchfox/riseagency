@@ -54,7 +54,7 @@ const PlayerDirectory = () => {
                   Players
                 </h1>
                 <p className="text-primary uppercase tracking-widest text-sm font-semibold">
-                  Elite Squad
+                  Players Under Management
                 </p>
               </div>
 
