@@ -32,7 +32,7 @@ export const Header = () => {
               <div className="flex justify-end p-4">
                 <DrawerClose asChild>
                   <button
-                    className="rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                    className="rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none"
                     aria-label="Close menu"
                   >
                     <X className="h-6 w-6" />
@@ -84,16 +84,24 @@ export const Header = () => {
               
               {/* Working Together Box */}
               <div className="px-4 pb-6 mt-auto">
-                <div className="relative overflow-hidden rounded-lg h-32">
+                <div className="relative overflow-hidden rounded-lg h-40">
                   <div 
                     className="absolute inset-0 bg-cover bg-center"
                     style={{ backgroundImage: `url(${workingTogether})` }}
                   />
                   <div className="absolute inset-0 bg-gradient-to-l from-transparent via-black/40 to-black/70" />
-                  <div className="relative h-full flex items-center justify-start px-4">
+                  <div className="relative h-full flex flex-col items-start justify-between p-4">
                     <h3 className="text-xl font-bebas uppercase tracking-wider text-white drop-shadow-lg">
                       Working<br/>Together<br/>With Rise
                     </h3>
+                    <DrawerClose asChild>
+                      <Button
+                        variant="outline"
+                        className="bg-white/10 text-white border-white/20 hover:bg-white/20 w-full"
+                      >
+                        Learn More
+                      </Button>
+                    </DrawerClose>
                   </div>
                 </div>
               </div>
