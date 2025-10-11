@@ -10,33 +10,33 @@ const PlayerDirectory = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="border-b border-border">
-        <div className="container mx-auto px-4 py-6">
+      <header className="bg-card">
+        <div className="container mx-auto px-4 py-12">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-2">
-                Player Directory
+              <h1 className="text-6xl md:text-7xl font-bebas uppercase text-foreground mb-2 tracking-wider">
+                Players
               </h1>
-              <p className="text-muted-foreground">
-                Meet our talented squad
+              <p className="text-primary uppercase tracking-widest text-sm">
+                Elite Squad
               </p>
             </div>
 
             {/* View Toggle - Hidden on mobile */}
-            <div className="hidden md:flex items-center gap-2 bg-card border border-border rounded-lg p-1">
+            <div className="hidden md:flex items-center gap-2 bg-secondary p-1">
               <Button
-                variant={viewMode === "grid" ? "secondary" : "ghost"}
+                variant={viewMode === "grid" ? "default" : "ghost"}
                 size="sm"
                 onClick={() => setViewMode("grid")}
-                className="h-8 w-8 p-0"
+                className="h-10 w-10 p-0"
               >
                 <Grid className="h-4 w-4" />
               </Button>
               <Button
-                variant={viewMode === "list" ? "secondary" : "ghost"}
+                variant={viewMode === "list" ? "default" : "ghost"}
                 size="sm"
                 onClick={() => setViewMode("list")}
-                className="h-8 w-8 p-0"
+                className="h-10 w-10 p-0"
               >
                 <List className="h-4 w-4" />
               </Button>
@@ -46,12 +46,12 @@ const PlayerDirectory = () => {
       </header>
 
       {/* Players Grid/List */}
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 py-12">
         <div
           className={
             viewMode === "grid"
-              ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
-              : "flex flex-col gap-4 max-w-4xl"
+              ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-1"
+              : "flex flex-col gap-1 max-w-5xl"
           }
         >
           {players.map((player) => (

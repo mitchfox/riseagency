@@ -26,12 +26,12 @@ const PlayerDetail = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Back Button */}
-      <div className="border-b border-border">
-        <div className="container mx-auto px-4 py-4">
+      <div className="bg-card">
+        <div className="container mx-auto px-4 py-6">
           <Button
             variant="ghost"
             onClick={() => navigate("/")}
-            className="group hover:bg-secondary"
+            className="group hover:bg-secondary uppercase tracking-wider"
           >
             <ArrowLeft className="mr-2 h-4 w-4 group-hover:-translate-x-1 transition-transform" />
             All Players
@@ -40,107 +40,107 @@ const PlayerDetail = () => {
       </div>
 
       {/* Player Profile */}
-      <main className="container mx-auto px-4 py-8">
-        <div className="grid md:grid-cols-2 gap-8 lg:gap-12 items-start">
+      <main className="container mx-auto px-4 py-12">
+        <div className="grid md:grid-cols-2 gap-12 lg:gap-16 items-start">
           {/* Player Image */}
           <div className="relative">
-            <div className="relative rounded-lg overflow-hidden aspect-[3/4] bg-gradient-to-br from-primary/20 to-transparent">
+            <div className="relative overflow-hidden aspect-[3/4]">
               <img
                 src={player.image}
                 alt={player.name}
                 className="w-full h-full object-cover"
               />
               {/* Glow effect */}
-              <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
             </div>
           </div>
 
           {/* Player Info */}
-          <div className="space-y-8">
+          <div className="space-y-10">
             {/* Name and Position */}
             <div>
-              <div className="inline-block px-4 py-1 bg-primary/10 border border-primary/30 rounded-full mb-4">
-                <span className="text-sm font-medium text-primary">
+              <div className="inline-block px-5 py-2 bg-primary mb-6">
+                <span className="text-xl font-bebas text-primary-foreground tracking-wider">
                   #{player.number}
                 </span>
               </div>
-              <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-foreground mb-4 leading-tight">
+              <h1 className="text-6xl md:text-7xl lg:text-8xl font-bebas uppercase text-foreground mb-4 leading-none tracking-wide">
                 {player.name}
               </h1>
-              <p className="text-xl text-muted-foreground mb-6">
+              <p className="text-lg text-primary uppercase tracking-widest">
                 {player.position} • Age {player.age} • {player.nationality}
               </p>
             </div>
 
             {/* Bio */}
             <div>
-              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+              <h2 className="text-sm font-bebas text-primary uppercase tracking-widest mb-4 text-lg">
                 About
               </h2>
-              <p className="text-foreground/90 leading-relaxed">
+              <p className="text-foreground/80 leading-relaxed">
                 {player.bio}
               </p>
             </div>
 
             {/* Stats */}
             <div>
-              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-6">
+              <h2 className="text-sm font-bebas text-primary uppercase tracking-widest mb-8 text-lg">
                 Season Stats
               </h2>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                 {player.stats.goals !== undefined && (
-                  <div className="text-center p-4 bg-card border border-border rounded-lg">
-                    <div className="text-3xl font-bold text-primary mb-1">
+                  <div className="text-center p-6 bg-card">
+                    <div className="text-5xl font-bebas text-primary mb-2">
                       {player.stats.goals}
                     </div>
-                    <div className="text-xs text-muted-foreground uppercase tracking-wider">
+                    <div className="text-xs text-muted-foreground uppercase tracking-widest">
                       Goals
                     </div>
                   </div>
                 )}
                 {player.stats.assists !== undefined && (
-                  <div className="text-center p-4 bg-card border border-border rounded-lg">
-                    <div className="text-3xl font-bold text-primary mb-1">
+                  <div className="text-center p-6 bg-card">
+                    <div className="text-5xl font-bebas text-primary mb-2">
                       {player.stats.assists}
                     </div>
-                    <div className="text-xs text-muted-foreground uppercase tracking-wider">
+                    <div className="text-xs text-muted-foreground uppercase tracking-widest">
                       Assists
                     </div>
                   </div>
                 )}
                 {player.stats.cleanSheets !== undefined && (
-                  <div className="text-center p-4 bg-card border border-border rounded-lg">
-                    <div className="text-3xl font-bold text-primary mb-1">
+                  <div className="text-center p-6 bg-card">
+                    <div className="text-5xl font-bebas text-primary mb-2">
                       {player.stats.cleanSheets}
                     </div>
-                    <div className="text-xs text-muted-foreground uppercase tracking-wider">
+                    <div className="text-xs text-muted-foreground uppercase tracking-widest">
                       Clean Sheets
                     </div>
                   </div>
                 )}
                 {player.stats.saves !== undefined && (
-                  <div className="text-center p-4 bg-card border border-border rounded-lg">
-                    <div className="text-3xl font-bold text-primary mb-1">
+                  <div className="text-center p-6 bg-card">
+                    <div className="text-5xl font-bebas text-primary mb-2">
                       {player.stats.saves}
                     </div>
-                    <div className="text-xs text-muted-foreground uppercase tracking-wider">
+                    <div className="text-xs text-muted-foreground uppercase tracking-widest">
                       Saves
                     </div>
                   </div>
                 )}
-                <div className="text-center p-4 bg-card border border-border rounded-lg">
-                  <div className="text-3xl font-bold text-primary mb-1">
+                <div className="text-center p-6 bg-card">
+                  <div className="text-5xl font-bebas text-primary mb-2">
                     {player.stats.matches}
                   </div>
-                  <div className="text-xs text-muted-foreground uppercase tracking-wider">
+                  <div className="text-xs text-muted-foreground uppercase tracking-widest">
                     Matches
                   </div>
                 </div>
-                <div className="text-center p-4 bg-card border border-border rounded-lg">
-                  <div className="text-3xl font-bold text-primary mb-1">
+                <div className="text-center p-6 bg-card">
+                  <div className="text-5xl font-bebas text-primary mb-2">
                     {player.stats.minutes}
                   </div>
-                  <div className="text-xs text-muted-foreground uppercase tracking-wider">
+                  <div className="text-xs text-muted-foreground uppercase tracking-widest">
                     Minutes
                   </div>
                 </div>
