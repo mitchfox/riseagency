@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
 import { Link } from "react-router-dom";
+import logo from "@/assets/logo.png";
 
 export const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -14,9 +15,7 @@ export const Header = () => {
 
           {/* Logo - Center */}
           <Link to="/" className="flex-shrink-0">
-            <div className="text-3xl font-bebas text-primary tracking-widest">
-              FOOTBALL AGENCY
-            </div>
+            <img src={logo} alt="RISE Football Agency" className="h-12 md:h-14" />
           </Link>
 
           {/* Burger Menu - Right */}
@@ -40,33 +39,37 @@ export const Header = () => {
         </div>
 
         {/* Mobile Menu */}
-        {isMenuOpen && (
-          <nav className="absolute top-full left-0 right-0 bg-background border-b border-primary/20 py-6">
-            <div className="container mx-auto px-4 flex flex-col gap-4">
-              <Link
-                to="/"
-                onClick={() => setIsMenuOpen(false)}
-                className="text-xl font-bebas uppercase text-foreground hover:text-primary transition-colors tracking-wider"
-              >
-                Players
-              </Link>
-              <Link
-                to="/about"
-                onClick={() => setIsMenuOpen(false)}
-                className="text-xl font-bebas uppercase text-foreground hover:text-primary transition-colors tracking-wider"
-              >
-                About
-              </Link>
-              <Link
-                to="/contact"
-                onClick={() => setIsMenuOpen(false)}
-                className="text-xl font-bebas uppercase text-foreground hover:text-primary transition-colors tracking-wider"
-              >
-                Contact
-              </Link>
-            </div>
-          </nav>
-        )}
+        <nav 
+          className={`absolute top-full left-0 right-0 bg-background border-b border-primary/20 overflow-hidden transition-all duration-500 ease-in-out ${
+            isMenuOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
+          }`}
+        >
+          <div className={`container mx-auto px-4 py-6 flex flex-col gap-4 transition-transform duration-500 ${
+            isMenuOpen ? 'translate-y-0' : '-translate-y-4'
+          }`}>
+            <Link
+              to="/"
+              onClick={() => setIsMenuOpen(false)}
+              className="text-xl font-bebas uppercase text-foreground hover:text-primary transition-colors tracking-wider"
+            >
+              Players
+            </Link>
+            <Link
+              to="/about"
+              onClick={() => setIsMenuOpen(false)}
+              className="text-xl font-bebas uppercase text-foreground hover:text-primary transition-colors tracking-wider"
+            >
+              About
+            </Link>
+            <Link
+              to="/contact"
+              onClick={() => setIsMenuOpen(false)}
+              className="text-xl font-bebas uppercase text-foreground hover:text-primary transition-colors tracking-wider"
+            >
+              Contact
+            </Link>
+          </div>
+        </nav>
       </div>
     </header>
   );
