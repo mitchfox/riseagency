@@ -17,16 +17,16 @@ All colors MUST be HSL.
     --popover: 0 0% 5%;
     --popover-foreground: 0 0% 100%;
 
-    --primary: 43 96% 56%;
+    --primary: 43 60% 60%;
     --primary-foreground: 0 0% 0%;
 
     --secondary: 0 0% 10%;
     --secondary-foreground: 0 0% 100%;
 
     --muted: 0 0% 10%;
-    --muted-foreground: 43 50% 60%;
+    --muted-foreground: 43 40% 70%;
 
-    --accent: 43 96% 56%;
+    --accent: 43 60% 60%;
     --accent-foreground: 0 0% 0%;
 
     --destructive: 0 84% 60%;
@@ -34,13 +34,13 @@ All colors MUST be HSL.
 
     --border: 0 0% 15%;
     --input: 0 0% 15%;
-    --ring: 43 96% 56%;
+    --ring: 43 60% 60%;
 
     --radius: 0rem;
 
     /* Custom design tokens */
-    --gold: 43 96% 56%;
-    --gold-muted: 43 50% 60%;
+    --gold: 43 60% 60%;
+    --gold-muted: 43 40% 70%;
     --text-primary: 0 0% 100%;
     --text-secondary: 43 50% 60%;
     --bg-dark: 0 0% 0%;
