@@ -55,7 +55,7 @@ const Index = () => {
             <div className="grid md:grid-cols-3 gap-8">
               {/* Players */}
               <div className="relative overflow-hidden rounded-lg group">
-                <div className="aspect-[16/9] relative">
+                <div className="aspect-[4/5] relative">
                   <img 
                     src={playersNetwork} 
                     alt="Players" 
@@ -82,7 +82,7 @@ const Index = () => {
 
               {/* Clubs */}
               <div className="relative overflow-hidden rounded-lg group">
-                <div className="aspect-[16/9] relative">
+                <div className="aspect-[4/5] relative">
                   <img 
                     src={clubsNetwork} 
                     alt="Clubs" 
@@ -109,7 +109,7 @@ const Index = () => {
 
               {/* Scouts */}
               <div className="relative overflow-hidden rounded-lg group">
-                <div className="aspect-[16/9] relative">
+                <div className="aspect-[4/5] relative">
                   <img 
                     src={scoutsNetwork} 
                     alt="Scouts" 
