@@ -95,4 +95,33 @@ All colors MUST be HSL.
       box-shadow: 0 0 20px rgba(0, 240, 255, 0.4);
     }
   }
+
+  @keyframes shine {
+    0% {
+      left: -100%;
+    }
+    100% {
+      left: 200%;
+    }
+  }
+
+  .btn-shine {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn-shine::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+    transition: left 0.5s;
+  }
+
+  .btn-shine:hover::after {
+    animation: shine 0.8s ease-in-out;
+  }
 }

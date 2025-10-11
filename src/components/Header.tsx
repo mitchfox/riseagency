@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import logo from "@/assets/logo.png";
-import { Menu, X } from "lucide-react";
+import { X } from "lucide-react";
+import { TbMenu } from "react-icons/tb";
 import {
   Drawer,
   DrawerClose,
@@ -23,7 +24,7 @@ export const Header = () => {
                 className="group relative w-12 h-12 flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                 aria-label="Toggle menu"
               >
-                <Menu className="w-6 h-6 text-primary group-hover:text-foreground transition-colors" />
+                <TbMenu className="w-7 h-7 text-primary group-hover:text-foreground transition-colors" />
               </button>
             </DrawerTrigger>
             <DrawerContent className="h-full w-[280px] left-0">
