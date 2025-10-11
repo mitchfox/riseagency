@@ -44,11 +44,11 @@ const PlayerDirectory = () => {
   return (
     <>
       <Header />
-      <div className="min-h-screen bg-background pt-20">
+      <div className="min-h-screen bg-background pt-16">
         {/* Page Header with Title and View Toggle */}
-        <div className="bg-background border-b border-primary/20">
+        <div className="bg-background">
           <div className="container mx-auto px-4 py-8">
-            <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center justify-between mb-6">
               <div>
                 <h1 className="text-5xl md:text-6xl font-bebas uppercase text-foreground mb-2 tracking-wider">
                   Players
@@ -59,7 +59,7 @@ const PlayerDirectory = () => {
               </div>
 
               {/* View Toggle - Hidden on mobile */}
-              <div className="hidden md:flex items-center gap-2 bg-secondary p-1">
+              <div className="hidden md:flex items-center gap-2 bg-secondary/50 backdrop-blur-sm p-1 rounded">
                 <Button
                   variant={viewMode === "grid" ? "default" : "ghost"}
                   size="sm"
@@ -80,27 +80,20 @@ const PlayerDirectory = () => {
             </div>
 
             {/* Filters */}
-            <div className="flex flex-wrap items-center gap-4">
-              <div className="flex items-center gap-2">
-                <Filter className="h-4 w-4 text-primary" />
-                <span className="text-sm font-bebas text-muted-foreground uppercase tracking-wider">
-                  Filters:
-                </span>
-              </div>
-
+            <div className="flex flex-wrap items-center gap-3">
               <Select value={selectedPosition} onValueChange={setSelectedPosition}>
-                <SelectTrigger className="w-[160px] bg-secondary border-primary/20 text-foreground font-semibold uppercase tracking-wide">
+                <SelectTrigger className="w-[160px] bg-background/50 backdrop-blur-sm border-primary/10 text-foreground font-semibold uppercase tracking-wide rounded hover:border-primary/30 transition-colors">
                   <SelectValue placeholder="Position" />
                 </SelectTrigger>
-                <SelectContent className="bg-secondary border-primary/20 z-50">
-                  <SelectItem value="all" className="uppercase tracking-wide font-semibold">
+                <SelectContent className="bg-background/95 backdrop-blur-md border-primary/20 z-50">
+                  <SelectItem value="all" className="uppercase tracking-wide font-semibold hover:bg-primary/10">
                     All Positions
                   </SelectItem>
                   {positions.map((position) => (
                     <SelectItem 
                       key={position} 
                       value={position}
-                      className="uppercase tracking-wide font-semibold"
+                      className="uppercase tracking-wide font-semibold hover:bg-primary/10"
                     >
                       {position}
                     </SelectItem>
@@ -109,20 +102,20 @@ const PlayerDirectory = () => {
               </Select>
 
               <Select value={selectedAge} onValueChange={setSelectedAge}>
-                <SelectTrigger className="w-[160px] bg-secondary border-primary/20 text-foreground font-semibold uppercase tracking-wide">
-                  <SelectValue placeholder="Age" />
+                <SelectTrigger className="w-[160px] bg-background/50 backdrop-blur-sm border-primary/10 text-foreground font-semibold uppercase tracking-wide rounded hover:border-primary/30 transition-colors">
+                  <SelectValue placeholder="Age Range" />
                 </SelectTrigger>
-                <SelectContent className="bg-secondary border-primary/20 z-50">
-                  <SelectItem value="all" className="uppercase tracking-wide font-semibold">
+                <SelectContent className="bg-background/95 backdrop-blur-md border-primary/20 z-50">
+                  <SelectItem value="all" className="uppercase tracking-wide font-semibold hover:bg-primary/10">
                     All Ages
                   </SelectItem>
-                  <SelectItem value="young" className="uppercase tracking-wide font-semibold">
+                  <SelectItem value="young" className="uppercase tracking-wide font-semibold hover:bg-primary/10">
                     Young (&lt;24)
                   </SelectItem>
-                  <SelectItem value="prime" className="uppercase tracking-wide font-semibold">
+                  <SelectItem value="prime" className="uppercase tracking-wide font-semibold hover:bg-primary/10">
                     Prime (24-28)
                   </SelectItem>
-                  <SelectItem value="experienced" className="uppercase tracking-wide font-semibold">
+                  <SelectItem value="experienced" className="uppercase tracking-wide font-semibold hover:bg-primary/10">
                     Experienced (28+)
                   </SelectItem>
                 </SelectContent>
@@ -136,9 +129,9 @@ const PlayerDirectory = () => {
                     setSelectedPosition("all");
                     setSelectedAge("all");
                   }}
-                  className="text-primary hover:text-foreground uppercase tracking-wide font-semibold"
+                  className="text-primary hover:text-foreground hover:bg-primary/10 uppercase tracking-wide font-semibold"
                 >
-                  Clear Filters
+                  Clear
                 </Button>
               )}
             </div>

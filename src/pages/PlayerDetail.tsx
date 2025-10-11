@@ -27,10 +27,10 @@ const PlayerDetail = () => {
   return (
     <>
       <Header />
-      <div className="min-h-screen bg-background pt-20">
+      <div className="min-h-screen bg-background pt-16">
         {/* Back Button */}
-        <div className="bg-background border-b border-primary/20">
-          <div className="container mx-auto px-4 py-6">
+        <div className="bg-background">
+          <div className="container mx-auto px-4 py-4">
             <Button
               variant="ghost"
               onClick={() => navigate("/")}

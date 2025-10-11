@@ -7,15 +7,15 @@ export const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-b border-primary/20">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md">
       <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-20">
+        <div className="flex items-center justify-between h-16">
           {/* Left spacer */}
           <div className="w-12" />
 
           {/* Logo - Center */}
           <Link to="/" className="flex-shrink-0">
-            <img src={logo} alt="RISE Football Agency" className="h-12 md:h-14" />
+            <img src={logo} alt="RISE Football Agency" className="h-8 md:h-10" />
           </Link>
 
           {/* Burger Menu - Right */}
@@ -40,7 +40,7 @@ export const Header = () => {
 
         {/* Mobile Menu */}
         <nav 
-          className={`absolute top-full left-0 right-0 bg-background border-b border-primary/20 overflow-hidden transition-all duration-500 ease-in-out ${
+          className={`absolute top-full left-0 right-0 bg-background/95 backdrop-blur-md overflow-hidden transition-all duration-500 ease-in-out ${
             isMenuOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
           }`}
         >
