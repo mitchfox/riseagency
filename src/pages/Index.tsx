@@ -1,33 +1,100 @@
 import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import bannerHero from "@/assets/banner-hero.jpg";
+import marbleBg from "@/assets/marble-bg.png";
+import player1 from "@/assets/player1.jpg";
+import player2 from "@/assets/player2.jpg";
+import player3 from "@/assets/player3.jpg";
+
+const banners = [
+  {
+    image: bannerHero,
+    text: "REALISE POTENTIAL"
+  },
+  {
+    image: bannerHero,
+    text: "DEVELOP EXCELLENCE"
+  },
+  {
+    image: bannerHero,
+    text: "RISE TOGETHER"
+  }
+];
 
 const Index = () => {
+  const [currentBanner, setCurrentBanner] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentBanner((prev) => (prev + 1) % banners.length);
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <>
       <Header />
       <div className="min-h-screen bg-background">
-        {/* Hero Section */}
-        <section className="relative min-h-screen flex items-center justify-center px-4 pt-16">
-          <div className="absolute inset-0 bg-gradient-to-b from-background via-background/95 to-background z-0" />
-          <div className="container mx-auto relative z-10">
+        {/* Hero Banner Section */}
+        <section className="relative h-[60vh] min-h-[500px] flex items-center justify-center overflow-hidden pt-16">
+          {banners.map((banner, index) => (
+            <div
+              key={index}
+              className={`absolute inset-0 transition-opacity duration-1000 ${
+                index === currentBanner ? "opacity-100" : "opacity-0"
+              }`}
+            >
+              <div 
+                className="absolute inset-0 bg-cover bg-center"
+                style={{ backgroundImage: `url(${banner.image})` }}
+              />
+              <div className="absolute inset-0 bg-black/40" />
+            </div>
+          ))}
+          <div className="container mx-auto relative z-10 px-4">
             <div className="max-w-5xl mx-auto text-center space-y-8">
-              <h1 className="text-6xl md:text-8xl font-bebas uppercase tracking-wider text-foreground">
-                How We Rise
+              <h1 className="text-7xl md:text-9xl font-bebas uppercase tracking-wider text-white drop-shadow-2xl">
+                {banners[currentBanner].text}
               </h1>
-              <div className="bg-primary/90 backdrop-blur-sm p-8 md:p-12 rounded-lg">
-                <p className="text-lg md:text-xl text-background leading-relaxed font-medium">
-                  We are your backing in the highly competitive football industry, tackling your challenges and ensuring your success through comprehensive, client-focused solutions. Leveraging deep knowledge and experience in the game, we offer insights you cannot find elsewhere. With respect for both your time and ours, we deliver premium service with unmatched efficiency while our innovative strategies realise your potential, ensuring we rise together.
-                </p>
-              </div>
               <Link to="/players">
                 <Button 
                   size="lg" 
-                  className="text-2xl font-bebas uppercase tracking-widest px-12 py-8 hover:scale-105 transition-transform"
+                  className="text-2xl font-bebas uppercase tracking-widest px-12 py-8 hover:scale-105 transition-transform bg-primary hover:bg-primary/90"
                 >
-                  Players
+                  View Players
                 </Button>
               </Link>
+            </div>
+          </div>
+        </section>
+
+        {/* Mission Section with Images */}
+        <section className="py-24 px-4 relative">
+          <div 
+            className="absolute inset-0 opacity-5"
+            style={{ backgroundImage: `url(${marbleBg})`, backgroundRepeat: "repeat" }}
+          />
+          <div className="container mx-auto relative z-10">
+            <div className="max-w-6xl mx-auto">
+              <div className="grid md:grid-cols-3 gap-8 mb-12">
+                <div className="aspect-square overflow-hidden rounded-lg">
+                  <img src={player1} alt="Rise Football Agency" className="w-full h-full object-cover hover:scale-110 transition-transform duration-500" />
+                </div>
+                <div className="aspect-square overflow-hidden rounded-lg">
+                  <img src={player2} alt="Rise Football Agency" className="w-full h-full object-cover hover:scale-110 transition-transform duration-500" />
+                </div>
+                <div className="aspect-square overflow-hidden rounded-lg">
+                  <img src={player3} alt="Rise Football Agency" className="w-full h-full object-cover hover:scale-110 transition-transform duration-500" />
+                </div>
+              </div>
+              <div className="bg-primary/90 backdrop-blur-sm p-8 md:p-12 rounded-lg text-center">
+                <p className="text-xl md:text-2xl text-background leading-relaxed font-medium">
+                  Your backing in the highly competitive football industry. We deliver premium service with unmatched efficiency while our innovative strategies realise your potential.
+                </p>
+              </div>
             </div>
           </div>
         </section>

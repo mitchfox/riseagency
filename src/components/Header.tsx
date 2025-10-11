@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import logo from "@/assets/logo.png";
-import { Menu } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import {
   Drawer,
   DrawerClose,
@@ -27,10 +27,18 @@ export const Header = () => {
               </button>
             </DrawerTrigger>
             <DrawerContent className="h-full w-[280px] left-0">
-              <DrawerHeader>
+              <DrawerHeader className="flex flex-row items-center justify-between">
                 <DrawerTitle className="text-2xl font-bebas uppercase tracking-wider text-primary">
                   Menu
                 </DrawerTitle>
+                <DrawerClose asChild>
+                  <button
+                    className="rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                    aria-label="Close menu"
+                  >
+                    <X className="h-6 w-6" />
+                  </button>
+                </DrawerClose>
               </DrawerHeader>
               <nav className="flex flex-col gap-2 px-4 py-6">
                 <DrawerClose asChild>
@@ -63,6 +71,14 @@ export const Header = () => {
                     className="text-xl font-bebas uppercase text-foreground hover:text-primary transition-colors tracking-wider py-3 px-4 hover:bg-primary/10 rounded"
                   >
                     Contact
+                  </Link>
+                </DrawerClose>
+                <DrawerClose asChild>
+                  <Link
+                    to="/news"
+                    className="text-xl font-bebas uppercase text-foreground hover:text-primary transition-colors tracking-wider py-3 px-4 hover:bg-primary/10 rounded"
+                  >
+                    News
                   </Link>
                 </DrawerClose>
               </nav>
