@@ -88,11 +88,6 @@ const PlayerDetail = () => {
           <div className="lg:grid lg:grid-cols-2 lg:gap-6 space-y-6 lg:space-y-0">
             {/* Name and Position */}
             <div className="lg:col-span-2">
-              <div className="inline-block px-5 py-2 bg-primary mb-6">
-                <span className="text-xl font-bbh text-primary-foreground tracking-wider">
-                  #{player.number}
-                </span>
-              </div>
               <h1 className="text-5xl md:text-6xl lg:text-7xl font-bebas uppercase text-foreground mb-4 leading-none tracking-wide">
                 {player.name}
               </h1>
@@ -210,7 +205,7 @@ const PlayerDetail = () => {
                   Tactical Formations
                 </h2>
                 <div className="bg-secondary/30 backdrop-blur-sm p-6 rounded-lg text-center min-h-[140px] flex flex-col justify-center">
-                  <div className="text-5xl font-bebas text-primary mb-2 transition-all duration-500">
+                  <div className="text-5xl font-bbh text-primary mb-2 transition-all duration-500">
                     {player.tacticalFormations[currentFormationIndex].formation}
                   </div>
                   <div className="text-sm text-muted-foreground uppercase tracking-widest font-semibold transition-all duration-500">
