@@ -205,7 +205,7 @@ const PlayerDetail = () => {
                   Tactical Formations
                 </h2>
                 <div className="bg-secondary/30 backdrop-blur-sm p-6 rounded-lg text-center min-h-[140px] flex flex-col justify-center">
-                  <div className="text-4xl font-bbh text-primary mb-2 transition-all duration-500">
+                  <div className="text-3xl font-bbh text-primary mb-2 transition-all duration-500">
                     {player.tacticalFormations[currentFormationIndex].formation}
                   </div>
                   <div className="text-sm text-muted-foreground uppercase tracking-widest font-semibold transition-all duration-500">
@@ -237,7 +237,7 @@ const PlayerDetail = () => {
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                 {player.stats.goals !== undefined && (
                   <div className="text-center p-6 bg-background">
-                    <div className="text-4xl font-bbh text-primary mb-2">
+                    <div className="text-3xl font-bbh text-primary mb-2">
                       {player.stats.goals}
                     </div>
                     <div className="text-xs text-muted-foreground uppercase tracking-widest font-semibold">
@@ -247,7 +247,7 @@ const PlayerDetail = () => {
                 )}
                 {player.stats.assists !== undefined && (
                   <div className="text-center p-6 bg-background">
-                    <div className="text-4xl font-bbh text-primary mb-2">
+                    <div className="text-3xl font-bbh text-primary mb-2">
                       {player.stats.assists}
                     </div>
                     <div className="text-xs text-muted-foreground uppercase tracking-widest font-semibold">
@@ -257,7 +257,7 @@ const PlayerDetail = () => {
                 )}
                 {player.stats.cleanSheets !== undefined && (
                   <div className="text-center p-6 bg-background">
-                    <div className="text-4xl font-bbh text-primary mb-2">
+                    <div className="text-3xl font-bbh text-primary mb-2">
                       {player.stats.cleanSheets}
                     </div>
                     <div className="text-xs text-muted-foreground uppercase tracking-widest font-semibold">
@@ -267,7 +267,7 @@ const PlayerDetail = () => {
                 )}
                 {player.stats.saves !== undefined && (
                   <div className="text-center p-6 bg-background">
-                    <div className="text-4xl font-bbh text-primary mb-2">
+                    <div className="text-3xl font-bbh text-primary mb-2">
                       {player.stats.saves}
                     </div>
                     <div className="text-xs text-muted-foreground uppercase tracking-widest font-semibold">
@@ -276,7 +276,7 @@ const PlayerDetail = () => {
                   </div>
                 )}
                 <div className="text-center p-6 bg-background">
-                  <div className="text-4xl font-bbh text-primary mb-2">
+                  <div className="text-3xl font-bbh text-primary mb-2">
                     {player.stats.matches}
                   </div>
                   <div className="text-xs text-muted-foreground uppercase tracking-widest font-semibold">
@@ -284,7 +284,7 @@ const PlayerDetail = () => {
                   </div>
                 </div>
                 <div className="text-center p-6 bg-background">
-                  <div className="text-4xl font-bbh text-primary mb-2">
+                  <div className="text-3xl font-bbh text-primary mb-2">
                     {player.stats.minutes}
                   </div>
                   <div className="text-xs text-muted-foreground uppercase tracking-widest font-semibold">
