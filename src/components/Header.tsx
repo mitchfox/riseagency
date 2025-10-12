@@ -96,9 +96,10 @@ export const Header = () => {
                     </h3>
                     <DrawerClose asChild>
                       <Button
-                        className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
+                        asChild
+                        className="btn-shine w-full font-bebas uppercase tracking-wider"
                       >
-                        Get Started
+                        <Link to="/contact">Get Started</Link>
                       </Button>
                     </DrawerClose>
                   </div>
@@ -112,8 +113,14 @@ export const Header = () => {
             <img src={logo} alt="RISE Football Agency" className="h-8 md:h-10" />
           </Link>
 
-          {/* Right spacer */}
-          <div className="w-12" />
+          {/* Work With Us Button - Right */}
+          <Button
+            asChild
+            size="sm"
+            className="btn-shine font-bebas uppercase tracking-wider"
+          >
+            <Link to="/contact">Work With Us</Link>
+          </Button>
         </div>
       </div>
     </header>

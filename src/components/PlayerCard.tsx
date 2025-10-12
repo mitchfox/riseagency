@@ -42,8 +42,8 @@ export const PlayerCard = ({ player, viewMode = "grid" }: PlayerCardProps) => {
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/5 to-transparent animate-slide-glow" />
         </div>
 
-        {/* Player Image */}
-        <div className="relative w-32 h-40 flex-shrink-0 overflow-hidden">
+        {/* Player Image - Larger */}
+        <div className="relative w-48 h-64 flex-shrink-0 overflow-hidden">
           <img
             src={player.image}
             alt={player.name}
@@ -51,9 +51,9 @@ export const PlayerCard = ({ player, viewMode = "grid" }: PlayerCardProps) => {
               isInView ? "grayscale-0" : "grayscale"
             } md:grayscale md:group-hover:grayscale-0`}
           />
-          {/* Position badge - top right */}
+          {/* Position badge - top right, smaller */}
           <div className="absolute top-3 right-3">
-            <span className="text-5xl text-primary tracking-wider" style={{ fontFamily: "'BBH Sans Bartle', 'Bebas Neue', sans-serif" }}>
+            <span className="text-3xl text-primary tracking-wider" style={{ fontFamily: "'BBH Sans Bartle', 'Bebas Neue', sans-serif" }}>
               {player.position}
             </span>
           </div>

@@ -81,6 +81,21 @@ export const players: Player[] = [
       minutes: 2040,
     },
     bio: "A creative midfielder with excellent vision and passing ability. Alex has been instrumental in orchestrating the team's attacks and creating scoring opportunities for his teammates.",
+    whatsapp: "+447508342901",
+    externalLinks: [
+      { label: "Transfermarkt", url: "https://www.transfermarkt.com" },
+      { label: "Match Reports", url: "#" }
+    ],
+    strengthsAndPlayStyle: [
+      "Exceptional vision and passing range",
+      "Creative playmaker with excellent technical ability",
+      "Strong work rate and defensive contribution",
+      "Ability to control tempo and dictate play"
+    ],
+    tacticalFormations: [
+      { club: "Current Club", formation: "4-3-3" },
+      { club: "Previous Club", formation: "4-4-2" }
+    ]
   },
   {
     id: "james-taylor",
@@ -97,6 +112,21 @@ export const players: Player[] = [
       minutes: 2180,
     },
     bio: "James is a prolific striker with an eye for goal. His pace, positioning, and clinical finishing have made him the team's top scorer this season.",
+    whatsapp: "+447508342901",
+    externalLinks: [
+      { label: "Transfermarkt", url: "https://www.transfermarkt.com" },
+      { label: "Match Reports", url: "#" }
+    ],
+    strengthsAndPlayStyle: [
+      "Clinical finisher with both feet",
+      "Excellent movement and positioning in the box",
+      "Strong aerial ability and hold-up play",
+      "Pace to run in behind defensive lines"
+    ],
+    tacticalFormations: [
+      { club: "Current Club", formation: "4-2-3-1" },
+      { club: "Previous Club", formation: "4-4-2" }
+    ]
   },
   {
     id: "david-muller",
@@ -113,6 +143,21 @@ export const players: Player[] = [
       minutes: 2250,
     },
     bio: "A solid and reliable defender with excellent tactical awareness. David's leadership qualities and defensive skills make him a cornerstone of the team's backline.",
+    whatsapp: "+447508342901",
+    externalLinks: [
+      { label: "Transfermarkt", url: "https://www.transfermarkt.com" },
+      { label: "Match Reports", url: "#" }
+    ],
+    strengthsAndPlayStyle: [
+      "Strong in aerial duels and physical battles",
+      "Excellent reading of the game and positioning",
+      "Composed ball-playing defender",
+      "Natural leader with strong communication"
+    ],
+    tacticalFormations: [
+      { club: "Current Club", formation: "4-2-3-1" },
+      { club: "Previous Club", formation: "3-5-2" }
+    ]
   },
   {
     id: "lucas-fernandez",
@@ -129,6 +174,21 @@ export const players: Player[] = [
       minutes: 1890,
     },
     bio: "An exciting young winger with explosive pace and dribbling skills. Lucas has the ability to change games with his individual brilliance and creativity.",
+    whatsapp: "+447508342901",
+    externalLinks: [
+      { label: "Transfermarkt", url: "https://www.transfermarkt.com" },
+      { label: "Match Reports", url: "#" }
+    ],
+    strengthsAndPlayStyle: [
+      "Explosive pace and acceleration",
+      "Exceptional dribbling in tight spaces",
+      "Ability to beat defenders one-on-one",
+      "Creative with unpredictable movements"
+    ],
+    tacticalFormations: [
+      { club: "Current Club", formation: "4-3-3" },
+      { club: "Previous Club", formation: "4-2-3-1" }
+    ]
   },
   {
     id: "thomas-dupont",
@@ -145,5 +205,20 @@ export const players: Player[] = [
       minutes: 2340,
     },
     bio: "A versatile midfielder who excels in both defensive and attacking roles. Thomas's work rate and technical ability make him an invaluable asset to the team.",
+    whatsapp: "+447508342901",
+    externalLinks: [
+      { label: "Transfermarkt", url: "https://www.transfermarkt.com" },
+      { label: "Match Reports", url: "#" }
+    ],
+    strengthsAndPlayStyle: [
+      "Versatile box-to-box midfielder",
+      "Strong defensive awareness and interceptions",
+      "Excellent stamina and work rate",
+      "Capable of contributing in attack and defense"
+    ],
+    tacticalFormations: [
+      { club: "Current Club", formation: "4-3-3" },
+      { club: "Previous Club", formation: "4-4-2" }
+    ]
   },
 ];

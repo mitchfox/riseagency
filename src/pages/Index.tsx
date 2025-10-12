@@ -1,4 +1,5 @@
 import { Header } from "@/components/Header";
+import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import bannerHero from "@/assets/banner-hero-new.jpg";
@@ -310,6 +311,7 @@ const Index = () => {
           </div>
         </section>
       </div>
+      <Footer />
     </>
   );
 };

@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { players } from "@/data/players";
 import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, MessageCircle, ExternalLink } from "lucide-react";
+import { ArrowLeft, MessageCircle, ExternalLink, Video } from "lucide-react";
 
 const PlayerDetail = () => {
   const { playername } = useParams<{ playername: string }>();
@@ -56,22 +56,23 @@ const PlayerDetail = () => {
       <Header />
       <div className="min-h-screen bg-background pt-16">
         {/* Back Button */}
-        <div className="bg-background">
-          <div className="container mx-auto px-4 py-4">
+        <div className="bg-secondary/20 border-b border-primary/10">
+          <div className="container mx-auto px-4 py-6">
             <Button
-              variant="ghost"
               onClick={() => navigate("/players")}
-              className="group hover:bg-secondary uppercase tracking-wider font-semibold"
+              variant="outline"
+              size="lg"
+              className="group font-bebas uppercase tracking-wider text-lg border-primary/30 hover:bg-primary hover:text-primary-foreground"
             >
-              <ArrowLeft className="mr-2 h-4 w-4 group-hover:-translate-x-1 transition-transform" />
-              All Players
+              <ArrowLeft className="mr-2 h-5 w-5 group-hover:-translate-x-1 transition-transform" />
+              Back to Players
             </Button>
           </div>
         </div>
 
       {/* Player Profile */}
       <main className="container mx-auto px-4 py-12">
-        <div className="grid md:grid-cols-2 gap-12 lg:gap-16 items-start">
+        <div className="grid lg:grid-cols-2 gap-8 lg:gap-12">
           {/* Player Image */}
           <div className="relative">
             <div className="relative overflow-hidden aspect-[3/4]">
@@ -85,16 +86,16 @@ const PlayerDetail = () => {
             </div>
           </div>
 
-          {/* Player Info */}
-          <div className="space-y-10">
+          {/* Player Info - Desktop: Grid 2x2, Mobile: Stacked */}
+          <div className="lg:grid lg:grid-cols-2 lg:gap-6 space-y-6 lg:space-y-0">
             {/* Name and Position */}
-            <div>
+            <div className="lg:col-span-2">
               <div className="inline-block px-5 py-2 bg-primary mb-6">
                 <span className="text-xl font-bebas text-primary-foreground tracking-wider">
                   #{player.number}
                 </span>
               </div>
-              <h1 className="text-6xl md:text-7xl lg:text-8xl font-bebas uppercase text-foreground mb-4 leading-none tracking-wide">
+              <h1 className="text-5xl md:text-6xl lg:text-7xl font-bebas uppercase text-foreground mb-4 leading-none tracking-wide">
                 {player.name}
               </h1>
               <p className="text-lg text-primary uppercase tracking-widest">
@@ -104,7 +105,7 @@ const PlayerDetail = () => {
 
             {/* WhatsApp Contact Button */}
             {player.whatsapp && (
-              <div>
+              <div className="lg:col-span-2">
                 <Button 
                   asChild
                   size="lg"
@@ -121,6 +122,31 @@ const PlayerDetail = () => {
                 </Button>
               </div>
             )}
+
+            {/* Bio */}
+            <div className="lg:col-span-2">
+              <h2 className="text-sm font-bebas text-primary uppercase tracking-widest mb-4 text-lg">
+                About
+              </h2>
+              <p className="text-foreground/80 leading-relaxed">
+                {player.bio}
+              </p>
+            </div>
+
+            {/* Highlights Video */}
+            <div className="lg:col-span-2">
+              <h2 className="text-sm font-bebas text-primary uppercase tracking-widest mb-4 text-lg">
+                Season Highlights
+              </h2>
+              <div className="relative aspect-video bg-secondary/30 rounded-lg border border-primary/20 overflow-hidden group hover:border-primary/40 transition-colors">
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
+                  <Video className="w-16 h-16 text-primary" />
+                  <p className="text-foreground/60 font-bebas text-xl uppercase tracking-wider">
+                    Highlights Coming Soon
+                  </p>
+                </div>
+              </div>
+            </div>
 
             {/* External Links */}
             {player.externalLinks && player.externalLinks.length > 0 && (
@@ -151,23 +177,13 @@ const PlayerDetail = () => {
               </div>
             )}
 
-            {/* Bio */}
-            <div>
-              <h2 className="text-sm font-bebas text-primary uppercase tracking-widest mb-4 text-lg">
-                About
-              </h2>
-              <p className="text-foreground/80 leading-relaxed">
-                {player.bio}
-              </p>
-            </div>
-
             {/* Strengths & Play Style Slider */}
             {player.strengthsAndPlayStyle && player.strengthsAndPlayStyle.length > 0 && (
               <div>
                 <h2 className="text-sm font-bebas text-primary uppercase tracking-widest mb-4 text-lg">
                   Strengths & Play Style
                 </h2>
-                <div className="bg-secondary/30 backdrop-blur-sm p-6 rounded-lg border border-primary/20 min-h-[100px] flex items-center">
+                <div className="bg-secondary/30 backdrop-blur-sm p-6 rounded-lg border border-primary/20 min-h-[140px] flex items-center">
                   <p className="text-foreground/90 leading-relaxed transition-all duration-500">
                     {player.strengthsAndPlayStyle[currentStrengthIndex]}
                   </p>
@@ -193,9 +209,9 @@ const PlayerDetail = () => {
             {player.tacticalFormations && player.tacticalFormations.length > 0 && (
               <div>
                 <h2 className="text-sm font-bebas text-primary uppercase tracking-widest mb-4 text-lg">
-                  Tactical Formations Played
+                  Tactical Formations
                 </h2>
-                <div className="bg-secondary/30 backdrop-blur-sm p-6 rounded-lg border border-primary/20 text-center">
+                <div className="bg-secondary/30 backdrop-blur-sm p-6 rounded-lg border border-primary/20 text-center min-h-[140px] flex flex-col justify-center">
                   <div className="text-5xl font-bebas text-primary mb-2 transition-all duration-500">
                     {player.tacticalFormations[currentFormationIndex].formation}
                   </div>
@@ -221,8 +237,8 @@ const PlayerDetail = () => {
             )}
 
             {/* Stats */}
-            <div>
-              <h2 className="text-sm font-bebas text-primary uppercase tracking-widest mb-8 text-lg">
+            <div className="lg:col-span-2">
+              <h2 className="text-sm font-bebas text-primary uppercase tracking-widest mb-6 text-lg">
                 Season Stats
               </h2>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
