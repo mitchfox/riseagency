@@ -64,7 +64,7 @@ export const PlayerCard = ({ player, viewMode = "grid" }: PlayerCardProps) => {
           <h3 className="text-3xl font-bebas uppercase text-foreground tracking-wider">
             {player.name}
           </h3>
-          <div className="flex gap-6 mt-3 text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+          <div className="flex gap-6 mt-3 text-sm font-bbh text-muted-foreground uppercase tracking-wide">
             <span>#{player.number}</span>
             <span>Age {player.age}</span>
             <span>{player.nationality}</span>

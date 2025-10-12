@@ -24,7 +24,7 @@ const Index = () => {
             style={{ backgroundImage: `url(${bannerHero})` }}
           />
           <div className="absolute inset-0 bg-black/40" />
-          <div className="container mx-auto relative z-10 px-4">
+          <div className="relative z-10">
             <div className="max-w-full mx-auto text-center space-y-10">
               <div className="overflow-hidden relative w-full">
                 <h1 className="text-9xl md:text-[14rem] font-bebas font-bold uppercase tracking-wider text-white drop-shadow-2xl whitespace-nowrap inline-block animate-[scroll-left_60s_linear_infinite]">

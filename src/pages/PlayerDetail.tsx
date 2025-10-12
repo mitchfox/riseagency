@@ -55,26 +55,24 @@ const PlayerDetail = () => {
     <>
       <Header />
       <div className="min-h-screen bg-background pt-16">
-        {/* Back Button */}
-        <div className="bg-secondary/20 border-b border-primary/10">
-          <div className="container mx-auto px-4 py-6">
-            <Button
-              onClick={() => navigate("/players")}
-              variant="outline"
-              size="sm"
-              className="group font-bebas uppercase tracking-wider border-primary/30 hover:bg-primary hover:text-primary-foreground"
-            >
-              <ArrowLeft className="mr-2 h-4 w-4 group-hover:-translate-x-1 transition-transform" />
-              Back to Players
-            </Button>
-          </div>
-        </div>
-
       {/* Player Profile */}
       <main className="container mx-auto px-4 py-12">
         <div className="grid lg:grid-cols-2 gap-8 lg:gap-12">
           {/* Player Image */}
           <div className="relative">
+            {/* Back Button - Positioned over image */}
+            <div className="absolute top-4 left-4 z-20">
+              <Button
+                onClick={() => navigate("/players")}
+                variant="outline"
+                size="sm"
+                className="group font-bebas uppercase tracking-wider border-primary/30 bg-background/80 backdrop-blur-sm hover:bg-primary hover:text-primary-foreground"
+              >
+                <ArrowLeft className="mr-2 h-4 w-4 group-hover:-translate-x-1 transition-transform" />
+                Back to Players
+              </Button>
+            </div>
+            
             <div className="relative overflow-hidden aspect-[3/4]">
               <img
                 src={player.image}

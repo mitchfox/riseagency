@@ -28,7 +28,7 @@ export const Header = () => {
                 <TbMenu className="w-7 h-7 text-primary group-hover:text-foreground transition-colors" />
               </button>
             </DrawerTrigger>
-            <DrawerContent className="h-full w-[280px] left-0 flex flex-col">
+            <DrawerContent className="h-full w-[280px] left-0 flex flex-col rounded-r-none">
               <div className="flex justify-end p-4">
                 <DrawerClose asChild>
                   <button
