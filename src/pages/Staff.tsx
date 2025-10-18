@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Header } from "@/components/Header";
@@ -9,51 +10,39 @@ import { Footer } from "@/components/Footer";
 import PlayerManagement from "@/components/staff/PlayerManagement";
 import BlogManagement from "@/components/staff/BlogManagement";
 
+const STAFF_PASSWORD = "rise2024admin"; // Change this to your desired password
+
 const Staff = () => {
-  const navigate = useNavigate();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(true);
-  const [hasStaffRole, setHasStaffRole] = useState(false);
 
   useEffect(() => {
-    checkAuth();
+    // Check if already authenticated in session
+    const authenticated = sessionStorage.getItem("staff_authenticated");
+    if (authenticated === "true") {
+      setIsAuthenticated(true);
+    }
+    setLoading(false);
   }, []);
 
-  const checkAuth = async () => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        navigate("/auth");
-        return;
-      }
-
-      // Check if user has staff or admin role
-      const { data: roles } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", session.user.id);
-
-      const isStaff = roles?.some(r => r.role === "staff" || r.role === "admin");
-      
-      if (!isStaff) {
-        toast.error("You don't have permission to access this page");
-        navigate("/");
-        return;
-      }
-
-      setHasStaffRole(true);
-    } catch (error) {
-      console.error("Auth error:", error);
-      navigate("/auth");
-    } finally {
-      setLoading(false);
+  const handlePasswordSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (password === STAFF_PASSWORD) {
+      setIsAuthenticated(true);
+      sessionStorage.setItem("staff_authenticated", "true");
+      toast.success("Access granted");
+    } else {
+      toast.error("Invalid password");
+      setPassword("");
     }
   };
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    toast.success("Logged out successfully");
-    navigate("/");
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    sessionStorage.removeItem("staff_authenticated");
+    setPassword("");
+    toast.success("Logged out");
   };
 
   if (loading) {
@@ -64,8 +53,40 @@ const Staff = () => {
     );
   }
 
-  if (!hasStaffRole) {
-    return null;
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen flex flex-col bg-background">
+        <Header />
+        <main className="flex-1 flex items-center justify-center py-20">
+          <Card className="w-full max-w-md mx-4">
+            <CardHeader>
+              <CardTitle className="text-2xl font-bold text-center">
+                Staff Access
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handlePasswordSubmit} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="password">Password</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    autoFocus
+                  />
+                </div>
+                <Button type="submit" className="w-full">
+                  Access Dashboard
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+        </main>
+        <Footer />
+      </div>
+    );
   }
 
   return (
