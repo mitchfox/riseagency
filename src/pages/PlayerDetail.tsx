@@ -192,73 +192,73 @@ const PlayerDetail = () => {
             </div>
           </div>
 
-          {/* Stats, Strengths, Scheme History Grid */}
-          <div className="grid lg:grid-cols-2 gap-8 mb-12">
-
-            {/* Stats - Full Width */}
-            <div className="lg:col-span-2">
-              <h2 className="text-sm font-bebas text-primary uppercase tracking-widest mb-6 text-lg">
-                Season Stats
-              </h2>
-              <div className="grid grid-cols-2 gap-4">
-                {player.stats.goals !== undefined && (
-                  <div className="text-center p-6 bg-background">
-                    <div className="text-3xl font-bbh text-primary mb-2">
-                      {player.stats.goals}
-                    </div>
-                    <div className="text-xs text-muted-foreground uppercase tracking-widest font-semibold">
-                      Goals
-                    </div>
-                  </div>
-                )}
-                {player.stats.assists !== undefined && (
-                  <div className="text-center p-6 bg-background">
-                    <div className="text-3xl font-bbh text-primary mb-2">
-                      {player.stats.assists}
-                    </div>
-                    <div className="text-xs text-muted-foreground uppercase tracking-widest font-semibold">
-                      Assists
-                    </div>
-                  </div>
-                )}
-                {player.stats.cleanSheets !== undefined && (
-                  <div className="text-center p-6 bg-background">
-                    <div className="text-3xl font-bbh text-primary mb-2">
-                      {player.stats.cleanSheets}
-                    </div>
-                    <div className="text-xs text-muted-foreground uppercase tracking-widest font-semibold">
-                      Clean Sheets
-                    </div>
-                  </div>
-                )}
-                {player.stats.saves !== undefined && (
-                  <div className="text-center p-6 bg-background">
-                    <div className="text-3xl font-bbh text-primary mb-2">
-                      {player.stats.saves}
-                    </div>
-                    <div className="text-xs text-muted-foreground uppercase tracking-widest font-semibold">
-                      Saves
-                    </div>
-                  </div>
-                )}
+          {/* Stats - Full Width */}
+          <div className="mb-12">
+            <h2 className="text-sm font-bebas text-primary uppercase tracking-widest mb-6 text-lg">
+              Season Stats
+            </h2>
+            <div className="grid grid-cols-2 gap-4">
+              {player.stats.goals !== undefined && (
                 <div className="text-center p-6 bg-background">
                   <div className="text-3xl font-bbh text-primary mb-2">
-                    {player.stats.matches}
+                    {player.stats.goals}
                   </div>
                   <div className="text-xs text-muted-foreground uppercase tracking-widest font-semibold">
-                    Matches
+                    Goals
                   </div>
                 </div>
+              )}
+              {player.stats.assists !== undefined && (
                 <div className="text-center p-6 bg-background">
                   <div className="text-3xl font-bbh text-primary mb-2">
-                    {player.stats.minutes}
+                    {player.stats.assists}
                   </div>
                   <div className="text-xs text-muted-foreground uppercase tracking-widest font-semibold">
-                    Minutes
+                    Assists
                   </div>
+                </div>
+              )}
+              {player.stats.cleanSheets !== undefined && (
+                <div className="text-center p-6 bg-background">
+                  <div className="text-3xl font-bbh text-primary mb-2">
+                    {player.stats.cleanSheets}
+                  </div>
+                  <div className="text-xs text-muted-foreground uppercase tracking-widest font-semibold">
+                    Clean Sheets
+                  </div>
+                </div>
+              )}
+              {player.stats.saves !== undefined && (
+                <div className="text-center p-6 bg-background">
+                  <div className="text-3xl font-bbh text-primary mb-2">
+                    {player.stats.saves}
+                  </div>
+                  <div className="text-xs text-muted-foreground uppercase tracking-widest font-semibold">
+                    Saves
+                  </div>
+                </div>
+              )}
+              <div className="text-center p-6 bg-background">
+                <div className="text-3xl font-bbh text-primary mb-2">
+                  {player.stats.matches}
+                </div>
+                <div className="text-xs text-muted-foreground uppercase tracking-widest font-semibold">
+                  Matches
+                </div>
+              </div>
+              <div className="text-center p-6 bg-background">
+                <div className="text-3xl font-bbh text-primary mb-2">
+                  {player.stats.minutes}
+                </div>
+                <div className="text-xs text-muted-foreground uppercase tracking-widest font-semibold">
+                  Minutes
                 </div>
               </div>
             </div>
+          </div>
+
+          {/* Strengths, In Numbers, Scheme History Grid */}
+          <div className="grid lg:grid-cols-2 gap-8 mb-12">
 
             {/* Strengths & Play Style */}
             {player.strengthsAndPlayStyle && player.strengthsAndPlayStyle.length > 0 && (
@@ -275,6 +275,37 @@ const PlayerDetail = () => {
                       </li>
                     ))}
                   </ul>
+                </div>
+              </div>
+            )}
+
+            {/* In Numbers */}
+            {player.topStats && player.topStats.length > 0 && (
+              <div>
+                <h2 className="text-sm font-bebas text-primary uppercase tracking-widest mb-4 text-lg">
+                  In Numbers
+                </h2>
+                <div className="bg-secondary/30 backdrop-blur-sm p-6 rounded-lg space-y-6">
+                  {player.topStats.map((stat, index) => (
+                    <div key={index} className="space-y-2">
+                      <div className="flex items-baseline justify-between">
+                        <span className="text-sm text-muted-foreground uppercase tracking-wider">
+                          {stat.label}
+                        </span>
+                        <span className="text-4xl font-bebas text-primary">
+                          {stat.value}
+                        </span>
+                      </div>
+                      {stat.description && (
+                        <p className="text-xs text-muted-foreground/70">
+                          {stat.description}
+                        </p>
+                      )}
+                      {index < player.topStats.length - 1 && (
+                        <div className="h-px bg-border/50 mt-4" />
+                      )}
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
@@ -329,6 +360,45 @@ const PlayerDetail = () => {
             )}
 
           </div>
+
+          {/* News Section */}
+          {player.news && player.news.length > 0 && (
+            <div className="mb-16">
+              <h2 className="text-sm font-bebas text-primary uppercase tracking-widest mb-6 text-lg">
+                Latest News
+              </h2>
+              <div className="grid md:grid-cols-3 gap-6">
+                {player.news.map((article, index) => (
+                  <a
+                    key={index}
+                    href={article.link || "#"}
+                    className="group bg-secondary/30 backdrop-blur-sm rounded-lg overflow-hidden border border-border/50 hover:border-primary/50 transition-all hover:scale-[1.02]"
+                  >
+                    {article.image && (
+                      <div className="aspect-video w-full overflow-hidden">
+                        <img
+                          src={article.image}
+                          alt={article.title}
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                        />
+                      </div>
+                    )}
+                    <div className="p-6 space-y-3">
+                      <div className="text-xs text-muted-foreground uppercase tracking-wider">
+                        {article.date}
+                      </div>
+                      <h3 className="text-xl font-bebas uppercase text-foreground leading-tight group-hover:text-primary transition-colors">
+                        {article.title}
+                      </h3>
+                      <p className="text-sm text-muted-foreground leading-relaxed">
+                        {article.summary}
+                      </p>
+                    </div>
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
 
         {/* Contact Section */}
         <section className="py-16 px-4 bg-secondary/20 border-t border-primary/10 -mx-4">

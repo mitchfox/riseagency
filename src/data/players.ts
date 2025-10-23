@@ -53,6 +53,18 @@ export interface Player {
       date?: string;
     }[];
   };
+  news?: {
+    title: string;
+    date: string;
+    summary: string;
+    image?: string;
+    link?: string;
+  }[];
+  topStats?: {
+    label: string;
+    value: string | number;
+    description?: string;
+  }[];
 }
 
 export const players: Player[] = [
@@ -104,7 +116,32 @@ export const players: Player[] = [
           videoUrl: "#"
         }
       ]
-    }
+    },
+    topStats: [
+      { label: "Goals Per Game", value: "0.50", description: "12 goals in 24 matches" },
+      { label: "Shot Accuracy", value: "68%", description: "Above league average" },
+      { label: "Aerial Duels Won", value: "74%", description: "Strong in the air" }
+    ],
+    news: [
+      {
+        title: "Omotoye Scores Brace in Derby Victory",
+        date: "March 15, 2025",
+        summary: "Belgian striker Tyrese Omotoye netted two crucial goals as FC Vysocina Jihlava secured a 3-1 victory in the regional derby, taking his season tally to 12 goals.",
+        link: "#"
+      },
+      {
+        title: "Rising Star Attracts Interest from Top Leagues",
+        date: "March 8, 2025",
+        summary: "Sources indicate multiple clubs from major European leagues are monitoring the 23-year-old's impressive performances this season.",
+        link: "#"
+      },
+      {
+        title: "Omotoye Named Player of the Month",
+        date: "February 28, 2025",
+        summary: "The Belgian forward's exceptional form throughout February has earned him the league's Player of the Month award for the first time.",
+        link: "#"
+      }
+    ]
   },
   {
     id: "michael-vit-mulligan",
@@ -137,6 +174,25 @@ export const players: Player[] = [
     tacticalFormations: [
       { club: "TJ Jiskra Domazlice", formation: "4-2-3-1", matches: 26, clubLogo: tjJiskraLogo },
       { club: "Previous Club", formation: "4-3-3", matches: 15, clubLogo: "https://upload.wikimedia.org/wikipedia/en/thumb/c/cc/Chelsea_FC.svg/200px-Chelsea_FC.svg.png" }
+    ],
+    topStats: [
+      { label: "Tackles Per Game", value: "5.2", description: "League leading" },
+      { label: "Pass Completion", value: "89%", description: "Excellent distribution" },
+      { label: "Interceptions", value: "3.8", description: "Per 90 minutes" }
+    ],
+    news: [
+      {
+        title: "Mulligan's Defensive Masterclass Secures Clean Sheet",
+        date: "March 18, 2025",
+        summary: "The Czech midfielder dominated the midfield with 8 tackles and 5 interceptions in TJ Jiskra Domazlice's 2-0 victory.",
+        link: "#"
+      },
+      {
+        title: "International Call-Up on the Horizon",
+        date: "March 10, 2025",
+        summary: "Michael Vit Mulligan's consistent performances have put him in contention for a senior Czech Republic call-up ahead of upcoming qualifiers.",
+        link: "#"
+      }
     ]
   },
   {
@@ -170,6 +226,31 @@ export const players: Player[] = [
     tacticalFormations: [
       { club: "Bohemians 1905 U19", formation: "4-3-3", matches: 22, clubLogo: bohemiansLogo },
       { club: "Youth Academy", formation: "4-4-2", matches: 16, clubLogo: bohemiansLogo }
+    ],
+    topStats: [
+      { label: "Key Passes", value: "4.1", description: "Per match average" },
+      { label: "Dribble Success", value: "78%", description: "Exceptional technique" },
+      { label: "Assists", value: "9", description: "In 22 appearances" }
+    ],
+    news: [
+      {
+        title: "Youth Prodigy Shines in U19 League",
+        date: "March 20, 2025",
+        summary: "18-year-old Jaroslav Svoboda delivered a man-of-the-match performance with 2 assists and a goal in Bohemians U19's 4-1 win.",
+        link: "#"
+      },
+      {
+        title: "First Team Training with Bohemians 1905 Senior Squad",
+        date: "March 12, 2025",
+        summary: "The talented midfielder has been invited to train with the senior squad, marking a significant step in his development.",
+        link: "#"
+      },
+      {
+        title: "Svoboda: The Next Czech Midfield Sensation",
+        date: "March 5, 2025",
+        summary: "Local media spotlight the young midfielder's exceptional vision and passing ability, comparing him to Czech legends.",
+        link: "#"
+      }
     ]
   },
 ];
