@@ -275,13 +275,20 @@ const PlayerDetail = () => {
                   Scheme History
                 </h2>
                 <div className="bg-secondary/30 backdrop-blur-sm p-6 rounded-lg">
-                  {/* Formation Name on Top */}
-                  <div className="text-center mb-4">
-                    <div className="text-3xl font-bbh text-primary mb-1 transition-all duration-500">
-                      {player.tacticalFormations[currentFormationIndex].formation}
-                    </div>
-                    <div className="text-sm text-muted-foreground uppercase tracking-widest font-semibold transition-all duration-500">
-                      {player.tacticalFormations[currentFormationIndex].club}
+                  {/* Club Info with Logo */}
+                  <div className="flex items-center justify-center gap-4 mb-4">
+                    <img 
+                      src={player.tacticalFormations[currentFormationIndex].clubLogo} 
+                      alt={player.tacticalFormations[currentFormationIndex].club}
+                      className="w-16 h-16 object-contain transition-all duration-500"
+                    />
+                    <div className="text-center">
+                      <div className="text-2xl font-bebas text-foreground uppercase tracking-wider transition-all duration-500">
+                        {player.tacticalFormations[currentFormationIndex].club}
+                      </div>
+                      <div className="text-sm text-muted-foreground uppercase tracking-widest font-semibold transition-all duration-500">
+                        {player.tacticalFormations[currentFormationIndex].matches} Matches • {player.tacticalFormations[currentFormationIndex].formation}
+                      </div>
                     </div>
                   </div>
                   

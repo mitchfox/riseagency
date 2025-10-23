@@ -31,6 +31,8 @@ export interface Player {
   tacticalFormations?: {
     club: string;
     formation: string;
+    matches: number;
+    clubLogo: string;
   }[];
   videoHighlights?: {
     seasonHighlights?: string; // URL to season highlights video
@@ -71,8 +73,8 @@ export const players: Player[] = [
       "Excellent communication with defenders"
     ],
     tacticalFormations: [
-      { club: "Current Club", formation: "4-3-3" },
-      { club: "Previous Club", formation: "4-2-3-1" }
+      { club: "Current Club", formation: "4-3-3", matches: 18, clubLogo: "https://upload.wikimedia.org/wikipedia/en/thumb/7/7a/Manchester_United_FC_crest.svg/200px-Manchester_United_FC_crest.svg.png" },
+      { club: "Previous Club", formation: "4-2-3-1", matches: 24, clubLogo: "https://upload.wikimedia.org/wikipedia/en/thumb/0/0c/Liverpool_FC.svg/200px-Liverpool_FC.svg.png" }
     ],
     videoHighlights: {
       seasonHighlights: "#",
@@ -127,8 +129,8 @@ export const players: Player[] = [
       "Ability to control tempo and dictate play"
     ],
     tacticalFormations: [
-      { club: "Current Club", formation: "4-3-3" },
-      { club: "Previous Club", formation: "4-4-2" }
+      { club: "Current Club", formation: "4-3-3", matches: 24, clubLogo: "https://upload.wikimedia.org/wikipedia/en/thumb/c/cc/Chelsea_FC.svg/200px-Chelsea_FC.svg.png" },
+      { club: "Previous Club", formation: "4-4-2", matches: 19, clubLogo: "https://upload.wikimedia.org/wikipedia/en/thumb/5/53/Arsenal_FC.svg/200px-Arsenal_FC.svg.png" }
     ]
   },
   {
@@ -158,8 +160,8 @@ export const players: Player[] = [
       "Pace to run in behind defensive lines"
     ],
     tacticalFormations: [
-      { club: "Current Club", formation: "4-2-3-1" },
-      { club: "Previous Club", formation: "4-4-2" }
+      { club: "Current Club", formation: "4-2-3-1", matches: 26, clubLogo: "https://upload.wikimedia.org/wikipedia/en/thumb/7/7a/Manchester_United_FC_crest.svg/200px-Manchester_United_FC_crest.svg.png" },
+      { club: "Previous Club", formation: "4-4-2", matches: 22, clubLogo: "https://upload.wikimedia.org/wikipedia/en/thumb/0/0c/Liverpool_FC.svg/200px-Liverpool_FC.svg.png" }
     ]
   },
   {
@@ -189,8 +191,8 @@ export const players: Player[] = [
       "Natural leader with strong communication"
     ],
     tacticalFormations: [
-      { club: "Current Club", formation: "4-2-3-1" },
-      { club: "Previous Club", formation: "3-5-2" }
+      { club: "Current Club", formation: "4-2-3-1", matches: 25, clubLogo: "https://upload.wikimedia.org/wikipedia/en/thumb/c/cc/Chelsea_FC.svg/200px-Chelsea_FC.svg.png" },
+      { club: "Previous Club", formation: "3-5-2", matches: 18, clubLogo: "https://upload.wikimedia.org/wikipedia/en/thumb/5/53/Arsenal_FC.svg/200px-Arsenal_FC.svg.png" }
     ]
   },
   {
@@ -220,8 +222,8 @@ export const players: Player[] = [
       "Creative with unpredictable movements"
     ],
     tacticalFormations: [
-      { club: "Current Club", formation: "4-3-3" },
-      { club: "Previous Club", formation: "4-2-3-1" }
+      { club: "Current Club", formation: "4-3-3", matches: 23, clubLogo: "https://upload.wikimedia.org/wikipedia/en/thumb/7/7a/Manchester_United_FC_crest.svg/200px-Manchester_United_FC_crest.svg.png" },
+      { club: "Previous Club", formation: "4-2-3-1", matches: 17, clubLogo: "https://upload.wikimedia.org/wikipedia/en/thumb/0/0c/Liverpool_FC.svg/200px-Liverpool_FC.svg.png" }
     ]
   },
   {
@@ -251,8 +253,8 @@ export const players: Player[] = [
       "Capable of contributing in attack and defense"
     ],
     tacticalFormations: [
-      { club: "Current Club", formation: "4-3-3" },
-      { club: "Previous Club", formation: "4-4-2" }
+      { club: "Current Club", formation: "4-3-3", matches: 27, clubLogo: "https://upload.wikimedia.org/wikipedia/en/thumb/c/cc/Chelsea_FC.svg/200px-Chelsea_FC.svg.png" },
+      { club: "Previous Club", formation: "4-4-2", matches: 20, clubLogo: "https://upload.wikimedia.org/wikipedia/en/thumb/5/53/Arsenal_FC.svg/200px-Arsenal_FC.svg.png" }
     ]
   },
 ];
