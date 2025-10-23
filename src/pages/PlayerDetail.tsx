@@ -10,7 +10,6 @@ const PlayerDetail = () => {
   const { playername } = useParams<{ playername: string }>();
   const navigate = useNavigate();
   const [currentFormationIndex, setCurrentFormationIndex] = useState(0);
-  const [currentStrengthIndex, setCurrentStrengthIndex] = useState(0);
   
   const player = players.find((p) => p.id === playername);
 
@@ -20,18 +19,6 @@ const PlayerDetail = () => {
       const interval = setInterval(() => {
         setCurrentFormationIndex((prev) => 
           (prev + 1) % player.tacticalFormations!.length
-        );
-      }, 5000);
-      return () => clearInterval(interval);
-    }
-  }, [player]);
-
-  // Auto-rotate strengths and play style every 5 seconds
-  useEffect(() => {
-    if (player?.strengthsAndPlayStyle && player.strengthsAndPlayStyle.length > 0) {
-      const interval = setInterval(() => {
-        setCurrentStrengthIndex((prev) => 
-          (prev + 1) % player.strengthsAndPlayStyle!.length
         );
       }, 5000);
       return () => clearInterval(interval);
@@ -171,30 +158,21 @@ const PlayerDetail = () => {
               </div>
             )}
 
-            {/* Strengths & Play Style Slider */}
+            {/* Strengths & Play Style */}
             {player.strengthsAndPlayStyle && player.strengthsAndPlayStyle.length > 0 && (
               <div>
                 <h2 className="text-sm font-bebas text-primary uppercase tracking-widest mb-4 text-lg">
                   Strengths & Play Style
                 </h2>
-                <div className="bg-secondary/30 backdrop-blur-sm p-6 rounded-lg min-h-[140px] flex items-center">
-                  <p className="text-foreground/90 leading-relaxed transition-all duration-500">
-                    {player.strengthsAndPlayStyle[currentStrengthIndex]}
-                  </p>
-                </div>
-                <div className="flex justify-center gap-2 mt-4">
-                  {player.strengthsAndPlayStyle.map((_, index) => (
-                    <button
-                      key={index}
-                      onClick={() => setCurrentStrengthIndex(index)}
-                      className={`w-2 h-2 rounded-full transition-all ${
-                        index === currentStrengthIndex 
-                          ? 'bg-primary w-6' 
-                          : 'bg-primary/30'
-                      }`}
-                      aria-label={`Go to strength ${index + 1}`}
-                    />
-                  ))}
+                <div className="bg-secondary/30 backdrop-blur-sm p-6 rounded-lg">
+                  <ul className="space-y-3">
+                    {player.strengthsAndPlayStyle.map((strength, index) => (
+                      <li key={index} className="flex items-start gap-3 text-foreground/90">
+                        <span className="text-primary mt-1">•</span>
+                        <span className="leading-relaxed">{strength}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               </div>
             )}
