@@ -74,15 +74,21 @@ const PlayerDetail = () => {
                 {player.position}
               </p>
               
-              <p className="text-2xl md:text-3xl text-primary uppercase tracking-widest font-bebas font-semibold leading-none whitespace-nowrap">
-                {player.dateOfBirth}
+              <p className="text-2xl md:text-3xl text-primary uppercase tracking-widest font-bebas font-semibold leading-none whitespace-nowrap flex items-center gap-2">
+                {player.dateOfBirth} <span className="text-muted-foreground">({player.age})</span>
               </p>
               
-              <p className="text-2xl md:text-3xl text-primary uppercase tracking-widest font-bebas font-semibold leading-none whitespace-nowrap">
+              <p className="text-2xl md:text-3xl text-primary uppercase tracking-widest font-bebas font-semibold leading-none whitespace-nowrap flex items-center gap-2">
+                <span className="text-3xl">{player.nationality === 'Belgium' ? '🇧🇪' : player.nationality === 'Czech Republic' ? '🇨🇿' : '🌍'}</span>
                 {player.nationality}
               </p>
               
-              <p className="text-2xl md:text-3xl text-primary uppercase tracking-widest font-bebas font-semibold leading-none whitespace-nowrap">
+              <p className="text-2xl md:text-3xl text-primary uppercase tracking-widest font-bebas font-semibold leading-none whitespace-nowrap flex items-center gap-2">
+                <img 
+                  src={player.tacticalFormations?.[0]?.clubLogo} 
+                  alt={player.currentClub}
+                  className="w-8 h-8 object-contain"
+                />
                 {player.currentClub}
               </p>
               

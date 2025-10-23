@@ -106,7 +106,20 @@ export const FormationDisplay = ({ selectedPosition, playerName, playerImage, fo
     // Handle position matching more flexibly
     const posLabel = pos.trim().toUpperCase();
     const selectedPos = selectedPosition.trim().toUpperCase();
-    return posLabel === selectedPos;
+    
+    // For duplicate positions (LST/RST, etc.), only activate the first one
+    if ((posLabel === "LST" || posLabel === "RST") && selectedPos === "ST") {
+      return posLabel === "LST"; // Only show in left striker position
+    }
+    if ((posLabel === "LW" || posLabel === "RW") && selectedPos === "RW") {
+      return posLabel === "RW"; // Show winger in their actual position
+    }
+    if ((posLabel === "LW" || posLabel === "RW") && selectedPos === "LW") {
+      return posLabel === "LW"; // Show winger in their actual position
+    }
+    
+    return posLabel === selectedPos || 
+           (posLabel.includes(selectedPos) && posLabel.length <= selectedPos.length + 1);
   };
 
   // Get player's surname (last word in name)

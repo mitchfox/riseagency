@@ -5,11 +5,11 @@ import player4 from "@/assets/player4.jpg";
 import player5 from "@/assets/player5.jpg";
 import player6 from "@/assets/player6.jpg";
 import tyreseImage from "@/assets/tyrese-omotoye.png";
-import fcVysocinaLogo from "@/assets/clubs/fc-vysocina-jihlava.png";
+import fcVysocinaLogo from "@/assets/clubs/jihlava-logo-alt.png";
 import tjJiskraLogo from "@/assets/clubs/tj-jiskra-domazlice.png";
 import bohemiansLogo from "@/assets/clubs/bohemians-1905.png";
 import forestGreenLogo from "@/assets/clubs/forest-green-rovers.png";
-import norwichLogo from "@/assets/clubs/norwich-city.png";
+import norwichLogo from "@/assets/clubs/norwich-logo-alt.png";
 
 export interface Player {
   id: string;
