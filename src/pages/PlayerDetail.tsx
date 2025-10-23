@@ -199,16 +199,16 @@ const PlayerDetail = () => {
               </div>
             )}
 
-            {/* Tactical Formations Slider */}
+            {/* Scheme History */}
             {player.tacticalFormations && player.tacticalFormations.length > 0 && (
               <div className="lg:col-span-2">
                 <h2 className="text-sm font-bebas text-primary uppercase tracking-widest mb-4 text-lg">
-                  Tactical Formations
+                  Scheme History
                 </h2>
-                <div className="grid md:grid-cols-2 gap-6">
-                  {/* Formation Info */}
-                  <div className="bg-secondary/30 backdrop-blur-sm p-6 rounded-lg text-center min-h-[140px] flex flex-col justify-center">
-                    <div className="text-3xl font-bbh text-primary mb-2 transition-all duration-500">
+                <div className="bg-secondary/30 backdrop-blur-sm p-6 rounded-lg">
+                  {/* Formation Name on Top */}
+                  <div className="text-center mb-4">
+                    <div className="text-3xl font-bbh text-primary mb-1 transition-all duration-500">
                       {player.tacticalFormations[currentFormationIndex].formation}
                     </div>
                     <div className="text-sm text-muted-foreground uppercase tracking-widest font-semibold transition-all duration-500">
@@ -216,10 +216,8 @@ const PlayerDetail = () => {
                     </div>
                   </div>
                   
-                  {/* Formation Visual */}
-                  <div>
-                    <FormationDisplay selectedPosition={player.position} />
-                  </div>
+                  {/* Formation Visual Below */}
+                  <FormationDisplay selectedPosition={player.position} />
                 </div>
                 <div className="flex justify-center gap-2 mt-4">
                   {player.tacticalFormations.map((_, index) => (

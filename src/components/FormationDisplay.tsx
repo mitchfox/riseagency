@@ -32,23 +32,15 @@ export const FormationDisplay = ({ selectedPosition }: FormationDisplayProps) =>
 
   return (
     <div className="w-full">
-      <div className="relative w-full aspect-[2/3] bg-gradient-to-b from-green-800 via-green-700 to-green-800 rounded-lg overflow-hidden shadow-2xl border-2 border-white/20">
-        {/* Pitch markings */}
+      <div className="relative w-full aspect-[2/3] bg-background/50 rounded-lg overflow-hidden border border-border">
+        {/* Minimal pitch lines */}
         <div className="absolute inset-0">
           {/* Center circle */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 border-2 border-white/30 rounded-full" />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-2 h-2 bg-white/30 rounded-full" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 border border-border/30 rounded-full" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-1 h-1 bg-border/30 rounded-full" />
           
           {/* Halfway line */}
-          <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-white/30" />
-          
-          {/* Penalty areas */}
-          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-3/5 h-20 border-t-2 border-l-2 border-r-2 border-white/30" />
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/5 h-20 border-b-2 border-l-2 border-r-2 border-white/30" />
-          
-          {/* Goal areas */}
-          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-2/5 h-12 border-t-2 border-l-2 border-r-2 border-white/30" />
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-2/5 h-12 border-b-2 border-l-2 border-r-2 border-white/30" />
+          <div className="absolute top-1/2 left-0 right-0 h-px bg-border/30" />
         </div>
 
         {/* Position markers */}
@@ -56,22 +48,22 @@ export const FormationDisplay = ({ selectedPosition }: FormationDisplayProps) =>
           <div
             key={key}
             className={`absolute -translate-x-1/2 -translate-y-1/2 transition-all duration-300 ${
-              isPositionActive(pos.label) ? "opacity-100 scale-110" : "opacity-20 scale-75"
+              isPositionActive(pos.label) ? "opacity-100 scale-125" : "opacity-100 scale-100"
             }`}
             style={{ top: `${pos.top}%`, left: `${pos.left}%` }}
           >
             <div className="relative group">
               <X 
-                className={`w-8 h-8 ${
+                className={`transition-all duration-300 ${
                   isPositionActive(pos.label) 
-                    ? "text-[--gold] drop-shadow-[0_0_12px_rgba(212,175,55,1)] animate-pulse-glow" 
-                    : "text-white/20"
+                    ? "w-10 h-10 text-[--gold] drop-shadow-[0_0_12px_rgba(212,175,55,1)] animate-pulse-glow" 
+                    : "w-6 h-6 text-white"
                 }`}
                 strokeWidth={isPositionActive(pos.label) ? 4 : 2}
               />
               <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 whitespace-nowrap">
-                <span className={`text-xs font-bebas tracking-wider drop-shadow-lg ${
-                  isPositionActive(pos.label) ? "text-[--gold] font-bold" : "text-white/30"
+                <span className={`text-xs font-bebas tracking-wider ${
+                  isPositionActive(pos.label) ? "text-[--gold] font-bold" : "text-muted-foreground"
                 }`}>
                   {pos.label}
                 </span>
