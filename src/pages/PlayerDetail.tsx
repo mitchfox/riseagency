@@ -62,7 +62,7 @@ const PlayerDetail = () => {
             <h1 className="text-5xl md:text-6xl font-bebas uppercase text-foreground leading-none tracking-wide">
               {player.name}
             </h1>
-            <p className="text-lg text-primary uppercase tracking-widest font-semibold">
+            <p className="text-4xl md:text-5xl text-primary uppercase tracking-widest font-bebas font-semibold leading-none">
               {player.position} • Age {player.age} • {player.nationality}
             </p>
             {player.whatsapp && (
@@ -98,7 +98,7 @@ const PlayerDetail = () => {
           {/* Player Image and Bio Section - Image smaller, bio wider */}
           <div className="mb-12">
             <h2 className="text-sm font-bebas text-primary uppercase tracking-widest mb-4 text-lg">
-              About
+              BIOGRAPHY
             </h2>
             <div className="flex gap-6 items-start">
               {/* Player Image - Smaller */}
@@ -123,8 +123,8 @@ const PlayerDetail = () => {
           {/* Stats, Strengths, Scheme History Grid */}
           <div className="grid lg:grid-cols-2 gap-8 mb-12">
 
-            {/* Stats */}
-            <div>
+            {/* Stats - Full Width */}
+            <div className="lg:col-span-2">
               <h2 className="text-sm font-bebas text-primary uppercase tracking-widest mb-6 text-lg">
                 Season Stats
               </h2>
@@ -209,7 +209,7 @@ const PlayerDetail = () => {
 
             {/* Scheme History */}
             {player.tacticalFormations && player.tacticalFormations.length > 0 && (
-              <div className="lg:col-span-2">
+              <div>
                 <h2 className="text-sm font-bebas text-primary uppercase tracking-widest mb-4 text-lg">
                   Scheme History
                 </h2>
