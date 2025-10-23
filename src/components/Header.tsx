@@ -31,10 +31,11 @@ export const Header = () => {
               </button>
             </DrawerTrigger>
             <DrawerContent 
-              className="h-full w-[240px] left-0 flex flex-col rounded-r-none bg-cover bg-center"
+              className="h-full w-[240px] left-0 flex flex-col rounded-r-none bg-cover bg-center relative"
               style={{ backgroundImage: `url(${blackMarbleBg})` }}
             >
-              <div className="flex justify-end p-4">
+              <div className="absolute inset-0 bg-black/60" />
+              <div className="relative z-10 flex justify-end p-4">
                 <DrawerClose asChild>
                   <button
                     className="rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none text-white"
@@ -44,7 +45,7 @@ export const Header = () => {
                   </button>
                 </DrawerClose>
               </div>
-              <nav className="flex flex-col gap-1 px-4 flex-1">
+              <nav className="relative z-10 flex flex-col gap-1 px-4 flex-1">
                 <DrawerClose asChild>
                   <Link
                     to="/"
@@ -96,7 +97,7 @@ export const Header = () => {
               </nav>
               
               {/* Player Portal Box */}
-              <div className="px-4 pb-3">
+              <div className="relative z-10 px-4 pb-3">
                 <div className="relative overflow-hidden rounded-lg h-24">
                   <div 
                     className="absolute inset-0 bg-cover bg-top"
@@ -120,7 +121,7 @@ export const Header = () => {
               </div>
 
               {/* Working Together Box */}
-              <div className="px-4 pb-4">
+              <div className="relative z-10 px-4 pb-4">
                 <div className="relative overflow-hidden rounded-lg h-24">
                   <div 
                     className="absolute inset-0 bg-cover bg-center"
