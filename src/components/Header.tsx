@@ -82,8 +82,20 @@ export const Header = () => {
                 </DrawerClose>
               </nav>
               
-              {/* Working Together Box - Player Portal */}
-              <div className="px-4 pb-6 mt-auto">
+              {/* Player Portal Button */}
+              <div className="px-4 pb-4">
+                <DrawerClose asChild>
+                  <Button
+                    asChild
+                    className="btn-shine w-full font-bebas uppercase tracking-wider text-lg py-6"
+                  >
+                    <Link to="/login">Player Portal</Link>
+                  </Button>
+                </DrawerClose>
+              </div>
+
+              {/* Working Together Box */}
+              <div className="px-4 pb-6">
                 <div className="relative overflow-hidden rounded-lg h-40">
                   <div 
                     className="absolute inset-0 bg-cover bg-center"
@@ -99,7 +111,7 @@ export const Header = () => {
                         asChild
                         className="btn-shine w-full font-bebas uppercase tracking-wider"
                       >
-                        <Link to="/login">Get Started</Link>
+                        <Link to="/contact">Get Started</Link>
                       </Button>
                     </DrawerClose>
                   </div>
