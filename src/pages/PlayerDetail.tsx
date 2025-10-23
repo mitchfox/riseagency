@@ -60,7 +60,7 @@ const PlayerDetail = () => {
           </div>
 
           {/* Player Name, Info, and Contact - Full width with grid background */}
-          <div className="mb-4 relative">
+          <div className="mb-1 relative">
             {/* Grid Background */}
             <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]" />
             
@@ -128,11 +128,11 @@ const PlayerDetail = () => {
                     className={`w-12 h-12 rounded border-2 transition-all bg-transparent ${
                       currentVideoType === 'season'
                         ? 'border-[--gold] scale-110'
-                        : 'border-white/20 hover:border-[--gold]/50'
+                        : 'border-[--gold]/20 hover:border-[--gold]/50'
                     }`}
                     title="Season Highlights"
                   >
-                    <Video className="w-6 h-6 text-white mx-auto" />
+                    <Video className="w-6 h-6 text-[--gold] mx-auto" />
                   </button>
                   
                   {/* Match Highlights Buttons */}
@@ -143,7 +143,7 @@ const PlayerDetail = () => {
                       className={`w-12 h-12 rounded border-2 transition-all overflow-hidden bg-transparent ${
                         currentVideoType === index
                           ? 'border-[--gold] scale-110'
-                          : 'border-white/20 hover:border-[--gold]/50'
+                          : 'border-[--gold]/20 hover:border-[--gold]/50'
                       }`}
                       title={`vs ${match.opponent}`}
                     >
