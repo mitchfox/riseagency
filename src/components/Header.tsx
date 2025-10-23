@@ -14,6 +14,7 @@ import {
   DrawerTrigger,
 } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
+import { WorkWithUsDialog } from "@/components/WorkWithUsDialog";
 
 export const Header = () => {
   return (
@@ -185,13 +186,14 @@ export const Header = () => {
           </Link>
 
           {/* Work With Us Button - Right */}
-          <Button
-            asChild
-            size="lg"
-            className="btn-shine font-bebas uppercase tracking-wider text-base px-6"
-          >
-            <Link to="/contact">Work With Us</Link>
-          </Button>
+          <WorkWithUsDialog>
+            <Button
+              size="lg"
+              className="btn-shine font-bebas uppercase tracking-wider text-base px-6"
+            >
+              Work With Us
+            </Button>
+          </WorkWithUsDialog>
         </div>
       </div>
     </header>
