@@ -75,11 +75,15 @@ const PlayerDetail = () => {
               </p>
               
               <p className="text-2xl md:text-3xl text-primary uppercase tracking-widest font-bebas font-semibold leading-none whitespace-nowrap">
-                Age {player.age}
+                {player.dateOfBirth}
               </p>
               
               <p className="text-2xl md:text-3xl text-primary uppercase tracking-widest font-bebas font-semibold leading-none whitespace-nowrap">
                 {player.nationality}
+              </p>
+              
+              <p className="text-2xl md:text-3xl text-primary uppercase tracking-widest font-bebas font-semibold leading-none whitespace-nowrap">
+                {player.currentClub}
               </p>
               
               {player.whatsapp && (

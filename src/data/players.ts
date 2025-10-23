@@ -4,6 +4,7 @@ import player3 from "@/assets/player3.jpg";
 import player4 from "@/assets/player4.jpg";
 import player5 from "@/assets/player5.jpg";
 import player6 from "@/assets/player6.jpg";
+import tyreseImage from "@/assets/tyrese-omotoye.png";
 import fcVysocinaLogo from "@/assets/clubs/fc-vysocina-jihlava.png";
 import tjJiskraLogo from "@/assets/clubs/tj-jiskra-domazlice.png";
 import bohemiansLogo from "@/assets/clubs/bohemians-1905.png";
@@ -13,9 +14,11 @@ export interface Player {
   name: string;
   position: string;
   age: number;
+  dateOfBirth: string;
   nationality: string;
   number: number;
   image: string;
+  currentClub: string;
   stats: {
     matches: number;
     goals?: number;
@@ -53,10 +56,12 @@ export const players: Player[] = [
     id: "tyrese-omotoye",
     name: "Tyrese Omotoye",
     position: "ST",
-    age: 22,
+    age: 23,
+    dateOfBirth: "23/09/2002",
     nationality: "Belgium",
+    currentClub: "FC Vysocina Jihlava",
     number: 9,
-    image: player1,
+    image: tyreseImage,
     stats: {
       matches: 24,
       goals: 12,
@@ -100,7 +105,9 @@ export const players: Player[] = [
     name: "Michael Vit Mulligan",
     position: "CDM",
     age: 22,
+    dateOfBirth: "17/09/2002",
     nationality: "Czech Republic",
+    currentClub: "TJ Jiskra Domazlice",
     number: 6,
     image: player2,
     stats: {
@@ -131,7 +138,9 @@ export const players: Player[] = [
     name: "Jaroslav Svoboda",
     position: "CM",
     age: 18,
+    dateOfBirth: "15/03/2007",
     nationality: "Czech Republic",
+    currentClub: "Bohemians 1905 U19",
     number: 8,
     image: player3,
     stats: {
