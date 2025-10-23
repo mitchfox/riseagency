@@ -10,10 +10,6 @@ import playersNetwork from "@/assets/players-network.jpg";
 import clubsNetwork from "@/assets/clubs-network.jpg";
 import scoutsNetwork from "@/assets/scouts-network.jpg";
 import coachesNetwork from "@/assets/coaches-network.jpg";
-import stadiumVisit from "@/assets/gallery/stadium-visit.jpg";
-import goalCelebration from "@/assets/gallery/goal-celebration.jpg";
-import matchAction1 from "@/assets/gallery/match-action-1.jpg";
-import teamHuddle from "@/assets/gallery/team-huddle.jpg";
 
 const Index = () => {
 
@@ -274,54 +270,6 @@ const Index = () => {
                     Creating relationships with major brands and negotiating the best sponsorship opportunities
                   </p>
                 </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Player Gallery Section */}
-        <section className="py-24 px-4 bg-secondary/20">
-          <div className="container mx-auto max-w-7xl">
-            <div className="text-center mb-16">
-              <h2 className="text-5xl md:text-7xl font-bebas uppercase tracking-wider text-foreground mb-4">
-                In <span className="text-primary">Action</span>
-              </h2>
-              <p className="text-base text-muted-foreground tracking-normal max-w-2xl mx-auto">
-                Our players competing at the highest levels
-              </p>
-            </div>
-            <div className="grid md:grid-cols-2 gap-6">
-              <div className="relative overflow-hidden rounded-lg group aspect-video">
-                <img 
-                  src={matchAction1} 
-                  alt="Match action" 
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-              </div>
-              <div className="relative overflow-hidden rounded-lg group aspect-video">
-                <img 
-                  src={goalCelebration} 
-                  alt="Goal celebration" 
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-              </div>
-              <div className="relative overflow-hidden rounded-lg group aspect-video">
-                <img 
-                  src={teamHuddle} 
-                  alt="Team huddle" 
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-              </div>
-              <div className="relative overflow-hidden rounded-lg group aspect-video">
-                <img 
-                  src={stadiumVisit} 
-                  alt="Stadium visit" 
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
               </div>
             </div>
           </div>

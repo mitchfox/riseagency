@@ -3,9 +3,6 @@ import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import bannerHero from "@/assets/banner-hero.jpg";
-import stadiumVisit from "@/assets/gallery/stadium-visit.jpg";
-import teamDiscussion from "@/assets/gallery/team-discussion.jpg";
-import trainingAction from "@/assets/gallery/training-action.jpg";
 
 const About = () => {
   return (
@@ -111,58 +108,6 @@ const About = () => {
                   <p className="text-muted-foreground">
                     Holistic care covering media training, financial guidance, lifestyle management, and personal brand development.
                   </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Our Team in Action Gallery */}
-        <section className="py-16 md:py-24">
-          <div className="container mx-auto px-4">
-            <div className="max-w-5xl mx-auto">
-              <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider mb-12 text-center">
-                Our Work
-              </h2>
-              <div className="grid md:grid-cols-3 gap-6">
-                <div className="relative overflow-hidden rounded-lg group aspect-[4/5]">
-                  <img 
-                    src={stadiumVisit} 
-                    alt="Stadium visits and club meetings" 
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                  <div className="absolute bottom-0 left-0 right-0 p-4">
-                    <h3 className="text-white font-bebas text-xl uppercase tracking-wider">
-                      Stadium Visits
-                    </h3>
-                  </div>
-                </div>
-                <div className="relative overflow-hidden rounded-lg group aspect-[4/5]">
-                  <img 
-                    src={teamDiscussion} 
-                    alt="Team discussions and strategy" 
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                  <div className="absolute bottom-0 left-0 right-0 p-4">
-                    <h3 className="text-white font-bebas text-xl uppercase tracking-wider">
-                      Team Strategy
-                    </h3>
-                  </div>
-                </div>
-                <div className="relative overflow-hidden rounded-lg group aspect-[4/5]">
-                  <img 
-                    src={trainingAction} 
-                    alt="Training and development" 
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                  <div className="absolute bottom-0 left-0 right-0 p-4">
-                    <h3 className="text-white font-bebas text-xl uppercase tracking-wider">
-                      Development
-                    </h3>
-                  </div>
                 </div>
               </div>
             </div>
