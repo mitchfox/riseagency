@@ -2,12 +2,12 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { ArrowRight } from "lucide-react";
 import bannerHero from "@/assets/banner-hero.jpg";
-import workingTogether from "@/assets/working-together.jpg";
+import blackMarble from "@/assets/black-marble-bg.png";
 import celebration1 from "@/assets/gallery/celebration-1.jpg";
 import matchAction2 from "@/assets/gallery/match-action-2.jpg";
 import matchAction3 from "@/assets/gallery/match-action-3.jpg";
+import trainingAction from "@/assets/gallery/training-action.jpg";
 
 const Performance = () => {
   return (
@@ -33,134 +33,86 @@ const Performance = () => {
           </div>
         </section>
 
-        {/* ATTRACT Section */}
-        <section className="relative min-h-screen grid md:grid-cols-2">
-          <div className="relative bg-black flex items-center justify-center p-8 md:p-16">
-            <div 
-              className="absolute inset-0 bg-cover bg-center opacity-40"
-              style={{ backgroundImage: `url(${celebration1})` }}
-            />
-            <div className="relative z-10 max-w-xl">
-              <div className="absolute -right-8 top-0 text-6xl md:text-8xl font-bebas text-white/10 rotate-90 origin-top-right">
-                RISE
-              </div>
-              <h2 className="text-5xl md:text-7xl font-bebas uppercase tracking-wider text-white mb-8">
+        {/* ATTRACT Section - Text Left, Image Right */}
+        <section className="grid md:grid-cols-2">
+          <div 
+            className="relative p-12 md:p-16 flex items-center"
+            style={{ backgroundImage: `url(${blackMarble})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
+          >
+            <div className="max-w-xl">
+              <h2 className="text-5xl md:text-6xl font-bebas uppercase tracking-wider text-[--gold] mb-6">
                 Attract
               </h2>
-              <p className="text-lg md:text-xl text-white/90 mb-8 leading-relaxed">
+              <p className="text-lg md:text-xl text-white/90 leading-relaxed">
                 Through our vast scouting network, we maximise visibility across the footballing world to ensure player interest and demand.
               </p>
-              <Button 
-                asChild 
-                size="lg" 
-                className="bg-primary/90 hover:bg-primary text-black font-bebas uppercase tracking-wider group"
-              >
-                <Link to="/contact">
-                  Learn More 
-                  <ArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" />
-                </Link>
-              </Button>
             </div>
           </div>
           <div 
-            className="relative bg-cover bg-center min-h-[50vh] md:min-h-full"
+            className="relative min-h-[400px] md:min-h-[600px] bg-cover bg-center"
+            style={{ backgroundImage: `url(${celebration1})` }}
+          />
+        </section>
+
+        {/* SIGN Section - Image Left, Text Right */}
+        <section className="grid md:grid-cols-2">
+          <div 
+            className="relative min-h-[400px] md:min-h-[600px] bg-cover bg-center order-2 md:order-1"
             style={{ backgroundImage: `url(${matchAction2})` }}
           />
-        </section>
-
-        {/* SIGN Section */}
-        <section className="relative min-h-screen grid md:grid-cols-2">
           <div 
-            className="relative bg-cover bg-center min-h-[50vh] md:min-h-full order-2 md:order-1"
-            style={{ backgroundImage: `url(${matchAction3})` }}
-          />
-          <div className="relative bg-muted flex items-center justify-center p-8 md:p-16 order-1 md:order-2">
-            <div className="relative z-10 max-w-xl">
-              <div className="absolute -left-8 top-0 text-6xl md:text-8xl font-bebas text-foreground/10 -rotate-90 origin-top-left">
-                RISE
-              </div>
-              <h2 className="text-5xl md:text-7xl font-bebas uppercase tracking-wider mb-8">
+            className="relative p-12 md:p-16 flex items-center order-1 md:order-2"
+            style={{ backgroundImage: `url(${blackMarble})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
+          >
+            <div className="max-w-xl">
+              <h2 className="text-5xl md:text-6xl font-bebas uppercase tracking-wider text-[--gold] mb-6">
                 Sign
               </h2>
-              <p className="text-lg md:text-xl text-foreground/80 mb-8 leading-relaxed">
+              <p className="text-lg md:text-xl text-white/90 leading-relaxed">
                 Sign the dotted line after our team of intermediaries negotiate new and improved contracts. Retain confidence knowing your career opportunities are being created and finalised.
               </p>
-              <Button 
-                asChild 
-                size="lg" 
-                className="bg-foreground hover:bg-foreground/90 text-background font-bebas uppercase tracking-wider group"
-              >
-                <Link to="/contact">
-                  Learn More 
-                  <ArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" />
-                </Link>
-              </Button>
             </div>
           </div>
         </section>
 
-        {/* DEVELOP Section */}
-        <section className="relative min-h-screen grid md:grid-cols-2">
-          <div className="relative bg-black flex items-center justify-center p-8 md:p-16">
-            <div 
-              className="absolute inset-0 bg-cover bg-center opacity-40"
-              style={{ backgroundImage: `url(${bannerHero})` }}
-            />
-            <div className="relative z-10 max-w-xl">
-              <div className="absolute -right-8 top-0 text-6xl md:text-8xl font-bebas text-white/10 rotate-90 origin-top-right">
-                RISE
-              </div>
-              <h2 className="text-5xl md:text-7xl font-bebas uppercase tracking-wider text-white mb-8">
+        {/* DEVELOP Section - Text Left, Image Right */}
+        <section className="grid md:grid-cols-2">
+          <div 
+            className="relative p-12 md:p-16 flex items-center"
+            style={{ backgroundImage: `url(${blackMarble})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
+          >
+            <div className="max-w-xl">
+              <h2 className="text-5xl md:text-6xl font-bebas uppercase tracking-wider text-[--gold] mb-6">
                 Develop
               </h2>
-              <p className="text-lg md:text-xl text-white/90 mb-8 leading-relaxed">
+              <p className="text-lg md:text-xl text-white/90 leading-relaxed">
                 Receive expert training to maximise your physical capacity for performance. Push the limits of your body and mind to truly know how far you can go in your career.
               </p>
-              <Button 
-                asChild 
-                size="lg" 
-                className="bg-primary/90 hover:bg-primary text-black font-bebas uppercase tracking-wider group"
-              >
-                <Link to="/contact">
-                  Learn More 
-                  <ArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" />
-                </Link>
-              </Button>
             </div>
           </div>
           <div 
-            className="relative bg-cover bg-center min-h-[50vh] md:min-h-full"
-            style={{ backgroundImage: `url(${bannerHero})` }}
+            className="relative min-h-[400px] md:min-h-[600px] bg-cover bg-center"
+            style={{ backgroundImage: `url(${matchAction3})` }}
           />
         </section>
 
-        {/* PERFORM Section */}
-        <section className="relative min-h-screen grid md:grid-cols-2">
+        {/* PERFORM Section - Image Left, Text Right */}
+        <section className="grid md:grid-cols-2">
           <div 
-            className="relative bg-cover bg-center min-h-[50vh] md:min-h-full order-2 md:order-1"
-            style={{ backgroundImage: `url(${workingTogether})` }}
+            className="relative min-h-[400px] md:min-h-[600px] bg-cover bg-center order-2 md:order-1"
+            style={{ backgroundImage: `url(${trainingAction})` }}
           />
-          <div className="relative bg-muted flex items-center justify-center p-8 md:p-16 order-1 md:order-2">
-            <div className="relative z-10 max-w-xl">
-              <div className="absolute -left-8 top-0 text-6xl md:text-8xl font-bebas text-foreground/10 -rotate-90 origin-top-left">
-                RISE
-              </div>
-              <h2 className="text-5xl md:text-7xl font-bebas uppercase tracking-wider mb-8">
+          <div 
+            className="relative p-12 md:p-16 flex items-center order-1 md:order-2"
+            style={{ backgroundImage: `url(${blackMarble})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
+          >
+            <div className="max-w-xl">
+              <h2 className="text-5xl md:text-6xl font-bebas uppercase tracking-wider text-[--gold] mb-6">
                 Perform
               </h2>
-              <p className="text-lg md:text-xl text-foreground/80 mb-8 leading-relaxed">
+              <p className="text-lg md:text-xl text-white/90 leading-relaxed">
                 Play your best on a consistent basis through smart preparation, including psychological training sessions and pre-match analysis specific to your individual matchups.
               </p>
-              <Button 
-                asChild 
-                size="lg" 
-                className="bg-foreground hover:bg-foreground/90 text-background font-bebas uppercase tracking-wider group"
-              >
-                <Link to="/contact">
-                  Learn More 
-                  <ArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" />
-                </Link>
-              </Button>
             </div>
           </div>
         </section>
