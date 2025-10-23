@@ -89,10 +89,10 @@ export const Header = () => {
                 </DrawerClose>
                 <DrawerClose asChild>
                   <Link
-                    to="/agents"
+                    to="/scouts"
                     className="text-xl font-bebas uppercase text-white hover:text-primary transition-colors tracking-wider py-1.5 px-4 hover:bg-white/10 rounded"
                   >
-                    Agents
+                    Scouts
                   </Link>
                 </DrawerClose>
                 <DrawerClose asChild>

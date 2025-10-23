@@ -16,7 +16,7 @@ import Dashboard from "./pages/Dashboard";
 import About from "./pages/About";
 import Clubs from "./pages/Clubs";
 import Coaches from "./pages/Coaches";
-import Agents from "./pages/Agents";
+import Scouts from "./pages/Scouts";
 import Performance from "./pages/NewPerformance";
 import NotFound from "./pages/NotFound";
 
@@ -36,7 +36,7 @@ const App = () => (
           <Route path="/players" element={<Players />} />
           <Route path="/clubs" element={<Clubs />} />
           <Route path="/coaches" element={<Coaches />} />
-          <Route path="/agents" element={<Agents />} />
+          <Route path="/scouts" element={<Scouts />} />
           <Route path="/performance" element={<Performance />} />
           <Route path="/news" element={<News />} />
           <Route path="/contact" element={<Contact />} />

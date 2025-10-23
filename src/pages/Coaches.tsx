@@ -3,7 +3,8 @@ import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import bannerHero from "@/assets/banner-hero.jpg";
-import coachesNetwork from "@/assets/coaches-network.jpg";
+import coachesSection from "@/assets/coaches-section.png";
+import coachesSection2 from "@/assets/coaches-section-2.png";
 
 const Coaches = () => {
   return (
@@ -24,57 +25,27 @@ const Coaches = () => {
               For Coaches
             </h1>
             <p className="text-xl md:text-2xl text-white/90 max-w-3xl mx-auto">
-              Professional representation for coaching careers
+              Professional representation for coaching excellence
             </p>
           </div>
         </section>
 
-        {/* Services Section */}
-        <section className="py-16 md:py-24 px-4">
-          <div className="container mx-auto max-w-4xl">
-            <div className="space-y-12">
-              <div>
-                <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider mb-6">
-                  Career Advancement
-                </h2>
-                <p className="text-lg text-muted-foreground leading-relaxed">
-                  We help coaches navigate their career path, connecting them with opportunities that match their philosophy and ambitions. From youth development to senior positions, we facilitate the right moves.
-                </p>
-              </div>
-
-              <div>
-                <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider mb-6">
-                  Contract Negotiation
-                </h2>
-                <p className="text-lg text-muted-foreground leading-relaxed">
-                  Our team ensures coaches receive fair compensation and beneficial terms. We handle negotiations professionally, allowing you to focus on what you do best - coaching.
-                </p>
-              </div>
-
-              <div>
-                <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider mb-6">
-                  Network Access
-                </h2>
-                <p className="text-lg text-muted-foreground leading-relaxed">
-                  Gain access to our extensive network of clubs, sporting directors, and industry professionals. We open doors to opportunities across multiple leagues and countries.
-                </p>
-              </div>
-            </div>
-          </div>
+        {/* Coaches Section 1 - RESULTS & FOSTER */}
+        <section className="relative">
+          <img 
+            src={coachesSection} 
+            alt="Results and Foster for Coaches" 
+            className="w-full h-auto"
+          />
         </section>
 
-        {/* Image Section */}
-        <section className="py-16 px-4">
-          <div className="container mx-auto max-w-6xl">
-            <div className="relative h-[400px] rounded-lg overflow-hidden">
-              <img 
-                src={coachesNetwork} 
-                alt="Coaching network" 
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-            </div>
-          </div>
+        {/* Coaches Section 2 - ALLURE & PROGRESS */}
+        <section className="relative">
+          <img 
+            src={coachesSection2} 
+            alt="Allure and Progress for Coaches" 
+            className="w-full h-auto"
+          />
         </section>
 
         {/* CTA Section */}

@@ -47,8 +47,8 @@ export const Footer = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/agents" className="text-muted-foreground hover:text-primary transition-colors">
-                  Agents
+                <Link to="/scouts" className="text-muted-foreground hover:text-primary transition-colors">
+                  Scouts
                 </Link>
               </li>
               <li>

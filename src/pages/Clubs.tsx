@@ -3,7 +3,8 @@ import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import bannerHero from "@/assets/banner-hero.jpg";
-import clubsNetwork from "@/assets/clubs-network.jpg";
+import clubsSection from "@/assets/clubs-section.png";
+import clubsSection2 from "@/assets/clubs-section-2.png";
 
 const Clubs = () => {
   return (
@@ -24,57 +25,27 @@ const Clubs = () => {
               For Clubs
             </h1>
             <p className="text-xl md:text-2xl text-white/90 max-w-3xl mx-auto">
-              Access elite talent through our extensive network
+              Strategic partnerships for competitive advantage
             </p>
           </div>
         </section>
 
-        {/* Services Section */}
-        <section className="py-16 md:py-24 px-4">
-          <div className="container mx-auto max-w-4xl">
-            <div className="space-y-12">
-              <div>
-                <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider mb-6">
-                  Player Recruitment
-                </h2>
-                <p className="text-lg text-muted-foreground leading-relaxed">
-                  We connect clubs with exceptional talent that matches their specific needs. Our comprehensive scouting network and detailed player analysis ensure you find the right fit for your squad.
-                </p>
-              </div>
-
-              <div>
-                <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider mb-6">
-                  Negotiation & Transfers
-                </h2>
-                <p className="text-lg text-muted-foreground leading-relaxed">
-                  Our experienced team handles all aspects of transfer negotiations, ensuring smooth transactions that benefit all parties involved. We facilitate deals with transparency and professionalism.
-                </p>
-              </div>
-
-              <div>
-                <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider mb-6">
-                  Long-Term Partnerships
-                </h2>
-                <p className="text-lg text-muted-foreground leading-relaxed">
-                  We believe in building lasting relationships with clubs, providing ongoing support and access to our talent pool as your needs evolve.
-                </p>
-              </div>
-            </div>
-          </div>
+        {/* Clubs Section 1 - STRATEGISE & RECRUIT */}
+        <section className="relative">
+          <img 
+            src={clubsSection} 
+            alt="Strategise and Recruit for Clubs" 
+            className="w-full h-auto"
+          />
         </section>
 
-        {/* Image Section */}
-        <section className="py-16 px-4">
-          <div className="container mx-auto max-w-6xl">
-            <div className="relative h-[400px] rounded-lg overflow-hidden">
-              <img 
-                src={clubsNetwork} 
-                alt="Club partnerships" 
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-            </div>
-          </div>
+        {/* Clubs Section 2 - OPTIMISE */}
+        <section className="relative">
+          <img 
+            src={clubsSection2} 
+            alt="Optimise Club Performance" 
+            className="w-full h-auto"
+          />
         </section>
 
         {/* CTA Section */}
