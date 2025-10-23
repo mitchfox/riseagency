@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { FaInstagram, FaTwitter, FaLinkedin } from "react-icons/fa";
+import { FaInstagram, FaTwitter, FaLinkedin, FaYoutube } from "react-icons/fa";
 import logo from "@/assets/logo.png";
 
 export const Footer = () => {
@@ -85,7 +85,15 @@ export const Footer = () => {
                   href="mailto:jolon.levene@risefootballagency.com"
                   className="text-muted-foreground hover:text-primary transition-colors"
                 >
-                  Email Us
+                  General Enquiries
+                </a>
+              </li>
+              <li>
+                <a 
+                  href="mailto:kuda.butawo@risefootballagency.com"
+                  className="text-muted-foreground hover:text-primary transition-colors"
+                >
+                  Media & Sponsors
                 </a>
               </li>
               <li>
@@ -134,6 +142,15 @@ export const Footer = () => {
               >
                 <FaLinkedin className="w-6 h-6" />
               </a>
+              <a
+                href="https://www.youtube.com/@RISEFootball"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-muted-foreground hover:text-primary transition-colors"
+                aria-label="YouTube"
+              >
+                <FaYoutube className="w-6 h-6" />
+              </a>
             </div>
           </div>
         </div>
@@ -145,6 +162,14 @@ export const Footer = () => {
               © {new Date().getFullYear()} RISE Football Agency. All rights reserved.
             </p>
             <div className="flex gap-6 text-sm">
+              <a 
+                href="https://www.youtube.com/@RISEFootball" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-muted-foreground hover:text-primary transition-colors"
+              >
+                RISE Podcast
+              </a>
               <Link to="/privacy" className="text-muted-foreground hover:text-primary transition-colors">
                 Privacy Policy
               </Link>
