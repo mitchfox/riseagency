@@ -11,6 +11,7 @@ const PlayerDetail = () => {
   const { playername } = useParams<{ playername: string }>();
   const navigate = useNavigate();
   const [currentFormationIndex, setCurrentFormationIndex] = useState(0);
+  const [currentVideoType, setCurrentVideoType] = useState<'season' | number>('season'); // 'season' or match index
   
   const player = players.find((p) => p.id === playername);
 
@@ -103,15 +104,58 @@ const PlayerDetail = () => {
             </div>
           </div>
 
-          {/* Highlights Video - Full Width 16:9 */}
+          {/* Highlights Video - Full Width 16:9 with Club Logo Overlays */}
           <div className="mb-8">
-            <div className="relative aspect-video bg-secondary/30 rounded-lg overflow-hidden group hover:shadow-lg transition-all">
+            <div className="relative aspect-video bg-secondary/30 rounded-lg overflow-hidden group">
               <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
                 <Video className="w-16 h-16 text-primary" />
                 <p className="text-foreground/60 font-bebas text-xl uppercase tracking-wider">
-                  Season Highlights
+                  {currentVideoType === 'season' ? 'Season Highlights' : `Match Highlights`}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {currentVideoType !== 'season' && player.videoHighlights?.matchHighlights?.[currentVideoType]
+                    ? `vs ${player.videoHighlights.matchHighlights[currentVideoType].opponent}`
+                    : 'Coming Soon'}
                 </p>
               </div>
+              
+              {/* Club Logo Overlays - Bottom */}
+              {player.videoHighlights?.matchHighlights && player.videoHighlights.matchHighlights.length > 0 && (
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-10">
+                  {/* Season Highlights Button */}
+                  <button
+                    onClick={() => setCurrentVideoType('season')}
+                    className={`w-12 h-12 rounded border-2 transition-all ${
+                      currentVideoType === 'season'
+                        ? 'border-[--gold] bg-[--gold]/20 scale-110'
+                        : 'border-white/30 bg-black/40 hover:border-[--gold]/50'
+                    }`}
+                    title="Season Highlights"
+                  >
+                    <Video className="w-6 h-6 text-white mx-auto" />
+                  </button>
+                  
+                  {/* Match Highlights Buttons */}
+                  {player.videoHighlights.matchHighlights.map((match, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setCurrentVideoType(index)}
+                      className={`w-12 h-12 rounded border-2 transition-all overflow-hidden ${
+                        currentVideoType === index
+                          ? 'border-[--gold] scale-110 ring-2 ring-[--gold]/50'
+                          : 'border-white/30 hover:border-[--gold]/50'
+                      }`}
+                      title={`vs ${match.opponent}`}
+                    >
+                      <img 
+                        src={match.clubLogo} 
+                        alt={match.opponent}
+                        className="w-full h-full object-cover bg-white/90"
+                      />
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 

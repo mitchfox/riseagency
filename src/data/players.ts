@@ -32,6 +32,15 @@ export interface Player {
     club: string;
     formation: string;
   }[];
+  videoHighlights?: {
+    seasonHighlights?: string; // URL to season highlights video
+    matchHighlights?: {
+      opponent: string;
+      clubLogo: string;
+      videoUrl: string;
+      date?: string;
+    }[];
+  };
 }
 
 export const players: Player[] = [
@@ -64,7 +73,32 @@ export const players: Player[] = [
     tacticalFormations: [
       { club: "Current Club", formation: "4-3-3" },
       { club: "Previous Club", formation: "4-2-3-1" }
-    ]
+    ],
+    videoHighlights: {
+      seasonHighlights: "#",
+      matchHighlights: [
+        {
+          opponent: "Manchester United",
+          clubLogo: "https://upload.wikimedia.org/wikipedia/en/thumb/7/7a/Manchester_United_FC_crest.svg/200px-Manchester_United_FC_crest.svg.png",
+          videoUrl: "#"
+        },
+        {
+          opponent: "Liverpool",
+          clubLogo: "https://upload.wikimedia.org/wikipedia/en/thumb/0/0c/Liverpool_FC.svg/200px-Liverpool_FC.svg.png",
+          videoUrl: "#"
+        },
+        {
+          opponent: "Chelsea",
+          clubLogo: "https://upload.wikimedia.org/wikipedia/en/thumb/c/cc/Chelsea_FC.svg/200px-Chelsea_FC.svg.png",
+          videoUrl: "#"
+        },
+        {
+          opponent: "Arsenal",
+          clubLogo: "https://upload.wikimedia.org/wikipedia/en/thumb/5/53/Arsenal_FC.svg/200px-Arsenal_FC.svg.png",
+          videoUrl: "#"
+        }
+      ]
+    }
   },
   {
     id: "alex-rodriguez",
