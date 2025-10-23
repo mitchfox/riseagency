@@ -5,6 +5,9 @@ import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import bannerHero from "@/assets/banner-hero.jpg";
 import workingTogether from "@/assets/working-together.jpg";
+import celebration1 from "@/assets/gallery/celebration-1.jpg";
+import matchAction2 from "@/assets/gallery/match-action-2.jpg";
+import matchAction3 from "@/assets/gallery/match-action-3.jpg";
 
 const Performance = () => {
   return (
@@ -35,7 +38,7 @@ const Performance = () => {
           <div className="relative bg-black flex items-center justify-center p-8 md:p-16">
             <div 
               className="absolute inset-0 bg-cover bg-center opacity-40"
-              style={{ backgroundImage: `url(${bannerHero})` }}
+              style={{ backgroundImage: `url(${celebration1})` }}
             />
             <div className="relative z-10 max-w-xl">
               <div className="absolute -right-8 top-0 text-6xl md:text-8xl font-bebas text-white/10 rotate-90 origin-top-right">
@@ -61,7 +64,7 @@ const Performance = () => {
           </div>
           <div 
             className="relative bg-cover bg-center min-h-[50vh] md:min-h-full"
-            style={{ backgroundImage: `url(${bannerHero})` }}
+            style={{ backgroundImage: `url(${matchAction2})` }}
           />
         </section>
 
@@ -69,7 +72,7 @@ const Performance = () => {
         <section className="relative min-h-screen grid md:grid-cols-2">
           <div 
             className="relative bg-cover bg-center min-h-[50vh] md:min-h-full order-2 md:order-1"
-            style={{ backgroundImage: `url(${workingTogether})` }}
+            style={{ backgroundImage: `url(${matchAction3})` }}
           />
           <div className="relative bg-muted flex items-center justify-center p-8 md:p-16 order-1 md:order-2">
             <div className="relative z-10 max-w-xl">

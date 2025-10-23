@@ -5,6 +5,7 @@ import player4 from "@/assets/player4.jpg";
 import player5 from "@/assets/player5.jpg";
 import player6 from "@/assets/player6.jpg";
 import tyreseImage from "@/assets/tyrese-omotoye.png";
+import michaelImage from "@/assets/michael-mulligan.png";
 import fcVysocinaLogo from "@/assets/clubs/jihlava-logo-alt.png";
 import tjJiskraLogo from "@/assets/clubs/tj-jiskra-domazlice.png";
 import bohemiansLogo from "@/assets/clubs/bohemians-1905.png";
@@ -113,7 +114,7 @@ export const players: Player[] = [
     nationality: "Czech Republic",
     currentClub: "TJ Jiskra Domazlice",
     number: 6,
-    image: player2,
+    image: michaelImage,
     stats: {
       matches: 26,
       goals: 2,
