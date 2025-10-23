@@ -28,7 +28,7 @@ export const FormationDisplay = ({ selectedPosition }: FormationDisplayProps) =>
   };
 
   return (
-    <div className="w-full max-w-2xl mx-auto my-8">
+    <div className="w-full">
       <div className="relative w-full aspect-[2/3] bg-gradient-to-b from-green-800 via-green-700 to-green-800 rounded-lg overflow-hidden shadow-2xl border-2 border-white/20">
         {/* Pitch markings */}
         <div className="absolute inset-0">
@@ -75,10 +75,6 @@ export const FormationDisplay = ({ selectedPosition }: FormationDisplayProps) =>
           </div>
         ))}
       </div>
-      
-      <p className="text-center mt-4 text-sm text-muted-foreground font-bebas uppercase tracking-wider">
-        Formation Display
-      </p>
     </div>
   );
 };

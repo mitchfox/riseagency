@@ -4,6 +4,7 @@ import { players } from "@/data/players";
 import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, MessageCircle, ExternalLink, Video } from "lucide-react";
+import { FormationDisplay } from "@/components/FormationDisplay";
 
 const PlayerDetail = () => {
   const { playername } = useParams<{ playername: string }>();
@@ -200,16 +201,24 @@ const PlayerDetail = () => {
 
             {/* Tactical Formations Slider */}
             {player.tacticalFormations && player.tacticalFormations.length > 0 && (
-              <div>
+              <div className="lg:col-span-2">
                 <h2 className="text-sm font-bebas text-primary uppercase tracking-widest mb-4 text-lg">
                   Tactical Formations
                 </h2>
-                <div className="bg-secondary/30 backdrop-blur-sm p-6 rounded-lg text-center min-h-[140px] flex flex-col justify-center">
-                  <div className="text-3xl font-bbh text-primary mb-2 transition-all duration-500">
-                    {player.tacticalFormations[currentFormationIndex].formation}
+                <div className="grid md:grid-cols-2 gap-6">
+                  {/* Formation Info */}
+                  <div className="bg-secondary/30 backdrop-blur-sm p-6 rounded-lg text-center min-h-[140px] flex flex-col justify-center">
+                    <div className="text-3xl font-bbh text-primary mb-2 transition-all duration-500">
+                      {player.tacticalFormations[currentFormationIndex].formation}
+                    </div>
+                    <div className="text-sm text-muted-foreground uppercase tracking-widest font-semibold transition-all duration-500">
+                      {player.tacticalFormations[currentFormationIndex].club}
+                    </div>
                   </div>
-                  <div className="text-sm text-muted-foreground uppercase tracking-widest font-semibold transition-all duration-500">
-                    {player.tacticalFormations[currentFormationIndex].club}
+                  
+                  {/* Formation Visual */}
+                  <div>
+                    <FormationDisplay selectedPosition={player.position} />
                   </div>
                 </div>
                 <div className="flex justify-center gap-2 mt-4">
