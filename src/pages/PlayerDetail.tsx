@@ -59,29 +59,26 @@ const PlayerDetail = () => {
             </Button>
           </div>
 
-          {/* Player Name, Info, and Contact - Full width with grid background */}
+          {/* Player Name, Info, and Contact - Full width */}
           <div className="mb-1 relative border-2 border-[hsl(var(--gold))] bg-secondary/20 backdrop-blur-sm rounded-lg overflow-hidden">
-            {/* Grid Background */}
-            <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]" />
-            
-            <div className="relative flex flex-wrap items-center justify-between gap-4 lg:gap-6 p-6">
+            <div className="relative flex flex-nowrap items-center justify-between gap-3 lg:gap-4 p-4">
               {/* Player Name with Golden Gloss */}
               <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-[--gold]/20 via-[--gold]/10 to-transparent blur-xl" />
-                <h1 className="relative text-5xl md:text-6xl font-bebas uppercase text-foreground leading-none tracking-wide">
+                <div className="absolute inset-0 bg-gradient-to-r from-[hsl(var(--gold))]/20 via-[hsl(var(--gold))]/10 to-transparent blur-xl" />
+                <h1 className="relative text-2xl md:text-3xl font-bebas uppercase text-foreground leading-none tracking-wide whitespace-nowrap">
                   {player.name}
                 </h1>
               </div>
               
-              <p className="text-4xl md:text-5xl text-primary uppercase tracking-widest font-bebas font-semibold leading-none">
+              <p className="text-2xl md:text-3xl text-primary uppercase tracking-widest font-bebas font-semibold leading-none whitespace-nowrap">
                 {player.position}
               </p>
               
-              <p className="text-4xl md:text-5xl text-primary uppercase tracking-widest font-bebas font-semibold leading-none">
+              <p className="text-2xl md:text-3xl text-primary uppercase tracking-widest font-bebas font-semibold leading-none whitespace-nowrap">
                 Age {player.age}
               </p>
               
-              <p className="text-4xl md:text-5xl text-primary uppercase tracking-widest font-bebas font-semibold leading-none">
+              <p className="text-2xl md:text-3xl text-primary uppercase tracking-widest font-bebas font-semibold leading-none whitespace-nowrap">
                 {player.nationality}
               </p>
               
