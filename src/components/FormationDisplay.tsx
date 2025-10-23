@@ -60,9 +60,9 @@ export const FormationDisplay = ({ selectedPosition, playerName, playerImage }: 
             style={{ top: `${pos.top}%`, left: `${pos.left}%` }}
           >
             <div className="relative group">
-              {/* Surname above for active position */}
+              {/* Surname above for active position - closer to image */}
               {isPositionActive(pos.label) && playerName && (
-                <div className="absolute -top-12 left-1/2 -translate-x-1/2 whitespace-nowrap">
+                <div className="absolute -top-6 left-1/2 -translate-x-1/2 whitespace-nowrap">
                   <span className="text-sm font-bebas tracking-wider text-[--gold] font-bold">
                     {getSurname()}
                   </span>

@@ -43,9 +43,9 @@ const PlayerDetail = () => {
     <>
       <Header />
       <div className="min-h-screen bg-background pt-16">
-        <main className="container mx-auto px-4 py-8">
+        <main className="container mx-auto px-4 py-4">
           {/* Back Button */}
-          <div className="mb-6">
+          <div className="mb-4">
             <Button
               onClick={() => navigate("/players")}
               variant="outline"
@@ -58,7 +58,7 @@ const PlayerDetail = () => {
           </div>
 
           {/* Player Name, Info, and Contact - Full width with grid background */}
-          <div className="mb-8 relative">
+          <div className="mb-4 relative">
             {/* Grid Background */}
             <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]" />
             
@@ -103,7 +103,7 @@ const PlayerDetail = () => {
           </div>
 
           {/* Highlights Video - Full Width 16:9 */}
-          <div className="mb-12">
+          <div className="mb-8">
             <div className="relative aspect-video bg-secondary/30 rounded-lg overflow-hidden group hover:shadow-lg transition-all">
               <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
                 <Video className="w-16 h-16 text-primary" />
