@@ -53,6 +53,34 @@ export const FormationDisplay = ({ selectedPosition, playerName, playerImage, fo
           LST: { top: 15, left: 38, label: "ST" },
           RST: { top: 15, left: 62, label: "ST" },
         };
+      case "3-4-1-2":
+        return {
+          GK: { top: 90, left: 50, label: "GK" },
+          LCB: { top: 70, left: 25, label: "CB" },
+          CB: { top: 70, left: 50, label: "CB" },
+          RCB: { top: 70, left: 75, label: "CB" },
+          LM: { top: 50, left: 15, label: "LM" },
+          LCM: { top: 50, left: 38, label: "CM" },
+          RCM: { top: 50, left: 62, label: "CM" },
+          RM: { top: 50, left: 85, label: "RM" },
+          CAM: { top: 30, left: 50, label: "CAM" },
+          LST: { top: 15, left: 38, label: "ST" },
+          RST: { top: 15, left: 62, label: "ST" },
+        };
+      case "4-2-2-2":
+        return {
+          GK: { top: 90, left: 50, label: "GK" },
+          LB: { top: 70, left: 15, label: "LB" },
+          LCB: { top: 70, left: 38, label: "CB" },
+          RCB: { top: 70, left: 62, label: "CB" },
+          RB: { top: 70, left: 85, label: "RB" },
+          LDM: { top: 55, left: 35, label: "DM" },
+          RDM: { top: 55, left: 65, label: "DM" },
+          LAM: { top: 35, left: 35, label: "AM" },
+          RAM: { top: 35, left: 65, label: "AM" },
+          LST: { top: 15, left: 38, label: "ST" },
+          RST: { top: 15, left: 62, label: "ST" },
+        };
       case "4-3-3":
       default:
         return {

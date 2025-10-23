@@ -8,6 +8,8 @@ import tyreseImage from "@/assets/tyrese-omotoye.png";
 import fcVysocinaLogo from "@/assets/clubs/fc-vysocina-jihlava.png";
 import tjJiskraLogo from "@/assets/clubs/tj-jiskra-domazlice.png";
 import bohemiansLogo from "@/assets/clubs/bohemians-1905.png";
+import forestGreenLogo from "@/assets/clubs/forest-green-rovers.png";
+import norwichLogo from "@/assets/clubs/norwich-city.png";
 
 export interface Player {
   id: string;
@@ -82,7 +84,9 @@ export const players: Player[] = [
     ],
     tacticalFormations: [
       { club: "FC Vysocina Jihlava", formation: "4-2-3-1", matches: 24, clubLogo: fcVysocinaLogo },
-      { club: "Forest Green Rovers", formation: "4-3-3", matches: 18, clubLogo: "https://upload.wikimedia.org/wikipedia/en/thumb/5/53/Arsenal_FC.svg/200px-Arsenal_FC.svg.png" }
+      { club: "Forest Green Rovers", formation: "3-4-1-2", matches: 18, clubLogo: forestGreenLogo },
+      { club: "Forest Green Rovers", formation: "4-2-2-2", matches: 15, clubLogo: forestGreenLogo },
+      { club: "Norwich City", formation: "4-3-3", matches: 12, clubLogo: norwichLogo }
     ],
     videoHighlights: {
       seasonHighlights: "#",
