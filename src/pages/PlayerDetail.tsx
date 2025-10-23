@@ -5,6 +5,7 @@ import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, MessageCircle, ExternalLink, Video } from "lucide-react";
 import { FormationDisplay } from "@/components/FormationDisplay";
+import { getCountryFlag } from "@/lib/countryFlags";
 import blackMarbleBg from "@/assets/black-marble-menu.png";
 
 const PlayerDetail = () => {
@@ -79,7 +80,7 @@ const PlayerDetail = () => {
               </p>
               
               <p className="text-2xl md:text-3xl text-primary uppercase tracking-widest font-bebas font-semibold leading-none whitespace-nowrap flex items-center gap-2">
-                <span className="text-3xl">{player.nationality === 'Belgium' ? '🇧🇪' : player.nationality === 'Czech Republic' ? '🇨🇿' : '🌍'}</span>
+                <span className="text-4xl" title={player.nationality}>{getCountryFlag(player.nationality)}</span>
                 {player.nationality}
               </p>
               
