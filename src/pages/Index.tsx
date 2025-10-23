@@ -3,7 +3,7 @@ import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { WorkWithUsDialog } from "@/components/WorkWithUsDialog";
-import bannerHero from "@/assets/banner-hero-new.jpg";
+import bannerHero from "@/assets/banner-hero-team.jpg";
 import marbleBg from "@/assets/marble-bg.png";
 import riseStarIcon from "@/assets/rise-star-icon.png";
 import marbleTexture from "@/assets/marble-texture.png";
