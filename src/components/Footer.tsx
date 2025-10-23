@@ -27,8 +27,33 @@ export const Footer = () => {
                 </Link>
               </li>
               <li>
+                <Link to="/stars" className="text-muted-foreground hover:text-primary transition-colors">
+                  Stars
+                </Link>
+              </li>
+              <li>
                 <Link to="/players" className="text-muted-foreground hover:text-primary transition-colors">
                   Players
+                </Link>
+              </li>
+              <li>
+                <Link to="/clubs" className="text-muted-foreground hover:text-primary transition-colors">
+                  Clubs
+                </Link>
+              </li>
+              <li>
+                <Link to="/coaches" className="text-muted-foreground hover:text-primary transition-colors">
+                  Coaches
+                </Link>
+              </li>
+              <li>
+                <Link to="/agents" className="text-muted-foreground hover:text-primary transition-colors">
+                  Agents
+                </Link>
+              </li>
+              <li>
+                <Link to="/performance" className="text-muted-foreground hover:text-primary transition-colors">
+                  Performance
                 </Link>
               </li>
               <li>

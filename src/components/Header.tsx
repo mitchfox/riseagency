@@ -57,6 +57,14 @@ export const Header = () => {
                 </DrawerClose>
                 <DrawerClose asChild>
                   <Link
+                    to="/stars"
+                    className="text-xl font-bebas uppercase text-white hover:text-primary transition-colors tracking-wider py-1.5 px-4 hover:bg-white/10 rounded"
+                  >
+                    Stars
+                  </Link>
+                </DrawerClose>
+                <DrawerClose asChild>
+                  <Link
                     to="/players"
                     className="text-xl font-bebas uppercase text-white hover:text-primary transition-colors tracking-wider py-1.5 px-4 hover:bg-white/10 rounded"
                   >
@@ -65,10 +73,26 @@ export const Header = () => {
                 </DrawerClose>
                 <DrawerClose asChild>
                   <Link
-                    to="/about"
+                    to="/clubs"
                     className="text-xl font-bebas uppercase text-white hover:text-primary transition-colors tracking-wider py-1.5 px-4 hover:bg-white/10 rounded"
                   >
-                    About
+                    Clubs
+                  </Link>
+                </DrawerClose>
+                <DrawerClose asChild>
+                  <Link
+                    to="/coaches"
+                    className="text-xl font-bebas uppercase text-white hover:text-primary transition-colors tracking-wider py-1.5 px-4 hover:bg-white/10 rounded"
+                  >
+                    Coaches
+                  </Link>
+                </DrawerClose>
+                <DrawerClose asChild>
+                  <Link
+                    to="/agents"
+                    className="text-xl font-bebas uppercase text-white hover:text-primary transition-colors tracking-wider py-1.5 px-4 hover:bg-white/10 rounded"
+                  >
+                    Agents
                   </Link>
                 </DrawerClose>
                 <DrawerClose asChild>
@@ -77,6 +101,14 @@ export const Header = () => {
                     className="text-xl font-bebas uppercase text-white hover:text-primary transition-colors tracking-wider py-1.5 px-4 hover:bg-white/10 rounded"
                   >
                     Performance
+                  </Link>
+                </DrawerClose>
+                <DrawerClose asChild>
+                  <Link
+                    to="/about"
+                    className="text-xl font-bebas uppercase text-white hover:text-primary transition-colors tracking-wider py-1.5 px-4 hover:bg-white/10 rounded"
+                  >
+                    About
                   </Link>
                 </DrawerClose>
                 <DrawerClose asChild>

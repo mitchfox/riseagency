@@ -31,12 +31,12 @@ const Index = () => {
                   REALISE POTENTIAL • REALISE POTENTIAL • REALISE POTENTIAL • REALISE POTENTIAL • REALISE POTENTIAL • REALISE POTENTIAL • REALISE POTENTIAL • REALISE POTENTIAL •
                 </h1>
               </div>
-              <Link to="/players">
+              <Link to="/stars">
                 <Button 
                   size="lg" 
                   className="btn-shine text-lg font-bebas uppercase tracking-widest px-8 py-5 hover:scale-105 transition-transform bg-primary hover:bg-primary/90"
                 >
-                  View Players
+                  View Stars
                 </Button>
               </Link>
             </div>

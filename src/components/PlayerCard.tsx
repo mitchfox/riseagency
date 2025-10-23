@@ -34,7 +34,7 @@ export const PlayerCard = ({ player, viewMode = "grid" }: PlayerCardProps) => {
     return (
       <Link
         ref={cardRef}
-        to={`/players/${player.id}`}
+        to={`/stars/${player.id}`}
         className="group relative flex items-center gap-8 p-8 overflow-hidden transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
       >
         {/* Hover and focus glow effect - desktop only */}
@@ -77,7 +77,7 @@ export const PlayerCard = ({ player, viewMode = "grid" }: PlayerCardProps) => {
   return (
     <Link
       ref={cardRef}
-      to={`/players/${player.id}`}
+      to={`/stars/${player.id}`}
       className="group relative block overflow-hidden transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
     >
       {/* Hover and focus glow effect - desktop only */}
