@@ -43,6 +43,20 @@ const Index = () => {
           </div>
         </section>
 
+        {/* Agency Overview Section */}
+        <section className="py-20 px-4 bg-background">
+          <div className="container mx-auto max-w-4xl">
+            <div className="text-center space-y-6">
+              <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-foreground">
+                Performance-First Agency
+              </h2>
+              <p className="text-lg md:text-xl text-muted-foreground leading-relaxed">
+                RISE Football is the performance-first agency, ensuring our players, coaches and clubs develop optimally on the pitch, as well as off. To reach their potential, we provide our clients with an extensive training, analysis and recovery protocol while utilising our network to put them in a position to succeed.
+              </p>
+            </div>
+          </div>
+        </section>
+
         {/* Inbound CTA Section - Moved to top */}
         <section className="py-24 px-4 bg-secondary/30">
           <div className="container mx-auto max-w-6xl">
