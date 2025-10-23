@@ -2,6 +2,7 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { WorkWithUsDialog } from "@/components/WorkWithUsDialog";
 import bannerHero from "@/assets/banner-hero-new.jpg";
 import marbleBg from "@/assets/marble-bg.png";
 import riseStarIcon from "@/assets/rise-star-icon.png";
@@ -10,6 +11,27 @@ import playersNetwork from "@/assets/players-network.jpg";
 import clubsNetwork from "@/assets/clubs-network.jpg";
 import scoutsNetwork from "@/assets/scouts-network.jpg";
 import coachesNetwork from "@/assets/coaches-network.jpg";
+
+const newsArticles = [
+  {
+    title: "Omotoye Scores Brace in Derby Victory",
+    date: "March 15, 2025",
+    excerpt: "Belgian striker shines with two crucial goals in regional derby, extending his impressive season form.",
+    link: "/players/tyrese-omotoye"
+  },
+  {
+    title: "Mulligan Earns International Call-Up",
+    date: "March 10, 2025",
+    excerpt: "Czech midfielder's consistent performances earn recognition at senior national team level.",
+    link: "/players/michael-vit-mulligan"
+  },
+  {
+    title: "Young Talent Svoboda Joins Senior Training",
+    date: "March 5, 2025",
+    excerpt: "18-year-old prospect invited to train with Bohemians 1905 first team, marking significant career step.",
+    link: "/players/jaroslav-svoboda"
+  }
+];
 
 const Index = () => {
 
@@ -53,6 +75,44 @@ const Index = () => {
               <p className="text-lg md:text-xl text-muted-foreground leading-relaxed">
                 RISE Football is the performance-first agency, ensuring our players, coaches and clubs develop optimally on the pitch, as well as off. To reach their potential, we provide our clients with an extensive training, analysis and recovery protocol while utilising our network to put them in a position to succeed.
               </p>
+            </div>
+          </div>
+        </section>
+
+        {/* News Section */}
+        <section className="py-20 px-4">
+          <div className="container mx-auto max-w-6xl">
+            <div className="text-center mb-12">
+              <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-foreground mb-4">
+                Latest <span className="text-primary">News</span>
+              </h2>
+              <p className="text-lg text-muted-foreground">
+                Stay updated with our players' achievements and agency news
+              </p>
+            </div>
+            <div className="grid md:grid-cols-3 gap-8">
+              {newsArticles.map((article, index) => (
+                <Link
+                  key={index}
+                  to={article.link}
+                  className="group bg-secondary/30 backdrop-blur-sm rounded-lg overflow-hidden border border-border/50 hover:border-primary/50 transition-all hover:scale-[1.02]"
+                >
+                  <div className="p-6 space-y-3">
+                    <div className="text-xs text-primary uppercase tracking-wider font-bebas">
+                      {article.date}
+                    </div>
+                    <h3 className="text-2xl font-bebas uppercase text-foreground leading-tight group-hover:text-primary transition-colors">
+                      {article.title}
+                    </h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      {article.excerpt}
+                    </p>
+                    <div className="text-sm text-primary font-bebas uppercase tracking-wider">
+                      Read More →
+                    </div>
+                  </div>
+                </Link>
+              ))}
             </div>
           </div>
         </section>
@@ -299,23 +359,22 @@ const Index = () => {
               Reach out to one of our representatives for a direct 1:1 conversation about yourself, or a player under your care.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              <Button 
-                asChild
-                size="lg" 
-                className="btn-shine text-xl font-bebas uppercase tracking-wider px-8 py-6"
-              >
-                <a href="mailto:jolon.levene@risefootballagency.com?subject=Portfolio%20Request">
-                  Request Our Portfolio
-                </a>
-              </Button>
+              <WorkWithUsDialog>
+                <Button 
+                  size="lg" 
+                  className="btn-shine text-xl font-bebas uppercase tracking-wider px-8 py-6"
+                >
+                  Work With Us
+                </Button>
+              </WorkWithUsDialog>
               <Button 
                 asChild
                 variant="outline"
                 size="lg" 
                 className="text-xl font-bebas uppercase tracking-wider px-8 py-6"
               >
-                <a href="http://wa.link/mabnsw" target="_blank" rel="noopener noreferrer">
-                  Reach Out To Us
+                <a href="mailto:jolon.levene@risefootballagency.com?subject=Portfolio%20Request">
+                  Request Our Portfolio
                 </a>
               </Button>
             </div>
