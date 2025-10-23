@@ -2,7 +2,8 @@ import { Link } from "react-router-dom";
 import logo from "@/assets/logo.png";
 import { X } from "lucide-react";
 import { TbMenu } from "react-icons/tb";
-import workingTogether from "@/assets/working-together.jpg";
+import workingTogether from "@/assets/menu-working-together.jpg";
+import playerPortalImage from "@/assets/menu-player-portal.png";
 import {
   Drawer,
   DrawerClose,
@@ -82,21 +83,33 @@ export const Header = () => {
                 </DrawerClose>
               </nav>
               
-              {/* Player Portal Button */}
+              {/* Player Portal Box */}
               <div className="px-4 pb-4">
-                <DrawerClose asChild>
-                  <Button
-                    asChild
-                    className="btn-shine w-full font-bebas uppercase tracking-wider text-lg py-6"
-                  >
-                    <Link to="/login">Player Portal</Link>
-                  </Button>
-                </DrawerClose>
+                <div className="relative overflow-hidden rounded-lg h-20">
+                  <div 
+                    className="absolute inset-0 bg-cover bg-center"
+                    style={{ backgroundImage: `url(${playerPortalImage})` }}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-l from-transparent via-black/40 to-black/70" />
+                  <div className="relative h-full flex flex-col items-start justify-between p-4">
+                    <h3 className="text-xl font-bebas uppercase tracking-wider text-white drop-shadow-lg">
+                      Player<br/>Portal
+                    </h3>
+                    <DrawerClose asChild>
+                      <Button
+                        asChild
+                        className="btn-shine w-full font-bebas uppercase tracking-wider"
+                      >
+                        <Link to="/login">Login</Link>
+                      </Button>
+                    </DrawerClose>
+                  </div>
+                </div>
               </div>
 
               {/* Working Together Box */}
               <div className="px-4 pb-6">
-                <div className="relative overflow-hidden rounded-lg h-40">
+                <div className="relative overflow-hidden rounded-lg h-20">
                   <div 
                     className="absolute inset-0 bg-cover bg-center"
                     style={{ backgroundImage: `url(${workingTogether})` }}
