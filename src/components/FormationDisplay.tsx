@@ -24,7 +24,10 @@ export const FormationDisplay = ({ selectedPosition }: FormationDisplayProps) =>
 
   const isPositionActive = (pos: string) => {
     if (!selectedPosition || selectedPosition === "all") return true;
-    return pos.trim() === selectedPosition;
+    // Handle position matching more flexibly
+    const posLabel = pos.trim().toUpperCase();
+    const selectedPos = selectedPosition.trim().toUpperCase();
+    return posLabel === selectedPos;
   };
 
   return (
@@ -53,7 +56,7 @@ export const FormationDisplay = ({ selectedPosition }: FormationDisplayProps) =>
           <div
             key={key}
             className={`absolute -translate-x-1/2 -translate-y-1/2 transition-all duration-300 ${
-              isPositionActive(pos.label) ? "opacity-100 scale-100" : "opacity-30 scale-75"
+              isPositionActive(pos.label) ? "opacity-100 scale-110" : "opacity-20 scale-75"
             }`}
             style={{ top: `${pos.top}%`, left: `${pos.left}%` }}
           >
@@ -61,13 +64,15 @@ export const FormationDisplay = ({ selectedPosition }: FormationDisplayProps) =>
               <X 
                 className={`w-8 h-8 ${
                   isPositionActive(pos.label) 
-                    ? "text-[--gold] drop-shadow-[0_0_8px_rgba(212,175,55,0.8)]" 
-                    : "text-[--gold]/50"
+                    ? "text-[--gold] drop-shadow-[0_0_12px_rgba(212,175,55,1)] animate-pulse-glow" 
+                    : "text-white/20"
                 }`}
-                strokeWidth={3}
+                strokeWidth={isPositionActive(pos.label) ? 4 : 2}
               />
               <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 whitespace-nowrap">
-                <span className="text-xs font-bebas tracking-wider text-white drop-shadow-lg">
+                <span className={`text-xs font-bebas tracking-wider drop-shadow-lg ${
+                  isPositionActive(pos.label) ? "text-[--gold] font-bold" : "text-white/30"
+                }`}>
                   {pos.label}
                 </span>
               </div>
