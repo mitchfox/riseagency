@@ -15,13 +15,22 @@ import { Textarea } from "@/components/ui/textarea";
 type Role = "player" | "coach" | "club" | "agent" | "parent" | "media" | "other" | null;
 
 interface WorkWithUsDialogProps {
-  children: React.ReactNode;
+  children?: React.ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
-export const WorkWithUsDialog = ({ children }: WorkWithUsDialogProps) => {
+export const WorkWithUsDialog = ({ children, open, onOpenChange }: WorkWithUsDialogProps) => {
   const [selectedRole, setSelectedRole] = useState<Role>(null);
 
   const resetSelection = () => setSelectedRole(null);
+
+  const handleOpenChange = (isOpen: boolean) => {
+    if (!isOpen) {
+      resetSelection();
+    }
+    onOpenChange?.(isOpen);
+  };
 
   const roles = [
     { value: "player" as const, label: "Player" },
@@ -351,8 +360,8 @@ export const WorkWithUsDialog = ({ children }: WorkWithUsDialogProps) => {
   };
 
   return (
-    <Dialog onOpenChange={(open) => !open && resetSelection()}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      {children && <DialogTrigger asChild>{children}</DialogTrigger>}
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-3xl font-bebas uppercase tracking-wider">

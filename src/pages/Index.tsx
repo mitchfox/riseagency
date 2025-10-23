@@ -3,6 +3,8 @@ import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { WorkWithUsDialog } from "@/components/WorkWithUsDialog";
+import { IntroModal } from "@/components/IntroModal";
+import { useState, useEffect } from "react";
 import bannerHero from "@/assets/banner-hero-team.jpg";
 import marbleBg from "@/assets/marble-bg.png";
 import riseStarIcon from "@/assets/rise-star-icon.png";
@@ -34,9 +36,18 @@ const newsArticles = [
 ];
 
 const Index = () => {
+  const [showIntroModal, setShowIntroModal] = useState(false);
+
+  useEffect(() => {
+    const hasSeenIntro = localStorage.getItem("intro-modal-seen");
+    if (!hasSeenIntro) {
+      setShowIntroModal(true);
+    }
+  }, []);
 
   return (
     <>
+      <IntroModal open={showIntroModal} onOpenChange={setShowIntroModal} />
       <Header />
       <div className="min-h-screen bg-background">
         {/* Hero Banner Section */}
