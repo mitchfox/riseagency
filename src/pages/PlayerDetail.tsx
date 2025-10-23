@@ -106,7 +106,7 @@ const PlayerDetail = () => {
 
           {/* Highlights Video - Full Width 16:9 with Club Logo Overlays */}
           <div className="mb-8">
-            <div className="relative aspect-video bg-secondary/30 rounded-lg overflow-hidden group">
+            <div className="relative aspect-video bg-secondary/30 rounded-lg overflow-hidden border-2 border-[--gold]">
               <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
                 <Video className="w-16 h-16 text-primary" />
                 <p className="text-foreground/60 font-bebas text-xl uppercase tracking-wider">
@@ -125,10 +125,10 @@ const PlayerDetail = () => {
                   {/* Season Highlights Button */}
                   <button
                     onClick={() => setCurrentVideoType('season')}
-                    className={`w-12 h-12 rounded border-2 transition-all ${
+                    className={`w-12 h-12 rounded border-2 transition-all bg-transparent ${
                       currentVideoType === 'season'
-                        ? 'border-[--gold] bg-[--gold]/20 scale-110'
-                        : 'border-white/30 bg-black/40 hover:border-[--gold]/50'
+                        ? 'border-[--gold] scale-110'
+                        : 'border-white/20 hover:border-[--gold]/50'
                     }`}
                     title="Season Highlights"
                   >
@@ -140,17 +140,17 @@ const PlayerDetail = () => {
                     <button
                       key={index}
                       onClick={() => setCurrentVideoType(index)}
-                      className={`w-12 h-12 rounded border-2 transition-all overflow-hidden ${
+                      className={`w-12 h-12 rounded border-2 transition-all overflow-hidden bg-transparent ${
                         currentVideoType === index
-                          ? 'border-[--gold] scale-110 ring-2 ring-[--gold]/50'
-                          : 'border-white/30 hover:border-[--gold]/50'
+                          ? 'border-[--gold] scale-110'
+                          : 'border-white/20 hover:border-[--gold]/50'
                       }`}
                       title={`vs ${match.opponent}`}
                     >
                       <img 
                         src={match.clubLogo} 
                         alt={match.opponent}
-                        className="w-full h-full object-cover bg-white/90"
+                        className="w-full h-full object-contain p-1"
                       />
                     </button>
                   ))}
