@@ -11,6 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { FormationDisplay } from "@/components/FormationDisplay";
 
 const PlayerDirectory = () => {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
@@ -136,6 +137,11 @@ const PlayerDirectory = () => {
               )}
             </div>
           </div>
+        </div>
+
+        {/* Formation Display */}
+        <div className="container mx-auto px-4 py-8">
+          <FormationDisplay selectedPosition={selectedPosition} />
         </div>
 
         {/* Players Grid/List */}
