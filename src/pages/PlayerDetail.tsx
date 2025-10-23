@@ -260,57 +260,60 @@ const PlayerDetail = () => {
           {/* Strengths, In Numbers, Scheme History Grid */}
           <div className="grid lg:grid-cols-2 gap-8 mb-12">
 
-            {/* Strengths & Play Style */}
-            {player.strengthsAndPlayStyle && player.strengthsAndPlayStyle.length > 0 && (
-              <div>
-                <h2 className="text-sm font-bebas text-primary uppercase tracking-widest mb-4 text-lg">
-                  Strengths & Play Style
-                </h2>
-                <div className="bg-secondary/30 backdrop-blur-sm p-6 rounded-lg">
-                  <ul className="space-y-3">
-                    {player.strengthsAndPlayStyle.map((strength, index) => (
-                      <li key={index} className="flex items-start gap-3 text-foreground/90">
-                        <span className="text-primary mt-1">•</span>
-                        <span className="leading-relaxed">{strength}</span>
-                      </li>
-                    ))}
-                  </ul>
+            {/* Left Column: Strengths & In Numbers */}
+            <div className="space-y-8">
+              {/* Strengths & Play Style */}
+              {player.strengthsAndPlayStyle && player.strengthsAndPlayStyle.length > 0 && (
+                <div>
+                  <h2 className="text-sm font-bebas text-primary uppercase tracking-widest mb-4 text-lg">
+                    Strengths & Play Style
+                  </h2>
+                  <div className="bg-secondary/30 backdrop-blur-sm p-6 rounded-lg">
+                    <ul className="space-y-3">
+                      {player.strengthsAndPlayStyle.map((strength, index) => (
+                        <li key={index} className="flex items-start gap-3 text-foreground/90">
+                          <span className="text-primary mt-1">•</span>
+                          <span className="leading-relaxed">{strength}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* In Numbers */}
-            {player.topStats && player.topStats.length > 0 && (
-              <div>
-                <h2 className="text-sm font-bebas text-primary uppercase tracking-widest mb-4 text-lg">
-                  In Numbers
-                </h2>
-                <div className="bg-secondary/30 backdrop-blur-sm p-6 rounded-lg space-y-6">
-                  {player.topStats.map((stat, index) => (
-                    <div key={index} className="space-y-2">
-                      <div className="flex items-baseline justify-between">
-                        <span className="text-sm text-muted-foreground uppercase tracking-wider">
-                          {stat.label}
-                        </span>
-                        <span className="text-4xl font-bebas text-primary">
-                          {stat.value}
-                        </span>
+              {/* In Numbers */}
+              {player.topStats && player.topStats.length > 0 && (
+                <div>
+                  <h2 className="text-sm font-bebas text-primary uppercase tracking-widest mb-4 text-lg">
+                    In Numbers
+                  </h2>
+                  <div className="bg-secondary/30 backdrop-blur-sm p-6 rounded-lg space-y-6">
+                    {player.topStats.map((stat, index) => (
+                      <div key={index} className="space-y-2">
+                        <div className="flex items-baseline justify-between">
+                          <span className="text-sm text-muted-foreground uppercase tracking-wider">
+                            {stat.label}
+                          </span>
+                          <span className="text-4xl font-bebas text-primary">
+                            {stat.value}
+                          </span>
+                        </div>
+                        {stat.description && (
+                          <p className="text-xs text-muted-foreground/70">
+                            {stat.description}
+                          </p>
+                        )}
+                        {index < player.topStats.length - 1 && (
+                          <div className="h-px bg-border/50 mt-4" />
+                        )}
                       </div>
-                      {stat.description && (
-                        <p className="text-xs text-muted-foreground/70">
-                          {stat.description}
-                        </p>
-                      )}
-                      {index < player.topStats.length - 1 && (
-                        <div className="h-px bg-border/50 mt-4" />
-                      )}
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
 
-            {/* Scheme History */}
+            {/* Right Column: Scheme History */}
             {player.tacticalFormations && player.tacticalFormations.length > 0 && (
               <div>
                 <h2 className="text-sm font-bebas text-primary uppercase tracking-widest mb-4 text-lg">
