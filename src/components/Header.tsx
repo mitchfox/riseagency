@@ -85,7 +85,7 @@ export const Header = () => {
               
               {/* Player Portal Box */}
               <div className="px-4 pb-4">
-                <div className="relative overflow-hidden rounded-lg h-16">
+                <div className="relative overflow-hidden rounded-lg h-32">
                   <div 
                     className="absolute inset-0 bg-cover bg-center"
                     style={{ backgroundImage: `url(${playerPortalImage})` }}
@@ -109,7 +109,7 @@ export const Header = () => {
 
               {/* Working Together Box */}
               <div className="px-4 pb-6">
-                <div className="relative overflow-hidden rounded-lg h-16">
+                <div className="relative overflow-hidden rounded-lg h-32">
                   <div 
                     className="absolute inset-0 bg-cover bg-center"
                     style={{ backgroundImage: `url(${workingTogether})` }}
