@@ -3,9 +3,10 @@ import { X } from "lucide-react";
 interface FormationDisplayProps {
   selectedPosition?: string;
   playerName?: string;
+  playerImage?: string;
 }
 
-export const FormationDisplay = ({ selectedPosition, playerName }: FormationDisplayProps) => {
+export const FormationDisplay = ({ selectedPosition, playerName, playerImage }: FormationDisplayProps) => {
   // Position coordinates as percentages from top and left - Standard 4-3-3 formation (11 players)
   const positions = {
     GK: { top: 90, left: 50, label: "GK" },
@@ -61,21 +62,32 @@ export const FormationDisplay = ({ selectedPosition, playerName }: FormationDisp
             <div className="relative group">
               {/* Surname above for active position */}
               {isPositionActive(pos.label) && playerName && (
-                <div className="absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap">
+                <div className="absolute -top-12 left-1/2 -translate-x-1/2 whitespace-nowrap">
                   <span className="text-sm font-bebas tracking-wider text-[--gold] font-bold">
                     {getSurname()}
                   </span>
                 </div>
               )}
               
-              <X 
-                className={`transition-all duration-300 ${
-                  isPositionActive(pos.label) 
-                    ? "w-10 h-10 text-[--gold] drop-shadow-[0_0_12px_rgba(212,175,55,1)] animate-pulse-glow" 
-                    : "w-6 h-6 text-white"
-                }`}
-                strokeWidth={isPositionActive(pos.label) ? 4 : 2}
-              />
+              {/* Player Image in Oval Golden Frame for active position */}
+              {isPositionActive(pos.label) && playerImage ? (
+                <div className="relative">
+                  {/* Golden oval frame */}
+                  <div className="w-12 h-16 rounded-full border-2 border-[--gold] shadow-[0_0_12px_rgba(212,175,55,0.8)] overflow-hidden">
+                    <img 
+                      src={playerImage}
+                      alt={playerName}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                </div>
+              ) : (
+                /* White X for non-active positions */
+                <X 
+                  className="w-6 h-6 text-white transition-all duration-300"
+                  strokeWidth={2}
+                />
+              )}
               
               {/* Position label below - only show for non-active */}
               {!isPositionActive(pos.label) && (

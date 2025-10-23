@@ -57,30 +57,49 @@ const PlayerDetail = () => {
             </Button>
           </div>
 
-          {/* Player Name, Info, and Contact - All on one line */}
-          <div className="mb-8 flex flex-wrap items-center gap-4 lg:gap-6">
-            <h1 className="text-5xl md:text-6xl font-bebas uppercase text-foreground leading-none tracking-wide">
-              {player.name}
-            </h1>
-            <p className="text-4xl md:text-5xl text-primary uppercase tracking-widest font-bebas font-semibold leading-none">
-              {player.position} • Age {player.age} • {player.nationality}
-            </p>
-            {player.whatsapp && (
-              <Button 
-                asChild
-                size="default"
-                className="btn-shine text-base font-bebas uppercase tracking-wider"
-              >
-                <a 
-                  href={`https://wa.me/${player.whatsapp.replace(/\+/g, '')}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
+          {/* Player Name, Info, and Contact - Full width with grid background */}
+          <div className="mb-8 relative">
+            {/* Grid Background */}
+            <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]" />
+            
+            <div className="relative flex flex-wrap items-center justify-between gap-4 lg:gap-6 p-6">
+              {/* Player Name with Golden Gloss */}
+              <div className="relative">
+                <div className="absolute inset-0 bg-gradient-to-r from-[--gold]/20 via-[--gold]/10 to-transparent blur-xl" />
+                <h1 className="relative text-5xl md:text-6xl font-bebas uppercase text-foreground leading-none tracking-wide">
+                  {player.name}
+                </h1>
+              </div>
+              
+              <p className="text-4xl md:text-5xl text-primary uppercase tracking-widest font-bebas font-semibold leading-none">
+                {player.position}
+              </p>
+              
+              <p className="text-4xl md:text-5xl text-primary uppercase tracking-widest font-bebas font-semibold leading-none">
+                Age {player.age}
+              </p>
+              
+              <p className="text-4xl md:text-5xl text-primary uppercase tracking-widest font-bebas font-semibold leading-none">
+                {player.nationality}
+              </p>
+              
+              {player.whatsapp && (
+                <Button 
+                  asChild
+                  size="default"
+                  className="btn-shine text-base font-bebas uppercase tracking-wider ml-auto"
                 >
-                  <MessageCircle className="mr-2 h-4 w-4" />
-                  Contact About This Player
-                </a>
-              </Button>
-            )}
+                  <a 
+                    href={`https://wa.me/${player.whatsapp.replace(/\+/g, '')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <MessageCircle className="mr-2 h-4 w-4" />
+                    Contact About This Player
+                  </a>
+                </Button>
+              )}
+            </div>
           </div>
 
           {/* Highlights Video - Full Width 16:9 */}
@@ -225,7 +244,11 @@ const PlayerDetail = () => {
                   </div>
                   
                   {/* Formation Visual Below */}
-                  <FormationDisplay selectedPosition={player.position} playerName={player.name} />
+                  <FormationDisplay 
+                    selectedPosition={player.position} 
+                    playerName={player.name} 
+                    playerImage={player.image}
+                  />
                 </div>
                 <div className="flex justify-center gap-2 mt-4">
                   {player.tacticalFormations.map((_, index) => (
