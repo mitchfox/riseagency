@@ -43,183 +43,94 @@ const PlayerDetail = () => {
     <>
       <Header />
       <div className="min-h-screen bg-background pt-16">
-      {/* Player Profile */}
-      <main className="container mx-auto px-4 py-12">
-        <div className="grid lg:grid-cols-2 gap-8 lg:gap-12">
-          {/* Player Image */}
-          <div className="relative">
-            {/* Back Button - Positioned over image */}
-            <div className="absolute top-4 left-4 z-20">
-              <Button
-                onClick={() => navigate("/players")}
-                variant="outline"
-                size="sm"
-                className="group font-bebas uppercase tracking-wider border-primary/30 bg-background/80 backdrop-blur-sm hover:bg-primary hover:text-primary-foreground"
+        <main className="container mx-auto px-4 py-8">
+          {/* Back Button */}
+          <div className="mb-6">
+            <Button
+              onClick={() => navigate("/players")}
+              variant="outline"
+              size="sm"
+              className="group font-bebas uppercase tracking-wider border-primary/30 bg-background/80 backdrop-blur-sm hover:bg-primary hover:text-primary-foreground"
+            >
+              <ArrowLeft className="mr-2 h-4 w-4 group-hover:-translate-x-1 transition-transform" />
+              Back to Players
+            </Button>
+          </div>
+
+          {/* Player Name and Info */}
+          <div className="mb-8">
+            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bebas uppercase text-foreground mb-4 leading-none tracking-wide">
+              {player.name}
+            </h1>
+            <p className="text-lg text-muted-foreground uppercase tracking-widest font-semibold">
+              {player.position} • Age {player.age} • {player.nationality}
+            </p>
+          </div>
+
+          {/* WhatsApp Contact Button */}
+          {player.whatsapp && (
+            <div className="mb-8">
+              <Button 
+                asChild
+                size="lg"
+                className="btn-shine text-lg font-bebas uppercase tracking-wider"
               >
-                <ArrowLeft className="mr-2 h-4 w-4 group-hover:-translate-x-1 transition-transform" />
-                Back to Players
+                <a 
+                  href={`https://wa.me/${player.whatsapp.replace(/\+/g, '')}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <MessageCircle className="mr-2 h-5 w-5" />
+                  Contact About This Player
+                </a>
               </Button>
             </div>
-            
-            <div className="relative overflow-hidden aspect-[3/4]">
+          )}
+
+          {/* Highlights Video - Full Width 16:9 */}
+          <div className="mb-12">
+            <div className="relative aspect-video bg-secondary/30 rounded-lg overflow-hidden group hover:shadow-lg transition-all">
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
+                <Video className="w-16 h-16 text-primary" />
+                <p className="text-foreground/60 font-bebas text-xl uppercase tracking-wider">
+                  Season Highlights
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Player Image and Bio Section */}
+          <div className="grid lg:grid-cols-2 gap-8 mb-12">
+            {/* Player Image */}
+            <div className="relative overflow-hidden aspect-[3/4] rounded-lg">
               <img
                 src={player.image}
                 alt={player.name}
                 className="w-full h-full object-cover"
               />
-              {/* Glow effect */}
               <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
             </div>
-          </div>
-
-          {/* Player Info - Desktop: Grid 2x2, Mobile: Stacked */}
-          <div className="lg:grid lg:grid-cols-2 lg:gap-6 space-y-6 lg:space-y-0">
-            {/* Name and Position */}
-            <div className="lg:col-span-2">
-              <h1 className="text-5xl md:text-6xl lg:text-7xl font-bebas uppercase text-foreground mb-4 leading-none tracking-wide">
-                {player.name}
-              </h1>
-              <p className="text-lg text-muted-foreground uppercase tracking-widest font-semibold">
-                {player.position} • Age {player.age} • {player.nationality}
-              </p>
-            </div>
-
-            {/* WhatsApp Contact Button */}
-            {player.whatsapp && (
-              <div className="lg:col-span-2">
-                <Button 
-                  asChild
-                  size="lg"
-                  className="btn-shine w-full text-lg font-bebas uppercase tracking-wider"
-                >
-                  <a 
-                    href={`https://wa.me/${player.whatsapp.replace(/\+/g, '')}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <MessageCircle className="mr-2 h-5 w-5" />
-                    Contact About This Player
-                  </a>
-                </Button>
-              </div>
-            )}
 
             {/* Bio */}
-            <div className="lg:col-span-2">
+            <div className="flex flex-col justify-center">
               <h2 className="text-sm font-bebas text-primary uppercase tracking-widest mb-4 text-lg">
                 About
               </h2>
-              <p className="text-foreground/80 leading-relaxed">
+              <p className="text-foreground/80 leading-relaxed text-lg">
                 {player.bio}
               </p>
             </div>
+          </div>
 
-            {/* Highlights Video */}
-            <div className="lg:col-span-2">
-              <h2 className="text-sm font-bebas text-primary uppercase tracking-widest mb-4 text-lg">
-                Season Highlights
-              </h2>
-              <div className="relative aspect-video bg-secondary/30 rounded-lg overflow-hidden group hover:shadow-lg transition-all">
-                <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
-                  <Video className="w-16 h-16 text-primary" />
-                  <p className="text-foreground/60 font-bebas text-xl uppercase tracking-wider">
-                    Highlights Coming Soon
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* External Links */}
-            {player.externalLinks && player.externalLinks.length > 0 && (
-              <div>
-                <h2 className="text-sm font-bebas text-primary uppercase tracking-widest mb-4 text-lg">
-                  External Links
-                </h2>
-                <div className="flex flex-wrap gap-3">
-                  {player.externalLinks.map((link, index) => (
-                    <Button
-                      key={index}
-                      asChild
-                      variant="outline"
-                      size="sm"
-                    >
-                      <a
-                        href={link.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="font-semibold"
-                      >
-                        {link.label}
-                        <ExternalLink className="ml-2 h-4 w-4" />
-                      </a>
-                    </Button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Strengths & Play Style */}
-            {player.strengthsAndPlayStyle && player.strengthsAndPlayStyle.length > 0 && (
-              <div>
-                <h2 className="text-sm font-bebas text-primary uppercase tracking-widest mb-4 text-lg">
-                  Strengths & Play Style
-                </h2>
-                <div className="bg-secondary/30 backdrop-blur-sm p-6 rounded-lg">
-                  <ul className="space-y-3">
-                    {player.strengthsAndPlayStyle.map((strength, index) => (
-                      <li key={index} className="flex items-start gap-3 text-foreground/90">
-                        <span className="text-primary mt-1">•</span>
-                        <span className="leading-relaxed">{strength}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            )}
-
-            {/* Scheme History */}
-            {player.tacticalFormations && player.tacticalFormations.length > 0 && (
-              <div className="lg:col-span-2">
-                <h2 className="text-sm font-bebas text-primary uppercase tracking-widest mb-4 text-lg">
-                  Scheme History
-                </h2>
-                <div className="bg-secondary/30 backdrop-blur-sm p-6 rounded-lg">
-                  {/* Formation Name on Top */}
-                  <div className="text-center mb-4">
-                    <div className="text-3xl font-bbh text-primary mb-1 transition-all duration-500">
-                      {player.tacticalFormations[currentFormationIndex].formation}
-                    </div>
-                    <div className="text-sm text-muted-foreground uppercase tracking-widest font-semibold transition-all duration-500">
-                      {player.tacticalFormations[currentFormationIndex].club}
-                    </div>
-                  </div>
-                  
-                  {/* Formation Visual Below */}
-                  <FormationDisplay selectedPosition={player.position} playerName={player.name} />
-                </div>
-                <div className="flex justify-center gap-2 mt-4">
-                  {player.tacticalFormations.map((_, index) => (
-                    <button
-                      key={index}
-                      onClick={() => setCurrentFormationIndex(index)}
-                      className={`w-2 h-2 rounded-full transition-all ${
-                        index === currentFormationIndex 
-                          ? 'bg-primary w-6' 
-                          : 'bg-primary/30'
-                      }`}
-                      aria-label={`Go to formation ${index + 1}`}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
+          {/* Stats, Strengths, Scheme History Grid */}
+          <div className="grid lg:grid-cols-2 gap-8 mb-12">
 
             {/* Stats */}
-            <div className="lg:col-span-2">
+            <div>
               <h2 className="text-sm font-bebas text-primary uppercase tracking-widest mb-6 text-lg">
                 Season Stats
               </h2>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 gap-4">
                 {player.stats.goals !== undefined && (
                   <div className="text-center p-6 bg-background">
                     <div className="text-3xl font-bbh text-primary mb-2">
@@ -278,11 +189,67 @@ const PlayerDetail = () => {
                 </div>
               </div>
             </div>
+
+            {/* Strengths & Play Style */}
+            {player.strengthsAndPlayStyle && player.strengthsAndPlayStyle.length > 0 && (
+              <div>
+                <h2 className="text-sm font-bebas text-primary uppercase tracking-widest mb-4 text-lg">
+                  Strengths & Play Style
+                </h2>
+                <div className="bg-secondary/30 backdrop-blur-sm p-6 rounded-lg">
+                  <ul className="space-y-3">
+                    {player.strengthsAndPlayStyle.map((strength, index) => (
+                      <li key={index} className="flex items-start gap-3 text-foreground/90">
+                        <span className="text-primary mt-1">•</span>
+                        <span className="leading-relaxed">{strength}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            )}
+
+            {/* Scheme History */}
+            {player.tacticalFormations && player.tacticalFormations.length > 0 && (
+              <div className="lg:col-span-2">
+                <h2 className="text-sm font-bebas text-primary uppercase tracking-widest mb-4 text-lg">
+                  Scheme History
+                </h2>
+                <div className="bg-secondary/30 backdrop-blur-sm p-6 rounded-lg">
+                  {/* Formation Name on Top */}
+                  <div className="text-center mb-4">
+                    <div className="text-3xl font-bbh text-primary mb-1 transition-all duration-500">
+                      {player.tacticalFormations[currentFormationIndex].formation}
+                    </div>
+                    <div className="text-sm text-muted-foreground uppercase tracking-widest font-semibold transition-all duration-500">
+                      {player.tacticalFormations[currentFormationIndex].club}
+                    </div>
+                  </div>
+                  
+                  {/* Formation Visual Below */}
+                  <FormationDisplay selectedPosition={player.position} playerName={player.name} />
+                </div>
+                <div className="flex justify-center gap-2 mt-4">
+                  {player.tacticalFormations.map((_, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setCurrentFormationIndex(index)}
+                      className={`w-2 h-2 rounded-full transition-all ${
+                        index === currentFormationIndex 
+                          ? 'bg-primary w-6' 
+                          : 'bg-primary/30'
+                      }`}
+                      aria-label={`Go to formation ${index + 1}`}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
           </div>
-        </div>
 
         {/* Contact Section */}
-        <section className="py-16 px-4 bg-secondary/20 border-t border-primary/10">
+        <section className="py-16 px-4 bg-secondary/20 border-t border-primary/10 -mx-4">
           <div className="container mx-auto max-w-4xl">
             <h2 className="text-4xl font-bebas text-center uppercase tracking-wider text-foreground mb-12">
               Get In <span className="text-primary">Touch</span>
