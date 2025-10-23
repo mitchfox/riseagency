@@ -217,7 +217,7 @@ const PlayerDetail = () => {
                   </div>
                   
                   {/* Formation Visual Below */}
-                  <FormationDisplay selectedPosition={player.position} />
+                  <FormationDisplay selectedPosition={player.position} playerName={player.name} />
                 </div>
                 <div className="flex justify-center gap-2 mt-4">
                   {player.tacticalFormations.map((_, index) => (

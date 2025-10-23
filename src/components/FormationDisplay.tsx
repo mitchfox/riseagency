@@ -2,24 +2,23 @@ import { X } from "lucide-react";
 
 interface FormationDisplayProps {
   selectedPosition?: string;
+  playerName?: string;
 }
 
-export const FormationDisplay = ({ selectedPosition }: FormationDisplayProps) => {
-  // Position coordinates as percentages from top and left
+export const FormationDisplay = ({ selectedPosition, playerName }: FormationDisplayProps) => {
+  // Position coordinates as percentages from top and left - Standard 4-3-3 formation (11 players)
   const positions = {
     GK: { top: 90, left: 50, label: "GK" },
-    LB: { top: 75, left: 15, label: "LB" },
-    CB: { top: 75, left: 42, label: "CB" },
-    "CB ": { top: 75, left: 58, label: "CB" }, // Second CB
-    RB: { top: 75, left: 85, label: "RB" },
-    DM: { top: 60, left: 50, label: "DM" },
-    LM: { top: 50, left: 20, label: "LM" },
-    CM: { top: 50, left: 50, label: "CM" },
-    RM: { top: 50, left: 80, label: "RM" },
-    LW: { top: 30, left: 20, label: "LW" },
-    CAM: { top: 35, left: 50, label: "CAM" },
-    RW: { top: 30, left: 80, label: "RW" },
+    LB: { top: 70, left: 15, label: "LB" },
+    LCB: { top: 70, left: 38, label: "CB" },
+    RCB: { top: 70, left: 62, label: "CB" },
+    RB: { top: 70, left: 85, label: "RB" },
+    LCM: { top: 45, left: 30, label: "CM" },
+    CM: { top: 45, left: 50, label: "CM" },
+    RCM: { top: 45, left: 70, label: "CM" },
+    LW: { top: 20, left: 20, label: "LW" },
     ST: { top: 15, left: 50, label: "ST" },
+    RW: { top: 20, left: 80, label: "RW" },
   };
 
   const isPositionActive = (pos: string) => {
@@ -30,8 +29,15 @@ export const FormationDisplay = ({ selectedPosition }: FormationDisplayProps) =>
     return posLabel === selectedPos;
   };
 
+  // Get player's surname (last word in name)
+  const getSurname = () => {
+    if (!playerName) return "";
+    const nameParts = playerName.trim().split(" ");
+    return nameParts[nameParts.length - 1].toUpperCase();
+  };
+
   return (
-    <div className="w-full">
+    <div className="w-full max-w-sm mx-auto">
       <div className="relative w-full aspect-[2/3] bg-background/50 rounded-lg overflow-hidden border border-border">
         {/* Minimal pitch lines */}
         <div className="absolute inset-0">
@@ -53,6 +59,15 @@ export const FormationDisplay = ({ selectedPosition }: FormationDisplayProps) =>
             style={{ top: `${pos.top}%`, left: `${pos.left}%` }}
           >
             <div className="relative group">
+              {/* Surname above for active position */}
+              {isPositionActive(pos.label) && playerName && (
+                <div className="absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap">
+                  <span className="text-sm font-bebas tracking-wider text-[--gold] font-bold">
+                    {getSurname()}
+                  </span>
+                </div>
+              )}
+              
               <X 
                 className={`transition-all duration-300 ${
                   isPositionActive(pos.label) 
@@ -61,13 +76,15 @@ export const FormationDisplay = ({ selectedPosition }: FormationDisplayProps) =>
                 }`}
                 strokeWidth={isPositionActive(pos.label) ? 4 : 2}
               />
-              <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 whitespace-nowrap">
-                <span className={`text-xs font-bebas tracking-wider ${
-                  isPositionActive(pos.label) ? "text-[--gold] font-bold" : "text-muted-foreground"
-                }`}>
-                  {pos.label}
-                </span>
-              </div>
+              
+              {/* Position label below - only show for non-active */}
+              {!isPositionActive(pos.label) && (
+                <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 whitespace-nowrap">
+                  <span className="text-xs font-bebas tracking-wider text-muted-foreground">
+                    {pos.label}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
         ))}
