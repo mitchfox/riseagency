@@ -98,7 +98,7 @@ export const Header = () => {
                     <DrawerClose asChild>
                       <Button
                         asChild
-                        className="btn-shine w-full font-bebas uppercase tracking-wider"
+                        className="btn-shine w-full font-bebas uppercase tracking-wider h-6 text-xs"
                       >
                         <Link to="/login">Login</Link>
                       </Button>
@@ -117,14 +117,14 @@ export const Header = () => {
                   <div className="absolute inset-0 bg-gradient-to-l from-transparent via-black/40 to-black/70" />
                   <div className="relative h-full flex flex-col items-start justify-between p-4">
                     <h3 className="text-xl font-bebas uppercase tracking-wider text-white drop-shadow-lg">
-                      Working<br/>Together<br/>With Rise
+                      REALISE YOUR POTENTIAL
                     </h3>
                     <DrawerClose asChild>
                       <Button
                         asChild
-                        className="btn-shine w-full font-bebas uppercase tracking-wider"
+                        className="btn-shine w-full font-bebas uppercase tracking-wider h-6 text-xs"
                       >
-                        <Link to="/contact">Get Started</Link>
+                        <Link to="/contact">REQUEST REPRESENTATION</Link>
                       </Button>
                     </DrawerClose>
                   </div>
