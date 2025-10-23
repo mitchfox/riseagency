@@ -55,28 +55,6 @@ const Index = () => {
               </p>
             </div>
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-              {/* Player Portal */}
-              <div className="relative overflow-hidden rounded-lg group bg-marble">
-                <div className="aspect-[4/5] relative bg-gradient-to-br from-primary/20 via-secondary to-background">
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
-                </div>
-                <div className="absolute bottom-0 left-0 right-0 p-6 space-y-3">
-                  <h3 className="text-3xl font-bebas uppercase tracking-wider text-white">
-                    Player Portal
-                  </h3>
-                  <p className="text-white/80 text-sm">
-                    Access your personal performance analysis and physical programming
-                  </p>
-                  <Button 
-                    asChild
-                    size="lg" 
-                    className="btn-shine w-full text-lg font-bebas uppercase tracking-wider"
-                  >
-                    <Link to="/login">Login</Link>
-                  </Button>
-                </div>
-              </div>
-
               {/* Players */}
               <div className="relative overflow-hidden rounded-lg group">
                 <div className="aspect-[4/5] relative">

@@ -82,7 +82,7 @@ export const Header = () => {
                 </DrawerClose>
               </nav>
               
-              {/* Working Together Box */}
+              {/* Working Together Box - Player Portal */}
               <div className="px-4 pb-6 mt-auto">
                 <div className="relative overflow-hidden rounded-lg h-40">
                   <div 
@@ -99,7 +99,7 @@ export const Header = () => {
                         asChild
                         className="btn-shine w-full font-bebas uppercase tracking-wider"
                       >
-                        <Link to="/contact">Get Started</Link>
+                        <Link to="/login">Get Started</Link>
                       </Button>
                     </DrawerClose>
                   </div>
