@@ -14,6 +14,7 @@ export default {
     },
     extend: {
       fontFamily: {
+        agrandir: ['Agrandir Tight', 'Bebas Neue', 'sans-serif'],
         bebas: ['Bebas Neue', 'sans-serif'],
         bbh: ['BBH Sans Bartle', 'Bebas Neue', 'sans-serif'],
       },
