@@ -1,6 +1,9 @@
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { Link } from "react-router-dom";
 import bannerHero from "@/assets/banner-hero.jpg";
 import scoutsNetwork from "@/assets/scouts-network.jpg";
@@ -74,6 +77,69 @@ const Scouts = () => {
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
             </div>
+          </div>
+        </section>
+
+        {/* Scout Request Form Section */}
+        <section className="py-16 md:py-24 px-4 bg-muted/30">
+          <div className="container mx-auto max-w-2xl">
+            <div className="text-center mb-12">
+              <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider mb-4">
+                Request a Scout at Your Game
+              </h2>
+              <p className="text-lg text-muted-foreground">
+                Fill out the form below and we'll get in touch
+              </p>
+            </div>
+            
+            <form className="space-y-6 bg-card p-8 rounded-lg border">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="playerName">Player Name *</Label>
+                  <Input id="playerName" placeholder="John Doe" required />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email *</Label>
+                  <Input id="email" type="email" placeholder="john@example.com" required />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Phone Number</Label>
+                  <Input id="phone" type="tel" placeholder="+1 (555) 000-0000" />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="position">Position *</Label>
+                  <Input id="position" placeholder="e.g., Striker, Midfielder" required />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="gameDate">Game Date *</Label>
+                <Input id="gameDate" type="date" required />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="venue">Venue/Location *</Label>
+                <Input id="venue" placeholder="Stadium name and address" required />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="details">Additional Details</Label>
+                <Textarea 
+                  id="details" 
+                  placeholder="Tell us about the game, level of competition, or any other relevant information..."
+                  className="min-h-[120px]"
+                />
+              </div>
+
+              <Button type="submit" size="lg" className="w-full btn-shine font-bebas uppercase tracking-wider text-lg">
+                Submit Request
+              </Button>
+            </form>
           </div>
         </section>
 
