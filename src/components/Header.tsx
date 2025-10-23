@@ -67,6 +67,14 @@ export const Header = () => {
                 </DrawerClose>
                 <DrawerClose asChild>
                   <Link
+                    to="/performance"
+                    className="text-xl font-bebas uppercase text-foreground hover:text-primary transition-colors tracking-wider py-3 px-4 hover:bg-primary/10 rounded"
+                  >
+                    Performance
+                  </Link>
+                </DrawerClose>
+                <DrawerClose asChild>
+                  <Link
                     to="/contact"
                     className="text-xl font-bebas uppercase text-foreground hover:text-primary transition-colors tracking-wider py-3 px-4 hover:bg-primary/10 rounded"
                   >
