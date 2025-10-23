@@ -5,6 +5,7 @@ import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, MessageCircle, ExternalLink, Video } from "lucide-react";
 import { FormationDisplay } from "@/components/FormationDisplay";
+import blackMarbleBg from "@/assets/black-marble-menu.png";
 
 const PlayerDetail = () => {
   const { playername } = useParams<{ playername: string }>();
@@ -43,9 +44,9 @@ const PlayerDetail = () => {
     <>
       <Header />
       <div className="min-h-screen bg-background pt-16">
-        <main className="container mx-auto px-4 py-4">
+        <main className="container mx-auto px-4 py-2">
           {/* Back Button */}
-          <div className="mb-4">
+          <div className="mb-2">
             <Button
               onClick={() => navigate("/players")}
               variant="outline"
