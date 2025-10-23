@@ -57,12 +57,12 @@ const PlayerDetail = () => {
             </Button>
           </div>
 
-          {/* Player Name and Info */}
-          <div className="mb-8">
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bebas uppercase text-foreground mb-4 leading-none tracking-wide">
+          {/* Player Name and Info - All on one line */}
+          <div className="mb-8 flex flex-col md:flex-row md:items-baseline md:gap-6">
+            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bebas uppercase text-foreground leading-none tracking-wide">
               {player.name}
             </h1>
-            <p className="text-lg text-muted-foreground uppercase tracking-widest font-semibold">
+            <p className="text-lg text-primary uppercase tracking-widest font-semibold mt-2 md:mt-0">
               {player.position} • Age {player.age} • {player.nationality}
             </p>
           </div>
@@ -99,26 +99,28 @@ const PlayerDetail = () => {
             </div>
           </div>
 
-          {/* Player Image and Bio Section */}
-          <div className="grid lg:grid-cols-2 gap-8 mb-12">
-            {/* Player Image */}
-            <div className="relative overflow-hidden aspect-[3/4] rounded-lg">
-              <img
-                src={player.image}
-                alt={player.name}
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
-            </div>
+          {/* Player Image and Bio Section - Image smaller, bio wider */}
+          <div className="mb-12">
+            <h2 className="text-sm font-bebas text-primary uppercase tracking-widest mb-4 text-lg">
+              About
+            </h2>
+            <div className="flex gap-6 items-start">
+              {/* Player Image - Smaller */}
+              <div className="relative overflow-hidden w-48 h-64 rounded-lg flex-shrink-0">
+                <img
+                  src={player.image}
+                  alt={player.name}
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
+              </div>
 
-            {/* Bio */}
-            <div className="flex flex-col justify-center">
-              <h2 className="text-sm font-bebas text-primary uppercase tracking-widest mb-4 text-lg">
-                About
-              </h2>
-              <p className="text-foreground/80 leading-relaxed text-lg">
-                {player.bio}
-              </p>
+              {/* Bio - Wider, approximately 5 lines */}
+              <div className="flex-1">
+                <p className="text-foreground/80 leading-relaxed text-base line-clamp-5">
+                  {player.bio}
+                </p>
+              </div>
             </div>
           </div>
 
