@@ -62,33 +62,33 @@ const PlayerDetail = () => {
 
           {/* Player Name, Info, and Contact - Full width */}
           <div className="mb-1 relative border-2 border-[hsl(var(--gold))] bg-secondary/20 backdrop-blur-sm rounded-lg overflow-hidden">
-            <div className="relative flex flex-nowrap items-center justify-between gap-3 lg:gap-4 p-4">
+            <div className="relative flex flex-col md:flex-row md:flex-nowrap items-start md:items-center justify-between gap-3 lg:gap-4 p-4">
               {/* Player Name with Golden Gloss */}
-              <div className="relative">
+              <div className="relative w-full md:w-auto">
                 <div className="absolute inset-0 bg-gradient-to-r from-[hsl(var(--gold))]/20 via-[hsl(var(--gold))]/10 to-transparent blur-xl" />
-                <h1 className="relative text-2xl md:text-3xl font-bebas uppercase text-foreground leading-none tracking-wide whitespace-nowrap">
+                <h1 className="relative text-2xl md:text-3xl font-bebas uppercase text-foreground leading-none tracking-wide">
                   {player.name}
                 </h1>
               </div>
               
-              <p className="text-2xl md:text-3xl text-primary uppercase tracking-widest font-bebas font-semibold leading-none whitespace-nowrap">
+              <p className="text-xl md:text-2xl lg:text-3xl text-primary uppercase tracking-widest font-bebas font-semibold leading-none">
                 {player.position}
               </p>
               
-              <p className="text-2xl md:text-3xl text-primary uppercase tracking-widest font-bebas font-semibold leading-none whitespace-nowrap flex items-center gap-2">
+              <p className="text-xl md:text-2xl lg:text-3xl text-primary uppercase tracking-widest font-bebas font-semibold leading-none flex items-center gap-2">
                 {player.dateOfBirth} <span className="text-muted-foreground">({player.age})</span>
               </p>
               
-              <p className="text-2xl md:text-3xl text-primary uppercase tracking-widest font-bebas font-semibold leading-none whitespace-nowrap flex items-center gap-2">
-                <span className="text-4xl" title={player.nationality}>{getCountryFlag(player.nationality)}</span>
+              <p className="text-xl md:text-2xl lg:text-3xl text-primary uppercase tracking-widest font-bebas font-semibold leading-none flex items-center gap-2">
+                <span className="text-3xl md:text-4xl" title={player.nationality}>{getCountryFlag(player.nationality)}</span>
                 {player.nationality}
               </p>
               
-              <p className="text-2xl md:text-3xl text-primary uppercase tracking-widest font-bebas font-semibold leading-none whitespace-nowrap flex items-center gap-2">
+              <p className="text-xl md:text-2xl lg:text-3xl text-primary uppercase tracking-widest font-bebas font-semibold leading-none flex items-center gap-2">
                 <img 
                   src={player.tacticalFormations?.[0]?.clubLogo} 
                   alt={player.currentClub}
-                  className="w-8 h-8 object-contain"
+                  className="w-6 h-6 md:w-8 md:h-8 object-contain"
                 />
                 {player.currentClub}
               </p>
@@ -97,7 +97,7 @@ const PlayerDetail = () => {
                 <Button 
                   asChild
                   size="default"
-                  className="btn-shine text-base font-bebas uppercase tracking-wider ml-auto"
+                  className="btn-shine text-sm md:text-base font-bebas uppercase tracking-wider w-full md:w-auto md:ml-auto"
                 >
                   <a 
                     href={`https://wa.me/${player.whatsapp.replace(/\+/g, '')}`}
@@ -133,14 +133,14 @@ const PlayerDetail = () => {
                   {/* Season Highlights Button */}
                   <button
                     onClick={() => setCurrentVideoType('season')}
-                    className={`w-12 h-12 rounded border-2 transition-all bg-transparent ${
+                    className={`w-8 h-8 rounded border-2 transition-all bg-transparent ${
                       currentVideoType === 'season'
                         ? 'border-[hsl(var(--gold))] scale-110'
                         : 'border-[hsl(var(--gold))]/20 hover:border-[hsl(var(--gold))]/50'
                     }`}
                     title="Season Highlights"
                   >
-                    <Video className="w-6 h-6 text-[hsl(var(--gold))] mx-auto" />
+                    <Video className="w-4 h-4 text-[hsl(var(--gold))] mx-auto" />
                   </button>
                   
                   {/* Match Highlights Buttons */}
@@ -148,7 +148,7 @@ const PlayerDetail = () => {
                     <button
                       key={index}
                       onClick={() => setCurrentVideoType(index)}
-                      className={`w-12 h-12 rounded border-2 transition-all overflow-hidden bg-transparent ${
+                      className={`w-8 h-8 rounded border-2 transition-all overflow-hidden bg-transparent ${
                         currentVideoType === index
                           ? 'border-[hsl(var(--gold))] scale-110'
                           : 'border-[hsl(var(--gold))]/20 hover:border-[hsl(var(--gold))]/50'
@@ -158,7 +158,7 @@ const PlayerDetail = () => {
                       <img 
                         src={match.clubLogo} 
                         alt={match.opponent}
-                        className="w-full h-full object-contain p-1"
+                        className="w-full h-full object-contain p-0.5"
                       />
                     </button>
                   ))}
