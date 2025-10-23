@@ -5,6 +5,7 @@ import { WorkWithUsDialog } from "@/components/WorkWithUsDialog";
 import { useState } from "react";
 import blackMarble from "@/assets/black-marble-bg.png";
 import riseStarIcon from "@/assets/rise-star-icon.png";
+import omotoyeJourney from "@/assets/omotoye-journey.jpg";
 
 interface IntroModalProps {
   open: boolean;
@@ -50,6 +51,20 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
               <p className="text-lg md:text-xl text-white/90 leading-relaxed max-w-2xl mx-auto">
                 We train the best young players and guide them to the top with individualised training and career guidance.
               </p>
+            </div>
+
+            {/* Journey Graphic */}
+            <div className="relative overflow-hidden rounded-lg border border-primary/30">
+              <img 
+                src={omotoyeJourney} 
+                alt="Player journey from youth to professional" 
+                className="w-full h-auto"
+              />
+              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
+                <p className="text-white text-sm md:text-base font-bebas uppercase tracking-wider text-center">
+                  From Grassroots → Premier League
+                </p>
+              </div>
             </div>
 
             {/* Key Points */}
