@@ -6,6 +6,7 @@ import player5 from "@/assets/player5.jpg";
 import player6 from "@/assets/player6.jpg";
 import tyreseImage from "@/assets/tyrese-omotoye.png";
 import michaelImage from "@/assets/michael-mulligan.png";
+import jaroslavImage from "@/assets/jaroslav-svoboda.jpg";
 import fcVysocinaLogo from "@/assets/clubs/fc-vysocina-jihlava-official.png";
 import tjJiskraLogo from "@/assets/clubs/tj-jiskra-domazlice-official.png";
 import bohemiansLogo from "@/assets/clubs/bohemians-1905-official.png";
@@ -147,7 +148,7 @@ export const players: Player[] = [
     nationality: "Czech Republic",
     currentClub: "Bohemians 1905 U19",
     number: 8,
-    image: player3,
+    image: jaroslavImage,
     stats: {
       matches: 22,
       goals: 6,
