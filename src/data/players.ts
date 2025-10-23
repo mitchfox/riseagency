@@ -4,6 +4,9 @@ import player3 from "@/assets/player3.jpg";
 import player4 from "@/assets/player4.jpg";
 import player5 from "@/assets/player5.jpg";
 import player6 from "@/assets/player6.jpg";
+import fcVysocinaLogo from "@/assets/clubs/fc-vysocina-jihlava.png";
+import tjJiskraLogo from "@/assets/clubs/tj-jiskra-domazlice.png";
+import bohemiansLogo from "@/assets/clubs/bohemians-1905.png";
 
 export interface Player {
   id: string;
@@ -50,31 +53,31 @@ export const players: Player[] = [
     id: "tyrese-omotoye",
     name: "Tyrese Omotoye",
     position: "ST",
-    age: 21,
-    nationality: "Nigeria",
+    age: 22,
+    nationality: "Belgium",
     number: 9,
     image: player1,
     stats: {
       matches: 24,
-      goals: 14,
-      assists: 5,
-      minutes: 2100,
+      goals: 12,
+      assists: 4,
+      minutes: 1980,
     },
-    bio: "Dynamic centre-forward with exceptional pace and finishing ability. Tyrese has been a consistent goal threat for FC Vysocina Jihlava, combining technical skill with physical presence to lead the attack.",
+    bio: "Dynamic Belgian centre-forward who joined FC Vysocina Jihlava in July 2025. Born in Hasselt, Belgium, Tyrese combines explosive pace with clinical finishing ability. His intelligent movement and physical presence make him a constant threat in the attacking third.",
     whatsapp: "+447508342901",
     externalLinks: [
-      { label: "Transfermarkt", url: "https://www.transfermarkt.com" },
+      { label: "Transfermarkt", url: "https://www.transfermarkt.us/tyrese-omotoye/profil/spieler/551309" },
       { label: "Match Reports", url: "#" }
     ],
     strengthsAndPlayStyle: [
-      "Clinical finisher in the box with both feet",
-      "Explosive pace to beat defenders",
+      "Clinical finishing with both feet",
+      "Explosive pace and acceleration to beat defenders",
       "Strong aerial ability and physical presence",
-      "Intelligent movement and positioning"
+      "Intelligent off-the-ball movement and positioning"
     ],
     tacticalFormations: [
-      { club: "FC Vysocina Jihlava", formation: "4-2-3-1", matches: 24, clubLogo: "https://upload.wikimedia.org/wikipedia/en/thumb/7/7a/Manchester_United_FC_crest.svg/200px-Manchester_United_FC_crest.svg.png" },
-      { club: "Previous Club", formation: "4-3-3", matches: 18, clubLogo: "https://upload.wikimedia.org/wikipedia/en/thumb/0/0c/Liverpool_FC.svg/200px-Liverpool_FC.svg.png" }
+      { club: "FC Vysocina Jihlava", formation: "4-2-3-1", matches: 24, clubLogo: fcVysocinaLogo },
+      { club: "Forest Green Rovers", formation: "4-3-3", matches: 18, clubLogo: "https://upload.wikimedia.org/wikipedia/en/thumb/5/53/Arsenal_FC.svg/200px-Arsenal_FC.svg.png" }
     ],
     videoHighlights: {
       seasonHighlights: "#",
@@ -103,24 +106,24 @@ export const players: Player[] = [
     stats: {
       matches: 26,
       goals: 2,
-      assists: 4,
+      assists: 5,
       minutes: 2280,
     },
-    bio: "Tenacious central defensive midfielder with excellent tactical awareness and ball-winning ability. Michael anchors the midfield for TJ Jiskra Domazlice, providing both defensive stability and distribution from deep positions.",
+    bio: "Tenacious Czech defensive midfielder playing for TJ Jiskra Domazlice. Born September 17, 2002, Michael stands 1.87m tall and excels at breaking up opposition attacks. His tactical intelligence and ball-winning ability make him the anchor of the midfield.",
     whatsapp: "+447508342901",
     externalLinks: [
-      { label: "Transfermarkt", url: "https://www.transfermarkt.com" },
+      { label: "Transfermarkt", url: "https://www.transfermarkt.com/michael-mulligan/profil/spieler/921082" },
       { label: "Match Reports", url: "#" }
     ],
     strengthsAndPlayStyle: [
       "Exceptional defensive positioning and interceptions",
-      "Strong in the tackle and aerial duels",
-      "Composed distribution and ball retention",
+      "Strong in the tackle and aerial duels (1.87m)",
+      "Composed distribution from deep positions",
       "High work rate and tactical discipline"
     ],
     tacticalFormations: [
-      { club: "TJ Jiskra Domazlice", formation: "4-2-3-1", matches: 26, clubLogo: "https://upload.wikimedia.org/wikipedia/en/thumb/c/cc/Chelsea_FC.svg/200px-Chelsea_FC.svg.png" },
-      { club: "Previous Club", formation: "4-3-3", matches: 15, clubLogo: "https://upload.wikimedia.org/wikipedia/en/thumb/5/53/Arsenal_FC.svg/200px-Arsenal_FC.svg.png" }
+      { club: "TJ Jiskra Domazlice", formation: "4-2-3-1", matches: 26, clubLogo: tjJiskraLogo },
+      { club: "Previous Club", formation: "4-3-3", matches: 15, clubLogo: "https://upload.wikimedia.org/wikipedia/en/thumb/c/cc/Chelsea_FC.svg/200px-Chelsea_FC.svg.png" }
     ]
   },
   {
@@ -137,21 +140,21 @@ export const players: Player[] = [
       assists: 9,
       minutes: 1890,
     },
-    bio: "Promising young central midfielder with exceptional vision and technical ability. Jaroslav has been a standout performer for Bohemians 1905 U18, showcasing maturity beyond his years with creative passing and intelligent positioning.",
+    bio: "Highly promising young Czech midfielder featuring for Bohemians 1905 U19. At just 18 years old, Jaroslav displays exceptional vision and technical ability beyond his years. His creative passing and intelligent positioning mark him as one to watch for the future.",
     whatsapp: "+447508342901",
     externalLinks: [
-      { label: "Transfermarkt", url: "https://www.transfermarkt.com" },
+      { label: "Transfermarkt", url: "https://www.transfermarkt.us/bohemians-prague-1905/kader/verein/715" },
       { label: "Match Reports", url: "#" }
     ],
     strengthsAndPlayStyle: [
-      "Exceptional vision and passing range",
-      "Creative playmaker with excellent ball control",
-      "Strong football intelligence and decision-making",
+      "Exceptional vision and creative passing range",
+      "Advanced technical ability and ball control",
+      "Strong football intelligence for his age",
       "Ability to control tempo and dictate play"
     ],
     tacticalFormations: [
-      { club: "Bohemians 1905 U18", formation: "4-3-3", matches: 22, clubLogo: "https://upload.wikimedia.org/wikipedia/en/thumb/7/7a/Manchester_United_FC_crest.svg/200px-Manchester_United_FC_crest.svg.png" },
-      { club: "Youth Academy", formation: "4-4-2", matches: 16, clubLogo: "https://upload.wikimedia.org/wikipedia/en/thumb/0/0c/Liverpool_FC.svg/200px-Liverpool_FC.svg.png" }
+      { club: "Bohemians 1905 U19", formation: "4-3-3", matches: 22, clubLogo: bohemiansLogo },
+      { club: "Youth Academy", formation: "4-4-2", matches: 16, clubLogo: bohemiansLogo }
     ]
   },
 ];
