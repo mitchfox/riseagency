@@ -141,4 +141,28 @@ All colors MUST be HSL.
   .btn-shine:hover::after {
     animation: shine 0.8s ease-in-out;
   }
+
+  /* Marble background utilities */
+  .bg-marble {
+    background-image: url('/src/assets/black-marble.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+
+  .bg-marble-fixed {
+    background-image: url('/src/assets/black-marble.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+  }
+
+  .bg-marble-subtle {
+    background-image: url('/src/assets/black-marble.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    opacity: 0.3;
+  }
 }
