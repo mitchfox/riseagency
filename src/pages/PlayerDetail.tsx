@@ -59,16 +59,12 @@ const PlayerDetail = () => {
             </Button>
           </div>
 
-          {/* Player Name, Info, and Contact - Full width with grid background */}
+          {/* Player Name, Info, and Contact */}
           <div className="mb-1 relative border-2 border-[--gold] bg-secondary/20 backdrop-blur-sm rounded-lg overflow-hidden">
-            {/* Grid Background */}
-            <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]" />
-            
-            <div className="relative flex flex-wrap items-center justify-between gap-4 lg:gap-6 p-6">
-              {/* Player Name with Golden Gloss */}
+            <div className="flex flex-wrap items-center justify-between gap-4 lg:gap-6 px-6 py-3">
+              {/* Player Name with Gold Background */}
               <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-[--gold]/20 via-[--gold]/10 to-transparent blur-xl" />
-                <h1 className="relative text-5xl md:text-6xl font-bebas uppercase text-foreground leading-none tracking-wide">
+                <h1 className="text-5xl md:text-6xl font-bebas uppercase text-foreground leading-none tracking-wide px-4 py-2 bg-[--gold]/20 rounded">
                   {player.name}
                 </h1>
               </div>
