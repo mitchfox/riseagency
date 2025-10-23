@@ -95,13 +95,13 @@ export const Header = () => {
               <div className="px-4 pb-3">
                 <div className="relative overflow-hidden rounded-lg h-24">
                   <div 
-                    className="absolute inset-0 bg-cover bg-center"
+                    className="absolute inset-0 bg-cover bg-top"
                     style={{ backgroundImage: `url(${playerPortalImage})` }}
                   />
-                  <div className="absolute inset-0 bg-gradient-to-l from-transparent via-black/40 to-black/70" />
-                  <div className="relative h-full flex flex-col items-start justify-between p-4">
-                    <h3 className="text-xl font-bebas uppercase tracking-wider text-white drop-shadow-lg">
-                      Player<br/>Portal
+                  <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70" />
+                  <div className="relative h-full flex flex-col items-center justify-between p-4">
+                    <h3 className="text-xl font-bebas uppercase tracking-wider text-white drop-shadow-lg text-center">
+                      Player Portal
                     </h3>
                     <DrawerClose asChild>
                       <Button
@@ -122,10 +122,10 @@ export const Header = () => {
                     className="absolute inset-0 bg-cover bg-center"
                     style={{ backgroundImage: `url(${workingTogether})` }}
                   />
-                  <div className="absolute inset-0 bg-gradient-to-l from-transparent via-black/40 to-black/70" />
-                  <div className="relative h-full flex flex-col items-start justify-between p-4">
-                    <h3 className="text-xl font-bebas uppercase tracking-wider text-white drop-shadow-lg">
-                      REALISE YOUR POTENTIAL
+                  <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70" />
+                  <div className="relative h-full flex flex-col items-center justify-between p-4">
+                    <h3 className="text-xl font-bebas uppercase tracking-wider text-white drop-shadow-lg text-center">
+                      REALISE POTENTIAL
                     </h3>
                     <DrawerClose asChild>
                       <Button
