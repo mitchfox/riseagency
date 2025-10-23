@@ -31,7 +31,7 @@ export const Header = () => {
               </button>
             </DrawerTrigger>
             <DrawerContent 
-              className="h-full w-[280px] left-0 flex flex-col rounded-r-none bg-cover bg-center"
+              className="h-full w-[240px] left-0 flex flex-col rounded-r-none bg-cover bg-center"
               style={{ backgroundImage: `url(${blackMarbleBg})` }}
             >
               <div className="flex justify-end p-4">
@@ -153,8 +153,8 @@ export const Header = () => {
           {/* Work With Us Button - Right */}
           <Button
             asChild
-            size="sm"
-            className="btn-shine font-bebas uppercase tracking-wider"
+            size="lg"
+            className="btn-shine font-bebas uppercase tracking-wider text-base px-6"
           >
             <Link to="/contact">Work With Us</Link>
           </Button>

@@ -27,8 +27,8 @@ const Index = () => {
           <div className="relative z-10">
             <div className="max-w-full mx-auto text-center space-y-10">
               <div className="overflow-hidden relative w-full">
-                <h1 className="text-9xl md:text-[14rem] font-bebas font-bold uppercase tracking-wider text-white drop-shadow-2xl whitespace-nowrap inline-block animate-[scroll-left_60s_linear_infinite]">
-                  RISE TOGETHER • RISE TOGETHER • RISE TOGETHER • RISE TOGETHER • RISE TOGETHER • RISE TOGETHER • RISE TOGETHER • RISE TOGETHER •
+                <h1 className="text-5xl md:text-7xl font-bebas font-bold uppercase tracking-wider text-white drop-shadow-2xl whitespace-nowrap inline-block animate-[scroll-left_60s_linear_infinite]">
+                  REALISE POTENTIAL • REALISE POTENTIAL • REALISE POTENTIAL • REALISE POTENTIAL • REALISE POTENTIAL • REALISE POTENTIAL • REALISE POTENTIAL • REALISE POTENTIAL •
                 </h1>
               </div>
               <Link to="/players">
