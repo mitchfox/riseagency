@@ -60,7 +60,7 @@ const PlayerDetail = () => {
           </div>
 
           {/* Player Name, Info, and Contact - Full width with grid background */}
-          <div className="mb-1 relative border-2 border-[--gold] bg-secondary/20 backdrop-blur-sm rounded-lg overflow-hidden">
+          <div className="mb-1 relative border-2 border-[hsl(var(--gold))] bg-secondary/20 backdrop-blur-sm rounded-lg overflow-hidden">
             {/* Grid Background */}
             <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]" />
             
@@ -106,7 +106,7 @@ const PlayerDetail = () => {
 
           {/* Highlights Video - Full Width 16:9 with Club Logo Overlays */}
           <div className="mb-8">
-            <div className="relative aspect-video bg-secondary/30 rounded-lg overflow-hidden border-4 border-[--gold]">
+            <div className="relative aspect-video bg-secondary/30 rounded-lg overflow-hidden border-4 border-[hsl(var(--gold))]">
               <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
                 <Video className="w-16 h-16 text-primary" />
                 <p className="text-foreground/60 font-bebas text-xl uppercase tracking-wider">
@@ -127,12 +127,12 @@ const PlayerDetail = () => {
                     onClick={() => setCurrentVideoType('season')}
                     className={`w-12 h-12 rounded border-2 transition-all bg-transparent ${
                       currentVideoType === 'season'
-                        ? 'border-[--gold] scale-110'
-                        : 'border-[--gold]/20 hover:border-[--gold]/50'
+                        ? 'border-[hsl(var(--gold))] scale-110'
+                        : 'border-[hsl(var(--gold))]/20 hover:border-[hsl(var(--gold))]/50'
                     }`}
                     title="Season Highlights"
                   >
-                    <Video className="w-6 h-6 text-[--gold] mx-auto" />
+                    <Video className="w-6 h-6 text-[hsl(var(--gold))] mx-auto" />
                   </button>
                   
                   {/* Match Highlights Buttons */}
@@ -142,8 +142,8 @@ const PlayerDetail = () => {
                       onClick={() => setCurrentVideoType(index)}
                       className={`w-12 h-12 rounded border-2 transition-all overflow-hidden bg-transparent ${
                         currentVideoType === index
-                          ? 'border-[--gold] scale-110'
-                          : 'border-[--gold]/20 hover:border-[--gold]/50'
+                          ? 'border-[hsl(var(--gold))] scale-110'
+                          : 'border-[hsl(var(--gold))]/20 hover:border-[hsl(var(--gold))]/50'
                       }`}
                       title={`vs ${match.opponent}`}
                     >
