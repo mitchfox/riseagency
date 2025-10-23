@@ -60,7 +60,7 @@ const PlayerDetail = () => {
           </div>
 
           {/* Player Name, Info, and Contact - Full width with grid background */}
-          <div className="mb-1 relative">
+          <div className="mb-1 relative border-2 border-[--gold] bg-secondary/20 backdrop-blur-sm rounded-lg overflow-hidden">
             {/* Grid Background */}
             <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]" />
             
@@ -106,7 +106,7 @@ const PlayerDetail = () => {
 
           {/* Highlights Video - Full Width 16:9 with Club Logo Overlays */}
           <div className="mb-8">
-            <div className="relative aspect-video bg-secondary/30 rounded-lg overflow-hidden border-2 border-[--gold]">
+            <div className="relative aspect-video bg-secondary/30 rounded-lg overflow-hidden border-4 border-[--gold]">
               <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
                 <Video className="w-16 h-16 text-primary" />
                 <p className="text-foreground/60 font-bebas text-xl uppercase tracking-wider">
