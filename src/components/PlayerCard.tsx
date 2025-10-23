@@ -51,8 +51,8 @@ export const PlayerCard = ({ player, viewMode = "grid" }: PlayerCardProps) => {
               isInView ? "grayscale-0" : "grayscale"
             } md:grayscale md:group-hover:grayscale-0`}
           />
-          {/* Position badge - top right, smaller */}
-          <div className="absolute top-3 right-3">
+          {/* Position badge - top left */}
+          <div className="absolute top-3 left-3">
             <span className="text-3xl text-primary tracking-wider" style={{ fontFamily: "'BBH Sans Bartle', 'Bebas Neue', sans-serif" }}>
               {player.position}
             </span>
@@ -94,8 +94,8 @@ export const PlayerCard = ({ player, viewMode = "grid" }: PlayerCardProps) => {
             isInView ? "grayscale-0" : "grayscale"
           } md:grayscale md:group-hover:grayscale-0`}
         />
-        {/* Position badge - top right */}
-        <div className="absolute top-4 right-4">
+        {/* Position badge - top left */}
+        <div className="absolute top-4 left-4">
           <span className="text-6xl text-primary tracking-wider" style={{ fontFamily: "'BBH Sans Bartle', 'Bebas Neue', sans-serif" }}>
             {player.position}
           </span>
