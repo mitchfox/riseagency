@@ -4,23 +4,74 @@ interface FormationDisplayProps {
   selectedPosition?: string;
   playerName?: string;
   playerImage?: string;
+  formation?: string;
 }
 
-export const FormationDisplay = ({ selectedPosition, playerName, playerImage }: FormationDisplayProps) => {
-  // Position coordinates as percentages from top and left - Standard 4-3-3 formation (11 players)
-  const positions = {
-    GK: { top: 90, left: 50, label: "GK" },
-    LB: { top: 70, left: 15, label: "LB" },
-    LCB: { top: 70, left: 38, label: "CB" },
-    RCB: { top: 70, left: 62, label: "CB" },
-    RB: { top: 70, left: 85, label: "RB" },
-    LCM: { top: 45, left: 30, label: "CM" },
-    CM: { top: 45, left: 50, label: "CM" },
-    RCM: { top: 45, left: 70, label: "CM" },
-    LW: { top: 20, left: 20, label: "LW" },
-    ST: { top: 15, left: 50, label: "ST" },
-    RW: { top: 20, left: 80, label: "RW" },
+export const FormationDisplay = ({ selectedPosition, playerName, playerImage, formation = "4-3-3" }: FormationDisplayProps) => {
+  // Position coordinates based on formation
+  const getFormationPositions = () => {
+    switch (formation) {
+      case "4-2-3-1":
+        return {
+          GK: { top: 90, left: 50, label: "GK" },
+          LB: { top: 70, left: 15, label: "LB" },
+          LCB: { top: 70, left: 38, label: "CB" },
+          RCB: { top: 70, left: 62, label: "CB" },
+          RB: { top: 70, left: 85, label: "RB" },
+          LDM: { top: 55, left: 35, label: "DM" },
+          RDM: { top: 55, left: 65, label: "DM" },
+          LAM: { top: 35, left: 20, label: "AM" },
+          CAM: { top: 35, left: 50, label: "CAM" },
+          RAM: { top: 35, left: 80, label: "AM" },
+          ST: { top: 15, left: 50, label: "ST" },
+        };
+      case "4-4-2":
+        return {
+          GK: { top: 90, left: 50, label: "GK" },
+          LB: { top: 70, left: 15, label: "LB" },
+          LCB: { top: 70, left: 38, label: "CB" },
+          RCB: { top: 70, left: 62, label: "CB" },
+          RB: { top: 70, left: 85, label: "RB" },
+          LM: { top: 45, left: 15, label: "LM" },
+          LCM: { top: 45, left: 38, label: "CM" },
+          RCM: { top: 45, left: 62, label: "CM" },
+          RM: { top: 45, left: 85, label: "RM" },
+          LST: { top: 15, left: 38, label: "ST" },
+          RST: { top: 15, left: 62, label: "ST" },
+        };
+      case "3-5-2":
+        return {
+          GK: { top: 90, left: 50, label: "GK" },
+          LCB: { top: 70, left: 25, label: "CB" },
+          CB: { top: 70, left: 50, label: "CB" },
+          RCB: { top: 70, left: 75, label: "CB" },
+          LWB: { top: 50, left: 10, label: "LWB" },
+          LCM: { top: 45, left: 35, label: "CM" },
+          CM: { top: 45, left: 50, label: "CM" },
+          RCM: { top: 45, left: 65, label: "CM" },
+          RWB: { top: 50, left: 90, label: "RWB" },
+          LST: { top: 15, left: 38, label: "ST" },
+          RST: { top: 15, left: 62, label: "ST" },
+        };
+      case "4-3-3":
+      default:
+        return {
+          GK: { top: 90, left: 50, label: "GK" },
+          LB: { top: 70, left: 15, label: "LB" },
+          LCB: { top: 70, left: 38, label: "CB" },
+          RCB: { top: 70, left: 62, label: "CB" },
+          RB: { top: 70, left: 85, label: "RB" },
+          LCM: { top: 45, left: 30, label: "CM" },
+          CM: { top: 45, left: 50, label: "CM" },
+          RCM: { top: 45, left: 70, label: "CM" },
+          LW: { top: 20, left: 20, label: "LW" },
+          ST: { top: 15, left: 50, label: "ST" },
+          RW: { top: 20, left: 80, label: "RW" },
+        };
+    }
   };
+
+  const positions = getFormationPositions();
 
   const isPositionActive = (pos: string) => {
     if (!selectedPosition || selectedPosition === "all") return true;

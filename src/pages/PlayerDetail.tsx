@@ -297,6 +297,7 @@ const PlayerDetail = () => {
                     selectedPosition={player.position} 
                     playerName={player.name} 
                     playerImage={player.image}
+                    formation={player.tacticalFormations[currentFormationIndex].formation}
                   />
                 </div>
                 <div className="flex justify-center gap-2 mt-4">
