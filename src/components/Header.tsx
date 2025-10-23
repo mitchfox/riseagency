@@ -4,6 +4,7 @@ import { X } from "lucide-react";
 import { TbMenu } from "react-icons/tb";
 import workingTogether from "@/assets/menu-working-together.jpg";
 import playerPortalImage from "@/assets/menu-player-portal.png";
+import blackMarbleBg from "@/assets/black-marble-menu.png";
 import {
   Drawer,
   DrawerClose,
@@ -29,22 +30,27 @@ export const Header = () => {
                 <TbMenu className="w-7 h-7 text-primary group-hover:text-foreground transition-colors" />
               </button>
             </DrawerTrigger>
-            <DrawerContent className="h-full w-[280px] left-0 flex flex-col rounded-r-none">
-              <div className="flex justify-end p-4">
+            <DrawerContent className="h-full w-[280px] left-0 flex flex-col rounded-r-none relative overflow-hidden">
+              <div 
+                className="absolute inset-0 bg-cover bg-center"
+                style={{ backgroundImage: `url(${blackMarbleBg})` }}
+              />
+              <div className="absolute inset-0 bg-black/20" />
+              <div className="relative z-10 flex justify-end p-4">
                 <DrawerClose asChild>
                   <button
-                    className="rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none"
+                    className="rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none text-white"
                     aria-label="Close menu"
                   >
                     <X className="h-6 w-6" />
                   </button>
                 </DrawerClose>
               </div>
-              <nav className="flex flex-col gap-1 px-4 flex-1">
+              <nav className="relative z-10 flex flex-col gap-1 px-4 flex-1">
                 <DrawerClose asChild>
                   <Link
                     to="/"
-                    className="text-xl font-bebas uppercase text-foreground hover:text-primary transition-colors tracking-wider py-1.5 px-4 hover:bg-primary/10 rounded"
+                    className="text-xl font-bebas uppercase text-white hover:text-primary transition-colors tracking-wider py-1.5 px-4 hover:bg-white/10 rounded"
                   >
                     Home
                   </Link>
@@ -52,7 +58,7 @@ export const Header = () => {
                 <DrawerClose asChild>
                   <Link
                     to="/players"
-                    className="text-xl font-bebas uppercase text-foreground hover:text-primary transition-colors tracking-wider py-1.5 px-4 hover:bg-primary/10 rounded"
+                    className="text-xl font-bebas uppercase text-white hover:text-primary transition-colors tracking-wider py-1.5 px-4 hover:bg-white/10 rounded"
                   >
                     Players
                   </Link>
@@ -60,7 +66,7 @@ export const Header = () => {
                 <DrawerClose asChild>
                   <Link
                     to="/about"
-                    className="text-xl font-bebas uppercase text-foreground hover:text-primary transition-colors tracking-wider py-1.5 px-4 hover:bg-primary/10 rounded"
+                    className="text-xl font-bebas uppercase text-white hover:text-primary transition-colors tracking-wider py-1.5 px-4 hover:bg-white/10 rounded"
                   >
                     About
                   </Link>
@@ -68,7 +74,7 @@ export const Header = () => {
                 <DrawerClose asChild>
                   <Link
                     to="/performance"
-                    className="text-xl font-bebas uppercase text-foreground hover:text-primary transition-colors tracking-wider py-1.5 px-4 hover:bg-primary/10 rounded"
+                    className="text-xl font-bebas uppercase text-white hover:text-primary transition-colors tracking-wider py-1.5 px-4 hover:bg-white/10 rounded"
                   >
                     Performance
                   </Link>
@@ -76,7 +82,7 @@ export const Header = () => {
                 <DrawerClose asChild>
                   <Link
                     to="/contact"
-                    className="text-xl font-bebas uppercase text-foreground hover:text-primary transition-colors tracking-wider py-1.5 px-4 hover:bg-primary/10 rounded"
+                    className="text-xl font-bebas uppercase text-white hover:text-primary transition-colors tracking-wider py-1.5 px-4 hover:bg-white/10 rounded"
                   >
                     Contact
                   </Link>
@@ -84,7 +90,7 @@ export const Header = () => {
                 <DrawerClose asChild>
                   <Link
                     to="/news"
-                    className="text-xl font-bebas uppercase text-foreground hover:text-primary transition-colors tracking-wider py-1.5 px-4 hover:bg-primary/10 rounded"
+                    className="text-xl font-bebas uppercase text-white hover:text-primary transition-colors tracking-wider py-1.5 px-4 hover:bg-white/10 rounded"
                   >
                     News
                   </Link>
@@ -92,7 +98,7 @@ export const Header = () => {
               </nav>
               
               {/* Player Portal Box */}
-              <div className="px-4 pb-3">
+              <div className="relative z-10 px-4 pb-3">
                 <div className="relative overflow-hidden rounded-lg h-24">
                   <div 
                     className="absolute inset-0 bg-cover bg-top"
@@ -116,7 +122,7 @@ export const Header = () => {
               </div>
 
               {/* Working Together Box */}
-              <div className="px-4 pb-4">
+              <div className="relative z-10 px-4 pb-4">
                 <div className="relative overflow-hidden rounded-lg h-24">
                   <div 
                     className="absolute inset-0 bg-cover bg-center"
