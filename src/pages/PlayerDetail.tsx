@@ -50,13 +50,13 @@ const PlayerDetail = () => {
           {/* Back Button */}
           <div className="mb-2">
             <Button
-              onClick={() => navigate("/players")}
+              onClick={() => navigate("/stars")}
               variant="outline"
               size="sm"
               className="group font-bebas uppercase tracking-wider border-primary/30 bg-background/80 backdrop-blur-sm hover:bg-primary hover:text-primary-foreground"
             >
               <ArrowLeft className="mr-2 h-4 w-4 group-hover:-translate-x-1 transition-transform" />
-              Back to Players
+              Back to Stars
             </Button>
           </div>
 
