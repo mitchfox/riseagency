@@ -103,23 +103,42 @@ export const FormationDisplay = ({ selectedPosition, playerName, playerImage, fo
 
   const isPositionActive = (pos: string) => {
     if (!selectedPosition || selectedPosition === "all") return true;
-    // Handle position matching more flexibly
+    
     const posLabel = pos.trim().toUpperCase();
     const selectedPos = selectedPosition.trim().toUpperCase();
     
-    // For duplicate positions (LST/RST, etc.), only activate the first one
-    if ((posLabel === "LST" || posLabel === "RST") && selectedPos === "ST") {
-      return posLabel === "LST"; // Only show in left striker position
-    }
-    if ((posLabel === "LW" || posLabel === "RW") && selectedPos === "RW") {
-      return posLabel === "RW"; // Show winger in their actual position
-    }
-    if ((posLabel === "LW" || posLabel === "RW") && selectedPos === "LW") {
-      return posLabel === "LW"; // Show winger in their actual position
+    // Handle striker positions - if player is ST, only show in LST
+    if (selectedPos === "ST") {
+      if (posLabel === "LST" || posLabel === "ST") return true;
+      if (posLabel === "RST") return false;
     }
     
-    return posLabel === selectedPos || 
-           (posLabel.includes(selectedPos) && posLabel.length <= selectedPos.length + 1);
+    // Handle positions like "LST/RST" - only show in the first one (LST)
+    if (selectedPos.includes("/")) {
+      const positions = selectedPos.split("/");
+      const firstPos = positions[0].trim();
+      // Only activate if posLabel matches the FIRST position in the list
+      return posLabel === firstPos || posLabel.includes(firstPos);
+    }
+    
+    // Handle wing positions explicitly
+    if (selectedPos === "LW" && posLabel === "LW") return true;
+    if (selectedPos === "RW" && posLabel === "RW") return true;
+    if (selectedPos === "LW" && posLabel === "RW") return false;
+    if (selectedPos === "RW" && posLabel === "LW") return false;
+    
+    // Handle center midfield, defensive mid, attacking mid duplicates
+    if (selectedPos === "CM" && (posLabel === "LCM" || posLabel === "CM")) return posLabel === "LCM" || posLabel === "CM";
+    if (selectedPos === "CM" && posLabel === "RCM") return false;
+    if (selectedPos === "DM" && (posLabel === "LDM" || posLabel === "DM")) return posLabel === "LDM" || posLabel === "DM";
+    if (selectedPos === "DM" && posLabel === "RDM") return false;
+    if (selectedPos === "AM" && (posLabel === "LAM" || posLabel === "CAM" || posLabel === "AM")) return posLabel === "LAM" || posLabel === "CAM" || posLabel === "AM";
+    if (selectedPos === "AM" && posLabel === "RAM") return false;
+    if (selectedPos === "CB" && (posLabel === "LCB" || posLabel === "CB")) return posLabel === "LCB" || posLabel === "CB";
+    if (selectedPos === "CB" && posLabel === "RCB") return false;
+    
+    // Exact match
+    return posLabel === selectedPos;
   };
 
   // Get player's surname (last word in name)
