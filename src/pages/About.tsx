@@ -2,6 +2,7 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import bannerHero from "@/assets/banner-hero.jpg";
 
 const About = () => {
   return (
@@ -13,7 +14,7 @@ const About = () => {
         <section className="relative h-[60vh] flex items-center justify-center overflow-hidden">
           <div 
             className="absolute inset-0 bg-cover bg-center"
-            style={{ backgroundImage: `url(${require('@/assets/banner-hero.jpg')})` }}
+            style={{ backgroundImage: `url(${bannerHero})` }}
           />
           <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-background" />
           

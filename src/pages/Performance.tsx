@@ -3,6 +3,8 @@ import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
+import bannerHero from "@/assets/banner-hero.jpg";
+import workingTogether from "@/assets/working-together.jpg";
 
 const Performance = () => {
   return (
@@ -14,7 +16,7 @@ const Performance = () => {
         <section className="relative h-[50vh] flex items-center justify-center overflow-hidden">
           <div 
             className="absolute inset-0 bg-cover bg-center"
-            style={{ backgroundImage: `url(${require('@/assets/banner-hero.jpg')})` }}
+            style={{ backgroundImage: `url(${bannerHero})` }}
           />
           <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-background" />
           
@@ -33,7 +35,7 @@ const Performance = () => {
           <div className="relative bg-black flex items-center justify-center p-8 md:p-16">
             <div 
               className="absolute inset-0 bg-cover bg-center opacity-40"
-              style={{ backgroundImage: `url(${require('@/assets/banner-hero.jpg')})` }}
+              style={{ backgroundImage: `url(${bannerHero})` }}
             />
             <div className="relative z-10 max-w-xl">
               <div className="absolute -right-8 top-0 text-6xl md:text-8xl font-bebas text-white/10 rotate-90 origin-top-right">
@@ -59,7 +61,7 @@ const Performance = () => {
           </div>
           <div 
             className="relative bg-cover bg-center min-h-[50vh] md:min-h-full"
-            style={{ backgroundImage: `url(${require('@/assets/banner-hero.jpg')})` }}
+            style={{ backgroundImage: `url(${bannerHero})` }}
           />
         </section>
 
@@ -67,7 +69,7 @@ const Performance = () => {
         <section className="relative min-h-screen grid md:grid-cols-2">
           <div 
             className="relative bg-cover bg-center min-h-[50vh] md:min-h-full order-2 md:order-1"
-            style={{ backgroundImage: `url(${require('@/assets/working-together.jpg')})` }}
+            style={{ backgroundImage: `url(${workingTogether})` }}
           />
           <div className="relative bg-muted flex items-center justify-center p-8 md:p-16 order-1 md:order-2">
             <div className="relative z-10 max-w-xl">
@@ -99,7 +101,7 @@ const Performance = () => {
           <div className="relative bg-black flex items-center justify-center p-8 md:p-16">
             <div 
               className="absolute inset-0 bg-cover bg-center opacity-40"
-              style={{ backgroundImage: `url(${require('@/assets/banner-hero.jpg')})` }}
+              style={{ backgroundImage: `url(${bannerHero})` }}
             />
             <div className="relative z-10 max-w-xl">
               <div className="absolute -right-8 top-0 text-6xl md:text-8xl font-bebas text-white/10 rotate-90 origin-top-right">
@@ -125,7 +127,7 @@ const Performance = () => {
           </div>
           <div 
             className="relative bg-cover bg-center min-h-[50vh] md:min-h-full"
-            style={{ backgroundImage: `url(${require('@/assets/banner-hero.jpg')})` }}
+            style={{ backgroundImage: `url(${bannerHero})` }}
           />
         </section>
 
@@ -133,7 +135,7 @@ const Performance = () => {
         <section className="relative min-h-screen grid md:grid-cols-2">
           <div 
             className="relative bg-cover bg-center min-h-[50vh] md:min-h-full order-2 md:order-1"
-            style={{ backgroundImage: `url(${require('@/assets/working-together.jpg')})` }}
+            style={{ backgroundImage: `url(${workingTogether})` }}
           />
           <div className="relative bg-muted flex items-center justify-center p-8 md:p-16 order-1 md:order-2">
             <div className="relative z-10 max-w-xl">
