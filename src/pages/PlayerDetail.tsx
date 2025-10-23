@@ -57,35 +57,31 @@ const PlayerDetail = () => {
             </Button>
           </div>
 
-          {/* Player Name and Info - All on one line */}
-          <div className="mb-8 flex flex-col md:flex-row md:items-baseline md:gap-6">
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bebas uppercase text-foreground leading-none tracking-wide">
+          {/* Player Name, Info, and Contact - All on one line */}
+          <div className="mb-8 flex flex-wrap items-center gap-4 lg:gap-6">
+            <h1 className="text-5xl md:text-6xl font-bebas uppercase text-foreground leading-none tracking-wide">
               {player.name}
             </h1>
-            <p className="text-lg text-primary uppercase tracking-widest font-semibold mt-2 md:mt-0">
+            <p className="text-lg text-primary uppercase tracking-widest font-semibold">
               {player.position} • Age {player.age} • {player.nationality}
             </p>
-          </div>
-
-          {/* WhatsApp Contact Button */}
-          {player.whatsapp && (
-            <div className="mb-8">
+            {player.whatsapp && (
               <Button 
                 asChild
-                size="lg"
-                className="btn-shine text-lg font-bebas uppercase tracking-wider"
+                size="default"
+                className="btn-shine text-base font-bebas uppercase tracking-wider"
               >
                 <a 
                   href={`https://wa.me/${player.whatsapp.replace(/\+/g, '')}`}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  <MessageCircle className="mr-2 h-5 w-5" />
+                  <MessageCircle className="mr-2 h-4 w-4" />
                   Contact About This Player
                 </a>
               </Button>
-            </div>
-          )}
+            )}
+          </div>
 
           {/* Highlights Video - Full Width 16:9 */}
           <div className="mb-12">
