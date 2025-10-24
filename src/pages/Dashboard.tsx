@@ -54,16 +54,16 @@ const Dashboard = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <p className="text-muted-foreground">Loading...</p>
+      <div className="min-h-screen bg-background">
+        <p className="text-muted-foreground p-4">Loading...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="min-h-screen bg-background">
       <Header />
-      <main className="flex-1 py-20 px-4">
+      <main className="py-20 px-4">
         <div className="container mx-auto max-w-6xl">
           <div className="flex justify-between items-center mb-8">
             <div>

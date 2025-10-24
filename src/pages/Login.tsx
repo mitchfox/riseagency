@@ -81,10 +81,11 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="min-h-screen bg-background">
       <Header />
-      <main className="flex-1 flex items-center justify-center py-20 px-4">
-        <Card className="w-full max-w-md bg-marble">
+      <main className="py-20 px-4">
+        <div className="max-w-md mx-auto">
+          <Card className="w-full bg-marble">
           <CardHeader className="space-y-1">
             <CardTitle className="text-3xl font-bebas uppercase tracking-wider text-center">
               Player Portal
@@ -185,6 +186,7 @@ const Login = () => {
             </Tabs>
           </CardContent>
         </Card>
+        </div>
       </main>
       <Footer />
     </div>

@@ -55,10 +55,11 @@ const Staff = () => {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen flex flex-col bg-background">
-        <Header />
-        <main className="flex-1 flex items-center justify-center py-20">
-          <Card className="w-full max-w-md mx-4">
+    <div className="min-h-screen bg-background">
+      <Header />
+      <main className="py-20">
+        <div className="max-w-md mx-4 md:mx-auto">
+          <Card className="w-full">
             <CardHeader>
               <CardTitle className="text-2xl font-bold text-center">
                 Staff Access
@@ -83,16 +84,17 @@ const Staff = () => {
               </form>
             </CardContent>
           </Card>
-        </main>
-        <Footer />
-      </div>
+        </div>
+      </main>
+      <Footer />
+    </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="min-h-screen bg-background">
       <Header />
-      <main className="flex-1 container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-4xl font-bold">Staff Dashboard</h1>
           <Button onClick={handleLogout} variant="outline">
