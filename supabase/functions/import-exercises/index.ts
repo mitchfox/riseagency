@@ -17,17 +17,31 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const formData = await req.formData();
-    const file = formData.get('file') as File;
+    let text = '';
+    const contentType = req.headers.get('content-type') || '';
     
-    if (!file) {
-      return new Response(
-        JSON.stringify({ error: 'No file provided' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    if (contentType.includes('multipart/form-data')) {
+      const formData = await req.formData();
+      const file = formData.get('file') as File;
+      
+      if (!file) {
+        return new Response(
+          JSON.stringify({ error: 'No file provided' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      text = await file.text();
+    } else {
+      // Accept raw CSV content in request body
+      text = await req.text();
+      if (!text) {
+        return new Response(
+          JSON.stringify({ error: 'No CSV content provided' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
     }
 
-    const text = await file.text();
     const lines = text.split('\n');
     const exercises = [];
     
