@@ -522,7 +522,15 @@ const PlayerManagement = () => {
           <Card key={player.id}>
             <CardHeader>
               <div className="flex justify-between items-center">
-                <CardTitle>{player.name}</CardTitle>
+                <div className="flex items-center gap-2 text-foreground font-normal">
+                  <span>{player.name}</span>
+                  <span className="text-muted-foreground">•</span>
+                  <span className="text-muted-foreground">{player.position}</span>
+                  <span className="text-muted-foreground">•</span>
+                  <span className="text-muted-foreground">{player.age} years</span>
+                  <span className="text-muted-foreground">•</span>
+                  <span className="text-muted-foreground">{player.nationality}</span>
+                </div>
                 <div className="flex gap-2">
                   <Button variant="outline" size="sm" onClick={() => startEdit(player)}>
                     <Edit className="w-4 h-4" />
