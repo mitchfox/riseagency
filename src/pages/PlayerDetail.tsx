@@ -44,14 +44,30 @@ const PlayerDetail = () => {
             let bioText = '';
             if (data.bio) {
               try {
-                // Try to parse as JSON
+                // First parse of the outer JSON
                 const parsed = JSON.parse(data.bio);
                 if (typeof parsed === 'object' && parsed !== null) {
                   bioData = parsed;
-                  // Extract just the bio text field
-                  bioText = parsed.bio || parsed.text || '';
-                  // If still empty, check if the entire thing is just a string describing the player
-                  if (!bioText && typeof data.bio === 'string' && !data.bio.startsWith('{')) {
+                  
+                  // Check if bio property exists and is a string (might be nested JSON)
+                  if (parsed.bio && typeof parsed.bio === 'string') {
+                    try {
+                      // Try to parse the inner bio JSON
+                      const innerBio = JSON.parse(parsed.bio);
+                      if (typeof innerBio === 'object' && innerBio.text) {
+                        bioText = innerBio.text;
+                      } else if (typeof innerBio === 'string') {
+                        bioText = innerBio;
+                      } else {
+                        bioText = parsed.bio;
+                      }
+                    } catch {
+                      // If inner bio is not JSON, use it as-is
+                      bioText = parsed.bio;
+                    }
+                  } else if (parsed.text) {
+                    bioText = parsed.text;
+                  } else if (typeof data.bio === 'string' && !data.bio.startsWith('{')) {
                     bioText = data.bio;
                   }
                 } else {
@@ -69,7 +85,7 @@ const PlayerDetail = () => {
               try {
                 highlights = typeof data.highlights === 'string' 
                   ? JSON.parse(data.highlights) 
-                  : data.highlights;
+                  : Array.isArray(data.highlights) ? data.highlights : [];
               } catch {
                 highlights = [];
               }
