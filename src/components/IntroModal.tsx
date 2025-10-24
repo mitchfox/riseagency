@@ -1,7 +1,6 @@
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
-import { WorkWithUsDialog } from "@/components/WorkWithUsDialog";
+import { RepresentationDialog } from "@/components/RepresentationDialog";
 import { useState } from "react";
 import blackMarble from "@/assets/black-marble-bg.png";
 import riseStarIcon from "@/assets/rise-star-icon.png";
@@ -13,7 +12,7 @@ interface IntroModalProps {
 }
 
 export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
-  const [showWorkWithUs, setShowWorkWithUs] = useState(false);
+  const [showRepresentation, setShowRepresentation] = useState(false);
 
   const handleEnterSite = () => {
     onOpenChange(false);
@@ -23,7 +22,7 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
   const handleRequestRepresentation = () => {
     onOpenChange(false);
     localStorage.setItem("intro-modal-seen", "true");
-    setShowWorkWithUs(true);
+    setShowRepresentation(true);
   };
 
   return (
@@ -99,7 +98,7 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
         </DialogContent>
       </Dialog>
 
-      <WorkWithUsDialog open={showWorkWithUs} onOpenChange={setShowWorkWithUs} />
+      <RepresentationDialog open={showRepresentation} onOpenChange={setShowRepresentation} />
     </>
   );
 };
