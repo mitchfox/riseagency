@@ -7,8 +7,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Plus, Edit, Trash2 } from "lucide-react";
+import { Plus, Edit, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
 
 
 type TableType = 'coaching_sessions' | 'coaching_programmes' | 'coaching_drills' | 'coaching_exercises' | 'coaching_analysis' | 'psychological_sessions';
@@ -79,21 +80,87 @@ export const CoachingDatabase = () => {
     content: '',
     category: '',
   });
+  
+  // Pagination and filtering
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [selectedMuscleGroup, setSelectedMuscleGroup] = useState<string>('all');
+  const [categories, setCategories] = useState<string[]>([]);
+  const [muscleGroups, setMuscleGroups] = useState<string[]>([]);
+  const itemsPerPage = 20;
+
+  useEffect(() => {
+    setCurrentPage(1);
+    setSelectedCategory('all');
+    setSelectedMuscleGroup('all');
+    fetchCategories();
+    fetchItems();
+  }, [activeTab]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+    fetchItems();
+  }, [selectedCategory, selectedMuscleGroup]);
 
   useEffect(() => {
     fetchItems();
-  }, [activeTab]);
+  }, [currentPage]);
+
+  const fetchCategories = async () => {
+    try {
+      const { data, error } = await supabase
+        .from(activeTab)
+        .select('category, tags');
+
+      if (error) throw error;
+      
+      const uniqueCategories = new Set<string>();
+      const uniqueMuscleGroups = new Set<string>();
+      
+      data?.forEach(item => {
+        if (item.category) uniqueCategories.add(item.category);
+        if (item.tags && Array.isArray(item.tags)) {
+          // Tags contain [Category, ...MuscleGroups], so skip first element
+          item.tags.slice(1).forEach((tag: string) => uniqueMuscleGroups.add(tag));
+        }
+      });
+      
+      setCategories(Array.from(uniqueCategories).sort());
+      setMuscleGroups(Array.from(uniqueMuscleGroups).sort());
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+    }
+  };
 
   const fetchItems = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from(activeTab)
-        .select('*')
+        .select('*', { count: 'exact' })
         .order('created_at', { ascending: false });
+
+      // Apply category filter
+      if (selectedCategory !== 'all') {
+        query = query.eq('category', selectedCategory);
+      }
+
+      // Apply muscle group filter
+      if (selectedMuscleGroup !== 'all') {
+        query = query.contains('tags', [selectedMuscleGroup]);
+      }
+
+      // Apply pagination
+      const from = (currentPage - 1) * itemsPerPage;
+      const to = from + itemsPerPage - 1;
+      query = query.range(from, to);
+
+      const { data, error, count } = await query;
 
       if (error) throw error;
       setItems(data || []);
+      setTotalItems(count || 0);
     } catch (error) {
       console.error('Error fetching items:', error);
       toast.error('Failed to load items');
@@ -101,6 +168,8 @@ export const CoachingDatabase = () => {
       setLoading(false);
     }
   };
+
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -374,62 +443,92 @@ export const CoachingDatabase = () => {
               </Dialog>
             </div>
 
-            <div className="grid gap-4">
+            {/* Filters */}
+            <div className="flex gap-4 mb-4">
+              <div className="w-48">
+                <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="All Categories" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Categories</SelectItem>
+                    {categories.map((cat) => (
+                      <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="w-48">
+                <Select value={selectedMuscleGroup} onValueChange={setSelectedMuscleGroup}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="All Muscle Groups" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Muscle Groups</SelectItem>
+                    {muscleGroups.map((mg) => (
+                      <SelectItem key={mg} value={mg}>{mg}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* Items Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
               {items.length === 0 ? (
-                <Card>
-                  <CardContent className="pt-6 text-center text-muted-foreground">
-                    No {config.label.toLowerCase()} found. Click "Add {config.singular}" to create one.
-                  </CardContent>
-                </Card>
+                <div className="col-span-full">
+                  <Card>
+                    <CardContent className="pt-6 text-center text-muted-foreground">
+                      No {config.label.toLowerCase()} found. Click "Add {config.singular}" to create one.
+                    </CardContent>
+                  </Card>
+                </div>
               ) : (
                 items.map((item) => (
-                  <Card key={item.id}>
-                    <CardHeader>
-                      <div className="flex items-start justify-between">
-                        <div className="space-y-1">
-                          <CardTitle>{item.title}</CardTitle>
-                          {item.category && (
-                            <p className="text-sm text-muted-foreground">
-                              Category: {item.category}
-                            </p>
-                          )}
-                        </div>
-                        <div className="flex gap-2">
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            onClick={() => handleEdit(item)}
-                          >
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            variant="destructive"
-                            size="icon"
-                            onClick={() => handleDelete(item.id)}
-                            disabled={loading}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      {item.description && (
-                        <p className="text-sm text-muted-foreground mb-2">
-                          {item.description}
-                        </p>
-                      )}
-                      {item.content && (
-                        <p className="text-sm line-clamp-3">{item.content}</p>
-                      )}
-                      <div className="mt-4 text-xs text-muted-foreground">
-                        Created: {new Date(item.created_at).toLocaleDateString()}
-                      </div>
-                    </CardContent>
+                  <Card key={item.id} className="p-3">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-sm font-medium line-clamp-2 flex-1 pr-2">
+                        {item.title}
+                      </h3>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-8 w-8 flex-shrink-0"
+                        onClick={() => handleEdit(item)}
+                      >
+                        <Edit className="w-3 h-3" />
+                      </Button>
+                    </div>
                   </Card>
                 ))
               )}
             </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-center gap-2 mt-6">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </Button>
+                <span className="text-sm text-muted-foreground">
+                  Page {currentPage} of {totalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+              </div>
+            )}
           </TabsContent>
         ))}
       </Tabs>
