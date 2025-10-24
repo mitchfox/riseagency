@@ -13,33 +13,61 @@ const PlayerDetail = () => {
   const { playername } = useParams<{ playername: string }>();
   const navigate = useNavigate();
   const [currentFormationIndex, setCurrentFormationIndex] = useState(0);
-  const [currentVideoType, setCurrentVideoType] = useState<'season' | number>('season'); // 'season' or match index
+  const [currentVideoType, setCurrentVideoType] = useState<'season' | number>('season');
   const [dbHighlights, setDbHighlights] = useState<any[]>([]);
+  const [player, setPlayer] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
   
-  const player = players.find((p) => p.id === playername);
-
-  // Fetch highlights from database
+  // Fetch player from database
   useEffect(() => {
     if (playername) {
-      const fetchHighlights = async () => {
-        const { data, error } = await supabase
-          .from('players')
-          .select('highlights')
-          .eq('id', playername)
-          .single();
-        
-        if (!error && data && data.highlights) {
-          try {
-            const highlights = typeof data.highlights === 'string' 
-              ? JSON.parse(data.highlights) 
-              : data.highlights;
-            setDbHighlights(Array.isArray(highlights) ? highlights : []);
-          } catch {
-            setDbHighlights([]);
+      const fetchPlayer = async () => {
+        try {
+          const { data, error } = await supabase
+            .from('players')
+            .select('*')
+            .eq('id', playername)
+            .single();
+          
+          if (error) throw error;
+          
+          if (data) {
+            // Parse bio to get additional data
+            let bioData: any = {};
+            if (data.bio) {
+              try {
+                bioData = JSON.parse(data.bio);
+              } catch {
+                bioData = { bio: data.bio };
+              }
+            }
+            
+            // Parse highlights
+            let highlights: any[] = [];
+            if (data.highlights) {
+              try {
+                highlights = typeof data.highlights === 'string' 
+                  ? JSON.parse(data.highlights) 
+                  : data.highlights;
+              } catch {
+                highlights = [];
+              }
+            }
+            
+            setPlayer({
+              ...data,
+              ...bioData,
+              highlightsArray: highlights
+            });
+            setDbHighlights(highlights);
           }
+        } catch (error) {
+          console.error("Error fetching player:", error);
+        } finally {
+          setLoading(false);
         }
       };
-      fetchHighlights();
+      fetchPlayer();
     }
   }, [playername]);
 
@@ -54,6 +82,17 @@ const PlayerDetail = () => {
       return () => clearInterval(interval);
     }
   }, [player]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <Header />
+        <div className="flex-shrink-0 text-center py-16">
+          <h1 className="text-2xl font-bold text-foreground">Loading player...</h1>
+        </div>
+      </div>
+    );
+  }
 
   if (!player) {
     return (
@@ -189,7 +228,7 @@ const PlayerDetail = () => {
               {/* Player Image - Smaller */}
               <div className="relative overflow-hidden w-48 h-64 rounded-lg flex-shrink-0">
                 <img
-                  src={player.image}
+                  src={player.image_url}
                   alt={player.name}
                   className="w-full h-full object-cover"
                 />
@@ -354,7 +393,7 @@ const PlayerDetail = () => {
                   <FormationDisplay 
                     selectedPosition={player.position} 
                     playerName={player.name} 
-                    playerImage={player.image}
+                    playerImage={player.image_url}
                     formation={player.tacticalFormations[currentFormationIndex].formation}
                   />
                 </div>

@@ -1,9 +1,8 @@
 import { Link } from "react-router-dom";
-import { Player } from "@/data/players";
 import { useEffect, useRef, useState } from "react";
 
 interface PlayerCardProps {
-  player: Player;
+  player: any; // Changed from Player to any since we're using database structure
   viewMode?: "grid" | "list";
 }
 
@@ -45,7 +44,7 @@ export const PlayerCard = ({ player, viewMode = "grid" }: PlayerCardProps) => {
         {/* Player Image - Larger */}
         <div className="relative w-48 h-64 flex-shrink-0 overflow-hidden">
           <img
-            src={player.image}
+            src={player.image_url || player.image}
             alt={player.name}
             className={`w-full h-full object-cover transition-all duration-700 ${
               isInView ? "grayscale-0" : "grayscale"
@@ -65,7 +64,6 @@ export const PlayerCard = ({ player, viewMode = "grid" }: PlayerCardProps) => {
             {player.name}
           </h3>
           <div className="flex gap-6 mt-3 text-sm font-bbh text-muted-foreground uppercase tracking-wide">
-            <span>#{player.number}</span>
             <span>Age {player.age}</span>
             <span>{player.nationality}</span>
           </div>
@@ -88,7 +86,7 @@ export const PlayerCard = ({ player, viewMode = "grid" }: PlayerCardProps) => {
       {/* Player Image */}
       <div className="relative aspect-[3/4] overflow-hidden">
         <img
-          src={player.image}
+          src={player.image_url || player.image}
           alt={player.name}
           className={`w-full h-full object-cover transition-all duration-700 ${
             isInView ? "grayscale-0" : "grayscale"

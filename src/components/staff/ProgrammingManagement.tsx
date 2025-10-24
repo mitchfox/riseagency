@@ -30,7 +30,6 @@ interface Exercise {
 
 interface SessionData {
   exercises: Exercise[];
-  scheduleNotes: string;
 }
 
 interface WeeklySchedule {
@@ -49,6 +48,7 @@ interface WeeklySchedule {
   fridayColor: string;
   saturdayColor: string;
   sundayColor: string;
+  scheduleNotes: string;
 }
 
 interface ProgrammingData {
@@ -99,13 +99,13 @@ const emptyExercise = (): Exercise => ({
 
 const emptySession = (): SessionData => ({
   exercises: [],
-  scheduleNotes: ''
 });
 
 const emptyWeeklySchedule = (): WeeklySchedule => ({
   week: '',
   monday: '', tuesday: '', wednesday: '', thursday: '', friday: '', saturday: '', sunday: '',
-  mondayColor: '', tuesdayColor: '', wednesdayColor: '', thursdayColor: '', fridayColor: '', saturdayColor: '', sundayColor: ''
+  mondayColor: '', tuesdayColor: '', wednesdayColor: '', thursdayColor: '', fridayColor: '', saturdayColor: '', sundayColor: '',
+  scheduleNotes: ''
 });
 
 export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }: ProgrammingManagementProps) => {
@@ -426,7 +426,7 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
 
                   {selectedSession ? (
                     <div className="space-y-4 pt-4">
-                      <div className="flex justify-between items-center">
+                      <div className="flex justify-between items-center mb-4">
                         <Label className="text-lg font-semibold">
                           {sessionLabels.find(s => s.key === selectedSession)?.label} Exercises
                         </Label>
@@ -440,107 +440,101 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
                         </Button>
                       </div>
 
-                      {(programmingData[selectedSession as keyof ProgrammingData] as SessionData).exercises.map((exercise, idx) => (
-                        <Card key={idx} className="p-4 space-y-3">
-                          <div className="flex justify-between items-start">
-                            <h4 className="font-semibold text-sm">Exercise {idx + 1}</h4>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => removeExercise(selectedSession as any, idx)}
-                            >
-                              <Trash2 className="w-4 h-4 text-destructive" />
-                            </Button>
-                          </div>
-                          
-                          <div className="grid grid-cols-2 gap-3">
-                            <div className="space-y-1">
-                              <Label className="text-xs">Exercise Name</Label>
-                              <Input
-                                placeholder="e.g., Bird Dog with Lateral Reach"
-                                value={exercise.name}
-                                onChange={(e) => updateExercise(selectedSession as any, idx, 'name', e.target.value)}
-                              />
-                            </div>
-                            <div className="space-y-1">
-                              <Label className="text-xs">Repetitions</Label>
-                              <Input
-                                placeholder="e.g., 16 (8 each side)"
-                                value={exercise.repetitions}
-                                onChange={(e) => updateExercise(selectedSession as any, idx, 'repetitions', e.target.value)}
-                              />
-                            </div>
-                          </div>
-
-                          <div className="space-y-1">
-                            <Label className="text-xs">Exercise Description</Label>
-                            <Textarea
-                              placeholder="Detailed description of how to perform the exercise..."
-                              value={exercise.description}
-                              onChange={(e) => updateExercise(selectedSession as any, idx, 'description', e.target.value)}
-                              rows={3}
-                              className="text-sm"
-                            />
-                          </div>
-
-                          <div className="grid grid-cols-4 gap-3">
-                            <div className="space-y-1">
-                              <Label className="text-xs">Sets</Label>
-                              <Input
-                                placeholder="e.g., 3"
-                                value={exercise.sets}
-                                onChange={(e) => updateExercise(selectedSession as any, idx, 'sets', e.target.value)}
-                              />
-                            </div>
-                            <div className="space-y-1">
-                              <Label className="text-xs">Load</Label>
-                              <Input
-                                placeholder="e.g., 20kg"
-                                value={exercise.load}
-                                onChange={(e) => updateExercise(selectedSession as any, idx, 'load', e.target.value)}
-                              />
-                            </div>
-                            <div className="space-y-1">
-                              <Label className="text-xs">Recovery Time</Label>
-                              <Input
-                                placeholder="e.g., 60s"
-                                value={exercise.recoveryTime}
-                                onChange={(e) => updateExercise(selectedSession as any, idx, 'recoveryTime', e.target.value)}
-                              />
-                            </div>
-                            <div className="space-y-1">
-                              <Label className="text-xs">Video URL</Label>
-                              <Input
-                                placeholder="Video link"
-                                value={exercise.videoUrl}
-                                onChange={(e) => updateExercise(selectedSession as any, idx, 'videoUrl', e.target.value)}
-                              />
-                            </div>
-                          </div>
-                        </Card>
-                      ))}
-
-                      {(programmingData[selectedSession as keyof ProgrammingData] as SessionData).exercises.length === 0 && (
+                      {(programmingData[selectedSession as keyof ProgrammingData] as SessionData).exercises.length > 0 ? (
+                        <div className="border rounded-lg overflow-hidden">
+                          <table className="w-full">
+                            <thead className="bg-muted">
+                              <tr>
+                                <th className="p-2 text-left text-xs font-semibold">Exercise Name</th>
+                                <th className="p-2 text-left text-xs font-semibold">Description</th>
+                                <th className="p-2 text-left text-xs font-semibold w-20">Reps</th>
+                                <th className="p-2 text-left text-xs font-semibold w-16">Sets</th>
+                                <th className="p-2 text-left text-xs font-semibold w-20">Load</th>
+                                <th className="p-2 text-left text-xs font-semibold w-24">Recovery</th>
+                                <th className="p-2 text-left text-xs font-semibold w-24">Video</th>
+                                <th className="p-2 w-12"></th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {(programmingData[selectedSession as keyof ProgrammingData] as SessionData).exercises.map((exercise, idx) => (
+                                <tr key={idx} className="border-t hover:bg-muted/50">
+                                  <td className="p-2">
+                                    <Input
+                                      placeholder="Exercise name"
+                                      value={exercise.name}
+                                      onChange={(e) => updateExercise(selectedSession as any, idx, 'name', e.target.value)}
+                                      className="text-sm"
+                                    />
+                                  </td>
+                                  <td className="p-2">
+                                    <Textarea
+                                      placeholder="Description"
+                                      value={exercise.description}
+                                      onChange={(e) => updateExercise(selectedSession as any, idx, 'description', e.target.value)}
+                                      rows={2}
+                                      className="text-xs"
+                                    />
+                                  </td>
+                                  <td className="p-2">
+                                    <Input
+                                      placeholder="e.g., 8x2"
+                                      value={exercise.repetitions}
+                                      onChange={(e) => updateExercise(selectedSession as any, idx, 'repetitions', e.target.value)}
+                                      className="text-sm"
+                                    />
+                                  </td>
+                                  <td className="p-2">
+                                    <Input
+                                      placeholder="3"
+                                      value={exercise.sets}
+                                      onChange={(e) => updateExercise(selectedSession as any, idx, 'sets', e.target.value)}
+                                      className="text-sm"
+                                    />
+                                  </td>
+                                  <td className="p-2">
+                                    <Input
+                                      placeholder="20kg"
+                                      value={exercise.load}
+                                      onChange={(e) => updateExercise(selectedSession as any, idx, 'load', e.target.value)}
+                                      className="text-sm"
+                                    />
+                                  </td>
+                                  <td className="p-2">
+                                    <Input
+                                      placeholder="60s"
+                                      value={exercise.recoveryTime}
+                                      onChange={(e) => updateExercise(selectedSession as any, idx, 'recoveryTime', e.target.value)}
+                                      className="text-sm"
+                                    />
+                                  </td>
+                                  <td className="p-2">
+                                    <Input
+                                      placeholder="URL"
+                                      value={exercise.videoUrl}
+                                      onChange={(e) => updateExercise(selectedSession as any, idx, 'videoUrl', e.target.value)}
+                                      className="text-sm"
+                                    />
+                                  </td>
+                                  <td className="p-2 text-center">
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => removeExercise(selectedSession as any, idx)}
+                                    >
+                                      <Trash2 className="w-4 h-4 text-destructive" />
+                                    </Button>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      ) : (
                         <div className="text-center py-8 text-muted-foreground border-2 border-dashed rounded-lg">
                           No exercises added yet. Click "Add Exercise" to get started.
                         </div>
                       )}
-
-                      <div className="space-y-2 pt-4">
-                        <Label htmlFor="scheduleNotes">Schedule Details / Notes</Label>
-                        <Textarea
-                          id="scheduleNotes"
-                          placeholder="e.g., Daily Prehab can be performed on all non-match or gym days..."
-                          value={(programmingData[selectedSession as keyof ProgrammingData] as SessionData).scheduleNotes}
-                          onChange={(e) => updateField(selectedSession as keyof ProgrammingData, {
-                            ...(programmingData[selectedSession as keyof ProgrammingData] as SessionData),
-                            scheduleNotes: e.target.value
-                          })}
-                          rows={3}
-                          className="text-sm"
-                        />
-                      </div>
                     </div>
                   ) : (
                     <div className="text-center py-8 text-muted-foreground">
@@ -630,6 +624,25 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
                     No weekly schedules added yet. Click "Add Week" to get started.
                   </div>
                 )}
+
+                <div className="space-y-2 pt-4">
+                  <Label htmlFor="generalScheduleNotes">General Schedule Notes</Label>
+                  <Textarea
+                    id="generalScheduleNotes"
+                    placeholder="e.g., Daily Prehab (Session A) can be performed on all non-match or gym days; Session B, C & D typically performed once each per week..."
+                    value={programmingData.weeklySchedules[0]?.scheduleNotes || ''}
+                    onChange={(e) => {
+                      if (programmingData.weeklySchedules.length > 0) {
+                        updateWeeklySchedule(0, 'scheduleNotes', e.target.value);
+                      }
+                    }}
+                    rows={4}
+                    className="text-sm"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    General notes about the weekly schedule structure
+                  </p>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
