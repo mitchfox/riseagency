@@ -375,6 +375,13 @@ export type Database = {
             referencedRelation: "players"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "player_analysis_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       player_programs: {
@@ -474,6 +481,13 @@ export type Database = {
             columns: ["player_id"]
             isOneToOne: true
             referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "player_stats_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: true
+            referencedRelation: "players_public"
             referencedColumns: ["id"]
           },
         ]
@@ -620,7 +634,54 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      players_public: {
+        Row: {
+          age: number | null
+          bio: string | null
+          category: string | null
+          created_at: string | null
+          highlights: Json | null
+          id: string | null
+          image_url: string | null
+          name: string | null
+          nationality: string | null
+          position: string | null
+          representation_status: string | null
+          updated_at: string | null
+          visible_on_stars_page: boolean | null
+        }
+        Insert: {
+          age?: number | null
+          bio?: string | null
+          category?: string | null
+          created_at?: string | null
+          highlights?: Json | null
+          id?: string | null
+          image_url?: string | null
+          name?: string | null
+          nationality?: string | null
+          position?: string | null
+          representation_status?: string | null
+          updated_at?: string | null
+          visible_on_stars_page?: boolean | null
+        }
+        Update: {
+          age?: number | null
+          bio?: string | null
+          category?: string | null
+          created_at?: string | null
+          highlights?: Json | null
+          id?: string | null
+          image_url?: string | null
+          name?: string | null
+          nationality?: string | null
+          position?: string | null
+          representation_status?: string | null
+          updated_at?: string | null
+          visible_on_stars_page?: boolean | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       has_role: {

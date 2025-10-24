@@ -1,10 +1,13 @@
 project_id = "qwethimbtaamlhbajmal"
 
 [functions.parse-program-excel]
-verify_jwt = false
+verify_jwt = true
 
 [functions.import-exercises]
-verify_jwt = false
+verify_jwt = true
 
 [functions.import-exercises-csv]
-verify_jwt = false
+verify_jwt = true
+
+[functions.import-program-csv]
+verify_jwt = true
