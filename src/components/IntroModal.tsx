@@ -35,25 +35,25 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
     <>
       <Dialog open={open} onOpenChange={handleDialogChange}>
         <DialogContent 
-          className="max-w-3xl p-0 border-primary/20 overflow-hidden bg-transparent"
+          className="max-w-xl p-0 border-primary/20 overflow-hidden bg-transparent"
           style={{ backgroundImage: `url(${blackMarble})`, backgroundSize: "cover" }}
         >
-          <div className="relative p-8 md:p-12 space-y-8">
+          <div className="relative p-6 md:p-8 space-y-6">
             {/* Logo/Icon */}
             <div className="flex justify-center">
               <img 
                 src={riseStarIcon} 
                 alt="RISE Football" 
-                className="w-24 h-24 object-contain"
+                className="w-16 h-16 object-contain"
               />
             </div>
 
             {/* Heading */}
-            <div className="text-center space-y-4">
-              <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider text-white">
+            <div className="text-center space-y-3">
+              <h2 className="text-3xl md:text-4xl font-bebas uppercase tracking-wider text-white">
                 Welcome to <span className="text-primary">RISE Football</span>
               </h2>
-              <p className="text-lg md:text-xl text-white/90 leading-relaxed max-w-2xl mx-auto">
+              <p className="text-base md:text-lg text-white/90 leading-relaxed">
                 We train the best young players and guide them to the top with individualised training and career guidance.
               </p>
             </div>
@@ -68,29 +68,29 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
             </div>
 
             {/* Key Points */}
-            <div className="space-y-4 text-white/80 text-center max-w-xl mx-auto">
-              <p className="text-base md:text-lg">
+            <div className="space-y-3 text-white/80 text-center">
+              <p className="text-sm md:text-base">
                 We have worked with many <span className="text-primary font-semibold">Premier League players</span> throughout their development.
               </p>
-              <p className="text-base md:text-lg italic">
+              <p className="text-sm md:text-base italic">
                 If you're a professional player or youth academy player in Europe, the chances are we have already scouted you.
               </p>
             </div>
 
             {/* CTAs */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-4">
+            <div className="flex flex-col sm:flex-row gap-3 justify-center items-center pt-2">
               <Button 
-                size="lg" 
+                size="default" 
                 onClick={handleEnterSite}
-                className="btn-shine text-xl font-bebas uppercase tracking-wider px-8 py-6 w-full sm:w-auto"
+                className="btn-shine text-lg font-bebas uppercase tracking-wider px-6 py-5 w-full sm:w-auto"
               >
                 Enter Site
               </Button>
               <Button 
-                size="lg"
+                size="default"
                 variant="outline"
                 onClick={handleRequestRepresentation}
-                className="text-xl font-bebas uppercase tracking-wider px-8 py-6 border-primary/50 text-white hover:bg-primary/20 w-full sm:w-auto"
+                className="text-lg font-bebas uppercase tracking-wider px-6 py-5 border-primary/50 text-white hover:bg-primary/20 w-full sm:w-auto"
               >
                 Request Representation
               </Button>
