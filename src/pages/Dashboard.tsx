@@ -49,6 +49,7 @@ const Dashboard = () => {
   const [selectedProgramId, setSelectedProgramId] = useState<string | null>(null);
   const [selectedSession, setSelectedSession] = useState<string | null>(null);
   const [accordionValue, setAccordionValue] = useState<string[]>([]);
+  const [selectedExercise, setSelectedExercise] = useState<string>('');
 
   // Session color mapping with hover states
   const getSessionColor = (sessionKey: string) => {
@@ -606,136 +607,347 @@ const Dashboard = () => {
                                 )}
 
                                 {/* Sessions Section */}
-                                {program.sessions && typeof program.sessions === 'object' && Object.keys(program.sessions).length > 0 && (
-                                  <AccordionItem value="sessions">
-                                    <AccordionTrigger className="text-xl font-bebas uppercase hover:no-underline">
-                                      Sessions
-                                    </AccordionTrigger>
-                                    <AccordionContent>
-                                      <Tabs value={selectedSession || Object.keys(program.sessions)[0]} onValueChange={setSelectedSession} className="w-full">
-                                        <TabsList className="grid w-full gap-2" style={{ gridTemplateColumns: `repeat(${Object.keys(program.sessions).length}, 1fr)` }}>
-                                          {Object.keys(program.sessions).map((key) => {
-                                            const colors = getSessionColor(key);
-                                            const isPre = key.toLowerCase().includes('pre');
+                                {program.sessions && typeof program.sessions === 'object' && Object.keys(program.sessions).length > 0 && (() => {
+                                  // Group sessions by main letter (A, B, C, etc.)
+                                  const mainSessions = new Set<string>();
+                                  Object.keys(program.sessions).forEach(key => {
+                                    const upperKey = key.toUpperCase();
+                                    if (upperKey.startsWith('PRE-')) {
+                                      mainSessions.add(upperKey.replace('PRE-', ''));
+                                    } else if (!upperKey.includes('PRE') && upperKey.length === 1) {
+                                      mainSessions.add(upperKey);
+                                    }
+                                  });
+                                  
+                                  const sortedMainSessions = Array.from(mainSessions).sort();
+                                  const firstSession = sortedMainSessions[0] || '';
+                                  
+                                  return (
+                                    <AccordionItem value="sessions">
+                                      <AccordionTrigger className="text-xl font-bebas uppercase hover:no-underline">
+                                        Sessions
+                                      </AccordionTrigger>
+                                      <AccordionContent>
+                                        <Tabs value={selectedSession || firstSession} onValueChange={setSelectedSession} className="w-full">
+                                          {/* Main Session Tabs */}
+                                          <TabsList className="grid w-full gap-2" style={{ gridTemplateColumns: `repeat(${sortedMainSessions.length}, 1fr)` }}>
+                                            {sortedMainSessions.map((mainKey) => {
+                                              const colors = getSessionColor(mainKey);
+                                              return (
+                                                <TabsTrigger
+                                                  key={mainKey}
+                                                  value={mainKey}
+                                                  className="font-bebas uppercase text-sm"
+                                                  style={{
+                                                    backgroundColor: colors.bg,
+                                                    color: colors.text,
+                                                  }}
+                                                >
+                                                  Session {mainKey}
+                                                </TabsTrigger>
+                                              );
+                                            })}
+                                          </TabsList>
+                                          
+                                          {/* Main Session Content with Sub-tabs */}
+                                          {sortedMainSessions.map((mainKey) => {
+                                            const preKey = `PRE-${mainKey}`;
+                                            const hasPreSession = program.sessions[preKey] || program.sessions[preKey.toLowerCase()];
+                                            const mainSession = program.sessions[mainKey] || program.sessions[mainKey.toLowerCase()];
+                                            
                                             return (
-                                              <TabsTrigger
-                                                key={key}
-                                                value={key}
-                                                className="font-bebas uppercase text-sm"
-                                                style={{
-                                                  backgroundColor: colors.bg,
-                                                  color: colors.text,
-                                                }}
-                                              >
-                                                {isPre ? `Warmup ${key}` : `Session ${key}`}
-                                              </TabsTrigger>
-                                            );
-                                          })}
-                                        </TabsList>
-                                        
-                                        {Object.entries(program.sessions).map(([key, session]: [string, any]) => {
-                                          const colors = getSessionColor(key);
-                                          return (
-                                            <TabsContent key={key} value={key} className="mt-4">
-                                              {session.exercises && Array.isArray(session.exercises) && session.exercises.length > 0 && (
-                                                <div className="border rounded-lg overflow-hidden">
-                                                  {/* Table Header */}
-                                                  <div 
-                                                    className="grid grid-cols-4 gap-px"
-                                                    style={{ backgroundColor: colors.bg }}
-                                                  >
-                                                    <div 
-                                                      className="p-3 font-bebas uppercase text-sm"
-                                                      style={{ 
-                                                        backgroundColor: 'hsl(45, 70%, 55%)',
-                                                        color: 'hsl(0, 0%, 0%)'
-                                                      }}
-                                                    >
-                                                      Exercise Name
-                                                    </div>
-                                                    <div 
-                                                      className="p-3 font-bebas uppercase text-sm text-center"
-                                                      style={{ 
-                                                        backgroundColor: 'hsl(45, 70%, 55%)',
-                                                        color: 'hsl(0, 0%, 0%)'
-                                                      }}
-                                                    >
-                                                      Repetitions
-                                                    </div>
-                                                    <div 
-                                                      className="p-3 font-bebas uppercase text-sm text-center"
-                                                      style={{ 
-                                                        backgroundColor: 'hsl(45, 70%, 55%)',
-                                                        color: 'hsl(0, 0%, 0%)'
-                                                      }}
-                                                    >
-                                                      Sets
-                                                    </div>
-                                                    <div 
-                                                      className="p-3 font-bebas uppercase text-sm text-center"
-                                                      style={{ 
-                                                        backgroundColor: 'hsl(45, 70%, 55%)',
-                                                        color: 'hsl(0, 0%, 0%)'
-                                                      }}
-                                                    >
-                                                      Load
-                                                    </div>
-                                                  </div>
-                                                  
-                                                  {/* Table Body */}
-                                                  <div>
-                                                    {session.exercises.map((exercise: any, idx: number) => (
-                                                      <div 
-                                                        key={idx}
-                                                        className="grid grid-cols-4 gap-px border-t"
-                                                        style={{ 
-                                                          backgroundColor: idx % 2 === 0 ? 'hsl(0, 0%, 95%)' : 'hsl(0, 0%, 10%)'
+                                              <TabsContent key={mainKey} value={mainKey} className="mt-4">
+                                                <Tabs defaultValue={hasPreSession ? "pre" : "main"} className="w-full">
+                                                  {/* Sub-tabs for Pre and Main Session */}
+                                                  <TabsList className="grid w-full gap-2 grid-cols-2 mb-4">
+                                                    {hasPreSession && (
+                                                      <TabsTrigger
+                                                        value="pre"
+                                                        className="font-bebas uppercase text-sm"
+                                                        style={{
+                                                          backgroundColor: getSessionColor(preKey).bg,
+                                                          color: getSessionColor(preKey).text,
                                                         }}
                                                       >
-                                                        <div 
-                                                          className="p-3 text-sm"
-                                                          style={{ 
-                                                            color: idx % 2 === 0 ? 'hsl(0, 0%, 0%)' : 'hsl(0, 0%, 100%)'
-                                                          }}
-                                                        >
-                                                          {exercise.name || exercise}
+                                                        Pre-{mainKey}
+                                                      </TabsTrigger>
+                                                    )}
+                                                    {mainSession && (
+                                                      <TabsTrigger
+                                                        value="main"
+                                                        className="font-bebas uppercase text-sm"
+                                                        style={{
+                                                          backgroundColor: getSessionColor(mainKey).bg,
+                                                          color: getSessionColor(mainKey).text,
+                                                        }}
+                                                      >
+                                                        Session {mainKey}
+                                                      </TabsTrigger>
+                                                    )}
+                                                  </TabsList>
+                                                  
+                                                  {/* Pre Session Content */}
+                                                  {hasPreSession && (
+                                                    <TabsContent value="pre">
+                                                      {hasPreSession.exercises && Array.isArray(hasPreSession.exercises) && hasPreSession.exercises.length > 0 && (
+                                                        <div className="space-y-4">
+                                                          {/* Exercise Table */}
+                                                          <div className="border rounded-lg overflow-hidden">
+                                                            <div 
+                                                              className="grid grid-cols-4 gap-px"
+                                                              style={{ backgroundColor: getSessionColor(preKey).bg }}
+                                                            >
+                                                              <div 
+                                                                className="p-3 font-bebas uppercase text-sm"
+                                                                style={{ 
+                                                                  backgroundColor: 'hsl(45, 70%, 55%)',
+                                                                  color: 'hsl(0, 0%, 0%)'
+                                                                }}
+                                                              >
+                                                                Exercise Name
+                                                              </div>
+                                                              <div 
+                                                                className="p-3 font-bebas uppercase text-sm text-center"
+                                                                style={{ 
+                                                                  backgroundColor: 'hsl(45, 70%, 55%)',
+                                                                  color: 'hsl(0, 0%, 0%)'
+                                                                }}
+                                                              >
+                                                                Repetitions
+                                                              </div>
+                                                              <div 
+                                                                className="p-3 font-bebas uppercase text-sm text-center"
+                                                                style={{ 
+                                                                  backgroundColor: 'hsl(45, 70%, 55%)',
+                                                                  color: 'hsl(0, 0%, 0%)'
+                                                                }}
+                                                              >
+                                                                Sets
+                                                              </div>
+                                                              <div 
+                                                                className="p-3 font-bebas uppercase text-sm text-center"
+                                                                style={{ 
+                                                                  backgroundColor: 'hsl(45, 70%, 55%)',
+                                                                  color: 'hsl(0, 0%, 0%)'
+                                                                }}
+                                                              >
+                                                                Load
+                                                              </div>
+                                                            </div>
+                                                            
+                                                            <div>
+                                                              {hasPreSession.exercises.map((exercise: any, idx: number) => (
+                                                                <div 
+                                                                  key={idx}
+                                                                  className="grid grid-cols-4 gap-px border-t"
+                                                                  style={{ 
+                                                                    backgroundColor: idx % 2 === 0 ? 'hsl(0, 0%, 95%)' : 'hsl(0, 0%, 10%)'
+                                                                  }}
+                                                                >
+                                                                  <div 
+                                                                    className="p-3 text-sm"
+                                                                    style={{ 
+                                                                      color: idx % 2 === 0 ? 'hsl(0, 0%, 0%)' : 'hsl(0, 0%, 100%)'
+                                                                    }}
+                                                                  >
+                                                                    {exercise.name || exercise}
+                                                                  </div>
+                                                                  <div 
+                                                                    className="p-3 text-sm text-center italic"
+                                                                    style={{ 
+                                                                      color: idx % 2 === 0 ? 'hsl(0, 0%, 0%)' : 'hsl(0, 0%, 100%)'
+                                                                    }}
+                                                                  >
+                                                                    {exercise.repetitions || '-'}
+                                                                  </div>
+                                                                  <div 
+                                                                    className="p-3 text-sm text-center italic"
+                                                                    style={{ 
+                                                                      color: idx % 2 === 0 ? 'hsl(0, 0%, 0%)' : 'hsl(0, 0%, 100%)'
+                                                                    }}
+                                                                  >
+                                                                    {exercise.sets || '-'}
+                                                                  </div>
+                                                                  <div 
+                                                                    className="p-3 text-sm text-center italic"
+                                                                    style={{ 
+                                                                      color: idx % 2 === 0 ? 'hsl(0, 0%, 0%)' : 'hsl(0, 0%, 100%)'
+                                                                    }}
+                                                                  >
+                                                                    {exercise.load && exercise.load !== "'-" ? exercise.load : '-'}
+                                                                  </div>
+                                                                </div>
+                                                              ))}
+                                                            </div>
+                                                          </div>
+                                                          
+                                                          {/* Exercise Descriptions Dropdown */}
+                                                          <div className="border rounded-lg p-4 bg-card">
+                                                            <h4 className="font-bebas uppercase text-lg mb-3">Exercise Descriptions</h4>
+                                                            <Select value={selectedExercise} onValueChange={setSelectedExercise}>
+                                                              <SelectTrigger className="w-full mb-4 bg-background z-50">
+                                                                <SelectValue placeholder="Select an exercise to view description" />
+                                                              </SelectTrigger>
+                                                              <SelectContent className="bg-background z-50">
+                                                                {hasPreSession.exercises
+                                                                  .filter((ex: any) => ex.description)
+                                                                  .map((exercise: any, idx: number) => (
+                                                                    <SelectItem key={idx} value={exercise.name || exercise}>
+                                                                      {exercise.name || exercise}
+                                                                    </SelectItem>
+                                                                  ))}
+                                                              </SelectContent>
+                                                            </Select>
+                                                            
+                                                            {selectedExercise && (() => {
+                                                              const exercise = hasPreSession.exercises.find((ex: any) => (ex.name || ex) === selectedExercise);
+                                                              return exercise?.description ? (
+                                                                <div className="p-4 bg-muted/50 rounded-lg">
+                                                                  <p className="text-sm whitespace-pre-wrap">{exercise.description}</p>
+                                                                </div>
+                                                              ) : null;
+                                                            })()}
+                                                          </div>
                                                         </div>
-                                                        <div 
-                                                          className="p-3 text-sm text-center italic"
-                                                          style={{ 
-                                                            color: idx % 2 === 0 ? 'hsl(0, 0%, 0%)' : 'hsl(0, 0%, 100%)'
-                                                          }}
-                                                        >
-                                                          {exercise.repetitions || '-'}
+                                                      )}
+                                                    </TabsContent>
+                                                  )}
+                                                  
+                                                  {/* Main Session Content */}
+                                                  {mainSession && (
+                                                    <TabsContent value="main">
+                                                      {mainSession.exercises && Array.isArray(mainSession.exercises) && mainSession.exercises.length > 0 && (
+                                                        <div className="space-y-4">
+                                                          {/* Exercise Table */}
+                                                          <div className="border rounded-lg overflow-hidden">
+                                                            <div 
+                                                              className="grid grid-cols-4 gap-px"
+                                                              style={{ backgroundColor: getSessionColor(mainKey).bg }}
+                                                            >
+                                                              <div 
+                                                                className="p-3 font-bebas uppercase text-sm"
+                                                                style={{ 
+                                                                  backgroundColor: 'hsl(45, 70%, 55%)',
+                                                                  color: 'hsl(0, 0%, 0%)'
+                                                                }}
+                                                              >
+                                                                Exercise Name
+                                                              </div>
+                                                              <div 
+                                                                className="p-3 font-bebas uppercase text-sm text-center"
+                                                                style={{ 
+                                                                  backgroundColor: 'hsl(45, 70%, 55%)',
+                                                                  color: 'hsl(0, 0%, 0%)'
+                                                                }}
+                                                              >
+                                                                Repetitions
+                                                              </div>
+                                                              <div 
+                                                                className="p-3 font-bebas uppercase text-sm text-center"
+                                                                style={{ 
+                                                                  backgroundColor: 'hsl(45, 70%, 55%)',
+                                                                  color: 'hsl(0, 0%, 0%)'
+                                                                }}
+                                                              >
+                                                                Sets
+                                                              </div>
+                                                              <div 
+                                                                className="p-3 font-bebas uppercase text-sm text-center"
+                                                                style={{ 
+                                                                  backgroundColor: 'hsl(45, 70%, 55%)',
+                                                                  color: 'hsl(0, 0%, 0%)'
+                                                                }}
+                                                              >
+                                                                Load
+                                                              </div>
+                                                            </div>
+                                                            
+                                                            <div>
+                                                              {mainSession.exercises.map((exercise: any, idx: number) => (
+                                                                <div 
+                                                                  key={idx}
+                                                                  className="grid grid-cols-4 gap-px border-t"
+                                                                  style={{ 
+                                                                    backgroundColor: idx % 2 === 0 ? 'hsl(0, 0%, 95%)' : 'hsl(0, 0%, 10%)'
+                                                                  }}
+                                                                >
+                                                                  <div 
+                                                                    className="p-3 text-sm"
+                                                                    style={{ 
+                                                                      color: idx % 2 === 0 ? 'hsl(0, 0%, 0%)' : 'hsl(0, 0%, 100%)'
+                                                                    }}
+                                                                  >
+                                                                    {exercise.name || exercise}
+                                                                  </div>
+                                                                  <div 
+                                                                    className="p-3 text-sm text-center italic"
+                                                                    style={{ 
+                                                                      color: idx % 2 === 0 ? 'hsl(0, 0%, 0%)' : 'hsl(0, 0%, 100%)'
+                                                                    }}
+                                                                  >
+                                                                    {exercise.repetitions || '-'}
+                                                                  </div>
+                                                                  <div 
+                                                                    className="p-3 text-sm text-center italic"
+                                                                    style={{ 
+                                                                      color: idx % 2 === 0 ? 'hsl(0, 0%, 0%)' : 'hsl(0, 0%, 100%)'
+                                                                    }}
+                                                                  >
+                                                                    {exercise.sets || '-'}
+                                                                  </div>
+                                                                  <div 
+                                                                    className="p-3 text-sm text-center italic"
+                                                                    style={{ 
+                                                                      color: idx % 2 === 0 ? 'hsl(0, 0%, 0%)' : 'hsl(0, 0%, 100%)'
+                                                                    }}
+                                                                  >
+                                                                    {exercise.load && exercise.load !== "'-" ? exercise.load : '-'}
+                                                                  </div>
+                                                                </div>
+                                                              ))}
+                                                            </div>
+                                                          </div>
+                                                          
+                                                          {/* Exercise Descriptions Dropdown */}
+                                                          <div className="border rounded-lg p-4 bg-card">
+                                                            <h4 className="font-bebas uppercase text-lg mb-3">Exercise Descriptions</h4>
+                                                            <Select value={selectedExercise} onValueChange={setSelectedExercise}>
+                                                              <SelectTrigger className="w-full mb-4 bg-background z-50">
+                                                                <SelectValue placeholder="Select an exercise to view description" />
+                                                              </SelectTrigger>
+                                                              <SelectContent className="bg-background z-50">
+                                                                {mainSession.exercises
+                                                                  .filter((ex: any) => ex.description)
+                                                                  .map((exercise: any, idx: number) => (
+                                                                    <SelectItem key={idx} value={exercise.name || exercise}>
+                                                                      {exercise.name || exercise}
+                                                                    </SelectItem>
+                                                                  ))}
+                                                              </SelectContent>
+                                                            </Select>
+                                                            
+                                                            {selectedExercise && (() => {
+                                                              const exercise = mainSession.exercises.find((ex: any) => (ex.name || ex) === selectedExercise);
+                                                              return exercise?.description ? (
+                                                                <div className="p-4 bg-muted/50 rounded-lg">
+                                                                  <p className="text-sm whitespace-pre-wrap">{exercise.description}</p>
+                                                                </div>
+                                                              ) : null;
+                                                            })()}
+                                                          </div>
                                                         </div>
-                                                        <div 
-                                                          className="p-3 text-sm text-center italic"
-                                                          style={{ 
-                                                            color: idx % 2 === 0 ? 'hsl(0, 0%, 0%)' : 'hsl(0, 0%, 100%)'
-                                                          }}
-                                                        >
-                                                          {exercise.sets || '-'}
-                                                        </div>
-                                                        <div 
-                                                          className="p-3 text-sm text-center italic"
-                                                          style={{ 
-                                                            color: idx % 2 === 0 ? 'hsl(0, 0%, 0%)' : 'hsl(0, 0%, 100%)'
-                                                          }}
-                                                        >
-                                                          {exercise.load && exercise.load !== "'-" ? exercise.load : '-'}
-                                                        </div>
-                                                      </div>
-                                                    ))}
-                                                  </div>
-                                                </div>
-                                              )}
-                                            </TabsContent>
-                                          );
-                                        })}
-                                      </Tabs>
-                                    </AccordionContent>
-                                  </AccordionItem>
-                                )}
+                                                      )}
+                                                    </TabsContent>
+                                                  )}
+                                                </Tabs>
+                                              </TabsContent>
+                                            );
+                                          })}
+                                        </Tabs>
+                                      </AccordionContent>
+                                    </AccordionItem>
+                                  );
+                                })()}
 
                                 {/* Testing Section */}
                                 <AccordionItem value="testing">
