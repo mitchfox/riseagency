@@ -23,11 +23,14 @@ interface BlogPost {
 }
 
 const betweenTheLinesCategories = [
-  "Tactical Analysis",
-  "Player Development",
-  "Match Review",
-  "Training Methods",
-  "Scouting Reports"
+  "TECHNICAL",
+  "NUTRITION",
+  "PSYCHOLOGY",
+  "TACTICAL",
+  "STRENGTH, POWER & SPEED",
+  "RECOVERY",
+  "COACHING",
+  "AGENTS",
 ];
 
 const BetweenTheLinesManagement = () => {
