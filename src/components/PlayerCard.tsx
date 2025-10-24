@@ -182,9 +182,9 @@ export const PlayerCard = ({ player, viewMode = "grid" }: PlayerCardProps) => {
             </div>
 
             {/* Profile Button */}
-            <div className="border-2 border-primary rounded-md py-3 px-4 flex items-center justify-center gap-2 transition-colors hover:bg-primary hover:text-black">
-              <span className="font-bebas uppercase tracking-wider text-primary group-hover:text-black">Player Profile</span>
-              <ArrowRight className="w-5 h-5 text-primary group-hover:text-black" />
+            <div className="bg-primary rounded-md py-3 px-4 flex items-center justify-center gap-2 transition-all hover:brightness-110">
+              <span className="font-bebas uppercase tracking-wider text-black">Player Profile</span>
+              <ArrowRight className="w-5 h-5 text-black" />
             </div>
           </div>
         </div>
