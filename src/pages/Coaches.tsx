@@ -96,7 +96,7 @@ const Coaches = () => {
         </section>
 
         {/* CTA Section */}
-        <section className="py-16 md:py-24 bg-background">
+        <section className="py-12 md:py-16 bg-background">
           <div className="container mx-auto px-4 text-center">
             <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider mb-6">
               Advance Your Coaching Career

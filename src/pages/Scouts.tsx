@@ -100,7 +100,7 @@ const Scouts = () => {
         </section>
 
         {/* Player Request Section */}
-        <section className="py-16 md:py-24 bg-muted/30">
+        <section className="py-12 md:py-16 bg-muted/30">
           <div className="container mx-auto px-4 text-center">
             <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider mb-6">
               Request a Scout at Your Game
@@ -119,7 +119,7 @@ const Scouts = () => {
         </section>
 
         {/* CTA Section */}
-        <section className="py-16 md:py-24 bg-background">
+        <section className="py-12 md:py-16 bg-background">
           <div className="container mx-auto px-4 text-center">
             <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider mb-6">
               Join Our Scouting Network

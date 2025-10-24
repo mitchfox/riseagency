@@ -51,7 +51,7 @@ const About = () => {
         </section>
 
         {/* Our Mission */}
-        <section className="py-16 md:py-24 bg-muted/30">
+        <section className="py-12 md:py-16 bg-muted/30">
           <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto">
               <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider mb-8">
@@ -70,7 +70,7 @@ const About = () => {
         </section>
 
         {/* What We Do */}
-        <section className="py-16 md:py-24">
+        <section className="py-12 md:py-16">
           <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto">
               <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider mb-12">
@@ -115,7 +115,7 @@ const About = () => {
         </section>
 
         {/* CTA Section */}
-        <section className="py-16 md:py-24 bg-muted/30">
+        <section className="py-12 md:py-16 bg-muted/30">
           <div className="container mx-auto px-4 text-center">
             <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider mb-6">
               Ready to Rise?
