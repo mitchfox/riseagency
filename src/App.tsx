@@ -18,6 +18,7 @@ import Clubs from "./pages/Clubs";
 import Coaches from "./pages/Coaches";
 import Scouts from "./pages/Scouts";
 import Performance from "./pages/NewPerformance";
+import BetweenTheLines from "./pages/BetweenTheLines";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -39,6 +40,7 @@ const App = () => (
           <Route path="/scouts" element={<Scouts />} />
           <Route path="/performance" element={<Performance />} />
           <Route path="/news" element={<News />} />
+          <Route path="/between-the-lines" element={<BetweenTheLines />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/about" element={<About />} />
           <Route path="/staff" element={<Staff />} />

@@ -189,6 +189,16 @@ export const Header = () => {
                     News
                   </Link>
                 </DrawerClose>
+                <DrawerClose asChild>
+                  <Link
+                    to="/between-the-lines"
+                    className={`text-xl font-bebas uppercase text-white hover:text-primary transition-colors tracking-wider py-1.5 px-4 rounded ${
+                      isActive("/between-the-lines") ? "bg-primary/80 text-white" : "hover:bg-white/10"
+                    }`}
+                  >
+                    Between The Lines
+                  </Link>
+                </DrawerClose>
               </nav>
               
               {/* Player Portal Box */}
