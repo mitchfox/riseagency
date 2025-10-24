@@ -316,18 +316,11 @@ const Index = () => {
         <section className="py-12 md:py-16 px-4 bg-background relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-transparent to-primary/5"></div>
           <div className="container mx-auto max-w-7xl relative z-10">
-            <div className="text-center mb-8 space-y-3">
-              <div className="inline-block">
-                <span className="text-sm font-bebas uppercase tracking-widest text-primary border border-primary/30 px-6 py-2 rounded-full">
-                  Our Network
-                </span>
-              </div>
-              <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-foreground">
-                Join Our <span className="text-primary">Network</span>
+            <div className="text-center mb-12 space-y-3">
+              <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider">
+                <span className="text-foreground">REALISE </span>
+                <span className="text-primary">POTENTIAL</span>
               </h2>
-              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                Whether you are a player, club, scout, or coach - we want to hear from you
-              </p>
             </div>
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
               {/* Players */}
@@ -340,12 +333,12 @@ const Index = () => {
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent opacity-90 group-hover:opacity-95 transition-opacity duration-300" />
                 </div>
-                <div className="absolute inset-0 flex flex-col justify-end p-8 space-y-4">
-                  <div className="transform transition-transform duration-300 group-hover:-translate-y-2">
-                    <h3 className="text-4xl font-bebas uppercase tracking-wider text-white mb-3">
+                <div className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center">
+                  <div className="transform transition-transform duration-300 group-hover:-translate-y-2 space-y-4">
+                    <h3 className="text-4xl font-bebas uppercase tracking-wider text-white">
                       Players
                     </h3>
-                    <p className="text-white/90 text-sm leading-relaxed mb-4">
+                    <p className="text-white/90 text-sm leading-relaxed">
                       Take your career to the next level with professional representation
                     </p>
                     <Button 
@@ -353,7 +346,7 @@ const Index = () => {
                       size="lg" 
                       className="btn-shine w-full text-lg font-bebas uppercase tracking-wider"
                     >
-                      <Link to="/contact">Get In Touch</Link>
+                      <Link to="/stars">Learn More</Link>
                     </Button>
                   </div>
                 </div>
@@ -369,12 +362,12 @@ const Index = () => {
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent opacity-90 group-hover:opacity-95 transition-opacity duration-300" />
                 </div>
-                <div className="absolute inset-0 flex flex-col justify-end p-8 space-y-4">
-                  <div className="transform transition-transform duration-300 group-hover:-translate-y-2">
-                    <h3 className="text-4xl font-bebas uppercase tracking-wider text-white mb-3">
+                <div className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center">
+                  <div className="transform transition-transform duration-300 group-hover:-translate-y-2 space-y-4">
+                    <h3 className="text-4xl font-bebas uppercase tracking-wider text-white">
                       Clubs
                     </h3>
-                    <p className="text-white/90 text-sm leading-relaxed mb-4">
+                    <p className="text-white/90 text-sm leading-relaxed">
                       Discover top talent for your squad through our extensive network
                     </p>
                     <Button 
@@ -382,7 +375,7 @@ const Index = () => {
                       size="lg" 
                       className="btn-shine w-full text-lg font-bebas uppercase tracking-wider"
                     >
-                      <Link to="/contact">Partner With Us</Link>
+                      <Link to="/clubs">Learn More</Link>
                     </Button>
                   </div>
                 </div>
@@ -398,12 +391,12 @@ const Index = () => {
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent opacity-90 group-hover:opacity-95 transition-opacity duration-300" />
                 </div>
-                <div className="absolute inset-0 flex flex-col justify-end p-8 space-y-4">
-                  <div className="transform transition-transform duration-300 group-hover:-translate-y-2">
-                    <h3 className="text-4xl font-bebas uppercase tracking-wider text-white mb-3">
+                <div className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center">
+                  <div className="transform transition-transform duration-300 group-hover:-translate-y-2 space-y-4">
+                    <h3 className="text-4xl font-bebas uppercase tracking-wider text-white">
                       Scouts
                     </h3>
-                    <p className="text-white/90 text-sm leading-relaxed mb-4">
+                    <p className="text-white/90 text-sm leading-relaxed">
                       Collaborate with us to identify and develop emerging talent
                     </p>
                     <Button 
@@ -411,7 +404,7 @@ const Index = () => {
                       size="lg" 
                       className="btn-shine w-full text-lg font-bebas uppercase tracking-wider"
                     >
-                      <Link to="/contact">Join Network</Link>
+                      <Link to="/scouts">Learn More</Link>
                     </Button>
                   </div>
                 </div>
@@ -427,12 +420,12 @@ const Index = () => {
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent opacity-90 group-hover:opacity-95 transition-opacity duration-300" />
                 </div>
-                <div className="absolute inset-0 flex flex-col justify-end p-8 space-y-4">
-                  <div className="transform transition-transform duration-300 group-hover:-translate-y-2">
-                    <h3 className="text-4xl font-bebas uppercase tracking-wider text-white mb-3">
+                <div className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center">
+                  <div className="transform transition-transform duration-300 group-hover:-translate-y-2 space-y-4">
+                    <h3 className="text-4xl font-bebas uppercase tracking-wider text-white">
                       Coaches
                     </h3>
-                    <p className="text-white/90 text-sm leading-relaxed mb-4">
+                    <p className="text-white/90 text-sm leading-relaxed">
                       Connect with professional representation for your coaching career
                     </p>
                     <Button 
@@ -440,7 +433,7 @@ const Index = () => {
                       size="lg" 
                       className="btn-shine w-full text-lg font-bebas uppercase tracking-wider"
                     >
-                      <Link to="/contact">Connect With Us</Link>
+                      <Link to="/coaches">Learn More</Link>
                     </Button>
                   </div>
                 </div>

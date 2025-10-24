@@ -12,24 +12,17 @@ export const PlayerCard = ({ player, viewMode = "grid" }: PlayerCardProps) => {
   const cardRef = useRef<HTMLAnchorElement>(null);
   const [isInView, setIsInView] = useState(false);
 
-  // Extract club info from bio or tactical formations
+  // Extract club info from player data
   const getClubInfo = () => {
     let currentClub = "";
     let clubLogo = "";
 
-    // Try to parse bio if it exists
-    if (player.bio) {
-      try {
-        const bioData = typeof player.bio === 'string' ? JSON.parse(player.bio) : player.bio;
-        currentClub = bioData.currentClub || "";
-        
-        // Get club logo from tactical formations if available
-        if (bioData.tacticalFormations && bioData.tacticalFormations[0]?.clubLogo) {
-          clubLogo = bioData.tacticalFormations[0].clubLogo;
-        }
-      } catch (e) {
-        // If parsing fails, just continue
-      }
+    // Get current club from player data
+    currentClub = player.currentClub || "";
+    
+    // Get club logo from tactical formations if available
+    if (player.tacticalFormations && player.tacticalFormations[0]?.clubLogo) {
+      clubLogo = player.tacticalFormations[0].clubLogo;
     }
 
     return { currentClub, clubLogo };
