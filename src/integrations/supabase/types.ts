@@ -61,6 +61,50 @@ export type Database = {
           },
         ]
       }
+      player_analysis: {
+        Row: {
+          analysis_date: string
+          created_at: string
+          id: string
+          notes: string | null
+          pdf_url: string | null
+          player_id: string
+          r90_score: number
+          updated_at: string
+          video_url: string | null
+        }
+        Insert: {
+          analysis_date: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          pdf_url?: string | null
+          player_id: string
+          r90_score: number
+          updated_at?: string
+          video_url?: string | null
+        }
+        Update: {
+          analysis_date?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          pdf_url?: string | null
+          player_id?: string
+          r90_score?: number
+          updated_at?: string
+          video_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "player_analysis_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       player_stats: {
         Row: {
           assists: number | null
