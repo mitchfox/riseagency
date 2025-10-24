@@ -609,45 +609,39 @@ const PlayerManagement = () => {
                         </Button>
                       </div>
                       
-                      <div className="space-y-3">
+                      <div className="space-y-2">
                         {mockAnalyses.map((analysis) => (
                           <div 
                             key={analysis.id} 
-                            className="border rounded-lg p-4 hover:border-primary transition-colors"
+                            className="flex items-center gap-3 border rounded-lg p-3 hover:border-primary transition-colors"
                           >
-                            <div className="flex items-center justify-between mb-3">
-                              <span className="text-sm text-muted-foreground">
-                                {new Date(analysis.date).toLocaleDateString('en-GB')}
-                              </span>
-                              <div className="flex items-center gap-2">
-                                <span className="text-sm font-medium">R90:</span>
-                                <div 
-                                  className={`${getR90Color(analysis.r90)} text-white px-3 py-1 rounded font-bold`}
-                                >
-                                  {analysis.r90.toFixed(2)}
-                                </div>
-                              </div>
-                            </div>
+                            <span className="text-sm text-muted-foreground min-w-[80px]">
+                              {new Date(analysis.date).toLocaleDateString('en-GB')}
+                            </span>
                             
-                            <div className="flex gap-2">
-                              <Button 
-                                variant="outline" 
-                                size="sm" 
-                                className="flex-1"
-                                onClick={() => toast.info("PDF viewer coming soon")}
-                              >
-                                <FileText className="w-4 h-4 mr-2" />
-                                View PDF
-                              </Button>
-                              <Button 
-                                variant="outline" 
-                                size="sm" 
-                                className="flex-1"
-                                onClick={() => toast.info("Video player coming soon")}
-                              >
-                                📹 View Video
-                              </Button>
-                            </div>
+                            <button
+                              onClick={() => toast.info("Performance report coming soon")}
+                              className={`${getR90Color(analysis.r90)} text-white px-3 py-1 rounded font-bold hover:opacity-80 transition-opacity cursor-pointer`}
+                            >
+                              R90: {analysis.r90.toFixed(2)}
+                            </button>
+                            
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => toast.info("PDF viewer coming soon")}
+                            >
+                              <FileText className="w-4 h-4 mr-1" />
+                              PDF
+                            </Button>
+                            
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => toast.info("Video player coming soon")}
+                            >
+                              📹 Video
+                            </Button>
                           </div>
                         ))}
                       </div>
