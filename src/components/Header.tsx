@@ -263,13 +263,13 @@ export const Header = () => {
             <img src={logo} alt="RISE Football Agency" className="h-8 md:h-10" />
           </Link>
 
-          {/* Work With Us Button - Right */}
+          {/* RISE WITH US Button - Right */}
           <Button
             onClick={() => setWorkWithUsOpen(true)}
             size="lg"
             className="btn-shine font-bebas uppercase tracking-wider text-base px-6"
           >
-            Work With Us
+            RISE WITH US
           </Button>
         </div>
       </div>

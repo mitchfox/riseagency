@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import logo from "@/assets/logo.png";
 
 type Role = "player" | "coach" | "club" | "agent" | "parent" | "media" | "other" | null;
 
@@ -363,13 +364,20 @@ export const WorkWithUsDialog = ({ children, open, onOpenChange }: WorkWithUsDia
     <Dialog open={open} onOpenChange={handleOpenChange}>
       {children && <DialogTrigger asChild>{children}</DialogTrigger>}
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+        {!selectedRole && (
+          <div className="flex justify-center mb-6 pt-4">
+            <img src={logo} alt="RISE Football Agency" className="h-16" />
+          </div>
+        )}
         <DialogHeader>
-          <DialogTitle className="text-3xl font-bebas uppercase tracking-wider">
-            {selectedRole ? `${selectedRole.charAt(0).toUpperCase() + selectedRole.slice(1)} Application` : "Work With Us"}
-          </DialogTitle>
+          {selectedRole && (
+            <DialogTitle className="text-3xl font-bebas uppercase tracking-wider">
+              {`${selectedRole.charAt(0).toUpperCase() + selectedRole.slice(1)} Application`}
+            </DialogTitle>
+          )}
           <DialogDescription>
             {!selectedRole
-              ? "Choose your role to get started"
+              ? "Please select your role to continue"
               : "Fill out the form below and we'll get back to you soon"}
           </DialogDescription>
         </DialogHeader>
