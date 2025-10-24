@@ -281,7 +281,7 @@ const Index = () => {
                 <iframe
                   width="100%"
                   height="100%"
-                  src="https://www.youtube.com/embed/pWH2cdmzwVg"
+                  src="https://www.youtube.com/embed/pWH2cdmzwVg?autoplay=1&mute=1"
                   title="RISE Football Video 1"
                   frameBorder="0"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -295,7 +295,7 @@ const Index = () => {
                 <iframe
                   width="100%"
                   height="100%"
-                  src="https://www.youtube.com/embed/XtmRhHvXeyo"
+                  src="https://www.youtube.com/embed/XtmRhHvXeyo?autoplay=1&mute=1"
                   title="RISE Football Video 2"
                   frameBorder="0"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
