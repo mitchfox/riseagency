@@ -57,13 +57,15 @@ serve(async (req) => {
       let muscleGroups: string[] = [];
       
       try {
-        types = JSON.parse(typeStr.replace(/\[""/, '["').replace(/""\]/, '"]'));
+        const parsed = JSON.parse(typeStr.replace(/\[""/, '["').replace(/""\]/, '"]'));
+        types = Array.isArray(parsed) ? parsed : [];
       } catch (e) {
         types = [];
       }
       
       try {
-        muscleGroups = JSON.parse(muscleGroupStr.replace(/\[""/, '["').replace(/""\]/, '"]'));
+        const parsed = JSON.parse(muscleGroupStr.replace(/\[""/, '["').replace(/""\]/, '"]'));
+        muscleGroups = Array.isArray(parsed) ? parsed : [];
       } catch (e) {
         muscleGroups = [];
       }
