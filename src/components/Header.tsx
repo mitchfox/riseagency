@@ -5,7 +5,7 @@ import { X, MessageCircle, Users, LogIn } from "lucide-react";
 import { TbMenu } from "react-icons/tb";
 import workingTogether from "@/assets/menu-working-together.jpg";
 import playerPortalImage from "@/assets/menu-player-portal.png";
-import blackMarbleBg from "@/assets/black-marble-menu.png";
+import blackMarbleBg from "@/assets/black-marble-smudged.png";
 import {
   Drawer,
   DrawerClose,

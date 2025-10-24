@@ -3,7 +3,7 @@ import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import bannerHero from "@/assets/banner-hero.jpg";
-import blackMarble from "@/assets/black-marble-bg.png";
+import blackMarble from "@/assets/black-marble-smudged.png";
 import celebration1 from "@/assets/gallery/celebration-1.jpg";
 import matchAction2 from "@/assets/gallery/match-action-2.jpg";
 import matchAction3 from "@/assets/gallery/match-action-3.jpg";

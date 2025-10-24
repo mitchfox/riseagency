@@ -3,7 +3,7 @@ import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import bannerHero from "@/assets/banner-hero.jpg";
-import blackMarble from "@/assets/black-marble-bg.png";
+import blackMarble from "@/assets/black-marble-smudged.png";
 import coachesSection from "@/assets/coaches-section.png";
 import coachesSection2 from "@/assets/coaches-section-2.png";
 import coachesNetwork from "@/assets/coaches-network.jpg";

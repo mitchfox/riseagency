@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { RequestScoutDialog } from "@/components/RequestScoutDialog";
 import bannerHero from "@/assets/banner-hero.jpg";
-import blackMarble from "@/assets/black-marble-bg.png";
+import blackMarble from "@/assets/black-marble-smudged.png";
 import scoutsNetwork from "@/assets/scouts-network.jpg";
 import matchAction1 from "@/assets/gallery/match-action-1.jpg";
 import teamDiscussion from "@/assets/gallery/team-discussion.jpg";
