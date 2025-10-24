@@ -162,6 +162,9 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
 
       if (error) throw error;
 
+      const sessions = (data.sessions || {}) as any;
+      const weeklySchedules = (data.weekly_schedules || []) as any[];
+
       setSelectedProgram(data);
       setProgrammingData({
         phaseName: data.phase_name || '',
@@ -169,15 +172,15 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
         phaseImageUrl: data.phase_image_url || '',
         playerImageUrl: data.player_image_url || '',
         overviewText: data.overview_text || '',
-        sessionA: data.sessions?.sessionA || emptySession(),
-        sessionB: data.sessions?.sessionB || emptySession(),
-        sessionC: data.sessions?.sessionC || emptySession(),
-        sessionD: data.sessions?.sessionD || emptySession(),
-        sessionE: data.sessions?.sessionE || emptySession(),
-        sessionF: data.sessions?.sessionF || emptySession(),
-        sessionG: data.sessions?.sessionG || emptySession(),
-        sessionH: data.sessions?.sessionH || emptySession(),
-        weeklySchedules: data.weekly_schedules || [],
+        sessionA: sessions.sessionA || emptySession(),
+        sessionB: sessions.sessionB || emptySession(),
+        sessionC: sessions.sessionC || emptySession(),
+        sessionD: sessions.sessionD || emptySession(),
+        sessionE: sessions.sessionE || emptySession(),
+        sessionF: sessions.sessionF || emptySession(),
+        sessionG: sessions.sessionG || emptySession(),
+        sessionH: sessions.sessionH || emptySession(),
+        weeklySchedules: weeklySchedules,
         testing: ''
       });
     } catch (error) {
@@ -240,8 +243,8 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
             sessionF: programmingData.sessionF,
             sessionG: programmingData.sessionG,
             sessionH: programmingData.sessionH,
-          },
-          weekly_schedules: programmingData.weeklySchedules,
+          } as any,
+          weekly_schedules: programmingData.weeklySchedules as any,
         })
         .eq('id', selectedProgram.id);
 
@@ -795,7 +798,7 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
                                   </SelectContent>
                                 </Select>
                               </div>
-                            )))}
+                            ))}
                           </div>
 
                           <div className="space-y-2">
@@ -809,7 +812,7 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
                           </div>
                         </CardContent>
                       </Card>
-                    )))}
+                    ))}
 
                     {programmingData.weeklySchedules.length === 0 && (
                       <div className="text-center text-muted-foreground py-8">
