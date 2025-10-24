@@ -706,7 +706,7 @@ const Dashboard = () => {
                                                     {hasPreSession && (
                                                       <TabsTrigger
                                                         value="pre"
-                                                        className="font-bebas uppercase text-sm"
+                                                        className="font-bebas uppercase text-sm data-[state=active]:bg-[hsl(45,70%,55%)] data-[state=active]:text-black"
                                                         style={{
                                                           backgroundColor: getSessionColor(preKey).bg,
                                                           color: getSessionColor(preKey).text,
@@ -718,7 +718,7 @@ const Dashboard = () => {
                                                     {mainSession && (
                                                       <TabsTrigger
                                                         value="main"
-                                                        className="font-bebas uppercase text-sm"
+                                                        className="font-bebas uppercase text-sm data-[state=active]:bg-[hsl(45,70%,55%)] data-[state=active]:text-black"
                                                         style={{
                                                           backgroundColor: getSessionColor(mainKey).bg,
                                                           color: getSessionColor(mainKey).text,
