@@ -56,6 +56,8 @@ const PlayerDetail = () => {
                       const innerBio = JSON.parse(parsed.bio);
                       if (typeof innerBio === 'object' && innerBio.text) {
                         bioText = innerBio.text;
+                        // Merge inner bio data with bioData
+                        bioData = { ...bioData, ...innerBio };
                       } else if (typeof innerBio === 'string') {
                         bioText = innerBio;
                       } else {
