@@ -9,6 +9,7 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -16,6 +17,7 @@ const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
+  const [rememberMe, setRememberMe] = useState(true);
 
   useEffect(() => {
     // Check if user is already logged in
@@ -102,29 +104,43 @@ const Login = () => {
               </TabsList>
 
               <TabsContent value="signin">
-                <form onSubmit={handleSignIn} className="space-y-4">
+                <form onSubmit={handleSignIn} className="space-y-4" autoComplete="on">
                   <div className="space-y-2">
                     <Label htmlFor="signin-email">Email</Label>
                     <Input
                       id="signin-email"
+                      name="email"
                       type="email"
                       placeholder="your.email@example.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
                       disabled={loading}
+                      autoComplete="email"
                     />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="signin-password">Password</Label>
                     <Input
                       id="signin-password"
+                      name="password"
                       type="password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       required
                       disabled={loading}
+                      autoComplete="current-password"
                     />
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="remember-me"
+                      checked={rememberMe}
+                      onCheckedChange={(checked) => setRememberMe(checked as boolean)}
+                    />
+                    <Label htmlFor="remember-me" className="text-sm cursor-pointer">
+                      Remember me
+                    </Label>
                   </div>
                   <Button 
                     type="submit" 

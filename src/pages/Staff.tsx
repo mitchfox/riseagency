@@ -12,6 +12,7 @@ import PlayerManagement from "@/components/staff/PlayerManagement";
 import BlogManagement from "@/components/staff/BlogManagement";
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const Staff = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -19,6 +20,7 @@ const Staff = () => {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(true);
   const [isStaff, setIsStaff] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -154,6 +156,16 @@ const Staff = () => {
                       required
                       autoComplete="current-password"
                     />
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="remember-me-staff"
+                      checked={rememberMe}
+                      onCheckedChange={(checked) => setRememberMe(checked as boolean)}
+                    />
+                    <Label htmlFor="remember-me-staff" className="text-sm cursor-pointer">
+                      Remember me
+                    </Label>
                   </div>
                   <Button type="submit" className="w-full" disabled={loading}>
                     {loading ? "Logging in..." : "Access Dashboard"}
