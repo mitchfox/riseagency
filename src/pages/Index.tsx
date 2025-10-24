@@ -130,7 +130,7 @@ const Index = () => {
         </section>
 
         {/* Agency Overview Section */}
-        <section className="py-32 px-4 bg-background relative snap-start snap-always min-h-screen flex items-center">
+        <section className="py-16 px-4 bg-background relative snap-start snap-always min-h-screen flex items-center">
           <div className="absolute inset-0 bg-gradient-to-b from-transparent via-primary/5 to-transparent"></div>
           <div className="container mx-auto max-w-5xl relative z-10">
             <div className="text-center space-y-8 animate-fade-in">
@@ -164,9 +164,9 @@ const Index = () => {
         </section>
 
         {/* News Section */}
-        <section className="py-32 px-4 bg-background snap-start snap-always min-h-screen flex items-center">
+        <section className="py-16 px-4 bg-background snap-start snap-always min-h-screen flex items-center">
           <div className="container mx-auto max-w-7xl w-full">
-            <div className="flex items-center justify-between mb-16">
+            <div className="flex items-center justify-between mb-8">
               <h2 className="text-5xl md:text-7xl font-bebas uppercase tracking-wider text-foreground">
                 News
               </h2>
@@ -213,7 +213,7 @@ const Index = () => {
                   </div>
 
                   {/* Title - moves up on hover */}
-                  <div className="absolute bottom-0 left-0 right-0 p-6 transition-all duration-300 group-hover:-translate-y-8">
+                  <div className="absolute bottom-0 left-0 right-0 p-6 transition-all duration-300 group-hover:-translate-y-16">
                     <h3 className="text-xl md:text-2xl font-bebas uppercase text-white leading-tight">
                       {article.title}
                     </h3>
@@ -233,9 +233,9 @@ const Index = () => {
 
         {/* INSIDE:ACCESS Section */}
         {insideAccessArticles.length > 0 && (
-          <section className="py-32 px-4 bg-background snap-start snap-always min-h-screen flex items-center">
+          <section className="py-16 px-4 bg-background snap-start snap-always min-h-screen flex items-center">
             <div className="container mx-auto max-w-7xl w-full">
-              <div className="text-center mb-16 space-y-4">
+              <div className="text-center mb-8 space-y-4">
                 <div className="inline-block">
                   <span className="text-sm font-bebas uppercase tracking-widest text-primary border border-primary/30 px-6 py-2 rounded-full">
                     Exclusive Content
@@ -268,9 +268,9 @@ const Index = () => {
         )}
 
         {/* WATCH NOW Section */}
-        <section className="py-32 px-4 bg-muted/30 snap-start snap-always min-h-screen flex items-center">
+        <section className="py-16 px-4 bg-muted/30 snap-start snap-always min-h-screen flex items-center">
           <div className="container mx-auto max-w-7xl">
-            <div className="text-center mb-16 space-y-4">
+            <div className="text-center mb-8 space-y-4">
               <div className="inline-block">
                 <span className="text-sm font-bebas uppercase tracking-widest text-primary border border-primary/30 px-6 py-2 rounded-full">
                   Video Content
@@ -313,10 +313,10 @@ const Index = () => {
         </section>
 
         {/* Inbound CTA Section - Moved to top */}
-        <section className="py-32 px-4 bg-background relative overflow-hidden snap-start snap-always min-h-screen flex items-center">
+        <section className="py-16 px-4 bg-background relative overflow-hidden snap-start snap-always min-h-screen flex items-center">
           <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-transparent to-primary/5"></div>
           <div className="container mx-auto max-w-7xl relative z-10">
-            <div className="text-center mb-20 space-y-4">
+            <div className="text-center mb-12 space-y-4">
               <div className="inline-block">
                 <span className="text-sm font-bebas uppercase tracking-widest text-primary border border-primary/30 px-6 py-2 rounded-full">
                   Our Network
