@@ -13,7 +13,6 @@ const Login = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
-  const [magicLinkSent, setMagicLinkSent] = useState(false);
 
   useEffect(() => {
     // Check if user is already logged in
@@ -32,23 +31,61 @@ const Login = () => {
     return () => subscription.unsubscribe();
   }, [navigate]);
 
-  const handleMagicLink = async (e: React.FormEvent) => {
+  const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      const { error } = await supabase.auth.signInWithOtp({
+      // Check if email exists in players table
+      const { data: player, error: playerError } = await supabase
+        .from("players")
+        .select("id, email")
+        .eq("email", email)
+        .maybeSingle();
+
+      if (playerError) throw playerError;
+      
+      if (!player) {
+        toast.error("Email not found. Please contact your coach to get access.");
+        setLoading(false);
+        return;
+      }
+
+      // Use a default password for all players (simplified authentication)
+      const defaultPassword = "RisePortal2025!";
+      
+      // Try to sign in first
+      const { error: signInError } = await supabase.auth.signInWithPassword({
         email,
-        options: {
-          emailRedirectTo: `${window.location.origin}/dashboard`,
-        },
+        password: defaultPassword,
       });
 
-      if (error) throw error;
-      setMagicLinkSent(true);
-      toast.success("Magic link sent! Check your email to sign in.");
+      // If sign in fails, create the account
+      if (signInError) {
+        const { error: signUpError } = await supabase.auth.signUp({
+          email,
+          password: defaultPassword,
+          options: {
+            emailRedirectTo: `${window.location.origin}/dashboard`,
+          },
+        });
+
+        if (signUpError) throw signUpError;
+        
+        // After signup, sign in
+        const { error: finalSignInError } = await supabase.auth.signInWithPassword({
+          email,
+          password: defaultPassword,
+        });
+        
+        if (finalSignInError) throw finalSignInError;
+      }
+
+      toast.success("Welcome to your portal!");
+      navigate("/dashboard");
     } catch (error: any) {
-      toast.error(error.message || "Failed to send magic link");
+      console.error("Login error:", error);
+      toast.error(error.message || "Failed to log in");
     } finally {
       setLoading(false);
     }
@@ -69,55 +106,32 @@ const Login = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {magicLinkSent ? (
-              <div className="text-center py-8 space-y-4">
-                <div className="text-6xl mb-4">📧</div>
-                <h3 className="text-2xl font-bebas uppercase tracking-wider">Check your email</h3>
-                <p className="text-muted-foreground">
-                  We've sent a magic link to <strong>{email}</strong>
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Click the link in your email to access your portal
-                </p>
-                <Button 
-                  variant="outline"
-                  onClick={() => {
-                    setMagicLinkSent(false);
-                    setEmail("");
-                  }}
-                  className="mt-4"
-                >
-                  Try different email
-                </Button>
-              </div>
-            ) : (
-              <form onSubmit={handleMagicLink} className="space-y-6">
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email Address</Label>
-                  <Input
-                    id="email"
-                    name="email"
-                    type="email"
-                    placeholder="your.email@example.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    disabled={loading}
-                    autoComplete="email"
-                  />
-                  <p className="text-sm text-muted-foreground">
-                    No password needed - we'll send you a secure link
-                  </p>
-                </div>
-                <Button 
-                  type="submit" 
-                  className="w-full btn-shine font-bebas text-lg uppercase tracking-wider"
+            <form onSubmit={handleEmailLogin} className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="email">Email Address</Label>
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  placeholder="your.email@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
                   disabled={loading}
-                >
-                  {loading ? "Sending link..." : "Send Magic Link"}
-                </Button>
-              </form>
-            )}
+                  autoComplete="email"
+                />
+                <p className="text-sm text-muted-foreground">
+                  Enter your email to access your portal
+                </p>
+              </div>
+              <Button 
+                type="submit" 
+                className="w-full btn-shine font-bebas text-lg uppercase tracking-wider"
+                disabled={loading}
+              >
+                {loading ? "Signing in..." : "Access Portal"}
+              </Button>
+            </form>
           </CardContent>
         </Card>
         </div>
