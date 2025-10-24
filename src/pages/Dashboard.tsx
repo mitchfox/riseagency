@@ -545,38 +545,127 @@ const Dashboard = () => {
                                       Sessions
                                     </AccordionTrigger>
                                     <AccordionContent>
-                                      <div className="space-y-3">
+                                      <Tabs defaultValue={Object.keys(program.sessions)[0]} className="w-full">
+                                        <TabsList className="grid w-full gap-2" style={{ gridTemplateColumns: `repeat(${Object.keys(program.sessions).length}, 1fr)` }}>
+                                          {Object.keys(program.sessions).map((key) => {
+                                            const colors = getSessionColor(key);
+                                            const isPre = key.toLowerCase().includes('pre');
+                                            return (
+                                              <TabsTrigger
+                                                key={key}
+                                                value={key}
+                                                className="font-bebas uppercase text-sm"
+                                                style={{
+                                                  backgroundColor: colors.bg,
+                                                  color: colors.text,
+                                                }}
+                                              >
+                                                {isPre ? `Warmup ${key}` : `Session ${key}`}
+                                              </TabsTrigger>
+                                            );
+                                          })}
+                                        </TabsList>
+                                        
                                         {Object.entries(program.sessions).map(([key, session]: [string, any]) => {
                                           const colors = getSessionColor(key);
                                           return (
-                                            <div 
-                                              key={key} 
-                                              className="rounded-lg p-4"
-                                              style={{ 
-                                                backgroundColor: colors.bg,
-                                              }}
-                                            >
-                                              <h5 
-                                                className="font-bebas text-lg mb-2 uppercase"
-                                                style={{ color: colors.text }}
-                                              >
-                                                Session {key}
-                                              </h5>
-                                              {session.exercises && Array.isArray(session.exercises) && (
-                                                <div className="space-y-1">
-                                                  {session.exercises.map((exercise: any, idx: number) => (
-                                                    <div key={idx} className="text-sm" style={{ color: 'rgba(255, 255, 255, 0.9)' }}>
-                                                      <span className="font-medium">{exercise.name || exercise}</span>
-                                                      {exercise.repetitions && <span className="opacity-80 ml-2">• {exercise.repetitions}</span>}
-                                                      {exercise.sets && <span className="opacity-80 ml-1">× {exercise.sets} sets</span>}
+                                            <TabsContent key={key} value={key} className="mt-4">
+                                              {session.exercises && Array.isArray(session.exercises) && session.exercises.length > 0 && (
+                                                <div className="border rounded-lg overflow-hidden">
+                                                  {/* Table Header */}
+                                                  <div 
+                                                    className="grid grid-cols-4 gap-px"
+                                                    style={{ backgroundColor: colors.bg }}
+                                                  >
+                                                    <div 
+                                                      className="p-3 font-bebas uppercase text-sm"
+                                                      style={{ 
+                                                        backgroundColor: 'hsl(45, 70%, 55%)',
+                                                        color: 'hsl(0, 0%, 0%)'
+                                                      }}
+                                                    >
+                                                      Exercise Name
                                                     </div>
-                                                  ))}
+                                                    <div 
+                                                      className="p-3 font-bebas uppercase text-sm text-center"
+                                                      style={{ 
+                                                        backgroundColor: 'hsl(45, 70%, 55%)',
+                                                        color: 'hsl(0, 0%, 0%)'
+                                                      }}
+                                                    >
+                                                      Repetitions
+                                                    </div>
+                                                    <div 
+                                                      className="p-3 font-bebas uppercase text-sm text-center"
+                                                      style={{ 
+                                                        backgroundColor: 'hsl(45, 70%, 55%)',
+                                                        color: 'hsl(0, 0%, 0%)'
+                                                      }}
+                                                    >
+                                                      Sets
+                                                    </div>
+                                                    <div 
+                                                      className="p-3 font-bebas uppercase text-sm text-center"
+                                                      style={{ 
+                                                        backgroundColor: 'hsl(45, 70%, 55%)',
+                                                        color: 'hsl(0, 0%, 0%)'
+                                                      }}
+                                                    >
+                                                      Load
+                                                    </div>
+                                                  </div>
+                                                  
+                                                  {/* Table Body */}
+                                                  <div>
+                                                    {session.exercises.map((exercise: any, idx: number) => (
+                                                      <div 
+                                                        key={idx}
+                                                        className="grid grid-cols-4 gap-px border-t"
+                                                        style={{ 
+                                                          backgroundColor: idx % 2 === 0 ? 'hsl(0, 0%, 95%)' : 'hsl(0, 0%, 10%)'
+                                                        }}
+                                                      >
+                                                        <div 
+                                                          className="p-3 text-sm"
+                                                          style={{ 
+                                                            color: idx % 2 === 0 ? 'hsl(0, 0%, 0%)' : 'hsl(0, 0%, 100%)'
+                                                          }}
+                                                        >
+                                                          {exercise.name || exercise}
+                                                        </div>
+                                                        <div 
+                                                          className="p-3 text-sm text-center italic"
+                                                          style={{ 
+                                                            color: idx % 2 === 0 ? 'hsl(0, 0%, 0%)' : 'hsl(0, 0%, 100%)'
+                                                          }}
+                                                        >
+                                                          {exercise.repetitions || '-'}
+                                                        </div>
+                                                        <div 
+                                                          className="p-3 text-sm text-center italic"
+                                                          style={{ 
+                                                            color: idx % 2 === 0 ? 'hsl(0, 0%, 0%)' : 'hsl(0, 0%, 100%)'
+                                                          }}
+                                                        >
+                                                          {exercise.sets || '-'}
+                                                        </div>
+                                                        <div 
+                                                          className="p-3 text-sm text-center italic"
+                                                          style={{ 
+                                                            color: idx % 2 === 0 ? 'hsl(0, 0%, 0%)' : 'hsl(0, 0%, 100%)'
+                                                          }}
+                                                        >
+                                                          {exercise.load && exercise.load !== "'-" ? exercise.load : '-'}
+                                                        </div>
+                                                      </div>
+                                                    ))}
+                                                  </div>
                                                 </div>
                                               )}
-                                            </div>
+                                            </TabsContent>
                                           );
                                         })}
-                                      </div>
+                                      </Tabs>
                                     </AccordionContent>
                                   </AccordionItem>
                                 )}
