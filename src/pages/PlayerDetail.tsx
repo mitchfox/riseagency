@@ -188,8 +188,8 @@ const PlayerDetail = () => {
   return (
     <>
       <Header />
-      <div className="min-h-screen bg-background pt-16">
-        <main className="container mx-auto px-4 py-2">
+      <div className="min-h-screen bg-background pt-16 overflow-x-hidden">
+        <main className="container mx-auto px-4 py-2 touch-pan-y">
           {/* Back Button */}
           <div className="mb-2">
             <Button
@@ -227,9 +227,6 @@ const PlayerDetail = () => {
                   src={getCountryFlagUrl(player.nationality)} 
                   alt={player.nationality}
                   className="w-6 h-4 object-cover rounded"
-                  onError={(e) => {
-                    e.currentTarget.style.display = 'none';
-                  }}
                 />
                 {player.nationality}
               </p>
@@ -317,9 +314,6 @@ const PlayerDetail = () => {
                         src={highlight.clubLogo} 
                         alt={highlight.name || `Highlight ${index + 1}`}
                         className="w-full h-full object-contain p-0.5"
-                        onError={(e) => {
-                          e.currentTarget.style.display = 'none';
-                        }}
                       />
                     </button>
                   ))}
@@ -379,45 +373,49 @@ const PlayerDetail = () => {
                   Minutes
                 </div>
               </div>
-              {player.stats?.goals !== undefined && player.position !== 'GK' && (
-                <div className="text-center p-6 bg-background">
-                  <div className="text-4xl font-bbh text-primary mb-2">
-                    {player.stats.goals}
+              {player.position !== 'GK' && (
+                <>
+                  <div className="text-center p-6 bg-background">
+                    <div className="text-4xl font-bbh text-primary mb-2">
+                      {player.stats?.goals || 0}
+                    </div>
+                    <div className="text-sm text-muted-foreground uppercase tracking-widest font-semibold">
+                      Goals
+                    </div>
                   </div>
-                  <div className="text-sm text-muted-foreground uppercase tracking-widest font-semibold">
-                    Goals
+                  <div className="text-center p-6 bg-background">
+                    <div className="text-4xl font-bbh text-primary mb-2">
+                      {player.stats?.assists || 0}
+                    </div>
+                    <div className="text-sm text-muted-foreground uppercase tracking-widest font-semibold">
+                      Assists
+                    </div>
                   </div>
-                </div>
+                </>
               )}
-              {player.stats?.assists !== undefined && player.position !== 'GK' && (
-                <div className="text-center p-6 bg-background">
-                  <div className="text-4xl font-bbh text-primary mb-2">
-                    {player.stats.assists}
-                  </div>
-                  <div className="text-sm text-muted-foreground uppercase tracking-widest font-semibold">
-                    Assists
-                  </div>
-                </div>
-              )}
-              {player.stats?.cleanSheets !== undefined && player.position === 'GK' && (
-                <div className="text-center p-6 bg-background">
-                  <div className="text-4xl font-bbh text-primary mb-2">
-                    {player.stats.cleanSheets}
-                  </div>
-                  <div className="text-sm text-muted-foreground uppercase tracking-widest font-semibold">
-                    Clean Sheets
-                  </div>
-                </div>
-              )}
-              {player.stats?.saves !== undefined && player.position === 'GK' && (
-                <div className="text-center p-6 bg-background">
-                  <div className="text-4xl font-bbh text-primary mb-2">
-                    {player.stats.saves}
-                  </div>
-                  <div className="text-sm text-muted-foreground uppercase tracking-widest font-semibold">
-                    Saves
-                  </div>
-                </div>
+              {player.position === 'GK' && (
+                <>
+                  {player.stats?.cleanSheets != null && (
+                    <div className="text-center p-6 bg-background">
+                      <div className="text-4xl font-bbh text-primary mb-2">
+                        {player.stats.cleanSheets}
+                      </div>
+                      <div className="text-sm text-muted-foreground uppercase tracking-widest font-semibold">
+                        Clean Sheets
+                      </div>
+                    </div>
+                  )}
+                  {player.stats?.saves != null && (
+                    <div className="text-center p-6 bg-background">
+                      <div className="text-4xl font-bbh text-primary mb-2">
+                        {player.stats.saves}
+                      </div>
+                      <div className="text-sm text-muted-foreground uppercase tracking-widest font-semibold">
+                        Saves
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </div>
@@ -495,9 +493,6 @@ const PlayerDetail = () => {
                       src={player.tacticalFormations[currentFormationIndex].clubLogo} 
                       alt={player.tacticalFormations[currentFormationIndex].club}
                       className="w-16 h-16 object-contain transition-all duration-500"
-                      onError={(e) => {
-                        e.currentTarget.style.display = 'none';
-                      }}
                     />
                     <div className="text-center">
                       <div className="text-2xl font-bebas text-foreground uppercase tracking-wider transition-all duration-500">
