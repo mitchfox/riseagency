@@ -52,6 +52,9 @@ const PlayerManagement = () => {
   const [expandedPlayerId, setExpandedPlayerId] = useState<string | null>(null);
   const [showingAnalysisFor, setShowingAnalysisFor] = useState<string | null>(null);
   const [playerAnalyses, setPlayerAnalyses] = useState<Record<string, any[]>>({});
+  const [isAnalysisDialogOpen, setIsAnalysisDialogOpen] = useState(false);
+  const [currentPlayerId, setCurrentPlayerId] = useState<string | null>(null);
+  const [uploadingFiles, setUploadingFiles] = useState(false);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -99,6 +102,16 @@ const PlayerManagement = () => {
     minutes: "",
     clean_sheets: "",
     saves: "",
+  });
+
+  const [analysisData, setAnalysisData] = useState({
+    opponent: "",
+    result: "",
+    date: "",
+    minutes_played: "",
+    r90_score: "",
+    pdf_file: null as File | null,
+    video_file: null as File | null,
   });
 
   useEffect(() => {
@@ -338,6 +351,85 @@ const PlayerManagement = () => {
     if (score >= 1.0 && score < 1.5) return "bg-lime-400";
     if (score >= 1.5 && score < 2.5) return "bg-green-500";
     return "bg-green-700";
+  };
+
+  const handleAnalysisSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!currentPlayerId) return;
+    
+    setUploadingFiles(true);
+    try {
+      let pdfUrl = null;
+      let videoUrl = null;
+
+      // Upload PDF if provided
+      if (analysisData.pdf_file) {
+        const pdfPath = `${currentPlayerId}/${Date.now()}-${analysisData.pdf_file.name}`;
+        const { error: pdfError } = await supabase.storage
+          .from('analysis-files')
+          .upload(pdfPath, analysisData.pdf_file);
+        
+        if (pdfError) throw pdfError;
+        
+        const { data: pdfData } = supabase.storage
+          .from('analysis-files')
+          .getPublicUrl(pdfPath);
+        pdfUrl = pdfData.publicUrl;
+      }
+
+      // Upload video if provided
+      if (analysisData.video_file) {
+        const videoPath = `${currentPlayerId}/${Date.now()}-${analysisData.video_file.name}`;
+        const { error: videoError } = await supabase.storage
+          .from('analysis-files')
+          .upload(videoPath, analysisData.video_file);
+        
+        if (videoError) throw videoError;
+        
+        const { data: videoData } = supabase.storage
+          .from('analysis-files')
+          .getPublicUrl(videoPath);
+        videoUrl = videoData.publicUrl;
+      }
+
+      // Insert analysis record
+      const { error } = await supabase
+        .from('player_analysis')
+        .insert({
+          player_id: currentPlayerId,
+          analysis_date: analysisData.date,
+          opponent: analysisData.opponent,
+          result: analysisData.result,
+          minutes_played: parseInt(analysisData.minutes_played) || null,
+          r90_score: parseFloat(analysisData.r90_score),
+          pdf_url: pdfUrl,
+          video_url: videoUrl,
+        });
+
+      if (error) throw error;
+
+      toast.success("Analysis added successfully");
+      setIsAnalysisDialogOpen(false);
+      setAnalysisData({
+        opponent: "",
+        result: "",
+        date: "",
+        minutes_played: "",
+        r90_score: "",
+        pdf_file: null,
+        video_file: null,
+      });
+      fetchAllAnalyses();
+    } catch (error: any) {
+      toast.error("Failed to add analysis: " + error.message);
+    } finally {
+      setUploadingFiles(false);
+    }
+  };
+
+  const openAnalysisDialog = (playerId: string) => {
+    setCurrentPlayerId(playerId);
+    setIsAnalysisDialogOpen(true);
   };
 
   if (loading && players.length === 0) {
@@ -622,57 +714,56 @@ const PlayerManagement = () => {
                     <div className="border-t pt-4 space-y-4">
                       <div className="flex justify-between items-center">
                         <h4 className="text-lg font-semibold">Player Analysis</h4>
-                        <Button size="sm" onClick={() => toast.info("Add new analysis coming soon")}>
+                        <Button size="sm" onClick={() => openAnalysisDialog(player.id)}>
                           Add New Analysis
                         </Button>
                       </div>
                       
-                      {(!playerAnalyses[player.id] || playerAnalyses[player.id].length === 0) ? (
-                        <p className="text-sm text-muted-foreground text-center py-4">
-                          No analysis data yet. Click "Add New Analysis" to get started.
-                        </p>
-                      ) : (
-                        <div className="space-y-2">
-                          {playerAnalyses[player.id].map((analysis) => (
-                            <div 
-                              key={analysis.id} 
-                              className="flex items-center gap-3 border rounded-lg p-3 hover:border-primary transition-colors"
+                      <div className="space-y-2">
+                        {(playerAnalyses[player.id] || []).map((analysis) => (
+                          <div 
+                            key={analysis.id} 
+                            className="flex items-center gap-3 border rounded-lg p-3 hover:border-primary transition-colors"
+                          >
+                            <span className="text-sm text-muted-foreground min-w-[80px]">
+                              {new Date(analysis.analysis_date).toLocaleDateString('en-GB')}
+                            </span>
+                            
+                            <button
+                              onClick={() => toast.info("Performance report coming soon")}
+                              className={`${getR90Color(analysis.r90_score)} text-white px-3 py-1 rounded font-bold hover:opacity-80 transition-opacity cursor-pointer`}
                             >
-                              <span className="text-sm text-muted-foreground min-w-[80px]">
-                                {new Date(analysis.analysis_date).toLocaleDateString('en-GB')}
-                              </span>
-                              
-                              <button
-                                onClick={() => toast.info("Performance report coming soon")}
-                                className={`${getR90Color(analysis.r90_score)} text-white px-3 py-1 rounded font-bold hover:opacity-80 transition-opacity cursor-pointer`}
+                              R90: {analysis.r90_score?.toFixed(2)}
+                            </button>
+                            
+                            {analysis.pdf_url && (
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => window.open(analysis.pdf_url, '_blank')}
                               >
-                                R90: {analysis.r90_score.toFixed(2)}
-                              </button>
-                              
-                              {analysis.pdf_url && (
-                                <Button 
-                                  variant="outline" 
-                                  size="sm"
-                                  onClick={() => window.open(analysis.pdf_url, '_blank')}
-                                >
-                                  <FileText className="w-4 h-4 mr-1" />
-                                  PDF
-                                </Button>
-                              )}
-                              
-                              {analysis.video_url && (
-                                <Button 
-                                  variant="outline" 
-                                  size="sm"
-                                  onClick={() => window.open(analysis.video_url, '_blank')}
-                                >
-                                  📹 Video
-                                </Button>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      )}
+                                <FileText className="w-4 h-4 mr-1" />
+                                PDF
+                              </Button>
+                            )}
+                            
+                            {analysis.video_url && (
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => window.open(analysis.video_url, '_blank')}
+                              >
+                                📹 Video
+                              </Button>
+                            )}
+                          </div>
+                        ))}
+                        {(!playerAnalyses[player.id] || playerAnalyses[player.id].length === 0) && (
+                          <p className="text-sm text-muted-foreground text-center py-4">
+                            No analysis data yet. Click "Add New Analysis" to create one.
+                          </p>
+                        )}
+                      </div>
                     </div>
                   )}
                 </CardContent>
@@ -681,6 +772,89 @@ const PlayerManagement = () => {
           );
         })}
       </div>
+
+      {/* Analysis Dialog */}
+      <Dialog open={isAnalysisDialogOpen} onOpenChange={setIsAnalysisDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Add New Analysis</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleAnalysisSubmit} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="opponent">Opponent *</Label>
+                <Input
+                  id="opponent"
+                  value={analysisData.opponent}
+                  onChange={(e) => setAnalysisData({ ...analysisData, opponent: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="result">Result *</Label>
+                <Input
+                  id="result"
+                  placeholder="e.g., 2-1 Win"
+                  value={analysisData.result}
+                  onChange={(e) => setAnalysisData({ ...analysisData, result: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="date">Date *</Label>
+                <Input
+                  id="date"
+                  type="date"
+                  value={analysisData.date}
+                  onChange={(e) => setAnalysisData({ ...analysisData, date: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="minutes_played">Minutes Played</Label>
+                <Input
+                  id="minutes_played"
+                  type="number"
+                  value={analysisData.minutes_played}
+                  onChange={(e) => setAnalysisData({ ...analysisData, minutes_played: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="r90_score">R90 Score *</Label>
+                <Input
+                  id="r90_score"
+                  type="number"
+                  step="0.01"
+                  value={analysisData.r90_score}
+                  onChange={(e) => setAnalysisData({ ...analysisData, r90_score: e.target.value })}
+                  required
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="pdf_file">PDF Report</Label>
+              <Input
+                id="pdf_file"
+                type="file"
+                accept=".pdf"
+                onChange={(e) => setAnalysisData({ ...analysisData, pdf_file: e.target.files?.[0] || null })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="video_file">Video Analysis</Label>
+              <Input
+                id="video_file"
+                type="file"
+                accept="video/*"
+                onChange={(e) => setAnalysisData({ ...analysisData, video_file: e.target.files?.[0] || null })}
+              />
+            </div>
+            <Button type="submit" disabled={uploadingFiles}>
+              {uploadingFiles ? "Uploading..." : "Add Analysis"}
+            </Button>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

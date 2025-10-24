@@ -66,10 +66,13 @@ export type Database = {
           analysis_date: string
           created_at: string
           id: string
+          minutes_played: number | null
           notes: string | null
+          opponent: string | null
           pdf_url: string | null
           player_id: string
           r90_score: number
+          result: string | null
           updated_at: string
           video_url: string | null
         }
@@ -77,10 +80,13 @@ export type Database = {
           analysis_date: string
           created_at?: string
           id?: string
+          minutes_played?: number | null
           notes?: string | null
+          opponent?: string | null
           pdf_url?: string | null
           player_id: string
           r90_score: number
+          result?: string | null
           updated_at?: string
           video_url?: string | null
         }
@@ -88,10 +94,13 @@ export type Database = {
           analysis_date?: string
           created_at?: string
           id?: string
+          minutes_played?: number | null
           notes?: string | null
+          opponent?: string | null
           pdf_url?: string | null
           player_id?: string
           r90_score?: number
+          result?: string | null
           updated_at?: string
           video_url?: string | null
         }
