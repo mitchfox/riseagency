@@ -174,12 +174,12 @@ const PerformanceReport = () => {
 
             <div className="grid grid-cols-3 gap-4 p-4 bg-accent/20 rounded-lg">
               <div className="text-center">
-                <p className="text-sm text-muted-foreground mb-1">R Score</p>
+                <p className="text-sm text-muted-foreground mb-1">Raw Score</p>
                 <p className="text-2xl font-bold">{calculateRScore()}</p>
               </div>
-              <div className="text-center">
-                <p className="text-sm text-muted-foreground mb-1">R90 Score</p>
-                <p className="text-2xl font-bold">{analysis.r90_score?.toFixed(2) || "N/A"}</p>
+              <div className="text-center bg-primary text-primary-foreground rounded-lg p-4 -m-2">
+                <p className="text-sm mb-1 opacity-90">R90 Score</p>
+                <p className="text-3xl font-bold">{analysis.r90_score?.toFixed(2) || "N/A"}</p>
               </div>
               <div className="text-center">
                 <p className="text-sm text-muted-foreground mb-1">Minutes Played</p>
