@@ -52,7 +52,6 @@ const PlayerManagement = () => {
   const [formData, setFormData] = useState({
     name: "",
     position: "",
-    age: "",
     nationality: "",
     bio: "",
     image_url: "",
@@ -61,6 +60,29 @@ const PlayerManagement = () => {
     currentClub: "",
     whatsapp: "",
   });
+
+  // Calculate age from date of birth
+  const calculateAge = (dob: string): number => {
+    if (!dob) return 0;
+    const parts = dob.split('/');
+    if (parts.length !== 3) return 0;
+    
+    const birthDate = new Date(
+      parseInt(parts[2]), // year
+      parseInt(parts[1]) - 1, // month (0-indexed)
+      parseInt(parts[0]) // day
+    );
+    
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    
+    return age;
+  };
 
   const [externalLinks, setExternalLinks] = useState<{ label: string; url: string }[]>([]);
   const [strengthsAndPlayStyle, setStrengthsAndPlayStyle] = useState<string[]>([]);
@@ -112,6 +134,15 @@ const PlayerManagement = () => {
     setLoading(true);
 
     try {
+      // Calculate age from date of birth
+      const age = calculateAge(formData.dateOfBirth);
+      
+      if (age === 0 && formData.dateOfBirth) {
+        toast.error("Invalid date of birth format. Use DD/MM/YYYY");
+        setLoading(false);
+        return;
+      }
+
       // Combine bio text with additional structured data
       const bioData: ExpandedPlayerData & { bio?: string } = {
         bio: formData.bio,
@@ -131,7 +162,7 @@ const PlayerManagement = () => {
           .update({
             name: formData.name,
             position: formData.position,
-            age: parseInt(formData.age),
+            age: age,
             nationality: formData.nationality,
             bio: bioString,
             image_url: formData.image_url,
@@ -146,7 +177,7 @@ const PlayerManagement = () => {
           .insert({
             name: formData.name,
             position: formData.position,
-            age: parseInt(formData.age),
+            age: age,
             nationality: formData.nationality,
             bio: bioString,
             image_url: formData.image_url,
@@ -173,7 +204,6 @@ const PlayerManagement = () => {
       setFormData({ 
         name: "", 
         position: "", 
-        age: "", 
         nationality: "", 
         bio: "", 
         image_url: "",
@@ -251,7 +281,6 @@ const PlayerManagement = () => {
     setFormData({
       name: player.name,
       position: player.position,
-      age: player.age.toString(),
       nationality: player.nationality,
       bio: typeof additionalData === 'object' && additionalData.bio ? additionalData.bio : (player.bio || ""),
       image_url: player.image_url || "",
@@ -296,7 +325,6 @@ const PlayerManagement = () => {
               setFormData({ 
                 name: "", 
                 position: "", 
-                age: "", 
                 nationality: "", 
                 bio: "", 
                 image_url: "",
@@ -336,23 +364,19 @@ const PlayerManagement = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="age">Age *</Label>
-                  <Input
-                    id="age"
-                    type="number"
-                    value={formData.age}
-                    onChange={(e) => setFormData({ ...formData, age: e.target.value })}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="dateOfBirth">Date of Birth</Label>
+                  <Label htmlFor="dateOfBirth">Date of Birth (DD/MM/YYYY) *</Label>
                   <Input
                     id="dateOfBirth"
                     placeholder="DD/MM/YYYY"
                     value={formData.dateOfBirth}
                     onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
+                    required
                   />
+                  {formData.dateOfBirth && (
+                    <p className="text-sm text-muted-foreground">
+                      Age: {calculateAge(formData.dateOfBirth)} years old
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="nationality">Nationality *</Label>
