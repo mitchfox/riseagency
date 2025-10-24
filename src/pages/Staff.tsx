@@ -11,7 +11,7 @@ import PlayerManagement from "@/components/staff/PlayerManagement";
 import BlogManagement from "@/components/staff/BlogManagement";
 import BetweenTheLinesManagement from "@/components/staff/BetweenTheLinesManagement";
 import { CoachingDatabase } from "@/components/staff/CoachingDatabase";
-import { ImportExercisesButton } from "@/components/staff/ImportExercisesButton";
+
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -224,9 +224,6 @@ const Staff = () => {
           </Button>
         </div>
 
-        <div className="mb-4">
-          <ImportExercisesButton />
-        </div>
 
         <div className="space-y-4">
           {/* Players Section */}
