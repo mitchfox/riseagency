@@ -25,7 +25,7 @@ const Performance = () => {
           
           <div className="relative container mx-auto px-4 text-center z-10">
             <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-8xl font-bebas uppercase tracking-wider text-white mb-2 md:mb-4">
-              Performance
+              REALISE POTENTIAL
             </h1>
             <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-white/90 max-w-3xl mx-auto px-4">
               Elevating your game through comprehensive support and development

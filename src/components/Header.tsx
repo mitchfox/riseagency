@@ -106,6 +106,10 @@ export const Header = () => {
                     Home
                   </Link>
                 </DrawerClose>
+                
+                {/* Separator */}
+                <div className="h-px bg-white/20 my-2 mx-4" />
+                
                 <DrawerClose asChild>
                   <Link
                     to="/stars"
@@ -116,6 +120,30 @@ export const Header = () => {
                     Stars
                   </Link>
                 </DrawerClose>
+                <DrawerClose asChild>
+                  <Link
+                    to="/performance"
+                    className={`text-xl font-bebas uppercase text-white hover:text-primary transition-colors tracking-wider py-1.5 px-4 rounded ${
+                      isActive("/performance") ? "bg-primary/80 text-white" : "hover:bg-white/10"
+                    }`}
+                  >
+                    REALISE POTENTIAL
+                  </Link>
+                </DrawerClose>
+                <DrawerClose asChild>
+                  <Link
+                    to="/between-the-lines"
+                    className={`text-xl font-bebas uppercase text-white hover:text-primary transition-colors tracking-wider py-1.5 px-4 rounded ${
+                      isActive("/between-the-lines") ? "bg-primary/80 text-white" : "hover:bg-white/10"
+                    }`}
+                  >
+                    Between The Lines
+                  </Link>
+                </DrawerClose>
+                
+                {/* Separator */}
+                <div className="h-px bg-white/20 my-2 mx-4" />
+                
                 <DrawerClose asChild>
                   <Link
                     to="/players"
@@ -158,52 +186,12 @@ export const Header = () => {
                 </DrawerClose>
                 <DrawerClose asChild>
                   <Link
-                    to="/performance"
-                    className={`text-xl font-bebas uppercase text-white hover:text-primary transition-colors tracking-wider py-1.5 px-4 rounded ${
-                      isActive("/performance") ? "bg-primary/80 text-white" : "hover:bg-white/10"
-                    }`}
-                  >
-                    Performance
-                  </Link>
-                </DrawerClose>
-                <DrawerClose asChild>
-                  <Link
-                    to="/about"
-                    className={`text-xl font-bebas uppercase text-white hover:text-primary transition-colors tracking-wider py-1.5 px-4 rounded ${
-                      isActive("/about") ? "bg-primary/80 text-white" : "hover:bg-white/10"
-                    }`}
-                  >
-                    About
-                  </Link>
-                </DrawerClose>
-                <DrawerClose asChild>
-                  <Link
                     to="/contact"
                     className={`text-xl font-bebas uppercase text-white hover:text-primary transition-colors tracking-wider py-1.5 px-4 rounded ${
                       isActive("/contact") ? "bg-primary/80 text-white" : "hover:bg-white/10"
                     }`}
                   >
                     Contact
-                  </Link>
-                </DrawerClose>
-                <DrawerClose asChild>
-                  <Link
-                    to="/news"
-                    className={`text-xl font-bebas uppercase text-white hover:text-primary transition-colors tracking-wider py-1.5 px-4 rounded ${
-                      isActive("/news") ? "bg-primary/80 text-white" : "hover:bg-white/10"
-                    }`}
-                  >
-                    News
-                  </Link>
-                </DrawerClose>
-                <DrawerClose asChild>
-                  <Link
-                    to="/between-the-lines"
-                    className={`text-xl font-bebas uppercase text-white hover:text-primary transition-colors tracking-wider py-1.5 px-4 rounded ${
-                      isActive("/between-the-lines") ? "bg-primary/80 text-white" : "hover:bg-white/10"
-                    }`}
-                  >
-                    Between The Lines
                   </Link>
                 </DrawerClose>
               </nav>

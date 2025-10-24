@@ -114,7 +114,7 @@ const Index = () => {
                     variant="outline"
                     className="text-lg font-bebas uppercase tracking-widest px-10 py-7 hover:scale-105 transition-all duration-300 bg-white/10 backdrop-blur-sm border-white/30 text-white hover:bg-white/20"
                   >
-                    Work With Us
+                    RISE WITH US
                   </Button>
                 </WorkWithUsDialog>
               </div>
