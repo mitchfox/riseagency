@@ -427,7 +427,7 @@ const Dashboard = () => {
                                 </p>
                               </div>
                             ) : (
-                              <Accordion type="multiple" className="w-full">
+                              <Accordion type="single" defaultValue="schedule" className="w-full" collapsible>
                                 {/* Overview Section */}
                                 {(program.overview_text || program.phase_image_url || program.player_image_url) && (
                                   <AccordionItem value="overview">
@@ -461,6 +461,45 @@ const Dashboard = () => {
                                   </AccordionItem>
                                 )}
 
+                                {/* Schedule Section */}
+                                {((program.weekly_schedules && Array.isArray(program.weekly_schedules) && program.weekly_schedules.length > 0) || program.schedule_notes) && (
+                                  <AccordionItem value="schedule">
+                                    <AccordionTrigger className="text-xl font-bebas uppercase hover:no-underline">
+                                      Schedule
+                                    </AccordionTrigger>
+                                    <AccordionContent>
+                                      <div className="space-y-4">
+                                        {/* Weekly Schedule */}
+                                        {program.weekly_schedules && Array.isArray(program.weekly_schedules) && program.weekly_schedules.length > 0 && (
+                                          <div className="space-y-4">
+                                            {program.weekly_schedules.map((week: any, idx: number) => (
+                                              <div key={idx} className="border rounded-lg p-4">
+                                                <h6 className="font-bebas text-base mb-3">Week {week.week || idx + 1}</h6>
+                                                <div className="grid gap-2">
+                                                  {Object.entries(week).filter(([key]) => key !== 'week').map(([day, value]) => (
+                                                    <div key={day} className="flex justify-between py-2 border-b last:border-0">
+                                                      <span className="font-medium capitalize">{day}</span>
+                                                      <span className="text-muted-foreground">{value as string}</span>
+                                                    </div>
+                                                  ))}
+                                                </div>
+                                              </div>
+                                            ))}
+                                          </div>
+                                        )}
+
+                                        {/* Schedule Notes */}
+                                        {program.schedule_notes && (
+                                          <div className="bg-accent/20 border border-primary/20 rounded-lg p-4">
+                                            <h5 className="text-base font-bebas uppercase mb-2">Notes</h5>
+                                            <p className="text-sm text-muted-foreground whitespace-pre-wrap">{program.schedule_notes}</p>
+                                          </div>
+                                        )}
+                                      </div>
+                                    </AccordionContent>
+                                  </AccordionItem>
+                                )}
+
                                 {/* Sessions Section */}
                                 {program.sessions && typeof program.sessions === 'object' && Object.keys(program.sessions).length > 0 && (
                                   <AccordionItem value="sessions">
@@ -468,56 +507,23 @@ const Dashboard = () => {
                                       Sessions
                                     </AccordionTrigger>
                                     <AccordionContent>
-                                      <div className="space-y-4">
-                                        {/* Weekly Schedule */}
-                                        {program.weekly_schedules && Array.isArray(program.weekly_schedules) && program.weekly_schedules.length > 0 && (
-                                          <div className="mb-6">
-                                            <h5 className="text-lg font-bebas uppercase mb-3">Weekly Schedule</h5>
-                                            <div className="space-y-4">
-                                              {program.weekly_schedules.map((week: any, idx: number) => (
-                                                <div key={idx} className="border rounded-lg p-4">
-                                                  <h6 className="font-bebas text-base mb-3">Week {week.week || idx + 1}</h6>
-                                                  <div className="grid gap-2">
-                                                    {Object.entries(week).filter(([key]) => key !== 'week').map(([day, value]) => (
-                                                      <div key={day} className="flex justify-between py-2 border-b last:border-0">
-                                                        <span className="font-medium capitalize">{day}</span>
-                                                        <span className="text-muted-foreground">{value as string}</span>
-                                                      </div>
-                                                    ))}
+                                      <div className="space-y-3">
+                                        {Object.entries(program.sessions).map(([key, session]: [string, any]) => (
+                                          <div key={key} className="border rounded-lg p-4">
+                                            <h5 className="font-bebas text-lg mb-2">Session {key}</h5>
+                                            {session.exercises && Array.isArray(session.exercises) && (
+                                              <div className="space-y-1">
+                                                {session.exercises.map((exercise: any, idx: number) => (
+                                                  <div key={idx} className="text-sm">
+                                                    <span className="font-medium">{exercise.name || exercise}</span>
+                                                    {exercise.repetitions && <span className="text-muted-foreground ml-2">• {exercise.repetitions}</span>}
+                                                    {exercise.sets && <span className="text-muted-foreground ml-1">× {exercise.sets} sets</span>}
                                                   </div>
-                                                </div>
-                                              ))}
-                                            </div>
+                                                ))}
+                                              </div>
+                                            )}
                                           </div>
-                                        )}
-
-                                        {/* Schedule Notes */}
-                                        {program.schedule_notes && (
-                                          <div className="bg-accent/20 border border-primary/20 rounded-lg p-4 mb-6">
-                                            <h5 className="text-base font-bebas uppercase mb-2">Notes</h5>
-                                            <p className="text-sm text-muted-foreground whitespace-pre-wrap">{program.schedule_notes}</p>
-                                          </div>
-                                        )}
-
-                                        {/* Session List */}
-                                        <div className="space-y-3">
-                                          {Object.entries(program.sessions).map(([key, session]: [string, any]) => (
-                                            <div key={key} className="border rounded-lg p-4">
-                                              <h5 className="font-bebas text-lg mb-2">Session {key}</h5>
-                                              {session.exercises && Array.isArray(session.exercises) && (
-                                                <div className="space-y-1">
-                                                  {session.exercises.map((exercise: any, idx: number) => (
-                                                    <div key={idx} className="text-sm">
-                                                      <span className="font-medium">{exercise.name || exercise}</span>
-                                                      {exercise.repetitions && <span className="text-muted-foreground ml-2">• {exercise.repetitions}</span>}
-                                                      {exercise.sets && <span className="text-muted-foreground ml-1">× {exercise.sets} sets</span>}
-                                                    </div>
-                                                  ))}
-                                                </div>
-                                              )}
-                                            </div>
-                                          ))}
-                                        </div>
+                                        ))}
                                       </div>
                                     </AccordionContent>
                                   </AccordionItem>
