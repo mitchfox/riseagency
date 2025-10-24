@@ -226,7 +226,7 @@ const Dashboard = () => {
                           
                           {analysis.r90_score !== null && analysis.r90_score !== undefined && (
                             <button
-                              onClick={() => toast.info("Performance report feature coming soon")}
+                              onClick={() => navigate(`/performance-report/${analysis.id}`)}
                               className={`${getR90Color(analysis.r90_score)} text-white px-4 py-2 rounded font-bold hover:opacity-80 transition-opacity cursor-pointer`}
                             >
                               R90: {analysis.r90_score.toFixed(2)}

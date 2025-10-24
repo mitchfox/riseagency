@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { Edit, FileText, LineChart, BookOpen } from "lucide-react";
+import { PerformanceActionsDialog } from "./PerformanceActionsDialog";
 
 interface Player {
   id: string;
@@ -55,6 +56,9 @@ const PlayerManagement = () => {
   const [isAnalysisDialogOpen, setIsAnalysisDialogOpen] = useState(false);
   const [currentPlayerId, setCurrentPlayerId] = useState<string | null>(null);
   const [uploadingFiles, setUploadingFiles] = useState(false);
+  const [isPerformanceActionsDialogOpen, setIsPerformanceActionsDialogOpen] = useState(false);
+  const [selectedAnalysisId, setSelectedAnalysisId] = useState<string | null>(null);
+  const [selectedPlayerName, setSelectedPlayerName] = useState<string>("");
 
   const [formData, setFormData] = useState({
     name: "",
@@ -707,7 +711,19 @@ const PlayerManagement = () => {
                       <LineChart className="w-4 h-4 mr-2" />
                       {showingAnalysisFor === player.id ? "Hide" : "View"} Analysis
                     </Button>
-                    <Button variant="outline" size="sm" onClick={() => toast.info("Performance report feature coming soon")}>
+                    <Button variant="outline" size="sm" onClick={() => {
+                      // First check if there are any analyses for this player
+                      const analyses = playerAnalyses[player.id] || [];
+                      if (analyses.length === 0) {
+                        toast.info("Please add an analysis entry first before creating a performance report");
+                        return;
+                      }
+                      // Use the most recent analysis
+                      const latestAnalysis = analyses[0];
+                      setSelectedAnalysisId(latestAnalysis.id);
+                      setSelectedPlayerName(player.name);
+                      setIsPerformanceActionsDialogOpen(true);
+                    }}>
                       <FileText className="w-4 h-4 mr-2" />
                       Add Performance Report
                     </Button>
@@ -743,7 +759,11 @@ const PlayerManagement = () => {
                             
                             {analysis.r90_score !== null && analysis.r90_score !== undefined && (
                               <button
-                                onClick={() => toast.info("Performance report coming soon")}
+                                onClick={() => {
+                                  setSelectedAnalysisId(analysis.id);
+                                  setSelectedPlayerName(player.name);
+                                  setIsPerformanceActionsDialogOpen(true);
+                                }}
                                 className={`${getR90Color(analysis.r90_score)} text-white px-3 py-1 rounded font-bold hover:opacity-80 transition-opacity cursor-pointer`}
                               >
                                 R90: {analysis.r90_score?.toFixed(2)}
@@ -884,6 +904,14 @@ const PlayerManagement = () => {
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* Performance Actions Dialog */}
+      <PerformanceActionsDialog
+        open={isPerformanceActionsDialogOpen}
+        onOpenChange={setIsPerformanceActionsDialogOpen}
+        analysisId={selectedAnalysisId || ""}
+        playerName={selectedPlayerName}
+      />
     </div>
   );
 };

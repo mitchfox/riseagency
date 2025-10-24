@@ -19,6 +19,7 @@ import Coaches from "./pages/Coaches";
 import Scouts from "./pages/Scouts";
 import Performance from "./pages/NewPerformance";
 import BetweenTheLines from "./pages/BetweenTheLines";
+import PerformanceReport from "./pages/PerformanceReport";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -46,6 +47,7 @@ const App = () => (
           <Route path="/staff" element={<Staff />} />
           <Route path="/login" element={<Login />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/performance-report/:analysisId" element={<PerformanceReport />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

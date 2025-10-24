@@ -61,6 +61,53 @@ export type Database = {
           },
         ]
       }
+      performance_report_actions: {
+        Row: {
+          action_description: string
+          action_number: number
+          action_score: number
+          action_type: string
+          analysis_id: string
+          created_at: string | null
+          id: string
+          minute: number
+          notes: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          action_description: string
+          action_number: number
+          action_score: number
+          action_type: string
+          analysis_id: string
+          created_at?: string | null
+          id?: string
+          minute: number
+          notes?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          action_description?: string
+          action_number?: number
+          action_score?: number
+          action_type?: string
+          analysis_id?: string
+          created_at?: string | null
+          id?: string
+          minute?: number
+          notes?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "performance_report_actions_analysis_id_fkey"
+            columns: ["analysis_id"]
+            isOneToOne: false
+            referencedRelation: "player_analysis"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       player_analysis: {
         Row: {
           analysis_date: string
