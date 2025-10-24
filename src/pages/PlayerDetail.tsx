@@ -1,6 +1,7 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { players } from "@/data/players";
+import { supabase } from "@/integrations/supabase/client";
 import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, MessageCircle, ExternalLink, Video } from "lucide-react";
@@ -13,8 +14,34 @@ const PlayerDetail = () => {
   const navigate = useNavigate();
   const [currentFormationIndex, setCurrentFormationIndex] = useState(0);
   const [currentVideoType, setCurrentVideoType] = useState<'season' | number>('season'); // 'season' or match index
+  const [dbHighlights, setDbHighlights] = useState<any[]>([]);
   
   const player = players.find((p) => p.id === playername);
+
+  // Fetch highlights from database
+  useEffect(() => {
+    if (playername) {
+      const fetchHighlights = async () => {
+        const { data, error } = await supabase
+          .from('players')
+          .select('highlights')
+          .eq('id', playername)
+          .single();
+        
+        if (!error && data && data.highlights) {
+          try {
+            const highlights = typeof data.highlights === 'string' 
+              ? JSON.parse(data.highlights) 
+              : data.highlights;
+            setDbHighlights(Array.isArray(highlights) ? highlights : []);
+          } catch {
+            setDbHighlights([]);
+          }
+        }
+      };
+      fetchHighlights();
+    }
+  }, [playername]);
 
   // Auto-rotate tactical formations every 5 seconds
   useEffect(() => {
@@ -127,24 +154,10 @@ const PlayerDetail = () => {
                 </p>
               </div>
               
-              {/* Club Logo Overlays - Bottom */}
-              {player.videoHighlights?.matchHighlights && player.videoHighlights.matchHighlights.length > 0 && (
+              {/* Club Logo Overlays - Bottom - Show database highlights */}
+              {dbHighlights.length > 0 && (
                 <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-10">
-                  {/* Season Highlights Button */}
-                  <button
-                    onClick={() => setCurrentVideoType('season')}
-                    className={`w-8 h-8 rounded border-2 transition-all bg-transparent ${
-                      currentVideoType === 'season'
-                        ? 'border-[hsl(var(--gold))] scale-110'
-                        : 'border-[hsl(var(--gold))]/20 hover:border-[hsl(var(--gold))]/50'
-                    }`}
-                    title="Season Highlights"
-                  >
-                    <Video className="w-4 h-4 text-[hsl(var(--gold))] mx-auto" />
-                  </button>
-                  
-                  {/* Match Highlights Buttons */}
-                  {player.videoHighlights.matchHighlights.map((match, index) => (
+                  {dbHighlights.map((highlight, index) => (
                     <button
                       key={index}
                       onClick={() => setCurrentVideoType(index)}
@@ -153,11 +166,11 @@ const PlayerDetail = () => {
                           ? 'border-[hsl(var(--gold))] scale-110'
                           : 'border-[hsl(var(--gold))]/20 hover:border-[hsl(var(--gold))]/50'
                       }`}
-                      title={`vs ${match.opponent}`}
+                      title={`Highlight ${index + 1}`}
                     >
                       <img 
-                        src={match.clubLogo} 
-                        alt={match.opponent}
+                        src={highlight.clubLogo} 
+                        alt={`Highlight ${index + 1}`}
                         className="w-full h-full object-contain p-0.5"
                       />
                     </button>

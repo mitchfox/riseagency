@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import logo from "@/assets/logo.png";
 import { X, MessageCircle, Users, LogIn } from "lucide-react";
@@ -20,17 +20,23 @@ import { RepresentationDialog } from "@/components/RepresentationDialog";
 import { DeclareInterestDialog } from "@/components/DeclareInterestDialog";
 
 export const Header = () => {
+  const location = useLocation();
   const [representationOpen, setRepresentationOpen] = useState(false);
   const [workWithUsOpen, setWorkWithUsOpen] = useState(false);
   const [declareInterestOpen, setDeclareInterestOpen] = useState(false);
-  const location = useLocation();
+  const [showTopBar, setShowTopBar] = useState(false);
+
+  useEffect(() => {
+    setShowTopBar(location.pathname === '/');
+  }, [location.pathname]);
 
   const isActive = (path: string) => location.pathname === path;
 
   return (
     <>
-      {/* Top Utility Bar */}
-      <div className="fixed top-0 left-0 right-0 z-50 bg-black/95 backdrop-blur-md border-b border-white/10">
+      {/* Top Utility Bar - only on homepage */}
+      {showTopBar && (
+        <div className="fixed top-0 left-0 right-0 z-50 bg-black/95 backdrop-blur-md border-b border-white/10">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-end h-10 gap-6">
             <button
@@ -57,9 +63,10 @@ export const Header = () => {
           </div>
         </div>
       </div>
+      )}
 
       {/* Main Header */}
-      <header className="fixed top-10 left-0 right-0 z-50 bg-background/80 backdrop-blur-md">
+      <header className={`fixed ${showTopBar ? 'top-10' : 'top-0'} left-0 right-0 z-50 bg-background/80 backdrop-blur-md`}>
         <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Drawer Menu - Left */}

@@ -136,7 +136,7 @@ const Index = () => {
             <div className="text-center space-y-8 animate-fade-in">
               <div className="inline-block">
                 <span className="text-sm font-bebas uppercase tracking-widest text-primary border border-primary/30 px-6 py-2 rounded-full">
-                  Who We Are
+                  Why RISE?
                 </span>
               </div>
               <h2 className="text-5xl md:text-7xl font-bebas uppercase tracking-wider text-foreground leading-tight">
@@ -236,11 +236,11 @@ const Index = () => {
           <section className="py-16 px-4 bg-background snap-start snap-always min-h-screen flex items-center">
             <div className="container mx-auto max-w-7xl w-full">
               <div className="text-center mb-8 space-y-4">
-                <div className="inline-block">
-                  <span className="text-sm font-bebas uppercase tracking-widest text-primary border border-primary/30 px-6 py-2 rounded-full">
-                    Exclusive Content
-                  </span>
-                </div>
+              <div className="inline-block">
+                <span className="text-sm font-bebas uppercase tracking-widest text-primary border border-primary/30 px-6 py-2 rounded-full">
+                  Exclusive
+                </span>
+              </div>
                 <h2 className="text-5xl md:text-7xl font-bebas uppercase tracking-wider text-foreground">
                   INSIDE<span className="text-primary">:ACCESS</span>
                 </h2>
@@ -273,7 +273,7 @@ const Index = () => {
             <div className="text-center mb-8 space-y-4">
               <div className="inline-block">
                 <span className="text-sm font-bebas uppercase tracking-widest text-primary border border-primary/30 px-6 py-2 rounded-full">
-                  Video Content
+                  Video
                 </span>
               </div>
               <h2 className="text-5xl md:text-7xl font-bebas uppercase tracking-wider text-foreground">
@@ -326,7 +326,7 @@ const Index = () => {
                 Join Our <span className="text-primary">Network</span>
               </h2>
               <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                Whether you're a player, club, scout, or coach - we want to hear from you
+                Whether you are a player, club, scout, or coach - we want to hear from you
               </p>
             </div>
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">

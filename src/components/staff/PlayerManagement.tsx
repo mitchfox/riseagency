@@ -20,6 +20,8 @@ interface Player {
   bio: string | null;
   image_url: string | null;
   email: string | null;
+  visible_on_stars_page: boolean;
+  highlights: any;
 }
 
 interface PlayerStats {
@@ -63,6 +65,8 @@ const PlayerManagement = () => {
   const [isHighlightsDialogOpen, setIsHighlightsDialogOpen] = useState(false);
   const [highlightVideoFile, setHighlightVideoFile] = useState<File | null>(null);
   const [highlightClubLogoFile, setHighlightClubLogoFile] = useState<File | null>(null);
+  const [existingHighlights, setExistingHighlights] = useState<any[]>([]);
+  const [visibleOnStarsPage, setVisibleOnStarsPage] = useState(false);
   const [isProgrammingDialogOpen, setIsProgrammingDialogOpen] = useState(false);
   const [selectedProgrammingPlayerId, setSelectedProgrammingPlayerId] = useState<string>("");
   const [selectedProgrammingPlayerName, setSelectedProgrammingPlayerName] = useState<string>("");
@@ -224,6 +228,7 @@ const PlayerManagement = () => {
             bio: bioString,
             image_url: formData.image_url,
             email: formData.email || null,
+            visible_on_stars_page: visibleOnStarsPage,
           })
           .eq("id", editingPlayer.id);
 
@@ -240,6 +245,7 @@ const PlayerManagement = () => {
             bio: bioString,
             image_url: formData.image_url,
             email: formData.email || null,
+            visible_on_stars_page: visibleOnStarsPage,
           })
           .select()
           .single();
@@ -314,6 +320,7 @@ const PlayerManagement = () => {
 
   const startEdit = (player: Player) => {
     setEditingPlayer(player);
+    setVisibleOnStarsPage(player.visible_on_stars_page || false);
     
     // Parse bio for additional fields if it contains JSON
     let additionalData: ExpandedPlayerData = {};
@@ -713,6 +720,20 @@ const PlayerManagement = () => {
                 </Button>
               </div>
 
+              {/* Visible on Stars Page Toggle */}
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="visible_on_stars_page"
+                  checked={visibleOnStarsPage}
+                  onChange={(e) => setVisibleOnStarsPage(e.target.checked)}
+                  className="h-4 w-4"
+                />
+                <Label htmlFor="visible_on_stars_page" className="cursor-pointer">
+                  Show player on Stars page
+                </Label>
+              </div>
+
               <Button type="submit" disabled={loading}>
                 {loading ? "Saving..." : editingPlayer ? "Update Player" : "Create Player"}
               </Button>
@@ -1010,11 +1031,110 @@ const PlayerManagement = () => {
       />
 
       {/* Highlights Management Dialog */}
-      <Dialog open={isHighlightsDialogOpen} onOpenChange={setIsHighlightsDialogOpen}>
-        <DialogContent className="max-w-2xl">
+      <Dialog open={isHighlightsDialogOpen} onOpenChange={(open) => {
+        setIsHighlightsDialogOpen(open);
+        if (open && currentPlayerId) {
+          // Load existing highlights when dialog opens
+          const player = players.find(p => p.id === currentPlayerId);
+          if (player && player.highlights) {
+            try {
+              const highlights = typeof player.highlights === 'string' 
+                ? JSON.parse(player.highlights) 
+                : player.highlights;
+              setExistingHighlights(Array.isArray(highlights) ? highlights : []);
+            } catch {
+              setExistingHighlights([]);
+            }
+          } else {
+            setExistingHighlights([]);
+          }
+        }
+      }}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Manage Player Highlights</DialogTitle>
           </DialogHeader>
+          
+          {/* Existing Highlights with Reordering */}
+          {existingHighlights.length > 0 && (
+            <div className="space-y-2 mb-4">
+              <Label>Current Highlights (drag to reorder)</Label>
+              {existingHighlights.map((highlight, index) => (
+                <div key={index} className="flex items-center gap-2 p-2 border rounded">
+                  <span className="cursor-move">⋮⋮</span>
+                  <div className="flex-1">
+                    <p className="text-sm">Highlight {index + 1}</p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      if (index > 0) {
+                        const newHighlights = [...existingHighlights];
+                        [newHighlights[index - 1], newHighlights[index]] = [newHighlights[index], newHighlights[index - 1]];
+                        setExistingHighlights(newHighlights);
+                      }
+                    }}
+                    disabled={index === 0}
+                  >
+                    ↑
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      if (index < existingHighlights.length - 1) {
+                        const newHighlights = [...existingHighlights];
+                        [newHighlights[index], newHighlights[index + 1]] = [newHighlights[index + 1], newHighlights[index]];
+                        setExistingHighlights(newHighlights);
+                      }
+                    }}
+                    disabled={index === existingHighlights.length - 1}
+                  >
+                    ↓
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => {
+                      const newHighlights = existingHighlights.filter((_, i) => i !== index);
+                      setExistingHighlights(newHighlights);
+                    }}
+                  >
+                    Delete
+                  </Button>
+                </div>
+              ))}
+              <Button
+                type="button"
+                onClick={async () => {
+                  try {
+                    setUploadingFiles(true);
+                    const { error } = await supabase
+                      .from("players")
+                      .update({ highlights: JSON.stringify(existingHighlights) })
+                      .eq("id", currentPlayerId);
+                    
+                    if (error) throw error;
+                    toast.success("Highlights order saved!");
+                    fetchPlayers();
+                  } catch (error: any) {
+                    toast.error("Failed to save highlights order");
+                  } finally {
+                    setUploadingFiles(false);
+                  }
+                }}
+                disabled={uploadingFiles}
+              >
+                Save Order
+              </Button>
+            </div>
+          )}
+
+          {/* Add New Highlight Form */}
           <form onSubmit={async (e) => {
             e.preventDefault();
             if (!currentPlayerId || !highlightVideoFile || !highlightClubLogoFile) return;
@@ -1048,41 +1168,26 @@ const PlayerManagement = () => {
                 .from('analysis-files')
                 .getPublicUrl(`highlights/logos/${logoFileName}`);
               
-              // Get current player data
-              const player = players.find(p => p.id === currentPlayerId);
-              if (!player) return;
-              
-              let bioData: any = {};
-              if (player.bio) {
-                try {
-                  bioData = JSON.parse(player.bio);
-                } catch {
-                  bioData = { bio: player.bio };
-                }
-              }
-              
               // Add highlight to array
-              if (!bioData.highlights) {
-                bioData.highlights = [];
-              }
-              
-              bioData.highlights.push({
+              const newHighlight = {
                 videoUrl: videoUrl,
                 clubLogo: logoUrl,
                 addedAt: new Date().toISOString()
-              });
+              };
+              
+              const updatedHighlights = [...existingHighlights, newHighlight];
               
               const { error } = await supabase
                 .from("players")
-                .update({ bio: JSON.stringify(bioData) })
+                .update({ highlights: JSON.stringify(updatedHighlights) })
                 .eq("id", currentPlayerId);
               
               if (error) throw error;
               
               toast.success("Highlight added successfully!");
-              setIsHighlightsDialogOpen(false);
               setHighlightVideoFile(null);
               setHighlightClubLogoFile(null);
+              setExistingHighlights(updatedHighlights);
               fetchPlayers();
             } catch (error: any) {
               console.error("Error adding highlight:", error);

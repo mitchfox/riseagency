@@ -1,11 +1,44 @@
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { PlayerCard } from "@/components/PlayerCard";
-import { players } from "@/data/players";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 const Stars = () => {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [players, setPlayers] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchPlayers = async () => {
+      const { data, error } = await supabase
+        .from('players')
+        .select('*')
+        .eq('visible_on_stars_page', true)
+        .order('name');
+      
+      if (!error && data) {
+        setPlayers(data);
+      }
+      setLoading(false);
+    };
+
+    fetchPlayers();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <main className="pt-16">
+          <div className="container mx-auto px-4 py-24 text-center">
+            <p className="text-xl text-muted-foreground">Loading players...</p>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">

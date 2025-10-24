@@ -214,36 +214,42 @@ export type Database = {
           bio: string | null
           created_at: string | null
           email: string | null
+          highlights: Json | null
           id: string
           image_url: string | null
           name: string
           nationality: string
           position: string
           updated_at: string | null
+          visible_on_stars_page: boolean | null
         }
         Insert: {
           age: number
           bio?: string | null
           created_at?: string | null
           email?: string | null
+          highlights?: Json | null
           id?: string
           image_url?: string | null
           name: string
           nationality: string
           position: string
           updated_at?: string | null
+          visible_on_stars_page?: boolean | null
         }
         Update: {
           age?: number
           bio?: string | null
           created_at?: string | null
           email?: string | null
+          highlights?: Json | null
           id?: string
           image_url?: string | null
           name?: string
           nationality?: string
           position?: string
           updated_at?: string | null
+          visible_on_stars_page?: boolean | null
         }
         Relationships: []
       }

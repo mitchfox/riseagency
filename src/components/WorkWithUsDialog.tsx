@@ -114,7 +114,7 @@ export const WorkWithUsDialog = ({ children, open, onOpenChange }: WorkWithUsDia
               <Label htmlFor="message">Tell us about yourself</Label>
               <Textarea
                 id="message"
-                placeholder="Share your experience, goals, and what you're looking for..."
+                placeholder="Share your experience, goals, and what you are looking for..."
                 className="min-h-[100px]"
               />
             </div>
@@ -153,7 +153,7 @@ export const WorkWithUsDialog = ({ children, open, onOpenChange }: WorkWithUsDia
               <Label htmlFor="message">Tell us about your coaching philosophy</Label>
               <Textarea
                 id="message"
-                placeholder="Share your experience, approach, and what you're looking for..."
+                placeholder="Share your experience, approach, and what you are looking for..."
                 className="min-h-[100px]"
               />
             </div>

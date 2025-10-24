@@ -98,7 +98,7 @@ export const DeclareInterestDialog = ({ open, onOpenChange }: DeclareInterestDia
                 Select Player
               </DialogTitle>
               <DialogDescription>
-                Choose the player you're interested in
+                Choose the player you are interested in
               </DialogDescription>
             </DialogHeader>
 
