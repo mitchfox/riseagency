@@ -8,10 +8,11 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Plus, Trash2, Check, Edit, ChevronUp, ChevronDown, ArrowUp, ArrowDown } from "lucide-react";
+import { Plus, Trash2, Check, Edit, ChevronUp, ChevronDown, ArrowUp, ArrowDown, Database } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { ExerciseDatabaseSelector } from "./ExerciseDatabaseSelector";
 
 interface ProgrammingManagementProps {
   isOpen: boolean;
@@ -137,6 +138,7 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
     sessions: false,
     exercises: false
   });
+  const [isExerciseSelectorOpen, setIsExerciseSelectorOpen] = useState(false);
 
   useEffect(() => {
     if (isOpen && playerId) {
@@ -514,6 +516,14 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
     });
   };
 
+  const addExerciseFromDatabase = (sessionKey: keyof Pick<ProgrammingData, 'sessionA' | 'sessionB' | 'sessionC' | 'sessionD' | 'sessionE' | 'sessionF' | 'sessionG' | 'sessionH'>, exercise: Exercise) => {
+    const session = programmingData[sessionKey] as SessionData;
+    updateField(sessionKey, {
+      ...session,
+      exercises: [...session.exercises, exercise]
+    });
+  };
+
   const removeExercise = (sessionKey: keyof Pick<ProgrammingData, 'sessionA' | 'sessionB' | 'sessionC' | 'sessionD' | 'sessionE' | 'sessionF' | 'sessionG' | 'sessionH'>, index: number) => {
     const session = programmingData[sessionKey] as SessionData;
     updateField(sessionKey, {
@@ -588,7 +598,8 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <>
+      <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Programming Management - {playerName}</DialogTitle>
@@ -881,14 +892,25 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
                             <Label className="text-lg font-semibold">
                               {sessionLabels.find(s => s.key === selectedSession)?.label} Exercises
                             </Label>
-                            <Button
-                              type="button"
-                              size="sm"
-                              onClick={() => addExercise(selectedSession as any)}
-                            >
-                              <Plus className="w-4 h-4 mr-2" />
-                              Add Exercise
-                            </Button>
+                            <div className="flex gap-2">
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                onClick={() => setIsExerciseSelectorOpen(true)}
+                              >
+                                <Database className="w-4 h-4 mr-2" />
+                                From Database
+                              </Button>
+                              <Button
+                                type="button"
+                                size="sm"
+                                onClick={() => addExercise(selectedSession as any)}
+                              >
+                                <Plus className="w-4 h-4 mr-2" />
+                                Add Manual
+                              </Button>
+                            </div>
                           </div>
 
                           {(programmingData[selectedSession as keyof ProgrammingData] as SessionData).exercises.length > 0 ? (
@@ -1176,5 +1198,16 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
         )}
       </DialogContent>
     </Dialog>
+
+    <ExerciseDatabaseSelector
+      isOpen={isExerciseSelectorOpen}
+      onClose={() => setIsExerciseSelectorOpen(false)}
+      onSelect={(exercise) => {
+        if (selectedSession) {
+          addExerciseFromDatabase(selectedSession as any, exercise);
+        }
+      }}
+    />
+    </>
   );
 };

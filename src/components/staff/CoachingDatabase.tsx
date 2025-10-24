@@ -37,26 +37,32 @@ interface CoachingItem {
 const tableConfigs = {
   coaching_sessions: {
     label: 'Sessions',
+    singular: 'Session',
     fields: ['title', 'description', 'content', 'duration', 'category'],
   },
   coaching_programmes: {
     label: 'Programmes',
+    singular: 'Programme',
     fields: ['title', 'description', 'content', 'weeks', 'category'],
   },
   coaching_drills: {
     label: 'Drills',
+    singular: 'Drill',
     fields: ['title', 'description', 'content', 'setup', 'equipment', 'players_required', 'category'],
   },
   coaching_exercises: {
     label: 'Exercises',
+    singular: 'Exercise',
     fields: ['title', 'description', 'content', 'sets', 'reps', 'rest_time', 'category'],
   },
   coaching_analysis: {
     label: 'Analysis',
+    singular: 'Analysis',
     fields: ['title', 'description', 'content', 'analysis_type', 'category'],
   },
   psychological_sessions: {
     label: 'Psychological Sessions',
+    singular: 'Psychological Session',
     fields: ['title', 'description', 'content', 'duration', 'category'],
   },
 };
@@ -207,13 +213,13 @@ export const CoachingDatabase = () => {
                 <DialogTrigger asChild>
                   <Button onClick={resetForm}>
                     <Plus className="w-4 h-4 mr-2" />
-                    Add {config.label}
+                    Add {config.singular}
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                   <DialogHeader>
                     <DialogTitle>
-                      {editingItem ? `Edit ${config.label}` : `Add ${config.label}`}
+                      {editingItem ? `Edit ${config.singular}` : `Add ${config.singular}`}
                     </DialogTitle>
                   </DialogHeader>
                   <form onSubmit={handleSubmit} className="space-y-4">
@@ -372,7 +378,7 @@ export const CoachingDatabase = () => {
               {items.length === 0 ? (
                 <Card>
                   <CardContent className="pt-6 text-center text-muted-foreground">
-                    No {config.label.toLowerCase()} found. Click "Add {config.label}" to create one.
+                    No {config.label.toLowerCase()} found. Click "Add {config.singular}" to create one.
                   </CardContent>
                 </Card>
               ) : (
