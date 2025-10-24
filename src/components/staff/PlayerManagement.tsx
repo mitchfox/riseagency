@@ -80,6 +80,7 @@ const PlayerManagement = () => {
   const [uploadingPlayerImage, setUploadingPlayerImage] = useState(false);
   const [uploadingClubLogo, setUploadingClubLogo] = useState(false);
   const [clubLogoUrl, setClubLogoUrl] = useState<string>("");
+  const [representationFilter, setRepresentationFilter] = useState<string>("all");
 
   const [formData, setFormData] = useState({
     name: "",
@@ -653,6 +654,7 @@ const PlayerManagement = () => {
               setExternalLinks([]);
               setStrengthsAndPlayStyle([]);
               setPlayerCategory("Other");
+              setRepresentationStatus("other");
               setVisibleOnStarsPage(false);
               setClubLogoUrl("");
             }}>
@@ -941,9 +943,31 @@ const PlayerManagement = () => {
         </Dialog>
       </div>
 
+      {/* Filters */}
+      <div className="flex gap-4 items-center">
+        <div className="flex items-center gap-2">
+          <Label htmlFor="representation-filter">Representation Status:</Label>
+          <select
+            id="representation-filter"
+            value={representationFilter}
+            onChange={(e) => setRepresentationFilter(e.target.value)}
+            className="flex h-10 w-[180px] rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+          >
+            <option value="all">All</option>
+            <option value="represented">Represented</option>
+            <option value="mandated">Mandated</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+      </div>
+
       {/* Group players by category */}
       {['Signed', 'Mandate', 'Other'].map((category) => {
-        const categoryPlayers = players.filter(p => p.category === category);
+        const categoryPlayers = players.filter(p => {
+          const matchesCategory = p.category === category;
+          const matchesRepresentation = representationFilter === "all" || p.representation_status === representationFilter;
+          return matchesCategory && matchesRepresentation;
+        });
         if (categoryPlayers.length === 0) return null;
         
         return (
@@ -977,6 +1001,16 @@ const PlayerManagement = () => {
                           <span className="text-muted-foreground">{player.age} years</span>
                           <span className="text-muted-foreground">•</span>
                           <span className="text-muted-foreground">{player.nationality}</span>
+                          {player.representation_status && (
+                            <>
+                              <span className="text-muted-foreground">•</span>
+                              <span className="text-sm font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary">
+                                {player.representation_status === 'represented' ? 'Represented' : 
+                                 player.representation_status === 'mandated' ? 'Mandated' : 
+                                 'Other'}
+                              </span>
+                            </>
+                          )}
                         </div>
                         <div className="text-muted-foreground">
                           {isExpanded ? "▼" : "▶"}
