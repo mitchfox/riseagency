@@ -162,8 +162,8 @@ export const PlayerCard = ({ player, viewMode = "grid" }: PlayerCardProps) => {
               </div>
               
               {/* Club */}
-              <div className="text-right">
-                <div className="flex flex-col items-end gap-2 mb-1">
+              <div className="flex flex-col items-center">
+                <div className="mb-1">
                   {clubLogo && (
                     <img 
                       src={clubLogo} 
