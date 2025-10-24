@@ -63,19 +63,16 @@ const Index = () => {
               <div className="space-y-6">
                 <div className="overflow-hidden relative w-full mb-8">
                   <h1 
-                    className="text-6xl md:text-8xl lg:text-9xl font-bebas font-bold uppercase tracking-[0.15em] whitespace-nowrap inline-block animate-[scroll-left_45s_linear_infinite]"
+                    className="text-6xl md:text-8xl lg:text-9xl font-bebas font-bold uppercase tracking-[0.15em] text-white whitespace-nowrap inline-block animate-[scroll-left_45s_linear_infinite]"
                     style={{
-                      color: 'transparent',
-                      WebkitTextStroke: '2.5px rgba(255, 255, 255, 0.95)',
-                      textShadow: '0 4px 12px rgba(0, 0, 0, 0.6)',
-                      filter: 'drop-shadow(0 2px 8px rgba(0, 0, 0, 0.5))',
+                      textShadow: '0 4px 12px rgba(0, 0, 0, 0.8), 0 2px 4px rgba(0, 0, 0, 0.6)',
                     }}
                   >
                     REALISE POTENTIAL • REALISE POTENTIAL • REALISE POTENTIAL • REALISE POTENTIAL • REALISE POTENTIAL • REALISE POTENTIAL •
                   </h1>
                 </div>
                 <p className="text-xl md:text-2xl text-white/90 max-w-3xl mx-auto font-light tracking-wide">
-                  Elite Football Representation & Performance Optimization
+                  Elite Football Representation & Performance Optimisation
                 </p>
               </div>
               
