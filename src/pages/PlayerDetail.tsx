@@ -42,22 +42,39 @@ const PlayerDetail = () => {
             // Parse bio to get additional data
             let bioData: any = {};
             let bioText = '';
+            let tacticalFormations: any[] = [];
+            
             if (data.bio) {
               try {
                 // First parse of the outer JSON
                 const parsed = JSON.parse(data.bio);
+                console.log('Outer bio parsed:', parsed);
+                
                 if (typeof parsed === 'object' && parsed !== null) {
-                  bioData = parsed;
+                  // Get tactical formations from outer level
+                  if (parsed.tacticalFormations) {
+                    tacticalFormations = parsed.tacticalFormations;
+                  }
+                  
+                  // Get other top-level properties
+                  bioData = {
+                    dateOfBirth: parsed.dateOfBirth,
+                    number: parsed.number,
+                    currentClub: parsed.currentClub,
+                    whatsapp: parsed.whatsapp,
+                    externalLinks: parsed.externalLinks,
+                    strengthsAndPlayStyle: parsed.strengthsAndPlayStyle,
+                    tacticalFormations: tacticalFormations
+                  };
                   
                   // Check if bio property exists and is a string (might be nested JSON)
                   if (parsed.bio && typeof parsed.bio === 'string') {
                     try {
                       // Try to parse the inner bio JSON
                       const innerBio = JSON.parse(parsed.bio);
+                      console.log('Inner bio parsed:', innerBio);
                       if (typeof innerBio === 'object' && innerBio.text) {
                         bioText = innerBio.text;
-                        // Merge inner bio data with bioData
-                        bioData = { ...bioData, ...innerBio };
                       } else if (typeof innerBio === 'string') {
                         bioText = innerBio;
                       } else {
@@ -75,30 +92,38 @@ const PlayerDetail = () => {
                 } else {
                   bioText = data.bio;
                 }
-              } catch {
-                // Not valid JSON, use as-is
+              } catch (e) {
+                console.error('Error parsing bio:', e);
                 bioText = data.bio;
               }
             }
             
-            // Parse highlights
+            // Parse highlights from database column
             let highlights: any[] = [];
             if (data.highlights) {
               try {
                 highlights = typeof data.highlights === 'string' 
                   ? JSON.parse(data.highlights) 
                   : Array.isArray(data.highlights) ? data.highlights : [];
-                console.log('Parsed highlights:', highlights);
+                console.log('Parsed highlights from DB:', highlights);
               } catch (e) {
                 console.error('Error parsing highlights:', e);
                 highlights = [];
               }
             }
             
+            console.log('Final player data:', {
+              bioText,
+              bioData,
+              highlights,
+              tacticalFormations
+            });
+            
             setPlayer({
               ...data,
               ...bioData,
-              bio: bioText, // Use cleaned bio text
+              bio: bioText,
+              tacticalFormations: tacticalFormations,
               highlightsArray: highlights,
               stats: statsData ? {
                 goals: statsData.goals || 0,
