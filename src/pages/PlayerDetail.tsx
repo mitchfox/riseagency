@@ -61,6 +61,7 @@ const PlayerDetail = () => {
                     dateOfBirth: parsed.dateOfBirth,
                     number: parsed.number,
                     currentClub: parsed.currentClub,
+                    currentClubLogo: parsed.currentClubLogo,
                     whatsapp: parsed.whatsapp,
                     externalLinks: parsed.externalLinks,
                     strengthsAndPlayStyle: parsed.strengthsAndPlayStyle,
@@ -235,7 +236,7 @@ const PlayerDetail = () => {
               
               <p className="text-lg md:text-xl text-muted-foreground uppercase tracking-wide font-bebas leading-none flex items-center gap-2">
                 <img 
-                  src={player.tacticalFormations?.[0]?.clubLogo} 
+                  src={player.currentClubLogo || player.tacticalFormations?.[0]?.clubLogo} 
                   alt={player.currentClub}
                   className="w-6 h-6 md:w-8 md:h-8 object-contain"
                 />
