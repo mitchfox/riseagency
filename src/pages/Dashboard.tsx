@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import { User } from "@supabase/supabase-js";
 import { FileText } from "lucide-react";
 
-interface PlayerAnalysis {
+interface Analysis {
   id: string;
   analysis_date: string;
   r90_score: number;
@@ -23,7 +23,7 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<User | null>(null);
-  const [analyses, setAnalyses] = useState<PlayerAnalysis[]>([]);
+  const [analyses, setAnalyses] = useState<Analysis[]>([]);
 
   useEffect(() => {
     checkAuth();
