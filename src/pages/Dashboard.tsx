@@ -197,7 +197,7 @@ const Dashboard = () => {
           <div className="relative mb-12">
             <div className="flex items-center gap-6 mb-8">
               {playerData?.image_url && (
-                <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-[#FFD700] shadow-[0_0_20px_rgba(255,215,0,0.5)]">
+                <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-primary shadow-[0_0_20px_hsl(var(--primary)/0.5)]">
                   <img 
                     src={playerData.image_url} 
                     alt={playerData.name}
