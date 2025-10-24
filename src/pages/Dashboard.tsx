@@ -8,11 +8,22 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { User } from "@supabase/supabase-js";
+import { FileText } from "lucide-react";
+
+interface PlayerAnalysis {
+  id: string;
+  analysis_date: string;
+  r90_score: number;
+  pdf_url: string | null;
+  video_url: string | null;
+  notes: string | null;
+}
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<User | null>(null);
+  const [analyses, setAnalyses] = useState<PlayerAnalysis[]>([]);
 
   useEffect(() => {
     checkAuth();
@@ -22,6 +33,7 @@ const Dashboard = () => {
         navigate("/login");
       } else {
         setUser(session.user);
+        fetchAnalyses(session.user.email);
       }
     });
 
@@ -38,12 +50,54 @@ const Dashboard = () => {
       }
 
       setUser(session.user);
+      await fetchAnalyses(session.user.email);
     } catch (error) {
       console.error("Auth error:", error);
       navigate("/login");
     } finally {
       setLoading(false);
     }
+  };
+
+  const fetchAnalyses = async (email: string | undefined) => {
+    if (!email) return;
+
+    try {
+      // First get the player ID from email
+      const { data: playerData, error: playerError } = await supabase
+        .from("players")
+        .select("id")
+        .eq("email", email)
+        .maybeSingle();
+
+      if (playerError) throw playerError;
+      if (!playerData) {
+        console.log("No player profile found for this email");
+        return;
+      }
+
+      // Then fetch their analyses
+      const { data: analysisData, error: analysisError } = await supabase
+        .from("player_analysis")
+        .select("*")
+        .eq("player_id", playerData.id)
+        .order("analysis_date", { ascending: false });
+
+      if (analysisError) throw analysisError;
+      setAnalyses(analysisData || []);
+    } catch (error: any) {
+      console.error("Error fetching analyses:", error);
+      toast.error("Failed to load analysis data");
+    }
+  };
+
+  const getR90Color = (score: number) => {
+    if (score < 0) return "bg-red-900";
+    if (score >= 0 && score < 0.5) return "bg-red-600";
+    if (score >= 0.5 && score < 1.0) return "bg-yellow-500";
+    if (score >= 1.0 && score < 1.5) return "bg-lime-400";
+    if (score >= 1.5 && score < 2.5) return "bg-green-500";
+    return "bg-green-700";
   };
 
   const handleLogout = async () => {
@@ -104,21 +158,72 @@ const Dashboard = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <p className="text-muted-foreground">
-                    Your personalized performance analysis will appear here. This section will include:
-                  </p>
-                  <ul className="list-disc list-inside space-y-2 text-muted-foreground">
-                    <li>Match performance reviews</li>
-                    <li>Technical skill assessments</li>
-                    <li>Tactical positioning analysis</li>
-                    <li>Areas for improvement</li>
-                    <li>Strengths to leverage</li>
-                  </ul>
-                  <div className="mt-6 p-6 border border-primary/20 rounded-lg">
-                    <p className="text-center text-muted-foreground italic">
-                      Content coming soon - your coach will upload analysis reports here
-                    </p>
-                  </div>
+                  {analyses.length === 0 ? (
+                    <>
+                      <p className="text-muted-foreground">
+                        Your personalized performance analysis will appear here. This section will include:
+                      </p>
+                      <ul className="list-disc list-inside space-y-2 text-muted-foreground">
+                        <li>Match performance reviews</li>
+                        <li>Technical skill assessments</li>
+                        <li>Tactical positioning analysis</li>
+                        <li>Areas for improvement</li>
+                        <li>Strengths to leverage</li>
+                      </ul>
+                      <div className="mt-6 p-6 border border-primary/20 rounded-lg">
+                        <p className="text-center text-muted-foreground italic">
+                          Content coming soon - your coach will upload analysis reports here
+                        </p>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="space-y-3">
+                      {analyses.map((analysis) => (
+                        <div 
+                          key={analysis.id} 
+                          className="flex items-center gap-3 border rounded-lg p-4 hover:border-primary transition-colors bg-card"
+                        >
+                          <span className="text-sm text-muted-foreground min-w-[100px]">
+                            {new Date(analysis.analysis_date).toLocaleDateString('en-GB')}
+                          </span>
+                          
+                          <button
+                            onClick={() => toast.info("Performance report feature coming soon")}
+                            className={`${getR90Color(analysis.r90_score)} text-white px-4 py-2 rounded font-bold hover:opacity-80 transition-opacity cursor-pointer`}
+                          >
+                            R90: {analysis.r90_score.toFixed(2)}
+                          </button>
+                          
+                          {analysis.pdf_url && (
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => window.open(analysis.pdf_url!, '_blank')}
+                            >
+                              <FileText className="w-4 h-4 mr-1" />
+                              PDF
+                            </Button>
+                          )}
+                          
+                          {analysis.video_url && (
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => window.open(analysis.video_url!, '_blank')}
+                            >
+                              📹 Video
+                            </Button>
+                          )}
+                          
+                          {analysis.notes && (
+                            <span className="text-sm text-muted-foreground ml-auto">
+                              {analysis.notes}
+                            </span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>

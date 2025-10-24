@@ -51,6 +51,7 @@ const PlayerManagement = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [expandedPlayerId, setExpandedPlayerId] = useState<string | null>(null);
   const [showingAnalysisFor, setShowingAnalysisFor] = useState<string | null>(null);
+  const [playerAnalyses, setPlayerAnalyses] = useState<Record<string, any[]>>({});
 
   const [formData, setFormData] = useState({
     name: "",
@@ -102,6 +103,7 @@ const PlayerManagement = () => {
 
   useEffect(() => {
     fetchPlayers();
+    fetchAllAnalyses();
   }, []);
 
   const fetchPlayers = async () => {
@@ -130,6 +132,29 @@ const PlayerManagement = () => {
       toast.error("Failed to fetch players: " + error.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchAllAnalyses = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("player_analysis")
+        .select("*")
+        .order("analysis_date", { ascending: false });
+
+      if (error) throw error;
+
+      // Group analyses by player_id
+      const analysesMap: Record<string, any[]> = {};
+      data?.forEach(analysis => {
+        if (!analysesMap[analysis.player_id]) {
+          analysesMap[analysis.player_id] = [];
+        }
+        analysesMap[analysis.player_id].push(analysis);
+      });
+      setPlayerAnalyses(analysesMap);
+    } catch (error: any) {
+      toast.error("Failed to fetch analyses: " + error.message);
     }
   };
 
@@ -314,13 +339,6 @@ const PlayerManagement = () => {
     if (score >= 1.5 && score < 2.5) return "bg-green-500";
     return "bg-green-700";
   };
-
-  // Mock analysis data for placeholder
-  const mockAnalyses = [
-    { id: 1, date: "2025-01-15", r90: 1.8, pdfUrl: "#", videoUrl: "#" },
-    { id: 2, date: "2025-01-08", r90: 1.2, pdfUrl: "#", videoUrl: null },
-    { id: 3, date: "2024-12-20", r90: 0.7, pdfUrl: null, videoUrl: "#" },
-  ];
 
   if (loading && players.length === 0) {
     return <div>Loading...</div>;
@@ -609,46 +627,52 @@ const PlayerManagement = () => {
                         </Button>
                       </div>
                       
-                      <div className="space-y-2">
-                        {mockAnalyses.map((analysis) => (
-                          <div 
-                            key={analysis.id} 
-                            className="flex items-center gap-3 border rounded-lg p-3 hover:border-primary transition-colors"
-                          >
-                            <span className="text-sm text-muted-foreground min-w-[80px]">
-                              {new Date(analysis.date).toLocaleDateString('en-GB')}
-                            </span>
-                            
-                            <button
-                              onClick={() => toast.info("Performance report coming soon")}
-                              className={`${getR90Color(analysis.r90)} text-white px-3 py-1 rounded font-bold hover:opacity-80 transition-opacity cursor-pointer`}
+                      {(!playerAnalyses[player.id] || playerAnalyses[player.id].length === 0) ? (
+                        <p className="text-sm text-muted-foreground text-center py-4">
+                          No analysis data yet. Click "Add New Analysis" to get started.
+                        </p>
+                      ) : (
+                        <div className="space-y-2">
+                          {playerAnalyses[player.id].map((analysis) => (
+                            <div 
+                              key={analysis.id} 
+                              className="flex items-center gap-3 border rounded-lg p-3 hover:border-primary transition-colors"
                             >
-                              R90: {analysis.r90.toFixed(2)}
-                            </button>
-                            
-                            {analysis.pdfUrl && (
-                              <Button 
-                                variant="outline" 
-                                size="sm"
-                                onClick={() => toast.info("PDF viewer coming soon")}
+                              <span className="text-sm text-muted-foreground min-w-[80px]">
+                                {new Date(analysis.analysis_date).toLocaleDateString('en-GB')}
+                              </span>
+                              
+                              <button
+                                onClick={() => toast.info("Performance report coming soon")}
+                                className={`${getR90Color(analysis.r90_score)} text-white px-3 py-1 rounded font-bold hover:opacity-80 transition-opacity cursor-pointer`}
                               >
-                                <FileText className="w-4 h-4 mr-1" />
-                                PDF
-                              </Button>
-                            )}
-                            
-                            {analysis.videoUrl && (
-                              <Button 
-                                variant="outline" 
-                                size="sm"
-                                onClick={() => toast.info("Video player coming soon")}
-                              >
-                                📹 Video
-                              </Button>
-                            )}
-                          </div>
-                        ))}
-                      </div>
+                                R90: {analysis.r90_score.toFixed(2)}
+                              </button>
+                              
+                              {analysis.pdf_url && (
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  onClick={() => window.open(analysis.pdf_url, '_blank')}
+                                >
+                                  <FileText className="w-4 h-4 mr-1" />
+                                  PDF
+                                </Button>
+                              )}
+                              
+                              {analysis.video_url && (
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  onClick={() => window.open(analysis.video_url, '_blank')}
+                                >
+                                  📹 Video
+                                </Button>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   )}
                 </CardContent>
