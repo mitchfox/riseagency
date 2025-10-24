@@ -277,35 +277,31 @@ const Index = () => {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {/* Video 1 */}
-              <div className="relative aspect-video rounded-xl overflow-hidden bg-black border border-border group">
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="text-center space-y-4">
-                    <div className="w-20 h-20 mx-auto rounded-full bg-primary/20 border-2 border-primary flex items-center justify-center group-hover:scale-110 transition-transform">
-                      <svg className="w-8 h-8 text-primary" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M8 5v14l11-7z"/>
-                      </svg>
-                    </div>
-                    <p className="text-white font-bebas uppercase tracking-wider text-lg">
-                      Feature Video 1
-                    </p>
-                  </div>
-                </div>
+              <div className="relative aspect-video rounded-xl overflow-hidden border border-border shadow-lg">
+                <iframe
+                  width="100%"
+                  height="100%"
+                  src="https://www.youtube.com/embed/pWH2cdmzwVg"
+                  title="RISE Football Video 1"
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  className="absolute inset-0 w-full h-full"
+                />
               </div>
 
               {/* Video 2 - Hidden on mobile */}
-              <div className="relative aspect-video rounded-xl overflow-hidden bg-black border border-border group hidden md:block">
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="text-center space-y-4">
-                    <div className="w-20 h-20 mx-auto rounded-full bg-primary/20 border-2 border-primary flex items-center justify-center group-hover:scale-110 transition-transform">
-                      <svg className="w-8 h-8 text-primary" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M8 5v14l11-7z"/>
-                      </svg>
-                    </div>
-                    <p className="text-white font-bebas uppercase tracking-wider text-lg">
-                      Feature Video 2
-                    </p>
-                  </div>
-                </div>
+              <div className="relative aspect-video rounded-xl overflow-hidden border border-border shadow-lg hidden md:block">
+                <iframe
+                  width="100%"
+                  height="100%"
+                  src="https://www.youtube.com/embed/XtmRhHvXeyo"
+                  title="RISE Football Video 2"
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  className="absolute inset-0 w-full h-full"
+                />
               </div>
             </div>
           </div>
