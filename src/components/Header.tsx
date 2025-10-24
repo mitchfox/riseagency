@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import logo from "@/assets/logo.png";
 import { X } from "lucide-react";
@@ -15,8 +16,11 @@ import {
 } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import { WorkWithUsDialog } from "@/components/WorkWithUsDialog";
+import { RepresentationDialog } from "@/components/RepresentationDialog";
 
 export const Header = () => {
+  const [representationOpen, setRepresentationOpen] = useState(false);
+
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md">
       <div className="container mx-auto px-4">
@@ -168,10 +172,10 @@ export const Header = () => {
                     </h3>
                     <DrawerClose asChild>
                       <Button
-                        asChild
+                        onClick={() => setRepresentationOpen(true)}
                         className="btn-shine w-full font-bebas uppercase tracking-wider h-6 text-xs"
                       >
-                        <Link to="/contact">REQUEST REPRESENTATION</Link>
+                        REQUEST REPRESENTATION
                       </Button>
                     </DrawerClose>
                   </div>
@@ -196,6 +200,11 @@ export const Header = () => {
           </WorkWithUsDialog>
         </div>
       </div>
+
+      <RepresentationDialog 
+        open={representationOpen} 
+        onOpenChange={setRepresentationOpen} 
+      />
     </header>
   );
 };
