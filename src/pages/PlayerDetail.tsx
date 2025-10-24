@@ -13,7 +13,7 @@ const PlayerDetail = () => {
   const { playername } = useParams<{ playername: string }>();
   const navigate = useNavigate();
   const [currentFormationIndex, setCurrentFormationIndex] = useState(0);
-  const [currentVideoType, setCurrentVideoType] = useState<'season' | number>('season');
+  const [currentVideoType, setCurrentVideoType] = useState<'season' | number>(0);
   const [dbHighlights, setDbHighlights] = useState<any[]>([]);
   const [player, setPlayer] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -44,10 +44,21 @@ const PlayerDetail = () => {
             let bioText = '';
             if (data.bio) {
               try {
-                bioData = JSON.parse(data.bio);
-                // Extract just the bio text, not the whole JSON structure
-                bioText = bioData.bio || data.bio;
+                // Try to parse as JSON
+                const parsed = JSON.parse(data.bio);
+                if (typeof parsed === 'object' && parsed !== null) {
+                  bioData = parsed;
+                  // Extract just the bio text field
+                  bioText = parsed.bio || parsed.text || '';
+                  // If still empty, check if the entire thing is just a string describing the player
+                  if (!bioText && typeof data.bio === 'string' && !data.bio.startsWith('{')) {
+                    bioText = data.bio;
+                  }
+                } else {
+                  bioText = data.bio;
+                }
               } catch {
+                // Not valid JSON, use as-is
                 bioText = data.bio;
               }
             }
@@ -207,17 +218,29 @@ const PlayerDetail = () => {
           {/* Highlights Video - Full Width 16:9 with Club Logo Overlays */}
           <div className="mb-8">
             <div className="relative aspect-video bg-secondary/30 rounded-lg overflow-hidden border-4 border-[hsl(var(--gold))]">
-              <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
-                <Video className="w-16 h-16 text-primary" />
-                <p className="text-foreground/60 font-bebas text-xl uppercase tracking-wider">
-                  {currentVideoType === 'season' ? 'Season Highlights' : `Match Highlights`}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  {currentVideoType !== 'season' && player.videoHighlights?.matchHighlights?.[currentVideoType]
-                    ? `vs ${player.videoHighlights.matchHighlights[currentVideoType].opponent}`
-                    : 'Coming Soon'}
-                </p>
-              </div>
+              {dbHighlights.length > 0 && typeof currentVideoType === 'number' && dbHighlights[currentVideoType]?.videoUrl ? (
+                <video 
+                  key={dbHighlights[currentVideoType].videoUrl}
+                  className="w-full h-full object-contain"
+                  controls
+                  autoPlay={currentVideoType === 0}
+                >
+                  <source src={dbHighlights[currentVideoType].videoUrl} type="video/mp4" />
+                  Your browser does not support the video tag.
+                </video>
+              ) : (
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
+                  <Video className="w-16 h-16 text-primary" />
+                  <p className="text-foreground/60 font-bebas text-xl uppercase tracking-wider">
+                    {dbHighlights.length > 0 && typeof currentVideoType === 'number' && dbHighlights[currentVideoType]?.name
+                      ? dbHighlights[currentVideoType].name
+                      : 'Highlights'}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Coming Soon
+                  </p>
+                </div>
+              )}
               
               {/* Club Logo Overlays - Bottom - Show database highlights */}
               {dbHighlights.length > 0 && (
@@ -231,11 +254,11 @@ const PlayerDetail = () => {
                           ? 'border-[hsl(var(--gold))] scale-110'
                           : 'border-[hsl(var(--gold))]/20 hover:border-[hsl(var(--gold))]/50'
                       }`}
-                      title={`Highlight ${index + 1}`}
+                      title={highlight.name || `Highlight ${index + 1}`}
                     >
                       <img 
                         src={highlight.clubLogo} 
-                        alt={`Highlight ${index + 1}`}
+                        alt={highlight.name || `Highlight ${index + 1}`}
                         className="w-full h-full object-contain p-0.5"
                       />
                     </button>

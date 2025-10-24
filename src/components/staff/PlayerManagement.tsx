@@ -65,7 +65,9 @@ const PlayerManagement = () => {
   const [isHighlightsDialogOpen, setIsHighlightsDialogOpen] = useState(false);
   const [highlightVideoFile, setHighlightVideoFile] = useState<File | null>(null);
   const [highlightClubLogoFile, setHighlightClubLogoFile] = useState<File | null>(null);
+  const [highlightName, setHighlightName] = useState<string>("");
   const [existingHighlights, setExistingHighlights] = useState<any[]>([]);
+  const [editingHighlightIndex, setEditingHighlightIndex] = useState<number | null>(null);
   const [visibleOnStarsPage, setVisibleOnStarsPage] = useState(false);
   const [isProgrammingDialogOpen, setIsProgrammingDialogOpen] = useState(false);
   const [selectedProgrammingPlayerId, setSelectedProgrammingPlayerId] = useState<string>("");
@@ -1106,8 +1108,19 @@ const PlayerManagement = () => {
                 <div key={index} className="flex items-center gap-2 p-2 border rounded">
                   <span className="cursor-move">⋮⋮</span>
                   <div className="flex-1">
-                    <p className="text-sm">Highlight {index + 1}</p>
+                    <p className="text-sm font-medium">{highlight.name || `Highlight ${index + 1}`}</p>
                   </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setEditingHighlightIndex(index);
+                      setHighlightName(highlight.name || "");
+                    }}
+                  >
+                    <Edit className="w-3 h-3" />
+                  </Button>
                   <Button
                     type="button"
                     variant="ghost"
@@ -1176,11 +1189,68 @@ const PlayerManagement = () => {
               </Button>
             </div>
           )}
+          
+          {/* Edit Highlight Name Dialog */}
+          {editingHighlightIndex !== null && (
+            <div className="p-4 border rounded mb-4 space-y-2">
+              <Label htmlFor="edit_highlight_name">Edit Highlight Name</Label>
+              <Input
+                id="edit_highlight_name"
+                value={highlightName}
+                onChange={(e) => setHighlightName(e.target.value)}
+                placeholder="Enter highlight name"
+              />
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      setUploadingFiles(true);
+                      const newHighlights = [...existingHighlights];
+                      newHighlights[editingHighlightIndex] = {
+                        ...newHighlights[editingHighlightIndex],
+                        name: highlightName
+                      };
+                      
+                      const { error } = await supabase
+                        .from("players")
+                        .update({ highlights: JSON.stringify(newHighlights) })
+                        .eq("id", currentPlayerId);
+                      
+                      if (error) throw error;
+                      toast.success("Highlight name updated!");
+                      setExistingHighlights(newHighlights);
+                      setEditingHighlightIndex(null);
+                      setHighlightName("");
+                      fetchPlayers();
+                    } catch (error: any) {
+                      toast.error("Failed to update highlight name");
+                    } finally {
+                      setUploadingFiles(false);
+                    }
+                  }}
+                  disabled={uploadingFiles}
+                >
+                  Save
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setEditingHighlightIndex(null);
+                    setHighlightName("");
+                  }}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          )}
 
           {/* Add New Highlight Form */}
           <form onSubmit={async (e) => {
             e.preventDefault();
-            if (!currentPlayerId || !highlightVideoFile || !highlightClubLogoFile) return;
+            if (!currentPlayerId || !highlightVideoFile || !highlightClubLogoFile || !highlightName) return;
             
             try {
               setUploadingFiles(true);
@@ -1213,6 +1283,7 @@ const PlayerManagement = () => {
               
               // Add highlight to array
               const newHighlight = {
+                name: highlightName,
                 videoUrl: videoUrl,
                 clubLogo: logoUrl,
                 addedAt: new Date().toISOString()
@@ -1230,6 +1301,7 @@ const PlayerManagement = () => {
               toast.success("Highlight added successfully!");
               setHighlightVideoFile(null);
               setHighlightClubLogoFile(null);
+              setHighlightName("");
               setExistingHighlights(updatedHighlights);
               fetchPlayers();
             } catch (error: any) {
@@ -1239,6 +1311,20 @@ const PlayerManagement = () => {
               setUploadingFiles(false);
             }
           }} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="highlight_name">Highlight Name *</Label>
+              <Input
+                id="highlight_name"
+                value={highlightName}
+                onChange={(e) => setHighlightName(e.target.value)}
+                placeholder="e.g., Season Highlights 2024/25"
+                required
+              />
+              <p className="text-xs text-muted-foreground">
+                Give this highlight video a descriptive name
+              </p>
+            </div>
+            
             <div className="space-y-2">
               <Label htmlFor="highlight_video">Highlight Video *</Label>
               <Input
@@ -1267,7 +1353,7 @@ const PlayerManagement = () => {
               </p>
             </div>
             
-            <Button type="submit" disabled={uploadingFiles || !highlightVideoFile || !highlightClubLogoFile}>
+            <Button type="submit" disabled={uploadingFiles || !highlightVideoFile || !highlightClubLogoFile || !highlightName}>
               {uploadingFiles ? "Uploading..." : "Add Highlight"}
             </Button>
           </form>
