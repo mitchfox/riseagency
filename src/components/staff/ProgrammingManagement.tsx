@@ -129,6 +129,8 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
   const [selectedSession, setSelectedSession] = useState<string | null>(null);
   const [isCreatingNew, setIsCreatingNew] = useState(false);
   const [newProgramName, setNewProgramName] = useState("");
+  const [uploadingExcel, setUploadingExcel] = useState(false);
+  const [excelFile, setExcelFile] = useState<File | null>(null);
 
   useEffect(() => {
     if (isOpen && playerId) {
@@ -210,23 +212,79 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
         ? (existingPrograms[0].display_order || 0) + 1 
         : 1;
 
-      const { error } = await supabase
+      // If Excel file is uploaded, process it with AI
+      let aiParsedData: any = null;
+      if (excelFile) {
+        setUploadingExcel(true);
+        try {
+          const formData = new FormData();
+          formData.append('file', excelFile);
+
+          const response = await fetch(
+            `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/parse-program-excel`,
+            {
+              method: 'POST',
+              body: formData,
+            }
+          );
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to parse Excel file');
+          }
+
+          const result = await response.json();
+          aiParsedData = result.data;
+          toast.success('Excel file parsed successfully!');
+        } catch (error: any) {
+          console.error('Error parsing Excel:', error);
+          toast.error(`Failed to parse Excel: ${error.message}`);
+          setUploadingExcel(false);
+          setLoading(false);
+          return;
+        } finally {
+          setUploadingExcel(false);
+        }
+      }
+
+      // Create the program with AI-parsed data if available
+      const programData: any = {
+        player_id: playerId,
+        program_name: newProgramName,
+        is_current: programs.length === 0,
+        display_order: nextOrder
+      };
+
+      if (aiParsedData) {
+        programData.phase_name = aiParsedData.phaseName;
+        programData.phase_dates = aiParsedData.phaseDates;
+        programData.overview_text = aiParsedData.overviewText;
+        programData.sessions = aiParsedData.sessions;
+        programData.weekly_schedules = aiParsedData.weeklySchedules;
+      } else {
+        programData.sessions = {};
+        programData.weekly_schedules = [];
+      }
+
+      const { error, data: newProgram } = await supabase
         .from('player_programs')
-        .insert({
-          player_id: playerId,
-          program_name: newProgramName,
-          is_current: programs.length === 0,
-          sessions: {},
-          weekly_schedules: [],
-          display_order: nextOrder
-        });
+        .insert(programData)
+        .select()
+        .single();
 
       if (error) throw error;
 
       toast.success('Program created successfully');
       setNewProgramName('');
+      setExcelFile(null);
       setIsCreatingNew(false);
-      loadPrograms();
+      
+      // If AI data was used, open the program for editing/review
+      if (aiParsedData && newProgram) {
+        loadProgramDetails(newProgram.id);
+      } else {
+        loadPrograms();
+      }
     } catch (error) {
       console.error('Error creating program:', error);
       toast.error('Failed to create program');
@@ -464,21 +522,51 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
             {isCreatingNew && (
               <Card>
                 <CardContent className="pt-6">
-                  <div className="flex gap-2">
-                    <Input
-                      placeholder="Program name (e.g., Pre-Season 2025)"
-                      value={newProgramName}
-                      onChange={(e) => setNewProgramName(e.target.value)}
-                    />
-                    <Button onClick={createNewProgram} disabled={loading}>
-                      Create
-                    </Button>
-                    <Button variant="outline" onClick={() => {
-                      setIsCreatingNew(false);
-                      setNewProgramName('');
-                    }}>
-                      Cancel
-                    </Button>
+                  <div className="space-y-4">
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="Program name (e.g., Pre-Season 2025)"
+                        value={newProgramName}
+                        onChange={(e) => setNewProgramName(e.target.value)}
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="excel-upload">Upload Excel File (Optional)</Label>
+                      <p className="text-xs text-muted-foreground">
+                        Upload an Excel file and AI will automatically extract the program structure for you
+                      </p>
+                      <Input
+                        id="excel-upload"
+                        type="file"
+                        accept=".xlsx,.xls,.csv"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            setExcelFile(file);
+                          }
+                        }}
+                        disabled={uploadingExcel}
+                      />
+                      {excelFile && (
+                        <p className="text-sm text-muted-foreground">
+                          Selected: {excelFile.name}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="flex gap-2">
+                      <Button onClick={createNewProgram} disabled={loading || uploadingExcel}>
+                        {uploadingExcel ? 'Processing Excel...' : loading ? 'Creating...' : 'Create'}
+                      </Button>
+                      <Button variant="outline" onClick={() => {
+                        setIsCreatingNew(false);
+                        setNewProgramName('');
+                        setExcelFile(null);
+                      }}>
+                        Cancel
+                      </Button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
