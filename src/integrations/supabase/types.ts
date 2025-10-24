@@ -160,6 +160,7 @@ export type Database = {
           tags: string[] | null
           title: string
           updated_at: string
+          video_url: string | null
         }
         Insert: {
           attachments?: Json | null
@@ -175,6 +176,7 @@ export type Database = {
           tags?: string[] | null
           title: string
           updated_at?: string
+          video_url?: string | null
         }
         Update: {
           attachments?: Json | null
@@ -190,6 +192,7 @@ export type Database = {
           tags?: string[] | null
           title?: string
           updated_at?: string
+          video_url?: string | null
         }
         Relationships: []
       }

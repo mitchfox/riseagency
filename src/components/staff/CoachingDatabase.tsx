@@ -80,6 +80,7 @@ export const CoachingDatabase = () => {
     content: '',
     category: '',
     load: '',
+    video_url: '',
   });
   
   // Pagination and filtering
@@ -228,6 +229,7 @@ export const CoachingDatabase = () => {
         content: '',
         category: '',
         load: '',
+        video_url: '',
       });
       setEditingItem(null);
       setIsDialogOpen(false);
@@ -277,6 +279,7 @@ export const CoachingDatabase = () => {
       rest_time: item.rest_time || '',
       load: (item as any).load || '',
       analysis_type: item.analysis_type || '',
+      video_url: (item as any).video_url || '',
     });
     setIsDialogOpen(true);
   };
@@ -288,6 +291,7 @@ export const CoachingDatabase = () => {
       content: '',
       category: '',
       load: '',
+      video_url: '',
     });
     setEditingItem(null);
   };
@@ -489,6 +493,47 @@ export const CoachingDatabase = () => {
                               onChange={(e) => setFormData({ ...formData, rest_time: parseInt(e.target.value) || null })}
                             />
                           </div>
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <Label htmlFor="video_url">Video URL</Label>
+                          <Input
+                            id="video_url"
+                            value={formData.video_url}
+                            onChange={(e) => setFormData({ ...formData, video_url: e.target.value })}
+                            placeholder="https://... or upload a video below"
+                          />
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <Label htmlFor="video_file">Or Upload Video</Label>
+                          <Input
+                            id="video_file"
+                            type="file"
+                            accept="video/*"
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                try {
+                                  const fileName = `exercise-videos/${Date.now()}-${file.name}`;
+                                  const { data, error } = await supabase.storage
+                                    .from('analysis-files')
+                                    .upload(fileName, file);
+                                  
+                                  if (error) throw error;
+                                  
+                                  const { data: urlData } = supabase.storage
+                                    .from('analysis-files')
+                                    .getPublicUrl(fileName);
+                                  
+                                  setFormData({ ...formData, video_url: urlData.publicUrl });
+                                  toast.success('Video uploaded successfully');
+                                } catch (error: any) {
+                                  toast.error('Failed to upload video: ' + error.message);
+                                }
+                              }
+                            }}
+                          />
                         </div>
                       </>
                     )}
