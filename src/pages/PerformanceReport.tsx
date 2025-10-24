@@ -143,14 +143,15 @@ const PerformanceReport = () => {
     <div className="min-h-screen bg-background">
       <Header />
       <main className="container mx-auto px-4 py-8">
-        <Button onClick={() => navigate(-1)} variant="ghost" className="mb-4">
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back
-        </Button>
-
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle className="text-3xl">Performance Report</CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-3xl">Performance Report</CardTitle>
+              <Button onClick={() => navigate(-1)} variant="ghost" size="sm">
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
