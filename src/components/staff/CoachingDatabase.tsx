@@ -79,6 +79,7 @@ export const CoachingDatabase = () => {
     description: '',
     content: '',
     category: '',
+    load: '',
   });
   
   // Pagination and filtering
@@ -226,6 +227,7 @@ export const CoachingDatabase = () => {
         description: '',
         content: '',
         category: '',
+        load: '',
       });
       setEditingItem(null);
       setIsDialogOpen(false);
@@ -273,6 +275,7 @@ export const CoachingDatabase = () => {
       sets: item.sets || '',
       reps: item.reps || '',
       rest_time: item.rest_time || '',
+      load: (item as any).load || '',
       analysis_type: item.analysis_type || '',
     });
     setIsDialogOpen(true);
@@ -284,6 +287,7 @@ export const CoachingDatabase = () => {
       description: '',
       content: '',
       category: '',
+      load: '',
     });
     setEditingItem(null);
   };
@@ -372,15 +376,17 @@ export const CoachingDatabase = () => {
                       />
                     </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="content">Content</Label>
-                      <Textarea
-                        id="content"
-                        value={formData.content}
-                        onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                        rows={8}
-                      />
-                    </div>
+                    {key !== 'coaching_exercises' && (
+                      <div className="space-y-2">
+                        <Label htmlFor="content">Content</Label>
+                        <Textarea
+                          id="content"
+                          value={formData.content}
+                          onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                          rows={8}
+                        />
+                      </div>
+                    )}
 
                     <div className="space-y-2">
                       <Label htmlFor="category">Category</Label>
@@ -448,7 +454,15 @@ export const CoachingDatabase = () => {
 
                     {key === 'coaching_exercises' && (
                       <>
-                        <div className="grid grid-cols-3 gap-4">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="reps">Reps</Label>
+                            <Input
+                              id="reps"
+                              value={formData.reps}
+                              onChange={(e) => setFormData({ ...formData, reps: e.target.value })}
+                            />
+                          </div>
                           <div className="space-y-2">
                             <Label htmlFor="sets">Sets</Label>
                             <Input
@@ -459,15 +473,15 @@ export const CoachingDatabase = () => {
                             />
                           </div>
                           <div className="space-y-2">
-                            <Label htmlFor="reps">Reps</Label>
+                            <Label htmlFor="load">Load (kg)</Label>
                             <Input
-                              id="reps"
-                              value={formData.reps}
-                              onChange={(e) => setFormData({ ...formData, reps: e.target.value })}
+                              id="load"
+                              value={formData.load}
+                              onChange={(e) => setFormData({ ...formData, load: e.target.value })}
                             />
                           </div>
                           <div className="space-y-2">
-                            <Label htmlFor="rest_time">Rest (seconds)</Label>
+                            <Label htmlFor="rest_time">Recovery Time (seconds)</Label>
                             <Input
                               id="rest_time"
                               type="number"
