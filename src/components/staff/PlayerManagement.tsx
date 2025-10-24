@@ -1012,8 +1012,149 @@ const PlayerManagement = () => {
                       }}
                     >
                       <Video className="w-4 h-4 mr-2" />
-                      Highlights
+                      Add Highlight
                     </Button>
+                  </div>
+
+                  {/* Highlights Section */}
+                  <div className="border-t pt-4 space-y-4 mt-4">
+                    <h4 className="text-lg font-semibold">Player Highlights</h4>
+                    {(() => {
+                      let highlights: any[] = [];
+                      try {
+                        if (player.highlights) {
+                          highlights = typeof player.highlights === 'string' 
+                            ? JSON.parse(player.highlights) 
+                            : player.highlights;
+                          highlights = Array.isArray(highlights) ? highlights : [];
+                        }
+                      } catch {
+                        highlights = [];
+                      }
+                      
+                      return highlights.length > 0 ? (
+                        <div className="space-y-2">
+                          {highlights.map((highlight, index) => (
+                            <div key={index} className="flex items-center gap-3 p-3 border rounded-lg bg-secondary/5">
+                              <span className="text-muted-foreground font-bold">{index + 1}</span>
+                              
+                              {highlight.clubLogo && (
+                                <img 
+                                  src={highlight.clubLogo} 
+                                  alt="Club logo"
+                                  className="w-10 h-10 object-contain bg-white rounded p-1"
+                                />
+                              )}
+                              
+                              {highlight.videoUrl && (
+                                <video 
+                                  src={highlight.videoUrl}
+                                  className="w-20 h-14 object-cover rounded border cursor-pointer"
+                                  muted
+                                  onClick={() => window.open(highlight.videoUrl, '_blank')}
+                                />
+                              )}
+                              
+                              <div className="flex-1">
+                                <p className="text-sm font-medium">{highlight.name || `Highlight ${index + 1}`}</p>
+                                {highlight.addedAt && (
+                                  <p className="text-xs text-muted-foreground">
+                                    Added {new Date(highlight.addedAt).toLocaleDateString()}
+                                  </p>
+                                )}
+                              </div>
+                              
+                              <div className="flex gap-1">
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={async () => {
+                                    if (index > 0) {
+                                      const newHighlights = [...highlights];
+                                      [newHighlights[index - 1], newHighlights[index]] = [newHighlights[index], newHighlights[index - 1]];
+                                      
+                                      try {
+                                        const { error } = await supabase
+                                          .from("players")
+                                          .update({ highlights: JSON.stringify(newHighlights) })
+                                          .eq("id", player.id);
+                                        
+                                        if (error) throw error;
+                                        toast.success("Highlight moved up");
+                                        fetchPlayers();
+                                      } catch (error: any) {
+                                        toast.error("Failed to reorder");
+                                      }
+                                    }
+                                  }}
+                                  disabled={index === 0}
+                                  title="Move up"
+                                >
+                                  ↑
+                                </Button>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={async () => {
+                                    if (index < highlights.length - 1) {
+                                      const newHighlights = [...highlights];
+                                      [newHighlights[index], newHighlights[index + 1]] = [newHighlights[index + 1], newHighlights[index]];
+                                      
+                                      try {
+                                        const { error } = await supabase
+                                          .from("players")
+                                          .update({ highlights: JSON.stringify(newHighlights) })
+                                          .eq("id", player.id);
+                                        
+                                        if (error) throw error;
+                                        toast.success("Highlight moved down");
+                                        fetchPlayers();
+                                      } catch (error: any) {
+                                        toast.error("Failed to reorder");
+                                      }
+                                    }
+                                  }}
+                                  disabled={index === highlights.length - 1}
+                                  title="Move down"
+                                >
+                                  ↓
+                                </Button>
+                                <Button
+                                  type="button"
+                                  variant="destructive"
+                                  size="sm"
+                                  onClick={async () => {
+                                    const newHighlights = highlights.filter((_, i) => i !== index);
+                                    
+                                    try {
+                                      const { error } = await supabase
+                                        .from("players")
+                                        .update({ highlights: JSON.stringify(newHighlights) })
+                                        .eq("id", player.id);
+                                      
+                                      if (error) throw error;
+                                      toast.success("Highlight deleted");
+                                      fetchPlayers();
+                                    } catch (error: any) {
+                                      toast.error("Failed to delete");
+                                    }
+                                  }}
+                                  title="Delete"
+                                >
+                                  Delete
+                                </Button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-muted-foreground text-center py-4">
+                          No highlights yet. Click "Add Highlight" to create one.
+                        </p>
+                      );
+                    })()}
                   </div>
 
                   {showingAnalysisFor === player.id && (
@@ -1220,239 +1361,20 @@ const PlayerManagement = () => {
         playerName={selectedProgrammingPlayerName}
       />
 
-      {/* Highlights Management Dialog */}
+      {/* Add Highlight Dialog */}
       <Dialog open={isHighlightsDialogOpen} onOpenChange={(open) => {
         setIsHighlightsDialogOpen(open);
-        if (open && currentPlayerId) {
-          // Load existing highlights when dialog opens
-          const player = players.find(p => p.id === currentPlayerId);
-          if (player && player.highlights) {
-            try {
-              const highlights = typeof player.highlights === 'string' 
-                ? JSON.parse(player.highlights) 
-                : player.highlights;
-              setExistingHighlights(Array.isArray(highlights) ? highlights : []);
-            } catch {
-              setExistingHighlights([]);
-            }
-          } else {
-            setExistingHighlights([]);
-          }
-        }
         if (!open) {
           // Clear form when closing
           setHighlightVideoFile(null);
           setHighlightClubLogoFile(null);
           setHighlightName("");
-          setEditingHighlightIndex(null);
         }
       }}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Manage Player Highlights</DialogTitle>
+            <DialogTitle>Add New Highlight</DialogTitle>
           </DialogHeader>
-          
-          {/* Existing Highlights with Reordering */}
-          {existingHighlights.length > 0 && (
-            <div className="space-y-3 mb-6 p-4 border rounded-lg bg-secondary/5">
-              <Label className="text-lg font-semibold">Current Highlights ({existingHighlights.length})</Label>
-              <p className="text-sm text-muted-foreground">Use ↑ and ↓ buttons to reorder. Changes save automatically.</p>
-              {existingHighlights.map((highlight, index) => (
-                <div key={index} className="flex items-center gap-3 p-3 border rounded-lg bg-background shadow-sm">
-                  <span className="text-muted-foreground font-bold">{index + 1}</span>
-                  
-                  {/* Club Logo */}
-                  {highlight.clubLogo && (
-                    <img 
-                      src={highlight.clubLogo} 
-                      alt="Club logo"
-                      className="w-10 h-10 object-contain bg-white rounded p-1"
-                    />
-                  )}
-                  
-                  {/* Video Preview */}
-                  {highlight.videoUrl && (
-                    <video 
-                      src={highlight.videoUrl}
-                      className="w-20 h-14 object-cover rounded border"
-                      muted
-                    />
-                  )}
-                  
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">{highlight.name || `Highlight ${index + 1}`}</p>
-                    {highlight.addedAt && (
-                      <p className="text-xs text-muted-foreground">
-                        Added {new Date(highlight.addedAt).toLocaleDateString()}
-                      </p>
-                    )}
-                  </div>
-                  
-                  <div className="flex gap-1">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        setEditingHighlightIndex(index);
-                        setHighlightName(highlight.name || "");
-                      }}
-                      title="Edit name"
-                    >
-                      <Edit className="w-3 h-3" />
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={async () => {
-                        if (index > 0) {
-                          const newHighlights = [...existingHighlights];
-                          [newHighlights[index - 1], newHighlights[index]] = [newHighlights[index], newHighlights[index - 1]];
-                          setExistingHighlights(newHighlights);
-                          
-                          // Auto-save the reordering
-                          try {
-                            const { error } = await supabase
-                              .from("players")
-                              .update({ highlights: JSON.stringify(newHighlights) })
-                              .eq("id", currentPlayerId);
-                            
-                            if (error) throw error;
-                            toast.success("Highlight moved up");
-                            fetchPlayers();
-                          } catch (error: any) {
-                            toast.error("Failed to save order");
-                          }
-                        }
-                      }}
-                      disabled={index === 0}
-                      title="Move up"
-                    >
-                      ↑
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={async () => {
-                        if (index < existingHighlights.length - 1) {
-                          const newHighlights = [...existingHighlights];
-                          [newHighlights[index], newHighlights[index + 1]] = [newHighlights[index + 1], newHighlights[index]];
-                          setExistingHighlights(newHighlights);
-                          
-                          // Auto-save the reordering
-                          try {
-                            const { error } = await supabase
-                              .from("players")
-                              .update({ highlights: JSON.stringify(newHighlights) })
-                              .eq("id", currentPlayerId);
-                            
-                            if (error) throw error;
-                            toast.success("Highlight moved down");
-                            fetchPlayers();
-                          } catch (error: any) {
-                            toast.error("Failed to save order");
-                          }
-                        }
-                      }}
-                      disabled={index === existingHighlights.length - 1}
-                      title="Move down"
-                    >
-                      ↓
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      size="sm"
-                      onClick={async () => {
-                        const newHighlights = existingHighlights.filter((_, i) => i !== index);
-                        setExistingHighlights(newHighlights);
-                        
-                        // Auto-save the deletion
-                        try {
-                          const { error } = await supabase
-                            .from("players")
-                            .update({ highlights: JSON.stringify(newHighlights) })
-                            .eq("id", currentPlayerId);
-                          
-                          if (error) throw error;
-                          toast.success("Highlight deleted");
-                          fetchPlayers();
-                        } catch (error: any) {
-                          toast.error("Failed to delete highlight");
-                        }
-                      }}
-                      title="Delete"
-                    >
-                      Delete
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-          
-          {/* Edit Highlight Name Dialog */}
-          {editingHighlightIndex !== null && (
-            <div className="p-4 border rounded mb-4 space-y-2">
-              <Label htmlFor="edit_highlight_name">Edit Highlight Name</Label>
-              <Input
-                id="edit_highlight_name"
-                value={highlightName}
-                onChange={(e) => setHighlightName(e.target.value)}
-                placeholder="Enter highlight name"
-              />
-              <div className="flex gap-2">
-                <Button
-                  type="button"
-                  onClick={async () => {
-                    try {
-                      setUploadingFiles(true);
-                      const newHighlights = [...existingHighlights];
-                      newHighlights[editingHighlightIndex] = {
-                        ...newHighlights[editingHighlightIndex],
-                        name: highlightName
-                      };
-                      
-                      const { error } = await supabase
-                        .from("players")
-                        .update({ highlights: JSON.stringify(newHighlights) })
-                        .eq("id", currentPlayerId);
-                      
-                      if (error) throw error;
-                      toast.success("Highlight name updated!");
-                      setExistingHighlights(newHighlights);
-                      setEditingHighlightIndex(null);
-                      setHighlightName("");
-                      fetchPlayers();
-                    } catch (error: any) {
-                      toast.error("Failed to update highlight name");
-                    } finally {
-                      setUploadingFiles(false);
-                    }
-                  }}
-                  disabled={uploadingFiles}
-                >
-                  Save
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    setEditingHighlightIndex(null);
-                    setHighlightName("");
-                  }}
-                >
-                  Cancel
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {/* Add New Highlight Form */}
-          <div className="border-t pt-4">
-            <h3 className="text-lg font-semibold mb-4">Add New Highlight</h3>
           <form onSubmit={async (e) => {
             e.preventDefault();
             if (!currentPlayerId || !highlightVideoFile || !highlightClubLogoFile || !highlightName) return;
@@ -1487,6 +1409,20 @@ const PlayerManagement = () => {
                 .getPublicUrl(`highlights/logos/${logoFileName}`);
               
               // Add highlight to array
+              // Get existing highlights from the player
+              const player = players.find(p => p.id === currentPlayerId);
+              let existingHighlightsFromDb: any[] = [];
+              try {
+                if (player && player.highlights) {
+                  existingHighlightsFromDb = typeof player.highlights === 'string' 
+                    ? JSON.parse(player.highlights) 
+                    : player.highlights;
+                  existingHighlightsFromDb = Array.isArray(existingHighlightsFromDb) ? existingHighlightsFromDb : [];
+                }
+              } catch {
+                existingHighlightsFromDb = [];
+              }
+              
               const newHighlight = {
                 name: highlightName,
                 videoUrl: videoUrl,
@@ -1494,7 +1430,7 @@ const PlayerManagement = () => {
                 addedAt: new Date().toISOString()
               };
               
-              const updatedHighlights = [...existingHighlights, newHighlight];
+              const updatedHighlights = [...existingHighlightsFromDb, newHighlight];
               
               const { error } = await supabase
                 .from("players")
@@ -1507,7 +1443,7 @@ const PlayerManagement = () => {
               setHighlightVideoFile(null);
               setHighlightClubLogoFile(null);
               setHighlightName("");
-              setExistingHighlights(updatedHighlights);
+              setIsHighlightsDialogOpen(false);
               fetchPlayers();
             } catch (error: any) {
               console.error("Error adding highlight:", error);
@@ -1562,7 +1498,6 @@ const PlayerManagement = () => {
               {uploadingFiles ? "Uploading..." : "Add Highlight"}
             </Button>
           </form>
-          </div>
         </DialogContent>
       </Dialog>
     </div>
