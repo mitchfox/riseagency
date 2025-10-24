@@ -365,21 +365,21 @@ export const WorkWithUsDialog = ({ children, open, onOpenChange }: WorkWithUsDia
       {children && <DialogTrigger asChild>{children}</DialogTrigger>}
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         {!selectedRole && (
-          <div className="flex justify-center mb-6 pt-4">
+          <div className="flex justify-center pt-4 mb-4">
             <img src={logo} alt="RISE Football Agency" className="h-16" />
           </div>
         )}
         <DialogHeader>
           {selectedRole && (
-            <DialogTitle className="text-3xl font-bebas uppercase tracking-wider">
-              {`${selectedRole.charAt(0).toUpperCase() + selectedRole.slice(1)} Application`}
-            </DialogTitle>
+            <>
+              <DialogTitle className="text-3xl font-bebas uppercase tracking-wider">
+                {`${selectedRole.charAt(0).toUpperCase() + selectedRole.slice(1)} Application`}
+              </DialogTitle>
+              <DialogDescription>
+                Fill out the form below and we'll get back to you soon
+              </DialogDescription>
+            </>
           )}
-          <DialogDescription>
-            {!selectedRole
-              ? "Please select your role to continue"
-              : "Fill out the form below and we'll get back to you soon"}
-          </DialogDescription>
         </DialogHeader>
         {renderRoleForm()}
       </DialogContent>
