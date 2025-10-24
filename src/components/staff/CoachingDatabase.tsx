@@ -29,7 +29,7 @@ interface CoachingItem {
   equipment?: string | null;
   players_required?: string | null;
   sets?: number | null;
-  reps?: number | null;
+  reps?: string | null;
   rest_time?: number | null;
   analysis_type?: string | null;
 }
@@ -327,9 +327,8 @@ export const CoachingDatabase = () => {
                             <Label htmlFor="reps">Reps</Label>
                             <Input
                               id="reps"
-                              type="number"
                               value={formData.reps}
-                              onChange={(e) => setFormData({ ...formData, reps: parseInt(e.target.value) || null })}
+                              onChange={(e) => setFormData({ ...formData, reps: e.target.value })}
                             />
                           </div>
                           <div className="space-y-2">

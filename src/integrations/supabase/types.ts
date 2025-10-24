@@ -153,7 +153,7 @@ export type Database = {
           created_at: string
           description: string | null
           id: string
-          reps: number | null
+          reps: string | null
           rest_time: number | null
           sets: number | null
           tags: string[] | null
@@ -167,7 +167,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
-          reps?: number | null
+          reps?: string | null
           rest_time?: number | null
           sets?: number | null
           tags?: string[] | null
@@ -181,7 +181,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
-          reps?: number | null
+          reps?: string | null
           rest_time?: number | null
           sets?: number | null
           tags?: string[] | null
