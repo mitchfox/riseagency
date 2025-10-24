@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Edit, FileText, LineChart, BookOpen, Pencil } from "lucide-react";
+import { Edit, FileText, LineChart, BookOpen, Pencil, Video } from "lucide-react";
 import { PerformanceActionsDialog } from "./PerformanceActionsDialog";
 
 interface Player {
@@ -59,6 +59,9 @@ const PlayerManagement = () => {
   const [isPerformanceActionsDialogOpen, setIsPerformanceActionsDialogOpen] = useState(false);
   const [selectedAnalysisId, setSelectedAnalysisId] = useState<string | null>(null);
   const [selectedPlayerName, setSelectedPlayerName] = useState<string>("");
+  const [isHighlightsDialogOpen, setIsHighlightsDialogOpen] = useState(false);
+  const [highlightVideoUrl, setHighlightVideoUrl] = useState("");
+  const [highlightClubLogo, setHighlightClubLogo] = useState("");
 
   const [formData, setFormData] = useState({
     name: "",
@@ -754,11 +757,11 @@ const PlayerManagement = () => {
                   <div className="flex flex-wrap gap-2">
                     <Button variant="outline" size="sm" onClick={() => startEdit(player)}>
                       <Edit className="w-4 h-4 mr-2" />
-                      Edit Player
+                      Player Details
                     </Button>
                     <Button variant="outline" size="sm" onClick={() => toast.info("Programming feature coming soon")}>
                       <BookOpen className="w-4 h-4 mr-2" />
-                      Edit Programming
+                      Programming
                     </Button>
                     <Button 
                       variant="outline" 
@@ -766,7 +769,7 @@ const PlayerManagement = () => {
                       onClick={() => setShowingAnalysisFor(showingAnalysisFor === player.id ? null : player.id)}
                     >
                       <LineChart className="w-4 h-4 mr-2" />
-                      {showingAnalysisFor === player.id ? "Hide" : "View"} Analysis
+                      Analysis
                     </Button>
                     <Button variant="outline" size="sm" onClick={() => {
                       // First check if there are any analyses for this player
@@ -782,7 +785,18 @@ const PlayerManagement = () => {
                       setIsPerformanceActionsDialogOpen(true);
                     }}>
                       <FileText className="w-4 h-4 mr-2" />
-                      Add Performance Report
+                      Performance Reports
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => {
+                        setCurrentPlayerId(player.id);
+                        setIsHighlightsDialogOpen(true);
+                      }}
+                    >
+                      <Video className="w-4 h-4 mr-2" />
+                      Highlights
                     </Button>
                   </div>
 
@@ -978,6 +992,100 @@ const PlayerManagement = () => {
         analysisId={selectedAnalysisId || ""}
         playerName={selectedPlayerName}
       />
+
+      {/* Highlights Management Dialog */}
+      <Dialog open={isHighlightsDialogOpen} onOpenChange={setIsHighlightsDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Manage Player Highlights</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={async (e) => {
+            e.preventDefault();
+            if (!currentPlayerId) return;
+            
+            try {
+              setUploadingFiles(true);
+              
+              // For now, just store the URLs in the player's bio as JSON
+              // In production, you'd want a separate highlights table
+              const player = players.find(p => p.id === currentPlayerId);
+              if (!player) return;
+              
+              let bioData: any = {};
+              if (player.bio) {
+                try {
+                  bioData = JSON.parse(player.bio);
+                } catch {
+                  bioData = { bio: player.bio };
+                }
+              }
+              
+              // Add highlight to array
+              if (!bioData.highlights) {
+                bioData.highlights = [];
+              }
+              
+              bioData.highlights.push({
+                videoUrl: highlightVideoUrl,
+                clubLogo: highlightClubLogo,
+                addedAt: new Date().toISOString()
+              });
+              
+              const { error } = await supabase
+                .from("players")
+                .update({ bio: JSON.stringify(bioData) })
+                .eq("id", currentPlayerId);
+              
+              if (error) throw error;
+              
+              toast.success("Highlight added successfully!");
+              setIsHighlightsDialogOpen(false);
+              setHighlightVideoUrl("");
+              setHighlightClubLogo("");
+              fetchPlayers();
+            } catch (error: any) {
+              console.error("Error adding highlight:", error);
+              toast.error("Failed to add highlight");
+            } finally {
+              setUploadingFiles(false);
+            }
+          }} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="highlight_video">Video URL *</Label>
+              <Input
+                id="highlight_video"
+                type="url"
+                placeholder="https://youtube.com/watch?v=..."
+                value={highlightVideoUrl}
+                onChange={(e) => setHighlightVideoUrl(e.target.value)}
+                required
+              />
+              <p className="text-xs text-muted-foreground">
+                Paste a YouTube, Vimeo, or direct video link
+              </p>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="club_logo">Club Logo URL *</Label>
+              <Input
+                id="club_logo"
+                type="url"
+                placeholder="https://example.com/logo.png"
+                value={highlightClubLogo}
+                onChange={(e) => setHighlightClubLogo(e.target.value)}
+                required
+              />
+              <p className="text-xs text-muted-foreground">
+                Paste a direct link to the club's logo image
+              </p>
+            </div>
+            
+            <Button type="submit" disabled={uploadingFiles}>
+              {uploadingFiles ? "Adding..." : "Add Highlight"}
+            </Button>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
