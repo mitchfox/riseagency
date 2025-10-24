@@ -401,7 +401,7 @@ const PlayerManagement = () => {
           opponent: analysisData.opponent,
           result: analysisData.result,
           minutes_played: parseInt(analysisData.minutes_played) || null,
-          r90_score: parseFloat(analysisData.r90_score),
+          r90_score: analysisData.r90_score ? parseFloat(analysisData.r90_score) : null,
           pdf_url: pdfUrl,
           video_url: videoUrl,
         });
@@ -729,12 +729,29 @@ const PlayerManagement = () => {
                               {new Date(analysis.analysis_date).toLocaleDateString('en-GB')}
                             </span>
                             
-                            <button
-                              onClick={() => toast.info("Performance report coming soon")}
-                              className={`${getR90Color(analysis.r90_score)} text-white px-3 py-1 rounded font-bold hover:opacity-80 transition-opacity cursor-pointer`}
-                            >
-                              R90: {analysis.r90_score?.toFixed(2)}
-                            </button>
+                            {analysis.opponent && (
+                              <div className="flex flex-col min-w-[150px]">
+                                <span className="text-sm font-medium">vs {analysis.opponent}</span>
+                                {analysis.result && (
+                                  <span className="text-xs text-muted-foreground">{analysis.result}</span>
+                                )}
+                              </div>
+                            )}
+                            
+                            {analysis.r90_score !== null && analysis.r90_score !== undefined && (
+                              <button
+                                onClick={() => toast.info("Performance report coming soon")}
+                                className={`${getR90Color(analysis.r90_score)} text-white px-3 py-1 rounded font-bold hover:opacity-80 transition-opacity cursor-pointer`}
+                              >
+                                R90: {analysis.r90_score?.toFixed(2)}
+                              </button>
+                            )}
+                            
+                            {analysis.minutes_played && (
+                              <span className="text-sm text-muted-foreground">
+                                {analysis.minutes_played} min
+                              </span>
+                            )}
                             
                             {analysis.pdf_url && (
                               <Button 
@@ -820,14 +837,13 @@ const PlayerManagement = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="r90_score">R90 Score *</Label>
+                <Label htmlFor="r90_score">R90 Score</Label>
                 <Input
                   id="r90_score"
                   type="number"
                   step="0.01"
                   value={analysisData.r90_score}
                   onChange={(e) => setAnalysisData({ ...analysisData, r90_score: e.target.value })}
-                  required
                 />
               </div>
             </div>
