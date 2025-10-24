@@ -491,45 +491,84 @@ const Dashboard = () => {
                                     </AccordionTrigger>
                                     <AccordionContent>
                                       <div className="space-y-4">
-                                        {/* Weekly Schedule */}
+                                        {/* Weekly Schedule Table */}
                                         {program.weekly_schedules && Array.isArray(program.weekly_schedules) && program.weekly_schedules.length > 0 && (
-                                          <div className="space-y-4">
-                                            {program.weekly_schedules.map((week: any, idx: number) => (
-                                              <div key={idx} className="border rounded-lg p-4">
-                                                <h6 className="font-bebas text-base mb-3">Week {week.week || idx + 1}</h6>
-                                                <div className="grid gap-2">
-                                                  {Object.entries(week).filter(([key]) => key !== 'week').map(([day, value]) => {
-                                                    const sessionValue = value as string;
-                                                    const colors = sessionValue ? getSessionColor(sessionValue) : null;
+                                          <div className="border rounded-lg overflow-hidden">
+                                            {/* Table Header */}
+                                            <div 
+                                              className="grid grid-cols-8 gap-px"
+                                              style={{ backgroundColor: 'hsl(0, 0%, 0%)' }}
+                                            >
+                                              <div 
+                                                className="p-3 font-bebas uppercase text-sm text-center"
+                                                style={{ 
+                                                  backgroundColor: 'hsl(45, 70%, 55%)',
+                                                  color: 'hsl(0, 0%, 0%)'
+                                                }}
+                                              >
+                                                Week
+                                              </div>
+                                              {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((day) => (
+                                                <div 
+                                                  key={day}
+                                                  className="p-3 font-bebas uppercase text-sm text-center"
+                                                  style={{ 
+                                                    backgroundColor: 'hsl(45, 70%, 55%)',
+                                                    color: 'hsl(0, 0%, 0%)'
+                                                  }}
+                                                >
+                                                  {day}
+                                                </div>
+                                              ))}
+                                            </div>
+                                            
+                                            {/* Table Body */}
+                                            <div style={{ backgroundColor: 'hsl(0, 0%, 0%)' }}>
+                                              {program.weekly_schedules.map((week: any, idx: number) => (
+                                                <div 
+                                                  key={idx}
+                                                  className="grid grid-cols-8 gap-px"
+                                                >
+                                                  <div 
+                                                    className="p-4 text-sm font-medium text-center flex items-center justify-center"
+                                                    style={{ 
+                                                      backgroundColor: 'hsl(0, 0%, 95%)',
+                                                      color: 'hsl(0, 0%, 0%)'
+                                                    }}
+                                                  >
+                                                    {week.week}
+                                                  </div>
+                                                  {['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map((day) => {
+                                                    const sessionValue = week[day] || '';
+                                                    const colors = sessionValue ? getSessionColor(sessionValue) : { bg: 'hsl(0, 0%, 10%)', text: 'hsl(0, 0%, 100%)' };
                                                     return (
-                                                      <div key={day} className="flex justify-between py-2 border-b last:border-0">
-                                                        <span className="font-medium capitalize">{day}</span>
-                                                        {sessionValue ? (
+                                                      <div 
+                                                        key={day}
+                                                        className="p-4 flex items-center justify-center"
+                                                        style={{ 
+                                                          backgroundColor: colors.bg,
+                                                        }}
+                                                      >
+                                                        {sessionValue && (
                                                           <span 
-                                                            className="px-3 py-1 rounded font-bebas uppercase text-sm"
-                                                            style={{ 
-                                                              backgroundColor: colors?.bg,
-                                                              color: colors?.text
-                                                            }}
+                                                            className="font-bebas text-2xl uppercase"
+                                                            style={{ color: colors.text }}
                                                           >
                                                             {sessionValue}
                                                           </span>
-                                                        ) : (
-                                                          <span className="text-muted-foreground">-</span>
                                                         )}
                                                       </div>
                                                     );
                                                   })}
                                                 </div>
-                                              </div>
-                                            ))}
+                                              ))}
+                                            </div>
                                           </div>
                                         )}
 
                                         {/* Schedule Notes */}
                                         {program.schedule_notes && (
-                                          <div className="bg-accent/20 border border-primary/20 rounded-lg p-4">
-                                            <h5 className="text-base font-bebas uppercase mb-2">Notes</h5>
+                                          <div className="bg-card border border-border rounded-lg p-4">
                                             <p className="text-sm text-muted-foreground whitespace-pre-wrap">{program.schedule_notes}</p>
                                           </div>
                                         )}
