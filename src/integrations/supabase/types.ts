@@ -71,7 +71,7 @@ export type Database = {
           opponent: string | null
           pdf_url: string | null
           player_id: string
-          r90_score: number
+          r90_score: number | null
           result: string | null
           updated_at: string
           video_url: string | null
@@ -85,7 +85,7 @@ export type Database = {
           opponent?: string | null
           pdf_url?: string | null
           player_id: string
-          r90_score: number
+          r90_score?: number | null
           result?: string | null
           updated_at?: string
           video_url?: string | null
@@ -99,7 +99,7 @@ export type Database = {
           opponent?: string | null
           pdf_url?: string | null
           player_id?: string
-          r90_score?: number
+          r90_score?: number | null
           result?: string | null
           updated_at?: string
           video_url?: string | null
