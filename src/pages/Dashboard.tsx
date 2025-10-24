@@ -24,6 +24,7 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<User | null>(null);
   const [analyses, setAnalyses] = useState<Analysis[]>([]);
+  const [playerData, setPlayerData] = useState<any>(null);
 
   useEffect(() => {
     checkAuth();
@@ -61,12 +62,12 @@ const Dashboard = () => {
 
   const fetchAnalyses = async (email: string | undefined) => {
     if (!email) return;
-
+    
     try {
-      // First get the player ID from email
+      // First get the player ID and data from email
       const { data: playerData, error: playerError } = await supabase
         .from("players")
-        .select("id")
+        .select("*")
         .eq("email", email)
         .maybeSingle();
 
@@ -75,6 +76,19 @@ const Dashboard = () => {
         console.log("No player profile found for this email");
         return;
       }
+
+      // Parse bio data if it's JSON
+      let parsedPlayerData = { ...playerData };
+      if (playerData.bio) {
+        try {
+          const bioData = JSON.parse(playerData.bio);
+          parsedPlayerData = { ...playerData, ...bioData };
+        } catch (e) {
+          // Bio is not JSON, keep as is
+        }
+      }
+
+      setPlayerData(parsedPlayerData);
 
       // Then fetch their analyses
       const { data: analysisData, error: analysisError } = await supabase
@@ -119,34 +133,57 @@ const Dashboard = () => {
       <Header />
       <main className="py-20 px-4">
         <div className="container mx-auto max-w-6xl">
-          <div className="flex justify-between items-center mb-8">
-            <div>
-              <h1 className="text-5xl font-bebas uppercase tracking-wider text-foreground mb-2">
-                Player Portal
-              </h1>
-              <p className="text-muted-foreground">
-                Welcome back, {user?.user_metadata?.full_name || user?.email}
-              </p>
+          {/* Player Header */}
+          <div className="relative mb-12">
+            <div className="flex items-center gap-6 mb-8">
+              {playerData?.image_url && (
+                <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-primary/20">
+                  <img 
+                    src={playerData.image_url} 
+                    alt={playerData.name}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              )}
+              <div className="flex-1">
+                <h1 className="text-5xl md:text-6xl font-bebas uppercase tracking-wider text-foreground mb-2">
+                  {playerData?.name || user?.user_metadata?.full_name || "Player Portal"}
+                </h1>
+                <div className="flex items-center gap-4 text-muted-foreground">
+                  {playerData?.position && (
+                    <span className="text-lg">{playerData.position}</span>
+                  )}
+                  {playerData?.nationality && (
+                    <>
+                      <span>•</span>
+                      <span className="text-lg">{playerData.nationality}</span>
+                    </>
+                  )}
+                  {playerData?.currentClub && (
+                    <>
+                      <span>•</span>
+                      <span className="text-lg">{playerData.currentClub}</span>
+                    </>
+                  )}
+                </div>
+              </div>
+              <Button 
+                variant="outline" 
+                onClick={handleLogout}
+                className="font-bebas uppercase tracking-wider"
+              >
+                Log Out
+              </Button>
             </div>
-            <Button 
-              variant="outline" 
-              onClick={handleLogout}
-              className="font-bebas uppercase tracking-wider"
-            >
-              Log Out
-            </Button>
           </div>
 
           <Tabs defaultValue="analysis" className="w-full">
-            <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3 mb-8">
+            <TabsList className="grid w-full grid-cols-2 mb-8">
               <TabsTrigger value="analysis" className="font-bebas uppercase">
                 Performance Analysis
               </TabsTrigger>
               <TabsTrigger value="physical" className="font-bebas uppercase">
                 Physical Programming
-              </TabsTrigger>
-              <TabsTrigger value="profile" className="font-bebas uppercase">
-                My Profile
               </TabsTrigger>
             </TabsList>
 
@@ -250,34 +287,6 @@ const Dashboard = () => {
                     <p className="text-center text-muted-foreground italic">
                       Content coming soon - your strength coach will upload programs here
                     </p>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="profile" className="space-y-6">
-              <Card className="bg-marble">
-                <CardHeader>
-                  <CardTitle className="text-3xl font-bebas uppercase tracking-wider">
-                    My Profile
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-3">
-                    <div className="border-b border-border pb-3">
-                      <p className="text-sm text-muted-foreground">Name</p>
-                      <p className="text-lg">{user?.user_metadata?.full_name || "Not set"}</p>
-                    </div>
-                    <div className="border-b border-border pb-3">
-                      <p className="text-sm text-muted-foreground">Email</p>
-                      <p className="text-lg">{user?.email}</p>
-                    </div>
-                    <div className="border-b border-border pb-3">
-                      <p className="text-sm text-muted-foreground">Member Since</p>
-                      <p className="text-lg">
-                        {user?.created_at ? new Date(user.created_at).toLocaleDateString() : "Unknown"}
-                      </p>
-                    </div>
                   </div>
                 </CardContent>
               </Card>
