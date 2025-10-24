@@ -49,7 +49,7 @@ export const WorkWithUsDialog = ({ children, open, onOpenChange }: WorkWithUsDia
           <p className="text-center text-muted-foreground mb-6">
             Please select your role to continue
           </p>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {roles.map((role) => (
               <Button
                 key={role.value}

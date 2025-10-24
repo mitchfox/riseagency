@@ -240,7 +240,7 @@ const PlayerManagement = () => {
               <DialogTitle>{editingPlayer ? "Edit Player" : "Add New Player"}</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="name">Name *</Label>
                   <Input
@@ -329,7 +329,7 @@ const PlayerManagement = () => {
               <div className="space-y-4">
                 {editingStats?.player_id === player.id ? (
                   <div className="space-y-3">
-                    <div className="grid grid-cols-3 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                       <div>
                         <Label htmlFor={`goals-${player.id}`}>Goals</Label>
                         <Input

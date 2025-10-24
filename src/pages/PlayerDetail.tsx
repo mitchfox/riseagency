@@ -197,7 +197,7 @@ const PlayerDetail = () => {
             <h2 className="text-sm font-bebas text-primary uppercase tracking-widest mb-6 text-lg">
               Season Stats
             </h2>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {player.stats.goals !== undefined && (
                 <div className="text-center p-6 bg-background">
                   <div className="text-3xl font-bbh text-primary mb-2">

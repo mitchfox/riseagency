@@ -84,7 +84,7 @@ const Dashboard = () => {
           </div>
 
           <Tabs defaultValue="analysis" className="w-full">
-            <TabsList className="grid w-full grid-cols-3 mb-8">
+            <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3 mb-8">
               <TabsTrigger value="analysis" className="font-bebas uppercase">
                 Performance Analysis
               </TabsTrigger>
