@@ -63,10 +63,12 @@ const Index = () => {
               <div className="space-y-6">
                 <div className="overflow-hidden relative w-full mb-8">
                   <h1 
-                    className="text-6xl md:text-8xl lg:text-9xl font-bebas font-bold uppercase tracking-wider drop-shadow-2xl whitespace-nowrap inline-block animate-[scroll-left_60s_linear_infinite]"
+                    className="text-6xl md:text-8xl lg:text-9xl font-bebas font-bold uppercase tracking-[0.15em] whitespace-nowrap inline-block animate-[scroll-left_45s_linear_infinite]"
                     style={{
                       color: 'transparent',
-                      WebkitTextStroke: '2px white',
+                      WebkitTextStroke: '3px rgba(255, 215, 0, 0.9)',
+                      textShadow: '0 0 30px rgba(255, 215, 0, 0.6), 0 0 60px rgba(255, 215, 0, 0.4), 0 0 90px rgba(255, 215, 0, 0.2), 0 5px 20px rgba(0, 0, 0, 0.5)',
+                      filter: 'drop-shadow(0 0 20px rgba(255, 215, 0, 0.5)) drop-shadow(0 10px 30px rgba(0, 0, 0, 0.7))',
                     }}
                   >
                     REALISE POTENTIAL • REALISE POTENTIAL • REALISE POTENTIAL • REALISE POTENTIAL • REALISE POTENTIAL • REALISE POTENTIAL •
