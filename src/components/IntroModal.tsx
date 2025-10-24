@@ -36,7 +36,7 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
     <>
       <Dialog open={open} onOpenChange={handleDialogChange}>
         <DialogContent 
-          className="max-w-md p-0 border-primary/20 overflow-hidden bg-transparent"
+          className="max-w-md p-0 border-primary/20 overflow-hidden bg-transparent [&>button]:hidden"
         >
           {/* Journey Graphic with Overlayed Buttons */}
           <div className="relative overflow-hidden">
