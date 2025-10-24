@@ -50,6 +50,7 @@ const PlayerManagement = () => {
   const [editingStats, setEditingStats] = useState<PlayerStats | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [expandedPlayerId, setExpandedPlayerId] = useState<string | null>(null);
+  const [showingAnalysisFor, setShowingAnalysisFor] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -304,6 +305,22 @@ const PlayerManagement = () => {
       });
     }
   };
+
+  const getR90Color = (score: number) => {
+    if (score < 0) return "bg-red-900";
+    if (score >= 0 && score < 0.5) return "bg-red-600";
+    if (score >= 0.5 && score < 1.0) return "bg-yellow-500";
+    if (score >= 1.0 && score < 1.5) return "bg-lime-400";
+    if (score >= 1.5 && score < 2.5) return "bg-green-500";
+    return "bg-green-700";
+  };
+
+  // Mock analysis data for placeholder
+  const mockAnalyses = [
+    { id: 1, date: "2025-01-15", r90: 1.8, pdfUrl: "#", videoUrl: "#" },
+    { id: 2, date: "2025-01-08", r90: 1.2, pdfUrl: "#", videoUrl: "#" },
+    { id: 3, date: "2024-12-20", r90: 0.7, pdfUrl: "#", videoUrl: "#" },
+  ];
 
   if (loading && players.length === 0) {
     return <div>Loading...</div>;
@@ -569,15 +586,73 @@ const PlayerManagement = () => {
                       <BookOpen className="w-4 h-4 mr-2" />
                       Edit Programming
                     </Button>
-                    <Button variant="outline" size="sm" onClick={() => toast.info("Analysis feature coming soon")}>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => setShowingAnalysisFor(showingAnalysisFor === player.id ? null : player.id)}
+                    >
                       <LineChart className="w-4 h-4 mr-2" />
-                      Add Analysis
+                      {showingAnalysisFor === player.id ? "Hide" : "View"} Analysis
                     </Button>
                     <Button variant="outline" size="sm" onClick={() => toast.info("Performance report feature coming soon")}>
                       <FileText className="w-4 h-4 mr-2" />
                       Add Performance Report
                     </Button>
                   </div>
+
+                  {showingAnalysisFor === player.id && (
+                    <div className="border-t pt-4 space-y-4">
+                      <div className="flex justify-between items-center">
+                        <h4 className="text-lg font-semibold">Player Analysis</h4>
+                        <Button size="sm" onClick={() => toast.info("Add new analysis coming soon")}>
+                          Add New Analysis
+                        </Button>
+                      </div>
+                      
+                      <div className="space-y-3">
+                        {mockAnalyses.map((analysis) => (
+                          <div 
+                            key={analysis.id} 
+                            className="border rounded-lg p-4 hover:border-primary transition-colors"
+                          >
+                            <div className="flex items-center justify-between mb-3">
+                              <span className="text-sm text-muted-foreground">
+                                {new Date(analysis.date).toLocaleDateString('en-GB')}
+                              </span>
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm font-medium">R90:</span>
+                                <div 
+                                  className={`${getR90Color(analysis.r90)} text-white px-3 py-1 rounded font-bold`}
+                                >
+                                  {analysis.r90.toFixed(2)}
+                                </div>
+                              </div>
+                            </div>
+                            
+                            <div className="flex gap-2">
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                className="flex-1"
+                                onClick={() => toast.info("PDF viewer coming soon")}
+                              >
+                                <FileText className="w-4 h-4 mr-2" />
+                                View PDF
+                              </Button>
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                className="flex-1"
+                                onClick={() => toast.info("Video player coming soon")}
+                              >
+                                📹 View Video
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </CardContent>
               )}
             </Card>
