@@ -24,10 +24,10 @@ const Performance = () => {
           <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-background" />
           
           <div className="relative container mx-auto px-4 text-center z-10">
-            <h1 className="text-6xl md:text-8xl font-bebas uppercase tracking-wider text-white mb-4">
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-8xl font-bebas uppercase tracking-wider text-white mb-2 md:mb-4">
               Performance
             </h1>
-            <p className="text-xl md:text-2xl text-white/90 max-w-3xl mx-auto">
+            <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-white/90 max-w-3xl mx-auto px-4">
               Elevating your game through comprehensive support and development
             </p>
           </div>
@@ -36,14 +36,14 @@ const Performance = () => {
         {/* ATTRACT Section - Text Left, Image Right */}
         <section className="grid md:grid-cols-2">
           <div 
-            className="relative p-12 md:p-16 flex items-center"
+            className="relative p-6 sm:p-8 md:p-12 lg:p-16 flex items-center"
             style={{ backgroundImage: `url(${blackMarble})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
           >
             <div className="max-w-xl">
-              <h2 className="text-5xl md:text-6xl font-bebas uppercase tracking-wider text-[--gold] mb-6">
+              <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bebas uppercase tracking-wider text-[--gold] mb-4 md:mb-6">
                 Attract
               </h2>
-              <p className="text-lg md:text-xl text-white/90 leading-relaxed">
+              <p className="text-base sm:text-lg md:text-xl text-white/90 leading-relaxed">
                 Through our vast scouting network, we maximise visibility across the footballing world to ensure player interest and demand.
               </p>
             </div>
@@ -61,14 +61,14 @@ const Performance = () => {
             style={{ backgroundImage: `url(${matchAction2})` }}
           />
           <div 
-            className="relative p-12 md:p-16 flex items-center order-1 md:order-2"
+            className="relative p-6 sm:p-8 md:p-12 lg:p-16 flex items-center order-1 md:order-2"
             style={{ backgroundImage: `url(${blackMarble})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
           >
             <div className="max-w-xl">
-              <h2 className="text-5xl md:text-6xl font-bebas uppercase tracking-wider text-[--gold] mb-6">
+              <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bebas uppercase tracking-wider text-[--gold] mb-4 md:mb-6">
                 Sign
               </h2>
-              <p className="text-lg md:text-xl text-white/90 leading-relaxed">
+              <p className="text-base sm:text-lg md:text-xl text-white/90 leading-relaxed">
                 Sign the dotted line after our team of intermediaries negotiate new and improved contracts. Retain confidence knowing your career opportunities are being created and finalised.
               </p>
             </div>
@@ -78,14 +78,14 @@ const Performance = () => {
         {/* DEVELOP Section - Text Left, Image Right */}
         <section className="grid md:grid-cols-2">
           <div 
-            className="relative p-12 md:p-16 flex items-center"
+            className="relative p-6 sm:p-8 md:p-12 lg:p-16 flex items-center"
             style={{ backgroundImage: `url(${blackMarble})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
           >
             <div className="max-w-xl">
-              <h2 className="text-5xl md:text-6xl font-bebas uppercase tracking-wider text-[--gold] mb-6">
+              <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bebas uppercase tracking-wider text-[--gold] mb-4 md:mb-6">
                 Develop
               </h2>
-              <p className="text-lg md:text-xl text-white/90 leading-relaxed">
+              <p className="text-base sm:text-lg md:text-xl text-white/90 leading-relaxed">
                 Receive expert training to maximise your physical capacity for performance. Push the limits of your body and mind to truly know how far you can go in your career.
               </p>
             </div>
@@ -103,14 +103,14 @@ const Performance = () => {
             style={{ backgroundImage: `url(${trainingAction})` }}
           />
           <div 
-            className="relative p-12 md:p-16 flex items-center order-1 md:order-2"
+            className="relative p-6 sm:p-8 md:p-12 lg:p-16 flex items-center order-1 md:order-2"
             style={{ backgroundImage: `url(${blackMarble})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
           >
             <div className="max-w-xl">
-              <h2 className="text-5xl md:text-6xl font-bebas uppercase tracking-wider text-[--gold] mb-6">
+              <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bebas uppercase tracking-wider text-[--gold] mb-4 md:mb-6">
                 Perform
               </h2>
-              <p className="text-lg md:text-xl text-white/90 leading-relaxed">
+              <p className="text-base sm:text-lg md:text-xl text-white/90 leading-relaxed">
                 Play your best on a consistent basis through smart preparation, including psychological training sessions and pre-match analysis specific to your individual matchups.
               </p>
             </div>

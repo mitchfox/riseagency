@@ -514,15 +514,15 @@ export const CoachingDatabase = () => {
 
             {/* Filters - Show based on table type */}
             {(activeTab === 'coaching_exercises' || activeTab === 'coaching_drills') && (
-              <div className="flex gap-4 mb-4">
+              <div className="flex flex-wrap gap-2 md:gap-4 mb-4">
                 {activeTab === 'coaching_exercises' && (
                   <>
-                    <div className="w-48">
+                    <div className="w-full md:w-48">
                       <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                        <SelectTrigger>
+                        <SelectTrigger className="w-full">
                           <SelectValue placeholder="All Categories" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="z-50">
                           <SelectItem value="all">All Categories</SelectItem>
                           {categories.map((cat) => (
                             <SelectItem key={cat} value={cat}>{cat}</SelectItem>
@@ -531,12 +531,12 @@ export const CoachingDatabase = () => {
                       </Select>
                     </div>
                     
-                    <div className="w-48">
+                    <div className="w-full md:w-48">
                       <Select value={selectedMuscleGroup} onValueChange={setSelectedMuscleGroup}>
-                        <SelectTrigger>
+                        <SelectTrigger className="w-full">
                           <SelectValue placeholder="All Muscle Groups" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="z-50">
                           <SelectItem value="all">All Muscle Groups</SelectItem>
                           {muscleGroups.map((mg) => (
                             <SelectItem key={mg} value={mg}>{mg}</SelectItem>
@@ -549,12 +549,12 @@ export const CoachingDatabase = () => {
                 
                 {activeTab === 'coaching_drills' && (
                   <>
-                    <div className="w-48">
+                    <div className="w-full md:w-48">
                       <Select value={selectedPosition} onValueChange={setSelectedPosition}>
-                        <SelectTrigger>
+                        <SelectTrigger className="w-full">
                           <SelectValue placeholder="All Positions" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="z-50">
                           <SelectItem value="all">All Positions</SelectItem>
                           {positions.map((pos) => (
                             <SelectItem key={pos} value={pos}>{pos}</SelectItem>
@@ -563,12 +563,12 @@ export const CoachingDatabase = () => {
                       </Select>
                     </div>
                     
-                    <div className="w-48">
+                    <div className="w-full md:w-48">
                       <Select value={selectedSkill} onValueChange={setSelectedSkill}>
-                        <SelectTrigger>
+                        <SelectTrigger className="w-full">
                           <SelectValue placeholder="All Skills" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="z-50">
                           <SelectItem value="all">All Skills</SelectItem>
                           {skills.map((skill) => (
                             <SelectItem key={skill} value={skill}>{skill}</SelectItem>
