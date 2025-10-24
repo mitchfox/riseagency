@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Plus, Trash2, Check, Edit, ChevronUp, ChevronDown, ArrowUp, ArrowDown } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 
@@ -131,6 +132,11 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
   const [newProgramName, setNewProgramName] = useState("");
   const [uploadingExcel, setUploadingExcel] = useState(false);
   const [excelFile, setExcelFile] = useState<File | null>(null);
+  const [saveToCoachingDB, setSaveToCoachingDB] = useState({
+    programme: false,
+    sessions: false,
+    exercises: false
+  });
 
   useEffect(() => {
     if (isOpen && playerId) {
@@ -354,6 +360,86 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
         .eq('id', selectedProgram.id);
 
       if (error) throw error;
+
+      // Save to coaching database if requested
+      if (saveToCoachingDB.programme) {
+        await supabase.from('coaching_programmes').insert({
+          title: selectedProgram.program_name,
+          description: `${programmingData.phaseName} - ${programmingData.phaseDates}`,
+          content: programmingData.overviewText,
+          category: 'Player Programming'
+        });
+      }
+
+      if (saveToCoachingDB.sessions) {
+        const sessionsToSave = [];
+        for (const [key, session] of Object.entries({
+          'A': programmingData.sessionA,
+          'B': programmingData.sessionB,
+          'C': programmingData.sessionC,
+          'D': programmingData.sessionD,
+          'E': programmingData.sessionE,
+          'F': programmingData.sessionF,
+          'G': programmingData.sessionG,
+          'H': programmingData.sessionH,
+        })) {
+          if (session.exercises.length > 0) {
+            sessionsToSave.push({
+              title: `Session ${key} - ${selectedProgram.program_name}`,
+              content: session.exercises.map((ex: Exercise) => 
+                `${ex.name}: ${ex.sets} sets x ${ex.repetitions} reps @ ${ex.load}, ${ex.recoveryTime} rest`
+              ).join('\n'),
+              category: 'Player Programming'
+            });
+          }
+        }
+        if (sessionsToSave.length > 0) {
+          await supabase.from('coaching_sessions').insert(sessionsToSave);
+        }
+      }
+
+      if (saveToCoachingDB.exercises) {
+        // Get all existing exercises
+        const { data: existing } = await supabase
+          .from('coaching_exercises')
+          .select('title');
+        
+        const existingTitles = new Set(existing?.map((e: any) => e.title) || []);
+        const allExercises = [];
+
+        for (const session of Object.values({
+          ...programmingData.sessionA,
+          ...programmingData.sessionB,
+          ...programmingData.sessionC,
+          ...programmingData.sessionD,
+          ...programmingData.sessionE,
+          ...programmingData.sessionF,
+          ...programmingData.sessionG,
+          ...programmingData.sessionH,
+        })) {
+          if (Array.isArray(session)) {
+            for (const ex of session as Exercise[]) {
+              if (ex.name && !existingTitles.has(ex.name)) {
+                allExercises.push({
+                  title: ex.name,
+                  description: ex.description,
+                  content: `Video: ${ex.videoUrl || 'N/A'}`,
+                  sets: parseInt(ex.sets) || null,
+                  reps: ex.repetitions,
+                  rest_time: ex.recoveryTime ? parseInt(ex.recoveryTime.replace(/[^\d]/g, '')) : null,
+                  category: 'Player Programming'
+                });
+                existingTitles.add(ex.name);
+              }
+            }
+          }
+        }
+
+        if (allExercises.length > 0) {
+          await supabase.from('coaching_exercises').insert(allExercises);
+          toast.success(`Added ${allExercises.length} new exercises to coaching database`);
+        }
+      }
 
       toast.success('Program saved successfully');
       loadPrograms();
@@ -1035,6 +1121,47 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
             </Tabs>
 
             <div className="flex justify-end gap-2 mt-6">
+              <div className="flex-1 space-y-2">
+                <Label className="text-sm font-semibold">Save to Coaching Database:</Label>
+                <div className="flex gap-4">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="save-programme"
+                      checked={saveToCoachingDB.programme}
+                      onCheckedChange={(checked) => 
+                        setSaveToCoachingDB(prev => ({ ...prev, programme: checked as boolean }))
+                      }
+                    />
+                    <label htmlFor="save-programme" className="text-sm cursor-pointer">
+                      Save as Programme
+                    </label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="save-sessions"
+                      checked={saveToCoachingDB.sessions}
+                      onCheckedChange={(checked) => 
+                        setSaveToCoachingDB(prev => ({ ...prev, sessions: checked as boolean }))
+                      }
+                    />
+                    <label htmlFor="save-sessions" className="text-sm cursor-pointer">
+                      Save Sessions
+                    </label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="save-exercises"
+                      checked={saveToCoachingDB.exercises}
+                      onCheckedChange={(checked) => 
+                        setSaveToCoachingDB(prev => ({ ...prev, exercises: checked as boolean }))
+                      }
+                    />
+                    <label htmlFor="save-exercises" className="text-sm cursor-pointer">
+                      Save Exercises (new only)
+                    </label>
+                  </div>
+                </div>
+              </div>
               <Button variant="outline" onClick={() => {
                 setSelectedProgram(null);
                 setProgrammingData(initialProgrammingData());

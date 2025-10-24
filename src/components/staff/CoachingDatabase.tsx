@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Plus, Edit, Trash2 } from "lucide-react";
+import { ExerciseDatabaseImport } from "./ExerciseDatabaseImport";
 
 type TableType = 'coaching_sessions' | 'coaching_programmes' | 'coaching_drills' | 'coaching_exercises' | 'coaching_analysis' | 'psychological_sessions';
 
@@ -189,6 +190,9 @@ export const CoachingDatabase = () => {
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Coaching Database</h2>
       </div>
+
+      {/* Import section at the top */}
+      <ExerciseDatabaseImport />
 
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TableType)}>
         <TabsList className="grid w-full grid-cols-6">
