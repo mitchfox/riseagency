@@ -944,21 +944,29 @@ const PlayerManagement = () => {
       </div>
 
       {/* Filters */}
-      <div className="flex gap-4 items-center">
-        <div className="flex items-center gap-2">
-          <Label htmlFor="representation-filter">Representation Status:</Label>
-          <select
-            id="representation-filter"
-            value={representationFilter}
-            onChange={(e) => setRepresentationFilter(e.target.value)}
-            className="flex h-10 w-[180px] rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
-          >
-            <option value="all">All</option>
-            <option value="represented">Represented</option>
-            <option value="mandated">Mandated</option>
-            <option value="other">Other</option>
-          </select>
-        </div>
+      <div className="flex gap-2 items-center flex-wrap">
+        <span className="text-sm font-medium text-muted-foreground">Representation:</span>
+        <Button
+          variant={representationFilter === "represented" ? "default" : "outline"}
+          size="sm"
+          onClick={() => setRepresentationFilter(representationFilter === "represented" ? "all" : "represented")}
+        >
+          Represented
+        </Button>
+        <Button
+          variant={representationFilter === "mandated" ? "default" : "outline"}
+          size="sm"
+          onClick={() => setRepresentationFilter(representationFilter === "mandated" ? "all" : "mandated")}
+        >
+          Mandated
+        </Button>
+        <Button
+          variant={representationFilter === "other" ? "default" : "outline"}
+          size="sm"
+          onClick={() => setRepresentationFilter(representationFilter === "other" ? "all" : "other")}
+        >
+          Other
+        </Button>
       </div>
 
       {/* Group players by category */}
