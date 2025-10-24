@@ -1221,6 +1221,21 @@ const PlayerManagement = () => {
                                     >
                                       ↓
                                     </Button>
+                                     <Button
+                                      type="button"
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => {
+                                        setCurrentPlayerId(player.id);
+                                        setEditingHighlightIndex(index);
+                                        setHighlightName(highlight.name || "");
+                                        setExistingHighlights(highlights);
+                                        setIsHighlightsDialogOpen(true);
+                                      }}
+                                      title="Edit"
+                                    >
+                                      <Pencil className="w-3 h-3" />
+                                    </Button>
                                     <Button
                                       type="button"
                                       variant="destructive"
@@ -1463,7 +1478,7 @@ const PlayerManagement = () => {
         playerName={selectedProgrammingPlayerName}
       />
 
-      {/* Add Highlight Dialog */}
+      {/* Add/Edit Highlight Dialog */}
       <Dialog open={isHighlightsDialogOpen} onOpenChange={(open) => {
         setIsHighlightsDialogOpen(open);
         if (!open) {
@@ -1471,46 +1486,25 @@ const PlayerManagement = () => {
           setHighlightVideoFile(null);
           setHighlightClubLogoFile(null);
           setHighlightName("");
+          setEditingHighlightIndex(null);
+          setExistingHighlights([]);
         }
       }}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Add New Highlight</DialogTitle>
+            <DialogTitle>{editingHighlightIndex !== null ? "Edit Highlight" : "Add New Highlight"}</DialogTitle>
           </DialogHeader>
           <form onSubmit={async (e) => {
             e.preventDefault();
-            if (!currentPlayerId || !highlightVideoFile || !highlightClubLogoFile || !highlightName) return;
+            if (!currentPlayerId || !highlightName) return;
+            
+            // For editing, files are optional
+            const isEditing = editingHighlightIndex !== null;
+            if (!isEditing && (!highlightVideoFile || !highlightClubLogoFile)) return;
             
             try {
               setUploadingFiles(true);
               
-              // Upload video file
-              const videoFileName = `${currentPlayerId}_${Date.now()}_${highlightVideoFile.name}`;
-              const { data: videoData, error: videoError } = await supabase.storage
-                .from('analysis-files')
-                .upload(`highlights/${videoFileName}`, highlightVideoFile);
-              
-              if (videoError) throw videoError;
-              
-              // Get public URL for video
-              const { data: { publicUrl: videoUrl } } = supabase.storage
-                .from('analysis-files')
-                .getPublicUrl(`highlights/${videoFileName}`);
-              
-              // Upload club logo file
-              const logoFileName = `${currentPlayerId}_${Date.now()}_${highlightClubLogoFile.name}`;
-              const { data: logoData, error: logoError } = await supabase.storage
-                .from('analysis-files')
-                .upload(`highlights/logos/${logoFileName}`, highlightClubLogoFile);
-              
-              if (logoError) throw logoError;
-              
-              // Get public URL for logo
-              const { data: { publicUrl: logoUrl } } = supabase.storage
-                .from('analysis-files')
-                .getPublicUrl(`highlights/logos/${logoFileName}`);
-              
-              // Add highlight to array
               // Get existing highlights from the player
               const player = players.find(p => p.id === currentPlayerId);
               let existingHighlightsFromDb: any[] = [];
@@ -1525,14 +1519,66 @@ const PlayerManagement = () => {
                 existingHighlightsFromDb = [];
               }
               
-              const newHighlight = {
-                name: highlightName,
-                videoUrl: videoUrl,
-                clubLogo: logoUrl,
-                addedAt: new Date().toISOString()
-              };
+              let videoUrl = null;
+              let logoUrl = null;
               
-              const updatedHighlights = [...existingHighlightsFromDb, newHighlight];
+              // Upload video file if provided
+              if (highlightVideoFile) {
+                const videoFileName = `${currentPlayerId}_${Date.now()}_${highlightVideoFile.name}`;
+                const { error: videoError } = await supabase.storage
+                  .from('analysis-files')
+                  .upload(`highlights/${videoFileName}`, highlightVideoFile);
+                
+                if (videoError) throw videoError;
+                
+                // Get public URL for video
+                const { data: { publicUrl } } = supabase.storage
+                  .from('analysis-files')
+                  .getPublicUrl(`highlights/${videoFileName}`);
+                videoUrl = publicUrl;
+              }
+              
+              // Upload club logo file if provided
+              if (highlightClubLogoFile) {
+                const logoFileName = `${currentPlayerId}_${Date.now()}_${highlightClubLogoFile.name}`;
+                const { error: logoError } = await supabase.storage
+                  .from('analysis-files')
+                  .upload(`highlights/logos/${logoFileName}`, highlightClubLogoFile);
+                
+                if (logoError) throw logoError;
+                
+                // Get public URL for logo
+                const { data: { publicUrl } } = supabase.storage
+                  .from('analysis-files')
+                  .getPublicUrl(`highlights/logos/${logoFileName}`);
+                logoUrl = publicUrl;
+              }
+              
+              let updatedHighlights: any[] = [];
+              
+              if (isEditing && editingHighlightIndex < existingHighlightsFromDb.length) {
+                // Edit existing highlight
+                updatedHighlights = [...existingHighlightsFromDb];
+                const existingHighlight = updatedHighlights[editingHighlightIndex];
+                
+                updatedHighlights[editingHighlightIndex] = {
+                  name: highlightName,
+                  videoUrl: videoUrl || existingHighlight.videoUrl,
+                  clubLogo: logoUrl || existingHighlight.clubLogo,
+                  addedAt: existingHighlight.addedAt,
+                  updatedAt: new Date().toISOString()
+                };
+              } else {
+                // Add new highlight
+                const newHighlight = {
+                  name: highlightName,
+                  videoUrl: videoUrl!,
+                  clubLogo: logoUrl!,
+                  addedAt: new Date().toISOString()
+                };
+                
+                updatedHighlights = [...existingHighlightsFromDb, newHighlight];
+              }
               
               const { error } = await supabase
                 .from("players")
@@ -1541,15 +1587,17 @@ const PlayerManagement = () => {
               
               if (error) throw error;
               
-              toast.success("Highlight added successfully!");
+              toast.success(isEditing ? "Highlight updated successfully!" : "Highlight added successfully!");
               setHighlightVideoFile(null);
               setHighlightClubLogoFile(null);
               setHighlightName("");
+              setEditingHighlightIndex(null);
+              setExistingHighlights([]);
               setIsHighlightsDialogOpen(false);
               fetchPlayers();
             } catch (error: any) {
-              console.error("Error adding highlight:", error);
-              toast.error("Failed to add highlight");
+              console.error("Error saving highlight:", error);
+              toast.error(isEditing ? "Failed to update highlight" : "Failed to add highlight");
             } finally {
               setUploadingFiles(false);
             }
@@ -1569,35 +1617,63 @@ const PlayerManagement = () => {
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="highlight_video">Highlight Video *</Label>
+              <Label htmlFor="highlight_video">
+                Highlight Video {editingHighlightIndex === null ? "*" : "(optional - leave blank to keep current)"}
+              </Label>
               <Input
                 id="highlight_video"
                 type="file"
                 accept="video/mp4,video/quicktime,video/x-msvideo,video/*"
                 onChange={(e) => setHighlightVideoFile(e.target.files?.[0] || null)}
-                required
+                required={editingHighlightIndex === null}
               />
+              {editingHighlightIndex !== null && existingHighlights[editingHighlightIndex]?.videoUrl && (
+                <div className="mt-2">
+                  <p className="text-xs text-muted-foreground mb-1">Current video:</p>
+                  <video 
+                    src={existingHighlights[editingHighlightIndex].videoUrl}
+                    className="w-40 h-24 object-cover rounded border"
+                    muted
+                  />
+                </div>
+              )}
               <p className="text-xs text-muted-foreground">
-                Upload a video file (MP4, MOV, AVI, etc.)
+                {editingHighlightIndex === null 
+                  ? "Upload a video file (MP4, MOV, AVI, etc.)" 
+                  : "Upload a new video to replace the current one, or leave blank to keep it"}
               </p>
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="club_logo">Club Logo *</Label>
+              <Label htmlFor="club_logo">
+                Club Logo {editingHighlightIndex === null ? "*" : "(optional - leave blank to keep current)"}
+              </Label>
               <Input
                 id="club_logo"
                 type="file"
                 accept="image/png,image/jpeg,image/jpg,image/webp,image/*"
                 onChange={(e) => setHighlightClubLogoFile(e.target.files?.[0] || null)}
-                required
+                required={editingHighlightIndex === null}
               />
+              {editingHighlightIndex !== null && existingHighlights[editingHighlightIndex]?.clubLogo && (
+                <div className="mt-2">
+                  <p className="text-xs text-muted-foreground mb-1">Current logo:</p>
+                  <img 
+                    src={existingHighlights[editingHighlightIndex].clubLogo}
+                    alt="Current club logo"
+                    className="w-20 h-20 object-contain bg-secondary p-2 rounded border"
+                  />
+                </div>
+              )}
               <p className="text-xs text-muted-foreground">
-                Upload a club logo image (PNG, JPG, JPEG, WEBP)
+                {editingHighlightIndex === null
+                  ? "Upload a club logo image (PNG, JPG, JPEG, WEBP)"
+                  : "Upload a new logo to replace the current one, or leave blank to keep it"}
               </p>
             </div>
             
-            <Button type="submit" disabled={uploadingFiles || !highlightVideoFile || !highlightClubLogoFile || !highlightName}>
-              {uploadingFiles ? "Uploading..." : "Add Highlight"}
+            <Button type="submit" disabled={uploadingFiles || !highlightName || (editingHighlightIndex === null && (!highlightVideoFile || !highlightClubLogoFile))}>
+              {uploadingFiles ? "Uploading..." : (editingHighlightIndex !== null ? "Update Highlight" : "Add Highlight")}
             </Button>
           </form>
         </DialogContent>
