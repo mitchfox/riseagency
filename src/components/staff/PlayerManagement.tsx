@@ -61,8 +61,8 @@ const PlayerManagement = () => {
   const [selectedAnalysisId, setSelectedAnalysisId] = useState<string | null>(null);
   const [selectedPlayerName, setSelectedPlayerName] = useState<string>("");
   const [isHighlightsDialogOpen, setIsHighlightsDialogOpen] = useState(false);
-  const [highlightVideoUrl, setHighlightVideoUrl] = useState("");
-  const [highlightClubLogo, setHighlightClubLogo] = useState("");
+  const [highlightVideoFile, setHighlightVideoFile] = useState<File | null>(null);
+  const [highlightClubLogoFile, setHighlightClubLogoFile] = useState<File | null>(null);
   const [isProgrammingDialogOpen, setIsProgrammingDialogOpen] = useState(false);
   const [selectedProgrammingPlayerId, setSelectedProgrammingPlayerId] = useState<string>("");
   const [selectedProgrammingPlayerName, setSelectedProgrammingPlayerName] = useState<string>("");
@@ -1017,13 +1017,38 @@ const PlayerManagement = () => {
           </DialogHeader>
           <form onSubmit={async (e) => {
             e.preventDefault();
-            if (!currentPlayerId) return;
+            if (!currentPlayerId || !highlightVideoFile || !highlightClubLogoFile) return;
             
             try {
               setUploadingFiles(true);
               
-              // For now, just store the URLs in the player's bio as JSON
-              // In production, you'd want a separate highlights table
+              // Upload video file
+              const videoFileName = `${currentPlayerId}_${Date.now()}_${highlightVideoFile.name}`;
+              const { data: videoData, error: videoError } = await supabase.storage
+                .from('analysis-files')
+                .upload(`highlights/${videoFileName}`, highlightVideoFile);
+              
+              if (videoError) throw videoError;
+              
+              // Get public URL for video
+              const { data: { publicUrl: videoUrl } } = supabase.storage
+                .from('analysis-files')
+                .getPublicUrl(`highlights/${videoFileName}`);
+              
+              // Upload club logo file
+              const logoFileName = `${currentPlayerId}_${Date.now()}_${highlightClubLogoFile.name}`;
+              const { data: logoData, error: logoError } = await supabase.storage
+                .from('analysis-files')
+                .upload(`highlights/logos/${logoFileName}`, highlightClubLogoFile);
+              
+              if (logoError) throw logoError;
+              
+              // Get public URL for logo
+              const { data: { publicUrl: logoUrl } } = supabase.storage
+                .from('analysis-files')
+                .getPublicUrl(`highlights/logos/${logoFileName}`);
+              
+              // Get current player data
               const player = players.find(p => p.id === currentPlayerId);
               if (!player) return;
               
@@ -1042,8 +1067,8 @@ const PlayerManagement = () => {
               }
               
               bioData.highlights.push({
-                videoUrl: highlightVideoUrl,
-                clubLogo: highlightClubLogo,
+                videoUrl: videoUrl,
+                clubLogo: logoUrl,
                 addedAt: new Date().toISOString()
               });
               
@@ -1056,8 +1081,8 @@ const PlayerManagement = () => {
               
               toast.success("Highlight added successfully!");
               setIsHighlightsDialogOpen(false);
-              setHighlightVideoUrl("");
-              setHighlightClubLogo("");
+              setHighlightVideoFile(null);
+              setHighlightClubLogoFile(null);
               fetchPlayers();
             } catch (error: any) {
               console.error("Error adding highlight:", error);
@@ -1067,37 +1092,35 @@ const PlayerManagement = () => {
             }
           }} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="highlight_video">Video URL *</Label>
+              <Label htmlFor="highlight_video">Highlight Video *</Label>
               <Input
                 id="highlight_video"
-                type="url"
-                placeholder="https://youtube.com/watch?v=..."
-                value={highlightVideoUrl}
-                onChange={(e) => setHighlightVideoUrl(e.target.value)}
+                type="file"
+                accept="video/mp4,video/quicktime,video/x-msvideo,video/*"
+                onChange={(e) => setHighlightVideoFile(e.target.files?.[0] || null)}
                 required
               />
               <p className="text-xs text-muted-foreground">
-                Paste a YouTube, Vimeo, or direct video link
+                Upload a video file (MP4, MOV, AVI, etc.)
               </p>
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="club_logo">Club Logo URL *</Label>
+              <Label htmlFor="club_logo">Club Logo *</Label>
               <Input
                 id="club_logo"
-                type="url"
-                placeholder="https://example.com/logo.png"
-                value={highlightClubLogo}
-                onChange={(e) => setHighlightClubLogo(e.target.value)}
+                type="file"
+                accept="image/png,image/jpeg,image/jpg,image/webp,image/*"
+                onChange={(e) => setHighlightClubLogoFile(e.target.files?.[0] || null)}
                 required
               />
               <p className="text-xs text-muted-foreground">
-                Paste a direct link to the club's logo image
+                Upload a club logo image (PNG, JPG, JPEG, WEBP)
               </p>
             </div>
             
-            <Button type="submit" disabled={uploadingFiles}>
-              {uploadingFiles ? "Adding..." : "Add Highlight"}
+            <Button type="submit" disabled={uploadingFiles || !highlightVideoFile || !highlightClubLogoFile}>
+              {uploadingFiles ? "Uploading..." : "Add Highlight"}
             </Button>
           </form>
         </DialogContent>
