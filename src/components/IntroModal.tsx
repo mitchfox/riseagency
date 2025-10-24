@@ -2,7 +2,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { RepresentationDialog } from "@/components/RepresentationDialog";
 import { useState } from "react";
-import blackMarble from "@/assets/black-marble-bg.png";
+import blackMarbleSmudged from "@/assets/black-marble-smudged.png";
 import riseStarIcon from "@/assets/rise-star-icon.png";
 import omotoyeJourney from "@/assets/omotoye-journey.jpg";
 import logo from "@/assets/logo.png";
@@ -67,7 +67,7 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
           </div>
 
           {/* Text Content */}
-          <div className="p-4 md:p-6" style={{ backgroundImage: `url(${blackMarble})`, backgroundSize: "cover" }}>
+          <div className="p-4 md:p-6" style={{ backgroundImage: `url(${blackMarbleSmudged})`, backgroundSize: "cover" }}>
             <div className="text-center space-y-3">
               <img 
                 src={logo} 
