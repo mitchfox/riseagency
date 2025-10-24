@@ -18,7 +18,7 @@ const representationSchema = z.object({
   phone: z.string().trim().min(1, "Phone number is required").max(50),
   email: z.string().trim().email("Invalid email address").max(255).optional().or(z.literal("")),
   currentClub: z.string().trim().min(1, "Current club is required").max(100),
-  position: z.string().trim().min(1, "Position is required").max(100),
+  position: z.string().trim().max(100).optional().or(z.literal("")),
   message: z.string().trim().max(1000),
 });
 
@@ -76,61 +76,69 @@ export const RepresentationDialog = ({ open, onOpenChange }: RepresentationDialo
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-3">
           <div className="space-y-2">
             <Label htmlFor="name">Full Name *</Label>
             <Input
               id="name"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()}
               placeholder="John Doe"
               required
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="phone">Phone Number *</Label>
-            <Input
-              id="phone"
-              type="tel"
-              value={formData.phone}
-              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-              placeholder="+44 7340 184399"
-              required
-            />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Label htmlFor="phone">Phone Number *</Label>
+              <Input
+                id="phone"
+                type="tel"
+                value={formData.phone}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()}
+                placeholder="+44 7340 184399"
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()}
+                placeholder="john@example.com"
+              />
+            </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              placeholder="john@example.com"
-            />
-          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Label htmlFor="currentClub">Current Club *</Label>
+              <Input
+                id="currentClub"
+                value={formData.currentClub}
+                onChange={(e) => setFormData({ ...formData, currentClub: e.target.value })}
+                onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()}
+                placeholder="e.g., Manchester United U21"
+                required
+              />
+            </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="currentClub">Current Club *</Label>
-            <Input
-              id="currentClub"
-              value={formData.currentClub}
-              onChange={(e) => setFormData({ ...formData, currentClub: e.target.value })}
-              placeholder="e.g., Manchester United U21"
-              required
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="position">Position *</Label>
-            <Input
-              id="position"
-              value={formData.position}
-              onChange={(e) => setFormData({ ...formData, position: e.target.value })}
-              placeholder="e.g., Striker, Midfielder"
-              required
-            />
+            <div className="space-y-2">
+              <Label htmlFor="position">Position</Label>
+              <Input
+                id="position"
+                value={formData.position}
+                onChange={(e) => setFormData({ ...formData, position: e.target.value })}
+                onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()}
+                placeholder="e.g., Striker, Midfielder"
+              />
+            </div>
           </div>
 
           <div className="space-y-2">
@@ -140,7 +148,7 @@ export const RepresentationDialog = ({ open, onOpenChange }: RepresentationDialo
               value={formData.message}
               onChange={(e) => setFormData({ ...formData, message: e.target.value })}
               placeholder="Tell us about your experience and goals..."
-              className="min-h-[100px]"
+              className="min-h-[80px]"
             />
           </div>
 

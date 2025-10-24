@@ -17,10 +17,12 @@ import {
 import { Button } from "@/components/ui/button";
 import { WorkWithUsDialog } from "@/components/WorkWithUsDialog";
 import { RepresentationDialog } from "@/components/RepresentationDialog";
+import { DeclareInterestDialog } from "@/components/DeclareInterestDialog";
 
 export const Header = () => {
   const [representationOpen, setRepresentationOpen] = useState(false);
   const [workWithUsOpen, setWorkWithUsOpen] = useState(false);
+  const [declareInterestOpen, setDeclareInterestOpen] = useState(false);
   const location = useLocation();
 
   const isActive = (path: string) => location.pathname === path;
@@ -32,7 +34,7 @@ export const Header = () => {
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-end h-10 gap-6">
             <button
-              onClick={() => setWorkWithUsOpen(true)}
+              onClick={() => setDeclareInterestOpen(true)}
               className="text-xs font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-colors flex items-center gap-2"
             >
               <Users className="w-3 h-3" />
@@ -259,6 +261,10 @@ export const Header = () => {
       <RepresentationDialog 
         open={representationOpen} 
         onOpenChange={setRepresentationOpen} 
+      />
+      <DeclareInterestDialog 
+        open={declareInterestOpen} 
+        onOpenChange={setDeclareInterestOpen} 
       />
     </header>
     </>
