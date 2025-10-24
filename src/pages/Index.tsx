@@ -72,9 +72,9 @@ const Index = () => {
     <>
       <IntroModal open={showIntroModal} onOpenChange={setShowIntroModal} />
       <Header />
-      <div className="bg-background">
+      <div className="bg-background overscroll-behavior-y-none">
         {/* Hero Banner Section */}
-        <section className="relative h-[85vh] md:h-screen flex items-center justify-center overflow-hidden pt-10">
+        <section className="relative h-[85vh] md:h-screen flex items-center justify-center overflow-hidden pt-24 md:pt-20">
           <div 
             className="absolute inset-0 bg-cover bg-center scale-105 animate-[scale-in_20s_ease-in-out_infinite_alternate]"
             style={{ backgroundImage: `url(${bannerHero})` }}

@@ -89,7 +89,7 @@ export default function BetweenTheLines() {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
-      <main className="flex-1 pt-32 pb-16">
+      <main className="flex-1 pt-32 pb-16 touch-pan-y overflow-x-hidden">
         <div className="container mx-auto px-4">
           {/* Page Title */}
           <div className="text-center mb-12">

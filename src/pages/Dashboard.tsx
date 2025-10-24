@@ -258,7 +258,7 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <main className="py-20 px-4">
+      <main className="pt-24 md:pt-20 pb-12 px-4">
         <div className="container mx-auto max-w-6xl">
           {/* Player Header */}
           <div className="relative mb-12">
@@ -273,10 +273,10 @@ const Dashboard = () => {
                 </div>
               )}
               <div className="flex-1">
-                <h1 className="text-5xl md:text-6xl font-bebas uppercase tracking-wider text-foreground mb-2">
+                <h1 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-foreground mb-2">
                   {playerData?.name || user?.user_metadata?.full_name || "Player Portal"}
                 </h1>
-                <div className="flex items-center gap-4 text-muted-foreground">
+                <div className="hidden md:flex items-center gap-4 text-muted-foreground">
                   {playerData?.position && (
                     <span className="text-lg">{playerData.position}</span>
                   )}

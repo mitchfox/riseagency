@@ -118,7 +118,7 @@ const Stars = () => {
     <div className="min-h-screen bg-background">
       <Header />
       
-      <main className="pt-16">
+      <main className="pt-24 md:pt-16">
         {/* Hero Section */}
         <section className="py-16 md:py-24 px-4">
           <div className="container mx-auto">

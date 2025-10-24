@@ -29,7 +29,7 @@ const News = () => {
   return (
     <>
       <Header />
-      <div className="min-h-screen bg-background pt-16">
+      <div className="min-h-screen bg-background pt-24 md:pt-16 touch-pan-y overflow-x-hidden">
         <div className="container mx-auto px-4 py-24">
           <div className="max-w-4xl mx-auto">
             <h1 className="text-6xl md:text-8xl font-bebas uppercase tracking-wider text-foreground mb-12 text-center">
