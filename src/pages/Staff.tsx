@@ -246,6 +246,26 @@ const Staff = () => {
             )}
           </Card>
 
+          {/* Coaching Database Section */}
+          <Card className="cursor-pointer">
+            <CardHeader 
+              onClick={() => setExpandedSection(expandedSection === 'coaching' ? null : 'coaching')}
+              className="hover:bg-accent/50 transition-colors"
+            >
+              <div className="flex justify-between items-center">
+                <CardTitle className="text-2xl">Coaching Database</CardTitle>
+                <div className="text-muted-foreground">
+                  {expandedSection === 'coaching' ? <ChevronDown size={24} /> : <ChevronRight size={24} />}
+                </div>
+              </div>
+            </CardHeader>
+            {expandedSection === 'coaching' && (
+              <CardContent className="pt-6">
+                <CoachingDatabase />
+              </CardContent>
+            )}
+          </Card>
+
           {/* News Articles Section */}
           <Card className="cursor-pointer">
             <CardHeader 
@@ -282,26 +302,6 @@ const Staff = () => {
             {expandedSection === 'betweenthelines' && (
               <CardContent className="pt-6">
                 <BetweenTheLinesManagement />
-              </CardContent>
-            )}
-          </Card>
-
-          {/* Coaching Database Section */}
-          <Card className="cursor-pointer">
-            <CardHeader 
-              onClick={() => setExpandedSection(expandedSection === 'coaching' ? null : 'coaching')}
-              className="hover:bg-accent/50 transition-colors"
-            >
-              <div className="flex justify-between items-center">
-                <CardTitle className="text-2xl">Coaching Database</CardTitle>
-                <div className="text-muted-foreground">
-                  {expandedSection === 'coaching' ? <ChevronDown size={24} /> : <ChevronRight size={24} />}
-                </div>
-              </div>
-            </CardHeader>
-            {expandedSection === 'coaching' && (
-              <CardContent className="pt-6">
-                <CoachingDatabase />
               </CardContent>
             )}
           </Card>
