@@ -11,6 +11,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { toast } from "sonner";
 import { User } from "@supabase/supabase-js";
 import { FileText } from "lucide-react";
+import { addDays, format, parseISO } from "date-fns";
 
 interface Analysis {
   id: string;
@@ -82,6 +83,27 @@ const Dashboard = () => {
       const sessionsSection = document.querySelector('[value="sessions"]');
       sessionsSection?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, 100);
+  };
+
+  // Calculate actual dates for each day in a week based on week_start_date
+  const getWeekDates = (weekStartDate: string | null) => {
+    if (!weekStartDate) return null;
+    
+    try {
+      const startDate = parseISO(weekStartDate);
+      return {
+        monday: startDate,
+        tuesday: addDays(startDate, 1),
+        wednesday: addDays(startDate, 2),
+        thursday: addDays(startDate, 3),
+        friday: addDays(startDate, 4),
+        saturday: addDays(startDate, 5),
+        sunday: addDays(startDate, 6),
+      };
+    } catch (error) {
+      console.error('Error parsing week start date:', error);
+      return null;
+    }
   };
 
   useEffect(() => {
@@ -552,14 +574,17 @@ const Dashboard = () => {
                                                   </div>
                                                   
                                                   {/* Day Cells */}
-                                                  {['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map((day) => {
+                                                  {['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map((day, dayIdx) => {
                                                     const sessionValue = week[day] || '';
                                                     const colors = sessionValue ? getSessionColor(sessionValue) : { bg: 'hsl(0, 0%, 10%)', text: 'hsl(0, 0%, 100%)', hover: 'hsl(0, 0%, 15%)' };
+                                                    const weekDates = getWeekDates(week.week_start_date);
+                                                    const dayDate = weekDates ? weekDates[day as keyof typeof weekDates] : null;
+                                                    
                                                     return (
                                                       <div 
                                                         key={day}
                                                         onClick={() => sessionValue && handleSessionClick(sessionValue)}
-                                                        className={`p-6 flex items-center justify-center rounded-lg min-h-[80px] transition-all ${sessionValue ? 'cursor-pointer hover:scale-105' : ''}`}
+                                                        className={`p-6 flex items-center justify-center rounded-lg min-h-[80px] transition-all relative ${sessionValue ? 'cursor-pointer hover:scale-105' : ''}`}
                                                         style={{ 
                                                           backgroundColor: colors.bg,
                                                           border: '2px solid rgba(255, 255, 255, 0.1)'
@@ -575,6 +600,16 @@ const Dashboard = () => {
                                                           }
                                                         }}
                                                       >
+                                                        {/* Day number in top right */}
+                                                        {dayDate && (
+                                                          <span 
+                                                            className="absolute top-2 right-2 text-xs opacity-60"
+                                                            style={{ color: colors.text }}
+                                                          >
+                                                            {format(dayDate, 'd')}
+                                                          </span>
+                                                        )}
+                                                        
                                                         {sessionValue && (
                                                           <span 
                                                             className="font-bebas text-4xl uppercase font-bold"
