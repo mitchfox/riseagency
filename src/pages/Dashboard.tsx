@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { toast } from "sonner";
 import { User } from "@supabase/supabase-js";
 import { FileText } from "lucide-react";
@@ -343,7 +344,7 @@ const Dashboard = () => {
             </TabsContent>
 
             <TabsContent value="physical" className="space-y-6">
-              <Card className="bg-marble">
+              <Card className="bg-card">
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-3xl font-bebas uppercase tracking-wider">
@@ -365,9 +366,9 @@ const Dashboard = () => {
                     )}
                   </div>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent>
                   {programs.length === 0 ? (
-                    <>
+                    <div className="space-y-4">
                       <p className="text-muted-foreground">
                         Your personalized physical training program will appear here. This section will include:
                       </p>
@@ -383,7 +384,7 @@ const Dashboard = () => {
                           Content coming soon - your strength coach will upload programs here
                         </p>
                       </div>
-                    </>
+                    </div>
                   ) : (
                     <>
                       {programs.filter(p => p.id === selectedProgramId).map((program) => {
@@ -396,9 +397,9 @@ const Dashboard = () => {
                           (program.sessions && typeof program.sessions === 'object' && Object.keys(program.sessions).length > 0);
 
                         return (
-                          <div key={program.id} className="space-y-6">
+                          <div key={program.id}>
                             {/* Program Header */}
-                            <div className="border-b pb-4">
+                            <div className="border-b pb-4 mb-6">
                               <div className="flex items-start justify-between mb-2">
                                 <div>
                                   <h3 className="text-2xl font-bebas uppercase tracking-wider">
@@ -419,107 +420,150 @@ const Dashboard = () => {
                               )}
                             </div>
 
-                            {!hasContent && (
+                            {!hasContent ? (
                               <div className="p-6 border border-primary/20 rounded-lg bg-accent/10">
                                 <p className="text-center text-muted-foreground">
                                   Your coach is currently preparing the details for this program. Check back soon!
                                 </p>
                               </div>
-                            )}
-
-                            {/* Overview */}
-                            {program.overview_text && (
-                              <div>
-                                <h4 className="text-xl font-bebas uppercase mb-2">Overview</h4>
-                                <p className="text-muted-foreground whitespace-pre-wrap">{program.overview_text}</p>
-                              </div>
-                            )}
-
-                          {/* Images */}
-                          {(program.phase_image_url || program.player_image_url) && (
-                            <div className="grid md:grid-cols-2 gap-4">
-                              {program.phase_image_url && (
-                                <img 
-                                  src={program.phase_image_url} 
-                                  alt="Phase overview"
-                                  className="w-full rounded-lg"
-                                />
-                              )}
-                              {program.player_image_url && (
-                                <img 
-                                  src={program.player_image_url} 
-                                  alt="Player"
-                                  className="w-full rounded-lg"
-                                />
-                              )}
-                            </div>
-                          )}
-
-                          {/* Weekly Schedule */}
-                          {program.weekly_schedules && Array.isArray(program.weekly_schedules) && program.weekly_schedules.length > 0 && (
-                            <div>
-                              <h4 className="text-xl font-bebas uppercase mb-3">Weekly Schedule</h4>
-                              <div className="space-y-4">
-                                {program.weekly_schedules.map((week: any, idx: number) => (
-                                  <div key={idx} className="border rounded-lg p-4">
-                                    <h5 className="font-bebas text-lg mb-3">Week {week.week || idx + 1}</h5>
-                                    <div className="grid gap-2">
-                                      {Object.entries(week).filter(([key]) => key !== 'week').map(([day, value]) => (
-                                        <div key={day} className="flex justify-between py-2 border-b last:border-0">
-                                          <span className="font-medium capitalize">{day}</span>
-                                          <span className="text-muted-foreground">{value as string}</span>
+                            ) : (
+                              <Accordion type="multiple" className="w-full">
+                                {/* Overview Section */}
+                                {(program.overview_text || program.phase_image_url || program.player_image_url) && (
+                                  <AccordionItem value="overview">
+                                    <AccordionTrigger className="text-xl font-bebas uppercase hover:no-underline">
+                                      Overview
+                                    </AccordionTrigger>
+                                    <AccordionContent className="space-y-4">
+                                      {program.overview_text && (
+                                        <p className="text-muted-foreground whitespace-pre-wrap">{program.overview_text}</p>
+                                      )}
+                                      
+                                      {(program.phase_image_url || program.player_image_url) && (
+                                        <div className="grid md:grid-cols-2 gap-4">
+                                          {program.phase_image_url && (
+                                            <img 
+                                              src={program.phase_image_url} 
+                                              alt="Phase overview"
+                                              className="w-full rounded-lg"
+                                            />
+                                          )}
+                                          {program.player_image_url && (
+                                            <img 
+                                              src={program.player_image_url} 
+                                              alt="Player"
+                                              className="w-full rounded-lg"
+                                            />
+                                          )}
                                         </div>
-                                      ))}
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          )}
+                                      )}
+                                    </AccordionContent>
+                                  </AccordionItem>
+                                )}
 
-                          {/* Schedule Notes */}
-                          {program.schedule_notes && (
-                            <div className="bg-accent/20 border border-primary/20 rounded-lg p-4">
-                              <h4 className="text-lg font-bebas uppercase mb-2">Notes</h4>
-                              <p className="text-sm text-muted-foreground whitespace-pre-wrap">{program.schedule_notes}</p>
-                            </div>
-                          )}
-
-                          {/* Sessions */}
-                          {program.sessions && typeof program.sessions === 'object' && Object.keys(program.sessions).length > 0 && (
-                            <div>
-                              <h4 className="text-xl font-bebas uppercase mb-3">Training Sessions</h4>
-                              <div className="space-y-4">
-                                {Object.entries(program.sessions).map(([key, session]: [string, any]) => (
-                                  <div key={key} className="border rounded-lg p-4">
-                                    <h5 className="font-bebas text-lg mb-2">{session.name || key}</h5>
-                                    {session.description && (
-                                      <p className="text-sm text-muted-foreground mb-3">{session.description}</p>
-                                    )}
-                                    {session.exercises && Array.isArray(session.exercises) && (
-                                      <div className="space-y-2">
-                                        {session.exercises.map((exercise: any, idx: number) => (
-                                          <div key={idx} className="text-sm pl-4 border-l-2 border-primary/30">
-                                            <p className="font-medium">{exercise.name || exercise}</p>
-                                            {exercise.sets && <span className="text-muted-foreground">{exercise.sets} sets</span>}
-                                            {exercise.reps && <span className="text-muted-foreground"> × {exercise.reps} reps</span>}
+                                {/* Sessions Section */}
+                                {program.sessions && typeof program.sessions === 'object' && Object.keys(program.sessions).length > 0 && (
+                                  <AccordionItem value="sessions">
+                                    <AccordionTrigger className="text-xl font-bebas uppercase hover:no-underline">
+                                      Sessions
+                                    </AccordionTrigger>
+                                    <AccordionContent>
+                                      <div className="space-y-4">
+                                        {/* Weekly Schedule */}
+                                        {program.weekly_schedules && Array.isArray(program.weekly_schedules) && program.weekly_schedules.length > 0 && (
+                                          <div className="mb-6">
+                                            <h5 className="text-lg font-bebas uppercase mb-3">Weekly Schedule</h5>
+                                            <div className="space-y-4">
+                                              {program.weekly_schedules.map((week: any, idx: number) => (
+                                                <div key={idx} className="border rounded-lg p-4">
+                                                  <h6 className="font-bebas text-base mb-3">Week {week.week || idx + 1}</h6>
+                                                  <div className="grid gap-2">
+                                                    {Object.entries(week).filter(([key]) => key !== 'week').map(([day, value]) => (
+                                                      <div key={day} className="flex justify-between py-2 border-b last:border-0">
+                                                        <span className="font-medium capitalize">{day}</span>
+                                                        <span className="text-muted-foreground">{value as string}</span>
+                                                      </div>
+                                                    ))}
+                                                  </div>
+                                                </div>
+                                              ))}
+                                            </div>
                                           </div>
-                                        ))}
-                                      </div>
-                                    )}
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          )}
+                                        )}
 
-                            {hasContent && (
-                              <Button 
-                                onClick={() => navigate("/performance")}
-                                className="w-full font-bebas uppercase tracking-wider"
-                              >
-                                View Full Program
-                              </Button>
+                                        {/* Schedule Notes */}
+                                        {program.schedule_notes && (
+                                          <div className="bg-accent/20 border border-primary/20 rounded-lg p-4 mb-6">
+                                            <h5 className="text-base font-bebas uppercase mb-2">Notes</h5>
+                                            <p className="text-sm text-muted-foreground whitespace-pre-wrap">{program.schedule_notes}</p>
+                                          </div>
+                                        )}
+
+                                        {/* Session List */}
+                                        <div className="space-y-3">
+                                          {Object.entries(program.sessions).map(([key, session]: [string, any]) => (
+                                            <div key={key} className="border rounded-lg p-4">
+                                              <h5 className="font-bebas text-lg mb-2">Session {key}</h5>
+                                              {session.exercises && Array.isArray(session.exercises) && (
+                                                <div className="space-y-1">
+                                                  {session.exercises.map((exercise: any, idx: number) => (
+                                                    <div key={idx} className="text-sm">
+                                                      <span className="font-medium">{exercise.name || exercise}</span>
+                                                      {exercise.repetitions && <span className="text-muted-foreground ml-2">• {exercise.repetitions}</span>}
+                                                      {exercise.sets && <span className="text-muted-foreground ml-1">× {exercise.sets} sets</span>}
+                                                    </div>
+                                                  ))}
+                                                </div>
+                                              )}
+                                            </div>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    </AccordionContent>
+                                  </AccordionItem>
+                                )}
+
+                                {/* Testing Section */}
+                                <AccordionItem value="testing">
+                                  <AccordionTrigger className="text-xl font-bebas uppercase hover:no-underline">
+                                    Testing
+                                  </AccordionTrigger>
+                                  <AccordionContent>
+                                    <p className="text-muted-foreground">
+                                      Testing protocols and benchmarks will be added here by your coach.
+                                    </p>
+                                  </AccordionContent>
+                                </AccordionItem>
+
+                                {/* Exercise Descriptions Section */}
+                                {program.sessions && typeof program.sessions === 'object' && Object.keys(program.sessions).length > 0 && (
+                                  <AccordionItem value="descriptions">
+                                    <AccordionTrigger className="text-xl font-bebas uppercase hover:no-underline">
+                                      Exercise Descriptions
+                                    </AccordionTrigger>
+                                    <AccordionContent>
+                                      <div className="space-y-6">
+                                        {Object.entries(program.sessions).map(([sessionKey, session]: [string, any]) => 
+                                          session.exercises && Array.isArray(session.exercises) && session.exercises.map((exercise: any, idx: number) => (
+                                            exercise.description && (
+                                              <div key={`${sessionKey}-${idx}`} className="border-l-2 border-primary/30 pl-4">
+                                                <h5 className="font-bebas text-base uppercase mb-2">{exercise.name}</h5>
+                                                <p className="text-sm text-muted-foreground mb-2">{exercise.description}</p>
+                                                <div className="text-xs text-muted-foreground space-x-4">
+                                                  {exercise.repetitions && <span>Reps: {exercise.repetitions}</span>}
+                                                  {exercise.sets && <span>Sets: {exercise.sets}</span>}
+                                                  {exercise.load && exercise.load !== '-' && <span>Load: {exercise.load}</span>}
+                                                  {exercise.recoveryTime && exercise.recoveryTime !== '-' && <span>Rest: {exercise.recoveryTime}</span>}
+                                                </div>
+                                              </div>
+                                            )
+                                          ))
+                                        )}
+                                      </div>
+                                    </AccordionContent>
+                                  </AccordionItem>
+                                )}
+                              </Accordion>
                             )}
                           </div>
                         );
