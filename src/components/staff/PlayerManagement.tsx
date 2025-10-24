@@ -1239,6 +1239,13 @@ const PlayerManagement = () => {
             setExistingHighlights([]);
           }
         }
+        if (!open) {
+          // Clear form when closing
+          setHighlightVideoFile(null);
+          setHighlightClubLogoFile(null);
+          setHighlightName("");
+          setEditingHighlightIndex(null);
+        }
       }}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -1247,19 +1254,19 @@ const PlayerManagement = () => {
           
           {/* Existing Highlights with Reordering */}
           {existingHighlights.length > 0 && (
-            <div className="space-y-3 mb-4">
-              <Label className="text-lg font-semibold">Current Highlights</Label>
-              <p className="text-sm text-muted-foreground">Use ↑ and ↓ buttons to reorder highlights</p>
+            <div className="space-y-3 mb-6 p-4 border rounded-lg bg-secondary/5">
+              <Label className="text-lg font-semibold">Current Highlights ({existingHighlights.length})</Label>
+              <p className="text-sm text-muted-foreground">Use ↑ and ↓ buttons to reorder. Changes save automatically.</p>
               {existingHighlights.map((highlight, index) => (
-                <div key={index} className="flex items-center gap-3 p-3 border rounded-lg bg-secondary/10">
-                  <span className="cursor-move text-muted-foreground">⋮⋮</span>
+                <div key={index} className="flex items-center gap-3 p-3 border rounded-lg bg-background shadow-sm">
+                  <span className="text-muted-foreground font-bold">{index + 1}</span>
                   
                   {/* Club Logo */}
                   {highlight.clubLogo && (
                     <img 
                       src={highlight.clubLogo} 
                       alt="Club logo"
-                      className="w-8 h-8 object-contain"
+                      className="w-10 h-10 object-contain bg-white rounded p-1"
                     />
                   )}
                   
@@ -1267,7 +1274,7 @@ const PlayerManagement = () => {
                   {highlight.videoUrl && (
                     <video 
                       src={highlight.videoUrl}
-                      className="w-16 h-12 object-cover rounded"
+                      className="w-20 h-14 object-cover rounded border"
                       muted
                     />
                   )}
@@ -1298,11 +1305,25 @@ const PlayerManagement = () => {
                       type="button"
                       variant="ghost"
                       size="sm"
-                      onClick={() => {
+                      onClick={async () => {
                         if (index > 0) {
                           const newHighlights = [...existingHighlights];
                           [newHighlights[index - 1], newHighlights[index]] = [newHighlights[index], newHighlights[index - 1]];
                           setExistingHighlights(newHighlights);
+                          
+                          // Auto-save the reordering
+                          try {
+                            const { error } = await supabase
+                              .from("players")
+                              .update({ highlights: JSON.stringify(newHighlights) })
+                              .eq("id", currentPlayerId);
+                            
+                            if (error) throw error;
+                            toast.success("Highlight moved up");
+                            fetchPlayers();
+                          } catch (error: any) {
+                            toast.error("Failed to save order");
+                          }
                         }
                       }}
                       disabled={index === 0}
@@ -1314,11 +1335,25 @@ const PlayerManagement = () => {
                       type="button"
                       variant="ghost"
                       size="sm"
-                      onClick={() => {
+                      onClick={async () => {
                         if (index < existingHighlights.length - 1) {
                           const newHighlights = [...existingHighlights];
                           [newHighlights[index], newHighlights[index + 1]] = [newHighlights[index + 1], newHighlights[index]];
                           setExistingHighlights(newHighlights);
+                          
+                          // Auto-save the reordering
+                          try {
+                            const { error } = await supabase
+                              .from("players")
+                              .update({ highlights: JSON.stringify(newHighlights) })
+                              .eq("id", currentPlayerId);
+                            
+                            if (error) throw error;
+                            toast.success("Highlight moved down");
+                            fetchPlayers();
+                          } catch (error: any) {
+                            toast.error("Failed to save order");
+                          }
                         }
                       }}
                       disabled={index === existingHighlights.length - 1}
@@ -1330,9 +1365,23 @@ const PlayerManagement = () => {
                       type="button"
                       variant="destructive"
                       size="sm"
-                      onClick={() => {
+                      onClick={async () => {
                         const newHighlights = existingHighlights.filter((_, i) => i !== index);
                         setExistingHighlights(newHighlights);
+                        
+                        // Auto-save the deletion
+                        try {
+                          const { error } = await supabase
+                            .from("players")
+                            .update({ highlights: JSON.stringify(newHighlights) })
+                            .eq("id", currentPlayerId);
+                          
+                          if (error) throw error;
+                          toast.success("Highlight deleted");
+                          fetchPlayers();
+                        } catch (error: any) {
+                          toast.error("Failed to delete highlight");
+                        }
                       }}
                       title="Delete"
                     >
@@ -1341,29 +1390,6 @@ const PlayerManagement = () => {
                   </div>
                 </div>
               ))}
-              <Button
-                type="button"
-                onClick={async () => {
-                  try {
-                    setUploadingFiles(true);
-                    const { error } = await supabase
-                      .from("players")
-                      .update({ highlights: JSON.stringify(existingHighlights) })
-                      .eq("id", currentPlayerId);
-                    
-                    if (error) throw error;
-                    toast.success("Highlights order saved!");
-                    fetchPlayers();
-                  } catch (error: any) {
-                    toast.error("Failed to save highlights order");
-                  } finally {
-                    setUploadingFiles(false);
-                  }
-                }}
-                disabled={uploadingFiles}
-              >
-                Save Order
-              </Button>
             </div>
           )}
           
@@ -1425,6 +1451,8 @@ const PlayerManagement = () => {
           )}
 
           {/* Add New Highlight Form */}
+          <div className="border-t pt-4">
+            <h3 className="text-lg font-semibold mb-4">Add New Highlight</h3>
           <form onSubmit={async (e) => {
             e.preventDefault();
             if (!currentPlayerId || !highlightVideoFile || !highlightClubLogoFile || !highlightName) return;
@@ -1534,6 +1562,7 @@ const PlayerManagement = () => {
               {uploadingFiles ? "Uploading..." : "Add Highlight"}
             </Button>
           </form>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
