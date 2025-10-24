@@ -47,22 +47,26 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
             />
             
             {/* Overlayed CTAs - Top Corners */}
-            <div className="absolute top-3 left-3 right-3 flex justify-between items-start gap-2">
-              <Button 
-                size="sm"
-                variant="outline"
-                onClick={handleRequestRepresentation}
-                className="text-xs font-bebas uppercase tracking-wider px-3 py-2 border-primary/50 text-white hover:bg-primary/20 backdrop-blur-sm flex-1"
-              >
-                Request Representation
-              </Button>
-              <Button 
-                size="sm" 
-                onClick={handleEnterSite}
-                className="btn-shine text-xs font-bebas uppercase tracking-wider px-3 py-2 flex-1"
-              >
-                Enter Site
-              </Button>
+            <div className="absolute top-3 left-0 right-0 flex justify-between items-start gap-2 px-3">
+              <div className="flex-1 flex justify-start">
+                <Button 
+                  size="sm"
+                  variant="outline"
+                  onClick={handleRequestRepresentation}
+                  className="text-xs font-bebas uppercase tracking-wider px-3 py-2 border-primary/50 text-white hover:bg-primary/20 backdrop-blur-sm"
+                >
+                  Request Representation
+                </Button>
+              </div>
+              <div className="flex-1 flex justify-end">
+                <Button 
+                  size="sm" 
+                  onClick={handleEnterSite}
+                  className="btn-shine text-xs font-bebas uppercase tracking-wider px-3 py-2"
+                >
+                  Enter Site
+                </Button>
+              </div>
             </div>
           </div>
 

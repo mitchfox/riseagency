@@ -73,7 +73,7 @@ export const Header = () => {
               </button>
             </DrawerTrigger>
             <DrawerContent 
-              className="h-full w-[240px] left-0 flex flex-col rounded-r-none bg-cover bg-center"
+              className="h-full w-[240px] left-0 flex flex-col rounded-r-none bg-cover bg-center animate-slide-in-left transition-all duration-300 ease-out"
               style={{ 
                 backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url(${blackMarbleBg})` 
               }}
