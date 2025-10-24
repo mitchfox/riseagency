@@ -37,38 +37,40 @@ export const Header = () => {
       {/* Top Utility Bar - only on homepage */}
       {showTopBar && (
         <div className="fixed top-0 left-0 right-0 z-50 bg-black/95 backdrop-blur-md border-b border-white/10">
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between h-10">
-            <div className="flex items-center gap-6">
+        <div className="container mx-auto px-2 md:px-4">
+          <div className="flex items-center justify-between h-9 md:h-10">
+            <div className="flex items-center gap-2 md:gap-6">
               <button
                 onClick={() => setDeclareInterestOpen(true)}
-                className="text-xs font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-colors flex items-center gap-2"
+                className="text-[10px] md:text-xs font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-colors flex items-center gap-1"
               >
-                <Users className="w-3 h-3" />
-                Declare Interest In Player
+                <Users className="w-3 h-3 hidden sm:block" />
+                <span className="hidden sm:inline">Declare Interest In Player</span>
+                <span className="sm:hidden">Declare Interest</span>
               </button>
               <Link
                 to="/contact"
-                className="text-xs font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-colors flex items-center gap-2"
+                className="text-[10px] md:text-xs font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-colors flex items-center gap-1"
               >
-                <MessageCircle className="w-3 h-3" />
+                <MessageCircle className="w-3 h-3 hidden sm:block" />
                 Contact
               </Link>
             </div>
-            <div className="flex items-center gap-6">
+            <div className="flex items-center gap-2 md:gap-6">
               <button
                 onClick={() => setRepresentationOpen(true)}
-                className="text-xs font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-colors flex items-center gap-2"
+                className="text-[10px] md:text-xs font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-colors flex items-center gap-1 hidden sm:flex"
               >
                 <MessageCircle className="w-3 h-3" />
                 Request Representation
               </button>
               <Link
                 to="/login"
-                className="text-xs font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-colors flex items-center gap-2"
+                className="text-[10px] md:text-xs font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-colors flex items-center gap-1"
               >
-                <LogIn className="w-3 h-3" />
-                Player Portal
+                <LogIn className="w-3 h-3 hidden sm:block" />
+                <span className="hidden sm:inline">Player Portal</span>
+                <span className="sm:hidden">Portal</span>
               </Link>
             </div>
           </div>
@@ -77,17 +79,17 @@ export const Header = () => {
       )}
 
       {/* Main Header */}
-      <header className={`fixed ${showTopBar ? 'top-10' : 'top-0'} left-0 right-0 z-50 bg-background/80 backdrop-blur-md`}>
-        <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-16">
+      <header className={`fixed ${showTopBar ? 'top-9 md:top-10' : 'top-0'} left-0 right-0 z-50 bg-background/80 backdrop-blur-md`}>
+        <div className="container mx-auto px-2 md:px-4">
+        <div className="flex items-center justify-between h-14 md:h-16">
           {/* Drawer Menu - Left */}
           <Drawer direction="left">
             <DrawerTrigger asChild>
               <button
-                className="group relative w-12 h-12 flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                className="group relative w-10 h-10 md:w-12 md:h-12 flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                 aria-label="Toggle menu"
               >
-                <TbMenu className="w-7 h-7 text-primary group-hover:text-foreground transition-colors" />
+                <TbMenu className="w-6 h-6 md:w-7 md:h-7 text-primary group-hover:text-foreground transition-colors" />
               </button>
             </DrawerTrigger>
             <DrawerContent 
@@ -249,16 +251,17 @@ export const Header = () => {
 
           {/* Logo - Center */}
           <Link to="/" className="absolute left-1/2 transform -translate-x-1/2">
-            <img src={logo} alt="RISE Football Agency" className="h-8 md:h-10" />
+            <img src={logo} alt="RISE Football Agency" className="h-7 md:h-10" />
           </Link>
 
           {/* RISE WITH US Button - Right */}
           <Button
             onClick={() => setWorkWithUsOpen(true)}
-            size="lg"
-            className="btn-shine font-bebas uppercase tracking-wider text-base px-6"
+            size="sm"
+            className="btn-shine font-bebas uppercase tracking-wider text-xs md:text-base px-3 md:px-6 h-8 md:h-10"
           >
-            RISE WITH US
+            <span className="hidden sm:inline">RISE WITH US</span>
+            <span className="sm:hidden">RISE</span>
           </Button>
         </div>
       </div>

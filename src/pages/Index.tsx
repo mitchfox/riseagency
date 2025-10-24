@@ -246,12 +246,14 @@ const Index = () => {
                 </h2>
               </div>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {insideAccessArticles.map((article) => (
+                {insideAccessArticles.map((article, index) => (
                   article.image_url && (
                     <Link
                       key={article.id}
                       to={`/news/${article.id}`}
-                      className="group relative aspect-[4/5] overflow-hidden rounded-lg"
+                      className={`group relative aspect-[4/5] overflow-hidden rounded-lg ${
+                        index >= 2 ? 'hidden md:block' : ''
+                      }`}
                     >
                       <img 
                         src={article.image_url} 
