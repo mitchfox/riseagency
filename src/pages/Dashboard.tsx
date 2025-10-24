@@ -47,27 +47,40 @@ const Dashboard = () => {
   const [playerData, setPlayerData] = useState<any>(null);
   const [programs, setPrograms] = useState<PlayerProgram[]>([]);
   const [selectedProgramId, setSelectedProgramId] = useState<string | null>(null);
+  const [selectedSession, setSelectedSession] = useState<string | null>(null);
+  const [accordionValue, setAccordionValue] = useState<string[]>([]);
 
-  // Session color mapping
+  // Session color mapping with hover states
   const getSessionColor = (sessionKey: string) => {
     const key = sessionKey.toUpperCase();
-    const colorMap: Record<string, { bg: string; text: string }> = {
-      'A': { bg: 'hsl(220, 70%, 35%)', text: 'hsl(45, 100%, 60%)' },
-      'B': { bg: 'hsl(140, 50%, 30%)', text: 'hsl(45, 100%, 60%)' },
-      'C': { bg: 'hsl(0, 50%, 35%)', text: 'hsl(45, 100%, 60%)' },
-      'D': { bg: 'hsl(45, 70%, 45%)', text: 'hsl(45, 100%, 60%)' },
-      'E': { bg: 'hsl(70, 20%, 40%)', text: 'hsl(45, 100%, 60%)' },
-      'F': { bg: 'hsl(270, 60%, 40%)', text: 'hsl(45, 100%, 60%)' },
-      'G': { bg: 'hsl(190, 70%, 45%)', text: 'hsl(45, 100%, 60%)' },
-      'PRE-B': { bg: 'hsl(220, 80%, 20%)', text: 'hsl(45, 100%, 60%)' },
-      'PRE-C': { bg: 'hsl(220, 80%, 20%)', text: 'hsl(45, 100%, 60%)' },
-      'PREHAB': { bg: 'hsl(220, 80%, 20%)', text: 'hsl(45, 100%, 60%)' },
-      'T': { bg: 'hsl(140, 50%, 20%)', text: 'hsl(45, 100%, 60%)' },
-      'TESTING': { bg: 'hsl(140, 50%, 20%)', text: 'hsl(45, 100%, 60%)' },
-      'R': { bg: 'hsl(0, 0%, 85%)', text: 'hsl(45, 100%, 45%)' },
-      'REST': { bg: 'hsl(0, 0%, 85%)', text: 'hsl(45, 100%, 45%)' },
+    const colorMap: Record<string, { bg: string; text: string; hover: string }> = {
+      'A': { bg: 'hsl(220, 70%, 35%)', text: 'hsl(45, 100%, 60%)', hover: 'hsl(220, 70%, 45%)' },
+      'B': { bg: 'hsl(140, 50%, 30%)', text: 'hsl(45, 100%, 60%)', hover: 'hsl(140, 50%, 40%)' },
+      'C': { bg: 'hsl(0, 50%, 35%)', text: 'hsl(45, 100%, 60%)', hover: 'hsl(0, 50%, 45%)' },
+      'D': { bg: 'hsl(45, 70%, 45%)', text: 'hsl(45, 100%, 60%)', hover: 'hsl(45, 70%, 55%)' },
+      'E': { bg: 'hsl(70, 20%, 40%)', text: 'hsl(45, 100%, 60%)', hover: 'hsl(70, 20%, 50%)' },
+      'F': { bg: 'hsl(270, 60%, 40%)', text: 'hsl(45, 100%, 60%)', hover: 'hsl(270, 60%, 50%)' },
+      'G': { bg: 'hsl(190, 70%, 45%)', text: 'hsl(45, 100%, 60%)', hover: 'hsl(190, 70%, 55%)' },
+      'PRE-B': { bg: 'hsl(220, 80%, 20%)', text: 'hsl(45, 100%, 60%)', hover: 'hsl(220, 80%, 30%)' },
+      'PRE-C': { bg: 'hsl(220, 80%, 20%)', text: 'hsl(45, 100%, 60%)', hover: 'hsl(220, 80%, 30%)' },
+      'PREHAB': { bg: 'hsl(220, 80%, 20%)', text: 'hsl(45, 100%, 60%)', hover: 'hsl(220, 80%, 30%)' },
+      'T': { bg: 'hsl(140, 50%, 20%)', text: 'hsl(45, 100%, 60%)', hover: 'hsl(140, 50%, 30%)' },
+      'TESTING': { bg: 'hsl(140, 50%, 20%)', text: 'hsl(45, 100%, 60%)', hover: 'hsl(140, 50%, 30%)' },
+      'R': { bg: 'hsl(0, 0%, 85%)', text: 'hsl(45, 100%, 45%)', hover: 'hsl(0, 0%, 90%)' },
+      'REST': { bg: 'hsl(0, 0%, 85%)', text: 'hsl(45, 100%, 45%)', hover: 'hsl(0, 0%, 90%)' },
     };
-    return colorMap[key] || { bg: 'hsl(0, 0%, 15%)', text: 'hsl(0, 0%, 100%)' };
+    return colorMap[key] || { bg: 'hsl(0, 0%, 15%)', text: 'hsl(0, 0%, 100%)', hover: 'hsl(0, 0%, 25%)' };
+  };
+
+  // Handle clicking on a schedule day to jump to that session
+  const handleSessionClick = (sessionKey: string) => {
+    setSelectedSession(sessionKey);
+    setAccordionValue(['sessions']);
+    // Scroll to sessions section after state update
+    setTimeout(() => {
+      const sessionsSection = document.querySelector('[value="sessions"]');
+      sessionsSection?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
   };
 
   useEffect(() => {
@@ -449,7 +462,7 @@ const Dashboard = () => {
                                 </p>
                               </div>
                             ) : (
-                              <Accordion type="single" defaultValue="schedule" className="w-full" collapsible>
+                              <Accordion type="multiple" value={accordionValue} onValueChange={setAccordionValue} className="w-full">{/* defaultValue="schedule" removed as we're now using controlled state */}
                                 {/* Overview Section */}
                                 {(program.overview_text || program.phase_image_url || program.player_image_url) && (
                                   <AccordionItem value="overview">
@@ -540,14 +553,25 @@ const Dashboard = () => {
                                                   {/* Day Cells */}
                                                   {['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map((day) => {
                                                     const sessionValue = week[day] || '';
-                                                    const colors = sessionValue ? getSessionColor(sessionValue) : { bg: 'hsl(0, 0%, 10%)', text: 'hsl(0, 0%, 100%)' };
+                                                    const colors = sessionValue ? getSessionColor(sessionValue) : { bg: 'hsl(0, 0%, 10%)', text: 'hsl(0, 0%, 100%)', hover: 'hsl(0, 0%, 15%)' };
                                                     return (
                                                       <div 
                                                         key={day}
-                                                        className="p-6 flex items-center justify-center rounded-lg min-h-[80px] transition-transform hover:scale-105"
+                                                        onClick={() => sessionValue && handleSessionClick(sessionValue)}
+                                                        className={`p-6 flex items-center justify-center rounded-lg min-h-[80px] transition-all ${sessionValue ? 'cursor-pointer hover:scale-105' : ''}`}
                                                         style={{ 
                                                           backgroundColor: colors.bg,
                                                           border: '2px solid rgba(255, 255, 255, 0.1)'
+                                                        }}
+                                                        onMouseEnter={(e) => {
+                                                          if (sessionValue && colors.hover) {
+                                                            e.currentTarget.style.backgroundColor = colors.hover;
+                                                          }
+                                                        }}
+                                                        onMouseLeave={(e) => {
+                                                          if (sessionValue) {
+                                                            e.currentTarget.style.backgroundColor = colors.bg;
+                                                          }
                                                         }}
                                                       >
                                                         {sessionValue && (
@@ -588,7 +612,7 @@ const Dashboard = () => {
                                       Sessions
                                     </AccordionTrigger>
                                     <AccordionContent>
-                                      <Tabs defaultValue={Object.keys(program.sessions)[0]} className="w-full">
+                                      <Tabs value={selectedSession || Object.keys(program.sessions)[0]} onValueChange={setSelectedSession} className="w-full">
                                         <TabsList className="grid w-full gap-2" style={{ gridTemplateColumns: `repeat(${Object.keys(program.sessions).length}, 1fr)` }}>
                                           {Object.keys(program.sessions).map((key) => {
                                             const colors = getSessionColor(key);
