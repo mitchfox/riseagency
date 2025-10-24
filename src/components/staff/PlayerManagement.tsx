@@ -30,6 +30,17 @@ interface PlayerStats {
   saves: number | null;
 }
 
+interface ExpandedPlayerData {
+  // Additional fields that may be stored as JSON in bio or separate columns
+  bio?: string;
+  dateOfBirth?: string;
+  number?: number;
+  currentClub?: string;
+  whatsapp?: string;
+  externalLinks?: { label: string; url: string }[];
+  strengthsAndPlayStyle?: string[];
+}
+
 const PlayerManagement = () => {
   const [players, setPlayers] = useState<Player[]>([]);
   const [stats, setStats] = useState<Record<string, PlayerStats>>({});
@@ -45,7 +56,14 @@ const PlayerManagement = () => {
     nationality: "",
     bio: "",
     image_url: "",
+    dateOfBirth: "",
+    number: "",
+    currentClub: "",
+    whatsapp: "",
   });
+
+  const [externalLinks, setExternalLinks] = useState<{ label: string; url: string }[]>([]);
+  const [strengthsAndPlayStyle, setStrengthsAndPlayStyle] = useState<string[]>([]);
 
   const [statsData, setStatsData] = useState({
     goals: "",
@@ -94,6 +112,19 @@ const PlayerManagement = () => {
     setLoading(true);
 
     try {
+      // Combine bio text with additional structured data
+      const bioData: ExpandedPlayerData & { bio?: string } = {
+        bio: formData.bio,
+        dateOfBirth: formData.dateOfBirth || undefined,
+        number: formData.number ? parseInt(formData.number) : undefined,
+        currentClub: formData.currentClub || undefined,
+        whatsapp: formData.whatsapp || undefined,
+        externalLinks: externalLinks.length > 0 ? externalLinks : undefined,
+        strengthsAndPlayStyle: strengthsAndPlayStyle.length > 0 ? strengthsAndPlayStyle : undefined,
+      };
+
+      const bioString = JSON.stringify(bioData);
+
       if (editingPlayer) {
         const { error } = await supabase
           .from("players")
@@ -102,7 +133,7 @@ const PlayerManagement = () => {
             position: formData.position,
             age: parseInt(formData.age),
             nationality: formData.nationality,
-            bio: formData.bio,
+            bio: bioString,
             image_url: formData.image_url,
           })
           .eq("id", editingPlayer.id);
@@ -117,7 +148,7 @@ const PlayerManagement = () => {
             position: formData.position,
             age: parseInt(formData.age),
             nationality: formData.nationality,
-            bio: formData.bio,
+            bio: bioString,
             image_url: formData.image_url,
           })
           .select()
@@ -139,7 +170,20 @@ const PlayerManagement = () => {
         toast.success("Player created successfully");
       }
 
-      setFormData({ name: "", position: "", age: "", nationality: "", bio: "", image_url: "" });
+      setFormData({ 
+        name: "", 
+        position: "", 
+        age: "", 
+        nationality: "", 
+        bio: "", 
+        image_url: "",
+        dateOfBirth: "",
+        number: "",
+        currentClub: "",
+        whatsapp: "",
+      });
+      setExternalLinks([]);
+      setStrengthsAndPlayStyle([]);
       setEditingPlayer(null);
       setIsDialogOpen(false);
       fetchPlayers();
@@ -192,14 +236,33 @@ const PlayerManagement = () => {
 
   const startEdit = (player: Player) => {
     setEditingPlayer(player);
+    
+    // Parse bio for additional fields if it contains JSON
+    let additionalData: ExpandedPlayerData = {};
+    try {
+      if (player.bio && player.bio.startsWith('{')) {
+        const parsed = JSON.parse(player.bio);
+        additionalData = parsed;
+      }
+    } catch (e) {
+      // Bio is regular text, not JSON
+    }
+    
     setFormData({
       name: player.name,
       position: player.position,
       age: player.age.toString(),
       nationality: player.nationality,
-      bio: player.bio || "",
+      bio: typeof additionalData === 'object' && additionalData.bio ? additionalData.bio : (player.bio || ""),
       image_url: player.image_url || "",
+      dateOfBirth: additionalData.dateOfBirth || "",
+      number: additionalData.number?.toString() || "",
+      currentClub: additionalData.currentClub || "",
+      whatsapp: additionalData.whatsapp || "",
     });
+    
+    setExternalLinks(additionalData.externalLinks || []);
+    setStrengthsAndPlayStyle(additionalData.strengthsAndPlayStyle || []);
     setIsDialogOpen(true);
   };
 
@@ -230,7 +293,20 @@ const PlayerManagement = () => {
           <DialogTrigger asChild>
             <Button onClick={() => {
               setEditingPlayer(null);
-              setFormData({ name: "", position: "", age: "", nationality: "", bio: "", image_url: "" });
+              setFormData({ 
+                name: "", 
+                position: "", 
+                age: "", 
+                nationality: "", 
+                bio: "", 
+                image_url: "",
+                dateOfBirth: "",
+                number: "",
+                currentClub: "",
+                whatsapp: "",
+              });
+              setExternalLinks([]);
+              setStrengthsAndPlayStyle([]);
             }}>
               Add New Player
             </Button>
@@ -239,7 +315,7 @@ const PlayerManagement = () => {
             <DialogHeader>
               <DialogTitle>{editingPlayer ? "Edit Player" : "Add New Player"}</DialogTitle>
             </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4 max-h-[70vh] overflow-y-auto">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="name">Name *</Label>
@@ -270,12 +346,47 @@ const PlayerManagement = () => {
                   />
                 </div>
                 <div className="space-y-2">
+                  <Label htmlFor="dateOfBirth">Date of Birth</Label>
+                  <Input
+                    id="dateOfBirth"
+                    placeholder="DD/MM/YYYY"
+                    value={formData.dateOfBirth}
+                    onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
                   <Label htmlFor="nationality">Nationality *</Label>
                   <Input
                     id="nationality"
                     value={formData.nationality}
                     onChange={(e) => setFormData({ ...formData, nationality: e.target.value })}
                     required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="number">Jersey Number</Label>
+                  <Input
+                    id="number"
+                    type="number"
+                    value={formData.number}
+                    onChange={(e) => setFormData({ ...formData, number: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="currentClub">Current Club</Label>
+                  <Input
+                    id="currentClub"
+                    value={formData.currentClub}
+                    onChange={(e) => setFormData({ ...formData, currentClub: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="whatsapp">WhatsApp Number</Label>
+                  <Input
+                    id="whatsapp"
+                    value={formData.whatsapp}
+                    onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
+                    placeholder="+447508342901"
                   />
                 </div>
               </div>
@@ -296,6 +407,84 @@ const PlayerManagement = () => {
                   rows={4}
                 />
               </div>
+              
+              {/* External Links */}
+              <div className="space-y-2">
+                <Label>External Links</Label>
+                {externalLinks.map((link, index) => (
+                  <div key={index} className="flex gap-2">
+                    <Input
+                      placeholder="Label"
+                      value={link.label}
+                      onChange={(e) => {
+                        const newLinks = [...externalLinks];
+                        newLinks[index].label = e.target.value;
+                        setExternalLinks(newLinks);
+                      }}
+                    />
+                    <Input
+                      placeholder="URL"
+                      value={link.url}
+                      onChange={(e) => {
+                        const newLinks = [...externalLinks];
+                        newLinks[index].url = e.target.value;
+                        setExternalLinks(newLinks);
+                      }}
+                    />
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => setExternalLinks(externalLinks.filter((_, i) => i !== index))}
+                    >
+                      Remove
+                    </Button>
+                  </div>
+                ))}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setExternalLinks([...externalLinks, { label: "", url: "" }])}
+                >
+                  Add Link
+                </Button>
+              </div>
+
+              {/* Strengths and Play Style */}
+              <div className="space-y-2">
+                <Label>Strengths & Play Style</Label>
+                {strengthsAndPlayStyle.map((strength, index) => (
+                  <div key={index} className="flex gap-2">
+                    <Input
+                      placeholder="Strength or play style characteristic"
+                      value={strength}
+                      onChange={(e) => {
+                        const newStrengths = [...strengthsAndPlayStyle];
+                        newStrengths[index] = e.target.value;
+                        setStrengthsAndPlayStyle(newStrengths);
+                      }}
+                    />
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => setStrengthsAndPlayStyle(strengthsAndPlayStyle.filter((_, i) => i !== index))}
+                    >
+                      Remove
+                    </Button>
+                  </div>
+                ))}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setStrengthsAndPlayStyle([...strengthsAndPlayStyle, ""])}
+                >
+                  Add Strength
+                </Button>
+              </div>
+
               <Button type="submit" disabled={loading}>
                 {loading ? "Saving..." : editingPlayer ? "Update Player" : "Create Player"}
               </Button>
@@ -327,6 +516,61 @@ const PlayerManagement = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
+                {/* Display Player Additional Info */}
+                {(() => {
+                  let additionalData: ExpandedPlayerData = {};
+                  try {
+                    if (player.bio && player.bio.startsWith('{')) {
+                      additionalData = JSON.parse(player.bio);
+                    }
+                  } catch (e) {
+                    // Bio is regular text
+                  }
+                  
+                  return (
+                    <div className="text-sm space-y-2 mb-4 p-3 bg-muted/30 rounded-lg">
+                      {player.image_url && (
+                        <div className="mb-2">
+                          <img src={player.image_url} alt={player.name} className="w-20 h-20 rounded-lg object-cover" />
+                        </div>
+                      )}
+                      <div className="grid grid-cols-2 gap-2">
+                        {additionalData.dateOfBirth && <p><strong>DOB:</strong> {additionalData.dateOfBirth}</p>}
+                        {additionalData.number && <p><strong>Number:</strong> {additionalData.number}</p>}
+                        {additionalData.currentClub && <p><strong>Club:</strong> {additionalData.currentClub}</p>}
+                        {additionalData.whatsapp && <p><strong>WhatsApp:</strong> {additionalData.whatsapp}</p>}
+                      </div>
+                      {additionalData.bio && (
+                        <p className="text-muted-foreground mt-2">{additionalData.bio}</p>
+                      )}
+                      {additionalData.externalLinks && additionalData.externalLinks.length > 0 && (
+                        <div className="mt-2">
+                          <strong>Links:</strong>
+                          <ul className="list-disc list-inside ml-2">
+                            {additionalData.externalLinks.map((link, i) => (
+                              <li key={i}>
+                                <a href={link.url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                                  {link.label}
+                                </a>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      {additionalData.strengthsAndPlayStyle && additionalData.strengthsAndPlayStyle.length > 0 && (
+                        <div className="mt-2">
+                          <strong>Strengths:</strong>
+                          <ul className="list-disc list-inside ml-2">
+                            {additionalData.strengthsAndPlayStyle.map((strength, i) => (
+                              <li key={i}>{strength}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+
                 {editingStats?.player_id === player.id ? (
                   <div className="space-y-3">
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
