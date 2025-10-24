@@ -498,69 +498,6 @@ const Index = () => {
           </div>
         </section>
 
-        {/* Additional Services */}
-        <section className="py-12 md:py-16 px-4 relative overflow-hidden bg-muted/30">
-          <div 
-            className="absolute inset-0 opacity-20"
-            style={{ backgroundImage: `url(${marbleTexture})`, backgroundRepeat: "repeat" }}
-          />
-          <div className="container mx-auto max-w-5xl relative z-10">
-            <div className="text-center mb-10 space-y-3">
-              <div className="inline-block">
-                <span className="text-sm font-bebas uppercase tracking-widest text-primary border border-primary/30 px-6 py-2 rounded-full">
-                  What We Offer
-                </span>
-              </div>
-              <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-foreground">
-                Our <span className="text-primary">Services</span>
-              </h2>
-            </div>
-            
-            <div className="space-y-6">
-              <div className="flex items-start gap-6 md:gap-8 group p-6 md:p-8 rounded-2xl bg-background/50 backdrop-blur-sm border border-border hover:border-primary/50 transition-all duration-300 hover:shadow-xl">
-                <div className="flex-shrink-0 w-12 h-12 md:w-16 md:h-16 flex items-center justify-center bg-primary/10 rounded-xl group-hover:scale-110 transition-transform">
-                  <img src={riseStarIcon} alt="Rise Star" className="w-10 h-10 object-contain" />
-                </div>
-                <div>
-                  <h3 className="text-2xl md:text-3xl font-bebas uppercase tracking-wider text-foreground mb-2 group-hover:text-primary transition-colors">
-                    Stakeholder Management
-                  </h3>
-                  <p className="text-muted-foreground text-sm md:text-lg leading-relaxed">
-                    Career management through contract negotiations, loans and transfers
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-6 md:gap-8 group p-6 md:p-8 rounded-2xl bg-background/50 backdrop-blur-sm border border-border hover:border-primary/50 transition-all duration-300 hover:shadow-xl">
-                <div className="flex-shrink-0 w-12 h-12 md:w-16 md:h-16 flex items-center justify-center bg-primary/10 rounded-xl group-hover:scale-110 transition-transform">
-                  <img src={riseStarIcon} alt="Rise Star" className="w-10 h-10 object-contain" />
-                </div>
-                <div>
-                  <h3 className="text-2xl md:text-3xl font-bebas uppercase tracking-wider text-foreground mb-2 group-hover:text-primary transition-colors">
-                    Brand Image
-                  </h3>
-                  <p className="text-muted-foreground text-sm md:text-lg leading-relaxed">
-                    Development of your brand image and management of public relations
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-6 md:gap-8 group p-6 md:p-8 rounded-2xl bg-background/50 backdrop-blur-sm border border-border hover:border-primary/50 transition-all duration-300 hover:shadow-xl">
-                <div className="flex-shrink-0 w-12 h-12 md:w-16 md:h-16 flex items-center justify-center bg-primary/10 rounded-xl group-hover:scale-110 transition-transform">
-                  <img src={riseStarIcon} alt="Rise Star" className="w-10 h-10 object-contain" />
-                </div>
-                <div>
-                  <h3 className="text-2xl md:text-3xl font-bebas uppercase tracking-wider text-foreground mb-2 group-hover:text-primary transition-colors">
-                    Commercial Interests
-                  </h3>
-                  <p className="text-muted-foreground text-sm md:text-lg leading-relaxed">
-                    Creating relationships with major brands and negotiating the best sponsorship opportunities
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
 
         {/* CTA Section */}
         <section className="py-12 md:py-16 px-4 bg-background relative overflow-hidden">
