@@ -15,8 +15,9 @@ interface RepresentationDialogProps {
 
 const representationSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(100),
-  email: z.string().trim().email("Invalid email address").max(255),
   phone: z.string().trim().min(1, "Phone number is required").max(50),
+  email: z.string().trim().email("Invalid email address").max(255).optional().or(z.literal("")),
+  currentClub: z.string().trim().min(1, "Current club is required").max(100),
   position: z.string().trim().min(1, "Position is required").max(100),
   message: z.string().trim().max(1000),
 });
@@ -25,8 +26,9 @@ export const RepresentationDialog = ({ open, onOpenChange }: RepresentationDialo
   const { toast } = useToast();
   const [formData, setFormData] = useState({
     name: "",
-    email: "",
     phone: "",
+    email: "",
+    currentClub: "",
     position: "",
     message: "",
   });
@@ -43,7 +45,7 @@ export const RepresentationDialog = ({ open, onOpenChange }: RepresentationDialo
       });
       
       onOpenChange(false);
-      setFormData({ name: "", email: "", phone: "", position: "", message: "" });
+      setFormData({ name: "", phone: "", email: "", currentClub: "", position: "", message: "" });
     } catch (error) {
       if (error instanceof z.ZodError) {
         toast({
@@ -57,7 +59,7 @@ export const RepresentationDialog = ({ open, onOpenChange }: RepresentationDialo
 
   const handleWhatsApp = () => {
     const message = encodeURIComponent(
-      `Hi, I'm ${formData.name || "[Your Name]"} and I'd like to request representation. Position: ${formData.position || "[Your Position]"}. ${formData.message || ""}`
+      `Hi, I'm ${formData.name || "[Your Name]"} and I'd like to request representation. Current Club: ${formData.currentClub || "[Your Club]"}, Position: ${formData.position || "[Your Position]"}. ${formData.message || ""}`
     );
     window.open(`https://wa.me/447340184399?text=${message}`, "_blank");
   };
@@ -87,18 +89,6 @@ export const RepresentationDialog = ({ open, onOpenChange }: RepresentationDialo
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="email">Email *</Label>
-            <Input
-              id="email"
-              type="email"
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              placeholder="john@example.com"
-              required
-            />
-          </div>
-
-          <div className="space-y-2">
             <Label htmlFor="phone">Phone Number *</Label>
             <Input
               id="phone"
@@ -106,6 +96,28 @@ export const RepresentationDialog = ({ open, onOpenChange }: RepresentationDialo
               value={formData.phone}
               onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
               placeholder="+44 7340 184399"
+              required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              placeholder="john@example.com"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="currentClub">Current Club *</Label>
+            <Input
+              id="currentClub"
+              value={formData.currentClub}
+              onChange={(e) => setFormData({ ...formData, currentClub: e.target.value })}
+              placeholder="e.g., Manchester United U21"
               required
             />
           </div>
