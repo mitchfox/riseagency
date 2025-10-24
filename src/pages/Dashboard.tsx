@@ -794,7 +794,7 @@ const Dashboard = () => {
                                                                   className="grid grid-cols-5 gap-0 border-t-2 border-white cursor-pointer hover:opacity-80 transition-opacity"
                                                                 >
                                                                   <div 
-                                                                    className="p-4 text-sm font-medium border-r-2 border-white text-center"
+                                                                    className="p-4 text-sm font-medium border-r-2 border-white flex items-center justify-center"
                                                                     style={{ 
                                                                       backgroundColor: 'hsl(45, 40%, 80%)',
                                                                       color: 'hsl(0, 0%, 0%)'
@@ -803,7 +803,7 @@ const Dashboard = () => {
                                                                     {exercise.name || exercise}
                                                                   </div>
                                                                   <div 
-                                                                    className="p-4 text-sm italic border-r-2 border-white text-center"
+                                                                    className="p-4 text-sm italic border-r-2 border-white flex items-center justify-center"
                                                                     style={{ 
                                                                       backgroundColor: 'hsl(0, 0%, 10%)',
                                                                       color: 'hsl(0, 0%, 100%)'
@@ -812,7 +812,7 @@ const Dashboard = () => {
                                                                     {exercise.repetitions || '-'}
                                                                   </div>
                                                                   <div 
-                                                                    className="p-4 text-sm italic border-r-2 border-white text-center"
+                                                                    className="p-4 text-sm italic border-r-2 border-white flex items-center justify-center"
                                                                     style={{ 
                                                                       backgroundColor: 'hsl(0, 0%, 10%)',
                                                                       color: 'hsl(0, 0%, 100%)'
@@ -821,7 +821,7 @@ const Dashboard = () => {
                                                                     {exercise.sets || '-'}
                                                                   </div>
                                                                   <div 
-                                                                    className="p-4 text-sm italic border-r-2 border-white text-center"
+                                                                    className="p-4 text-sm italic border-r-2 border-white flex items-center justify-center"
                                                                     style={{ 
                                                                       backgroundColor: 'hsl(0, 0%, 10%)',
                                                                       color: 'hsl(0, 0%, 100%)'
@@ -830,7 +830,7 @@ const Dashboard = () => {
                                                                     {exercise.load && exercise.load !== "'-" ? exercise.load : '-'}
                                                                   </div>
                                                                   <div 
-                                                                    className="p-4 text-sm italic text-center"
+                                                                    className="p-4 text-sm italic flex items-center justify-center"
                                                                     style={{ 
                                                                       backgroundColor: 'hsl(0, 0%, 10%)',
                                                                       color: 'hsl(0, 0%, 100%)'
@@ -912,7 +912,7 @@ const Dashboard = () => {
                                                                   className="grid grid-cols-5 gap-0 border-t-2 border-white cursor-pointer hover:opacity-80 transition-opacity"
                                                                 >
                                                                   <div 
-                                                                    className="p-4 text-sm font-medium border-r-2 border-white text-center"
+                                                                    className="p-4 text-sm font-medium border-r-2 border-white flex items-center justify-center"
                                                                     style={{ 
                                                                       backgroundColor: 'hsl(45, 40%, 80%)',
                                                                       color: 'hsl(0, 0%, 0%)'
@@ -921,7 +921,7 @@ const Dashboard = () => {
                                                                     {exercise.name || exercise}
                                                                   </div>
                                                                   <div 
-                                                                    className="p-4 text-sm italic border-r-2 border-white text-center"
+                                                                    className="p-4 text-sm italic border-r-2 border-white flex items-center justify-center"
                                                                     style={{ 
                                                                       backgroundColor: 'hsl(0, 0%, 10%)',
                                                                       color: 'hsl(0, 0%, 100%)'
@@ -930,7 +930,7 @@ const Dashboard = () => {
                                                                     {exercise.repetitions || '-'}
                                                                   </div>
                                                                   <div 
-                                                                    className="p-4 text-sm italic border-r-2 border-white text-center"
+                                                                    className="p-4 text-sm italic border-r-2 border-white flex items-center justify-center"
                                                                     style={{ 
                                                                       backgroundColor: 'hsl(0, 0%, 10%)',
                                                                       color: 'hsl(0, 0%, 100%)'
@@ -939,7 +939,7 @@ const Dashboard = () => {
                                                                     {exercise.sets || '-'}
                                                                   </div>
                                                                   <div 
-                                                                    className="p-4 text-sm italic border-r-2 border-white text-center"
+                                                                    className="p-4 text-sm italic border-r-2 border-white flex items-center justify-center"
                                                                     style={{ 
                                                                       backgroundColor: 'hsl(0, 0%, 10%)',
                                                                       color: 'hsl(0, 0%, 100%)'
@@ -948,7 +948,7 @@ const Dashboard = () => {
                                                                     {exercise.load && exercise.load !== "'-" ? exercise.load : '-'}
                                                                   </div>
                                                                   <div 
-                                                                    className="p-4 text-sm italic text-center"
+                                                                    className="p-4 text-sm italic flex items-center justify-center"
                                                                     style={{ 
                                                                       backgroundColor: 'hsl(0, 0%, 10%)',
                                                                       color: 'hsl(0, 0%, 100%)'
