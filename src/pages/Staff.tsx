@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,38 +10,98 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import PlayerManagement from "@/components/staff/PlayerManagement";
 import BlogManagement from "@/components/staff/BlogManagement";
-
-const STAFF_PASSWORD = "rise2024admin"; // Change this to your desired password
+import { supabase } from "@/integrations/supabase/client";
+import type { User } from "@supabase/supabase-js";
 
 const Staff = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(true);
+  const [isStaff, setIsStaff] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    // Check if already authenticated in session
-    const authenticated = sessionStorage.getItem("staff_authenticated");
-    if (authenticated === "true") {
-      setIsAuthenticated(true);
-    }
-    setLoading(false);
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setUser(session?.user ?? null);
+        if (session?.user) {
+          checkStaffRole(session.user.id);
+        } else {
+          setIsStaff(false);
+          setLoading(false);
+        }
+      }
+    );
+
+    // Check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        checkStaffRole(session.user.id);
+      } else {
+        setLoading(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  const handlePasswordSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (password === STAFF_PASSWORD) {
-      setIsAuthenticated(true);
-      sessionStorage.setItem("staff_authenticated", "true");
-      toast.success("Access granted");
-    } else {
-      toast.error("Invalid password");
-      setPassword("");
+  const checkStaffRole = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId)
+        .eq('role', 'staff')
+        .single();
+
+      if (error) {
+        console.error('Error checking staff role:', error);
+        setIsStaff(false);
+      } else {
+        setIsStaff(!!data);
+      }
+    } catch (err) {
+      console.error('Error:', err);
+      setIsStaff(false);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleLogout = () => {
-    setIsAuthenticated(false);
-    sessionStorage.removeItem("staff_authenticated");
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        toast.error(error.message);
+        setLoading(false);
+        return;
+      }
+
+      if (data.user) {
+        await checkStaffRole(data.user.id);
+        toast.success("Login successful");
+      }
+    } catch (err) {
+      toast.error("An error occurred during login");
+      setLoading(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setUser(null);
+    setIsStaff(false);
+    setEmail("");
     setPassword("");
     toast.success("Logged out");
   };
@@ -53,41 +114,82 @@ const Staff = () => {
     );
   }
 
-  if (!isAuthenticated) {
+  // Show login form if not authenticated
+  if (!user) {
     return (
-    <div className="min-h-screen bg-background">
-      <Header />
-      <main className="py-20">
-        <div className="max-w-md mx-4 md:mx-auto">
-          <Card className="w-full">
-            <CardHeader>
-              <CardTitle className="text-2xl font-bold text-center">
-                Staff Access
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handlePasswordSubmit} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    autoFocus
-                  />
-                </div>
-                <Button type="submit" className="w-full">
-                  Access Dashboard
+      <div className="min-h-screen bg-background">
+        <Header />
+        <main className="py-20">
+          <div className="max-w-md mx-4 md:mx-auto">
+            <Card className="w-full">
+              <CardHeader>
+                <CardTitle className="text-2xl font-bold text-center">
+                  Staff Login
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleLogin} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="staff@example.com"
+                      required
+                      autoFocus
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="password">Password</Label>
+                    <Input
+                      id="password"
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <Button type="submit" className="w-full" disabled={loading}>
+                    {loading ? "Logging in..." : "Access Dashboard"}
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  // Show access denied if user is authenticated but not staff
+  if (!isStaff) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <main className="py-20">
+          <div className="max-w-md mx-4 md:mx-auto">
+            <Card className="w-full">
+              <CardHeader>
+                <CardTitle className="text-2xl font-bold text-center text-destructive">
+                  Access Denied
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-center text-muted-foreground">
+                  You do not have staff permissions to access this page.
+                </p>
+                <Button onClick={handleLogout} className="w-full" variant="outline">
+                  Logout
                 </Button>
-              </form>
-            </CardContent>
-          </Card>
-        </div>
-      </main>
-      <Footer />
-    </div>
+              </CardContent>
+            </Card>
+          </div>
+        </main>
+        <Footer />
+      </div>
     );
   }
 
