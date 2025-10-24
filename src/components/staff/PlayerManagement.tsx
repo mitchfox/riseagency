@@ -593,7 +593,7 @@ const PlayerManagement = () => {
         .getPublicUrl(`player-images/${fileName}`);
       
       setFormData({ ...formData, image_url: publicUrl });
-      toast.success("Player image uploaded successfully!");
+      toast.success("Player image uploaded successfully! Note: For best results, copy images to /public/players/ folder");
     } catch (error: any) {
       console.error("Error uploading player image:", error);
       toast.error("Failed to upload player image");
@@ -618,7 +618,7 @@ const PlayerManagement = () => {
         .getPublicUrl(`club-logos/${fileName}`);
       
       setClubLogoUrl(publicUrl);
-      toast.success("Club logo uploaded successfully!");
+      toast.success("Club logo uploaded successfully! Note: For best results, copy logos to /public/clubs/ folder");
     } catch (error: any) {
       console.error("Error uploading club logo:", error);
       toast.error("Failed to upload club logo");
@@ -796,7 +796,17 @@ const PlayerManagement = () => {
                   </div>
                 )}
                 <p className="text-xs text-muted-foreground">
-                  Upload player profile image (PNG, JPG, WEBP)
+                  Upload player image OR manually enter a path below
+                </p>
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="/players/player-name.jpg"
+                    value={formData.image_url}
+                    onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  For best reliability, copy images to /public/players/ folder and use path: /players/filename.jpg
                 </p>
               </div>
               
@@ -830,7 +840,17 @@ const PlayerManagement = () => {
                   </div>
                 )}
                 <p className="text-xs text-muted-foreground">
-                  Upload a logo for the current club (displayed on player profile)
+                  Upload a logo OR manually enter a path below
+                </p>
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="/clubs/logo.png"
+                    value={clubLogoUrl}
+                    onChange={(e) => setClubLogoUrl(e.target.value)}
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  For best reliability, copy logos to /public/clubs/ folder and use path: /clubs/filename.png
                 </p>
               </div>
               
