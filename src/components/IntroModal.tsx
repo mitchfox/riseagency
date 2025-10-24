@@ -14,20 +14,26 @@ interface IntroModalProps {
 export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
   const [showRepresentation, setShowRepresentation] = useState(false);
 
+  const handleDialogChange = (newOpen: boolean) => {
+    if (!newOpen) {
+      // Mark as seen whenever the modal is closed
+      localStorage.setItem("intro-modal-seen", "true");
+    }
+    onOpenChange(newOpen);
+  };
+
   const handleEnterSite = () => {
-    onOpenChange(false);
-    localStorage.setItem("intro-modal-seen", "true");
+    handleDialogChange(false);
   };
 
   const handleRequestRepresentation = () => {
-    onOpenChange(false);
-    localStorage.setItem("intro-modal-seen", "true");
+    handleDialogChange(false);
     setShowRepresentation(true);
   };
 
   return (
     <>
-      <Dialog open={open} onOpenChange={onOpenChange}>
+      <Dialog open={open} onOpenChange={handleDialogChange}>
         <DialogContent 
           className="max-w-3xl p-0 border-primary/20 overflow-hidden bg-transparent"
           style={{ backgroundImage: `url(${blackMarble})`, backgroundSize: "cover" }}
