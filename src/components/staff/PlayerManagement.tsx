@@ -75,6 +75,8 @@ const PlayerManagement = () => {
   const [selectedProgrammingPlayerId, setSelectedProgrammingPlayerId] = useState<string>("");
   const [selectedProgrammingPlayerName, setSelectedProgrammingPlayerName] = useState<string>("");
   const [uploadingPlayerImage, setUploadingPlayerImage] = useState(false);
+  const [uploadingClubLogo, setUploadingClubLogo] = useState(false);
+  const [clubLogoUrl, setClubLogoUrl] = useState<string>("");
 
   const [formData, setFormData] = useState({
     name: "",
@@ -209,8 +211,21 @@ const PlayerManagement = () => {
         return;
       }
 
+      // Get existing tactical formations if editing
+      let existingTacticalFormations: any[] = [];
+      if (editingPlayer && editingPlayer.bio) {
+        try {
+          const existingBio = JSON.parse(editingPlayer.bio);
+          if (existingBio.tacticalFormations) {
+            existingTacticalFormations = existingBio.tacticalFormations;
+          }
+        } catch (e) {
+          // Ignore parse errors
+        }
+      }
+
       // Combine bio text with additional structured data
-      const bioData: ExpandedPlayerData & { bio?: string } = {
+      const bioData: ExpandedPlayerData & { bio?: string; tacticalFormations?: any[] } = {
         bio: formData.bio,
         dateOfBirth: formData.dateOfBirth || undefined,
         number: formData.number ? parseInt(formData.number) : undefined,
@@ -219,6 +234,36 @@ const PlayerManagement = () => {
         externalLinks: externalLinks.length > 0 ? externalLinks : undefined,
         strengthsAndPlayStyle: strengthsAndPlayStyle.length > 0 ? strengthsAndPlayStyle : undefined,
       };
+
+      // Update or add current club in tacticalFormations
+      if (clubLogoUrl && formData.currentClub) {
+        // Find existing formation for current club or update the first one
+        const updatedFormations = [...existingTacticalFormations];
+        const currentClubIndex = updatedFormations.findIndex(f => f.club === formData.currentClub);
+        
+        const currentClubFormation = {
+          formation: "4-3-3", // Default formation
+          role: formData.position,
+          club: formData.currentClub,
+          clubLogo: clubLogoUrl
+        };
+        
+        if (currentClubIndex >= 0) {
+          // Update existing club formation
+          updatedFormations[currentClubIndex] = currentClubFormation;
+        } else if (updatedFormations.length > 0) {
+          // Replace the first formation with current club
+          updatedFormations[0] = currentClubFormation;
+        } else {
+          // Add as new formation
+          updatedFormations.push(currentClubFormation);
+        }
+        
+        bioData.tacticalFormations = updatedFormations;
+      } else if (existingTacticalFormations.length > 0) {
+        // Keep existing formations if no club logo update
+        bioData.tacticalFormations = existingTacticalFormations;
+      }
 
       const bioString = JSON.stringify(bioData);
 
@@ -336,9 +381,16 @@ const PlayerManagement = () => {
       if (player.bio && player.bio.startsWith('{')) {
         const parsed = JSON.parse(player.bio);
         additionalData = parsed;
+        // Load club logo from tacticalFormations
+        if (parsed.tacticalFormations && parsed.tacticalFormations[0]?.clubLogo) {
+          setClubLogoUrl(parsed.tacticalFormations[0].clubLogo);
+        } else {
+          setClubLogoUrl("");
+        }
       }
     } catch (e) {
       // Bio is regular text, not JSON
+      setClubLogoUrl("");
     }
     
     setFormData({
@@ -543,6 +595,31 @@ const PlayerManagement = () => {
     }
   };
 
+  const handleClubLogoUpload = async (file: File) => {
+    try {
+      setUploadingClubLogo(true);
+      
+      const fileName = `${Date.now()}_${file.name}`;
+      const { data, error } = await supabase.storage
+        .from('analysis-files')
+        .upload(`club-logos/${fileName}`, file);
+      
+      if (error) throw error;
+      
+      const { data: { publicUrl } } = supabase.storage
+        .from('analysis-files')
+        .getPublicUrl(`club-logos/${fileName}`);
+      
+      setClubLogoUrl(publicUrl);
+      toast.success("Club logo uploaded successfully!");
+    } catch (error: any) {
+      console.error("Error uploading club logo:", error);
+      toast.error("Failed to upload club logo");
+    } finally {
+      setUploadingClubLogo(false);
+    }
+  };
+
   if (loading && players.length === 0) {
     return <div>Loading...</div>;
   }
@@ -571,6 +648,7 @@ const PlayerManagement = () => {
               setStrengthsAndPlayStyle([]);
               setPlayerCategory("Other");
               setVisibleOnStarsPage(false);
+              setClubLogoUrl("");
             }}>
               Add New Player
             </Button>
@@ -699,6 +777,41 @@ const PlayerManagement = () => {
                   Upload player profile image (PNG, JPG, WEBP)
                 </p>
               </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="club_logo">Current Club Logo</Label>
+                <Input
+                  id="club_logo"
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleClubLogoUpload(file);
+                  }}
+                  disabled={uploadingClubLogo}
+                />
+                {clubLogoUrl && (
+                  <div className="mt-2 flex items-center gap-2">
+                    <img 
+                      src={clubLogoUrl} 
+                      alt="Club logo preview" 
+                      className="w-16 h-16 object-contain bg-secondary p-2 rounded border"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setClubLogoUrl("")}
+                    >
+                      Remove
+                    </Button>
+                  </div>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  Upload a logo for the current club (displayed on player profile)
+                </p>
+              </div>
+              
               <div className="space-y-2">
                 <Label htmlFor="bio">Bio</Label>
                 <Textarea
