@@ -482,6 +482,7 @@ export type Database = {
           name: string
           nationality: string
           position: string
+          representation_status: string | null
           updated_at: string | null
           visible_on_stars_page: boolean | null
         }
@@ -497,6 +498,7 @@ export type Database = {
           name: string
           nationality: string
           position: string
+          representation_status?: string | null
           updated_at?: string | null
           visible_on_stars_page?: boolean | null
         }
@@ -512,6 +514,7 @@ export type Database = {
           name?: string
           nationality?: string
           position?: string
+          representation_status?: string | null
           updated_at?: string | null
           visible_on_stars_page?: boolean | null
         }

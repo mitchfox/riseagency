@@ -23,6 +23,7 @@ interface Player {
   visible_on_stars_page: boolean;
   highlights: any;
   category: string;
+  representation_status: string;
 }
 
 interface PlayerStats {
@@ -72,6 +73,7 @@ const PlayerManagement = () => {
   const [editingHighlightIndex, setEditingHighlightIndex] = useState<number | null>(null);
   const [visibleOnStarsPage, setVisibleOnStarsPage] = useState(false);
   const [playerCategory, setPlayerCategory] = useState<string>("Other");
+  const [representationStatus, setRepresentationStatus] = useState<string>("other");
   const [isProgrammingDialogOpen, setIsProgrammingDialogOpen] = useState(false);
   const [selectedProgrammingPlayerId, setSelectedProgrammingPlayerId] = useState<string>("");
   const [selectedProgrammingPlayerName, setSelectedProgrammingPlayerName] = useState<string>("");
@@ -281,6 +283,7 @@ const PlayerManagement = () => {
             email: formData.email || null,
             visible_on_stars_page: visibleOnStarsPage,
             category: playerCategory,
+            representation_status: representationStatus,
           })
           .eq("id", editingPlayer.id);
 
@@ -299,6 +302,7 @@ const PlayerManagement = () => {
             email: formData.email || null,
             visible_on_stars_page: visibleOnStarsPage,
             category: playerCategory,
+            representation_status: representationStatus,
           })
           .select()
           .single();
@@ -375,6 +379,7 @@ const PlayerManagement = () => {
     setEditingPlayer(player);
     setVisibleOnStarsPage(player.visible_on_stars_page || false);
     setPlayerCategory(player.category || "Other");
+    setRepresentationStatus(player.representation_status || "other");
     
     // Parse bio for additional fields if it contains JSON
     let additionalData: ExpandedPlayerData = {};
@@ -714,6 +719,20 @@ const PlayerManagement = () => {
                     <option value="Signed">Signed</option>
                     <option value="Mandate">Mandate</option>
                     <option value="Other">Other</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="representation_status">Representation Status *</Label>
+                  <select
+                    id="representation_status"
+                    value={representationStatus}
+                    onChange={(e) => setRepresentationStatus(e.target.value)}
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                    required
+                  >
+                    <option value="represented">Represented</option>
+                    <option value="mandated">Mandated</option>
+                    <option value="other">Other</option>
                   </select>
                 </div>
                 <div className="space-y-2">
