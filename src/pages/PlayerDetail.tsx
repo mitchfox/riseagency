@@ -242,14 +242,6 @@ const PlayerDetail = () => {
                 {player.currentClub}
               </p>
               
-              {player.representation_status && (
-                <p className="text-lg md:text-xl text-muted-foreground uppercase tracking-wide font-bebas leading-none">
-                  {player.representation_status === 'represented' ? '🤝 Represented' : 
-                   player.representation_status === 'mandated' ? '📋 Mandated' : 
-                   '📝 Other'}
-                </p>
-              )}
-              
               {player.whatsapp && (
                 <Button 
                   asChild
