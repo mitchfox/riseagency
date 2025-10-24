@@ -8,9 +8,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { User } from "@supabase/supabase-js";
-import { FileText } from "lucide-react";
+import { FileText, ExternalLink } from "lucide-react";
 import { addDays, format, parseISO } from "date-fns";
 
 interface Analysis {
@@ -50,7 +51,8 @@ const Dashboard = () => {
   const [selectedProgramId, setSelectedProgramId] = useState<string | null>(null);
   const [selectedSession, setSelectedSession] = useState<string | null>(null);
   const [accordionValue, setAccordionValue] = useState<string[]>([]);
-  const [selectedExercise, setSelectedExercise] = useState<string>('');
+  const [selectedExercise, setSelectedExercise] = useState<any>(null);
+  const [exerciseDialogOpen, setExerciseDialogOpen] = useState(false);
 
   // Session color mapping with hover states
   const getSessionColor = (sessionKey: string) => {
@@ -104,6 +106,12 @@ const Dashboard = () => {
       console.error('Error parsing week start date:', error);
       return null;
     }
+  };
+
+  // Handle clicking on an exercise to show details
+  const handleExerciseClick = (exercise: any) => {
+    setSelectedExercise(exercise);
+    setExerciseDialogOpen(true);
   };
 
   useEffect(() => {
@@ -782,7 +790,8 @@ const Dashboard = () => {
                                                               {hasPreSession.exercises.map((exercise: any, idx: number) => (
                                                                 <div 
                                                                   key={idx}
-                                                                  className="grid grid-cols-5 gap-0 border-t-2 border-white"
+                                                                  onClick={() => handleExerciseClick(exercise)}
+                                                                  className="grid grid-cols-5 gap-0 border-t-2 border-white cursor-pointer hover:opacity-80 transition-opacity"
                                                                 >
                                                                   <div 
                                                                     className="p-4 text-sm font-medium border-r-2 border-white text-center"
@@ -832,34 +841,6 @@ const Dashboard = () => {
                                                                 </div>
                                                               ))}
                                                             </div>
-                                                          </div>
-                                                          
-                                                          {/* Exercise Descriptions Dropdown */}
-                                                          <div className="border rounded-lg p-4 bg-card">
-                                                            <h4 className="font-bebas uppercase text-lg mb-3">Exercise Descriptions</h4>
-                                                            <Select value={selectedExercise} onValueChange={setSelectedExercise}>
-                                                              <SelectTrigger className="w-full mb-4 bg-background z-50">
-                                                                <SelectValue placeholder="Select an exercise to view description" />
-                                                              </SelectTrigger>
-                                                              <SelectContent className="bg-background z-50">
-                                                                {hasPreSession.exercises
-                                                                  .filter((ex: any) => ex.description)
-                                                                  .map((exercise: any, idx: number) => (
-                                                                    <SelectItem key={idx} value={exercise.name || exercise}>
-                                                                      {exercise.name || exercise}
-                                                                    </SelectItem>
-                                                                  ))}
-                                                              </SelectContent>
-                                                            </Select>
-                                                            
-                                                            {selectedExercise && (() => {
-                                                              const exercise = hasPreSession.exercises.find((ex: any) => (ex.name || ex) === selectedExercise);
-                                                              return exercise?.description ? (
-                                                                <div className="p-4 bg-muted/50 rounded-lg">
-                                                                  <p className="text-sm whitespace-pre-wrap">{exercise.description}</p>
-                                                                </div>
-                                                              ) : null;
-                                                            })()}
                                                           </div>
                                                         </div>
                                                       )}
@@ -927,7 +908,8 @@ const Dashboard = () => {
                                                               {mainSession.exercises.map((exercise: any, idx: number) => (
                                                                 <div 
                                                                   key={idx}
-                                                                  className="grid grid-cols-5 gap-0 border-t-2 border-white"
+                                                                  onClick={() => handleExerciseClick(exercise)}
+                                                                  className="grid grid-cols-5 gap-0 border-t-2 border-white cursor-pointer hover:opacity-80 transition-opacity"
                                                                 >
                                                                   <div 
                                                                     className="p-4 text-sm font-medium border-r-2 border-white text-center"
@@ -977,34 +959,6 @@ const Dashboard = () => {
                                                                 </div>
                                                               ))}
                                                             </div>
-                                                          </div>
-                                                          
-                                                          {/* Exercise Descriptions Dropdown */}
-                                                          <div className="border rounded-lg p-4 bg-card">
-                                                            <h4 className="font-bebas uppercase text-lg mb-3">Exercise Descriptions</h4>
-                                                            <Select value={selectedExercise} onValueChange={setSelectedExercise}>
-                                                              <SelectTrigger className="w-full mb-4 bg-background z-50">
-                                                                <SelectValue placeholder="Select an exercise to view description" />
-                                                              </SelectTrigger>
-                                                              <SelectContent className="bg-background z-50">
-                                                                {mainSession.exercises
-                                                                  .filter((ex: any) => ex.description)
-                                                                  .map((exercise: any, idx: number) => (
-                                                                    <SelectItem key={idx} value={exercise.name || exercise}>
-                                                                      {exercise.name || exercise}
-                                                                    </SelectItem>
-                                                                  ))}
-                                                              </SelectContent>
-                                                            </Select>
-                                                            
-                                                            {selectedExercise && (() => {
-                                                              const exercise = mainSession.exercises.find((ex: any) => (ex.name || ex) === selectedExercise);
-                                                              return exercise?.description ? (
-                                                                <div className="p-4 bg-muted/50 rounded-lg">
-                                                                  <p className="text-sm whitespace-pre-wrap">{exercise.description}</p>
-                                                                </div>
-                                                              ) : null;
-                                                            })()}
                                                           </div>
                                                         </div>
                                                       )}
@@ -1074,6 +1028,48 @@ const Dashboard = () => {
         </div>
       </main>
       <Footer />
+
+      {/* Exercise Details Dialog */}
+      <Dialog open={exerciseDialogOpen} onOpenChange={setExerciseDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="font-bebas uppercase text-2xl">
+              {selectedExercise?.name || 'Exercise Details'}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {selectedExercise?.description && (
+              <div>
+                <h4 className="font-semibold mb-2">Description</h4>
+                <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                  {selectedExercise.description}
+                </p>
+              </div>
+            )}
+            
+            {(selectedExercise?.videoUrl || selectedExercise?.video_url) && (
+              <div>
+                <h4 className="font-semibold mb-2">Video</h4>
+                <a 
+                  href={selectedExercise.videoUrl || selectedExercise.video_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 text-primary hover:underline"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                  Watch Exercise Video
+                </a>
+              </div>
+            )}
+            
+            {!selectedExercise?.description && !selectedExercise?.videoUrl && !selectedExercise?.video_url && (
+              <p className="text-sm text-muted-foreground italic">
+                No additional details available for this exercise.
+              </p>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
