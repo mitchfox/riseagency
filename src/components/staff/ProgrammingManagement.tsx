@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Plus, Trash2, Check, Edit } from "lucide-react";
+import { Plus, Trash2, Check, Edit, ChevronUp, ChevronDown } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 
@@ -341,6 +341,22 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
     });
   };
 
+  const moveExercise = (sessionKey: keyof Pick<ProgrammingData, 'sessionA' | 'sessionB' | 'sessionC' | 'sessionD' | 'sessionE' | 'sessionF' | 'sessionG' | 'sessionH'>, index: number, direction: 'up' | 'down') => {
+    const session = programmingData[sessionKey] as SessionData;
+    const exercises = [...session.exercises];
+    
+    if (direction === 'up' && index > 0) {
+      [exercises[index - 1], exercises[index]] = [exercises[index], exercises[index - 1]];
+    } else if (direction === 'down' && index < exercises.length - 1) {
+      [exercises[index], exercises[index + 1]] = [exercises[index + 1], exercises[index]];
+    }
+    
+    updateField(sessionKey, {
+      ...session,
+      exercises
+    });
+  };
+
   const addWeeklySchedule = () => {
     updateField('weeklySchedules', [...programmingData.weeklySchedules, emptyWeeklySchedule()]);
   };
@@ -639,6 +655,7 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
                               <table className="w-full">
                                 <thead className="bg-muted">
                                   <tr>
+                                    <th className="p-2 text-left text-xs font-semibold w-20">Order</th>
                                     <th className="p-2 text-left text-xs font-semibold">Exercise Name</th>
                                     <th className="p-2 text-left text-xs font-semibold">Description</th>
                                     <th className="p-2 text-left text-xs font-semibold w-20">Reps</th>
@@ -652,6 +669,28 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
                                 <tbody>
                                   {(programmingData[selectedSession as keyof ProgrammingData] as SessionData).exercises.map((exercise, idx) => (
                                     <tr key={idx} className="border-t hover:bg-muted/50">
+                                      <td className="p-2">
+                                        <div className="flex gap-1">
+                                          <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-8 w-8"
+                                            onClick={() => moveExercise(selectedSession as any, idx, 'up')}
+                                            disabled={idx === 0}
+                                          >
+                                            <ChevronUp className="w-4 h-4" />
+                                          </Button>
+                                          <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-8 w-8"
+                                            onClick={() => moveExercise(selectedSession as any, idx, 'down')}
+                                            disabled={idx === (programmingData[selectedSession as keyof ProgrammingData] as SessionData).exercises.length - 1}
+                                          >
+                                            <ChevronDown className="w-4 h-4" />
+                                          </Button>
+                                        </div>
+                                      </td>
                                       <td className="p-2">
                                         <Input
                                           placeholder="Exercise name"

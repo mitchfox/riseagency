@@ -41,11 +41,14 @@ const PlayerDetail = () => {
             
             // Parse bio to get additional data
             let bioData: any = {};
+            let bioText = '';
             if (data.bio) {
               try {
                 bioData = JSON.parse(data.bio);
+                // Extract just the bio text, not the whole JSON structure
+                bioText = bioData.bio || data.bio;
               } catch {
-                bioData = { bio: data.bio };
+                bioText = data.bio;
               }
             }
             
@@ -64,6 +67,7 @@ const PlayerDetail = () => {
             setPlayer({
               ...data,
               ...bioData,
+              bio: bioText, // Use cleaned bio text
               highlightsArray: highlights,
               stats: statsData ? {
                 goals: statsData.goals || 0,
@@ -268,46 +272,46 @@ const PlayerDetail = () => {
 
           {/* Stats - Full Width */}
           <div className="mb-12">
-            <h2 className="text-sm font-bebas text-primary uppercase tracking-widest mb-6 text-lg">
+            <h2 className="text-2xl font-bebas text-primary uppercase tracking-widest mb-6">
               Season Stats
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {player.stats?.goals !== undefined && (
                 <div className="text-center p-6 bg-background">
-                  <div className="text-3xl font-bbh text-primary mb-2">
+                  <div className="text-4xl font-bbh text-primary mb-2">
                     {player.stats.goals}
                   </div>
-                  <div className="text-xs text-muted-foreground uppercase tracking-widest font-semibold">
+                  <div className="text-sm text-muted-foreground uppercase tracking-widest font-semibold">
                     Goals
                   </div>
                 </div>
               )}
               {player.stats?.assists !== undefined && (
                 <div className="text-center p-6 bg-background">
-                  <div className="text-3xl font-bbh text-primary mb-2">
+                  <div className="text-4xl font-bbh text-primary mb-2">
                     {player.stats.assists}
                   </div>
-                  <div className="text-xs text-muted-foreground uppercase tracking-widest font-semibold">
+                  <div className="text-sm text-muted-foreground uppercase tracking-widest font-semibold">
                     Assists
                   </div>
                 </div>
               )}
               {player.stats?.cleanSheets !== undefined && (
                 <div className="text-center p-6 bg-background">
-                  <div className="text-3xl font-bbh text-primary mb-2">
+                  <div className="text-4xl font-bbh text-primary mb-2">
                     {player.stats.cleanSheets}
                   </div>
-                  <div className="text-xs text-muted-foreground uppercase tracking-widest font-semibold">
+                  <div className="text-sm text-muted-foreground uppercase tracking-widest font-semibold">
                     Clean Sheets
                   </div>
                 </div>
               )}
               {player.stats?.saves !== undefined && (
                 <div className="text-center p-6 bg-background">
-                  <div className="text-3xl font-bbh text-primary mb-2">
+                  <div className="text-4xl font-bbh text-primary mb-2">
                     {player.stats.saves}
                   </div>
-                  <div className="text-xs text-muted-foreground uppercase tracking-widest font-semibold">
+                  <div className="text-sm text-muted-foreground uppercase tracking-widest font-semibold">
                     Saves
                   </div>
                 </div>
