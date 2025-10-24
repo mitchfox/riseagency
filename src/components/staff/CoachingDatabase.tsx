@@ -86,14 +86,21 @@ export const CoachingDatabase = () => {
   const [totalItems, setTotalItems] = useState(0);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedMuscleGroup, setSelectedMuscleGroup] = useState<string>('all');
+  const [selectedPosition, setSelectedPosition] = useState<string>('all');
+  const [selectedSkill, setSelectedSkill] = useState<string>('all');
   const [categories, setCategories] = useState<string[]>([]);
   const [muscleGroups, setMuscleGroups] = useState<string[]>([]);
+  const [positions, setPositions] = useState<string[]>([]);
+  const [skills, setSkills] = useState<string[]>([]);
   const itemsPerPage = 20;
+  const [isImporting, setIsImporting] = useState(false);
 
   useEffect(() => {
     setCurrentPage(1);
     setSelectedCategory('all');
     setSelectedMuscleGroup('all');
+    setSelectedPosition('all');
+    setSelectedSkill('all');
     fetchCategories();
     fetchItems();
   }, [activeTab]);
@@ -101,7 +108,7 @@ export const CoachingDatabase = () => {
   useEffect(() => {
     setCurrentPage(1);
     fetchItems();
-  }, [selectedCategory, selectedMuscleGroup]);
+  }, [selectedCategory, selectedMuscleGroup, selectedPosition, selectedSkill]);
 
   useEffect(() => {
     fetchItems();
@@ -117,17 +124,27 @@ export const CoachingDatabase = () => {
       
       const uniqueCategories = new Set<string>();
       const uniqueMuscleGroups = new Set<string>();
+      const uniquePositions = new Set<string>();
+      const uniqueSkills = new Set<string>();
       
       data?.forEach(item => {
         if (item.category) uniqueCategories.add(item.category);
         if (item.tags && Array.isArray(item.tags)) {
-          // Tags contain [Category, ...MuscleGroups], so skip first element
-          item.tags.slice(1).forEach((tag: string) => uniqueMuscleGroups.add(tag));
+          if (activeTab === 'coaching_exercises') {
+            // For exercises: Tags contain [Category, ...MuscleGroups]
+            item.tags.slice(1).forEach((tag: string) => uniqueMuscleGroups.add(tag));
+          } else if (activeTab === 'coaching_drills') {
+            // For drills: Tags contain [Position, Skill, ...]
+            if (item.tags[0]) uniquePositions.add(item.tags[0]);
+            if (item.tags[1]) uniqueSkills.add(item.tags[1]);
+          }
         }
       });
       
       setCategories(Array.from(uniqueCategories).sort());
       setMuscleGroups(Array.from(uniqueMuscleGroups).sort());
+      setPositions(Array.from(uniquePositions).sort());
+      setSkills(Array.from(uniqueSkills).sort());
     } catch (error) {
       console.error('Error fetching categories:', error);
     }
@@ -141,14 +158,25 @@ export const CoachingDatabase = () => {
         .select('*', { count: 'exact' })
         .order('created_at', { ascending: false });
 
-      // Apply category filter
-      if (selectedCategory !== 'all') {
-        query = query.eq('category', selectedCategory);
-      }
-
-      // Apply muscle group filter
-      if (selectedMuscleGroup !== 'all') {
-        query = query.contains('tags', [selectedMuscleGroup]);
+      // Apply filters based on table type
+      if (activeTab === 'coaching_exercises') {
+        // Apply category filter
+        if (selectedCategory !== 'all') {
+          query = query.eq('category', selectedCategory);
+        }
+        // Apply muscle group filter
+        if (selectedMuscleGroup !== 'all') {
+          query = query.contains('tags', [selectedMuscleGroup]);
+        }
+      } else if (activeTab === 'coaching_drills') {
+        // Apply position filter
+        if (selectedPosition !== 'all') {
+          query = query.contains('tags', [selectedPosition]);
+        }
+        // Apply skill filter
+        if (selectedSkill !== 'all') {
+          query = query.contains('tags', [selectedSkill]);
+        }
       }
 
       // Apply pagination
@@ -260,10 +288,51 @@ export const CoachingDatabase = () => {
     setEditingItem(null);
   };
 
+  const handleImportExercises = async () => {
+    if (!confirm('This will clear all existing exercises and import 848 new ones from the CSV. Continue?')) {
+      return;
+    }
+    
+    setIsImporting(true);
+    try {
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/import-exercises-csv`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      const data = await response.json();
+      
+      if (response.ok) {
+        toast.success(data.message || 'Exercises imported successfully!');
+        fetchItems();
+        fetchCategories();
+      } else {
+        throw new Error(data.error || 'Import failed');
+      }
+    } catch (error: any) {
+      console.error('Import error:', error);
+      toast.error('Failed to import exercises: ' + error.message);
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Coaching Database</h2>
+        {activeTab === 'coaching_exercises' && (
+          <Button
+            onClick={handleImportExercises}
+            disabled={isImporting}
+            variant="outline"
+          >
+            {isImporting ? 'Importing...' : 'Import 848 Exercises from CSV'}
+          </Button>
+        )}
       </div>
 
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TableType)}>
@@ -443,36 +512,74 @@ export const CoachingDatabase = () => {
               </Dialog>
             </div>
 
-            {/* Filters */}
-            <div className="flex gap-4 mb-4">
-              <div className="w-48">
-                <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="All Categories" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Categories</SelectItem>
-                    {categories.map((cat) => (
-                      <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+            {/* Filters - Show based on table type */}
+            {(activeTab === 'coaching_exercises' || activeTab === 'coaching_drills') && (
+              <div className="flex gap-4 mb-4">
+                {activeTab === 'coaching_exercises' && (
+                  <>
+                    <div className="w-48">
+                      <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="All Categories" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Categories</SelectItem>
+                          {categories.map((cat) => (
+                            <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div className="w-48">
+                      <Select value={selectedMuscleGroup} onValueChange={setSelectedMuscleGroup}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="All Muscle Groups" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Muscle Groups</SelectItem>
+                          {muscleGroups.map((mg) => (
+                            <SelectItem key={mg} value={mg}>{mg}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </>
+                )}
+                
+                {activeTab === 'coaching_drills' && (
+                  <>
+                    <div className="w-48">
+                      <Select value={selectedPosition} onValueChange={setSelectedPosition}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="All Positions" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Positions</SelectItem>
+                          {positions.map((pos) => (
+                            <SelectItem key={pos} value={pos}>{pos}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div className="w-48">
+                      <Select value={selectedSkill} onValueChange={setSelectedSkill}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="All Skills" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Skills</SelectItem>
+                          {skills.map((skill) => (
+                            <SelectItem key={skill} value={skill}>{skill}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </>
+                )}
               </div>
-              
-              <div className="w-48">
-                <Select value={selectedMuscleGroup} onValueChange={setSelectedMuscleGroup}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="All Muscle Groups" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Muscle Groups</SelectItem>
-                    {muscleGroups.map((mg) => (
-                      <SelectItem key={mg} value={mg}>{mg}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
+            )}
 
             {/* Items Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
