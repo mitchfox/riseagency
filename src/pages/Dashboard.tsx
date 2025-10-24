@@ -651,19 +651,18 @@ const Dashboard = () => {
 
                                 {/* Sessions Section */}
                                 {program.sessions && typeof program.sessions === 'object' && Object.keys(program.sessions).length > 0 && (() => {
-                                  // Group sessions by main letter (A, B, C, etc.)
-                                  const mainSessions = new Set<string>();
-                                  Object.keys(program.sessions).forEach(key => {
-                                    const upperKey = key.toUpperCase();
-                                    if (upperKey.startsWith('PRE-')) {
-                                      mainSessions.add(upperKey.replace('PRE-', ''));
-                                    } else if (!upperKey.includes('PRE') && upperKey.length === 1) {
-                                      mainSessions.add(upperKey);
-                                    }
-                                  });
+                                  // Define all possible sessions A-H
+                                  const allSessions = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
                                   
-                                  const sortedMainSessions = Array.from(mainSessions).sort();
-                                  const firstSession = sortedMainSessions[0] || '';
+                                  // Check which sessions have data
+                                  const hasSessionData = (sessionKey: string) => {
+                                    const mainSession = program.sessions[sessionKey] || program.sessions[sessionKey.toLowerCase()];
+                                    const preSession = program.sessions[`PRE-${sessionKey}`] || program.sessions[`pre-${sessionKey.toLowerCase()}`];
+                                    return !!(mainSession || preSession);
+                                  };
+                                  
+                                  // Find first session with data
+                                  const firstSessionWithData = allSessions.find(s => hasSessionData(s)) || 'A';
                                   
                                   return (
                                     <AccordionItem value="sessions">
@@ -671,29 +670,56 @@ const Dashboard = () => {
                                         Sessions
                                       </AccordionTrigger>
                                       <AccordionContent>
-                                        <Tabs value={selectedSession || firstSession} onValueChange={setSelectedSession} className="w-full">
-                                          {/* Main Session Tabs */}
-                                          <TabsList className="grid w-full gap-2" style={{ gridTemplateColumns: `repeat(${sortedMainSessions.length}, 1fr)` }}>
-                                            {sortedMainSessions.map((mainKey) => {
-                                              const colors = getSessionColor(mainKey);
-                                              return (
-                                                <TabsTrigger
-                                                  key={mainKey}
-                                                  value={mainKey}
-                                                  className="font-bebas uppercase text-sm"
-                                                  style={{
-                                                    backgroundColor: colors.bg,
-                                                    color: colors.text,
-                                                  }}
-                                                >
-                                                  Session {mainKey}
-                                                </TabsTrigger>
-                                              );
-                                            })}
-                                          </TabsList>
+                                        <Tabs value={selectedSession || firstSessionWithData} onValueChange={setSelectedSession} className="w-full">
+                                          {/* Main Session Tabs - Two Rows */}
+                                          <div className="space-y-2 mb-4">
+                                            {/* First Row: A, B, C, D */}
+                                            <div className="grid grid-cols-4 gap-2">
+                                              {['A', 'B', 'C', 'D'].map((mainKey) => {
+                                                const colors = getSessionColor(mainKey);
+                                                const hasData = hasSessionData(mainKey);
+                                                return (
+                                                  <TabsTrigger
+                                                    key={mainKey}
+                                                    value={mainKey}
+                                                    disabled={!hasData}
+                                                    className="font-bebas uppercase text-sm disabled:opacity-40 disabled:cursor-not-allowed"
+                                                    style={{
+                                                      backgroundColor: hasData ? colors.bg : 'hsl(0, 0%, 30%)',
+                                                      color: hasData ? colors.text : 'hsl(0, 0%, 60%)',
+                                                    }}
+                                                  >
+                                                    Session {mainKey}
+                                                  </TabsTrigger>
+                                                );
+                                              })}
+                                            </div>
+                                            
+                                            {/* Second Row: E, F, G, H */}
+                                            <div className="grid grid-cols-4 gap-2">
+                                              {['E', 'F', 'G', 'H'].map((mainKey) => {
+                                                const colors = getSessionColor(mainKey);
+                                                const hasData = hasSessionData(mainKey);
+                                                return (
+                                                  <TabsTrigger
+                                                    key={mainKey}
+                                                    value={mainKey}
+                                                    disabled={!hasData}
+                                                    className="font-bebas uppercase text-sm disabled:opacity-40 disabled:cursor-not-allowed"
+                                                    style={{
+                                                      backgroundColor: hasData ? colors.bg : 'hsl(0, 0%, 30%)',
+                                                      color: hasData ? colors.text : 'hsl(0, 0%, 60%)',
+                                                    }}
+                                                  >
+                                                    Session {mainKey}
+                                                  </TabsTrigger>
+                                                );
+                                              })}
+                                            </div>
+                                          </div>
                                           
                                           {/* Main Session Content with Sub-tabs */}
-                                          {sortedMainSessions.map((mainKey) => {
+                                          {allSessions.map((mainKey) => {
                                             const preKey = `PRE-${mainKey}`;
                                             const hasPreSession = program.sessions[preKey] || program.sessions[preKey.toLowerCase()];
                                             const mainSession = program.sessions[mainKey] || program.sessions[mainKey.toLowerCase()];
