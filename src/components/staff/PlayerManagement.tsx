@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Edit, FileText, LineChart, BookOpen } from "lucide-react";
+import { Edit, FileText, LineChart, BookOpen, Pencil } from "lucide-react";
 import { PerformanceActionsDialog } from "./PerformanceActionsDialog";
 
 interface Player {
@@ -118,6 +118,9 @@ const PlayerManagement = () => {
     pdf_file: null as File | null,
     video_file: null as File | null,
   });
+  
+  const [isEditingAnalysis, setIsEditingAnalysis] = useState(false);
+  const [editingAnalysisId, setEditingAnalysisId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchPlayers();
@@ -360,7 +363,7 @@ const PlayerManagement = () => {
 
   const handleAnalysisSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!currentPlayerId) return;
+    if (!currentPlayerId && !isEditingAnalysis) return;
     
     setUploadingFiles(true);
     try {
@@ -397,25 +400,51 @@ const PlayerManagement = () => {
         videoUrl = videoData.publicUrl;
       }
 
-      // Insert analysis record
-      const { error } = await supabase
-        .from('player_analysis')
-        .insert({
-          player_id: currentPlayerId,
+      if (isEditingAnalysis && editingAnalysisId) {
+        // Update existing analysis
+        const updateData: any = {
           analysis_date: analysisData.date,
           opponent: analysisData.opponent,
           result: analysisData.result,
           minutes_played: parseInt(analysisData.minutes_played) || null,
           r90_score: analysisData.r90_score ? parseFloat(analysisData.r90_score) : null,
           notes: analysisData.notes || null,
-          pdf_url: pdfUrl,
-          video_url: videoUrl,
-        });
+        };
+        
+        // Only update URLs if new files were uploaded
+        if (pdfUrl) updateData.pdf_url = pdfUrl;
+        if (videoUrl) updateData.video_url = videoUrl;
 
-      if (error) throw error;
+        const { error } = await supabase
+          .from('player_analysis')
+          .update(updateData)
+          .eq('id', editingAnalysisId);
 
-      toast.success("Analysis added successfully");
+        if (error) throw error;
+        toast.success("Analysis updated successfully");
+      } else {
+        // Insert new analysis record
+        const { error } = await supabase
+          .from('player_analysis')
+          .insert({
+            player_id: currentPlayerId,
+            analysis_date: analysisData.date,
+            opponent: analysisData.opponent,
+            result: analysisData.result,
+            minutes_played: parseInt(analysisData.minutes_played) || null,
+            r90_score: analysisData.r90_score ? parseFloat(analysisData.r90_score) : null,
+            notes: analysisData.notes || null,
+            pdf_url: pdfUrl,
+            video_url: videoUrl,
+          });
+
+        if (error) throw error;
+        toast.success("Analysis added successfully");
+      }
+
       setIsAnalysisDialogOpen(false);
+      setIsEditingAnalysis(false);
+      setEditingAnalysisId(null);
       setAnalysisData({
         opponent: "",
         result: "",
@@ -428,7 +457,7 @@ const PlayerManagement = () => {
       });
       fetchAllAnalyses();
     } catch (error: any) {
-      toast.error("Failed to add analysis: " + error.message);
+      toast.error(`Failed to ${isEditingAnalysis ? 'update' : 'add'} analysis: ` + error.message);
     } finally {
       setUploadingFiles(false);
     }
@@ -436,6 +465,34 @@ const PlayerManagement = () => {
 
   const openAnalysisDialog = (playerId: string) => {
     setCurrentPlayerId(playerId);
+    setIsEditingAnalysis(false);
+    setEditingAnalysisId(null);
+    setAnalysisData({
+      opponent: "",
+      result: "",
+      date: "",
+      minutes_played: "",
+      r90_score: "",
+      notes: "",
+      pdf_file: null,
+      video_file: null,
+    });
+    setIsAnalysisDialogOpen(true);
+  };
+
+  const openEditAnalysisDialog = (analysis: any) => {
+    setIsEditingAnalysis(true);
+    setEditingAnalysisId(analysis.id);
+    setAnalysisData({
+      opponent: analysis.opponent || "",
+      result: analysis.result || "",
+      date: analysis.analysis_date || "",
+      minutes_played: analysis.minutes_played?.toString() || "",
+      r90_score: analysis.r90_score?.toString() || "",
+      notes: analysis.notes || "",
+      pdf_file: null,
+      video_file: null,
+    });
     setIsAnalysisDialogOpen(true);
   };
 
@@ -776,6 +833,15 @@ const PlayerManagement = () => {
                               </span>
                             )}
                             
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => openEditAnalysisDialog(analysis)}
+                            >
+                              <Pencil className="w-4 h-4 mr-1" />
+                              Edit
+                            </Button>
+                            
                             {analysis.pdf_url && (
                               <Button 
                                 variant="outline" 
@@ -817,7 +883,7 @@ const PlayerManagement = () => {
       <Dialog open={isAnalysisDialogOpen} onOpenChange={setIsAnalysisDialogOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Add New Analysis</DialogTitle>
+            <DialogTitle>{isEditingAnalysis ? 'Edit Analysis' : 'Add New Analysis'}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleAnalysisSubmit} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
