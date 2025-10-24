@@ -12,6 +12,31 @@ export const PlayerCard = ({ player, viewMode = "grid" }: PlayerCardProps) => {
   const cardRef = useRef<HTMLAnchorElement>(null);
   const [isInView, setIsInView] = useState(false);
 
+  // Extract club info from bio or tactical formations
+  const getClubInfo = () => {
+    let currentClub = "";
+    let clubLogo = "";
+
+    // Try to parse bio if it exists
+    if (player.bio) {
+      try {
+        const bioData = typeof player.bio === 'string' ? JSON.parse(player.bio) : player.bio;
+        currentClub = bioData.currentClub || "";
+        
+        // Get club logo from tactical formations if available
+        if (bioData.tacticalFormations && bioData.tacticalFormations[0]?.clubLogo) {
+          clubLogo = bioData.tacticalFormations[0].clubLogo;
+        }
+      } catch (e) {
+        // If parsing fails, just continue
+      }
+    }
+
+    return { currentClub, clubLogo };
+  };
+
+  const { currentClub, clubLogo } = getClubInfo();
+
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => {
@@ -136,14 +161,23 @@ export const PlayerCard = ({ player, viewMode = "grid" }: PlayerCardProps) => {
                 <div className="text-sm font-bebas uppercase text-white tracking-wider">Position</div>
               </div>
               
-              {/* Category/Status */}
+              {/* Club */}
               <div className="text-right">
-                <div className="text-5xl font-bebas text-primary mb-1">
-                  {player.category === 'Signed' ? new Date().getFullYear() : player.category}
+                <div className="flex flex-col items-end gap-2 mb-1">
+                  {clubLogo && (
+                    <img 
+                      src={clubLogo} 
+                      alt={currentClub}
+                      className="h-12 w-12 object-contain"
+                    />
+                  )}
+                  {!clubLogo && currentClub && (
+                    <div className="text-3xl font-bebas text-primary">
+                      {currentClub.substring(0, 3).toUpperCase()}
+                    </div>
+                  )}
                 </div>
-                <div className="text-sm font-bebas uppercase text-white tracking-wider">
-                  {player.category === 'Signed' ? 'Start' : 'Status'}
-                </div>
+                <div className="text-sm font-bebas uppercase text-white tracking-wider">Club</div>
               </div>
             </div>
 
