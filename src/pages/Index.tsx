@@ -51,7 +51,7 @@ const Index = () => {
       <Header />
       <div className="min-h-screen bg-background">
         {/* Hero Banner Section */}
-        <section className="relative h-screen flex items-center justify-center overflow-hidden">
+        <section className="relative h-screen flex items-center justify-center overflow-hidden pt-10">
           <div 
             className="absolute inset-0 bg-cover bg-center scale-105 animate-[scale-in_20s_ease-in-out_infinite_alternate]"
             style={{ backgroundImage: `url(${bannerHero})` }}
@@ -62,7 +62,13 @@ const Index = () => {
             <div className="max-w-5xl mx-auto text-center space-y-12 animate-fade-in">
               <div className="space-y-6">
                 <div className="overflow-hidden relative w-full mb-8">
-                  <h1 className="text-6xl md:text-8xl lg:text-9xl font-bebas font-bold uppercase tracking-wider text-white drop-shadow-2xl whitespace-nowrap inline-block animate-[scroll-left_60s_linear_infinite]">
+                  <h1 
+                    className="text-6xl md:text-8xl lg:text-9xl font-bebas font-bold uppercase tracking-wider drop-shadow-2xl whitespace-nowrap inline-block animate-[scroll-left_60s_linear_infinite]"
+                    style={{
+                      color: 'transparent',
+                      WebkitTextStroke: '2px white',
+                    }}
+                  >
                     REALISE POTENTIAL • REALISE POTENTIAL • REALISE POTENTIAL • REALISE POTENTIAL • REALISE POTENTIAL • REALISE POTENTIAL •
                   </h1>
                 </div>

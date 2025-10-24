@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import logo from "@/assets/logo.png";
-import { X } from "lucide-react";
+import { X, MessageCircle, Users, LogIn } from "lucide-react";
 import { TbMenu } from "react-icons/tb";
 import workingTogether from "@/assets/menu-working-together.jpg";
 import playerPortalImage from "@/assets/menu-player-portal.png";
@@ -20,10 +20,42 @@ import { RepresentationDialog } from "@/components/RepresentationDialog";
 
 export const Header = () => {
   const [representationOpen, setRepresentationOpen] = useState(false);
+  const [workWithUsOpen, setWorkWithUsOpen] = useState(false);
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md">
-      <div className="container mx-auto px-4">
+    <>
+      {/* Top Utility Bar */}
+      <div className="fixed top-0 left-0 right-0 z-50 bg-black/95 backdrop-blur-md border-b border-white/10">
+        <div className="container mx-auto px-4">
+          <div className="flex items-center justify-end h-10 gap-6">
+            <button
+              onClick={() => setWorkWithUsOpen(true)}
+              className="text-xs font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-colors flex items-center gap-2"
+            >
+              <Users className="w-3 h-3" />
+              Declare Interest In Player
+            </button>
+            <button
+              onClick={() => setRepresentationOpen(true)}
+              className="text-xs font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-colors flex items-center gap-2"
+            >
+              <MessageCircle className="w-3 h-3" />
+              Request Representation
+            </button>
+            <Link
+              to="/login"
+              className="text-xs font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-colors flex items-center gap-2"
+            >
+              <LogIn className="w-3 h-3" />
+              Player Portal
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Header */}
+      <header className="fixed top-10 left-0 right-0 z-50 bg-background/80 backdrop-blur-md">
+        <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Drawer Menu - Left */}
           <Drawer direction="left">
@@ -190,21 +222,22 @@ export const Header = () => {
           </Link>
 
           {/* Work With Us Button - Right */}
-          <WorkWithUsDialog>
-            <Button
-              size="lg"
-              className="btn-shine font-bebas uppercase tracking-wider text-base px-6"
-            >
-              Work With Us
-            </Button>
-          </WorkWithUsDialog>
+          <Button
+            onClick={() => setWorkWithUsOpen(true)}
+            size="lg"
+            className="btn-shine font-bebas uppercase tracking-wider text-base px-6"
+          >
+            Work With Us
+          </Button>
         </div>
       </div>
-
+      
+      <WorkWithUsDialog open={workWithUsOpen} onOpenChange={setWorkWithUsOpen} />
       <RepresentationDialog 
         open={representationOpen} 
         onOpenChange={setRepresentationOpen} 
       />
     </header>
+    </>
   );
 };
