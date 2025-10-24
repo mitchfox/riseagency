@@ -358,8 +358,12 @@ const PlayerDetail = () => {
             <h2 className="text-2xl font-bebas text-primary uppercase tracking-widest mb-6">
               Season Stats
             </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {player.stats?.goals !== undefined && (
+            <div className={`grid gap-4 ${
+              player.position === 'GK' 
+                ? 'grid-cols-2 sm:grid-cols-2 lg:grid-cols-4'
+                : 'grid-cols-2 lg:grid-cols-4'
+            }`}>
+              {player.stats?.goals !== undefined && player.position !== 'GK' && (
                 <div className="text-center p-6 bg-background">
                   <div className="text-4xl font-bbh text-primary mb-2">
                     {player.stats.goals}
@@ -369,7 +373,7 @@ const PlayerDetail = () => {
                   </div>
                 </div>
               )}
-              {player.stats?.assists !== undefined && (
+              {player.stats?.assists !== undefined && player.position !== 'GK' && (
                 <div className="text-center p-6 bg-background">
                   <div className="text-4xl font-bbh text-primary mb-2">
                     {player.stats.assists}
@@ -379,7 +383,7 @@ const PlayerDetail = () => {
                   </div>
                 </div>
               )}
-              {player.stats?.cleanSheets !== undefined && (
+              {player.stats?.cleanSheets !== undefined && player.position === 'GK' && (
                 <div className="text-center p-6 bg-background">
                   <div className="text-4xl font-bbh text-primary mb-2">
                     {player.stats.cleanSheets}
@@ -389,7 +393,7 @@ const PlayerDetail = () => {
                   </div>
                 </div>
               )}
-              {player.stats?.saves !== undefined && (
+              {player.stats?.saves !== undefined && player.position === 'GK' && (
                 <div className="text-center p-6 bg-background">
                   <div className="text-4xl font-bbh text-primary mb-2">
                     {player.stats.saves}
