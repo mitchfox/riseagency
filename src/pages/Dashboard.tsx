@@ -490,17 +490,14 @@ const Dashboard = () => {
                                       Schedule
                                     </AccordionTrigger>
                                     <AccordionContent>
-                                      <div className="space-y-4">
+                                      <div className="space-y-6">
                                         {/* Weekly Schedule Table */}
                                         {program.weekly_schedules && Array.isArray(program.weekly_schedules) && program.weekly_schedules.length > 0 && (
-                                          <div className="border rounded-lg overflow-hidden">
+                                          <div className="bg-black/40 rounded-xl p-4">
                                             {/* Table Header */}
-                                            <div 
-                                              className="grid grid-cols-8 gap-px"
-                                              style={{ backgroundColor: 'hsl(0, 0%, 0%)' }}
-                                            >
+                                            <div className="grid grid-cols-8 gap-2 mb-2">
                                               <div 
-                                                className="p-3 font-bebas uppercase text-sm text-center"
+                                                className="p-4 font-bebas uppercase text-lg text-center rounded-lg"
                                                 style={{ 
                                                   backgroundColor: 'hsl(45, 70%, 55%)',
                                                   color: 'hsl(0, 0%, 0%)'
@@ -511,7 +508,7 @@ const Dashboard = () => {
                                               {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((day) => (
                                                 <div 
                                                   key={day}
-                                                  className="p-3 font-bebas uppercase text-sm text-center"
+                                                  className="p-4 font-bebas uppercase text-lg text-center rounded-lg"
                                                   style={{ 
                                                     backgroundColor: 'hsl(45, 70%, 55%)',
                                                     color: 'hsl(0, 0%, 0%)'
@@ -522,15 +519,16 @@ const Dashboard = () => {
                                               ))}
                                             </div>
                                             
-                                            {/* Table Body */}
-                                            <div style={{ backgroundColor: 'hsl(0, 0%, 0%)' }}>
+                                            {/* Table Rows */}
+                                            <div className="space-y-2">
                                               {program.weekly_schedules.map((week: any, idx: number) => (
                                                 <div 
                                                   key={idx}
-                                                  className="grid grid-cols-8 gap-px"
+                                                  className="grid grid-cols-8 gap-2"
                                                 >
+                                                  {/* Week Cell */}
                                                   <div 
-                                                    className="p-4 text-sm font-medium text-center flex items-center justify-center"
+                                                    className="p-6 text-base font-medium text-center flex items-center justify-center rounded-lg"
                                                     style={{ 
                                                       backgroundColor: 'hsl(0, 0%, 95%)',
                                                       color: 'hsl(0, 0%, 0%)'
@@ -538,21 +536,27 @@ const Dashboard = () => {
                                                   >
                                                     {week.week}
                                                   </div>
+                                                  
+                                                  {/* Day Cells */}
                                                   {['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map((day) => {
                                                     const sessionValue = week[day] || '';
                                                     const colors = sessionValue ? getSessionColor(sessionValue) : { bg: 'hsl(0, 0%, 10%)', text: 'hsl(0, 0%, 100%)' };
                                                     return (
                                                       <div 
                                                         key={day}
-                                                        className="p-4 flex items-center justify-center"
+                                                        className="p-6 flex items-center justify-center rounded-lg min-h-[80px] transition-transform hover:scale-105"
                                                         style={{ 
                                                           backgroundColor: colors.bg,
+                                                          border: '2px solid rgba(255, 255, 255, 0.1)'
                                                         }}
                                                       >
                                                         {sessionValue && (
                                                           <span 
-                                                            className="font-bebas text-2xl uppercase"
-                                                            style={{ color: colors.text }}
+                                                            className="font-bebas text-4xl uppercase font-bold"
+                                                            style={{ 
+                                                              color: colors.text,
+                                                              textShadow: '0 2px 4px rgba(0, 0, 0, 0.3)'
+                                                            }}
                                                           >
                                                             {sessionValue}
                                                           </span>
@@ -568,8 +572,8 @@ const Dashboard = () => {
 
                                         {/* Schedule Notes */}
                                         {program.schedule_notes && (
-                                          <div className="bg-card border border-border rounded-lg p-4">
-                                            <p className="text-sm text-muted-foreground whitespace-pre-wrap">{program.schedule_notes}</p>
+                                          <div className="bg-card/50 backdrop-blur-sm border border-border rounded-lg p-6">
+                                            <p className="text-base text-foreground/90 leading-relaxed">{program.schedule_notes}</p>
                                           </div>
                                         )}
                                       </div>
