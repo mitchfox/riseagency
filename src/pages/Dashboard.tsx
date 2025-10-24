@@ -17,6 +17,9 @@ interface Analysis {
   pdf_url: string | null;
   video_url: string | null;
   notes: string | null;
+  opponent: string | null;
+  result: string | null;
+  minutes_played: number | null;
 }
 
 const Dashboard = () => {
@@ -218,47 +221,60 @@ const Dashboard = () => {
                       {analyses.map((analysis) => (
                         <div 
                           key={analysis.id} 
-                          className="flex items-center gap-3 border rounded-lg p-4 hover:border-primary transition-colors bg-card"
+                          className="flex items-center justify-between border rounded-lg p-4 hover:border-primary transition-colors bg-card"
                         >
-                          <span className="text-sm text-muted-foreground min-w-[100px]">
-                            {new Date(analysis.analysis_date).toLocaleDateString('en-GB')}
-                          </span>
-                          
-                          {analysis.r90_score !== null && analysis.r90_score !== undefined && (
-                            <button
-                              onClick={() => navigate(`/performance-report/${analysis.id}`)}
-                              className={`${getR90Color(analysis.r90_score)} text-white px-4 py-2 rounded font-bold hover:opacity-80 transition-opacity cursor-pointer`}
-                            >
-                              R90: {analysis.r90_score.toFixed(2)}
-                            </button>
-                          )}
-                          
-                          {analysis.pdf_url && (
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => window.open(analysis.pdf_url!, '_blank')}
-                            >
-                              <FileText className="w-4 h-4 mr-1" />
-                              PDF
-                            </Button>
-                          )}
-                          
-                          {analysis.video_url && (
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => window.open(analysis.video_url!, '_blank')}
-                            >
-                              📹 Video
-                            </Button>
-                          )}
-
-                          {analysis.notes && (
-                            <span className="text-sm text-muted-foreground ml-auto">
-                              {analysis.notes}
+                          <div className="flex items-center gap-6">
+                            <span className="text-sm text-muted-foreground min-w-[100px]">
+                              {new Date(analysis.analysis_date).toLocaleDateString('en-GB')}
                             </span>
-                          )}
+                            
+                            {analysis.opponent && (
+                              <div className="flex flex-col">
+                                <span className="text-sm font-medium">vs {analysis.opponent}</span>
+                                {analysis.result && (
+                                  <span className="text-xs text-muted-foreground">{analysis.result}</span>
+                                )}
+                              </div>
+                            )}
+
+                            {analysis.minutes_played !== null && (
+                              <span className="text-sm text-muted-foreground">
+                                {analysis.minutes_played} min
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            {analysis.r90_score !== null && analysis.r90_score !== undefined && (
+                              <button
+                                onClick={() => navigate(`/performance-report/${analysis.id}`)}
+                                className={`${getR90Color(analysis.r90_score)} text-white px-4 py-2 rounded font-bold hover:opacity-80 transition-opacity cursor-pointer`}
+                              >
+                                R90: {analysis.r90_score.toFixed(2)}
+                              </button>
+                            )}
+                            
+                            {analysis.pdf_url && (
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => window.open(analysis.pdf_url!, '_blank')}
+                              >
+                                <FileText className="w-4 h-4 mr-1" />
+                                PDF
+                              </Button>
+                            )}
+                            
+                            {analysis.video_url && (
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => window.open(analysis.video_url!, '_blank')}
+                              >
+                                📹 Video
+                              </Button>
+                            )}
+                          </div>
                         </div>
                       ))}
                     </div>
