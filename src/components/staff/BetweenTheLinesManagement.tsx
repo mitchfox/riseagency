@@ -167,12 +167,12 @@ const BetweenTheLinesManagement = () => {
               setEditingPost(null);
               setFormData({ title: "", content: "", excerpt: "", published: false, image_url: "", category: "" });
             }}>
-              Add New Article
+              Add New Post
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>{editingPost ? "Edit Article" : "Add New Article"}</DialogTitle>
+              <DialogTitle>{editingPost ? "Edit Post" : "Add New Post"}</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
