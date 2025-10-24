@@ -191,9 +191,6 @@ export const CoachingDatabase = () => {
         <h2 className="text-2xl font-bold">Coaching Database</h2>
       </div>
 
-      {/* Import section at the top */}
-      <ExerciseDatabaseImport />
-
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TableType)}>
         <TabsList className="grid w-full grid-cols-6">
           {Object.entries(tableConfigs).map(([key, config]) => (
