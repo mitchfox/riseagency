@@ -363,6 +363,22 @@ const PlayerDetail = () => {
                 ? 'grid-cols-2 sm:grid-cols-2 lg:grid-cols-4'
                 : 'grid-cols-2 lg:grid-cols-4'
             }`}>
+              <div className="text-center p-6 bg-background">
+                <div className="text-3xl font-bbh text-primary mb-2">
+                  {player.stats.matches}
+                </div>
+                <div className="text-xs text-muted-foreground uppercase tracking-widest font-semibold">
+                  Matches
+                </div>
+              </div>
+              <div className="text-center p-6 bg-background">
+                <div className="text-3xl font-bbh text-primary mb-2">
+                  {player.stats.minutes}
+                </div>
+                <div className="text-xs text-muted-foreground uppercase tracking-widest font-semibold">
+                  Minutes
+                </div>
+              </div>
               {player.stats?.goals !== undefined && player.position !== 'GK' && (
                 <div className="text-center p-6 bg-background">
                   <div className="text-4xl font-bbh text-primary mb-2">
@@ -403,22 +419,6 @@ const PlayerDetail = () => {
                   </div>
                 </div>
               )}
-              <div className="text-center p-6 bg-background">
-                <div className="text-3xl font-bbh text-primary mb-2">
-                  {player.stats.matches}
-                </div>
-                <div className="text-xs text-muted-foreground uppercase tracking-widest font-semibold">
-                  Matches
-                </div>
-              </div>
-              <div className="text-center p-6 bg-background">
-                <div className="text-3xl font-bbh text-primary mb-2">
-                  {player.stats.minutes}
-                </div>
-                <div className="text-xs text-muted-foreground uppercase tracking-widest font-semibold">
-                  Minutes
-                </div>
-              </div>
             </div>
           </div>
 
@@ -504,7 +504,10 @@ const PlayerDetail = () => {
                         {player.tacticalFormations[currentFormationIndex].club}
                       </div>
                       <div className="text-sm text-muted-foreground uppercase tracking-widest font-semibold transition-all duration-500">
-                        {player.tacticalFormations[currentFormationIndex].appearances || player.tacticalFormations[currentFormationIndex].matches || 0} Matches • {player.tacticalFormations[currentFormationIndex].formation}
+                        {player.tacticalFormations[currentFormationIndex].club === player.currentClub 
+                          ? 'CURRENT CLUB'
+                          : `${player.tacticalFormations[currentFormationIndex].appearances || player.tacticalFormations[currentFormationIndex].matches || 0} Matches`
+                        } • {player.tacticalFormations[currentFormationIndex].formation}
                       </div>
                     </div>
                   </div>
