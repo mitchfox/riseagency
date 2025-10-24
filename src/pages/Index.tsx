@@ -262,6 +262,55 @@ const Index = () => {
           </section>
         )}
 
+        {/* WATCH NOW Section */}
+        <section className="py-32 px-4 bg-muted/30">
+          <div className="container mx-auto max-w-7xl">
+            <div className="text-center mb-16 space-y-4">
+              <div className="inline-block">
+                <span className="text-sm font-bebas uppercase tracking-widest text-primary border border-primary/30 px-6 py-2 rounded-full">
+                  Video Content
+                </span>
+              </div>
+              <h2 className="text-5xl md:text-7xl font-bebas uppercase tracking-wider text-foreground">
+                WATCH <span className="text-primary">NOW</span>
+              </h2>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {/* Video 1 */}
+              <div className="relative aspect-video rounded-xl overflow-hidden bg-black border border-border group">
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="text-center space-y-4">
+                    <div className="w-20 h-20 mx-auto rounded-full bg-primary/20 border-2 border-primary flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <svg className="w-8 h-8 text-primary" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M8 5v14l11-7z"/>
+                      </svg>
+                    </div>
+                    <p className="text-white font-bebas uppercase tracking-wider text-lg">
+                      Feature Video 1
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Video 2 - Hidden on mobile */}
+              <div className="relative aspect-video rounded-xl overflow-hidden bg-black border border-border group hidden md:block">
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="text-center space-y-4">
+                    <div className="w-20 h-20 mx-auto rounded-full bg-primary/20 border-2 border-primary flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <svg className="w-8 h-8 text-primary" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M8 5v14l11-7z"/>
+                      </svg>
+                    </div>
+                    <p className="text-white font-bebas uppercase tracking-wider text-lg">
+                      Feature Video 2
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* Inbound CTA Section - Moved to top */}
         <section className="py-32 px-4 bg-background relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-transparent to-primary/5"></div>
