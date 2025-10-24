@@ -1007,18 +1007,32 @@ const PlayerManagement = () => {
                       variant="outline" 
                       size="sm"
                       onClick={() => {
-                        setCurrentPlayerId(player.id);
-                        setIsHighlightsDialogOpen(true);
+                        setSelectedProgrammingPlayerId(player.id);
+                        setSelectedProgrammingPlayerName(player.name);
+                        setIsProgrammingDialogOpen(true);
                       }}
                     >
-                      <Video className="w-4 h-4 mr-2" />
-                      Add Highlight
+                      <BookOpen className="w-4 h-4 mr-2" />
+                      Programming
                     </Button>
                   </div>
 
                   {/* Highlights Section */}
                   <div className="border-t pt-4 space-y-4 mt-4">
-                    <h4 className="text-lg font-semibold">Player Highlights</h4>
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-lg font-semibold">Player Highlights</h4>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => {
+                          setCurrentPlayerId(player.id);
+                          setIsHighlightsDialogOpen(true);
+                        }}
+                      >
+                        <Video className="w-4 h-4 mr-2" />
+                        Add Highlight
+                      </Button>
+                    </div>
                     {(() => {
                       let highlights: any[] = [];
                       try {
