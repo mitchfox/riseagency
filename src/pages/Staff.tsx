@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
@@ -13,6 +12,7 @@ import BlogManagement from "@/components/staff/BlogManagement";
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
 import { Checkbox } from "@/components/ui/checkbox";
+import { ChevronDown, ChevronRight } from "lucide-react";
 
 const Staff = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -21,6 +21,7 @@ const Staff = () => {
   const [loading, setLoading] = useState(true);
   const [isStaff, setIsStaff] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
+  const [expandedSection, setExpandedSection] = useState<'players' | 'blog' | null>('players');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -220,18 +221,47 @@ const Staff = () => {
           </Button>
         </div>
 
-        <Tabs defaultValue="players" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="players">Players</TabsTrigger>
-            <TabsTrigger value="blog">News Articles</TabsTrigger>
-          </TabsList>
-          <TabsContent value="players">
-            <PlayerManagement />
-          </TabsContent>
-          <TabsContent value="blog">
-            <BlogManagement />
-          </TabsContent>
-        </Tabs>
+        <div className="space-y-4">
+          {/* Players Section */}
+          <Card className="cursor-pointer">
+            <CardHeader 
+              onClick={() => setExpandedSection(expandedSection === 'players' ? null : 'players')}
+              className="hover:bg-accent/50 transition-colors"
+            >
+              <div className="flex justify-between items-center">
+                <CardTitle className="text-2xl">Players</CardTitle>
+                <div className="text-muted-foreground">
+                  {expandedSection === 'players' ? <ChevronDown size={24} /> : <ChevronRight size={24} />}
+                </div>
+              </div>
+            </CardHeader>
+            {expandedSection === 'players' && (
+              <CardContent className="pt-6">
+                <PlayerManagement />
+              </CardContent>
+            )}
+          </Card>
+
+          {/* News Articles Section */}
+          <Card className="cursor-pointer">
+            <CardHeader 
+              onClick={() => setExpandedSection(expandedSection === 'blog' ? null : 'blog')}
+              className="hover:bg-accent/50 transition-colors"
+            >
+              <div className="flex justify-between items-center">
+                <CardTitle className="text-2xl">News Articles</CardTitle>
+                <div className="text-muted-foreground">
+                  {expandedSection === 'blog' ? <ChevronDown size={24} /> : <ChevronRight size={24} />}
+                </div>
+              </div>
+            </CardHeader>
+            {expandedSection === 'blog' && (
+              <CardContent className="pt-6">
+                <BlogManagement />
+              </CardContent>
+            )}
+          </Card>
+        </div>
       </main>
       <Footer />
     </div>
