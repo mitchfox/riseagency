@@ -72,9 +72,9 @@ const Index = () => {
     <>
       <IntroModal open={showIntroModal} onOpenChange={setShowIntroModal} />
       <Header />
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background scroll-smooth snap-y snap-mandatory overflow-y-auto">
         {/* Hero Banner Section */}
-        <section className="relative h-screen flex items-center justify-center overflow-hidden pt-10">
+        <section className="relative h-screen flex items-center justify-center overflow-hidden pt-10 snap-start snap-always">
           <div 
             className="absolute inset-0 bg-cover bg-center scale-105 animate-[scale-in_20s_ease-in-out_infinite_alternate]"
             style={{ backgroundImage: `url(${bannerHero})` }}
@@ -130,7 +130,7 @@ const Index = () => {
         </section>
 
         {/* Agency Overview Section */}
-        <section className="py-32 px-4 bg-background relative">
+        <section className="py-32 px-4 bg-background relative snap-start snap-always min-h-screen flex items-center">
           <div className="absolute inset-0 bg-gradient-to-b from-transparent via-primary/5 to-transparent"></div>
           <div className="container mx-auto max-w-5xl relative z-10">
             <div className="text-center space-y-8 animate-fade-in">
@@ -164,7 +164,7 @@ const Index = () => {
         </section>
 
         {/* News Section */}
-        <section className="py-32 px-4 bg-muted/30">
+        <section className="py-32 px-4 bg-muted/30 snap-start snap-always min-h-screen flex items-center">
           <div className="container mx-auto max-w-7xl">
             <div className="text-center mb-16 space-y-4">
               <div className="inline-block">
@@ -228,8 +228,8 @@ const Index = () => {
 
         {/* INSIDE:ACCESS Section */}
         {insideAccessArticles.length > 0 && (
-          <section className="py-32 px-4 bg-background">
-            <div className="container mx-auto max-w-7xl">
+          <section className="py-32 px-4 bg-background snap-start snap-always min-h-screen flex items-center">
+            <div className="container mx-auto max-w-7xl w-full">
               <div className="text-center mb-16 space-y-4">
                 <div className="inline-block">
                   <span className="text-sm font-bebas uppercase tracking-widest text-primary border border-primary/30 px-6 py-2 rounded-full">
@@ -246,7 +246,7 @@ const Index = () => {
                     <Link
                       key={article.id}
                       to={`/news/${article.id}`}
-                      className="group relative aspect-square overflow-hidden rounded-lg"
+                      className="group relative aspect-[4/5] overflow-hidden rounded-lg"
                     >
                       <img 
                         src={article.image_url} 
@@ -263,7 +263,7 @@ const Index = () => {
         )}
 
         {/* WATCH NOW Section */}
-        <section className="py-32 px-4 bg-muted/30">
+        <section className="py-32 px-4 bg-muted/30 snap-start snap-always min-h-screen flex items-center">
           <div className="container mx-auto max-w-7xl">
             <div className="text-center mb-16 space-y-4">
               <div className="inline-block">
@@ -308,7 +308,7 @@ const Index = () => {
         </section>
 
         {/* Inbound CTA Section - Moved to top */}
-        <section className="py-32 px-4 bg-background relative overflow-hidden">
+        <section className="py-32 px-4 bg-background relative overflow-hidden snap-start snap-always min-h-screen flex items-center">
           <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-transparent to-primary/5"></div>
           <div className="container mx-auto max-w-7xl relative z-10">
             <div className="text-center mb-20 space-y-4">
