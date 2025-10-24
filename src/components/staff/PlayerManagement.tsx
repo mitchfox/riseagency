@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Trash2, Edit } from "lucide-react";
+import { Edit, FileText, LineChart, BookOpen } from "lucide-react";
 
 interface Player {
   id: string;
@@ -17,6 +17,7 @@ interface Player {
   nationality: string;
   bio: string | null;
   image_url: string | null;
+  email: string | null;
 }
 
 interface PlayerStats {
@@ -56,6 +57,7 @@ const PlayerManagement = () => {
     nationality: "",
     bio: "",
     image_url: "",
+    email: "",
     dateOfBirth: "",
     number: "",
     currentClub: "",
@@ -167,6 +169,7 @@ const PlayerManagement = () => {
             nationality: formData.nationality,
             bio: bioString,
             image_url: formData.image_url,
+            email: formData.email || null,
           })
           .eq("id", editingPlayer.id);
 
@@ -182,6 +185,7 @@ const PlayerManagement = () => {
             nationality: formData.nationality,
             bio: bioString,
             image_url: formData.image_url,
+            email: formData.email || null,
           })
           .select()
           .single();
@@ -208,6 +212,7 @@ const PlayerManagement = () => {
         nationality: "", 
         bio: "", 
         image_url: "",
+        email: "",
         dateOfBirth: "",
         number: "",
         currentClub: "",
@@ -252,18 +257,6 @@ const PlayerManagement = () => {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this player?")) return;
-
-    try {
-      const { error } = await supabase.from("players").delete().eq("id", id);
-      if (error) throw error;
-      toast.success("Player deleted successfully");
-      fetchPlayers();
-    } catch (error: any) {
-      toast.error("Failed to delete player: " + error.message);
-    }
-  };
 
   const startEdit = (player: Player) => {
     setEditingPlayer(player);
@@ -285,6 +278,7 @@ const PlayerManagement = () => {
       nationality: player.nationality,
       bio: typeof additionalData === 'object' && additionalData.bio ? additionalData.bio : (player.bio || ""),
       image_url: player.image_url || "",
+      email: player.email || "",
       dateOfBirth: additionalData.dateOfBirth || "",
       number: additionalData.number?.toString() || "",
       currentClub: additionalData.currentClub || "",
@@ -329,6 +323,7 @@ const PlayerManagement = () => {
                 nationality: "", 
                 bio: "", 
                 image_url: "",
+                email: "",
                 dateOfBirth: "",
                 number: "",
                 currentClub: "",
@@ -412,6 +407,16 @@ const PlayerManagement = () => {
                     value={formData.whatsapp}
                     onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
                     placeholder="+447508342901"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email Address</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    placeholder="player@example.com"
                   />
                 </div>
               </div>
@@ -560,9 +565,17 @@ const PlayerManagement = () => {
                       <Edit className="w-4 h-4 mr-2" />
                       Edit Player
                     </Button>
-                    <Button variant="destructive" size="sm" onClick={() => handleDelete(player.id)}>
-                      <Trash2 className="w-4 h-4 mr-2" />
-                      Delete
+                    <Button variant="outline" size="sm" onClick={() => toast.info("Programming feature coming soon")}>
+                      <BookOpen className="w-4 h-4 mr-2" />
+                      Edit Programming
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => toast.info("Analysis feature coming soon")}>
+                      <LineChart className="w-4 h-4 mr-2" />
+                      Add Analysis
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => toast.info("Performance report feature coming soon")}>
+                      <FileText className="w-4 h-4 mr-2" />
+                      Add Performance Report
                     </Button>
                   </div>
                   
@@ -595,6 +608,12 @@ const PlayerManagement = () => {
                       <div>
                         <p className="text-sm text-muted-foreground">WhatsApp</p>
                         <p className="font-medium">{bioData.whatsapp}</p>
+                      </div>
+                    )}
+                    {player.email && (
+                      <div>
+                        <p className="text-sm text-muted-foreground">Email (Account)</p>
+                        <p className="font-medium">{player.email}</p>
                       </div>
                     )}
                   </div>
