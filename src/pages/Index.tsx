@@ -147,16 +147,16 @@ const Index = () => {
               </p>
               <div className="flex justify-center gap-12 pt-8">
                 <div className="text-center">
-                  <div className="text-5xl font-bebas text-primary mb-2">50+</div>
-                  <div className="text-sm uppercase tracking-wider text-muted-foreground">Players</div>
-                </div>
-                <div className="text-center">
                   <div className="text-5xl font-bebas text-primary mb-2">15+</div>
                   <div className="text-sm uppercase tracking-wider text-muted-foreground">Countries</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-5xl font-bebas text-primary mb-2">100+</div>
-                  <div className="text-sm uppercase tracking-wider text-muted-foreground">Transfers</div>
+                  <div className="text-5xl font-bebas text-primary mb-2">25+</div>
+                  <div className="text-sm uppercase tracking-wider text-muted-foreground">Premier League Players</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-5xl font-bebas text-primary mb-2">50+</div>
+                  <div className="text-sm uppercase tracking-wider text-muted-foreground">International Players</div>
                 </div>
               </div>
             </div>
