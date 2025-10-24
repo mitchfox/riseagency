@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Plus, Trash2, Check, Edit, ChevronUp, ChevronDown } from "lucide-react";
+import { Plus, Trash2, Check, Edit, ChevronUp, ChevronDown, ArrowUp, ArrowDown } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 
@@ -142,6 +142,7 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
         .from('player_programs')
         .select('*')
         .eq('player_id', playerId)
+        .order('display_order', { ascending: true })
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -197,6 +198,18 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
 
     setLoading(true);
     try {
+      // Get max display_order for this player
+      const { data: existingPrograms } = await supabase
+        .from('player_programs')
+        .select('display_order')
+        .eq('player_id', playerId)
+        .order('display_order', { ascending: false })
+        .limit(1);
+
+      const nextOrder = existingPrograms && existingPrograms.length > 0 
+        ? (existingPrograms[0].display_order || 0) + 1 
+        : 1;
+
       const { error } = await supabase
         .from('player_programs')
         .insert({
@@ -204,7 +217,8 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
           program_name: newProgramName,
           is_current: programs.length === 0,
           sessions: {},
-          weekly_schedules: []
+          weekly_schedules: [],
+          display_order: nextOrder
         });
 
       if (error) throw error;
@@ -216,6 +230,39 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
     } catch (error) {
       console.error('Error creating program:', error);
       toast.error('Failed to create program');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const moveProgram = async (programId: string, direction: 'up' | 'down') => {
+    const currentIndex = programs.findIndex(p => p.id === programId);
+    if (currentIndex === -1) return;
+
+    const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+    if (targetIndex < 0 || targetIndex >= programs.length) return;
+
+    setLoading(true);
+    try {
+      const currentProgram = programs[currentIndex];
+      const targetProgram = programs[targetIndex];
+
+      // Swap display orders
+      await supabase
+        .from('player_programs')
+        .update({ display_order: targetProgram.display_order })
+        .eq('id', currentProgram.id);
+
+      await supabase
+        .from('player_programs')
+        .update({ display_order: currentProgram.display_order })
+        .eq('id', targetProgram.id);
+
+      toast.success('Program order updated');
+      loadPrograms();
+    } catch (error) {
+      console.error('Error reordering program:', error);
+      toast.error('Failed to reorder program');
     } finally {
       setLoading(false);
     }
@@ -445,11 +492,31 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
                   </CardContent>
                 </Card>
               ) : (
-                programs.map((program) => (
+                programs.map((program, idx) => (
                   <Card key={program.id} className="hover:bg-accent/50 transition-colors">
                     <CardContent className="pt-6">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
+                          <div className="flex flex-col gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={() => moveProgram(program.id, 'up')}
+                              disabled={idx === 0 || loading}
+                            >
+                              <ArrowUp className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={() => moveProgram(program.id, 'down')}
+                              disabled={idx === programs.length - 1 || loading}
+                            >
+                              <ArrowDown className="w-4 h-4" />
+                            </Button>
+                          </div>
                           <div>
                             <div className="flex items-center gap-2">
                               <h4 className="font-semibold">{program.program_name}</h4>

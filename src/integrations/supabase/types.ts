@@ -61,6 +61,213 @@ export type Database = {
           },
         ]
       }
+      coaching_analysis: {
+        Row: {
+          analysis_type: string | null
+          attachments: Json | null
+          category: string | null
+          content: string | null
+          created_at: string
+          description: string | null
+          id: string
+          tags: string[] | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          analysis_type?: string | null
+          attachments?: Json | null
+          category?: string | null
+          content?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          analysis_type?: string | null
+          attachments?: Json | null
+          category?: string | null
+          content?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      coaching_drills: {
+        Row: {
+          attachments: Json | null
+          category: string | null
+          content: string | null
+          created_at: string
+          description: string | null
+          equipment: string | null
+          id: string
+          players_required: string | null
+          setup: string | null
+          tags: string[] | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          attachments?: Json | null
+          category?: string | null
+          content?: string | null
+          created_at?: string
+          description?: string | null
+          equipment?: string | null
+          id?: string
+          players_required?: string | null
+          setup?: string | null
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          attachments?: Json | null
+          category?: string | null
+          content?: string | null
+          created_at?: string
+          description?: string | null
+          equipment?: string | null
+          id?: string
+          players_required?: string | null
+          setup?: string | null
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      coaching_exercises: {
+        Row: {
+          attachments: Json | null
+          category: string | null
+          content: string | null
+          created_at: string
+          description: string | null
+          id: string
+          reps: number | null
+          rest_time: number | null
+          sets: number | null
+          tags: string[] | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          attachments?: Json | null
+          category?: string | null
+          content?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          reps?: number | null
+          rest_time?: number | null
+          sets?: number | null
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          attachments?: Json | null
+          category?: string | null
+          content?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          reps?: number | null
+          rest_time?: number | null
+          sets?: number | null
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      coaching_programmes: {
+        Row: {
+          attachments: Json | null
+          category: string | null
+          content: string | null
+          created_at: string
+          description: string | null
+          id: string
+          tags: string[] | null
+          title: string
+          updated_at: string
+          weeks: number | null
+        }
+        Insert: {
+          attachments?: Json | null
+          category?: string | null
+          content?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+          weeks?: number | null
+        }
+        Update: {
+          attachments?: Json | null
+          category?: string | null
+          content?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+          weeks?: number | null
+        }
+        Relationships: []
+      }
+      coaching_sessions: {
+        Row: {
+          attachments: Json | null
+          category: string | null
+          content: string | null
+          created_at: string
+          description: string | null
+          duration: number | null
+          id: string
+          tags: string[] | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          attachments?: Json | null
+          category?: string | null
+          content?: string | null
+          created_at?: string
+          description?: string | null
+          duration?: number | null
+          id?: string
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          attachments?: Json | null
+          category?: string | null
+          content?: string | null
+          created_at?: string
+          description?: string | null
+          duration?: number | null
+          id?: string
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       performance_report_actions: {
         Row: {
           action_description: string
@@ -164,6 +371,7 @@ export type Database = {
       player_programs: {
         Row: {
           created_at: string
+          display_order: number | null
           id: string
           is_current: boolean
           overview_text: string | null
@@ -180,6 +388,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          display_order?: number | null
           id?: string
           is_current?: boolean
           overview_text?: string | null
@@ -196,6 +405,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          display_order?: number | null
           id?: string
           is_current?: boolean
           overview_text?: string | null
@@ -322,6 +532,45 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id?: string
+        }
+        Relationships: []
+      }
+      psychological_sessions: {
+        Row: {
+          attachments: Json | null
+          category: string | null
+          content: string | null
+          created_at: string
+          description: string | null
+          duration: number | null
+          id: string
+          tags: string[] | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          attachments?: Json | null
+          category?: string | null
+          content?: string | null
+          created_at?: string
+          description?: string | null
+          duration?: number | null
+          id?: string
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          attachments?: Json | null
+          category?: string | null
+          content?: string | null
+          created_at?: string
+          description?: string | null
+          duration?: number | null
+          id?: string
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
         }
         Relationships: []
       }
