@@ -8,8 +8,9 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Check, Edit } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 
 interface ProgrammingManagementProps {
   isOpen: boolean;
@@ -52,14 +53,11 @@ interface WeeklySchedule {
 }
 
 interface ProgrammingData {
-  // Overview/Phase Info
   phaseName: string;
   phaseDates: string;
   phaseImageUrl: string;
   playerImageUrl: string;
   overviewText: string;
-  
-  // Sessions
   sessionA: SessionData;
   sessionB: SessionData;
   sessionC: SessionData;
@@ -68,11 +66,7 @@ interface ProgrammingData {
   sessionF: SessionData;
   sessionG: SessionData;
   sessionH: SessionData;
-  
-  // Weekly Schedule
   weeklySchedules: WeeklySchedule[];
-  
-  // Testing
   testing: string;
 }
 
@@ -108,125 +102,214 @@ const emptyWeeklySchedule = (): WeeklySchedule => ({
   scheduleNotes: ''
 });
 
+const initialProgrammingData = (): ProgrammingData => ({
+  phaseName: '',
+  phaseDates: '',
+  phaseImageUrl: '',
+  playerImageUrl: '',
+  overviewText: '',
+  sessionA: emptySession(),
+  sessionB: emptySession(),
+  sessionC: emptySession(),
+  sessionD: emptySession(),
+  sessionE: emptySession(),
+  sessionF: emptySession(),
+  sessionG: emptySession(),
+  sessionH: emptySession(),
+  weeklySchedules: [],
+  testing: '',
+});
+
 export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }: ProgrammingManagementProps) => {
+  const [programs, setPrograms] = useState<any[]>([]);
+  const [selectedProgram, setSelectedProgram] = useState<any | null>(null);
+  const [programmingData, setProgrammingData] = useState<ProgrammingData>(initialProgrammingData());
   const [loading, setLoading] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [selectedSession, setSelectedSession] = useState<string | null>(null);
-  const [programmingData, setProgrammingData] = useState<ProgrammingData>({
-    phaseName: '',
-    phaseDates: '',
-    phaseImageUrl: '',
-    playerImageUrl: '',
-    overviewText: '',
-    sessionA: emptySession(),
-    sessionB: emptySession(),
-    sessionC: emptySession(),
-    sessionD: emptySession(),
-    sessionE: emptySession(),
-    sessionF: emptySession(),
-    sessionG: emptySession(),
-    sessionH: emptySession(),
-    weeklySchedules: [],
-    testing: '',
-  });
+  const [isCreatingNew, setIsCreatingNew] = useState(false);
+  const [newProgramName, setNewProgramName] = useState("");
 
   useEffect(() => {
     if (isOpen && playerId) {
-      loadProgrammingData();
+      loadPrograms();
     }
   }, [isOpen, playerId]);
 
-  const loadProgrammingData = async () => {
+  const loadPrograms = async () => {
     try {
-      const { data: player, error } = await supabase
-        .from('players')
-        .select('bio')
-        .eq('id', playerId)
+      const { data, error } = await supabase
+        .from('player_programs')
+        .select('*')
+        .eq('player_id', playerId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setPrograms(data || []);
+    } catch (error) {
+      console.error('Error loading programs:', error);
+      toast.error('Failed to load programs');
+    }
+  };
+
+  const loadProgramDetails = async (programId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('player_programs')
+        .select('*')
+        .eq('id', programId)
         .single();
 
       if (error) throw error;
 
-      if (player?.bio) {
-        try {
-          const bioData = JSON.parse(player.bio);
-          if (bioData.programming) {
-            setProgrammingData({
-              phaseName: bioData.programming.phaseName || '',
-              phaseDates: bioData.programming.phaseDates || '',
-              phaseImageUrl: bioData.programming.phaseImageUrl || '',
-              playerImageUrl: bioData.programming.playerImageUrl || '',
-              overviewText: bioData.programming.overviewText || '',
-              sessionA: bioData.programming.sessionA || emptySession(),
-              sessionB: bioData.programming.sessionB || emptySession(),
-              sessionC: bioData.programming.sessionC || emptySession(),
-              sessionD: bioData.programming.sessionD || emptySession(),
-              sessionE: bioData.programming.sessionE || emptySession(),
-              sessionF: bioData.programming.sessionF || emptySession(),
-              sessionG: bioData.programming.sessionG || emptySession(),
-              sessionH: bioData.programming.sessionH || emptySession(),
-              weeklySchedules: bioData.programming.weeklySchedules || [],
-              testing: bioData.programming.testing || '',
-            });
-          }
-        } catch (e) {
-          console.log("Bio is not JSON format");
-        }
-      }
+      setSelectedProgram(data);
+      setProgrammingData({
+        phaseName: data.phase_name || '',
+        phaseDates: data.phase_dates || '',
+        phaseImageUrl: data.phase_image_url || '',
+        playerImageUrl: data.player_image_url || '',
+        overviewText: data.overview_text || '',
+        sessionA: data.sessions?.sessionA || emptySession(),
+        sessionB: data.sessions?.sessionB || emptySession(),
+        sessionC: data.sessions?.sessionC || emptySession(),
+        sessionD: data.sessions?.sessionD || emptySession(),
+        sessionE: data.sessions?.sessionE || emptySession(),
+        sessionF: data.sessions?.sessionF || emptySession(),
+        sessionG: data.sessions?.sessionG || emptySession(),
+        sessionH: data.sessions?.sessionH || emptySession(),
+        weeklySchedules: data.weekly_schedules || [],
+        testing: ''
+      });
     } catch (error) {
-      console.error("Error loading programming data:", error);
-      toast.error("Failed to load programming data");
+      console.error('Error loading program details:', error);
+      toast.error('Failed to load program details');
+    }
+  };
+
+  const createNewProgram = async () => {
+    if (!newProgramName.trim()) {
+      toast.error('Please enter a program name');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { error } = await supabase
+        .from('player_programs')
+        .insert({
+          player_id: playerId,
+          program_name: newProgramName,
+          is_current: programs.length === 0,
+          sessions: {},
+          weekly_schedules: []
+        });
+
+      if (error) throw error;
+
+      toast.success('Program created successfully');
+      setNewProgramName('');
+      setIsCreatingNew(false);
+      loadPrograms();
+    } catch (error) {
+      console.error('Error creating program:', error);
+      toast.error('Failed to create program');
+    } finally {
+      setLoading(false);
     }
   };
 
   const saveProgrammingData = async () => {
+    if (!selectedProgram) return;
+
+    setLoading(true);
     try {
-      setLoading(true);
+      const { error } = await supabase
+        .from('player_programs')
+        .update({
+          phase_name: programmingData.phaseName,
+          phase_dates: programmingData.phaseDates,
+          phase_image_url: programmingData.phaseImageUrl,
+          player_image_url: programmingData.playerImageUrl,
+          overview_text: programmingData.overviewText,
+          sessions: {
+            sessionA: programmingData.sessionA,
+            sessionB: programmingData.sessionB,
+            sessionC: programmingData.sessionC,
+            sessionD: programmingData.sessionD,
+            sessionE: programmingData.sessionE,
+            sessionF: programmingData.sessionF,
+            sessionG: programmingData.sessionG,
+            sessionH: programmingData.sessionH,
+          },
+          weekly_schedules: programmingData.weeklySchedules,
+        })
+        .eq('id', selectedProgram.id);
 
-      // Get current player data
-      const { data: player, error: fetchError } = await supabase
-        .from('players')
-        .select('bio')
-        .eq('id', playerId)
-        .single();
+      if (error) throw error;
 
-      if (fetchError) throw fetchError;
-
-      // Parse existing bio or create new structure
-      let bioData: any = {};
-      if (player?.bio) {
-        try {
-          bioData = JSON.parse(player.bio);
-        } catch {
-          bioData = { bio: player.bio };
-        }
-      }
-
-      // Update programming section
-      bioData.programming = programmingData;
-
-      // Save back to database
-      const { error: updateError } = await supabase
-        .from('players')
-        .update({ bio: JSON.stringify(bioData) })
-        .eq('id', playerId);
-
-      if (updateError) throw updateError;
-
-      toast.success("Programming data saved successfully!");
-      onClose();
+      toast.success('Program saved successfully');
+      loadPrograms();
     } catch (error) {
-      console.error("Error saving programming data:", error);
-      toast.error("Failed to save programming data");
+      console.error('Error saving program:', error);
+      toast.error('Failed to save program');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const makeCurrentProgram = async (programId: string) => {
+    setLoading(true);
+    try {
+      await supabase
+        .from('player_programs')
+        .update({ is_current: false })
+        .eq('player_id', playerId);
+
+      const { error } = await supabase
+        .from('player_programs')
+        .update({ is_current: true })
+        .eq('id', programId);
+
+      if (error) throw error;
+
+      toast.success('Program set as current');
+      loadPrograms();
+    } catch (error) {
+      console.error('Error setting current program:', error);
+      toast.error('Failed to set current program');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const deleteProgram = async (programId: string) => {
+    if (!confirm('Are you sure you want to delete this program?')) return;
+
+    setLoading(true);
+    try {
+      const { error } = await supabase
+        .from('player_programs')
+        .delete()
+        .eq('id', programId);
+
+      if (error) throw error;
+
+      toast.success('Program deleted successfully');
+      if (selectedProgram?.id === programId) {
+        setSelectedProgram(null);
+        setProgrammingData(initialProgrammingData());
+      }
+      loadPrograms();
+    } catch (error) {
+      console.error('Error deleting program:', error);
+      toast.error('Failed to delete program');
     } finally {
       setLoading(false);
     }
   };
 
   const updateField = (field: keyof ProgrammingData, value: any) => {
-    setProgrammingData(prev => ({
-      ...prev,
-      [field]: value
-    }));
+    setProgrammingData(prev => ({ ...prev, [field]: value }));
   };
 
   const addExercise = (sessionKey: keyof Pick<ProgrammingData, 'sessionA' | 'sessionB' | 'sessionC' | 'sessionD' | 'sessionE' | 'sessionF' | 'sessionG' | 'sessionH'>) => {
@@ -296,391 +379,477 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-2xl">
-            Physical Programming - {playerName}
-          </DialogTitle>
+          <DialogTitle>Programming Management - {playerName}</DialogTitle>
         </DialogHeader>
 
-        <Tabs defaultValue="overview" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="sessions">Sessions</TabsTrigger>
-            <TabsTrigger value="schedule">Weekly Schedule</TabsTrigger>
-            <TabsTrigger value="testing">Testing</TabsTrigger>
-          </TabsList>
+        {!selectedProgram ? (
+          
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold">Programs</h3>
+              <Button onClick={() => setIsCreatingNew(true)}>
+                <Plus className="w-4 h-4 mr-2" />
+                New Program
+              </Button>
+            </div>
 
-          {/* Overview Tab */}
-          <TabsContent value="overview" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Phase Information</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="phaseName">Phase Name</Label>
+            {isCreatingNew && (
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex gap-2">
                     <Input
-                      id="phaseName"
-                      placeholder="e.g., Push-Pull Phase"
-                      value={programmingData.phaseName}
-                      onChange={(e) => updateField('phaseName', e.target.value)}
+                      placeholder="Program name (e.g., Pre-Season 2025)"
+                      value={newProgramName}
+                      onChange={(e) => setNewProgramName(e.target.value)}
                     />
+                    <Button onClick={createNewProgram} disabled={loading}>
+                      Create
+                    </Button>
+                    <Button variant="outline" onClick={() => {
+                      setIsCreatingNew(false);
+                      setNewProgramName('');
+                    }}>
+                      Cancel
+                    </Button>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="phaseDates">Phase Dates</Label>
-                    <Input
-                      id="phaseDates"
-                      placeholder="e.g., October"
-                      value={programmingData.phaseDates}
-                      onChange={(e) => updateField('phaseDates', e.target.value)}
-                    />
-                  </div>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="phaseImage">Phase Image</Label>
-                    <Input
-                      id="phaseImage"
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) handleImageUpload(file, 'phaseImageUrl');
-                      }}
-                      disabled={uploadingImage}
-                    />
-                    {programmingData.phaseImageUrl && (
-                      <div className="mt-2">
-                        <img 
-                          src={programmingData.phaseImageUrl} 
-                          alt="Phase" 
-                          className="w-32 h-32 object-cover rounded border"
+                </CardContent>
+              </Card>
+            )}
+
+            <div className="space-y-2">
+              {programs.length === 0 ? (
+                <Card>
+                  <CardContent className="pt-6 text-center text-muted-foreground">
+                    No programs created yet. Click "New Program" to get started.
+                  </CardContent>
+                </Card>
+              ) : (
+                programs.map((program) => (
+                  <Card key={program.id} className="hover:bg-accent/50 transition-colors">
+                    <CardContent className="pt-6">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <h4 className="font-semibold">{program.program_name}</h4>
+                              {program.is_current && (
+                                <Badge variant="default" className="gap-1">
+                                  <Check className="w-3 h-3" />
+                                  Current
+                                </Badge>
+                              )}
+                            </div>
+                            <p className="text-sm text-muted-foreground">
+                              Created: {new Date(program.created_at).toLocaleDateString()}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          {!program.is_current && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => makeCurrentProgram(program.id)}
+                              disabled={loading}
+                            >
+                              Make Current
+                            </Button>
+                          )}
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => loadProgramDetails(program.id)}
+                          >
+                            <Edit className="w-4 h-4 mr-2" />
+                            Edit
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => deleteProgram(program.id)}
+                            disabled={loading}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              )}
+            </div>
+          </div>
+        ) : (
+          
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <Button variant="outline" onClick={() => {
+                setSelectedProgram(null);
+                setProgrammingData(initialProgrammingData());
+              }}>
+                &larr; Back to Programs
+              </Button>
+              <div className="flex items-center gap-2">
+                <span className="font-semibold">{selectedProgram.program_name}</span>
+                {selectedProgram.is_current && (
+                  <Badge variant="default">Current</Badge>
+                )}
+              </div>
+            </div>
+
+            <Tabs defaultValue="overview" className="w-full">
+              <TabsList className="grid w-full grid-cols-4">
+                <TabsTrigger value="overview">Overview</TabsTrigger>
+                <TabsTrigger value="sessions">Sessions</TabsTrigger>
+                <TabsTrigger value="schedule">Weekly Schedule</TabsTrigger>
+                <TabsTrigger value="testing">Testing</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="overview" className="space-y-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Phase Information</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="phaseName">Phase Name</Label>
+                        <Input
+                          id="phaseName"
+                          placeholder="e.g., Push-Pull Phase"
+                          value={programmingData.phaseName}
+                          onChange={(e) => updateField('phaseName', e.target.value)}
                         />
                       </div>
-                    )}
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="playerImage">Player Image</Label>
-                    <Input
-                      id="playerImage"
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) handleImageUpload(file, 'playerImageUrl');
-                      }}
-                      disabled={uploadingImage}
-                    />
-                    {programmingData.playerImageUrl && (
-                      <div className="mt-2">
-                        <img 
-                          src={programmingData.playerImageUrl} 
-                          alt="Player" 
-                          className="w-32 h-32 object-cover rounded border"
+                      <div className="space-y-2">
+                        <Label htmlFor="phaseDates">Phase Dates</Label>
+                        <Input
+                          id="phaseDates"
+                          placeholder="e.g., October"
+                          value={programmingData.phaseDates}
+                          onChange={(e) => updateField('phaseDates', e.target.value)}
                         />
                       </div>
-                    )}
-                  </div>
-                </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="phaseImage">Phase Image</Label>
+                        <Input
+                          id="phaseImage"
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) handleImageUpload(file, 'phaseImageUrl');
+                          }}
+                          disabled={uploadingImage}
+                        />
+                        {programmingData.phaseImageUrl && (
+                          <div className="mt-2">
+                            <img 
+                              src={programmingData.phaseImageUrl} 
+                              alt="Phase" 
+                              className="w-32 h-32 object-cover rounded border"
+                            />
+                          </div>
+                        )}
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="playerImage">Player Image</Label>
+                        <Input
+                          id="playerImage"
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) handleImageUpload(file, 'playerImageUrl');
+                          }}
+                          disabled={uploadingImage}
+                        />
+                        {programmingData.playerImageUrl && (
+                          <div className="mt-2">
+                            <img 
+                              src={programmingData.playerImageUrl} 
+                              alt="Player" 
+                              className="w-32 h-32 object-cover rounded border"
+                            />
+                          </div>
+                        )}
+                      </div>
+                    </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="overviewText">Overview Text</Label>
-                  <Textarea
-                    id="overviewText"
-                    placeholder="Enter overall programming notes, goals, and structure..."
-                    value={programmingData.overviewText}
-                    onChange={(e) => updateField('overviewText', e.target.value)}
-                    rows={12}
-                    className="text-sm"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Include long-term focus, phase goals, technical objectives, and general guidelines.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
+                    <div className="space-y-2">
+                      <Label htmlFor="overviewText">Overview Text</Label>
+                      <Textarea
+                        id="overviewText"
+                        placeholder="Enter overall programming notes, goals, and structure..."
+                        value={programmingData.overviewText}
+                        onChange={(e) => updateField('overviewText', e.target.value)}
+                        rows={12}
+                        className="text-sm"
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
 
-          {/* Sessions Tab */}
-          <TabsContent value="sessions" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Training Sessions</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex flex-wrap gap-2">
-                    {sessionLabels.map((session) => (
-                      <Button
-                        key={session.key}
-                        variant={selectedSession === session.key ? "default" : "outline"}
-                        onClick={() => setSelectedSession(session.key)}
-                      >
-                        {session.label}
-                      </Button>
-                    ))}
-                  </div>
-
-                  {selectedSession ? (
-                    <div className="space-y-4 pt-4">
-                      <div className="flex justify-between items-center mb-4">
-                        <Label className="text-lg font-semibold">
-                          {sessionLabels.find(s => s.key === selectedSession)?.label} Exercises
-                        </Label>
-                        <Button
-                          type="button"
-                          size="sm"
-                          onClick={() => addExercise(selectedSession as any)}
-                        >
-                          <Plus className="w-4 h-4 mr-2" />
-                          Add Exercise
-                        </Button>
+              <TabsContent value="sessions" className="space-y-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Training Sessions</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="flex flex-wrap gap-2">
+                        {sessionLabels.map((session) => (
+                          <Button
+                            key={session.key}
+                            variant={selectedSession === session.key ? "default" : "outline"}
+                            onClick={() => setSelectedSession(session.key)}
+                          >
+                            {session.label}
+                          </Button>
+                        ))}
                       </div>
 
-                      {(programmingData[selectedSession as keyof ProgrammingData] as SessionData).exercises.length > 0 ? (
-                        <div className="border rounded-lg overflow-hidden">
-                          <table className="w-full">
-                            <thead className="bg-muted">
-                              <tr>
-                                <th className="p-2 text-left text-xs font-semibold">Exercise Name</th>
-                                <th className="p-2 text-left text-xs font-semibold">Description</th>
-                                <th className="p-2 text-left text-xs font-semibold w-20">Reps</th>
-                                <th className="p-2 text-left text-xs font-semibold w-16">Sets</th>
-                                <th className="p-2 text-left text-xs font-semibold w-20">Load</th>
-                                <th className="p-2 text-left text-xs font-semibold w-24">Recovery</th>
-                                <th className="p-2 text-left text-xs font-semibold w-24">Video</th>
-                                <th className="p-2 w-12"></th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {(programmingData[selectedSession as keyof ProgrammingData] as SessionData).exercises.map((exercise, idx) => (
-                                <tr key={idx} className="border-t hover:bg-muted/50">
-                                  <td className="p-2">
-                                    <Input
-                                      placeholder="Exercise name"
-                                      value={exercise.name}
-                                      onChange={(e) => updateExercise(selectedSession as any, idx, 'name', e.target.value)}
-                                      className="text-sm"
-                                    />
-                                  </td>
-                                  <td className="p-2">
-                                    <Textarea
-                                      placeholder="Description"
-                                      value={exercise.description}
-                                      onChange={(e) => updateExercise(selectedSession as any, idx, 'description', e.target.value)}
-                                      rows={2}
-                                      className="text-xs"
-                                    />
-                                  </td>
-                                  <td className="p-2">
-                                    <Input
-                                      placeholder="e.g., 8x2"
-                                      value={exercise.repetitions}
-                                      onChange={(e) => updateExercise(selectedSession as any, idx, 'repetitions', e.target.value)}
-                                      className="text-sm"
-                                    />
-                                  </td>
-                                  <td className="p-2">
-                                    <Input
-                                      placeholder="3"
-                                      value={exercise.sets}
-                                      onChange={(e) => updateExercise(selectedSession as any, idx, 'sets', e.target.value)}
-                                      className="text-sm"
-                                    />
-                                  </td>
-                                  <td className="p-2">
-                                    <Input
-                                      placeholder="20kg"
-                                      value={exercise.load}
-                                      onChange={(e) => updateExercise(selectedSession as any, idx, 'load', e.target.value)}
-                                      className="text-sm"
-                                    />
-                                  </td>
-                                  <td className="p-2">
-                                    <Input
-                                      placeholder="60s"
-                                      value={exercise.recoveryTime}
-                                      onChange={(e) => updateExercise(selectedSession as any, idx, 'recoveryTime', e.target.value)}
-                                      className="text-sm"
-                                    />
-                                  </td>
-                                  <td className="p-2">
-                                    <Input
-                                      placeholder="URL"
-                                      value={exercise.videoUrl}
-                                      onChange={(e) => updateExercise(selectedSession as any, idx, 'videoUrl', e.target.value)}
-                                      className="text-sm"
-                                    />
-                                  </td>
-                                  <td className="p-2 text-center">
-                                    <Button
-                                      type="button"
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={() => removeExercise(selectedSession as any, idx)}
-                                    >
-                                      <Trash2 className="w-4 h-4 text-destructive" />
-                                    </Button>
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
+                      {selectedSession ? (
+                        <div className="space-y-4 pt-4">
+                          <div className="flex justify-between items-center mb-4">
+                            <Label className="text-lg font-semibold">
+                              {sessionLabels.find(s => s.key === selectedSession)?.label} Exercises
+                            </Label>
+                            <Button
+                              type="button"
+                              size="sm"
+                              onClick={() => addExercise(selectedSession as any)}
+                            >
+                              <Plus className="w-4 h-4 mr-2" />
+                              Add Exercise
+                            </Button>
+                          </div>
+
+                          {(programmingData[selectedSession as keyof ProgrammingData] as SessionData).exercises.length > 0 ? (
+                            <div className="border rounded-lg overflow-hidden">
+                              <table className="w-full">
+                                <thead className="bg-muted">
+                                  <tr>
+                                    <th className="p-2 text-left text-xs font-semibold">Exercise Name</th>
+                                    <th className="p-2 text-left text-xs font-semibold">Description</th>
+                                    <th className="p-2 text-left text-xs font-semibold w-20">Reps</th>
+                                    <th className="p-2 text-left text-xs font-semibold w-16">Sets</th>
+                                    <th className="p-2 text-left text-xs font-semibold w-20">Load</th>
+                                    <th className="p-2 text-left text-xs font-semibold w-24">Recovery</th>
+                                    <th className="p-2 text-left text-xs font-semibold w-24">Video</th>
+                                    <th className="p-2 w-12"></th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {(programmingData[selectedSession as keyof ProgrammingData] as SessionData).exercises.map((exercise, idx) => (
+                                    <tr key={idx} className="border-t hover:bg-muted/50">
+                                      <td className="p-2">
+                                        <Input
+                                          placeholder="Exercise name"
+                                          value={exercise.name}
+                                          onChange={(e) => updateExercise(selectedSession as any, idx, 'name', e.target.value)}
+                                          className="text-sm"
+                                        />
+                                      </td>
+                                      <td className="p-2">
+                                        <Input
+                                          placeholder="Description"
+                                          value={exercise.description}
+                                          onChange={(e) => updateExercise(selectedSession as any, idx, 'description', e.target.value)}
+                                          className="text-sm"
+                                        />
+                                      </td>
+                                      <td className="p-2">
+                                        <Input
+                                          placeholder="Reps"
+                                          value={exercise.repetitions}
+                                          onChange={(e) => updateExercise(selectedSession as any, idx, 'repetitions', e.target.value)}
+                                          className="text-sm"
+                                        />
+                                      </td>
+                                      <td className="p-2">
+                                        <Input
+                                          placeholder="Sets"
+                                          value={exercise.sets}
+                                          onChange={(e) => updateExercise(selectedSession as any, idx, 'sets', e.target.value)}
+                                          className="text-sm"
+                                        />
+                                      </td>
+                                      <td className="p-2">
+                                        <Input
+                                          placeholder="Load"
+                                          value={exercise.load}
+                                          onChange={(e) => updateExercise(selectedSession as any, idx, 'load', e.target.value)}
+                                          className="text-sm"
+                                        />
+                                      </td>
+                                      <td className="p-2">
+                                        <Input
+                                          placeholder="Recovery"
+                                          value={exercise.recoveryTime}
+                                          onChange={(e) => updateExercise(selectedSession as any, idx, 'recoveryTime', e.target.value)}
+                                          className="text-sm"
+                                        />
+                                      </td>
+                                      <td className="p-2">
+                                        <Input
+                                          placeholder="Video URL"
+                                          value={exercise.videoUrl}
+                                          onChange={(e) => updateExercise(selectedSession as any, idx, 'videoUrl', e.target.value)}
+                                          className="text-sm"
+                                        />
+                                      </td>
+                                      <td className="p-2">
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          onClick={() => removeExercise(selectedSession as any, idx)}
+                                        >
+                                          <Trash2 className="w-4 h-4" />
+                                        </Button>
+                                      </td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          ) : (
+                            <div className="text-center text-muted-foreground py-8">
+                              No exercises added yet. Click "Add Exercise" to get started.
+                            </div>
+                          )}
                         </div>
                       ) : (
-                        <div className="text-center py-8 text-muted-foreground border-2 border-dashed rounded-lg">
-                          No exercises added yet. Click "Add Exercise" to get started.
+                        <div className="text-center text-muted-foreground py-8">
+                          Select a session to manage exercises
                         </div>
                       )}
                     </div>
-                  ) : (
-                    <div className="text-center py-8 text-muted-foreground">
-                      Select a session above to edit its content
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
+                  </CardContent>
+                </Card>
+              </TabsContent>
 
-          {/* Weekly Schedule Tab */}
-          <TabsContent value="schedule" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <div className="flex justify-between items-center">
-                  <CardTitle>Weekly Training Schedule</CardTitle>
-                  <Button
-                    type="button"
-                    size="sm"
-                    onClick={addWeeklySchedule}
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Week
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {programmingData.weeklySchedules.map((schedule, idx) => (
-                  <Card key={idx} className="p-4 space-y-3">
-                    <div className="flex justify-between items-center">
-                      <Label className="font-semibold">Week {idx + 1}</Label>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeWeeklySchedule(idx)}
-                      >
-                        <Trash2 className="w-4 h-4 text-destructive" />
+              <TabsContent value="schedule" className="space-y-4">
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <CardTitle>Weekly Schedule</CardTitle>
+                      <Button onClick={addWeeklySchedule} size="sm">
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add Week
                       </Button>
                     </div>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    {programmingData.weeklySchedules.map((schedule, idx) => (
+                      <Card key={idx} className="border-2">
+                        <CardContent className="pt-6 space-y-4">
+                          <div className="flex items-center justify-between mb-4">
+                            <Input
+                              placeholder="Week (e.g., Week 1)"
+                              value={schedule.week}
+                              onChange={(e) => updateWeeklySchedule(idx, 'week', e.target.value)}
+                              className="max-w-xs"
+                            />
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => removeWeeklySchedule(idx)}
+                            >
+                              <Trash2 className="w-4 h-4 mr-2" />
+                              Remove Week
+                            </Button>
+                          </div>
 
-                    <div className="space-y-1">
-                      <Label className="text-xs">Week Number/Name</Label>
-                      <Input
-                        placeholder="e.g., Week 1"
-                        value={schedule.week}
-                        onChange={(e) => updateWeeklySchedule(idx, 'week', e.target.value)}
-                      />
-                    </div>
+                          <div className="grid grid-cols-7 gap-2">
+                            {['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map((day) => (
+                              <div key={day} className="space-y-2">
+                                <Label className="text-xs capitalize">{day}</Label>
+                                <Input
+                                  placeholder="Activity"
+                                  value={schedule[day as keyof WeeklySchedule] as string}
+                                  onChange={(e) => updateWeeklySchedule(idx, day as keyof WeeklySchedule, e.target.value)}
+                                  className="text-xs"
+                                />
+                                <Select
+                                  value={schedule[`${day}Color` as keyof WeeklySchedule] as string}
+                                  onValueChange={(value) => updateWeeklySchedule(idx, `${day}Color` as keyof WeeklySchedule, value)}
+                                >
+                                  <SelectTrigger className="text-xs">
+                                    <SelectValue placeholder="Color" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="red">Red</SelectItem>
+                                    <SelectItem value="blue">Blue</SelectItem>
+                                    <SelectItem value="green">Green</SelectItem>
+                                    <SelectItem value="yellow">Yellow</SelectItem>
+                                    <SelectItem value="purple">Purple</SelectItem>
+                                    <SelectItem value="orange">Orange</SelectItem>
+                                    <SelectItem value="gray">Gray</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            )))}
+                          </div>
 
-                    <div className="grid grid-cols-7 gap-2">
-                      {['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map((day) => (
-                        <div key={day} className="space-y-2">
-                          <Label className="text-xs capitalize">{day.slice(0, 3)}</Label>
-                          <Input
-                            placeholder="Activity"
-                            value={schedule[day as keyof WeeklySchedule] as string}
-                            onChange={(e) => updateWeeklySchedule(idx, day as keyof WeeklySchedule, e.target.value)}
-                            className="text-xs"
-                          />
-                          <Select
-                            value={schedule[`${day}Color` as keyof WeeklySchedule] as string}
-                            onValueChange={(value) => updateWeeklySchedule(idx, `${day}Color` as keyof WeeklySchedule, value)}
-                          >
-                            <SelectTrigger className="h-8 text-xs">
-                              <SelectValue placeholder="Color" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="red">Red</SelectItem>
-                              <SelectItem value="orange">Orange</SelectItem>
-                              <SelectItem value="yellow">Yellow</SelectItem>
-                              <SelectItem value="green">Green</SelectItem>
-                              <SelectItem value="blue">Blue</SelectItem>
-                              <SelectItem value="purple">Purple</SelectItem>
-                              <SelectItem value="gray">Gray</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      ))}
-                    </div>
-                  </Card>
-                ))}
+                          <div className="space-y-2">
+                            <Label>Weekly Notes</Label>
+                            <Textarea
+                              placeholder="Notes for this week..."
+                              value={schedule.scheduleNotes}
+                              onChange={(e) => updateWeeklySchedule(idx, 'scheduleNotes', e.target.value)}
+                              rows={3}
+                            />
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )))}
 
-                {programmingData.weeklySchedules.length === 0 && (
-                  <div className="text-center py-8 text-muted-foreground border-2 border-dashed rounded-lg">
-                    No weekly schedules added yet. Click "Add Week" to get started.
-                  </div>
-                )}
+                    {programmingData.weeklySchedules.length === 0 && (
+                      <div className="text-center text-muted-foreground py-8">
+                        No weekly schedules added yet. Click "Add Week" to get started.
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
 
-                <div className="space-y-2 pt-4">
-                  <Label htmlFor="generalScheduleNotes">General Schedule Notes</Label>
-                  <Textarea
-                    id="generalScheduleNotes"
-                    placeholder="e.g., Daily Prehab (Session A) can be performed on all non-match or gym days; Session B, C & D typically performed once each per week..."
-                    value={programmingData.weeklySchedules[0]?.scheduleNotes || ''}
-                    onChange={(e) => {
-                      if (programmingData.weeklySchedules.length > 0) {
-                        updateWeeklySchedule(0, 'scheduleNotes', e.target.value);
-                      }
-                    }}
-                    rows={4}
-                    className="text-sm"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    General notes about the weekly schedule structure
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
+              <TabsContent value="testing" className="space-y-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Testing Protocol</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <Textarea
+                      placeholder="Enter testing protocols and benchmarks..."
+                      value={programmingData.testing}
+                      onChange={(e) => updateField('testing', e.target.value)}
+                      rows={10}
+                    />
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
 
-          {/* Testing Tab */}
-          <TabsContent value="testing" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Physical Testing</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <Label htmlFor="testing">Testing Protocols & Results</Label>
-                  <Textarea
-                    id="testing"
-                    placeholder="Enter testing protocols, benchmarks, and results (speed tests, strength tests, etc.)..."
-                    value={programmingData.testing}
-                    onChange={(e) => updateField('testing', e.target.value)}
-                    rows={15}
-                    className="font-mono text-sm"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Include sprint times, jump heights, strength metrics, and any other physical assessment data.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-
-        <div className="flex justify-end gap-2 pt-4">
-          <Button variant="outline" onClick={onClose} disabled={loading}>
-            Cancel
-          </Button>
-          <Button onClick={saveProgrammingData} disabled={loading}>
-            {loading ? "Saving..." : "Save Programming"}
-          </Button>
-        </div>
+            <div className="flex justify-end gap-2 mt-6">
+              <Button variant="outline" onClick={() => {
+                setSelectedProgram(null);
+                setProgrammingData(initialProgrammingData());
+              }}>
+                Cancel
+              </Button>
+              <Button onClick={saveProgrammingData} disabled={loading}>
+                {loading ? 'Saving...' : 'Save Changes'}
+              </Button>
+            </div>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );

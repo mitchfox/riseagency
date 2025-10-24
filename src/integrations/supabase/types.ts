@@ -161,6 +161,57 @@ export type Database = {
           },
         ]
       }
+      player_programs: {
+        Row: {
+          created_at: string
+          id: string
+          is_current: boolean
+          overview_text: string | null
+          phase_dates: string | null
+          phase_image_url: string | null
+          phase_name: string | null
+          player_id: string
+          player_image_url: string | null
+          program_name: string
+          schedule_notes: string | null
+          sessions: Json | null
+          updated_at: string
+          weekly_schedules: Json | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_current?: boolean
+          overview_text?: string | null
+          phase_dates?: string | null
+          phase_image_url?: string | null
+          phase_name?: string | null
+          player_id: string
+          player_image_url?: string | null
+          program_name: string
+          schedule_notes?: string | null
+          sessions?: Json | null
+          updated_at?: string
+          weekly_schedules?: Json | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_current?: boolean
+          overview_text?: string | null
+          phase_dates?: string | null
+          phase_image_url?: string | null
+          phase_name?: string | null
+          player_id?: string
+          player_image_url?: string | null
+          program_name?: string
+          schedule_notes?: string | null
+          sessions?: Json | null
+          updated_at?: string
+          weekly_schedules?: Json | null
+        }
+        Relationships: []
+      }
       player_stats: {
         Row: {
           assists: number | null
