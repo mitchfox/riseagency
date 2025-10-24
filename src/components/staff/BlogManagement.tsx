@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Trash2, Edit } from "lucide-react";
 
@@ -17,6 +18,7 @@ interface BlogPost {
   excerpt: string | null;
   published: boolean;
   image_url: string | null;
+  category: string | null;
   created_at: string;
 }
 
@@ -33,6 +35,7 @@ const BlogManagement = () => {
     excerpt: "",
     published: false,
     image_url: "",
+    category: "",
   });
 
   useEffect(() => {
@@ -77,6 +80,7 @@ const BlogManagement = () => {
             excerpt: formData.excerpt,
             published: formData.published,
             image_url: formData.image_url,
+            category: formData.category || null,
           })
           .eq("id", editingPost.id);
 
@@ -91,6 +95,7 @@ const BlogManagement = () => {
             excerpt: formData.excerpt,
             published: formData.published,
             image_url: formData.image_url,
+            category: formData.category || null,
             author_id: userId,
           });
 
@@ -98,7 +103,7 @@ const BlogManagement = () => {
         toast.success("Blog post created successfully");
       }
 
-      setFormData({ title: "", content: "", excerpt: "", published: false, image_url: "" });
+      setFormData({ title: "", content: "", excerpt: "", published: false, image_url: "", category: "" });
       setEditingPost(null);
       setIsDialogOpen(false);
       fetchPosts();
@@ -130,6 +135,7 @@ const BlogManagement = () => {
       excerpt: post.excerpt || "",
       published: post.published,
       image_url: post.image_url || "",
+      category: post.category || "",
     });
     setIsDialogOpen(true);
   };
@@ -146,7 +152,7 @@ const BlogManagement = () => {
           <DialogTrigger asChild>
             <Button onClick={() => {
               setEditingPost(null);
-              setFormData({ title: "", content: "", excerpt: "", published: false, image_url: "" });
+              setFormData({ title: "", content: "", excerpt: "", published: false, image_url: "", category: "" });
             }}>
               Add New Post
             </Button>
@@ -185,12 +191,29 @@ const BlogManagement = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="image_url">Image URL</Label>
+                <Label htmlFor="image_url">Image URL *</Label>
                 <Input
                   id="image_url"
                   value={formData.image_url}
                   onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
+                  placeholder="https://example.com/image.jpg"
+                  required
                 />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="category">Category</Label>
+                <Select
+                  value={formData.category}
+                  onValueChange={(value) => setFormData({ ...formData, category: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a category (optional)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="news">News</SelectItem>
+                    <SelectItem value="INSIDE:ACCESS">INSIDE:ACCESS</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div className="flex items-center space-x-2">
                 <Switch
@@ -216,7 +239,7 @@ const BlogManagement = () => {
                 <div>
                   <CardTitle>{post.title}</CardTitle>
                   <p className="text-sm text-muted-foreground">
-                    {post.published ? "Published" : "Draft"} | {new Date(post.created_at).toLocaleDateString()}
+                    {post.published ? "Published" : "Draft"} | {post.category && `${post.category} | `}{new Date(post.created_at).toLocaleDateString('en-GB')}
                   </p>
                 </div>
                 <div className="flex gap-2">

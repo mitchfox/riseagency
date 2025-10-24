@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import { WorkWithUsDialog } from "@/components/WorkWithUsDialog";
 import { IntroModal } from "@/components/IntroModal";
 import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import bannerHero from "@/assets/banner-hero-team.jpg";
 import marbleBg from "@/assets/marble-bg.png";
 import riseStarIcon from "@/assets/rise-star-icon.png";
@@ -14,35 +15,57 @@ import clubsNetwork from "@/assets/clubs-network.jpg";
 import scoutsNetwork from "@/assets/scouts-network.jpg";
 import coachesNetwork from "@/assets/coaches-network.jpg";
 
-const newsArticles = [
-  {
-    title: "Omotoye Scores Brace in Derby Victory",
-    date: "March 15, 2025",
-    excerpt: "Belgian striker shines with two crucial goals in regional derby, extending his impressive season form.",
-    link: "/players/tyrese-omotoye"
-  },
-  {
-    title: "Mulligan Earns International Call-Up",
-    date: "March 10, 2025",
-    excerpt: "Czech midfielder's consistent performances earn recognition at senior national team level.",
-    link: "/players/michael-vit-mulligan"
-  },
-  {
-    title: "Young Talent Svoboda Joins Senior Training",
-    date: "March 5, 2025",
-    excerpt: "18-year-old prospect invited to train with Bohemians 1905 first team, marking significant career step.",
-    link: "/players/jaroslav-svoboda"
-  }
-];
+interface NewsArticle {
+  id: string;
+  title: string;
+  excerpt: string | null;
+  image_url: string | null;
+  created_at: string;
+}
 
 const Index = () => {
   const [showIntroModal, setShowIntroModal] = useState(false);
+  const [newsArticles, setNewsArticles] = useState<NewsArticle[]>([]);
+  const [insideAccessArticles, setInsideAccessArticles] = useState<NewsArticle[]>([]);
 
   useEffect(() => {
     const hasSeenIntro = localStorage.getItem("intro-modal-seen");
     if (!hasSeenIntro) {
       setShowIntroModal(true);
     }
+
+    // Fetch regular news articles
+    const fetchNews = async () => {
+      const { data, error } = await supabase
+        .from('blog_posts')
+        .select('id, title, excerpt, image_url, created_at')
+        .eq('published', true)
+        .or('category.is.null,category.neq.INSIDE:ACCESS')
+        .order('created_at', { ascending: false })
+        .limit(3);
+
+      if (!error && data) {
+        setNewsArticles(data);
+      }
+    };
+
+    // Fetch INSIDE:ACCESS articles
+    const fetchInsideAccess = async () => {
+      const { data, error } = await supabase
+        .from('blog_posts')
+        .select('id, title, excerpt, image_url, created_at')
+        .eq('published', true)
+        .eq('category', 'INSIDE:ACCESS')
+        .order('created_at', { ascending: false })
+        .limit(6);
+
+      if (!error && data) {
+        setInsideAccessArticles(data);
+      }
+    };
+
+    fetchNews();
+    fetchInsideAccess();
   }, []);
 
   return (
@@ -157,26 +180,41 @@ const Index = () => {
               </p>
             </div>
             <div className="grid md:grid-cols-3 gap-8">
-              {newsArticles.map((article, index) => (
+              {newsArticles.map((article) => (
                 <Link
-                  key={index}
-                  to={article.link}
+                  key={article.id}
+                  to={`/news/${article.id}`}
                   className="group bg-background rounded-xl overflow-hidden border border-border hover:border-primary/50 transition-all duration-300 hover:shadow-2xl hover:shadow-primary/10 hover:-translate-y-2"
                 >
+                  {article.image_url && (
+                    <div className="aspect-video overflow-hidden">
+                      <img 
+                        src={article.image_url} 
+                        alt={article.title}
+                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                      />
+                    </div>
+                  )}
                   <div className="p-8 space-y-4">
                     <div className="flex items-center gap-3">
                       <div className="h-px flex-1 bg-gradient-to-r from-transparent to-primary/30"></div>
                       <div className="text-xs text-primary uppercase tracking-widest font-bebas">
-                        {article.date}
+                        {new Date(article.created_at).toLocaleDateString('en-GB', { 
+                          day: 'numeric', 
+                          month: 'long', 
+                          year: 'numeric' 
+                        })}
                       </div>
                       <div className="h-px flex-1 bg-gradient-to-l from-transparent to-primary/30"></div>
                     </div>
                     <h3 className="text-2xl md:text-3xl font-bebas uppercase text-foreground leading-tight group-hover:text-primary transition-colors duration-300">
                       {article.title}
                     </h3>
-                    <p className="text-muted-foreground leading-relaxed">
-                      {article.excerpt}
-                    </p>
+                    {article.excerpt && (
+                      <p className="text-muted-foreground leading-relaxed">
+                        {article.excerpt}
+                      </p>
+                    )}
                     <div className="flex items-center text-primary font-bebas uppercase tracking-wider text-sm pt-2 group-hover:gap-3 transition-all">
                       <span>Read More</span>
                       <span className="inline-block group-hover:translate-x-2 transition-transform">→</span>
@@ -187,6 +225,42 @@ const Index = () => {
             </div>
           </div>
         </section>
+
+        {/* INSIDE:ACCESS Section */}
+        {insideAccessArticles.length > 0 && (
+          <section className="py-32 px-4 bg-background">
+            <div className="container mx-auto max-w-7xl">
+              <div className="text-center mb-16 space-y-4">
+                <div className="inline-block">
+                  <span className="text-sm font-bebas uppercase tracking-widest text-primary border border-primary/30 px-6 py-2 rounded-full">
+                    Exclusive Content
+                  </span>
+                </div>
+                <h2 className="text-5xl md:text-7xl font-bebas uppercase tracking-wider text-foreground">
+                  INSIDE<span className="text-primary">:ACCESS</span>
+                </h2>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                {insideAccessArticles.map((article) => (
+                  article.image_url && (
+                    <Link
+                      key={article.id}
+                      to={`/news/${article.id}`}
+                      className="group relative aspect-square overflow-hidden rounded-lg"
+                    >
+                      <img 
+                        src={article.image_url} 
+                        alt={article.title}
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                      />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    </Link>
+                  )
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* Inbound CTA Section - Moved to top */}
         <section className="py-32 px-4 bg-background relative overflow-hidden">
