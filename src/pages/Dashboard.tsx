@@ -6,6 +6,7 @@ import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { User } from "@supabase/supabase-js";
 import { FileText } from "lucide-react";
@@ -22,12 +23,29 @@ interface Analysis {
   minutes_played: number | null;
 }
 
+interface PlayerProgram {
+  id: string;
+  program_name: string;
+  phase_name: string | null;
+  phase_dates: string | null;
+  overview_text: string | null;
+  is_current: boolean;
+  schedule_notes: string | null;
+  weekly_schedules: any;
+  sessions: any;
+  phase_image_url: string | null;
+  player_image_url: string | null;
+  created_at: string;
+}
+
 const Dashboard = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<User | null>(null);
   const [analyses, setAnalyses] = useState<Analysis[]>([]);
   const [playerData, setPlayerData] = useState<any>(null);
+  const [programs, setPrograms] = useState<PlayerProgram[]>([]);
+  const [selectedProgramId, setSelectedProgramId] = useState<string | null>(null);
 
   useEffect(() => {
     checkAuth();
@@ -55,6 +73,7 @@ const Dashboard = () => {
 
       setUser(session.user);
       await fetchAnalyses(session.user.email);
+      await fetchPrograms(session.user.email);
     } catch (error) {
       console.error("Auth error:", error);
       navigate("/login");
@@ -105,6 +124,44 @@ const Dashboard = () => {
     } catch (error: any) {
       console.error("Error fetching analyses:", error);
       toast.error("Failed to load analysis data");
+    }
+  };
+
+  const fetchPrograms = async (email: string | undefined) => {
+    if (!email) return;
+    
+    try {
+      // First get the player ID from email
+      const { data: playerData, error: playerError } = await supabase
+        .from("players")
+        .select("id")
+        .eq("email", email)
+        .maybeSingle();
+
+      if (playerError) throw playerError;
+      if (!playerData) return;
+
+      // Fetch their programs
+      const { data: programsData, error: programsError } = await supabase
+        .from("player_programs")
+        .select("*")
+        .eq("player_id", playerData.id)
+        .order("created_at", { ascending: false });
+
+      if (programsError) throw programsError;
+      
+      setPrograms(programsData || []);
+      
+      // Set the current program as default
+      const currentProgram = programsData?.find(p => p.is_current);
+      if (currentProgram) {
+        setSelectedProgramId(currentProgram.id);
+      } else if (programsData && programsData.length > 0) {
+        setSelectedProgramId(programsData[0].id);
+      }
+    } catch (error: any) {
+      console.error("Error fetching programs:", error);
+      toast.error("Failed to load program data");
     }
   };
 
@@ -288,26 +345,167 @@ const Dashboard = () => {
             <TabsContent value="physical" className="space-y-6">
               <Card className="bg-marble">
                 <CardHeader>
-                  <CardTitle className="text-3xl font-bebas uppercase tracking-wider">
-                    Physical Programming
-                  </CardTitle>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-3xl font-bebas uppercase tracking-wider">
+                      Physical Programming
+                    </CardTitle>
+                    {programs.length > 1 && (
+                      <Select value={selectedProgramId || undefined} onValueChange={setSelectedProgramId}>
+                        <SelectTrigger className="w-[250px]">
+                          <SelectValue placeholder="Select program" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {programs.map((program) => (
+                            <SelectItem key={program.id} value={program.id}>
+                              {program.program_name} {program.is_current && "(Current)"}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <p className="text-muted-foreground">
-                    Your personalized physical training program will appear here. This section will include:
-                  </p>
-                  <ul className="list-disc list-inside space-y-2 text-muted-foreground">
-                    <li>Weekly training schedules</li>
-                    <li>Strength & conditioning workouts</li>
-                    <li>Recovery protocols</li>
-                    <li>Nutrition guidelines</li>
-                    <li>Injury prevention exercises</li>
-                  </ul>
-                  <div className="mt-6 p-6 border border-primary/20 rounded-lg">
-                    <p className="text-center text-muted-foreground italic">
-                      Content coming soon - your strength coach will upload programs here
-                    </p>
-                  </div>
+                  {programs.length === 0 ? (
+                    <>
+                      <p className="text-muted-foreground">
+                        Your personalized physical training program will appear here. This section will include:
+                      </p>
+                      <ul className="list-disc list-inside space-y-2 text-muted-foreground">
+                        <li>Weekly training schedules</li>
+                        <li>Strength & conditioning workouts</li>
+                        <li>Recovery protocols</li>
+                        <li>Nutrition guidelines</li>
+                        <li>Injury prevention exercises</li>
+                      </ul>
+                      <div className="mt-6 p-6 border border-primary/20 rounded-lg">
+                        <p className="text-center text-muted-foreground italic">
+                          Content coming soon - your strength coach will upload programs here
+                        </p>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      {programs.filter(p => p.id === selectedProgramId).map((program) => (
+                        <div key={program.id} className="space-y-6">
+                          {/* Program Header */}
+                          <div className="border-b pb-4">
+                            <div className="flex items-start justify-between mb-2">
+                              <div>
+                                <h3 className="text-2xl font-bebas uppercase tracking-wider">
+                                  {program.program_name}
+                                </h3>
+                                {program.phase_name && (
+                                  <p className="text-lg text-muted-foreground">{program.phase_name}</p>
+                                )}
+                              </div>
+                              {program.is_current && (
+                                <span className="px-3 py-1 bg-primary text-black text-sm font-bebas uppercase rounded">
+                                  Current
+                                </span>
+                              )}
+                            </div>
+                            {program.phase_dates && (
+                              <p className="text-sm text-muted-foreground">{program.phase_dates}</p>
+                            )}
+                          </div>
+
+                          {/* Overview */}
+                          {program.overview_text && (
+                            <div>
+                              <h4 className="text-xl font-bebas uppercase mb-2">Overview</h4>
+                              <p className="text-muted-foreground whitespace-pre-wrap">{program.overview_text}</p>
+                            </div>
+                          )}
+
+                          {/* Images */}
+                          {(program.phase_image_url || program.player_image_url) && (
+                            <div className="grid md:grid-cols-2 gap-4">
+                              {program.phase_image_url && (
+                                <img 
+                                  src={program.phase_image_url} 
+                                  alt="Phase overview"
+                                  className="w-full rounded-lg"
+                                />
+                              )}
+                              {program.player_image_url && (
+                                <img 
+                                  src={program.player_image_url} 
+                                  alt="Player"
+                                  className="w-full rounded-lg"
+                                />
+                              )}
+                            </div>
+                          )}
+
+                          {/* Weekly Schedule */}
+                          {program.weekly_schedules && Array.isArray(program.weekly_schedules) && program.weekly_schedules.length > 0 && (
+                            <div>
+                              <h4 className="text-xl font-bebas uppercase mb-3">Weekly Schedule</h4>
+                              <div className="space-y-4">
+                                {program.weekly_schedules.map((week: any, idx: number) => (
+                                  <div key={idx} className="border rounded-lg p-4">
+                                    <h5 className="font-bebas text-lg mb-3">Week {week.week || idx + 1}</h5>
+                                    <div className="grid gap-2">
+                                      {Object.entries(week).filter(([key]) => key !== 'week').map(([day, value]) => (
+                                        <div key={day} className="flex justify-between py-2 border-b last:border-0">
+                                          <span className="font-medium capitalize">{day}</span>
+                                          <span className="text-muted-foreground">{value as string}</span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Schedule Notes */}
+                          {program.schedule_notes && (
+                            <div className="bg-accent/20 border border-primary/20 rounded-lg p-4">
+                              <h4 className="text-lg font-bebas uppercase mb-2">Notes</h4>
+                              <p className="text-sm text-muted-foreground whitespace-pre-wrap">{program.schedule_notes}</p>
+                            </div>
+                          )}
+
+                          {/* Sessions */}
+                          {program.sessions && typeof program.sessions === 'object' && Object.keys(program.sessions).length > 0 && (
+                            <div>
+                              <h4 className="text-xl font-bebas uppercase mb-3">Training Sessions</h4>
+                              <div className="space-y-4">
+                                {Object.entries(program.sessions).map(([key, session]: [string, any]) => (
+                                  <div key={key} className="border rounded-lg p-4">
+                                    <h5 className="font-bebas text-lg mb-2">{session.name || key}</h5>
+                                    {session.description && (
+                                      <p className="text-sm text-muted-foreground mb-3">{session.description}</p>
+                                    )}
+                                    {session.exercises && Array.isArray(session.exercises) && (
+                                      <div className="space-y-2">
+                                        {session.exercises.map((exercise: any, idx: number) => (
+                                          <div key={idx} className="text-sm pl-4 border-l-2 border-primary/30">
+                                            <p className="font-medium">{exercise.name || exercise}</p>
+                                            {exercise.sets && <span className="text-muted-foreground">{exercise.sets} sets</span>}
+                                            {exercise.reps && <span className="text-muted-foreground"> × {exercise.reps} reps</span>}
+                                          </div>
+                                        ))}
+                                      </div>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          <Button 
+                            onClick={() => navigate("/performance")}
+                            className="w-full font-bebas uppercase tracking-wider"
+                          >
+                            View Full Program
+                          </Button>
+                        </div>
+                      ))}
+                    </>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
