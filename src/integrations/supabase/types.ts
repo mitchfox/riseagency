@@ -473,6 +473,7 @@ export type Database = {
         Row: {
           age: number
           bio: string | null
+          category: string | null
           created_at: string | null
           email: string | null
           highlights: Json | null
@@ -487,6 +488,7 @@ export type Database = {
         Insert: {
           age: number
           bio?: string | null
+          category?: string | null
           created_at?: string | null
           email?: string | null
           highlights?: Json | null
@@ -501,6 +503,7 @@ export type Database = {
         Update: {
           age?: number
           bio?: string | null
+          category?: string | null
           created_at?: string | null
           email?: string | null
           highlights?: Json | null

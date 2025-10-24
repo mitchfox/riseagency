@@ -22,6 +22,7 @@ interface Player {
   email: string | null;
   visible_on_stars_page: boolean;
   highlights: any;
+  category: string;
 }
 
 interface PlayerStats {
@@ -69,6 +70,7 @@ const PlayerManagement = () => {
   const [existingHighlights, setExistingHighlights] = useState<any[]>([]);
   const [editingHighlightIndex, setEditingHighlightIndex] = useState<number | null>(null);
   const [visibleOnStarsPage, setVisibleOnStarsPage] = useState(false);
+  const [playerCategory, setPlayerCategory] = useState<string>("Other");
   const [isProgrammingDialogOpen, setIsProgrammingDialogOpen] = useState(false);
   const [selectedProgrammingPlayerId, setSelectedProgrammingPlayerId] = useState<string>("");
   const [selectedProgrammingPlayerName, setSelectedProgrammingPlayerName] = useState<string>("");
@@ -232,6 +234,7 @@ const PlayerManagement = () => {
             image_url: formData.image_url,
             email: formData.email || null,
             visible_on_stars_page: visibleOnStarsPage,
+            category: playerCategory,
           })
           .eq("id", editingPlayer.id);
 
@@ -249,6 +252,7 @@ const PlayerManagement = () => {
             image_url: formData.image_url,
             email: formData.email || null,
             visible_on_stars_page: visibleOnStarsPage,
+            category: playerCategory,
           })
           .select()
           .single();
@@ -324,6 +328,7 @@ const PlayerManagement = () => {
   const startEdit = (player: Player) => {
     setEditingPlayer(player);
     setVisibleOnStarsPage(player.visible_on_stars_page || false);
+    setPlayerCategory(player.category || "Other");
     
     // Parse bio for additional fields if it contains JSON
     let additionalData: ExpandedPlayerData = {};
@@ -545,7 +550,7 @@ const PlayerManagement = () => {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Player Management</h2>
+        <h2 className="text-2xl font-bold">Players</h2>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button onClick={() => {
@@ -564,6 +569,8 @@ const PlayerManagement = () => {
               });
               setExternalLinks([]);
               setStrengthsAndPlayStyle([]);
+              setPlayerCategory("Other");
+              setVisibleOnStarsPage(false);
             }}>
               Add New Player
             </Button>
@@ -615,6 +622,20 @@ const PlayerManagement = () => {
                     onChange={(e) => setFormData({ ...formData, nationality: e.target.value })}
                     required
                   />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="category">Category *</Label>
+                  <select
+                    id="category"
+                    value={playerCategory}
+                    onChange={(e) => setPlayerCategory(e.target.value)}
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                    required
+                  >
+                    <option value="Signed">Signed</option>
+                    <option value="Mandate">Mandate</option>
+                    <option value="Other">Other</option>
+                  </select>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="number">Jersey Number</Label>
@@ -787,40 +808,48 @@ const PlayerManagement = () => {
         </Dialog>
       </div>
 
-      <div className="grid gap-4">
-        {players.map((player) => {
-          const isExpanded = expandedPlayerId === player.id;
-          const playerStats = stats[player.id];
-          let bioData: any = {};
-          try {
-            if (player.bio && player.bio.startsWith('{')) {
-              bioData = JSON.parse(player.bio);
-            }
-          } catch (e) {
-            // Bio is regular text
-          }
-          
-          return (
-            <Card key={player.id} className="cursor-pointer">
-              <CardHeader 
-                onClick={() => setExpandedPlayerId(isExpanded ? null : player.id)}
-                className="hover:bg-accent/50 transition-colors"
-              >
-                <div className="flex justify-between items-center">
-                  <div className="flex items-center gap-2 text-foreground font-normal">
-                    <span>{player.name}</span>
-                    <span className="text-muted-foreground">•</span>
-                    <span className="text-muted-foreground">{player.position}</span>
-                    <span className="text-muted-foreground">•</span>
-                    <span className="text-muted-foreground">{player.age} years</span>
-                    <span className="text-muted-foreground">•</span>
-                    <span className="text-muted-foreground">{player.nationality}</span>
-                  </div>
-                  <div className="text-muted-foreground">
-                    {isExpanded ? "▼" : "▶"}
-                  </div>
-                </div>
-              </CardHeader>
+      {/* Group players by category */}
+      {['Signed', 'Mandate', 'Other'].map((category) => {
+        const categoryPlayers = players.filter(p => p.category === category);
+        if (categoryPlayers.length === 0) return null;
+        
+        return (
+          <div key={category} className="space-y-4">
+            <h3 className="text-xl font-semibold text-primary">{category}</h3>
+            <div className="grid gap-4">
+              {categoryPlayers.map((player) => {
+                const isExpanded = expandedPlayerId === player.id;
+                const playerStats = stats[player.id];
+                let bioData: any = {};
+                try {
+                  if (player.bio && player.bio.startsWith('{')) {
+                    bioData = JSON.parse(player.bio);
+                  }
+                } catch (e) {
+                  // Bio is regular text
+                }
+                
+                return (
+                  <Card key={player.id} className="cursor-pointer">
+                    <CardHeader 
+                      onClick={() => setExpandedPlayerId(isExpanded ? null : player.id)}
+                      className="hover:bg-accent/50 transition-colors"
+                    >
+                      <div className="flex justify-between items-center">
+                        <div className="flex items-center gap-2 text-foreground font-normal">
+                          <span>{player.name}</span>
+                          <span className="text-muted-foreground">•</span>
+                          <span className="text-muted-foreground">{player.position}</span>
+                          <span className="text-muted-foreground">•</span>
+                          <span className="text-muted-foreground">{player.age} years</span>
+                          <span className="text-muted-foreground">•</span>
+                          <span className="text-muted-foreground">{player.nationality}</span>
+                        </div>
+                        <div className="text-muted-foreground">
+                          {isExpanded ? "▼" : "▶"}
+                        </div>
+                      </div>
+                    </CardHeader>
               
               {isExpanded && (
                 <CardContent className="space-y-4">
@@ -965,7 +994,10 @@ const PlayerManagement = () => {
             </Card>
           );
         })}
-      </div>
+            </div>
+          </div>
+        );
+      })}
 
       {/* Analysis Dialog */}
       <Dialog open={isAnalysisDialogOpen} onOpenChange={setIsAnalysisDialogOpen}>
