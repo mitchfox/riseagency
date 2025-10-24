@@ -6,15 +6,16 @@ export const Footer = () => {
   return (
     <footer className="bg-secondary/30 border-t border-primary/10">
       <div className="container mx-auto px-4 py-16">
-        <div className="grid md:grid-cols-4 gap-12">
-          {/* Logo & Description */}
-          <div className="space-y-6">
-            <img src={logo} alt="RISE Football Agency" className="h-12" />
-            <p className="text-muted-foreground text-base leading-relaxed">
-              Professional football representation helping players reach their full potential.
-            </p>
-          </div>
+        {/* Logo & Description - Most Prominent */}
+        <div className="max-w-2xl mx-auto text-center mb-16 space-y-6">
+          <img src={logo} alt="RISE Football Agency" className="h-16 mx-auto" />
+          <p className="text-muted-foreground text-lg leading-relaxed">
+            Professional football representation helping players reach their full potential.
+          </p>
+        </div>
 
+        {/* Everything else underneath */}
+        <div className="grid md:grid-cols-3 gap-12 max-w-5xl mx-auto">
           {/* Quick Links */}
           <div>
             <h3 className="font-bebas text-2xl uppercase tracking-wider text-foreground mb-6">
