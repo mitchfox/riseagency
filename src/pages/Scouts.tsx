@@ -1,7 +1,9 @@
+import { useState } from "react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { RequestScoutDialog } from "@/components/RequestScoutDialog";
 import bannerHero from "@/assets/banner-hero.jpg";
 import blackMarble from "@/assets/black-marble-bg.png";
 import scoutsNetwork from "@/assets/scouts-network.jpg";
@@ -9,6 +11,8 @@ import matchAction1 from "@/assets/gallery/match-action-1.jpg";
 import teamDiscussion from "@/assets/gallery/team-discussion.jpg";
 
 const Scouts = () => {
+  const [requestScoutOpen, setRequestScoutOpen] = useState(false);
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -95,6 +99,25 @@ const Scouts = () => {
           />
         </section>
 
+        {/* Player Request Section */}
+        <section className="py-16 md:py-24 bg-muted/30">
+          <div className="container mx-auto px-4 text-center">
+            <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider mb-6">
+              Request a Scout at Your Game
+            </h2>
+            <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
+              Playing in an upcoming match? Request one of our scouts to attend and evaluate your performance
+            </p>
+            <Button 
+              onClick={() => setRequestScoutOpen(true)}
+              size="lg" 
+              className="btn-shine font-bebas uppercase tracking-wider"
+            >
+              Request Scout Attendance
+            </Button>
+          </div>
+        </section>
+
         {/* CTA Section */}
         <section className="py-16 md:py-24 bg-background">
           <div className="container mx-auto px-4 text-center">
@@ -112,6 +135,7 @@ const Scouts = () => {
       </main>
 
       <Footer />
+      <RequestScoutDialog open={requestScoutOpen} onOpenChange={setRequestScoutOpen} />
     </div>
   );
 };
