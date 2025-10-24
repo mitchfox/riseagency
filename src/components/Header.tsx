@@ -80,12 +80,12 @@ export const Header = () => {
               </button>
             </DrawerTrigger>
             <DrawerContent 
-              className="h-full w-[240px] left-0 flex flex-col rounded-r-none bg-cover bg-center animate-slide-in-left transition-all duration-300 ease-out"
+              className="h-full w-[240px] left-0 flex flex-col rounded-r-none bg-cover bg-center animate-slide-in-left transition-all duration-300 ease-out overflow-y-auto"
               style={{ 
                 backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url(${blackMarbleBg})` 
               }}
             >
-              <div className="flex justify-end p-4">
+              <div className="flex justify-end p-4 sticky top-0 bg-black/40 backdrop-blur-sm z-10">
                 <DrawerClose asChild>
                   <button
                     className="rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none text-white"
@@ -95,7 +95,7 @@ export const Header = () => {
                   </button>
                 </DrawerClose>
               </div>
-              <nav className="flex flex-col gap-1 px-4 flex-1">
+              <nav className="flex flex-col gap-1 px-4 flex-1 pb-4">
                 <DrawerClose asChild>
                   <Link
                     to="/"

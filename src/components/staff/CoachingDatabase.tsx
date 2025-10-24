@@ -336,9 +336,9 @@ export const CoachingDatabase = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TableType)}>
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-1">
           {Object.entries(tableConfigs).map(([key, config]) => (
-            <TabsTrigger key={key} value={key}>
+            <TabsTrigger key={key} value={key} className="text-xs md:text-sm">
               {config.label}
             </TabsTrigger>
           ))}

@@ -263,14 +263,13 @@ const PlayerDetail = () => {
 
           {/* Highlights Video - Full Width 16:9 with Club Logo Overlays */}
           <div className="mb-8">
-            <div className="relative aspect-video bg-secondary/30 rounded-lg overflow-hidden border-4 border-[hsl(var(--gold))]">
+            <div className="relative aspect-video bg-secondary/30 rounded-lg overflow-hidden border-2 md:border-4 border-[hsl(var(--gold))]">
               {dbHighlights.length > 0 && typeof currentVideoType === 'number' && dbHighlights[currentVideoType]?.videoUrl ? (
                 <>
                   <video 
                     key={dbHighlights[currentVideoType].videoUrl}
                     className="w-full h-full object-contain bg-black"
                     controls
-                    autoPlay={currentVideoType === 0}
                     playsInline
                     preload="metadata"
                     onError={(e) => {
@@ -285,14 +284,14 @@ const PlayerDetail = () => {
                   </video>
                 </>
               ) : (
-                <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
-                  <Video className="w-16 h-16 text-primary" />
-                  <p className="text-foreground/60 font-bebas text-xl uppercase tracking-wider">
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 px-4">
+                  <Video className="w-12 h-12 md:w-16 md:h-16 text-primary" />
+                  <p className="text-foreground/60 font-bebas text-lg md:text-xl uppercase tracking-wider text-center">
                     {dbHighlights.length > 0 && typeof currentVideoType === 'number' && dbHighlights[currentVideoType]?.name
                       ? dbHighlights[currentVideoType].name
                       : 'Highlights'}
                   </p>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-xs md:text-sm text-muted-foreground">
                     Coming Soon
                   </p>
                 </div>
@@ -300,12 +299,12 @@ const PlayerDetail = () => {
               
               {/* Club Logo Overlays - Bottom - Show database highlights */}
               {dbHighlights.length > 0 && (
-                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-10">
+                <div className="absolute bottom-2 md:bottom-4 left-1/2 -translate-x-1/2 flex flex-wrap justify-center gap-1 md:gap-2 z-10 max-w-full px-2">
                   {dbHighlights.map((highlight, index) => (
                     <button
                       key={index}
                       onClick={() => setCurrentVideoType(index)}
-                      className={`w-8 h-8 rounded border-2 transition-all overflow-hidden bg-transparent ${
+                      className={`w-6 h-6 md:w-8 md:h-8 rounded border transition-all overflow-hidden bg-black/50 ${
                         currentVideoType === index
                           ? 'border-[hsl(var(--gold))] scale-110'
                           : 'border-[hsl(var(--gold))]/20 hover:border-[hsl(var(--gold))]/50'
@@ -316,6 +315,9 @@ const PlayerDetail = () => {
                         src={highlight.clubLogo} 
                         alt={highlight.name || `Highlight ${index + 1}`}
                         className="w-full h-full object-contain p-0.5"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                        }}
                       />
                     </button>
                   ))}

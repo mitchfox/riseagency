@@ -282,25 +282,25 @@ const BlogManagement = () => {
                   </div>
                   
                   {post.image_url && (
-                    <div className="flex justify-center">
+                    <div className="flex justify-center overflow-hidden">
                       <img 
                         src={post.image_url} 
                         alt={post.title} 
-                        className="max-w-full h-auto max-h-64 object-cover rounded-lg" 
+                        className="max-w-full w-full h-auto max-h-64 object-cover rounded-lg" 
                       />
                     </div>
                   )}
                   
                   {post.excerpt && (
-                    <div>
+                    <div className="overflow-hidden">
                       <p className="text-sm text-muted-foreground mb-1">Excerpt</p>
-                      <p className="text-sm">{post.excerpt}</p>
+                      <p className="text-sm break-words">{post.excerpt}</p>
                     </div>
                   )}
                   
-                  <div>
+                  <div className="overflow-hidden">
                     <p className="text-sm text-muted-foreground mb-1">Content</p>
-                    <div className="text-sm whitespace-pre-wrap">{post.content}</div>
+                    <div className="text-sm whitespace-pre-wrap break-words max-h-96 overflow-y-auto">{post.content}</div>
                   </div>
                 </CardContent>
               )}

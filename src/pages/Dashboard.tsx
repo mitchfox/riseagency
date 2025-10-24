@@ -221,16 +221,16 @@ const Dashboard = () => {
                       {analyses.map((analysis) => (
                         <div 
                           key={analysis.id} 
-                          className="flex items-center justify-between border rounded-lg p-4 hover:border-primary transition-colors bg-card"
+                          className="flex flex-col md:flex-row md:items-center md:justify-between border rounded-lg p-3 md:p-4 hover:border-primary transition-colors bg-card gap-3 md:gap-0"
                         >
-                          <div className="flex items-center gap-6">
-                            <span className="text-sm text-muted-foreground min-w-[100px]">
+                          <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-6">
+                            <span className="text-xs md:text-sm text-muted-foreground md:min-w-[100px]">
                               {new Date(analysis.analysis_date).toLocaleDateString('en-GB')}
                             </span>
                             
                             {analysis.opponent && (
                               <div className="flex flex-col">
-                                <span className="text-sm font-medium">vs {analysis.opponent}</span>
+                                <span className="text-xs md:text-sm font-medium">vs {analysis.opponent}</span>
                                 {analysis.result && (
                                   <span className="text-xs text-muted-foreground">{analysis.result}</span>
                                 )}
@@ -238,17 +238,17 @@ const Dashboard = () => {
                             )}
 
                             {analysis.minutes_played !== null && (
-                              <span className="text-sm text-muted-foreground">
+                              <span className="text-xs md:text-sm text-muted-foreground">
                                 {analysis.minutes_played} min
                               </span>
                             )}
                           </div>
 
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 flex-wrap">
                             {analysis.r90_score !== null && analysis.r90_score !== undefined && (
                               <button
                                 onClick={() => navigate(`/performance-report/${analysis.id}`)}
-                                className={`${getR90Color(analysis.r90_score)} text-white px-4 py-2 rounded font-bold hover:opacity-80 transition-opacity cursor-pointer`}
+                                className={`${getR90Color(analysis.r90_score)} text-white px-3 md:px-4 py-1.5 md:py-2 rounded text-sm md:text-base font-bold hover:opacity-80 transition-opacity cursor-pointer`}
                               >
                                 R90: {analysis.r90_score.toFixed(2)}
                               </button>
@@ -259,8 +259,9 @@ const Dashboard = () => {
                                 variant="outline" 
                                 size="sm"
                                 onClick={() => window.open(analysis.pdf_url!, '_blank')}
+                                className="text-xs"
                               >
-                                <FileText className="w-4 h-4 mr-1" />
+                                <FileText className="w-3 h-3 md:w-4 md:h-4 mr-1" />
                                 PDF
                               </Button>
                             )}
@@ -270,6 +271,7 @@ const Dashboard = () => {
                                 variant="outline" 
                                 size="sm"
                                 onClick={() => window.open(analysis.video_url!, '_blank')}
+                                className="text-xs"
                               >
                                 📹 Video
                               </Button>

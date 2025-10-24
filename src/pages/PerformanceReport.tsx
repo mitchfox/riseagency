@@ -172,18 +172,18 @@ const PerformanceReport = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-4 p-4 bg-accent/20 rounded-lg">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-accent/20 rounded-lg">
               <div className="text-center">
-                <p className="text-sm text-muted-foreground mb-1">Raw Score</p>
-                <p className="text-2xl font-bold">{calculateRScore()}</p>
+                <p className="text-xs md:text-sm text-muted-foreground mb-1">Raw Score</p>
+                <p className="text-xl md:text-2xl font-bold">{calculateRScore()}</p>
               </div>
-              <div className="text-center bg-primary text-primary-foreground rounded-lg p-4 -m-2">
-                <p className="text-sm mb-1 opacity-90">R90 Score</p>
-                <p className="text-3xl font-bold">{analysis.r90_score?.toFixed(2) || "N/A"}</p>
+              <div className="text-center bg-primary text-primary-foreground rounded-lg p-4">
+                <p className="text-xs md:text-sm mb-1 opacity-90">R90 Score</p>
+                <p className="text-2xl md:text-3xl font-bold">{analysis.r90_score?.toFixed(2) || "N/A"}</p>
               </div>
               <div className="text-center">
-                <p className="text-sm text-muted-foreground mb-1">Minutes Played</p>
-                <p className="text-2xl font-bold">{analysis.minutes_played || "N/A"}</p>
+                <p className="text-xs md:text-sm text-muted-foreground mb-1">Minutes Played</p>
+                <p className="text-xl md:text-2xl font-bold">{analysis.minutes_played || "N/A"}</p>
               </div>
             </div>
           </CardContent>
@@ -197,29 +197,29 @@ const PerformanceReport = () => {
             {actions.length === 0 ? (
               <p className="text-center text-muted-foreground py-8">No performance actions recorded yet</p>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full">
+              <div className="overflow-x-auto -mx-4 md:mx-0">
+                <table className="w-full min-w-full">
                   <thead>
                     <tr className="border-b">
-                      <th className="text-left p-2 font-semibold">#</th>
-                      <th className="text-left p-2 font-semibold">Minute</th>
-                      <th className="text-left p-2 font-semibold">Score</th>
-                      <th className="text-left p-2 font-semibold">Action</th>
-                      <th className="text-left p-2 font-semibold">Description</th>
-                      <th className="text-left p-2 font-semibold">Notes</th>
+                      <th className="text-left p-2 font-semibold text-xs md:text-sm whitespace-nowrap">#</th>
+                      <th className="text-left p-2 font-semibold text-xs md:text-sm whitespace-nowrap">Minute</th>
+                      <th className="text-left p-2 font-semibold text-xs md:text-sm whitespace-nowrap">Score</th>
+                      <th className="text-left p-2 font-semibold text-xs md:text-sm whitespace-nowrap">Action</th>
+                      <th className="text-left p-2 font-semibold text-xs md:text-sm">Description</th>
+                      <th className="text-left p-2 font-semibold text-xs md:text-sm hidden md:table-cell">Notes</th>
                     </tr>
                   </thead>
                   <tbody>
                     {actions.map((action) => (
                       <tr key={action.id} className="border-b hover:bg-accent/50">
-                        <td className="p-2">{action.action_number}</td>
-                        <td className="p-2">{action.minute.toFixed(2)}</td>
-                        <td className={`p-2 ${getActionScoreColor(action.action_score)}`}>
+                        <td className="p-2 text-xs md:text-sm whitespace-nowrap">{action.action_number}</td>
+                        <td className="p-2 text-xs md:text-sm whitespace-nowrap">{action.minute.toFixed(2)}</td>
+                        <td className={`p-2 text-xs md:text-sm whitespace-nowrap ${getActionScoreColor(action.action_score)}`}>
                           {action.action_score.toFixed(5)}
                         </td>
-                        <td className="p-2 font-medium">{action.action_type}</td>
-                        <td className="p-2 text-sm">{action.action_description}</td>
-                        <td className="p-2 text-sm text-muted-foreground">{action.notes || "-"}</td>
+                        <td className="p-2 font-medium text-xs md:text-sm whitespace-nowrap">{action.action_type}</td>
+                        <td className="p-2 text-xs md:text-sm">{action.action_description}</td>
+                        <td className="p-2 text-xs md:text-sm text-muted-foreground hidden md:table-cell">{action.notes || "-"}</td>
                       </tr>
                     ))}
                   </tbody>
