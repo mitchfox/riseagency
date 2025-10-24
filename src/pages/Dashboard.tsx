@@ -716,7 +716,7 @@ const Dashboard = () => {
                                                           color: getSessionColor(mainKey).text,
                                                         }}
                                                       >
-                                                        Exercises
+                                                        Session {mainKey}
                                                       </TabsTrigger>
                                                     )}
                                                   </TabsList>
