@@ -5,6 +5,7 @@ import { useState } from "react";
 import blackMarble from "@/assets/black-marble-bg.png";
 import riseStarIcon from "@/assets/rise-star-icon.png";
 import omotoyeJourney from "@/assets/omotoye-journey.jpg";
+import logo from "@/assets/logo.png";
 
 interface IntroModalProps {
   open: boolean;
@@ -66,8 +67,13 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
           </div>
 
           {/* Text Content */}
-          <div className="p-3 md:p-4" style={{ backgroundImage: `url(${blackMarble})`, backgroundSize: "cover" }}>
-            <div className="text-center space-y-1">
+          <div className="p-4 md:p-6" style={{ backgroundImage: `url(${blackMarble})`, backgroundSize: "cover" }}>
+            <div className="text-center space-y-3">
+              <img 
+                src={logo} 
+                alt="RISE Football" 
+                className="h-12 md:h-16 mx-auto mb-2"
+              />
               <h2 className="text-xl md:text-2xl font-bebas uppercase tracking-wider text-white">
                 Welcome to <span className="text-primary">RISE Football</span>
               </h2>
