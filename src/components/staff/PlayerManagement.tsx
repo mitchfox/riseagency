@@ -1102,66 +1102,98 @@ const PlayerManagement = () => {
           
           {/* Existing Highlights with Reordering */}
           {existingHighlights.length > 0 && (
-            <div className="space-y-2 mb-4">
-              <Label>Current Highlights (drag to reorder)</Label>
+            <div className="space-y-3 mb-4">
+              <Label className="text-lg font-semibold">Current Highlights</Label>
+              <p className="text-sm text-muted-foreground">Use ↑ and ↓ buttons to reorder highlights</p>
               {existingHighlights.map((highlight, index) => (
-                <div key={index} className="flex items-center gap-2 p-2 border rounded">
-                  <span className="cursor-move">⋮⋮</span>
+                <div key={index} className="flex items-center gap-3 p-3 border rounded-lg bg-secondary/10">
+                  <span className="cursor-move text-muted-foreground">⋮⋮</span>
+                  
+                  {/* Club Logo */}
+                  {highlight.clubLogo && (
+                    <img 
+                      src={highlight.clubLogo} 
+                      alt="Club logo"
+                      className="w-8 h-8 object-contain"
+                    />
+                  )}
+                  
+                  {/* Video Preview */}
+                  {highlight.videoUrl && (
+                    <video 
+                      src={highlight.videoUrl}
+                      className="w-16 h-12 object-cover rounded"
+                      muted
+                    />
+                  )}
+                  
                   <div className="flex-1">
                     <p className="text-sm font-medium">{highlight.name || `Highlight ${index + 1}`}</p>
+                    {highlight.addedAt && (
+                      <p className="text-xs text-muted-foreground">
+                        Added {new Date(highlight.addedAt).toLocaleDateString()}
+                      </p>
+                    )}
                   </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setEditingHighlightIndex(index);
-                      setHighlightName(highlight.name || "");
-                    }}
-                  >
-                    <Edit className="w-3 h-3" />
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      if (index > 0) {
-                        const newHighlights = [...existingHighlights];
-                        [newHighlights[index - 1], newHighlights[index]] = [newHighlights[index], newHighlights[index - 1]];
+                  
+                  <div className="flex gap-1">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setEditingHighlightIndex(index);
+                        setHighlightName(highlight.name || "");
+                      }}
+                      title="Edit name"
+                    >
+                      <Edit className="w-3 h-3" />
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        if (index > 0) {
+                          const newHighlights = [...existingHighlights];
+                          [newHighlights[index - 1], newHighlights[index]] = [newHighlights[index], newHighlights[index - 1]];
+                          setExistingHighlights(newHighlights);
+                        }
+                      }}
+                      disabled={index === 0}
+                      title="Move up"
+                    >
+                      ↑
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        if (index < existingHighlights.length - 1) {
+                          const newHighlights = [...existingHighlights];
+                          [newHighlights[index], newHighlights[index + 1]] = [newHighlights[index + 1], newHighlights[index]];
+                          setExistingHighlights(newHighlights);
+                        }
+                      }}
+                      disabled={index === existingHighlights.length - 1}
+                      title="Move down"
+                    >
+                      ↓
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => {
+                        const newHighlights = existingHighlights.filter((_, i) => i !== index);
                         setExistingHighlights(newHighlights);
-                      }
-                    }}
-                    disabled={index === 0}
-                  >
-                    ↑
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      if (index < existingHighlights.length - 1) {
-                        const newHighlights = [...existingHighlights];
-                        [newHighlights[index], newHighlights[index + 1]] = [newHighlights[index + 1], newHighlights[index]];
-                        setExistingHighlights(newHighlights);
-                      }
-                    }}
-                    disabled={index === existingHighlights.length - 1}
-                  >
-                    ↓
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => {
-                      const newHighlights = existingHighlights.filter((_, i) => i !== index);
-                      setExistingHighlights(newHighlights);
-                    }}
-                  >
-                    Delete
-                  </Button>
+                      }}
+                      title="Delete"
+                    >
+                      Delete
+                    </Button>
+                  </div>
                 </div>
               ))}
               <Button
