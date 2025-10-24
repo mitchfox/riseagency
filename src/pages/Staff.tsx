@@ -230,7 +230,7 @@ const Staff = () => {
               className="hover:bg-accent/50 transition-colors"
             >
               <div className="flex justify-between items-center">
-                <CardTitle className="text-2xl">Players</CardTitle>
+                <CardTitle className="text-2xl">PLAYER MANAGEMENT</CardTitle>
                 <div className="text-muted-foreground">
                   {expandedSection === 'players' ? <ChevronDown size={24} /> : <ChevronRight size={24} />}
                 </div>
