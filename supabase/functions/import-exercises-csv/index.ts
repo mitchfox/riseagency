@@ -40,20 +40,20 @@ Deno.serve(async (req) => {
     );
 
     console.log('Fetching CSV file...');
-    const csvUrl = `${Deno.env.get('SUPABASE_URL')}/storage/v1/object/public/analysis-files/exercise-import-2025.csv`;
+    // Try to fetch from the public URL
+    const baseUrl = (Deno.env.get('SUPABASE_URL') ?? '').replace('//', '//qwethimbtaamlhbajmal.');
+    const csvUrl = `${baseUrl.replace('supabase.co', 'lovableproject.com')}/exercise-import-2025.csv`;
+    
+    console.log(`Attempting to fetch from: ${csvUrl}`);
     const csvResponse = await fetch(csvUrl);
     
     if (!csvResponse.ok) {
-      // Try from public folder
-      const publicUrl = `${req.url.replace('/functions/v1/import-exercises-csv', '')}/exercise-import-2025.csv`;
-      const publicResponse = await fetch(publicUrl);
-      if (!publicResponse.ok) {
-        throw new Error(`Failed to fetch CSV file from both locations`);
-      }
-      var csvText = await publicResponse.text();
-    } else {
-      var csvText = await csvResponse.text();
+      console.error(`Failed to fetch CSV: ${csvResponse.status} ${csvResponse.statusText}`);
+      throw new Error(`Failed to fetch CSV file: ${csvResponse.status}`);
     }
+    
+    const csvText = await csvResponse.text();
+    console.log(`Fetched CSV with ${csvText.length} characters`);
 
     console.log('Parsing CSV...');
     const lines = csvText.split('\n');

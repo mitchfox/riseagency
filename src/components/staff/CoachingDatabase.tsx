@@ -324,15 +324,6 @@ export const CoachingDatabase = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Coaching Database</h2>
-        {activeTab === 'coaching_exercises' && (
-          <Button
-            onClick={handleImportExercises}
-            disabled={isImporting}
-            variant="outline"
-          >
-            {isImporting ? 'Importing...' : 'Import 848 Exercises from CSV'}
-          </Button>
-        )}
       </div>
 
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TableType)}>
