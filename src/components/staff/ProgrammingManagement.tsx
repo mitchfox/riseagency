@@ -110,6 +110,7 @@ const emptyWeeklySchedule = (): WeeklySchedule => ({
 
 export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }: ProgrammingManagementProps) => {
   const [loading, setLoading] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [selectedSession, setSelectedSession] = useState<string | null>(null);
   const [programmingData, setProgrammingData] = useState<ProgrammingData>({
     phaseName: '',
@@ -268,6 +269,31 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
     updateField('weeklySchedules', updated);
   };
 
+  const handleImageUpload = async (file: File, fieldName: 'phaseImageUrl' | 'playerImageUrl') => {
+    try {
+      setUploadingImage(true);
+      
+      const fileName = `${playerId}_${fieldName}_${Date.now()}_${file.name}`;
+      const { data, error } = await supabase.storage
+        .from('analysis-files')
+        .upload(`programming/${fileName}`, file);
+      
+      if (error) throw error;
+      
+      const { data: { publicUrl } } = supabase.storage
+        .from('analysis-files')
+        .getPublicUrl(`programming/${fileName}`);
+      
+      updateField(fieldName, publicUrl);
+      toast.success("Image uploaded successfully!");
+    } catch (error: any) {
+      console.error("Error uploading image:", error);
+      toast.error("Failed to upload image");
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
@@ -315,22 +341,48 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
                 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="phaseImageUrl">Phase Image URL</Label>
+                    <Label htmlFor="phaseImage">Phase Image</Label>
                     <Input
-                      id="phaseImageUrl"
-                      placeholder="Image URL for phase"
-                      value={programmingData.phaseImageUrl}
-                      onChange={(e) => updateField('phaseImageUrl', e.target.value)}
+                      id="phaseImage"
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleImageUpload(file, 'phaseImageUrl');
+                      }}
+                      disabled={uploadingImage}
                     />
+                    {programmingData.phaseImageUrl && (
+                      <div className="mt-2">
+                        <img 
+                          src={programmingData.phaseImageUrl} 
+                          alt="Phase" 
+                          className="w-32 h-32 object-cover rounded border"
+                        />
+                      </div>
+                    )}
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="playerImageUrl">Player Image URL</Label>
+                    <Label htmlFor="playerImage">Player Image</Label>
                     <Input
-                      id="playerImageUrl"
-                      placeholder="Player image URL"
-                      value={programmingData.playerImageUrl}
-                      onChange={(e) => updateField('playerImageUrl', e.target.value)}
+                      id="playerImage"
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleImageUpload(file, 'playerImageUrl');
+                      }}
+                      disabled={uploadingImage}
                     />
+                    {programmingData.playerImageUrl && (
+                      <div className="mt-2">
+                        <img 
+                          src={programmingData.playerImageUrl} 
+                          alt="Player" 
+                          className="w-32 h-32 object-cover rounded border"
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
 

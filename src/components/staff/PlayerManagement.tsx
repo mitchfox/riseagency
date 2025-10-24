@@ -70,6 +70,7 @@ const PlayerManagement = () => {
   const [isProgrammingDialogOpen, setIsProgrammingDialogOpen] = useState(false);
   const [selectedProgrammingPlayerId, setSelectedProgrammingPlayerId] = useState<string>("");
   const [selectedProgrammingPlayerName, setSelectedProgrammingPlayerName] = useState<string>("");
+  const [uploadingPlayerImage, setUploadingPlayerImage] = useState(false);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -510,6 +511,31 @@ const PlayerManagement = () => {
     setIsAnalysisDialogOpen(true);
   };
 
+  const handlePlayerImageUpload = async (file: File) => {
+    try {
+      setUploadingPlayerImage(true);
+      
+      const fileName = `${Date.now()}_${file.name}`;
+      const { data, error } = await supabase.storage
+        .from('analysis-files')
+        .upload(`player-images/${fileName}`, file);
+      
+      if (error) throw error;
+      
+      const { data: { publicUrl } } = supabase.storage
+        .from('analysis-files')
+        .getPublicUrl(`player-images/${fileName}`);
+      
+      setFormData({ ...formData, image_url: publicUrl });
+      toast.success("Player image uploaded successfully!");
+    } catch (error: any) {
+      console.error("Error uploading player image:", error);
+      toast.error("Failed to upload player image");
+    } finally {
+      setUploadingPlayerImage(false);
+    }
+  };
+
   if (loading && players.length === 0) {
     return <div>Loading...</div>;
   }
@@ -626,12 +652,29 @@ const PlayerManagement = () => {
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="image_url">Image URL</Label>
+                <Label htmlFor="player_image">Player Image</Label>
                 <Input
-                  id="image_url"
-                  value={formData.image_url}
-                  onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
+                  id="player_image"
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handlePlayerImageUpload(file);
+                  }}
+                  disabled={uploadingPlayerImage}
                 />
+                {formData.image_url && (
+                  <div className="mt-2">
+                    <img 
+                      src={formData.image_url} 
+                      alt="Player preview" 
+                      className="w-32 h-32 object-cover rounded border"
+                    />
+                  </div>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  Upload player profile image (PNG, JPG, WEBP)
+                </p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="bio">Bio</Label>
