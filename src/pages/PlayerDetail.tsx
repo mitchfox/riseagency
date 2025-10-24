@@ -442,14 +442,14 @@ const PlayerDetail = () => {
                 </div>
               )}
 
-              {/* In Numbers */}
-              {player.topStats && player.topStats.length > 0 && (
-                <div>
-                  <h2 className="text-sm font-bebas text-primary uppercase tracking-widest mb-4 text-lg">
-                    In Numbers
-                  </h2>
-                  <div className="bg-secondary/30 backdrop-blur-sm p-6 rounded-lg space-y-6">
-                    {player.topStats.map((stat, index) => (
+              {/* In Numbers - Always show even if empty */}
+              <div>
+                <h2 className="text-sm font-bebas text-primary uppercase tracking-widest mb-4 text-lg">
+                  In Numbers
+                </h2>
+                <div className="bg-secondary/30 backdrop-blur-sm p-6 rounded-lg space-y-6">
+                  {player.topStats && player.topStats.length > 0 ? (
+                    player.topStats.map((stat, index) => (
                       <div key={index} className="space-y-2">
                         <div className="flex items-baseline justify-between">
                           <span className="text-sm text-muted-foreground uppercase tracking-wider">
@@ -468,10 +468,14 @@ const PlayerDetail = () => {
                           <div className="h-px bg-border/50 mt-4" />
                         )}
                       </div>
-                    ))}
-                  </div>
+                    ))
+                  ) : (
+                    <p className="text-sm text-muted-foreground text-center py-4">
+                      No stats data available yet
+                    </p>
+                  )}
                 </div>
-              )}
+              </div>
             </div>
 
             {/* Right Column: Scheme History */}
@@ -487,13 +491,16 @@ const PlayerDetail = () => {
                       src={player.tacticalFormations[currentFormationIndex].clubLogo} 
                       alt={player.tacticalFormations[currentFormationIndex].club}
                       className="w-16 h-16 object-contain transition-all duration-500"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                      }}
                     />
                     <div className="text-center">
                       <div className="text-2xl font-bebas text-foreground uppercase tracking-wider transition-all duration-500">
                         {player.tacticalFormations[currentFormationIndex].club}
                       </div>
                       <div className="text-sm text-muted-foreground uppercase tracking-widest font-semibold transition-all duration-500">
-                        {player.tacticalFormations[currentFormationIndex].matches} Matches • {player.tacticalFormations[currentFormationIndex].formation}
+                        {player.tacticalFormations[currentFormationIndex].appearances || player.tacticalFormations[currentFormationIndex].matches || 0} Matches • {player.tacticalFormations[currentFormationIndex].formation}
                       </div>
                     </div>
                   </div>
