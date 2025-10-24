@@ -110,6 +110,7 @@ const PlayerManagement = () => {
     date: "",
     minutes_played: "",
     r90_score: "",
+    notes: "",
     pdf_file: null as File | null,
     video_file: null as File | null,
   });
@@ -402,6 +403,7 @@ const PlayerManagement = () => {
           result: analysisData.result,
           minutes_played: parseInt(analysisData.minutes_played) || null,
           r90_score: analysisData.r90_score ? parseFloat(analysisData.r90_score) : null,
+          notes: analysisData.notes || null,
           pdf_url: pdfUrl,
           video_url: videoUrl,
         });
@@ -416,6 +418,7 @@ const PlayerManagement = () => {
         date: "",
         minutes_played: "",
         r90_score: "",
+        notes: "",
         pdf_file: null,
         video_file: null,
       });
@@ -846,6 +849,16 @@ const PlayerManagement = () => {
                   onChange={(e) => setAnalysisData({ ...analysisData, r90_score: e.target.value })}
                 />
               </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="notes">Notes / Comments</Label>
+              <Textarea
+                id="notes"
+                value={analysisData.notes}
+                onChange={(e) => setAnalysisData({ ...analysisData, notes: e.target.value })}
+                rows={3}
+                placeholder="e.g., Strong match performance with excellent positioning"
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="pdf_file">PDF Report</Label>
