@@ -38,28 +38,39 @@ export const Header = () => {
       {showTopBar && (
         <div className="fixed top-0 left-0 right-0 z-50 bg-black/95 backdrop-blur-md border-b border-white/10">
         <div className="container mx-auto px-4">
-          <div className="flex items-center justify-end h-10 gap-6">
-            <button
-              onClick={() => setDeclareInterestOpen(true)}
-              className="text-xs font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-colors flex items-center gap-2"
-            >
-              <Users className="w-3 h-3" />
-              Declare Interest In Player
-            </button>
-            <button
-              onClick={() => setRepresentationOpen(true)}
-              className="text-xs font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-colors flex items-center gap-2"
-            >
-              <MessageCircle className="w-3 h-3" />
-              Request Representation
-            </button>
-            <Link
-              to="/login"
-              className="text-xs font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-colors flex items-center gap-2"
-            >
-              <LogIn className="w-3 h-3" />
-              Player Portal
-            </Link>
+          <div className="flex items-center justify-between h-10">
+            <div className="flex items-center gap-6">
+              <button
+                onClick={() => setDeclareInterestOpen(true)}
+                className="text-xs font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-colors flex items-center gap-2"
+              >
+                <Users className="w-3 h-3" />
+                Declare Interest In Player
+              </button>
+              <Link
+                to="/contact"
+                className="text-xs font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-colors flex items-center gap-2"
+              >
+                <MessageCircle className="w-3 h-3" />
+                Contact
+              </Link>
+            </div>
+            <div className="flex items-center gap-6">
+              <button
+                onClick={() => setRepresentationOpen(true)}
+                className="text-xs font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-colors flex items-center gap-2"
+              >
+                <MessageCircle className="w-3 h-3" />
+                Request Representation
+              </button>
+              <Link
+                to="/login"
+                className="text-xs font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-colors flex items-center gap-2"
+              >
+                <LogIn className="w-3 h-3" />
+                Player Portal
+              </Link>
+            </div>
           </div>
         </div>
       </div>
@@ -182,16 +193,6 @@ export const Header = () => {
                     }`}
                   >
                     Scouts
-                  </Link>
-                </DrawerClose>
-                <DrawerClose asChild>
-                  <Link
-                    to="/contact"
-                    className={`text-xl font-bebas uppercase text-white hover:text-primary transition-colors tracking-wider py-1.5 px-4 rounded ${
-                      isActive("/contact") ? "bg-primary/80 text-white" : "hover:bg-white/10"
-                    }`}
-                  >
-                    Contact
                   </Link>
                 </DrawerClose>
               </nav>
