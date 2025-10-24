@@ -28,6 +28,7 @@ const BlogManagement = () => {
   const [editingPost, setEditingPost] = useState<BlogPost | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [userId, setUserId] = useState<string>("");
+  const [expandedPostId, setExpandedPostId] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     title: "",
@@ -232,32 +233,80 @@ const BlogManagement = () => {
       </div>
 
       <div className="grid gap-4">
-        {posts.map((post) => (
-          <Card key={post.id}>
-            <CardHeader>
-              <div className="flex justify-between items-start">
-                <div>
-                  <CardTitle>{post.title}</CardTitle>
-                  <p className="text-sm text-muted-foreground">
-                    {post.published ? "Published" : "Draft"} | {post.category && `${post.category} | `}{new Date(post.created_at).toLocaleDateString('en-GB')}
-                  </p>
+        {posts.map((post) => {
+          const isExpanded = expandedPostId === post.id;
+          
+          return (
+            <Card key={post.id} className="cursor-pointer">
+              <CardHeader 
+                onClick={() => setExpandedPostId(isExpanded ? null : post.id)}
+                className="hover:bg-accent/50 transition-colors"
+              >
+                <div className="flex justify-between items-start">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 text-foreground font-normal">
+                      <span>{post.title}</span>
+                      <span className="text-muted-foreground">•</span>
+                      <span className="text-muted-foreground text-sm">
+                        {post.published ? "Published" : "Draft"}
+                      </span>
+                      {post.category && (
+                        <>
+                          <span className="text-muted-foreground">•</span>
+                          <span className="text-muted-foreground text-sm">{post.category}</span>
+                        </>
+                      )}
+                      <span className="text-muted-foreground">•</span>
+                      <span className="text-muted-foreground text-sm">
+                        {new Date(post.created_at).toLocaleDateString('en-GB')}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="text-muted-foreground ml-4">
+                    {isExpanded ? "▼" : "▶"}
+                  </div>
                 </div>
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm" onClick={() => startEdit(post)}>
-                    <Edit className="w-4 h-4" />
-                  </Button>
-                  <Button variant="destructive" size="sm" onClick={() => handleDelete(post.id)}>
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {post.excerpt && <p className="text-sm text-muted-foreground mb-2">{post.excerpt}</p>}
-              <p className="text-sm line-clamp-3">{post.content}</p>
-            </CardContent>
-          </Card>
-        ))}
+              </CardHeader>
+              
+              {isExpanded && (
+                <CardContent className="space-y-4">
+                  <div className="flex justify-end gap-2 pb-4 border-b">
+                    <Button variant="outline" size="sm" onClick={() => startEdit(post)}>
+                      <Edit className="w-4 h-4 mr-2" />
+                      Edit Post
+                    </Button>
+                    <Button variant="destructive" size="sm" onClick={() => handleDelete(post.id)}>
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Delete
+                    </Button>
+                  </div>
+                  
+                  {post.image_url && (
+                    <div className="flex justify-center">
+                      <img 
+                        src={post.image_url} 
+                        alt={post.title} 
+                        className="max-w-full h-auto max-h-64 object-cover rounded-lg" 
+                      />
+                    </div>
+                  )}
+                  
+                  {post.excerpt && (
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-1">Excerpt</p>
+                      <p className="text-sm">{post.excerpt}</p>
+                    </div>
+                  )}
+                  
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Content</p>
+                    <div className="text-sm whitespace-pre-wrap">{post.content}</div>
+                  </div>
+                </CardContent>
+              )}
+            </Card>
+          );
+        })}
       </div>
     </div>
   );

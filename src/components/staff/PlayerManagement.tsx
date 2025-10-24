@@ -48,6 +48,7 @@ const PlayerManagement = () => {
   const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
   const [editingStats, setEditingStats] = useState<PlayerStats | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [expandedPlayerId, setExpandedPlayerId] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -518,31 +519,206 @@ const PlayerManagement = () => {
       </div>
 
       <div className="grid gap-4">
-        {players.map((player) => (
-          <Card key={player.id}>
-            <CardHeader>
-              <div className="flex justify-between items-center">
-                <div className="flex items-center gap-2 text-foreground font-normal">
-                  <span>{player.name}</span>
-                  <span className="text-muted-foreground">•</span>
-                  <span className="text-muted-foreground">{player.position}</span>
-                  <span className="text-muted-foreground">•</span>
-                  <span className="text-muted-foreground">{player.age} years</span>
-                  <span className="text-muted-foreground">•</span>
-                  <span className="text-muted-foreground">{player.nationality}</span>
+        {players.map((player) => {
+          const isExpanded = expandedPlayerId === player.id;
+          const playerStats = stats[player.id];
+          let bioData: any = {};
+          try {
+            if (player.bio && player.bio.startsWith('{')) {
+              bioData = JSON.parse(player.bio);
+            }
+          } catch (e) {
+            // Bio is regular text
+          }
+          
+          return (
+            <Card key={player.id} className="cursor-pointer">
+              <CardHeader 
+                onClick={() => setExpandedPlayerId(isExpanded ? null : player.id)}
+                className="hover:bg-accent/50 transition-colors"
+              >
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center gap-2 text-foreground font-normal">
+                    <span>{player.name}</span>
+                    <span className="text-muted-foreground">•</span>
+                    <span className="text-muted-foreground">{player.position}</span>
+                    <span className="text-muted-foreground">•</span>
+                    <span className="text-muted-foreground">{player.age} years</span>
+                    <span className="text-muted-foreground">•</span>
+                    <span className="text-muted-foreground">{player.nationality}</span>
+                  </div>
+                  <div className="text-muted-foreground">
+                    {isExpanded ? "▼" : "▶"}
+                  </div>
                 </div>
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm" onClick={() => startEdit(player)}>
-                    <Edit className="w-4 h-4" />
-                  </Button>
-                  <Button variant="destructive" size="sm" onClick={() => handleDelete(player.id)}>
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
-            </CardHeader>
-          </Card>
-        ))}
+              </CardHeader>
+              
+              {isExpanded && (
+                <CardContent className="space-y-4">
+                  <div className="flex justify-end gap-2 pb-4 border-b">
+                    <Button variant="outline" size="sm" onClick={() => startEdit(player)}>
+                      <Edit className="w-4 h-4 mr-2" />
+                      Edit Player
+                    </Button>
+                    <Button variant="destructive" size="sm" onClick={() => handleDelete(player.id)}>
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Delete
+                    </Button>
+                  </div>
+                  
+                  {player.image_url && (
+                    <div className="flex justify-center">
+                      <img src={player.image_url} alt={player.name} className="w-32 h-32 object-cover rounded-lg" />
+                    </div>
+                  )}
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    {bioData.number && (
+                      <div>
+                        <p className="text-sm text-muted-foreground">Jersey Number</p>
+                        <p className="font-medium">{bioData.number}</p>
+                      </div>
+                    )}
+                    {bioData.currentClub && (
+                      <div>
+                        <p className="text-sm text-muted-foreground">Current Club</p>
+                        <p className="font-medium">{bioData.currentClub}</p>
+                      </div>
+                    )}
+                    {bioData.dateOfBirth && (
+                      <div>
+                        <p className="text-sm text-muted-foreground">Date of Birth</p>
+                        <p className="font-medium">{bioData.dateOfBirth}</p>
+                      </div>
+                    )}
+                    {bioData.whatsapp && (
+                      <div>
+                        <p className="text-sm text-muted-foreground">WhatsApp</p>
+                        <p className="font-medium">{bioData.whatsapp}</p>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {bioData.bio && (
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-2">Bio</p>
+                      <p className="text-sm">{bioData.bio}</p>
+                    </div>
+                  )}
+                  
+                  {playerStats && (
+                    <div>
+                      <div className="flex justify-between items-center mb-2">
+                        <p className="text-sm text-muted-foreground">Statistics</p>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => startEditStats(player.id)}
+                        >
+                          Edit Stats
+                        </Button>
+                      </div>
+                      <div className="grid grid-cols-3 gap-4">
+                        <div>
+                          <p className="text-xs text-muted-foreground">Matches</p>
+                          <p className="text-lg font-semibold">{playerStats.matches}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-muted-foreground">Goals</p>
+                          <p className="text-lg font-semibold">{playerStats.goals}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-muted-foreground">Assists</p>
+                          <p className="text-lg font-semibold">{playerStats.assists}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-muted-foreground">Minutes</p>
+                          <p className="text-lg font-semibold">{playerStats.minutes}</p>
+                        </div>
+                        {playerStats.clean_sheets !== null && (
+                          <div>
+                            <p className="text-xs text-muted-foreground">Clean Sheets</p>
+                            <p className="text-lg font-semibold">{playerStats.clean_sheets}</p>
+                          </div>
+                        )}
+                        {playerStats.saves !== null && (
+                          <div>
+                            <p className="text-xs text-muted-foreground">Saves</p>
+                            <p className="text-lg font-semibold">{playerStats.saves}</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {editingStats && editingStats.player_id === player.id && (
+                    <div className="border-t pt-4">
+                      <h4 className="text-sm font-medium mb-2">Edit Statistics</h4>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label>Goals</Label>
+                          <Input
+                            type="number"
+                            value={statsData.goals}
+                            onChange={(e) => setStatsData({ ...statsData, goals: e.target.value })}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Assists</Label>
+                          <Input
+                            type="number"
+                            value={statsData.assists}
+                            onChange={(e) => setStatsData({ ...statsData, assists: e.target.value })}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Matches</Label>
+                          <Input
+                            type="number"
+                            value={statsData.matches}
+                            onChange={(e) => setStatsData({ ...statsData, matches: e.target.value })}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Minutes</Label>
+                          <Input
+                            type="number"
+                            value={statsData.minutes}
+                            onChange={(e) => setStatsData({ ...statsData, minutes: e.target.value })}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Clean Sheets (GK)</Label>
+                          <Input
+                            type="number"
+                            value={statsData.clean_sheets}
+                            onChange={(e) => setStatsData({ ...statsData, clean_sheets: e.target.value })}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Saves (GK)</Label>
+                          <Input
+                            type="number"
+                            value={statsData.saves}
+                            onChange={(e) => setStatsData({ ...statsData, saves: e.target.value })}
+                          />
+                        </div>
+                      </div>
+                      <div className="flex gap-2 mt-4">
+                        <Button onClick={() => handleStatsSubmit(player.id)} disabled={loading}>
+                          Save Stats
+                        </Button>
+                        <Button variant="outline" onClick={() => setEditingStats(null)}>
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              )}
+            </Card>
+          );
+        })}
       </div>
     </div>
   );
