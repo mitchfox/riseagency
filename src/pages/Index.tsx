@@ -164,61 +164,69 @@ const Index = () => {
         </section>
 
         {/* News Section */}
-        <section className="py-32 px-4 bg-muted/30 snap-start snap-always min-h-screen flex items-center">
-          <div className="container mx-auto max-w-7xl">
-            <div className="text-center mb-16 space-y-4">
-              <div className="inline-block">
-                <span className="text-sm font-bebas uppercase tracking-widest text-primary border border-primary/30 px-6 py-2 rounded-full">
-                  Latest Updates
-                </span>
-              </div>
+        <section className="py-32 px-4 bg-background snap-start snap-always min-h-screen flex items-center">
+          <div className="container mx-auto max-w-7xl w-full">
+            <div className="flex items-center justify-between mb-16">
               <h2 className="text-5xl md:text-7xl font-bebas uppercase tracking-wider text-foreground">
-                Latest <span className="text-primary">News</span>
+                News
               </h2>
-              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                Stay updated with our players' achievements and agency news
-              </p>
+              <Link to="/news">
+                <Button 
+                  variant="outline"
+                  className="font-bebas uppercase tracking-wider border-primary/30 text-foreground hover:bg-primary/10"
+                >
+                  All News →
+                </Button>
+              </Link>
             </div>
-            <div className="grid md:grid-cols-3 gap-8">
+            <div className="grid md:grid-cols-3 gap-6">
               {newsArticles.map((article) => (
                 <Link
                   key={article.id}
                   to={`/news/${article.id}`}
-                  className="group bg-background rounded-xl overflow-hidden border border-border hover:border-primary/50 transition-all duration-300 hover:shadow-2xl hover:shadow-primary/10 hover:-translate-y-2"
+                  className="group relative aspect-[16/10] overflow-hidden rounded-lg"
                 >
                   {article.image_url && (
-                    <div className="aspect-video overflow-hidden">
+                    <>
                       <img 
                         src={article.image_url} 
                         alt={article.title}
-                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                        className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                       />
-                    </div>
+                      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-black/20" />
+                    </>
                   )}
-                  <div className="p-8 space-y-4">
-                    <div className="flex items-center gap-3">
-                      <div className="h-px flex-1 bg-gradient-to-r from-transparent to-primary/30"></div>
-                      <div className="text-xs text-primary uppercase tracking-widest font-bebas">
-                        {new Date(article.created_at).toLocaleDateString('en-GB', { 
-                          day: 'numeric', 
-                          month: 'long', 
-                          year: 'numeric' 
-                        })}
-                      </div>
-                      <div className="h-px flex-1 bg-gradient-to-l from-transparent to-primary/30"></div>
-                    </div>
-                    <h3 className="text-2xl md:text-3xl font-bebas uppercase text-foreground leading-tight group-hover:text-primary transition-colors duration-300">
+                  
+                  {/* Date/Time */}
+                  <div className="absolute top-4 left-4 flex items-center gap-2 text-white/80 text-xs font-bebas uppercase tracking-wider">
+                    <span className="text-primary">▶</span>
+                    <span>
+                      {new Date(article.created_at).toLocaleDateString('en-GB', { 
+                        day: '2-digit', 
+                        month: '2-digit', 
+                        year: 'numeric' 
+                      })} {new Date(article.created_at).toLocaleTimeString('en-GB', { 
+                        hour: '2-digit', 
+                        minute: '2-digit' 
+                      })}
+                    </span>
+                  </div>
+
+                  {/* Title */}
+                  <div className="absolute bottom-0 left-0 right-0 p-6">
+                    <h3 className="text-2xl md:text-3xl font-bebas uppercase text-white leading-tight">
                       {article.title}
                     </h3>
-                    {article.excerpt && (
-                      <p className="text-muted-foreground leading-relaxed">
-                        {article.excerpt}
-                      </p>
-                    )}
-                    <div className="flex items-center text-primary font-bebas uppercase tracking-wider text-sm pt-2 group-hover:gap-3 transition-all">
-                      <span>Read More</span>
-                      <span className="inline-block group-hover:translate-x-2 transition-transform">→</span>
-                    </div>
+                  </div>
+
+                  {/* Hover Button */}
+                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/40">
+                    <Button 
+                      size="lg"
+                      className="btn-shine font-bebas uppercase tracking-wider px-8"
+                    >
+                      Read Article
+                    </Button>
                   </div>
                 </Link>
               ))}
