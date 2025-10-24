@@ -1069,18 +1069,6 @@ const PlayerManagement = () => {
                       variant="outline" 
                       size="sm"
                       onClick={() => {
-                        setSelectedProgrammingPlayerId(player.id);
-                        setSelectedProgrammingPlayerName(player.name);
-                        setIsProgrammingDialogOpen(true);
-                      }}
-                    >
-                      <BookOpen className="w-4 h-4 mr-2" />
-                      Programming
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => {
                         if (showingHighlightsFor === player.id) {
                           setShowingHighlightsFor(null);
                         } else {
