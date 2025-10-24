@@ -270,6 +270,7 @@ const PlayerDetail = () => {
                     key={dbHighlights[currentVideoType].videoUrl}
                     className="w-full h-full object-contain bg-black"
                     controls
+                    autoPlay
                     playsInline
                     preload="metadata"
                     onError={(e) => {
