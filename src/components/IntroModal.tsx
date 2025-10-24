@@ -51,14 +51,14 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
                 size="sm"
                 variant="outline"
                 onClick={handleRequestRepresentation}
-                className="text-xs font-bebas uppercase tracking-wider px-3 py-2 border-primary/50 text-white hover:bg-primary/20 backdrop-blur-sm"
+                className="text-xs font-bebas uppercase tracking-wider px-3 py-2 border-primary/50 text-white hover:bg-primary/20 backdrop-blur-sm flex-1"
               >
                 Request Representation
               </Button>
               <Button 
                 size="sm" 
                 onClick={handleEnterSite}
-                className="btn-shine text-xs font-bebas uppercase tracking-wider px-3 py-2"
+                className="btn-shine text-xs font-bebas uppercase tracking-wider px-3 py-2 flex-1"
               >
                 Enter Site
               </Button>
@@ -72,7 +72,7 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
                 Welcome to <span className="text-primary">RISE Football</span>
               </h2>
               <p className="text-xs md:text-sm text-white/90 leading-snug">
-                We train the best young players and guide them to the top with individualised training and career guidance. We have worked with many <span className="text-primary font-semibold">Premier League players</span> throughout their development.
+                We have worked with many <span className="text-primary font-semibold">Premier League players</span> throughout their development.
               </p>
             </div>
           </div>
