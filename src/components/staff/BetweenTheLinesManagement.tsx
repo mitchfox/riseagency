@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -22,7 +22,15 @@ interface BlogPost {
   created_at: string;
 }
 
-const BlogManagement = () => {
+const betweenTheLinesCategories = [
+  "Tactical Analysis",
+  "Player Development",
+  "Match Review",
+  "Training Methods",
+  "Scouting Reports"
+];
+
+const BetweenTheLinesManagement = () => {
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingPost, setEditingPost] = useState<BlogPost | null>(null);
@@ -56,12 +64,13 @@ const BlogManagement = () => {
       const { data, error } = await supabase
         .from("blog_posts")
         .select("*")
+        .in("category", betweenTheLinesCategories)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
       setPosts(data || []);
     } catch (error: any) {
-      toast.error("Failed to fetch blog posts: " + error.message);
+      toast.error("Failed to fetch articles: " + error.message);
     } finally {
       setLoading(false);
     }
@@ -86,7 +95,7 @@ const BlogManagement = () => {
           .eq("id", editingPost.id);
 
         if (error) throw error;
-        toast.success("Blog post updated successfully");
+        toast.success("Article updated successfully");
       } else {
         const { error } = await supabase
           .from("blog_posts")
@@ -101,7 +110,7 @@ const BlogManagement = () => {
           });
 
         if (error) throw error;
-        toast.success("Blog post created successfully");
+        toast.success("Article created successfully");
       }
 
       setFormData({ title: "", content: "", excerpt: "", published: false, image_url: "", category: "" });
@@ -109,22 +118,22 @@ const BlogManagement = () => {
       setIsDialogOpen(false);
       fetchPosts();
     } catch (error: any) {
-      toast.error("Failed to save blog post: " + error.message);
+      toast.error("Failed to save article: " + error.message);
     } finally {
       setLoading(false);
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this blog post?")) return;
+    if (!confirm("Are you sure you want to delete this article?")) return;
 
     try {
       const { error } = await supabase.from("blog_posts").delete().eq("id", id);
       if (error) throw error;
-      toast.success("Blog post deleted successfully");
+      toast.success("Article deleted successfully");
       fetchPosts();
     } catch (error: any) {
-      toast.error("Failed to delete blog post: " + error.message);
+      toast.error("Failed to delete article: " + error.message);
     }
   };
 
@@ -148,7 +157,7 @@ const BlogManagement = () => {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">News Articles Management</h2>
+        <h2 className="text-2xl font-bold">Between The Lines Management</h2>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button onClick={() => {
@@ -202,17 +211,21 @@ const BlogManagement = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="category">Category</Label>
+                <Label htmlFor="category">Category *</Label>
                 <Select
                   value={formData.category}
                   onValueChange={(value) => setFormData({ ...formData, category: value })}
+                  required
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select a category (optional)" />
+                    <SelectValue placeholder="Select a category" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="news">News</SelectItem>
-                    <SelectItem value="INSIDE:ACCESS">INSIDE:ACCESS</SelectItem>
+                    {betweenTheLinesCategories.map((cat) => (
+                      <SelectItem key={cat} value={cat}>
+                        {cat}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -312,4 +325,4 @@ const BlogManagement = () => {
   );
 };
 
-export default BlogManagement;
+export default BetweenTheLinesManagement;

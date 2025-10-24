@@ -9,6 +9,7 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import PlayerManagement from "@/components/staff/PlayerManagement";
 import BlogManagement from "@/components/staff/BlogManagement";
+import BetweenTheLinesManagement from "@/components/staff/BetweenTheLinesManagement";
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -21,7 +22,7 @@ const Staff = () => {
   const [loading, setLoading] = useState(true);
   const [isStaff, setIsStaff] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
-  const [expandedSection, setExpandedSection] = useState<'players' | 'blog' | null>('players');
+  const [expandedSection, setExpandedSection] = useState<'players' | 'blog' | 'betweenthelines' | null>('players');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -258,6 +259,26 @@ const Staff = () => {
             {expandedSection === 'blog' && (
               <CardContent className="pt-6">
                 <BlogManagement />
+              </CardContent>
+            )}
+          </Card>
+
+          {/* Between The Lines Section */}
+          <Card className="cursor-pointer">
+            <CardHeader 
+              onClick={() => setExpandedSection(expandedSection === 'betweenthelines' ? null : 'betweenthelines')}
+              className="hover:bg-accent/50 transition-colors"
+            >
+              <div className="flex justify-between items-center">
+                <CardTitle className="text-2xl">Between The Lines</CardTitle>
+                <div className="text-muted-foreground">
+                  {expandedSection === 'betweenthelines' ? <ChevronDown size={24} /> : <ChevronRight size={24} />}
+                </div>
+              </div>
+            </CardHeader>
+            {expandedSection === 'betweenthelines' && (
+              <CardContent className="pt-6">
+                <BetweenTheLinesManagement />
               </CardContent>
             )}
           </Card>
