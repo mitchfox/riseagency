@@ -207,7 +207,7 @@ const Staff = () => {
         <Tabs defaultValue="players" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="players">Players</TabsTrigger>
-            <TabsTrigger value="blog">Blog Posts</TabsTrigger>
+            <TabsTrigger value="blog">News Articles</TabsTrigger>
           </TabsList>
           <TabsContent value="players">
             <PlayerManagement />
