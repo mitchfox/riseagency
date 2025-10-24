@@ -5,86 +5,68 @@ import logo from "@/assets/logo.png";
 export const Footer = () => {
   return (
     <footer className="bg-secondary/30 border-t border-primary/10">
-      <div className="container mx-auto px-4 py-16">
+      <div className="container mx-auto px-4 py-12">
         {/* Logo & Description - Most Prominent */}
-        <div className="max-w-2xl mx-auto text-center mb-16 space-y-6">
-          <img src={logo} alt="RISE Football Agency" className="h-16 mx-auto" />
-          <p className="text-muted-foreground text-lg leading-relaxed">
+        <div className="max-w-2xl mx-auto text-center mb-12 space-y-4">
+          <img src={logo} alt="RISE Football Agency" className="h-14 mx-auto" />
+          <p className="text-muted-foreground text-base leading-relaxed">
             Professional football representation helping players reach their full potential.
           </p>
         </div>
 
-        {/* Everything else underneath */}
-        <div className="grid md:grid-cols-3 gap-12 max-w-5xl mx-auto">
-          {/* Quick Links */}
+        {/* Compact sections underneath */}
+        <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto mb-8">
+          {/* Quick Links - Two columns */}
           <div>
-            <h3 className="font-bebas text-2xl uppercase tracking-wider text-foreground mb-6">
+            <h3 className="font-bebas text-xl uppercase tracking-wider text-foreground mb-4">
               Quick Links
             </h3>
-            <ul className="space-y-3">
-              <li>
-                <Link to="/" className="text-muted-foreground hover:text-primary transition-colors text-base">
-                  Home
-                </Link>
-              </li>
-              <li>
-                <Link to="/stars" className="text-muted-foreground hover:text-primary transition-colors text-base">
-                  Stars
-                </Link>
-              </li>
-              <li>
-                <Link to="/players" className="text-muted-foreground hover:text-primary transition-colors text-base">
-                  Players
-                </Link>
-              </li>
-              <li>
-                <Link to="/clubs" className="text-muted-foreground hover:text-primary transition-colors text-base">
-                  Clubs
-                </Link>
-              </li>
-              <li>
-                <Link to="/coaches" className="text-muted-foreground hover:text-primary transition-colors text-base">
-                  Coaches
-                </Link>
-              </li>
-              <li>
-                <Link to="/scouts" className="text-muted-foreground hover:text-primary transition-colors text-base">
-                  Scouts
-                </Link>
-              </li>
-              <li>
-                <Link to="/performance" className="text-muted-foreground hover:text-primary transition-colors text-base">
-                  Performance
-                </Link>
-              </li>
-              <li>
-                <Link to="/about" className="text-muted-foreground hover:text-primary transition-colors text-base">
-                  About
-                </Link>
-              </li>
-              <li>
-                <Link to="/news" className="text-muted-foreground hover:text-primary transition-colors text-base">
-                  News
-                </Link>
-              </li>
-            </ul>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+              <Link to="/" className="text-muted-foreground hover:text-primary transition-colors text-sm">
+                Home
+              </Link>
+              <Link to="/stars" className="text-muted-foreground hover:text-primary transition-colors text-sm">
+                Stars
+              </Link>
+              <Link to="/players" className="text-muted-foreground hover:text-primary transition-colors text-sm">
+                Players
+              </Link>
+              <Link to="/clubs" className="text-muted-foreground hover:text-primary transition-colors text-sm">
+                Clubs
+              </Link>
+              <Link to="/coaches" className="text-muted-foreground hover:text-primary transition-colors text-sm">
+                Coaches
+              </Link>
+              <Link to="/scouts" className="text-muted-foreground hover:text-primary transition-colors text-sm">
+                Scouts
+              </Link>
+              <Link to="/performance" className="text-muted-foreground hover:text-primary transition-colors text-sm">
+                Performance
+              </Link>
+              <Link to="/about" className="text-muted-foreground hover:text-primary transition-colors text-sm">
+                About
+              </Link>
+              <Link to="/news" className="text-muted-foreground hover:text-primary transition-colors text-sm">
+                News
+              </Link>
+            </div>
           </div>
 
           {/* Contact */}
           <div>
-            <h3 className="font-bebas text-2xl uppercase tracking-wider text-foreground mb-6">
+            <h3 className="font-bebas text-xl uppercase tracking-wider text-foreground mb-4">
               Contact
             </h3>
-            <ul className="space-y-3">
+            <ul className="space-y-2">
               <li>
-                <Link to="/contact" className="text-muted-foreground hover:text-primary transition-colors text-base">
+                <Link to="/contact" className="text-muted-foreground hover:text-primary transition-colors text-sm">
                   Get In Touch
                 </Link>
               </li>
               <li>
                 <a 
                   href="mailto:jolon.levene@risefootballagency.com"
-                  className="text-muted-foreground hover:text-primary transition-colors text-base"
+                  className="text-muted-foreground hover:text-primary transition-colors text-sm"
                 >
                   General Enquiries
                 </a>
@@ -92,7 +74,7 @@ export const Footer = () => {
               <li>
                 <a 
                   href="mailto:kuda.butawo@risefootballagency.com"
-                  className="text-muted-foreground hover:text-primary transition-colors text-base"
+                  className="text-muted-foreground hover:text-primary transition-colors text-sm"
                 >
                   Media & Sponsors
                 </a>
@@ -102,7 +84,7 @@ export const Footer = () => {
                   href="http://wa.link/mabnsw"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-muted-foreground hover:text-primary transition-colors text-base"
+                  className="text-muted-foreground hover:text-primary transition-colors text-sm"
                 >
                   WhatsApp
                 </a>
@@ -112,10 +94,10 @@ export const Footer = () => {
 
           {/* Social Media */}
           <div>
-            <h3 className="font-bebas text-2xl uppercase tracking-wider text-foreground mb-6">
+            <h3 className="font-bebas text-xl uppercase tracking-wider text-foreground mb-4">
               Follow Us
             </h3>
-            <div className="flex gap-5">
+            <div className="flex gap-4">
               <a
                 href="https://www.instagram.com/rise.footballagency"
                 target="_blank"
@@ -123,7 +105,7 @@ export const Footer = () => {
                 className="text-muted-foreground hover:text-primary transition-all hover:scale-110"
                 aria-label="Instagram"
               >
-                <FaInstagram className="w-7 h-7" />
+                <FaInstagram className="w-6 h-6" />
               </a>
               <a
                 href="https://x.com/RISE_FTBL"
@@ -132,7 +114,7 @@ export const Footer = () => {
                 className="text-muted-foreground hover:text-primary transition-all hover:scale-110"
                 aria-label="X (Twitter)"
               >
-                <FaTwitter className="w-7 h-7" />
+                <FaTwitter className="w-6 h-6" />
               </a>
               <a
                 href="https://www.linkedin.com/company/rise-football-agency"
@@ -141,7 +123,7 @@ export const Footer = () => {
                 className="text-muted-foreground hover:text-primary transition-all hover:scale-110"
                 aria-label="LinkedIn"
               >
-                <FaLinkedin className="w-7 h-7" />
+                <FaLinkedin className="w-6 h-6" />
               </a>
               <a
                 href="https://www.youtube.com/@RISEFootball"
@@ -150,19 +132,19 @@ export const Footer = () => {
                 className="text-muted-foreground hover:text-primary transition-all hover:scale-110"
                 aria-label="YouTube"
               >
-                <FaYoutube className="w-7 h-7" />
+                <FaYoutube className="w-6 h-6" />
               </a>
             </div>
           </div>
         </div>
 
-        {/* Bottom Bar */}
-        <div className="mt-16 pt-8 border-t border-primary/10">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-muted-foreground text-base">
+        {/* Bottom Bar - Compact */}
+        <div className="pt-6 border-t border-primary/10">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-3 text-sm">
+            <p className="text-muted-foreground">
               © {new Date().getFullYear()} RISE Football Agency. All rights reserved.
             </p>
-            <div className="flex gap-8 text-base">
+            <div className="flex gap-6">
               <a 
                 href="https://www.youtube.com/@RISEFootball" 
                 target="_blank" 
