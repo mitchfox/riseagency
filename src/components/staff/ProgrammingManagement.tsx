@@ -4,9 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Plus, Trash2 } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface ProgrammingManagementProps {
   isOpen: boolean;
@@ -15,16 +18,61 @@ interface ProgrammingManagementProps {
   playerName: string;
 }
 
+interface Exercise {
+  name: string;
+  description: string;
+  repetitions: string;
+  sets: string;
+  load: string;
+  recoveryTime: string;
+  videoUrl: string;
+}
+
+interface SessionData {
+  exercises: Exercise[];
+  scheduleNotes: string;
+}
+
+interface WeeklySchedule {
+  week: string;
+  monday: string;
+  tuesday: string;
+  wednesday: string;
+  thursday: string;
+  friday: string;
+  saturday: string;
+  sunday: string;
+  mondayColor: string;
+  tuesdayColor: string;
+  wednesdayColor: string;
+  thursdayColor: string;
+  fridayColor: string;
+  saturdayColor: string;
+  sundayColor: string;
+}
+
 interface ProgrammingData {
-  overview: string;
-  sessionA: string;
-  sessionB: string;
-  sessionC: string;
-  sessionD: string;
-  sessionE: string;
-  sessionF: string;
-  sessionG: string;
-  sessionH: string;
+  // Overview/Phase Info
+  phaseName: string;
+  phaseDates: string;
+  phaseImageUrl: string;
+  playerImageUrl: string;
+  overviewText: string;
+  
+  // Sessions
+  sessionA: SessionData;
+  sessionB: SessionData;
+  sessionC: SessionData;
+  sessionD: SessionData;
+  sessionE: SessionData;
+  sessionF: SessionData;
+  sessionG: SessionData;
+  sessionH: SessionData;
+  
+  // Weekly Schedule
+  weeklySchedules: WeeklySchedule[];
+  
+  // Testing
   testing: string;
 }
 
@@ -39,19 +87,45 @@ const sessionLabels = [
   { key: 'sessionH', label: 'Session H' },
 ];
 
+const emptyExercise = (): Exercise => ({
+  name: '',
+  description: '',
+  repetitions: '',
+  sets: '',
+  load: '',
+  recoveryTime: '',
+  videoUrl: ''
+});
+
+const emptySession = (): SessionData => ({
+  exercises: [],
+  scheduleNotes: ''
+});
+
+const emptyWeeklySchedule = (): WeeklySchedule => ({
+  week: '',
+  monday: '', tuesday: '', wednesday: '', thursday: '', friday: '', saturday: '', sunday: '',
+  mondayColor: '', tuesdayColor: '', wednesdayColor: '', thursdayColor: '', fridayColor: '', saturdayColor: '', sundayColor: ''
+});
+
 export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }: ProgrammingManagementProps) => {
   const [loading, setLoading] = useState(false);
   const [selectedSession, setSelectedSession] = useState<string | null>(null);
   const [programmingData, setProgrammingData] = useState<ProgrammingData>({
-    overview: '',
-    sessionA: '',
-    sessionB: '',
-    sessionC: '',
-    sessionD: '',
-    sessionE: '',
-    sessionF: '',
-    sessionG: '',
-    sessionH: '',
+    phaseName: '',
+    phaseDates: '',
+    phaseImageUrl: '',
+    playerImageUrl: '',
+    overviewText: '',
+    sessionA: emptySession(),
+    sessionB: emptySession(),
+    sessionC: emptySession(),
+    sessionD: emptySession(),
+    sessionE: emptySession(),
+    sessionF: emptySession(),
+    sessionG: emptySession(),
+    sessionH: emptySession(),
+    weeklySchedules: [],
     testing: '',
   });
 
@@ -76,15 +150,20 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
           const bioData = JSON.parse(player.bio);
           if (bioData.programming) {
             setProgrammingData({
-              overview: bioData.programming.overview || '',
-              sessionA: bioData.programming.sessionA || '',
-              sessionB: bioData.programming.sessionB || '',
-              sessionC: bioData.programming.sessionC || '',
-              sessionD: bioData.programming.sessionD || '',
-              sessionE: bioData.programming.sessionE || '',
-              sessionF: bioData.programming.sessionF || '',
-              sessionG: bioData.programming.sessionG || '',
-              sessionH: bioData.programming.sessionH || '',
+              phaseName: bioData.programming.phaseName || '',
+              phaseDates: bioData.programming.phaseDates || '',
+              phaseImageUrl: bioData.programming.phaseImageUrl || '',
+              playerImageUrl: bioData.programming.playerImageUrl || '',
+              overviewText: bioData.programming.overviewText || '',
+              sessionA: bioData.programming.sessionA || emptySession(),
+              sessionB: bioData.programming.sessionB || emptySession(),
+              sessionC: bioData.programming.sessionC || emptySession(),
+              sessionD: bioData.programming.sessionD || emptySession(),
+              sessionE: bioData.programming.sessionE || emptySession(),
+              sessionF: bioData.programming.sessionF || emptySession(),
+              sessionG: bioData.programming.sessionG || emptySession(),
+              sessionH: bioData.programming.sessionH || emptySession(),
+              weeklySchedules: bioData.programming.weeklySchedules || [],
               testing: bioData.programming.testing || '',
             });
           }
@@ -142,11 +221,51 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
     }
   };
 
-  const updateField = (field: keyof ProgrammingData, value: string) => {
+  const updateField = (field: keyof ProgrammingData, value: any) => {
     setProgrammingData(prev => ({
       ...prev,
       [field]: value
     }));
+  };
+
+  const addExercise = (sessionKey: keyof Pick<ProgrammingData, 'sessionA' | 'sessionB' | 'sessionC' | 'sessionD' | 'sessionE' | 'sessionF' | 'sessionG' | 'sessionH'>) => {
+    const session = programmingData[sessionKey] as SessionData;
+    updateField(sessionKey, {
+      ...session,
+      exercises: [...session.exercises, emptyExercise()]
+    });
+  };
+
+  const removeExercise = (sessionKey: keyof Pick<ProgrammingData, 'sessionA' | 'sessionB' | 'sessionC' | 'sessionD' | 'sessionE' | 'sessionF' | 'sessionG' | 'sessionH'>, index: number) => {
+    const session = programmingData[sessionKey] as SessionData;
+    updateField(sessionKey, {
+      ...session,
+      exercises: session.exercises.filter((_, i) => i !== index)
+    });
+  };
+
+  const updateExercise = (sessionKey: keyof Pick<ProgrammingData, 'sessionA' | 'sessionB' | 'sessionC' | 'sessionD' | 'sessionE' | 'sessionF' | 'sessionG' | 'sessionH'>, index: number, field: keyof Exercise, value: string) => {
+    const session = programmingData[sessionKey] as SessionData;
+    const updatedExercises = [...session.exercises];
+    updatedExercises[index] = { ...updatedExercises[index], [field]: value };
+    updateField(sessionKey, {
+      ...session,
+      exercises: updatedExercises
+    });
+  };
+
+  const addWeeklySchedule = () => {
+    updateField('weeklySchedules', [...programmingData.weeklySchedules, emptyWeeklySchedule()]);
+  };
+
+  const removeWeeklySchedule = (index: number) => {
+    updateField('weeklySchedules', programmingData.weeklySchedules.filter((_, i) => i !== index));
+  };
+
+  const updateWeeklySchedule = (index: number, field: keyof WeeklySchedule, value: string) => {
+    const updated = [...programmingData.weeklySchedules];
+    updated[index] = { ...updated[index], [field]: value };
+    updateField('weeklySchedules', updated);
   };
 
   return (
@@ -159,9 +278,10 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
         </DialogHeader>
 
         <Tabs defaultValue="overview" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="sessions">Sessions</TabsTrigger>
+            <TabsTrigger value="schedule">Weekly Schedule</TabsTrigger>
             <TabsTrigger value="testing">Testing</TabsTrigger>
           </TabsList>
 
@@ -169,21 +289,63 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
           <TabsContent value="overview" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle>Programming Overview</CardTitle>
+                <CardTitle>Phase Information</CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="phaseName">Phase Name</Label>
+                    <Input
+                      id="phaseName"
+                      placeholder="e.g., Push-Pull Phase"
+                      value={programmingData.phaseName}
+                      onChange={(e) => updateField('phaseName', e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="phaseDates">Phase Dates</Label>
+                    <Input
+                      id="phaseDates"
+                      placeholder="e.g., October"
+                      value={programmingData.phaseDates}
+                      onChange={(e) => updateField('phaseDates', e.target.value)}
+                    />
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="phaseImageUrl">Phase Image URL</Label>
+                    <Input
+                      id="phaseImageUrl"
+                      placeholder="Image URL for phase"
+                      value={programmingData.phaseImageUrl}
+                      onChange={(e) => updateField('phaseImageUrl', e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="playerImageUrl">Player Image URL</Label>
+                    <Input
+                      id="playerImageUrl"
+                      placeholder="Player image URL"
+                      value={programmingData.playerImageUrl}
+                      onChange={(e) => updateField('playerImageUrl', e.target.value)}
+                    />
+                  </div>
+                </div>
+
                 <div className="space-y-2">
-                  <Label htmlFor="overview">Overview Content</Label>
+                  <Label htmlFor="overviewText">Overview Text</Label>
                   <Textarea
-                    id="overview"
+                    id="overviewText"
                     placeholder="Enter overall programming notes, goals, and structure..."
-                    value={programmingData.overview}
-                    onChange={(e) => updateField('overview', e.target.value)}
-                    rows={15}
-                    className="font-mono text-sm"
+                    value={programmingData.overviewText}
+                    onChange={(e) => updateField('overviewText', e.target.value)}
+                    rows={12}
+                    className="text-sm"
                   />
                   <p className="text-xs text-muted-foreground">
-                    Include weekly schedules, strength & conditioning workouts, recovery protocols, nutrition guidelines, and injury prevention exercises.
+                    Include long-term focus, phase goals, technical objectives, and general guidelines.
                   </p>
                 </div>
               </CardContent>
@@ -211,18 +373,122 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
                   </div>
 
                   {selectedSession ? (
-                    <div className="space-y-2 pt-4">
-                      <Label htmlFor={selectedSession}>
-                        {sessionLabels.find(s => s.key === selectedSession)?.label} Content
-                      </Label>
-                      <Textarea
-                        id={selectedSession}
-                        placeholder={`Enter exercises, sets, reps, and notes for ${sessionLabels.find(s => s.key === selectedSession)?.label}...`}
-                        value={programmingData[selectedSession as keyof ProgrammingData]}
-                        onChange={(e) => updateField(selectedSession as keyof ProgrammingData, e.target.value)}
-                        rows={15}
-                        className="font-mono text-sm"
-                      />
+                    <div className="space-y-4 pt-4">
+                      <div className="flex justify-between items-center">
+                        <Label className="text-lg font-semibold">
+                          {sessionLabels.find(s => s.key === selectedSession)?.label} Exercises
+                        </Label>
+                        <Button
+                          type="button"
+                          size="sm"
+                          onClick={() => addExercise(selectedSession as any)}
+                        >
+                          <Plus className="w-4 h-4 mr-2" />
+                          Add Exercise
+                        </Button>
+                      </div>
+
+                      {(programmingData[selectedSession as keyof ProgrammingData] as SessionData).exercises.map((exercise, idx) => (
+                        <Card key={idx} className="p-4 space-y-3">
+                          <div className="flex justify-between items-start">
+                            <h4 className="font-semibold text-sm">Exercise {idx + 1}</h4>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeExercise(selectedSession as any, idx)}
+                            >
+                              <Trash2 className="w-4 h-4 text-destructive" />
+                            </Button>
+                          </div>
+                          
+                          <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-1">
+                              <Label className="text-xs">Exercise Name</Label>
+                              <Input
+                                placeholder="e.g., Bird Dog with Lateral Reach"
+                                value={exercise.name}
+                                onChange={(e) => updateExercise(selectedSession as any, idx, 'name', e.target.value)}
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <Label className="text-xs">Repetitions</Label>
+                              <Input
+                                placeholder="e.g., 16 (8 each side)"
+                                value={exercise.repetitions}
+                                onChange={(e) => updateExercise(selectedSession as any, idx, 'repetitions', e.target.value)}
+                              />
+                            </div>
+                          </div>
+
+                          <div className="space-y-1">
+                            <Label className="text-xs">Exercise Description</Label>
+                            <Textarea
+                              placeholder="Detailed description of how to perform the exercise..."
+                              value={exercise.description}
+                              onChange={(e) => updateExercise(selectedSession as any, idx, 'description', e.target.value)}
+                              rows={3}
+                              className="text-sm"
+                            />
+                          </div>
+
+                          <div className="grid grid-cols-4 gap-3">
+                            <div className="space-y-1">
+                              <Label className="text-xs">Sets</Label>
+                              <Input
+                                placeholder="e.g., 3"
+                                value={exercise.sets}
+                                onChange={(e) => updateExercise(selectedSession as any, idx, 'sets', e.target.value)}
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <Label className="text-xs">Load</Label>
+                              <Input
+                                placeholder="e.g., 20kg"
+                                value={exercise.load}
+                                onChange={(e) => updateExercise(selectedSession as any, idx, 'load', e.target.value)}
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <Label className="text-xs">Recovery Time</Label>
+                              <Input
+                                placeholder="e.g., 60s"
+                                value={exercise.recoveryTime}
+                                onChange={(e) => updateExercise(selectedSession as any, idx, 'recoveryTime', e.target.value)}
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <Label className="text-xs">Video URL</Label>
+                              <Input
+                                placeholder="Video link"
+                                value={exercise.videoUrl}
+                                onChange={(e) => updateExercise(selectedSession as any, idx, 'videoUrl', e.target.value)}
+                              />
+                            </div>
+                          </div>
+                        </Card>
+                      ))}
+
+                      {(programmingData[selectedSession as keyof ProgrammingData] as SessionData).exercises.length === 0 && (
+                        <div className="text-center py-8 text-muted-foreground border-2 border-dashed rounded-lg">
+                          No exercises added yet. Click "Add Exercise" to get started.
+                        </div>
+                      )}
+
+                      <div className="space-y-2 pt-4">
+                        <Label htmlFor="scheduleNotes">Schedule Details / Notes</Label>
+                        <Textarea
+                          id="scheduleNotes"
+                          placeholder="e.g., Daily Prehab can be performed on all non-match or gym days..."
+                          value={(programmingData[selectedSession as keyof ProgrammingData] as SessionData).scheduleNotes}
+                          onChange={(e) => updateField(selectedSession as keyof ProgrammingData, {
+                            ...(programmingData[selectedSession as keyof ProgrammingData] as SessionData),
+                            scheduleNotes: e.target.value
+                          })}
+                          rows={3}
+                          className="text-sm"
+                        />
+                      </div>
                     </div>
                   ) : (
                     <div className="text-center py-8 text-muted-foreground">
@@ -230,6 +496,88 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
                     </div>
                   )}
                 </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Weekly Schedule Tab */}
+          <TabsContent value="schedule" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <div className="flex justify-between items-center">
+                  <CardTitle>Weekly Training Schedule</CardTitle>
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={addWeeklySchedule}
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Week
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {programmingData.weeklySchedules.map((schedule, idx) => (
+                  <Card key={idx} className="p-4 space-y-3">
+                    <div className="flex justify-between items-center">
+                      <Label className="font-semibold">Week {idx + 1}</Label>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeWeeklySchedule(idx)}
+                      >
+                        <Trash2 className="w-4 h-4 text-destructive" />
+                      </Button>
+                    </div>
+
+                    <div className="space-y-1">
+                      <Label className="text-xs">Week Number/Name</Label>
+                      <Input
+                        placeholder="e.g., Week 1"
+                        value={schedule.week}
+                        onChange={(e) => updateWeeklySchedule(idx, 'week', e.target.value)}
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-7 gap-2">
+                      {['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map((day) => (
+                        <div key={day} className="space-y-2">
+                          <Label className="text-xs capitalize">{day.slice(0, 3)}</Label>
+                          <Input
+                            placeholder="Activity"
+                            value={schedule[day as keyof WeeklySchedule] as string}
+                            onChange={(e) => updateWeeklySchedule(idx, day as keyof WeeklySchedule, e.target.value)}
+                            className="text-xs"
+                          />
+                          <Select
+                            value={schedule[`${day}Color` as keyof WeeklySchedule] as string}
+                            onValueChange={(value) => updateWeeklySchedule(idx, `${day}Color` as keyof WeeklySchedule, value)}
+                          >
+                            <SelectTrigger className="h-8 text-xs">
+                              <SelectValue placeholder="Color" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="red">Red</SelectItem>
+                              <SelectItem value="orange">Orange</SelectItem>
+                              <SelectItem value="yellow">Yellow</SelectItem>
+                              <SelectItem value="green">Green</SelectItem>
+                              <SelectItem value="blue">Blue</SelectItem>
+                              <SelectItem value="purple">Purple</SelectItem>
+                              <SelectItem value="gray">Gray</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      ))}
+                    </div>
+                  </Card>
+                ))}
+
+                {programmingData.weeklySchedules.length === 0 && (
+                  <div className="text-center py-8 text-muted-foreground border-2 border-dashed rounded-lg">
+                    No weekly schedules added yet. Click "Add Week" to get started.
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
