@@ -1,5 +1,7 @@
 import { Link } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
+import { getCountryFlagUrl } from "@/lib/countryFlags";
+import { ArrowRight } from "lucide-react";
 
 interface PlayerCardProps {
   player: any; // Changed from Player to any since we're using database structure
@@ -97,6 +99,60 @@ export const PlayerCard = ({ player, viewMode = "grid" }: PlayerCardProps) => {
           <span className="text-6xl text-primary tracking-wider" style={{ fontFamily: "'BBH Sans Bartle', 'Bebas Neue', sans-serif" }}>
             {player.position}
           </span>
+        </div>
+
+        {/* Hover Overlay - Key Info */}
+        <div className="absolute inset-0 bg-black/90 opacity-0 md:group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-between p-6 z-20">
+          {/* Top Section */}
+          <div className="grid grid-cols-2 gap-4">
+            {/* Age */}
+            <div>
+              <div className="text-5xl font-bebas text-primary mb-1">{player.age}</div>
+              <div className="text-sm font-bebas uppercase text-white tracking-wider">Age</div>
+            </div>
+            
+            {/* Nationality */}
+            <div className="text-right">
+              <div className="flex items-center justify-end gap-2 mb-1">
+                <img 
+                  src={getCountryFlagUrl(player.nationality)} 
+                  alt={player.nationality}
+                  className="w-8 h-6 object-cover rounded"
+                />
+                <span className="text-5xl font-bebas text-primary">
+                  {player.nationality.substring(0, 2).toUpperCase()}
+                </span>
+              </div>
+              <div className="text-sm font-bebas uppercase text-white tracking-wider">Nationality</div>
+            </div>
+          </div>
+
+          {/* Bottom Section */}
+          <div>
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              {/* Position */}
+              <div>
+                <div className="text-5xl font-bebas text-primary mb-1">{player.position}</div>
+                <div className="text-sm font-bebas uppercase text-white tracking-wider">Position</div>
+              </div>
+              
+              {/* Category/Status */}
+              <div className="text-right">
+                <div className="text-5xl font-bebas text-primary mb-1">
+                  {player.category === 'Signed' ? new Date().getFullYear() : player.category}
+                </div>
+                <div className="text-sm font-bebas uppercase text-white tracking-wider">
+                  {player.category === 'Signed' ? 'Start' : 'Status'}
+                </div>
+              </div>
+            </div>
+
+            {/* Profile Button */}
+            <div className="border-2 border-primary rounded-md py-3 px-4 flex items-center justify-center gap-2 transition-colors hover:bg-primary hover:text-black">
+              <span className="font-bebas uppercase tracking-wider text-primary group-hover:text-black">Player Profile</span>
+              <ArrowRight className="w-5 h-5 text-primary group-hover:text-black" />
+            </div>
+          </div>
         </div>
       </div>
 
