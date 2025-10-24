@@ -592,7 +592,7 @@ const Dashboard = () => {
                                                       <div 
                                                         key={day}
                                                         onClick={() => sessionValue && handleSessionClick(sessionValue)}
-                                                        className={`p-6 flex items-center justify-center rounded-lg min-h-[80px] transition-all relative ${sessionValue ? 'cursor-pointer hover:scale-105' : ''}`}
+                                                        className={`p-3 flex items-center justify-center rounded-lg min-h-[40px] transition-all relative ${sessionValue ? 'cursor-pointer hover:scale-105' : ''}`}
                                                         style={{ 
                                                           backgroundColor: colors.bg,
                                                           border: '2px solid rgba(255, 255, 255, 0.1)'
@@ -620,7 +620,7 @@ const Dashboard = () => {
                                                         
                                                         {sessionValue && (
                                                           <span 
-                                                            className="font-bebas text-4xl uppercase font-bold"
+                                                            className="font-bebas text-2xl uppercase font-bold"
                                                             style={{ 
                                                               color: colors.text,
                                                               textShadow: '0 2px 4px rgba(0, 0, 0, 0.3)'
@@ -985,35 +985,6 @@ const Dashboard = () => {
                                     </p>
                                   </AccordionContent>
                                 </AccordionItem>
-
-                                {/* Exercise Descriptions Section */}
-                                {program.sessions && typeof program.sessions === 'object' && Object.keys(program.sessions).length > 0 && (
-                                  <AccordionItem value="descriptions">
-                                    <AccordionTrigger className="text-xl font-bebas uppercase hover:no-underline">
-                                      Exercise Descriptions
-                                    </AccordionTrigger>
-                                    <AccordionContent>
-                                      <div className="space-y-6">
-                                        {Object.entries(program.sessions).map(([sessionKey, session]: [string, any]) => 
-                                          session.exercises && Array.isArray(session.exercises) && session.exercises.map((exercise: any, idx: number) => (
-                                            exercise.description && (
-                                              <div key={`${sessionKey}-${idx}`} className="border-l-2 border-primary/30 pl-4">
-                                                <h5 className="font-bebas text-base uppercase mb-2">{exercise.name}</h5>
-                                                <p className="text-sm text-muted-foreground mb-2">{exercise.description}</p>
-                                                <div className="text-xs text-muted-foreground space-x-4">
-                                                  {exercise.repetitions && <span>Reps: {exercise.repetitions}</span>}
-                                                  {exercise.sets && <span>Sets: {exercise.sets}</span>}
-                                                  {exercise.load && exercise.load !== '-' && <span>Load: {exercise.load}</span>}
-                                                  {exercise.recoveryTime && exercise.recoveryTime !== '-' && <span>Rest: {exercise.recoveryTime}</span>}
-                                                </div>
-                                              </div>
-                                            )
-                                          ))
-                                        )}
-                                      </div>
-                                    </AccordionContent>
-                                  </AccordionItem>
-                                )}
                               </Accordion>
                             )}
                           </div>
