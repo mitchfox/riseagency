@@ -318,8 +318,8 @@ const PlayerManagement = () => {
   // Mock analysis data for placeholder
   const mockAnalyses = [
     { id: 1, date: "2025-01-15", r90: 1.8, pdfUrl: "#", videoUrl: "#" },
-    { id: 2, date: "2025-01-08", r90: 1.2, pdfUrl: "#", videoUrl: "#" },
-    { id: 3, date: "2024-12-20", r90: 0.7, pdfUrl: "#", videoUrl: "#" },
+    { id: 2, date: "2025-01-08", r90: 1.2, pdfUrl: "#", videoUrl: null },
+    { id: 3, date: "2024-12-20", r90: 0.7, pdfUrl: null, videoUrl: "#" },
   ];
 
   if (loading && players.length === 0) {
@@ -626,22 +626,26 @@ const PlayerManagement = () => {
                               R90: {analysis.r90.toFixed(2)}
                             </button>
                             
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => toast.info("PDF viewer coming soon")}
-                            >
-                              <FileText className="w-4 h-4 mr-1" />
-                              PDF
-                            </Button>
+                            {analysis.pdfUrl && (
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => toast.info("PDF viewer coming soon")}
+                              >
+                                <FileText className="w-4 h-4 mr-1" />
+                                PDF
+                              </Button>
+                            )}
                             
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => toast.info("Video player coming soon")}
-                            >
-                              📹 Video
-                            </Button>
+                            {analysis.videoUrl && (
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => toast.info("Video player coming soon")}
+                              >
+                                📹 Video
+                              </Button>
+                            )}
                           </div>
                         ))}
                       </div>
