@@ -64,6 +64,7 @@ const PlayerDetail = () => {
                     whatsapp: parsed.whatsapp,
                     externalLinks: parsed.externalLinks,
                     strengthsAndPlayStyle: parsed.strengthsAndPlayStyle,
+                    topStats: parsed.topStats,
                     tacticalFormations: tacticalFormations
                   };
                   
