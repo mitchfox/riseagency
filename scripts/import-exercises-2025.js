@@ -17,7 +17,7 @@ if (!supabaseUrl || !supabaseKey) {
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 function parseRecoveryTime(recoveryStr) {
-  if (!recoveryStr || recoveryStr === "'-" || recoveryStr === 'Full') return null;
+  if (!recoveryStr || recoveryStr === "'-" || recoveryStr === 'Full' || recoveryStr === '') return null;
   const match = recoveryStr.match(/(\d+)s/);
   return match ? parseInt(match[1]) : null;
 }
@@ -58,12 +58,17 @@ async function importExercises() {
     console.error('Error clearing exercises:', deleteError);
   }
   
-  const exercises = [];
+  let exercises = [];
+  let totalParsed = 0;
+  let skippedLines = 0;
   
   // Skip header line
   for (let i = 1; i < lines.length; i++) {
     const line = lines[i].trim();
-    if (!line) continue;
+    if (!line) {
+      skippedLines++;
+      continue;
+    }
     
     try {
       // Parse CSV with proper quote handling
@@ -85,10 +90,16 @@ async function importExercises() {
       }
       columns.push(current);
       
-      if (columns.length < 10) continue;
+      if (columns.length < 10) {
+        skippedLines++;
+        continue;
+      }
       
       const title = columns[2].trim();
-      if (!title) continue;
+      if (!title) {
+        skippedLines++;
+        continue;
+      }
       
       const description = columns[3].trim();
       const reps = columns[4].trim();
@@ -111,6 +122,8 @@ async function importExercises() {
         tags: tags.length > 0 ? tags : null
       });
       
+      totalParsed++;
+      
       // Insert in batches of 100
       if (exercises.length === 100) {
         console.log(`Inserting batch of ${exercises.length} exercises...`);
@@ -121,12 +134,13 @@ async function importExercises() {
         if (error) {
           console.error('Error inserting batch:', error);
         } else {
-          console.log(`Successfully inserted ${exercises.length} exercises`);
+          console.log(`Successfully inserted batch`);
         }
-        exercises.length = 0;
+        exercises = [];
       }
     } catch (error) {
       console.error(`Error parsing line ${i}:`, error.message);
+      skippedLines++;
     }
   }
   
@@ -140,7 +154,7 @@ async function importExercises() {
     if (error) {
       console.error('Error inserting final batch:', error);
     } else {
-      console.log(`Successfully inserted ${exercises.length} exercises`);
+      console.log(`Successfully inserted final batch`);
     }
   }
   
@@ -149,7 +163,11 @@ async function importExercises() {
     .from('coaching_exercises')
     .select('*', { count: 'exact', head: true });
   
-  console.log(`\nImport complete! Total exercises in database: ${count}`);
+  console.log(`\nImport complete!`);
+  console.log(`Total lines in CSV: ${lines.length - 1} (excluding header)`);
+  console.log(`Successfully parsed: ${totalParsed}`);
+  console.log(`Skipped lines: ${skippedLines}`);
+  console.log(`Total exercises in database: ${count}`);
 }
 
 importExercises().catch(console.error);
