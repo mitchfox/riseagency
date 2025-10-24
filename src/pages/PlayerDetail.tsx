@@ -306,7 +306,7 @@ const PlayerDetail = () => {
                     <button
                       key={index}
                       onClick={() => setCurrentVideoType(index)}
-                      className={`w-6 h-6 md:w-8 md:h-8 rounded border transition-all overflow-hidden bg-black/50 ${
+                      className={`w-6 h-6 md:w-10 md:h-10 rounded border transition-all overflow-hidden bg-black/50 ${
                         currentVideoType === index
                           ? 'border-[hsl(var(--gold))] scale-110'
                           : 'border-[hsl(var(--gold))]/20 hover:border-[hsl(var(--gold))]/50'
