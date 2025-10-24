@@ -315,7 +315,7 @@ const Dashboard = () => {
             </TabsList>
 
             <TabsContent value="analysis" className="space-y-6">
-              <Card className="bg-marble">
+              <Card>
                 <CardHeader>
                   <CardTitle className="text-3xl font-bebas uppercase tracking-wider">
                     Performance Analysis
@@ -323,23 +323,7 @@ const Dashboard = () => {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {analyses.length === 0 ? (
-                    <>
-                      <p className="text-muted-foreground">
-                        Your personalized performance analysis will appear here. This section will include:
-                      </p>
-                      <ul className="list-disc list-inside space-y-2 text-muted-foreground">
-                        <li>Match performance reviews</li>
-                        <li>Technical skill assessments</li>
-                        <li>Tactical positioning analysis</li>
-                        <li>Areas for improvement</li>
-                        <li>Strengths to leverage</li>
-                      </ul>
-                      <div className="mt-6 p-6 border border-primary/20 rounded-lg">
-                        <p className="text-center text-muted-foreground italic">
-                          Content coming soon - your coach will upload analysis reports here
-                        </p>
-                      </div>
-                    </>
+                    <div className="py-8"></div>
                   ) : (
                     <div className="space-y-3">
                       {analyses.map((analysis) => (
