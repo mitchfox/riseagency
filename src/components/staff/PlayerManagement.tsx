@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { toast } from "sonner";
 import { Edit, FileText, LineChart, BookOpen, Pencil, Video } from "lucide-react";
 import { PerformanceActionsDialog } from "./PerformanceActionsDialog";
+import { ProgrammingManagement } from "./ProgrammingManagement";
 
 interface Player {
   id: string;
@@ -62,6 +63,9 @@ const PlayerManagement = () => {
   const [isHighlightsDialogOpen, setIsHighlightsDialogOpen] = useState(false);
   const [highlightVideoUrl, setHighlightVideoUrl] = useState("");
   const [highlightClubLogo, setHighlightClubLogo] = useState("");
+  const [isProgrammingDialogOpen, setIsProgrammingDialogOpen] = useState(false);
+  const [selectedProgrammingPlayerId, setSelectedProgrammingPlayerId] = useState<string>("");
+  const [selectedProgrammingPlayerName, setSelectedProgrammingPlayerName] = useState<string>("");
 
   const [formData, setFormData] = useState({
     name: "",
@@ -759,7 +763,11 @@ const PlayerManagement = () => {
                       <Edit className="w-4 h-4 mr-2" />
                       Player Details
                     </Button>
-                    <Button variant="outline" size="sm" onClick={() => toast.info("Programming feature coming soon")}>
+                    <Button variant="outline" size="sm" onClick={() => {
+                      setSelectedProgrammingPlayerId(player.id);
+                      setSelectedProgrammingPlayerName(player.name);
+                      setIsProgrammingDialogOpen(true);
+                    }}>
                       <BookOpen className="w-4 h-4 mr-2" />
                       Programming
                     </Button>
@@ -991,6 +999,14 @@ const PlayerManagement = () => {
         onOpenChange={setIsPerformanceActionsDialogOpen}
         analysisId={selectedAnalysisId || ""}
         playerName={selectedPlayerName}
+      />
+
+      {/* Programming Management Dialog */}
+      <ProgrammingManagement
+        isOpen={isProgrammingDialogOpen}
+        onClose={() => setIsProgrammingDialogOpen(false)}
+        playerId={selectedProgrammingPlayerId}
+        playerName={selectedProgrammingPlayerName}
       />
 
       {/* Highlights Management Dialog */}
