@@ -708,6 +708,9 @@ const Dashboard = () => {
                                             const hasPreSession = program.sessions[preKey] || program.sessions[preKey.toLowerCase()];
                                             const mainSession = program.sessions[mainKey] || program.sessions[mainKey.toLowerCase()];
                                             
+                                            // Only render TabsContent if there's data for this session
+                                            if (!hasPreSession && !mainSession) return null;
+                                            
                                             return (
                                               <TabsContent key={mainKey} value={mainKey} className="mt-4">
                                                 <Tabs defaultValue={hasPreSession ? "pre" : "main"} className="w-full">
