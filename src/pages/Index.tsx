@@ -333,18 +333,22 @@ const Index = () => {
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent opacity-90 group-hover:opacity-95 transition-opacity duration-300" />
                 </div>
-                <div className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center">
-                  <div className="transform transition-transform duration-300 group-hover:-translate-y-2 space-y-4">
-                    <h3 className="text-4xl font-bebas uppercase tracking-wider text-white">
+                <div className="absolute inset-0 flex flex-col items-center justify-between p-8 text-center">
+                  <div className="flex-1 flex items-center">
+                    <h3 className="text-4xl font-bebas uppercase tracking-wider text-white transform transition-transform duration-300 group-hover:-translate-y-2">
                       Players
                     </h3>
-                    <p className="text-white/90 text-sm leading-relaxed">
+                  </div>
+                  <div className="flex-1 flex items-center">
+                    <p className="text-white/90 text-sm leading-relaxed transform transition-transform duration-300 group-hover:-translate-y-2">
                       Take your career to the next level with professional representation
                     </p>
+                  </div>
+                  <div className="flex-1 flex items-end w-full">
                     <Button 
                       asChild
                       size="lg" 
-                      className="btn-shine w-full text-lg font-bebas uppercase tracking-wider"
+                      className="btn-shine w-full text-lg font-bebas uppercase tracking-wider transform transition-transform duration-300 group-hover:-translate-y-2"
                     >
                       <Link to="/stars">Learn More</Link>
                     </Button>
@@ -362,18 +366,22 @@ const Index = () => {
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent opacity-90 group-hover:opacity-95 transition-opacity duration-300" />
                 </div>
-                <div className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center">
-                  <div className="transform transition-transform duration-300 group-hover:-translate-y-2 space-y-4">
-                    <h3 className="text-4xl font-bebas uppercase tracking-wider text-white">
+                <div className="absolute inset-0 flex flex-col items-center justify-between p-8 text-center">
+                  <div className="flex-1 flex items-center">
+                    <h3 className="text-4xl font-bebas uppercase tracking-wider text-white transform transition-transform duration-300 group-hover:-translate-y-2">
                       Clubs
                     </h3>
-                    <p className="text-white/90 text-sm leading-relaxed">
+                  </div>
+                  <div className="flex-1 flex items-center">
+                    <p className="text-white/90 text-sm leading-relaxed transform transition-transform duration-300 group-hover:-translate-y-2">
                       Discover top talent for your squad through our extensive network
                     </p>
+                  </div>
+                  <div className="flex-1 flex items-end w-full">
                     <Button 
                       asChild
                       size="lg" 
-                      className="btn-shine w-full text-lg font-bebas uppercase tracking-wider"
+                      className="btn-shine w-full text-lg font-bebas uppercase tracking-wider transform transition-transform duration-300 group-hover:-translate-y-2"
                     >
                       <Link to="/clubs">Learn More</Link>
                     </Button>
@@ -391,18 +399,22 @@ const Index = () => {
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent opacity-90 group-hover:opacity-95 transition-opacity duration-300" />
                 </div>
-                <div className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center">
-                  <div className="transform transition-transform duration-300 group-hover:-translate-y-2 space-y-4">
-                    <h3 className="text-4xl font-bebas uppercase tracking-wider text-white">
+                <div className="absolute inset-0 flex flex-col items-center justify-between p-8 text-center">
+                  <div className="flex-1 flex items-center">
+                    <h3 className="text-4xl font-bebas uppercase tracking-wider text-white transform transition-transform duration-300 group-hover:-translate-y-2">
                       Scouts
                     </h3>
-                    <p className="text-white/90 text-sm leading-relaxed">
+                  </div>
+                  <div className="flex-1 flex items-center">
+                    <p className="text-white/90 text-sm leading-relaxed transform transition-transform duration-300 group-hover:-translate-y-2">
                       Collaborate with us to identify and develop emerging talent
                     </p>
+                  </div>
+                  <div className="flex-1 flex items-end w-full">
                     <Button 
                       asChild
                       size="lg" 
-                      className="btn-shine w-full text-lg font-bebas uppercase tracking-wider"
+                      className="btn-shine w-full text-lg font-bebas uppercase tracking-wider transform transition-transform duration-300 group-hover:-translate-y-2"
                     >
                       <Link to="/scouts">Learn More</Link>
                     </Button>
@@ -420,18 +432,22 @@ const Index = () => {
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent opacity-90 group-hover:opacity-95 transition-opacity duration-300" />
                 </div>
-                <div className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center">
-                  <div className="transform transition-transform duration-300 group-hover:-translate-y-2 space-y-4">
-                    <h3 className="text-4xl font-bebas uppercase tracking-wider text-white">
+                <div className="absolute inset-0 flex flex-col items-center justify-between p-8 text-center">
+                  <div className="flex-1 flex items-center">
+                    <h3 className="text-4xl font-bebas uppercase tracking-wider text-white transform transition-transform duration-300 group-hover:-translate-y-2">
                       Coaches
                     </h3>
-                    <p className="text-white/90 text-sm leading-relaxed">
+                  </div>
+                  <div className="flex-1 flex items-center">
+                    <p className="text-white/90 text-sm leading-relaxed transform transition-transform duration-300 group-hover:-translate-y-2">
                       Connect with professional representation for your coaching career
                     </p>
+                  </div>
+                  <div className="flex-1 flex items-end w-full">
                     <Button 
                       asChild
                       size="lg" 
-                      className="btn-shine w-full text-lg font-bebas uppercase tracking-wider"
+                      className="btn-shine w-full text-lg font-bebas uppercase tracking-wider transform transition-transform duration-300 group-hover:-translate-y-2"
                     >
                       <Link to="/coaches">Learn More</Link>
                     </Button>
