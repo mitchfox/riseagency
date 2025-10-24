@@ -1,12 +1,12 @@
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
 import { Link } from "react-router-dom";
 import bannerHero from "@/assets/banner-hero.jpg";
+import blackMarble from "@/assets/black-marble-bg.png";
 import scoutsNetwork from "@/assets/scouts-network.jpg";
+import matchAction1 from "@/assets/gallery/match-action-1.jpg";
+import teamDiscussion from "@/assets/gallery/team-discussion.jpg";
 
 const Scouts = () => {
   return (
@@ -15,7 +15,7 @@ const Scouts = () => {
       
       <main className="pt-16">
         {/* Hero Section */}
-        <section className="relative h-[60vh] flex items-center justify-center overflow-hidden">
+        <section className="relative h-[50vh] flex items-center justify-center overflow-hidden">
           <div 
             className="absolute inset-0 bg-cover bg-center"
             style={{ backgroundImage: `url(${bannerHero})` }}
@@ -23,7 +23,7 @@ const Scouts = () => {
           <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-background" />
           
           <div className="relative container mx-auto px-4 text-center z-10">
-            <h1 className="text-6xl md:text-8xl font-bebas uppercase tracking-wider text-white mb-6">
+            <h1 className="text-6xl md:text-8xl font-bebas uppercase tracking-wider text-white mb-4">
               For Scouts
             </h1>
             <p className="text-xl md:text-2xl text-white/90 max-w-3xl mx-auto">
@@ -32,119 +32,71 @@ const Scouts = () => {
           </div>
         </section>
 
-        {/* Services Section */}
-        <section className="py-16 md:py-24 px-4">
-          <div className="container mx-auto max-w-4xl">
-            <div className="space-y-12">
-              <div>
-                <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider mb-6">
-                  Talent Identification
-                </h2>
-                <p className="text-lg text-muted-foreground leading-relaxed">
-                  We work alongside scouts to identify and evaluate emerging talent. Our collaborative approach ensures comprehensive player assessment and development tracking.
-                </p>
-              </div>
-
-              <div>
-                <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider mb-6">
-                  Network Access
-                </h2>
-                <p className="text-lg text-muted-foreground leading-relaxed">
-                  Gain access to our extensive network of clubs, coaches, and industry professionals. We facilitate connections that create opportunities for the players you discover.
-                </p>
-              </div>
-
-              <div>
-                <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider mb-6">
-                  Professional Development
-                </h2>
-                <p className="text-lg text-muted-foreground leading-relaxed">
-                  We support scouts with industry insights, best practices, and opportunities to enhance their scouting expertise and expand their reach.
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Image Section */}
-        <section className="py-16 px-4">
-          <div className="container mx-auto max-w-6xl">
-            <div className="relative h-[400px] rounded-lg overflow-hidden">
-              <img 
-              src={scoutsNetwork} 
-              alt="Scout network"
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-            </div>
-          </div>
-        </section>
-
-        {/* Scout Request Form Section */}
-        <section className="py-16 md:py-24 px-4 bg-muted/30">
-          <div className="container mx-auto max-w-2xl">
-            <div className="text-center mb-12">
-              <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider mb-4">
-                Request a Scout at Your Game
+        {/* IDENTIFY Section - Text Left, Image Right */}
+        <section className="grid md:grid-cols-2">
+          <div 
+            className="relative p-8 md:p-16 flex items-center"
+            style={{ backgroundImage: `url(${blackMarble})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
+          >
+            <div className="max-w-xl">
+              <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-[--gold] mb-6">
+                Identify
               </h2>
-              <p className="text-lg text-muted-foreground">
-                Fill out the form below and we'll get in touch
+              <p className="text-base md:text-xl text-white/90 leading-relaxed">
+                Work alongside our team to identify and evaluate emerging talent. Our collaborative approach ensures comprehensive player assessment and development tracking.
               </p>
             </div>
-            
-            <form className="space-y-6 bg-card p-8 rounded-lg border">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="playerName">Player Name *</Label>
-                  <Input id="playerName" placeholder="John Doe" required />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email *</Label>
-                  <Input id="email" type="email" placeholder="john@example.com" required />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Phone Number</Label>
-                  <Input id="phone" type="tel" placeholder="+1 (555) 000-0000" />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="position">Position *</Label>
-                  <Input id="position" placeholder="e.g., Striker, Midfielder" required />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="gameDate">Game Date *</Label>
-                <Input id="gameDate" type="date" required />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="venue">Venue/Location *</Label>
-                <Input id="venue" placeholder="Stadium name and address" required />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="details">Additional Details</Label>
-                <Textarea 
-                  id="details" 
-                  placeholder="Tell us about the game, level of competition, or any other relevant information..."
-                  className="min-h-[120px]"
-                />
-              </div>
-
-              <Button type="submit" size="lg" className="w-full btn-shine font-bebas uppercase tracking-wider text-lg">
-                Submit Request
-              </Button>
-            </form>
           </div>
+          <div 
+            className="relative min-h-[300px] md:min-h-[600px] bg-cover bg-center"
+            style={{ backgroundImage: `url(${matchAction1})` }}
+          />
+        </section>
+
+        {/* NETWORK Section - Image Left, Text Right */}
+        <section className="grid md:grid-cols-2">
+          <div 
+            className="relative min-h-[300px] md:min-h-[600px] bg-cover bg-center order-2 md:order-1"
+            style={{ backgroundImage: `url(${scoutsNetwork})` }}
+          />
+          <div 
+            className="relative p-8 md:p-16 flex items-center order-1 md:order-2"
+            style={{ backgroundImage: `url(${blackMarble})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
+          >
+            <div className="max-w-xl">
+              <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-[--gold] mb-6">
+                Network
+              </h2>
+              <p className="text-base md:text-xl text-white/90 leading-relaxed">
+                Gain access to our extensive network of clubs, coaches, and industry professionals. We facilitate connections that create opportunities for the players you discover.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* DEVELOP Section - Text Left, Image Right */}
+        <section className="grid md:grid-cols-2">
+          <div 
+            className="relative p-8 md:p-16 flex items-center"
+            style={{ backgroundImage: `url(${blackMarble})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
+          >
+            <div className="max-w-xl">
+              <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-[--gold] mb-6">
+                Develop
+              </h2>
+              <p className="text-base md:text-xl text-white/90 leading-relaxed">
+                Enhance your scouting expertise through industry insights, best practices, and opportunities to expand your reach. We support your professional growth in talent identification.
+              </p>
+            </div>
+          </div>
+          <div 
+            className="relative min-h-[300px] md:min-h-[600px] bg-cover bg-center"
+            style={{ backgroundImage: `url(${teamDiscussion})` }}
+          />
         </section>
 
         {/* CTA Section */}
-        <section className="py-16 md:py-24 bg-muted/30">
+        <section className="py-16 md:py-24 bg-background">
           <div className="container mx-auto px-4 text-center">
             <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider mb-6">
               Join Our Scouting Network
