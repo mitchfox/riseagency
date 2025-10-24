@@ -386,37 +386,54 @@ const Dashboard = () => {
                     </>
                   ) : (
                     <>
-                      {programs.filter(p => p.id === selectedProgramId).map((program) => (
-                        <div key={program.id} className="space-y-6">
-                          {/* Program Header */}
-                          <div className="border-b pb-4">
-                            <div className="flex items-start justify-between mb-2">
-                              <div>
-                                <h3 className="text-2xl font-bebas uppercase tracking-wider">
-                                  {program.program_name}
-                                </h3>
-                                {program.phase_name && (
-                                  <p className="text-lg text-muted-foreground">{program.phase_name}</p>
+                      {programs.filter(p => p.id === selectedProgramId).map((program) => {
+                        const hasContent = 
+                          program.overview_text || 
+                          program.phase_image_url || 
+                          program.player_image_url ||
+                          (program.weekly_schedules && Array.isArray(program.weekly_schedules) && program.weekly_schedules.length > 0) ||
+                          program.schedule_notes ||
+                          (program.sessions && typeof program.sessions === 'object' && Object.keys(program.sessions).length > 0);
+
+                        return (
+                          <div key={program.id} className="space-y-6">
+                            {/* Program Header */}
+                            <div className="border-b pb-4">
+                              <div className="flex items-start justify-between mb-2">
+                                <div>
+                                  <h3 className="text-2xl font-bebas uppercase tracking-wider">
+                                    {program.program_name}
+                                  </h3>
+                                  {program.phase_name && (
+                                    <p className="text-lg text-muted-foreground">{program.phase_name}</p>
+                                  )}
+                                </div>
+                                {program.is_current && (
+                                  <span className="px-3 py-1 bg-primary text-black text-sm font-bebas uppercase rounded">
+                                    Current
+                                  </span>
                                 )}
                               </div>
-                              {program.is_current && (
-                                <span className="px-3 py-1 bg-primary text-black text-sm font-bebas uppercase rounded">
-                                  Current
-                                </span>
+                              {program.phase_dates && (
+                                <p className="text-sm text-muted-foreground">{program.phase_dates}</p>
                               )}
                             </div>
-                            {program.phase_dates && (
-                              <p className="text-sm text-muted-foreground">{program.phase_dates}</p>
-                            )}
-                          </div>
 
-                          {/* Overview */}
-                          {program.overview_text && (
-                            <div>
-                              <h4 className="text-xl font-bebas uppercase mb-2">Overview</h4>
-                              <p className="text-muted-foreground whitespace-pre-wrap">{program.overview_text}</p>
-                            </div>
-                          )}
+                            {!hasContent && (
+                              <div className="p-6 border border-primary/20 rounded-lg bg-accent/10">
+                                <p className="text-center text-muted-foreground">
+                                  Your coach is currently preparing the details for this program. Check back soon!
+                                </p>
+                              </div>
+                            )}
+
+                            {/* Overview */}
+                            {program.overview_text && (
+                              <div>
+                                <h4 className="text-xl font-bebas uppercase mb-2">Overview</h4>
+                                <p className="text-muted-foreground whitespace-pre-wrap">{program.overview_text}</p>
+                              </div>
+                            )}
 
                           {/* Images */}
                           {(program.phase_image_url || program.player_image_url) && (
@@ -496,14 +513,17 @@ const Dashboard = () => {
                             </div>
                           )}
 
-                          <Button 
-                            onClick={() => navigate("/performance")}
-                            className="w-full font-bebas uppercase tracking-wider"
-                          >
-                            View Full Program
-                          </Button>
-                        </div>
-                      ))}
+                            {hasContent && (
+                              <Button 
+                                onClick={() => navigate("/performance")}
+                                className="w-full font-bebas uppercase tracking-wider"
+                              >
+                                View Full Program
+                              </Button>
+                            )}
+                          </div>
+                        );
+                      })}
                     </>
                   )}
                 </CardContent>
