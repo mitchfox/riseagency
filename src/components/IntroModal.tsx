@@ -59,11 +59,6 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
                 alt="Player journey from youth to professional" 
                 className="w-full h-auto"
               />
-              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
-                <p className="text-white text-sm md:text-base font-bebas uppercase tracking-wider text-center">
-                  From Grassroots → Premier League
-                </p>
-              </div>
             </div>
 
             {/* Key Points */}

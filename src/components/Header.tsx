@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import logo from "@/assets/logo.png";
 import { X, MessageCircle, Users, LogIn } from "lucide-react";
 import { TbMenu } from "react-icons/tb";
@@ -21,6 +21,9 @@ import { RepresentationDialog } from "@/components/RepresentationDialog";
 export const Header = () => {
   const [representationOpen, setRepresentationOpen] = useState(false);
   const [workWithUsOpen, setWorkWithUsOpen] = useState(false);
+  const location = useLocation();
+
+  const isActive = (path: string) => location.pathname === path;
 
   return (
     <>
@@ -87,7 +90,9 @@ export const Header = () => {
                 <DrawerClose asChild>
                   <Link
                     to="/"
-                    className="text-xl font-bebas uppercase text-white hover:text-primary transition-colors tracking-wider py-1.5 px-4 hover:bg-white/10 rounded"
+                    className={`text-xl font-bebas uppercase text-white hover:text-primary transition-colors tracking-wider py-1.5 px-4 rounded ${
+                      isActive("/") ? "bg-primary/80 text-white" : "hover:bg-white/10"
+                    }`}
                   >
                     Home
                   </Link>
@@ -95,7 +100,9 @@ export const Header = () => {
                 <DrawerClose asChild>
                   <Link
                     to="/stars"
-                    className="text-xl font-bebas uppercase text-white hover:text-primary transition-colors tracking-wider py-1.5 px-4 hover:bg-white/10 rounded"
+                    className={`text-xl font-bebas uppercase text-white hover:text-primary transition-colors tracking-wider py-1.5 px-4 rounded ${
+                      isActive("/stars") || location.pathname.startsWith("/stars/") ? "bg-primary/80 text-white" : "hover:bg-white/10"
+                    }`}
                   >
                     Stars
                   </Link>
@@ -103,7 +110,9 @@ export const Header = () => {
                 <DrawerClose asChild>
                   <Link
                     to="/players"
-                    className="text-xl font-bebas uppercase text-white hover:text-primary transition-colors tracking-wider py-1.5 px-4 hover:bg-white/10 rounded"
+                    className={`text-xl font-bebas uppercase text-white hover:text-primary transition-colors tracking-wider py-1.5 px-4 rounded ${
+                      isActive("/players") || location.pathname.startsWith("/players/") ? "bg-primary/80 text-white" : "hover:bg-white/10"
+                    }`}
                   >
                     Players
                   </Link>
@@ -111,7 +120,9 @@ export const Header = () => {
                 <DrawerClose asChild>
                   <Link
                     to="/clubs"
-                    className="text-xl font-bebas uppercase text-white hover:text-primary transition-colors tracking-wider py-1.5 px-4 hover:bg-white/10 rounded"
+                    className={`text-xl font-bebas uppercase text-white hover:text-primary transition-colors tracking-wider py-1.5 px-4 rounded ${
+                      isActive("/clubs") ? "bg-primary/80 text-white" : "hover:bg-white/10"
+                    }`}
                   >
                     Clubs
                   </Link>
@@ -119,7 +130,9 @@ export const Header = () => {
                 <DrawerClose asChild>
                   <Link
                     to="/coaches"
-                    className="text-xl font-bebas uppercase text-white hover:text-primary transition-colors tracking-wider py-1.5 px-4 hover:bg-white/10 rounded"
+                    className={`text-xl font-bebas uppercase text-white hover:text-primary transition-colors tracking-wider py-1.5 px-4 rounded ${
+                      isActive("/coaches") ? "bg-primary/80 text-white" : "hover:bg-white/10"
+                    }`}
                   >
                     Coaches
                   </Link>
@@ -127,7 +140,9 @@ export const Header = () => {
                 <DrawerClose asChild>
                   <Link
                     to="/scouts"
-                    className="text-xl font-bebas uppercase text-white hover:text-primary transition-colors tracking-wider py-1.5 px-4 hover:bg-white/10 rounded"
+                    className={`text-xl font-bebas uppercase text-white hover:text-primary transition-colors tracking-wider py-1.5 px-4 rounded ${
+                      isActive("/scouts") ? "bg-primary/80 text-white" : "hover:bg-white/10"
+                    }`}
                   >
                     Scouts
                   </Link>
@@ -135,7 +150,9 @@ export const Header = () => {
                 <DrawerClose asChild>
                   <Link
                     to="/performance"
-                    className="text-xl font-bebas uppercase text-white hover:text-primary transition-colors tracking-wider py-1.5 px-4 hover:bg-white/10 rounded"
+                    className={`text-xl font-bebas uppercase text-white hover:text-primary transition-colors tracking-wider py-1.5 px-4 rounded ${
+                      isActive("/performance") ? "bg-primary/80 text-white" : "hover:bg-white/10"
+                    }`}
                   >
                     Performance
                   </Link>
@@ -143,7 +160,9 @@ export const Header = () => {
                 <DrawerClose asChild>
                   <Link
                     to="/about"
-                    className="text-xl font-bebas uppercase text-white hover:text-primary transition-colors tracking-wider py-1.5 px-4 hover:bg-white/10 rounded"
+                    className={`text-xl font-bebas uppercase text-white hover:text-primary transition-colors tracking-wider py-1.5 px-4 rounded ${
+                      isActive("/about") ? "bg-primary/80 text-white" : "hover:bg-white/10"
+                    }`}
                   >
                     About
                   </Link>
@@ -151,7 +170,9 @@ export const Header = () => {
                 <DrawerClose asChild>
                   <Link
                     to="/contact"
-                    className="text-xl font-bebas uppercase text-white hover:text-primary transition-colors tracking-wider py-1.5 px-4 hover:bg-white/10 rounded"
+                    className={`text-xl font-bebas uppercase text-white hover:text-primary transition-colors tracking-wider py-1.5 px-4 rounded ${
+                      isActive("/contact") ? "bg-primary/80 text-white" : "hover:bg-white/10"
+                    }`}
                   >
                     Contact
                   </Link>
@@ -159,7 +180,9 @@ export const Header = () => {
                 <DrawerClose asChild>
                   <Link
                     to="/news"
-                    className="text-xl font-bebas uppercase text-white hover:text-primary transition-colors tracking-wider py-1.5 px-4 hover:bg-white/10 rounded"
+                    className={`text-xl font-bebas uppercase text-white hover:text-primary transition-colors tracking-wider py-1.5 px-4 rounded ${
+                      isActive("/news") ? "bg-primary/80 text-white" : "hover:bg-white/10"
+                    }`}
                   >
                     News
                   </Link>
