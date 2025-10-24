@@ -6,7 +6,7 @@ import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, MessageCircle, ExternalLink, Video } from "lucide-react";
 import { FormationDisplay } from "@/components/FormationDisplay";
-import { getCountryFlag } from "@/lib/countryFlags";
+import { getCountryFlagUrl } from "@/lib/countryFlags";
 import blackMarbleBg from "@/assets/black-marble-menu.png";
 
 const PlayerDetail = () => {
@@ -147,25 +147,32 @@ const PlayerDetail = () => {
               {/* Player Name with Golden Gloss */}
               <div className="relative w-full md:w-auto">
                 <div className="absolute inset-0 bg-gradient-to-r from-[hsl(var(--gold))]/20 via-[hsl(var(--gold))]/10 to-transparent blur-xl" />
-                <h1 className="relative text-2xl md:text-3xl font-bebas uppercase text-foreground leading-none tracking-wide">
+                <h1 className="relative text-2xl md:text-3xl font-bebas uppercase font-bold text-foreground leading-none tracking-wide">
                   {player.name}
                 </h1>
               </div>
               
-              <p className="text-xl md:text-2xl lg:text-3xl text-primary uppercase tracking-widest font-bebas font-semibold leading-none">
+              <p className="text-lg md:text-xl text-muted-foreground uppercase tracking-wide font-bebas leading-none">
                 {player.position}
               </p>
               
-              <p className="text-xl md:text-2xl lg:text-3xl text-primary uppercase tracking-widest font-bebas font-semibold leading-none flex items-center gap-2">
-                {player.dateOfBirth} <span className="text-muted-foreground">({player.age})</span>
+              <p className="text-lg md:text-xl text-muted-foreground uppercase tracking-wide font-bebas leading-none flex items-center gap-2">
+                {player.dateOfBirth} <span className="text-muted-foreground/70">({player.age})</span>
               </p>
               
-              <p className="text-xl md:text-2xl lg:text-3xl text-primary uppercase tracking-widest font-bebas font-semibold leading-none flex items-center gap-2">
-                <span className="text-3xl md:text-4xl" title={player.nationality}>{getCountryFlag(player.nationality)}</span>
+              <p className="text-lg md:text-xl text-muted-foreground uppercase tracking-wide font-bebas leading-none flex items-center gap-2">
+                <img 
+                  src={getCountryFlagUrl(player.nationality)} 
+                  alt={player.nationality}
+                  className="w-6 h-4 object-cover rounded"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
                 {player.nationality}
               </p>
               
-              <p className="text-xl md:text-2xl lg:text-3xl text-primary uppercase tracking-widest font-bebas font-semibold leading-none flex items-center gap-2">
+              <p className="text-lg md:text-xl text-muted-foreground uppercase tracking-wide font-bebas leading-none flex items-center gap-2">
                 <img 
                   src={player.tacticalFormations?.[0]?.clubLogo} 
                   alt={player.currentClub}
