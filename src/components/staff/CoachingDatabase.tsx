@@ -33,6 +33,8 @@ interface CoachingItem {
   reps?: string | null;
   rest_time?: number | null;
   analysis_type?: string | null;
+  video_url?: string | null;
+  is_own_video?: boolean | null;
 }
 
 const tableConfigs = {
@@ -81,6 +83,7 @@ export const CoachingDatabase = () => {
     category: '',
     load: '',
     video_url: '',
+    is_own_video: false,
   });
   
   // Pagination and filtering
@@ -230,6 +233,7 @@ export const CoachingDatabase = () => {
         category: '',
         load: '',
         video_url: '',
+        is_own_video: false,
       });
       setEditingItem(null);
       setIsDialogOpen(false);
@@ -279,7 +283,8 @@ export const CoachingDatabase = () => {
       rest_time: item.rest_time || '',
       load: (item as any).load || '',
       analysis_type: item.analysis_type || '',
-      video_url: (item as any).video_url || '',
+      video_url: item.video_url || '',
+      is_own_video: item.is_own_video || false,
     });
     setIsDialogOpen(true);
   };
@@ -292,6 +297,7 @@ export const CoachingDatabase = () => {
       category: '',
       load: '',
       video_url: '',
+      is_own_video: false,
     });
     setEditingItem(null);
   };
@@ -526,7 +532,7 @@ export const CoachingDatabase = () => {
                                     .from('analysis-files')
                                     .getPublicUrl(fileName);
                                   
-                                  setFormData({ ...formData, video_url: urlData.publicUrl });
+                                  setFormData({ ...formData, video_url: urlData.publicUrl, is_own_video: true });
                                   toast.success('Video uploaded successfully');
                                 } catch (error: any) {
                                   toast.error('Failed to upload video: ' + error.message);
@@ -534,6 +540,19 @@ export const CoachingDatabase = () => {
                               }
                             }}
                           />
+                        </div>
+                        
+                        <div className="flex items-center space-x-2">
+                          <input
+                            type="checkbox"
+                            id="is_own_video"
+                            checked={formData.is_own_video || false}
+                            onChange={(e) => setFormData({ ...formData, is_own_video: e.target.checked })}
+                            className="h-4 w-4"
+                          />
+                          <Label htmlFor="is_own_video" className="cursor-pointer">
+                            This is our own video
+                          </Label>
                         </div>
                       </>
                     )}

@@ -153,6 +153,7 @@ export type Database = {
           created_at: string
           description: string | null
           id: string
+          is_own_video: boolean | null
           load: string | null
           reps: string | null
           rest_time: number | null
@@ -169,6 +170,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          is_own_video?: boolean | null
           load?: string | null
           reps?: string | null
           rest_time?: number | null
@@ -185,6 +187,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          is_own_video?: boolean | null
           load?: string | null
           reps?: string | null
           rest_time?: number | null
