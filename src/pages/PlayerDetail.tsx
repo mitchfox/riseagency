@@ -86,7 +86,9 @@ const PlayerDetail = () => {
                 highlights = typeof data.highlights === 'string' 
                   ? JSON.parse(data.highlights) 
                   : Array.isArray(data.highlights) ? data.highlights : [];
-              } catch {
+                console.log('Parsed highlights:', highlights);
+              } catch (e) {
+                console.error('Error parsing highlights:', e);
                 highlights = [];
               }
             }
@@ -235,15 +237,25 @@ const PlayerDetail = () => {
           <div className="mb-8">
             <div className="relative aspect-video bg-secondary/30 rounded-lg overflow-hidden border-4 border-[hsl(var(--gold))]">
               {dbHighlights.length > 0 && typeof currentVideoType === 'number' && dbHighlights[currentVideoType]?.videoUrl ? (
-                <video 
-                  key={dbHighlights[currentVideoType].videoUrl}
-                  className="w-full h-full object-contain"
-                  controls
-                  autoPlay={currentVideoType === 0}
-                >
-                  <source src={dbHighlights[currentVideoType].videoUrl} type="video/mp4" />
-                  Your browser does not support the video tag.
-                </video>
+                <>
+                  <video 
+                    key={dbHighlights[currentVideoType].videoUrl}
+                    className="w-full h-full object-contain bg-black"
+                    controls
+                    autoPlay={currentVideoType === 0}
+                    playsInline
+                    preload="metadata"
+                    onError={(e) => {
+                      console.error('Video error:', e);
+                      console.log('Video URL:', dbHighlights[currentVideoType].videoUrl);
+                    }}
+                    onLoadStart={() => console.log('Video loading started')}
+                    onLoadedData={() => console.log('Video loaded successfully')}
+                  >
+                    <source src={dbHighlights[currentVideoType].videoUrl} type="video/mp4" />
+                    Your browser does not support the video tag.
+                  </video>
+                </>
               ) : (
                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
                   <Video className="w-16 h-16 text-primary" />
