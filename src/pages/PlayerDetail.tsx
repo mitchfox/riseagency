@@ -32,6 +32,13 @@ const PlayerDetail = () => {
           if (error) throw error;
           
           if (data) {
+            // Fetch player stats
+            const { data: statsData } = await supabase
+              .from('player_stats')
+              .select('*')
+              .eq('player_id', playername)
+              .single();
+            
             // Parse bio to get additional data
             let bioData: any = {};
             if (data.bio) {
@@ -57,7 +64,15 @@ const PlayerDetail = () => {
             setPlayer({
               ...data,
               ...bioData,
-              highlightsArray: highlights
+              highlightsArray: highlights,
+              stats: statsData ? {
+                goals: statsData.goals || 0,
+                assists: statsData.assists || 0,
+                matches: statsData.matches || 0,
+                minutes: statsData.minutes || 0,
+                cleanSheets: statsData.clean_sheets,
+                saves: statsData.saves
+              } : {}
             });
             setDbHighlights(highlights);
           }
@@ -250,7 +265,7 @@ const PlayerDetail = () => {
               Season Stats
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {player.stats.goals !== undefined && (
+              {player.stats?.goals !== undefined && (
                 <div className="text-center p-6 bg-background">
                   <div className="text-3xl font-bbh text-primary mb-2">
                     {player.stats.goals}
@@ -260,7 +275,7 @@ const PlayerDetail = () => {
                   </div>
                 </div>
               )}
-              {player.stats.assists !== undefined && (
+              {player.stats?.assists !== undefined && (
                 <div className="text-center p-6 bg-background">
                   <div className="text-3xl font-bbh text-primary mb-2">
                     {player.stats.assists}
@@ -270,7 +285,7 @@ const PlayerDetail = () => {
                   </div>
                 </div>
               )}
-              {player.stats.cleanSheets !== undefined && (
+              {player.stats?.cleanSheets !== undefined && (
                 <div className="text-center p-6 bg-background">
                   <div className="text-3xl font-bbh text-primary mb-2">
                     {player.stats.cleanSheets}
@@ -280,7 +295,7 @@ const PlayerDetail = () => {
                   </div>
                 </div>
               )}
-              {player.stats.saves !== undefined && (
+              {player.stats?.saves !== undefined && (
                 <div className="text-center p-6 bg-background">
                   <div className="text-3xl font-bbh text-primary mb-2">
                     {player.stats.saves}
