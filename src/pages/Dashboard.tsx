@@ -48,6 +48,28 @@ const Dashboard = () => {
   const [programs, setPrograms] = useState<PlayerProgram[]>([]);
   const [selectedProgramId, setSelectedProgramId] = useState<string | null>(null);
 
+  // Session color mapping
+  const getSessionColor = (sessionKey: string) => {
+    const key = sessionKey.toUpperCase();
+    const colorMap: Record<string, { bg: string; text: string }> = {
+      'A': { bg: 'hsl(220, 70%, 35%)', text: 'hsl(45, 100%, 60%)' },
+      'B': { bg: 'hsl(140, 50%, 30%)', text: 'hsl(45, 100%, 60%)' },
+      'C': { bg: 'hsl(0, 50%, 35%)', text: 'hsl(45, 100%, 60%)' },
+      'D': { bg: 'hsl(45, 70%, 45%)', text: 'hsl(45, 100%, 60%)' },
+      'E': { bg: 'hsl(70, 20%, 40%)', text: 'hsl(45, 100%, 60%)' },
+      'F': { bg: 'hsl(270, 60%, 40%)', text: 'hsl(45, 100%, 60%)' },
+      'G': { bg: 'hsl(190, 70%, 45%)', text: 'hsl(45, 100%, 60%)' },
+      'PRE-B': { bg: 'hsl(220, 80%, 20%)', text: 'hsl(45, 100%, 60%)' },
+      'PRE-C': { bg: 'hsl(220, 80%, 20%)', text: 'hsl(45, 100%, 60%)' },
+      'PREHAB': { bg: 'hsl(220, 80%, 20%)', text: 'hsl(45, 100%, 60%)' },
+      'T': { bg: 'hsl(140, 50%, 20%)', text: 'hsl(45, 100%, 60%)' },
+      'TESTING': { bg: 'hsl(140, 50%, 20%)', text: 'hsl(45, 100%, 60%)' },
+      'R': { bg: 'hsl(0, 0%, 85%)', text: 'hsl(45, 100%, 45%)' },
+      'REST': { bg: 'hsl(0, 0%, 85%)', text: 'hsl(45, 100%, 45%)' },
+    };
+    return colorMap[key] || { bg: 'hsl(0, 0%, 15%)', text: 'hsl(0, 0%, 100%)' };
+  };
+
   useEffect(() => {
     checkAuth();
 
@@ -476,12 +498,28 @@ const Dashboard = () => {
                                               <div key={idx} className="border rounded-lg p-4">
                                                 <h6 className="font-bebas text-base mb-3">Week {week.week || idx + 1}</h6>
                                                 <div className="grid gap-2">
-                                                  {Object.entries(week).filter(([key]) => key !== 'week').map(([day, value]) => (
-                                                    <div key={day} className="flex justify-between py-2 border-b last:border-0">
-                                                      <span className="font-medium capitalize">{day}</span>
-                                                      <span className="text-muted-foreground">{value as string}</span>
-                                                    </div>
-                                                  ))}
+                                                  {Object.entries(week).filter(([key]) => key !== 'week').map(([day, value]) => {
+                                                    const sessionValue = value as string;
+                                                    const colors = sessionValue ? getSessionColor(sessionValue) : null;
+                                                    return (
+                                                      <div key={day} className="flex justify-between py-2 border-b last:border-0">
+                                                        <span className="font-medium capitalize">{day}</span>
+                                                        {sessionValue ? (
+                                                          <span 
+                                                            className="px-3 py-1 rounded font-bebas uppercase text-sm"
+                                                            style={{ 
+                                                              backgroundColor: colors?.bg,
+                                                              color: colors?.text
+                                                            }}
+                                                          >
+                                                            {sessionValue}
+                                                          </span>
+                                                        ) : (
+                                                          <span className="text-muted-foreground">-</span>
+                                                        )}
+                                                      </div>
+                                                    );
+                                                  })}
                                                 </div>
                                               </div>
                                             ))}
@@ -508,22 +546,36 @@ const Dashboard = () => {
                                     </AccordionTrigger>
                                     <AccordionContent>
                                       <div className="space-y-3">
-                                        {Object.entries(program.sessions).map(([key, session]: [string, any]) => (
-                                          <div key={key} className="border rounded-lg p-4">
-                                            <h5 className="font-bebas text-lg mb-2">Session {key}</h5>
-                                            {session.exercises && Array.isArray(session.exercises) && (
-                                              <div className="space-y-1">
-                                                {session.exercises.map((exercise: any, idx: number) => (
-                                                  <div key={idx} className="text-sm">
-                                                    <span className="font-medium">{exercise.name || exercise}</span>
-                                                    {exercise.repetitions && <span className="text-muted-foreground ml-2">• {exercise.repetitions}</span>}
-                                                    {exercise.sets && <span className="text-muted-foreground ml-1">× {exercise.sets} sets</span>}
-                                                  </div>
-                                                ))}
-                                              </div>
-                                            )}
-                                          </div>
-                                        ))}
+                                        {Object.entries(program.sessions).map(([key, session]: [string, any]) => {
+                                          const colors = getSessionColor(key);
+                                          return (
+                                            <div 
+                                              key={key} 
+                                              className="rounded-lg p-4"
+                                              style={{ 
+                                                backgroundColor: colors.bg,
+                                              }}
+                                            >
+                                              <h5 
+                                                className="font-bebas text-lg mb-2 uppercase"
+                                                style={{ color: colors.text }}
+                                              >
+                                                Session {key}
+                                              </h5>
+                                              {session.exercises && Array.isArray(session.exercises) && (
+                                                <div className="space-y-1">
+                                                  {session.exercises.map((exercise: any, idx: number) => (
+                                                    <div key={idx} className="text-sm" style={{ color: 'rgba(255, 255, 255, 0.9)' }}>
+                                                      <span className="font-medium">{exercise.name || exercise}</span>
+                                                      {exercise.repetitions && <span className="opacity-80 ml-2">• {exercise.repetitions}</span>}
+                                                      {exercise.sets && <span className="opacity-80 ml-1">× {exercise.sets} sets</span>}
+                                                    </div>
+                                                  ))}
+                                                </div>
+                                              )}
+                                            </div>
+                                          );
+                                        })}
                                       </div>
                                     </AccordionContent>
                                   </AccordionItem>
