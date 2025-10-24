@@ -84,10 +84,23 @@ const PerformanceReport = () => {
   };
 
   const getActionScoreColor = (score: number) => {
-    if (score >= 0.1) return "text-green-600 font-bold";
-    if (score > 0) return "text-green-500";
-    if (score < 0) return "text-red-500";
-    return "text-muted-foreground";
+    // Positive scores - greens
+    if (score >= 0.15) return "text-green-800 font-bold"; // Dark green for excellent actions
+    if (score >= 0.1) return "text-green-600 font-bold";  // Strong green for very good actions
+    if (score >= 0.05) return "text-green-500 font-semibold"; // Medium green for good actions
+    if (score >= 0.02) return "text-green-400"; // Light green for positive actions
+    if (score > 0.005) return "text-lime-500"; // Very light green for small positive
+    if (score > 0) return "text-lime-400"; // Minimal green for tiny positive
+    
+    // Zero
+    if (score === 0) return "text-muted-foreground";
+    
+    // Negative scores - reds/oranges
+    if (score > -0.005) return "text-orange-400"; // Minimal negative
+    if (score > -0.02) return "text-orange-500"; // Small negative
+    if (score > -0.04) return "text-red-400"; // Medium negative
+    if (score > -0.06) return "text-red-500 font-semibold"; // Significant negative
+    return "text-red-700 font-bold"; // Dark red for major errors
   };
 
   const calculateRScore = () => {
