@@ -526,13 +526,14 @@ const Dashboard = () => {
                                             {/* Table Header */}
                                             <div className="grid grid-cols-8 gap-1 md:gap-2 mb-2">
                                               <div 
-                                                className="p-1 md:p-4 font-bebas uppercase text-xs md:text-lg text-center rounded-lg"
+                                                className="p-1 md:p-4 font-bebas uppercase text-[10px] md:text-lg text-center rounded-lg leading-tight"
                                                 style={{ 
                                                   backgroundColor: 'hsl(45, 70%, 55%)',
                                                   color: 'hsl(0, 0%, 0%)'
                                                 }}
                                               >
-                                                Week
+                                                <span className="hidden md:inline">Week Start Date</span>
+                                                <span className="md:hidden">Week Start</span>
                                               </div>
                                               {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, idx) => (
                                                 <div 
@@ -560,13 +561,20 @@ const Dashboard = () => {
                                                 >
                                                   {/* Week Cell */}
                                                   <div 
-                                                    className="p-1 md:p-6 text-xs md:text-base font-medium text-center flex items-center justify-center rounded-lg"
+                                                    className="p-1 md:p-6 text-[10px] md:text-base font-medium text-center flex items-center justify-center rounded-lg leading-tight"
                                                     style={{ 
                                                       backgroundColor: 'hsl(0, 0%, 95%)',
                                                       color: 'hsl(0, 0%, 0%)'
                                                     }}
                                                   >
-                                                    {week.week_start_date ? format(parseISO(week.week_start_date), 'dd/MM/yy') : week.week}
+                                                    {week.week_start_date ? (() => {
+                                                      const date = parseISO(week.week_start_date);
+                                                      const day = format(date, 'd');
+                                                      const suffix = day.endsWith('1') && day !== '11' ? 'st' :
+                                                                    day.endsWith('2') && day !== '12' ? 'nd' :
+                                                                    day.endsWith('3') && day !== '13' ? 'rd' : 'th';
+                                                      return `${day}${suffix} ${format(date, 'MMMM')}`;
+                                                    })() : week.week}
                                                   </div>
                                                   
                                                   {/* Day Cells */}
