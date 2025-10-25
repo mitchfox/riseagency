@@ -88,6 +88,8 @@ const PlayerManagement = () => {
     matches: string;
     clubLogo: string;
   }>>([]);
+  const [editingSchemeIndex, setEditingSchemeIndex] = useState<number | null>(null);
+  const [uploadingSchemeClubLogo, setUploadingSchemeClubLogo] = useState(false);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -666,17 +668,45 @@ const PlayerManagement = () => {
       
       if (error) throw error;
       
-      const { data: { publicUrl } } = supabase.storage
+      const { data: publicUrl } = supabase.storage
         .from('analysis-files')
         .getPublicUrl(`club-logos/${fileName}`);
       
-      setClubLogoUrl(publicUrl);
+      setClubLogoUrl(publicUrl.publicUrl);
       toast.success("Club logo uploaded successfully! Note: For best results, copy logos to /public/clubs/ folder");
     } catch (error: any) {
       console.error("Error uploading club logo:", error);
       toast.error("Failed to upload club logo");
     } finally {
       setUploadingClubLogo(false);
+    }
+  };
+
+  const handleSchemeClubLogoUpload = async (file: File, schemeIndex: number) => {
+    try {
+      setUploadingSchemeClubLogo(true);
+      
+      const fileName = `${Date.now()}_${file.name}`;
+      const { data, error } = await supabase.storage
+        .from('analysis-files')
+        .upload(`club-logos/${fileName}`, file);
+      
+      if (error) throw error;
+      
+      const { data: publicUrl } = supabase.storage
+        .from('analysis-files')
+        .getPublicUrl(`club-logos/${fileName}`);
+      
+      const newHistory = [...schemeHistory];
+      newHistory[schemeIndex].clubLogo = publicUrl.publicUrl;
+      setSchemeHistory(newHistory);
+      
+      toast.success("Club logo uploaded!");
+    } catch (error: any) {
+      console.error("Error uploading club logo:", error);
+      toast.error("Failed to upload club logo");
+    } finally {
+      setUploadingSchemeClubLogo(false);
     }
   };
 
@@ -1013,7 +1043,7 @@ const PlayerManagement = () => {
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div className="space-y-2">
-                        <Label>Formation</Label>
+                        <Label>Scheme</Label>
                         <select
                           className="w-full h-10 px-3 py-2 rounded-md border border-input bg-background text-sm"
                           value={scheme.formation}
@@ -1023,7 +1053,7 @@ const PlayerManagement = () => {
                             setSchemeHistory(newHistory);
                           }}
                         >
-                          <option value="">Select formation</option>
+                          <option value="">Select scheme</option>
                           <option value="4-3-3">4-3-3</option>
                           <option value="4-2-3-1">4-2-3-1</option>
                           <option value="4-4-2">4-4-2</option>
@@ -1049,7 +1079,7 @@ const PlayerManagement = () => {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label>Position(s) in Formation</Label>
+                        <Label>Position(s) in Scheme</Label>
                         <Input
                           placeholder="e.g., ST, LW, CAM"
                           value={scheme.positions.join(", ")}
@@ -1059,7 +1089,9 @@ const PlayerManagement = () => {
                             setSchemeHistory(newHistory);
                           }}
                         />
-                        <p className="text-xs text-muted-foreground">Separate multiple positions with commas</p>
+                        <p className="text-xs text-muted-foreground">
+                          Use position codes like: GK, LB, CB, RB, LWB, RWB, DM, CM, LM, RM, CAM, AM, LW, RW, ST
+                        </p>
                       </div>
                       <div className="space-y-2">
                         <Label>Matches Played</Label>
@@ -1075,7 +1107,19 @@ const PlayerManagement = () => {
                         />
                       </div>
                       <div className="space-y-2 col-span-2">
-                        <Label>Club Logo Path</Label>
+                        <Label>Club Logo</Label>
+                        <Input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) handleSchemeClubLogoUpload(file, index);
+                          }}
+                          disabled={uploadingSchemeClubLogo}
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Upload logo OR manually enter path below
+                        </p>
                         <Input
                           placeholder="/clubs/team-logo.png"
                           value={scheme.clubLogo}
@@ -1086,7 +1130,7 @@ const PlayerManagement = () => {
                           }}
                         />
                         <p className="text-xs text-muted-foreground">
-                          Upload logo to /public/clubs/ folder and enter path here
+                          For best reliability, copy logos to /public/clubs/ folder
                         </p>
                         {scheme.clubLogo && (
                           <div className="mt-2">
@@ -1439,6 +1483,96 @@ const PlayerManagement = () => {
                       </div>
                     </>
                   )}
+
+                  {/* Scheme History Section */}
+                  <div className="border-t pt-4 space-y-4 mt-4">
+                    <h4 className="text-lg font-semibold">Scheme History</h4>
+                    {(() => {
+                      const schemeData = bioData.schemeHistory || [];
+                      return schemeData.length > 0 ? (
+                        <div className="space-y-3">
+                          {schemeData.map((scheme: any, index: number) => (
+                            <Card key={index} className="p-4">
+                              <div className="flex items-start gap-4">
+                                {scheme.clubLogo && (
+                                  <img 
+                                    src={scheme.clubLogo} 
+                                    alt="Club logo"
+                                    className="w-16 h-16 object-contain bg-secondary p-2 rounded border"
+                                  />
+                                )}
+                                <div className="flex-1 space-y-2">
+                                  <div className="flex items-center justify-between">
+                                    <p className="font-semibold">{scheme.teamName || 'Team Name'}</p>
+                                    <div className="flex gap-2">
+                                      <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => {
+                                          startEdit(player);
+                                          setEditingSchemeIndex(index);
+                                        }}
+                                      >
+                                        <Pencil className="w-3 h-3 mr-1" />
+                                        Edit
+                                      </Button>
+                                      <Button
+                                        type="button"
+                                        variant="destructive"
+                                        size="sm"
+                                        onClick={async () => {
+                                          if (!confirm("Delete this scheme history entry?")) return;
+                                          
+                                          const newSchemeHistory = schemeData.filter((_: any, i: number) => i !== index);
+                                          const updatedBio = { ...bioData, schemeHistory: newSchemeHistory };
+                                          
+                                          try {
+                                            const { error } = await supabase
+                                              .from("players")
+                                              .update({ bio: JSON.stringify(updatedBio) })
+                                              .eq("id", player.id);
+                                            
+                                            if (error) throw error;
+                                            toast.success("Scheme history entry deleted");
+                                            fetchPlayers();
+                                          } catch (error: any) {
+                                            toast.error("Failed to delete: " + error.message);
+                                          }
+                                        }}
+                                      >
+                                        Delete
+                                      </Button>
+                                    </div>
+                                  </div>
+                                  <div className="grid grid-cols-2 gap-2 text-sm">
+                                    <div>
+                                      <span className="text-muted-foreground">Scheme: </span>
+                                      <span className="font-medium">{scheme.formation || 'N/A'}</span>
+                                    </div>
+                                    <div>
+                                      <span className="text-muted-foreground">Matches: </span>
+                                      <span className="font-medium">{scheme.matches || '0'}</span>
+                                    </div>
+                                    <div className="col-span-2">
+                                      <span className="text-muted-foreground">Position(s): </span>
+                                      <span className="font-medium">
+                                        {Array.isArray(scheme.positions) ? scheme.positions.join(", ") : scheme.positions || 'N/A'}
+                                      </span>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </Card>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-muted-foreground text-center py-4">
+                          No scheme history yet. Edit player details to add.
+                        </p>
+                      );
+                    })()}
+                  </div>
 
                   {showingAnalysisFor === player.id && (
                     <div className="border-t pt-4 space-y-4">
