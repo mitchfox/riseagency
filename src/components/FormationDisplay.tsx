@@ -110,10 +110,57 @@ export const FormationDisplay = ({ selectedPosition, selectedPositions, playerNa
     
     const posLabel = pos.trim().toUpperCase();
     
-    // Check if any of the selected positions match this position exactly
-    return positions.some(selectedPos => 
-      selectedPos.trim().toUpperCase() === posLabel
-    );
+    // Check if any of the selected positions match this position
+    return positions.some(selectedPos => {
+      const selected = selectedPos.trim().toUpperCase();
+      
+      // Exact match
+      if (selected === posLabel) return true;
+      
+      // Common position abbreviations and variations
+      const positionMappings: Record<string, string[]> = {
+        'LAM': ['LAM', 'LEFT AM', 'LEFT ATTACKING MID', 'LEFT ATTACKING MIDFIELDER', 'LAM'],
+        'RAM': ['RAM', 'RIGHT AM', 'RIGHT ATTACKING MID', 'RIGHT ATTACKING MIDFIELDER', 'RAM'],
+        'CAM': ['CAM', 'CENTRAL AM', 'ATTACKING MID', 'ATTACKING MIDFIELDER', 'CAM', 'AM'],
+        'LST': ['LST', 'LEFT ST', 'LEFT STRIKER', 'LS', 'LEFT FORWARD'],
+        'RST': ['RST', 'RIGHT ST', 'RIGHT STRIKER', 'RS', 'RIGHT FORWARD'],
+        'ST': ['ST', 'STRIKER', 'CENTER FORWARD', 'CF', 'CENTRAL STRIKER'],
+        'LW': ['LW', 'LEFT WING', 'LEFT WINGER', 'LW'],
+        'RW': ['RW', 'RIGHT WING', 'RIGHT WINGER', 'RW'],
+        'LM': ['LM', 'LEFT MID', 'LEFT MIDFIELDER', 'LEFT MIDFIELD'],
+        'RM': ['RM', 'RIGHT MID', 'RIGHT MIDFIELDER', 'RIGHT MIDFIELD'],
+        'LCM': ['LCM', 'LEFT CM', 'LEFT CENTRAL MID', 'LEFT CENTRAL MIDFIELDER'],
+        'RCM': ['RCM', 'RIGHT CM', 'RIGHT CENTRAL MID', 'RIGHT CENTRAL MIDFIELDER'],
+        'CM': ['CM', 'CENTRAL MID', 'CENTRAL MIDFIELDER', 'CENTER MID'],
+        'LDM': ['LDM', 'LEFT DM', 'LEFT DEFENSIVE MID', 'LEFT DEFENSIVE MIDFIELDER'],
+        'RDM': ['RDM', 'RIGHT DM', 'RIGHT DEFENSIVE MID', 'RIGHT DEFENSIVE MIDFIELDER'],
+        'DM': ['DM', 'DEFENSIVE MID', 'DEFENSIVE MIDFIELDER'],
+        'LB': ['LB', 'LEFT BACK', 'LEFT FULL BACK', 'LFB'],
+        'RB': ['RB', 'RIGHT BACK', 'RIGHT FULL BACK', 'RFB'],
+        'LCB': ['LCB', 'LEFT CB', 'LEFT CENTER BACK', 'LEFT CENTRE BACK'],
+        'RCB': ['RCB', 'RIGHT CB', 'RIGHT CENTER BACK', 'RIGHT CENTRE BACK'],
+        'CB': ['CB', 'CENTER BACK', 'CENTRE BACK', 'CENTRAL DEFENDER'],
+        'LWB': ['LWB', 'LEFT WING BACK', 'LEFT WINGBACK'],
+        'RWB': ['RWB', 'RIGHT WING BACK', 'RIGHT WINGBACK'],
+        'GK': ['GK', 'GOALKEEPER', 'KEEPER']
+      };
+      
+      // Check if the position label has a mapping and if the selected position matches any variation
+      if (positionMappings[posLabel]) {
+        return positionMappings[posLabel].some(variant => 
+          selected === variant || selected.includes(variant) || variant.includes(selected)
+        );
+      }
+      
+      // Also check reverse - if selected position has a mapping
+      for (const [key, variants] of Object.entries(positionMappings)) {
+        if (variants.some(variant => selected === variant)) {
+          return key === posLabel;
+        }
+      }
+      
+      return false;
+    });
   };
 
   // Get player's surname (last word in name)
