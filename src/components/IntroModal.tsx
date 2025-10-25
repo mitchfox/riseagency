@@ -46,10 +46,18 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
             
             {/* Overlay Content */}
             <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8" style={{ backgroundImage: `url(${blackMarbleSmudged})`, backgroundSize: "cover" }}>
-              <div className="text-center space-y-4">
-                <h2 className="text-2xl md:text-3xl font-bebas uppercase tracking-wider text-white">
-                  From Striving. To Rising. To Thriving.
-                </h2>
+              <div className="space-y-4">
+                <div className="grid grid-cols-3 gap-2 md:gap-4">
+                  <h2 className="text-xl md:text-3xl font-bebas uppercase tracking-wider text-white text-center">
+                    From Striving
+                  </h2>
+                  <h2 className="text-xl md:text-3xl font-bebas uppercase tracking-wider text-primary/70 text-center">
+                    To Rising
+                  </h2>
+                  <h2 className="text-xl md:text-3xl font-bebas uppercase tracking-wider text-primary text-center">
+                    To Thriving
+                  </h2>
+                </div>
                 <p className="text-sm md:text-base text-white/90 leading-relaxed max-w-2xl mx-auto">
                   We take pride in scouting across the entirety of professional football in Europe and have guided many Premier League players to success through their development journey.
                 </p>
@@ -60,9 +68,9 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
                 {/* Buttons */}
                 <div className="flex flex-row gap-3 justify-center items-center">
                   <Button 
-                    variant="outline"
+                    variant="ghost"
                     onClick={handleRequestRepresentation}
-                    className="font-bebas uppercase tracking-wider px-4 md:px-6 py-2 border-primary/50 text-white hover:bg-white/10 hover:border-white/70 backdrop-blur-sm text-xs md:text-sm flex-1 max-w-[180px]"
+                    className="font-bebas uppercase tracking-wider px-4 md:px-6 py-2 text-white hover:bg-white/10 backdrop-blur-sm text-xs md:text-sm flex-1 max-w-[180px]"
                   >
                     Request Representation
                   </Button>
