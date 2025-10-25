@@ -600,7 +600,7 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto bg-background">
         <DialogHeader>
           <DialogTitle>Programming Management - {playerName}</DialogTitle>
         </DialogHeader>
@@ -1072,35 +1072,37 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
                             </Button>
                           </div>
 
-                          <div className="grid grid-cols-7 gap-2">
-                            {['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map((day) => (
-                              <div key={day} className="space-y-2">
-                                <Label className="text-xs capitalize">{day}</Label>
-                                <Input
-                                  placeholder="Activity"
-                                  value={schedule[day as keyof WeeklySchedule] as string}
-                                  onChange={(e) => updateWeeklySchedule(idx, day as keyof WeeklySchedule, e.target.value)}
-                                  className="text-xs"
-                                />
-                                <Select
-                                  value={schedule[`${day}Color` as keyof WeeklySchedule] as string}
-                                  onValueChange={(value) => updateWeeklySchedule(idx, `${day}Color` as keyof WeeklySchedule, value)}
-                                >
-                                  <SelectTrigger className="text-xs">
-                                    <SelectValue placeholder="Color" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="red">Red</SelectItem>
-                                    <SelectItem value="blue">Blue</SelectItem>
-                                    <SelectItem value="green">Green</SelectItem>
-                                    <SelectItem value="yellow">Yellow</SelectItem>
-                                    <SelectItem value="purple">Purple</SelectItem>
-                                    <SelectItem value="orange">Orange</SelectItem>
-                                    <SelectItem value="gray">Gray</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                            ))}
+                          <div className="overflow-x-auto">
+                            <div className="grid grid-cols-7 gap-2 min-w-[600px] md:min-w-0">
+                              {['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map((day) => (
+                                <div key={day} className="space-y-2">
+                                  <Label className="text-xs capitalize">{day}</Label>
+                                  <Input
+                                    placeholder="Activity"
+                                    value={schedule[day as keyof WeeklySchedule] as string}
+                                    onChange={(e) => updateWeeklySchedule(idx, day as keyof WeeklySchedule, e.target.value)}
+                                    className="text-xs"
+                                  />
+                                  <Select
+                                    value={schedule[`${day}Color` as keyof WeeklySchedule] as string}
+                                    onValueChange={(value) => updateWeeklySchedule(idx, `${day}Color` as keyof WeeklySchedule, value)}
+                                  >
+                                    <SelectTrigger className="text-xs">
+                                      <SelectValue placeholder="Color" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="red">Red</SelectItem>
+                                      <SelectItem value="blue">Blue</SelectItem>
+                                      <SelectItem value="green">Green</SelectItem>
+                                      <SelectItem value="yellow">Yellow</SelectItem>
+                                      <SelectItem value="purple">Purple</SelectItem>
+                                      <SelectItem value="orange">Orange</SelectItem>
+                                      <SelectItem value="gray">Gray</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                              ))}
+                            </div>
                           </div>
 
                           <div className="space-y-2">
