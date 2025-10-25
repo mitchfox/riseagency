@@ -142,7 +142,7 @@ export const Header = () => {
                       isActive("/performance") ? "bg-primary/80 text-white" : "hover:bg-white/10"
                     }`}
                   >
-                    REALISE POTENTIAL
+                    Realise Potential
                   </Link>
                 </DrawerClose>
                 <DrawerClose asChild>
@@ -235,7 +235,7 @@ export const Header = () => {
                   <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70" />
                   <div className="relative h-full flex flex-col items-center justify-between p-4">
                     <h3 className="text-xl font-bebas uppercase tracking-wider text-white drop-shadow-lg text-center">
-                      REALISE POTENTIAL
+                      Realise Potential
                     </h3>
                     <DrawerClose asChild>
                       <Button

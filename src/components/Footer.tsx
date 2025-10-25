@@ -41,7 +41,7 @@ export const Footer = () => {
                 Scouts
               </Link>
               <Link to="/performance" className="text-muted-foreground hover:text-primary transition-colors text-sm">
-                REALISE POTENTIAL
+                Realise Potential
               </Link>
               <Link to="/about" className="text-muted-foreground hover:text-primary transition-colors text-sm">
                 About
