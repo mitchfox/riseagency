@@ -109,8 +109,16 @@ serve(async (req) => {
     const rows = lines.map(parseCSVLine);
     const headers = rows[0];
     
-    // Find column indices
-    const getColIndex = (name: string) => headers.findIndex(h => h.toLowerCase().includes(name.toLowerCase()));
+    // Find column indices - ignore irrelevant columns like "session colour"
+    const getColIndex = (name: string) => {
+      const index = headers.findIndex(h => {
+        const headerLower = h.toLowerCase();
+        // Skip irrelevant columns
+        if (headerLower.includes('colour') || headerLower.includes('color')) return false;
+        return headerLower.includes(name.toLowerCase());
+      });
+      return index;
+    };
     
     const sessionIdx = getColIndex('session');
     const exerciseNameIdx = getColIndex('exercise name');
