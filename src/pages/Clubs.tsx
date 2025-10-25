@@ -2,6 +2,8 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { ChevronDown } from "lucide-react";
 import bannerHero from "@/assets/banner-hero.jpg";
 import blackMarble from "@/assets/black-marble-smudged.png";
 import clubsSection from "@/assets/clubs-section.png";
@@ -42,9 +44,26 @@ const Clubs = () => {
               <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-[--gold] mb-6">
                 Strategise
               </h2>
-              <p className="text-base md:text-xl text-white/90 leading-relaxed">
+              <p className="text-base md:text-xl text-white/90 leading-relaxed mb-4">
                 Work alongside our recruitment team to identify talent that fits your club's philosophy and tactical needs. We provide comprehensive player analysis and market intelligence.
               </p>
+              <Collapsible>
+                <CollapsibleTrigger className="flex items-center gap-2 text-[--gold] hover:text-[--gold]/80 transition-colors">
+                  <span className="text-sm uppercase tracking-wider">Learn More</span>
+                  <ChevronDown className="h-4 w-4" />
+                </CollapsibleTrigger>
+                <CollapsibleContent className="mt-4 space-y-4 text-sm md:text-base text-white/80 leading-relaxed">
+                  <p>
+                    In order to beat the competition, effective and innovative strategies must be employed. We work to build winning sides both in the short term and long term through our bespoke approach. Whether a board of directors or heading up technical staff, our consultation provides essential insights to gain an advantage for your team. The major advantage we can guarantee to our clients is national exclusivity, providing our undivided time and resources, resulting in greater domestic success due to the prioritisation of your club over all others.
+                  </p>
+                  <p>
+                    At the heart of our strategy-building is an individualised approach. Due diligence is put into fully understanding the way an organisation thinks about the game, the culture it aims to build and what is most important to the key decision-makers. This allows us to create and provide the tools for a completely unique and tailored strategy for success.
+                  </p>
+                  <p>
+                    Our extensive knowledge of what it takes to build a winning team and how to adapt the underlying protocols that lead to these, allows us to adapt approaches to the distinct needs of the club. These prove especially impactful in combination with our broad application of reasoning to get to the heart of any internal or external issue. Unlike the average organisation that remains reactive to changes in the footballing landscape, our team also works to stay ahead of the curve on key developments to avoid future pitfalls and be first to potential opportunities.
+                  </p>
+                </CollapsibleContent>
+              </Collapsible>
             </div>
           </div>
           <div 
@@ -67,9 +86,26 @@ const Clubs = () => {
               <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-[--gold] mb-6">
                 Recruit
               </h2>
-              <p className="text-base md:text-xl text-white/90 leading-relaxed">
+              <p className="text-base md:text-xl text-white/90 leading-relaxed mb-4">
                 Access our extensive network of talented players across all levels. Our professional intermediaries facilitate seamless negotiations and contract discussions.
               </p>
+              <Collapsible>
+                <CollapsibleTrigger className="flex items-center gap-2 text-[--gold] hover:text-[--gold]/80 transition-colors">
+                  <span className="text-sm uppercase tracking-wider">Learn More</span>
+                  <ChevronDown className="h-4 w-4" />
+                </CollapsibleTrigger>
+                <CollapsibleContent className="mt-4 space-y-4 text-sm md:text-base text-white/80 leading-relaxed">
+                  <p>
+                    In a competitive market, the combination of greater finances, superior scouting and networking results in the greatest success on the pitch. Our work impacts all three to put your club in the prime position to execute at a higher level than all its competitors. Ensure that you find, convince and sign the greatest and best-fitted talent each and every season; while simultaneously making wise decisions on the timing of departures for expert squad-building.
+                  </p>
+                  <p>
+                    Our analysis extends across the entirety of professional football within Europe, allowing us to pick up on players that club scouting networks can easily miss. Furthermore, our talent identification ensures prudent signings including undervalued players and key contributors to success on the pitch. We consider not only the raw ability and potential of players, but also their technical and tactical adaptability to playstyles, as well as experience within related systems.
+                  </p>
+                  <p>
+                    A major aspect to this is our broad network which spans across half of the globe with key decision-makers in clubs at all levels of the game. This combined with our reputation for recruiting great fits for our clients allows us to tap into any market to ensure deals are completed.
+                  </p>
+                </CollapsibleContent>
+              </Collapsible>
             </div>
           </div>
         </section>
@@ -84,9 +120,26 @@ const Clubs = () => {
               <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-[--gold] mb-6">
                 Optimise
               </h2>
-              <p className="text-base md:text-xl text-white/90 leading-relaxed">
+              <p className="text-base md:text-xl text-white/90 leading-relaxed mb-4">
                 Enhance your squad's performance through our player development programs. We provide physical and psychological support to maximize your team's potential.
               </p>
+              <Collapsible>
+                <CollapsibleTrigger className="flex items-center gap-2 text-[--gold] hover:text-[--gold]/80 transition-colors">
+                  <span className="text-sm uppercase tracking-wider">Learn More</span>
+                  <ChevronDown className="h-4 w-4" />
+                </CollapsibleTrigger>
+                <CollapsibleContent className="mt-4 space-y-4 text-sm md:text-base text-white/80 leading-relaxed">
+                  <p>
+                    Where we stand apart from other agencies and help to elevate your side is in our unique expertise in the domain of performance. With a vast experience developing players and support staff, our consultation provides a platform to develop your personnel and improve results on the pitch.
+                  </p>
+                  <p>
+                    As part of our comprehensive approach to player development, we do not offer generic advice; instead, we provide analysis that is specific to the club's needs. This means understanding the parameters that allow for success at the current level while supporting the playing to strengths of individuals and overcoming any potential weaknesses.
+                  </p>
+                  <p>
+                    In terms of coach development, we work to achieve vertical and horizontal alignment of support staff and break down the silo effect which so easily sets in at clubs. To do this, we work actively with coaches and management to offer a unique perspective and provide key insights with timeliness.
+                  </p>
+                </CollapsibleContent>
+              </Collapsible>
             </div>
           </div>
           <div 

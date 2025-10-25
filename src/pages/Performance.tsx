@@ -196,8 +196,51 @@ const Performance = () => {
           </div>
         </section>
 
-        {/* CTA Section */}
+        {/* STAKEHOLDER MANAGEMENT Section */}
         <section className="py-16 md:py-24 bg-background">
+          <div className="container mx-auto px-4">
+            <div className="max-w-4xl mx-auto text-center">
+              <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bebas uppercase tracking-wider text-[--gold] mb-4 md:mb-6">
+                Stakeholder Management
+              </h2>
+              <p className="text-base sm:text-lg md:text-xl text-foreground/90 leading-relaxed">
+                Career management through contract negotiations, loans and transfers
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* BRAND Section */}
+        <section className="py-16 md:py-24 bg-muted/30">
+          <div className="container mx-auto px-4">
+            <div className="max-w-4xl mx-auto text-center">
+              <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bebas uppercase tracking-wider text-[--gold] mb-4 md:mb-6">
+                Brand
+              </h2>
+              <p className="text-xl font-semibold text-foreground mb-4">Image</p>
+              <p className="text-base sm:text-lg md:text-xl text-foreground/90 leading-relaxed">
+                Development of your brand image and management of public relations
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* COMMERCIAL INTERESTS Section */}
+        <section className="py-16 md:py-24 bg-background">
+          <div className="container mx-auto px-4">
+            <div className="max-w-4xl mx-auto text-center">
+              <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bebas uppercase tracking-wider text-[--gold] mb-4 md:mb-6">
+                Commercial Interests
+              </h2>
+              <p className="text-base sm:text-lg md:text-xl text-foreground/90 leading-relaxed">
+                Creating relationships with major brands and negotiating the best sponsorship opportunities
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* CTA Section */}
+        <section className="py-16 md:py-24 bg-muted/30">
           <div className="container mx-auto px-4 text-center">
             <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider mb-6">
               Ready to Elevate Your Game?
