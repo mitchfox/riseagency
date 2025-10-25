@@ -291,11 +291,11 @@ const Dashboard = () => {
           </div>
 
           <Tabs defaultValue="analysis" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-8">
-              <TabsTrigger value="analysis" className="font-bebas uppercase">
+            <TabsList className="grid w-full grid-cols-2 mb-8 bg-muted">
+              <TabsTrigger value="analysis" className="font-bebas uppercase text-base">
                 Performance Analysis
               </TabsTrigger>
-              <TabsTrigger value="physical" className="font-bebas uppercase">
+              <TabsTrigger value="physical" className="font-bebas uppercase text-base">
                 Physical Programming
               </TabsTrigger>
             </TabsList>
@@ -404,23 +404,7 @@ const Dashboard = () => {
                 </CardHeader>
                 <CardContent>
                   {programs.length === 0 ? (
-                    <div className="space-y-4">
-                      <p className="text-muted-foreground">
-                        Your personalized physical training program will appear here. This section will include:
-                      </p>
-                      <ul className="list-disc list-inside space-y-2 text-muted-foreground">
-                        <li>Weekly training schedules</li>
-                        <li>Strength & conditioning workouts</li>
-                        <li>Recovery protocols</li>
-                        <li>Nutrition guidelines</li>
-                        <li>Injury prevention exercises</li>
-                      </ul>
-                      <div className="mt-6 p-6 border border-primary/20 rounded-lg">
-                        <p className="text-center text-muted-foreground italic">
-                          Content coming soon - your strength coach will upload programs here
-                        </p>
-                      </div>
-                    </div>
+                    <div className="py-8"></div>
                   ) : (
                     <>
                       {programs.filter(p => p.id === selectedProgramId).map((program) => {
