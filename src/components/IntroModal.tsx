@@ -34,7 +34,7 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
     <>
       <Dialog open={open} onOpenChange={handleDialogChange}>
         <DialogContent 
-          className="max-w-4xl p-0 border-primary/20 overflow-hidden bg-transparent [&>button]:hidden"
+          className="w-[min(90vw,1080px)] max-h-[90vh] p-0 border-primary/20 overflow-hidden bg-transparent [&>button]:hidden"
         >
           <div className="relative">
             {/* Main Image */}
