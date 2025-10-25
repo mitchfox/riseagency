@@ -18,6 +18,25 @@ interface PerformanceAction {
   notes: string | null;
 }
 
+interface StrikerStats {
+  xGChain?: number;
+  xGChain_per90?: number;
+  xG_adj?: number;
+  xG_adj_per90?: number;
+  xA_adj?: number;
+  xA_adj_per90?: number;
+  movement_in_behind_xC?: number;
+  movement_in_behind_xC_per90?: number;
+  movement_down_side_xC?: number;
+  movement_down_side_xC_per90?: number;
+  triple_threat_xC?: number;
+  triple_threat_xC_per90?: number;
+  movement_to_feet_xC?: number;
+  movement_to_feet_xC_per90?: number;
+  crossing_movement_xC?: number;
+  crossing_movement_xC_per90?: number;
+}
+
 interface AnalysisDetails {
   id: string;
   analysis_date: string;
@@ -26,6 +45,7 @@ interface AnalysisDetails {
   r90_score: number | null;
   minutes_played: number | null;
   player_name: string;
+  striker_stats?: StrikerStats | null;
 }
 
 const PerformanceReport = () => {
@@ -63,6 +83,7 @@ const PerformanceReport = () => {
         r90_score: analysisData.r90_score,
         minutes_played: analysisData.minutes_played,
         player_name: analysisData.players?.name || "Unknown Player",
+        striker_stats: analysisData.striker_stats as StrikerStats | null,
       });
 
       // Fetch performance actions
@@ -187,6 +208,70 @@ const PerformanceReport = () => {
                 <p className="text-xl md:text-2xl font-bold">{analysis.minutes_played || "N/A"}</p>
               </div>
             </div>
+
+            {analysis.striker_stats && (
+              <div className="mt-6 p-4 bg-accent/10 rounded-lg border-2 border-primary/20">
+                <h3 className="font-bold text-lg mb-4 text-primary">Additional Striker Statistics</h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {analysis.striker_stats.xGChain !== undefined && (
+                    <div className="text-center p-3 bg-background rounded-md">
+                      <p className="text-xs text-muted-foreground mb-1">xGChain</p>
+                      <p className="font-bold text-lg">{analysis.striker_stats.xGChain.toFixed(3)}</p>
+                      <p className="text-xs text-muted-foreground mt-1">per 90: {analysis.striker_stats.xGChain_per90?.toFixed(3)}</p>
+                    </div>
+                  )}
+                  {analysis.striker_stats.xG_adj !== undefined && (
+                    <div className="text-center p-3 bg-background rounded-md">
+                      <p className="text-xs text-muted-foreground mb-1">xG (adj.)</p>
+                      <p className="font-bold text-lg">{analysis.striker_stats.xG_adj.toFixed(3)}</p>
+                      <p className="text-xs text-muted-foreground mt-1">per 90: {analysis.striker_stats.xG_adj_per90?.toFixed(3)}</p>
+                    </div>
+                  )}
+                  {analysis.striker_stats.xA_adj !== undefined && (
+                    <div className="text-center p-3 bg-background rounded-md">
+                      <p className="text-xs text-muted-foreground mb-1">xA (adj.)</p>
+                      <p className="font-bold text-lg">{analysis.striker_stats.xA_adj.toFixed(3)}</p>
+                      <p className="text-xs text-muted-foreground mt-1">per 90: {analysis.striker_stats.xA_adj_per90?.toFixed(3)}</p>
+                    </div>
+                  )}
+                  {analysis.striker_stats.movement_in_behind_xC !== undefined && (
+                    <div className="text-center p-3 bg-background rounded-md">
+                      <p className="text-xs text-muted-foreground mb-1">Movement In Behind xC</p>
+                      <p className="font-bold text-lg">{analysis.striker_stats.movement_in_behind_xC.toFixed(3)}</p>
+                      <p className="text-xs text-muted-foreground mt-1">per 90: {analysis.striker_stats.movement_in_behind_xC_per90?.toFixed(3)}</p>
+                    </div>
+                  )}
+                  {analysis.striker_stats.movement_down_side_xC !== undefined && (
+                    <div className="text-center p-3 bg-background rounded-md">
+                      <p className="text-xs text-muted-foreground mb-1">Movement Down Side xC</p>
+                      <p className="font-bold text-lg">{analysis.striker_stats.movement_down_side_xC.toFixed(3)}</p>
+                      <p className="text-xs text-muted-foreground mt-1">per 90: {analysis.striker_stats.movement_down_side_xC_per90?.toFixed(3)}</p>
+                    </div>
+                  )}
+                  {analysis.striker_stats.triple_threat_xC !== undefined && (
+                    <div className="text-center p-3 bg-background rounded-md">
+                      <p className="text-xs text-muted-foreground mb-1">Triple Threat xC</p>
+                      <p className="font-bold text-lg">{analysis.striker_stats.triple_threat_xC.toFixed(3)}</p>
+                      <p className="text-xs text-muted-foreground mt-1">per 90: {analysis.striker_stats.triple_threat_xC_per90?.toFixed(3)}</p>
+                    </div>
+                  )}
+                  {analysis.striker_stats.movement_to_feet_xC !== undefined && (
+                    <div className="text-center p-3 bg-background rounded-md">
+                      <p className="text-xs text-muted-foreground mb-1">Movement To Feet xC</p>
+                      <p className="font-bold text-lg">{analysis.striker_stats.movement_to_feet_xC.toFixed(3)}</p>
+                      <p className="text-xs text-muted-foreground mt-1">per 90: {analysis.striker_stats.movement_to_feet_xC_per90?.toFixed(3)}</p>
+                    </div>
+                  )}
+                  {analysis.striker_stats.crossing_movement_xC !== undefined && (
+                    <div className="text-center p-3 bg-background rounded-md">
+                      <p className="text-xs text-muted-foreground mb-1">Crossing Movement xC</p>
+                      <p className="font-bold text-lg">{analysis.striker_stats.crossing_movement_xC.toFixed(3)}</p>
+                      <p className="text-xs text-muted-foreground mt-1">per 90: {analysis.striker_stats.crossing_movement_xC_per90?.toFixed(3)}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 
