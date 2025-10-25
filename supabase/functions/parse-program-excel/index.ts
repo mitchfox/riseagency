@@ -90,37 +90,13 @@ serve(async (req) => {
 
     console.log('Processing file:', file.name, 'Type:', file.type, 'Size:', file.size);
 
-    // Convert file to base64 for the document parser
+    // Read file content directly
     const arrayBuffer = await file.arrayBuffer();
-    const bytes = new Uint8Array(arrayBuffer);
-    const base64 = btoa(String.fromCharCode(...bytes));
-
-    // Parse the Excel file using Lovable's document parser
-    const parseResponse = await fetch('https://api.lovable.dev/v1/ai/tools/parse-document', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': authHeader,
-      },
-      body: JSON.stringify({
-        file: base64,
-        filename: file.name,
-      }),
-    });
-
-    if (!parseResponse.ok) {
-      const errorText = await parseResponse.text();
-      console.error('Document parser error:', errorText);
-      return new Response(
-        JSON.stringify({ error: 'Failed to parse document' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    const parsedData = await parseResponse.json();
-    const extractedText = parsedData.text || '';
+    const decoder = new TextDecoder('utf-8');
+    const extractedText = decoder.decode(arrayBuffer);
     
     console.log('Extracted text length:', extractedText.length);
+    console.log('First 500 characters:', extractedText.substring(0, 500));
 
     // Use Lovable AI to extract structured program data
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
