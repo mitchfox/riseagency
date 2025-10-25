@@ -83,7 +83,7 @@ export const Header = () => {
         <div className="container mx-auto px-2 md:px-4">
         <div className="flex items-center justify-between h-14 md:h-16">
           {/* Drawer Menu - Left */}
-          <Drawer direction="left" modal={false}>
+          <Drawer direction="left" modal={false} preventScrollRestoration={false}>
             <DrawerTrigger asChild>
               <button
                 className="group relative w-10 h-10 md:w-12 md:h-12 flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
