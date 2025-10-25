@@ -33,6 +33,8 @@ export const PerformanceActionsDialog = ({
 }: PerformanceActionsDialogProps) => {
   const [actions, setActions] = useState<PerformanceAction[]>([]);
   const [loading, setLoading] = useState(false);
+  const [strikerStats, setStrikerStats] = useState<any>(null);
+  const [r90Score, setR90Score] = useState<number | null>(null);
   const [newAction, setNewAction] = useState<PerformanceAction>({
     action_number: 1,
     minute: 0,
@@ -45,8 +47,25 @@ export const PerformanceActionsDialog = ({
   useEffect(() => {
     if (open && analysisId) {
       fetchActions();
+      fetchAnalysisDetails();
     }
   }, [open, analysisId]);
+
+  const fetchAnalysisDetails = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("player_analysis")
+        .select("r90_score, striker_stats")
+        .eq("id", analysisId)
+        .single();
+
+      if (error) throw error;
+      setR90Score(data?.r90_score || null);
+      setStrikerStats(data?.striker_stats || null);
+    } catch (error: any) {
+      console.error("Error fetching analysis details:", error);
+    }
+  };
 
   const fetchActions = async () => {
     try {
@@ -150,10 +169,37 @@ export const PerformanceActionsDialog = ({
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* Current R Score Display */}
+          {/* R90 Score Display */}
+          {r90Score !== null && (
+            <div className="bg-accent/20 p-4 rounded-lg">
+              <div className="text-center">
+                <p className="text-sm text-muted-foreground mb-1">R90 Score</p>
+                <p className="text-3xl font-bold">{r90Score.toFixed(2)}</p>
+              </div>
+            </div>
+          )}
+
+          {/* Additional Striker Stats */}
+          {strikerStats && (
+            <div className="border rounded-lg p-4 bg-card">
+              <h3 className="font-semibold mb-3">Additional Match Statistics</h3>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {Object.entries(strikerStats).map(([key, value]) => (
+                  <div key={key} className="text-center p-3 bg-accent/10 rounded">
+                    <p className="text-xs text-muted-foreground uppercase mb-1">
+                      {key.replace(/_/g, ' ')}
+                    </p>
+                    <p className="text-xl font-bold">{String(value)}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Current R Score from Actions */}
           <div className="bg-accent/20 p-4 rounded-lg">
             <div className="text-center">
-              <p className="text-sm text-muted-foreground mb-1">Current R Score</p>
+              <p className="text-sm text-muted-foreground mb-1">Current R Score (from actions)</p>
               <p className="text-3xl font-bold">{calculateRScore()}</p>
               <p className="text-xs text-muted-foreground mt-1">
                 Total of {actions.length} actions
