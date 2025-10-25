@@ -87,9 +87,6 @@ const Index = () => {
                 <div className="overflow-hidden relative w-full mb-8">
                   <h1 
                     className="text-6xl md:text-8xl lg:text-9xl font-bebas font-bold uppercase tracking-[0.15em] text-white whitespace-nowrap inline-block animate-[scroll-left_45s_linear_infinite]"
-                    style={{
-                      textShadow: '0 4px 12px rgba(0, 0, 0, 0.8), 0 2px 4px rgba(0, 0, 0, 0.6)',
-                    }}
                   >
                     REALISE POTENTIAL • REALISE POTENTIAL • REALISE POTENTIAL • REALISE POTENTIAL • REALISE POTENTIAL • REALISE POTENTIAL •
                   </h1>

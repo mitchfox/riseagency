@@ -521,7 +521,8 @@ const Dashboard = () => {
                                       <div className="space-y-6">
                                         {/* Weekly Schedule Table */}
                                         {program.weekly_schedules && Array.isArray(program.weekly_schedules) && program.weekly_schedules.length > 0 && (
-                                          <div className="bg-black/40 rounded-xl p-4">
+                                          <div className="bg-black/40 rounded-xl p-4 overflow-x-auto">
+                                            <div className="min-w-[800px]">
                                             {/* Table Header */}
                                             <div className="grid grid-cols-8 gap-2 mb-2">
                                               <div 
@@ -537,18 +538,18 @@ const Dashboard = () => {
                                                 <div 
                                                   key={day}
                                                   className="p-4 font-bebas uppercase text-lg text-center rounded-lg"
-                                                  style={{ 
-                                                    backgroundColor: 'hsl(45, 70%, 55%)',
-                                                    color: 'hsl(0, 0%, 0%)'
-                                                  }}
-                                                >
-                                                  {day}
-                                                </div>
-                                              ))}
-                                            </div>
-                                            
-                                            {/* Table Rows */}
-                                            <div className="space-y-2">
+                                                     style={{ 
+                                                       backgroundColor: 'hsl(45, 70%, 55%)',
+                                                       color: 'hsl(0, 0%, 0%)'
+                                                     }}
+                                                   >
+                                                     {day}
+                                                   </div>
+                                                 ))}
+                                               </div>
+                                               
+                                               {/* Table Rows */}
+                                               <div className="space-y-2">
                                               {program.weekly_schedules.map((week: any, idx: number) => (
                                                 <div 
                                                   key={idx}
@@ -614,13 +615,14 @@ const Dashboard = () => {
                                                           </span>
                                                         )}
                                                       </div>
-                                                    );
-                                                  })}
-                                                </div>
-                                              ))}
-                                            </div>
-                                          </div>
-                                        )}
+                                                   );
+                                                 })}
+                                               </div>
+                                             ))}
+                                             </div>
+                                             </div>
+                                           </div>
+                                         )}
 
                                         {/* Schedule Notes */}
                                         {program.schedule_notes && (
