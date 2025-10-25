@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { MessageCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import { z } from "zod";
 
 interface RequestScoutDialogProps {
@@ -35,11 +36,17 @@ export const RequestScoutDialog = ({ open, onOpenChange }: RequestScoutDialogPro
     message: "",
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     try {
       requestScoutSchema.parse(formData);
+      
+      const { error } = await supabase.functions.invoke("send-form-email", {
+        body: { formType: "request-scout", data: formData },
+      });
+
+      if (error) throw error;
       
       toast({
         title: "Request Submitted",
@@ -53,6 +60,13 @@ export const RequestScoutDialog = ({ open, onOpenChange }: RequestScoutDialogPro
         toast({
           title: "Validation Error",
           description: error.errors[0].message,
+          variant: "destructive",
+        });
+      } else {
+        console.error("Error submitting form:", error);
+        toast({
+          title: "Error",
+          description: "Failed to submit request. Please try again.",
           variant: "destructive",
         });
       }

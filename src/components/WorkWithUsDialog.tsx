@@ -11,6 +11,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import logo from "@/assets/logo.png";
 
 type Role = "player" | "coach" | "club" | "agent" | "parent" | "media" | "other" | null;
@@ -22,6 +24,7 @@ interface WorkWithUsDialogProps {
 }
 
 export const WorkWithUsDialog = ({ children, open, onOpenChange }: WorkWithUsDialogProps) => {
+  const { toast } = useToast();
   const [selectedRole, setSelectedRole] = useState<Role>(null);
 
   const resetSelection = () => setSelectedRole(null);
@@ -31,6 +34,37 @@ export const WorkWithUsDialog = ({ children, open, onOpenChange }: WorkWithUsDia
       resetSelection();
     }
     onOpenChange?.(isOpen);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    const formData = new FormData(e.target as HTMLFormElement);
+    const data: Record<string, any> = { role: selectedRole };
+    formData.forEach((value, key) => {
+      data[key] = value;
+    });
+
+    try {
+      const { error } = await supabase.functions.invoke("send-form-email", {
+        body: { formType: "work-with-us", data },
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Application Submitted!",
+        description: "We'll review your application and get back to you soon.",
+      });
+      setSelectedRole(null);
+    } catch (error) {
+      console.error("Error submitting form:", error);
+      toast({
+        title: "Error",
+        description: "Failed to submit application. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const roles = [
@@ -71,15 +105,15 @@ export const WorkWithUsDialog = ({ children, open, onOpenChange }: WorkWithUsDia
       <>
         <div className="space-y-2">
           <Label htmlFor="name">Full Name *</Label>
-          <Input id="name" placeholder="John Doe" required />
+          <Input id="name" name="name" placeholder="John Doe" required />
         </div>
         <div className="space-y-2">
           <Label htmlFor="email">Email *</Label>
-          <Input id="email" type="email" placeholder="john@example.com" required />
+          <Input id="email" name="email" type="email" placeholder="john@example.com" required />
         </div>
         <div className="space-y-2">
           <Label htmlFor="whatsapp">WhatsApp Number *</Label>
-          <Input id="whatsapp" type="tel" placeholder="+1 (555) 000-0000" required />
+          <Input id="whatsapp" name="whatsapp" type="tel" placeholder="+1 (555) 000-0000" required />
         </div>
       </>
     );
@@ -88,7 +122,7 @@ export const WorkWithUsDialog = ({ children, open, onOpenChange }: WorkWithUsDia
     switch (selectedRole) {
       case "player":
         return (
-          <form className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <Button
               type="button"
               variant="ghost"
@@ -101,20 +135,21 @@ export const WorkWithUsDialog = ({ children, open, onOpenChange }: WorkWithUsDia
             {commonFields}
             <div className="space-y-2">
               <Label htmlFor="position">Position *</Label>
-              <Input id="position" placeholder="e.g., Striker, Midfielder" required />
+              <Input id="position" name="position" placeholder="e.g., Striker, Midfielder" required />
             </div>
             <div className="space-y-2">
               <Label htmlFor="age">Age *</Label>
-              <Input id="age" type="number" placeholder="21" required />
+              <Input id="age" name="age" type="number" placeholder="21" required />
             </div>
             <div className="space-y-2">
               <Label htmlFor="currentClub">Current Club</Label>
-              <Input id="currentClub" placeholder="Your current club" />
+              <Input id="currentClub" name="currentClub" placeholder="Your current club" />
             </div>
             <div className="space-y-2">
               <Label htmlFor="message">Tell us about yourself</Label>
               <Textarea
                 id="message"
+                name="message"
                 placeholder="Share your experience, goals, and what you are looking for..."
                 className="min-h-[100px]"
               />
@@ -127,7 +162,7 @@ export const WorkWithUsDialog = ({ children, open, onOpenChange }: WorkWithUsDia
 
       case "coach":
         return (
-          <form className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <Button
               type="button"
               variant="ghost"
@@ -140,20 +175,21 @@ export const WorkWithUsDialog = ({ children, open, onOpenChange }: WorkWithUsDia
             {commonFields}
             <div className="space-y-2">
               <Label htmlFor="specialization">Specialization *</Label>
-              <Input id="specialization" placeholder="e.g., Youth Development, First Team" required />
+              <Input id="specialization" name="specialization" placeholder="e.g., Youth Development, First Team" required />
             </div>
             <div className="space-y-2">
               <Label htmlFor="licenses">Coaching Licenses</Label>
-              <Input id="licenses" placeholder="UEFA A, B, etc." />
+              <Input id="licenses" name="licenses" placeholder="UEFA A, B, etc." />
             </div>
             <div className="space-y-2">
               <Label htmlFor="experience">Years of Experience *</Label>
-              <Input id="experience" type="number" placeholder="5" required />
+              <Input id="experience" name="experience" type="number" placeholder="5" required />
             </div>
             <div className="space-y-2">
               <Label htmlFor="message">Tell us about your coaching philosophy</Label>
               <Textarea
                 id="message"
+                name="message"
                 placeholder="Share your experience, approach, and what you are looking for..."
                 className="min-h-[100px]"
               />
@@ -166,7 +202,7 @@ export const WorkWithUsDialog = ({ children, open, onOpenChange }: WorkWithUsDia
 
       case "club":
         return (
-          <form className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <Button
               type="button"
               variant="ghost"
@@ -178,28 +214,29 @@ export const WorkWithUsDialog = ({ children, open, onOpenChange }: WorkWithUsDia
             </Button>
             <div className="space-y-2">
               <Label htmlFor="clubName">Club Name *</Label>
-              <Input id="clubName" placeholder="Your Club Name" required />
+              <Input id="clubName" name="clubName" placeholder="Your Club Name" required />
             </div>
             <div className="space-y-2">
               <Label htmlFor="contactName">Contact Person *</Label>
-              <Input id="contactName" placeholder="Full Name" required />
+              <Input id="contactName" name="contactName" placeholder="Full Name" required />
             </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email *</Label>
-              <Input id="email" type="email" placeholder="contact@club.com" required />
+              <Input id="email" name="email" type="email" placeholder="contact@club.com" required />
             </div>
             <div className="space-y-2">
               <Label htmlFor="whatsapp">WhatsApp Number *</Label>
-              <Input id="whatsapp" type="tel" placeholder="+1 (555) 000-0000" required />
+              <Input id="whatsapp" name="whatsapp" type="tel" placeholder="+1 (555) 000-0000" required />
             </div>
             <div className="space-y-2">
               <Label htmlFor="league">League/Division *</Label>
-              <Input id="league" placeholder="e.g., Championship, League Two" required />
+              <Input id="league" name="league" placeholder="e.g., Championship, League Two" required />
             </div>
             <div className="space-y-2">
               <Label htmlFor="message">What are you looking for?</Label>
               <Textarea
                 id="message"
+                name="message"
                 placeholder="Player recruitment, coaching staff, scouting services..."
                 className="min-h-[100px]"
               />
@@ -212,7 +249,7 @@ export const WorkWithUsDialog = ({ children, open, onOpenChange }: WorkWithUsDia
 
       case "agent":
         return (
-          <form className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <Button
               type="button"
               variant="ghost"
@@ -225,16 +262,17 @@ export const WorkWithUsDialog = ({ children, open, onOpenChange }: WorkWithUsDia
             {commonFields}
             <div className="space-y-2">
               <Label htmlFor="agency">Agency Name</Label>
-              <Input id="agency" placeholder="Your agency name" />
+              <Input id="agency" name="agency" placeholder="Your agency name" />
             </div>
             <div className="space-y-2">
               <Label htmlFor="license">FIFA License Number</Label>
-              <Input id="license" placeholder="If applicable" />
+              <Input id="license" name="license" placeholder="If applicable" />
             </div>
             <div className="space-y-2">
               <Label htmlFor="message">How can we collaborate?</Label>
               <Textarea
                 id="message"
+                name="message"
                 placeholder="Tell us about potential collaboration opportunities..."
                 className="min-h-[100px]"
               />
@@ -247,7 +285,7 @@ export const WorkWithUsDialog = ({ children, open, onOpenChange }: WorkWithUsDia
 
       case "parent":
         return (
-          <form className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <Button
               type="button"
               variant="ghost"
@@ -260,24 +298,25 @@ export const WorkWithUsDialog = ({ children, open, onOpenChange }: WorkWithUsDia
             {commonFields}
             <div className="space-y-2">
               <Label htmlFor="playerName">Player's Name *</Label>
-              <Input id="playerName" placeholder="Your child's name" required />
+              <Input id="playerName" name="playerName" placeholder="Your child's name" required />
             </div>
             <div className="space-y-2">
               <Label htmlFor="playerAge">Player's Age *</Label>
-              <Input id="playerAge" type="number" placeholder="16" required />
+              <Input id="playerAge" name="playerAge" type="number" placeholder="16" required />
             </div>
             <div className="space-y-2">
               <Label htmlFor="position">Position *</Label>
-              <Input id="position" placeholder="e.g., Striker, Midfielder" required />
+              <Input id="position" name="position" placeholder="e.g., Striker, Midfielder" required />
             </div>
             <div className="space-y-2">
               <Label htmlFor="currentClub">Current Club/Academy</Label>
-              <Input id="currentClub" placeholder="Current club or academy" />
+              <Input id="currentClub" name="currentClub" placeholder="Current club or academy" />
             </div>
             <div className="space-y-2">
               <Label htmlFor="message">Tell us about the player</Label>
               <Textarea
                 id="message"
+                name="message"
                 placeholder="Share their experience, strengths, and aspirations..."
                 className="min-h-[100px]"
               />
@@ -290,7 +329,7 @@ export const WorkWithUsDialog = ({ children, open, onOpenChange }: WorkWithUsDia
 
       case "media":
         return (
-          <form className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <Button
               type="button"
               variant="ghost"
@@ -303,16 +342,17 @@ export const WorkWithUsDialog = ({ children, open, onOpenChange }: WorkWithUsDia
             {commonFields}
             <div className="space-y-2">
               <Label htmlFor="outlet">Media Outlet *</Label>
-              <Input id="outlet" placeholder="Publication/Channel name" required />
+              <Input id="outlet" name="outlet" placeholder="Publication/Channel name" required />
             </div>
             <div className="space-y-2">
               <Label htmlFor="role">Your Role *</Label>
-              <Input id="role" placeholder="e.g., Journalist, Content Creator" required />
+              <Input id="role" name="role" placeholder="e.g., Journalist, Content Creator" required />
             </div>
             <div className="space-y-2">
               <Label htmlFor="message">What's your inquiry about?</Label>
               <Textarea
                 id="message"
+                name="message"
                 placeholder="Interview requests, press releases, media partnerships..."
                 className="min-h-[100px]"
               />
@@ -325,7 +365,7 @@ export const WorkWithUsDialog = ({ children, open, onOpenChange }: WorkWithUsDia
 
       case "other":
         return (
-          <form className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <Button
               type="button"
               variant="ghost"
@@ -338,12 +378,13 @@ export const WorkWithUsDialog = ({ children, open, onOpenChange }: WorkWithUsDia
             {commonFields}
             <div className="space-y-2">
               <Label htmlFor="subject">Subject *</Label>
-              <Input id="subject" placeholder="What is this regarding?" required />
+              <Input id="subject" name="subject" placeholder="What is this regarding?" required />
             </div>
             <div className="space-y-2">
               <Label htmlFor="message">Message *</Label>
               <Textarea
                 id="message"
+                name="message"
                 placeholder="Tell us how we can help you..."
                 className="min-h-[120px]"
                 required

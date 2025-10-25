@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { MessageCircle, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import { z } from "zod";
 import { players } from "@/data/players";
 
@@ -42,13 +43,29 @@ export const DeclareInterestDialog = ({ open, onOpenChange }: DeclareInterestDia
     setSelectedPlayer(null);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     try {
       interestSchema.parse(formData);
       
       const player = players.find(p => p.id === selectedPlayer);
+      
+      const { error } = await supabase.functions.invoke("send-form-email", {
+        body: { 
+          formType: "declare-interest", 
+          data: { 
+            ...formData, 
+            playerName: player?.name,
+            name: formData.name,
+            role: formData.role,
+            clubOrCompany: formData.clubCompany,
+            request: formData.request
+          } 
+        },
+      });
+
+      if (error) throw error;
       
       toast({
         title: "Interest Declared",
@@ -64,6 +81,13 @@ export const DeclareInterestDialog = ({ open, onOpenChange }: DeclareInterestDia
         toast({
           title: "Validation Error",
           description: error.errors[0].message,
+          variant: "destructive",
+        });
+      } else {
+        console.error("Error submitting form:", error);
+        toast({
+          title: "Error",
+          description: "Failed to submit. Please try again.",
           variant: "destructive",
         });
       }
