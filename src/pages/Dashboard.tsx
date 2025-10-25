@@ -812,9 +812,9 @@ const Dashboard = () => {
                                                                       color: 'hsl(0, 0%, 100%)'
                                                                     }}
                                                                   >
-                                                                    {exercise.repetitions || '-'}
+                                                                    {exercise.reps || exercise.repetitions || '-'}
                                                                   </div>
-                                                                  <div 
+                                                                  <div
                                                                     className="p-2 md:p-4 text-xs md:text-sm italic border-r-2 border-white flex items-center justify-center text-center"
                                                                     style={{ 
                                                                       backgroundColor: 'hsl(0, 0%, 10%)',
@@ -839,7 +839,7 @@ const Dashboard = () => {
                                                                       color: 'hsl(0, 0%, 100%)'
                                                                     }}
                                                                   >
-                                                                    {exercise.recoveryTime || exercise.recovery_time || '-'}
+                                                                    {exercise.rest || exercise.recoveryTime || exercise.recovery_time || '-'}
                                                                   </div>
                                                                 </div>
                                                               ))}
@@ -931,9 +931,9 @@ const Dashboard = () => {
                                                                       color: 'hsl(0, 0%, 100%)'
                                                                     }}
                                                                   >
-                                                                    {exercise.repetitions || '-'}
+                                                                    {exercise.reps || exercise.repetitions || '-'}
                                                                   </div>
-                                                                  <div 
+                                                                  <div
                                                                     className="p-2 md:p-4 text-xs md:text-sm italic border-r-2 border-white flex items-center justify-center text-center"
                                                                     style={{ 
                                                                       backgroundColor: 'hsl(0, 0%, 10%)',
@@ -958,7 +958,7 @@ const Dashboard = () => {
                                                                       color: 'hsl(0, 0%, 100%)'
                                                                     }}
                                                                   >
-                                                                    {exercise.recoveryTime || exercise.recovery_time || '-'}
+                                                                    {exercise.rest || exercise.recoveryTime || exercise.recovery_time || '-'}
                                                                   </div>
                                                                 </div>
                                                               ))}
