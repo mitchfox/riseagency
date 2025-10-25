@@ -40,20 +40,22 @@ export const Header = () => {
         <div className="container mx-auto px-2 md:px-4">
           <div className="flex items-center justify-between h-9 md:h-10">
             <div className="flex flex-wrap items-center gap-1 md:gap-4">
-              <button
-                onClick={() => setDeclareInterestOpen(true)}
-                className="text-[9px] md:text-xs font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-colors flex items-center gap-1"
-              >
-                <Users className="w-3 h-3 hidden sm:block" />
-                <span>Declare Interest</span>
-              </button>
               <Link
                 to="/contact"
                 className="text-[9px] md:text-xs font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-colors flex items-center gap-1"
               >
                 <MessageCircle className="w-3 h-3 hidden sm:block" />
-                Contact
+                <span className="hidden md:inline">Contact Us</span>
+                <span className="md:hidden">Contact</span>
               </Link>
+              <button
+                onClick={() => setDeclareInterestOpen(true)}
+                className="text-[9px] md:text-xs font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-colors flex items-center gap-1"
+              >
+                <Users className="w-3 h-3 hidden sm:block" />
+                <span className="hidden md:inline">Declare Interest In A Star</span>
+                <span className="md:hidden">Declare Interest</span>
+              </button>
             </div>
             <div className="flex flex-wrap items-center gap-1 md:gap-4">
               <button
@@ -61,16 +63,16 @@ export const Header = () => {
                 className="text-[9px] md:text-xs font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-colors flex items-center gap-1"
               >
                 <MessageCircle className="w-3 h-3 hidden sm:block" />
-                <span className="hidden sm:inline">Request Representation</span>
-                <span className="sm:hidden">Representation</span>
+                <span className="hidden md:inline">Request Representation</span>
+                <span className="md:hidden">Represent Me</span>
               </button>
               <Link
                 to="/login"
                 className="text-[9px] md:text-xs font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-colors flex items-center gap-1"
               >
                 <LogIn className="w-3 h-3 hidden sm:block" />
-                <span className="hidden sm:inline">Player Portal</span>
-                <span className="sm:hidden">Portal</span>
+                <span className="hidden md:inline">Player Portal</span>
+                <span className="md:hidden">Portal</span>
               </Link>
             </div>
           </div>
