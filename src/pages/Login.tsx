@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -13,23 +13,6 @@ const Login = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
-
-  useEffect(() => {
-    // Check if user is already logged in
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        navigate("/dashboard");
-      }
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session && event === "SIGNED_IN") {
-        navigate("/dashboard");
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [navigate]);
 
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,41 +34,14 @@ const Login = () => {
         return;
       }
 
-      // Use a default password for all players (simplified authentication)
-      const defaultPassword = "RisePortal2025!";
+      // Store email in session storage for dashboard access
+      sessionStorage.setItem("player_email", email);
       
-      // Try to sign in first
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password: defaultPassword,
-      });
-
-      // If sign in fails, create the account
-      if (signInError) {
-        const { error: signUpError } = await supabase.auth.signUp({
-          email,
-          password: defaultPassword,
-          options: {
-            emailRedirectTo: `${window.location.origin}/dashboard`,
-          },
-        });
-
-        if (signUpError) throw signUpError;
-        
-        // After signup, sign in
-        const { error: finalSignInError } = await supabase.auth.signInWithPassword({
-          email,
-          password: defaultPassword,
-        });
-        
-        if (finalSignInError) throw finalSignInError;
-      }
-
       toast.success("Welcome to your portal!");
       navigate("/dashboard");
     } catch (error: any) {
       console.error("Login error:", error);
-      toast.error(error.message || "Failed to log in");
+      toast.error(error.message || "Failed to access portal");
     } finally {
       setLoading(false);
     }

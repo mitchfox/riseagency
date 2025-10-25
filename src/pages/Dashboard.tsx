@@ -10,7 +10,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { User } from "@supabase/supabase-js";
 import { FileText, ExternalLink } from "lucide-react";
 import { addDays, format, parseISO } from "date-fns";
 
@@ -44,7 +43,6 @@ interface PlayerProgram {
 const Dashboard = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState<User | null>(null);
   const [analyses, setAnalyses] = useState<Analysis[]>([]);
   const [playerData, setPlayerData] = useState<any>(null);
   const [programs, setPrograms] = useState<PlayerProgram[]>([]);
@@ -116,33 +114,21 @@ const Dashboard = () => {
 
   useEffect(() => {
     checkAuth();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (!session) {
-        navigate("/login");
-      } else {
-        setUser(session.user);
-        fetchAnalyses(session.user.email);
-      }
-    });
-
-    return () => subscription.unsubscribe();
   }, [navigate]);
 
   const checkAuth = async () => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const playerEmail = sessionStorage.getItem("player_email");
       
-      if (!session) {
+      if (!playerEmail) {
         navigate("/login");
         return;
       }
 
-      setUser(session.user);
-      await fetchAnalyses(session.user.email);
-      await fetchPrograms(session.user.email);
+      await fetchAnalyses(playerEmail);
+      await fetchPrograms(playerEmail);
     } catch (error) {
-      console.error("Auth error:", error);
+      console.error("Error loading data:", error);
       navigate("/login");
     } finally {
       setLoading(false);
@@ -242,7 +228,7 @@ const Dashboard = () => {
   };
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    sessionStorage.removeItem("player_email");
     toast.success("Logged out successfully");
     navigate("/login");
   };
@@ -274,7 +260,7 @@ const Dashboard = () => {
               )}
               <div className="flex-1">
                 <h1 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-foreground mb-2">
-                  {playerData?.name || user?.user_metadata?.full_name || "Player Portal"}
+                  {playerData?.name || "Player Portal"}
                 </h1>
                 <div className="hidden md:flex items-center gap-4 text-muted-foreground">
                   {playerData?.position && (
