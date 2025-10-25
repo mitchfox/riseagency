@@ -91,7 +91,7 @@ const Index = () => {
                     REALISE POTENTIAL • REALISE POTENTIAL • REALISE POTENTIAL • REALISE POTENTIAL • REALISE POTENTIAL • REALISE POTENTIAL •
                   </h1>
                 </div>
-                <p className="text-xl md:text-2xl text-white/90 max-w-3xl mx-auto font-light tracking-wide italic">
+                <p className="text-xl md:text-2xl text-white/90 max-w-3xl mx-auto font-light tracking-wide">
                   Elite Football Representation & Performance Optimisation
                 </p>
               </div>
