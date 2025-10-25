@@ -81,6 +81,13 @@ const PlayerManagement = () => {
   const [uploadingClubLogo, setUploadingClubLogo] = useState(false);
   const [clubLogoUrl, setClubLogoUrl] = useState<string>("");
   const [representationFilter, setRepresentationFilter] = useState<string>("all");
+  const [schemeHistory, setSchemeHistory] = useState<Array<{
+    formation: string;
+    positions: string[];
+    teamName: string;
+    matches: string;
+    clubLogo: string;
+  }>>([]);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -229,7 +236,7 @@ const PlayerManagement = () => {
       }
 
       // Combine bio text with additional structured data
-      const bioData: ExpandedPlayerData & { bio?: string; tacticalFormations?: any[] } = {
+      const bioData: ExpandedPlayerData & { bio?: string; tacticalFormations?: any[]; schemeHistory?: any[] } = {
         bio: formData.bio,
         dateOfBirth: formData.dateOfBirth || undefined,
         number: formData.number ? parseInt(formData.number) : undefined,
@@ -237,6 +244,7 @@ const PlayerManagement = () => {
         whatsapp: formData.whatsapp || undefined,
         externalLinks: externalLinks.length > 0 ? externalLinks : undefined,
         strengthsAndPlayStyle: strengthsAndPlayStyle.length > 0 ? strengthsAndPlayStyle : undefined,
+        schemeHistory: schemeHistory.length > 0 ? schemeHistory : undefined,
       };
 
       // Update or add current club in tacticalFormations
@@ -338,6 +346,7 @@ const PlayerManagement = () => {
       });
       setExternalLinks([]);
       setStrengthsAndPlayStyle([]);
+      setSchemeHistory([]);
       setEditingPlayer(null);
       setIsDialogOpen(false);
       fetchPlayers();
@@ -421,16 +430,27 @@ const PlayerManagement = () => {
       if (player.bio && player.bio.startsWith('{')) {
         const parsed = JSON.parse(player.bio);
         additionalData = parsed;
+        
+        // Load scheme history
+        if (parsed.schemeHistory && Array.isArray(parsed.schemeHistory)) {
+          setSchemeHistory(parsed.schemeHistory);
+        } else {
+          setSchemeHistory([]);
+        }
+        
         // Load club logo from tacticalFormations
         if (parsed.tacticalFormations && parsed.tacticalFormations[0]?.clubLogo) {
           setClubLogoUrl(parsed.tacticalFormations[0].clubLogo);
         } else {
           setClubLogoUrl("");
         }
+      } else {
+        setSchemeHistory([]);
       }
     } catch (e) {
       // Bio is regular text, not JSON
       setClubLogoUrl("");
+      setSchemeHistory([]);
     }
     
     setFormData({
@@ -686,6 +706,7 @@ const PlayerManagement = () => {
               });
               setExternalLinks([]);
               setStrengthsAndPlayStyle([]);
+              setSchemeHistory([]);
               setPlayerCategory("Other");
               setRepresentationStatus("other");
               setVisibleOnStarsPage(false);
@@ -971,6 +992,127 @@ const PlayerManagement = () => {
                   onClick={() => setStrengthsAndPlayStyle([...strengthsAndPlayStyle, ""])}
                 >
                   Add Strength
+                </Button>
+              </div>
+
+              {/* Scheme History */}
+              <div className="space-y-3 border-t pt-4">
+                <Label className="text-base font-semibold">Scheme History</Label>
+                {schemeHistory.map((scheme, index) => (
+                  <Card key={index} className="p-4 space-y-3">
+                    <div className="flex justify-between items-start">
+                      <h4 className="font-medium">Entry {index + 1}</h4>
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => setSchemeHistory(schemeHistory.filter((_, i) => i !== index))}
+                      >
+                        Remove
+                      </Button>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-2">
+                        <Label>Formation</Label>
+                        <select
+                          className="w-full h-10 px-3 py-2 rounded-md border border-input bg-background text-sm"
+                          value={scheme.formation}
+                          onChange={(e) => {
+                            const newHistory = [...schemeHistory];
+                            newHistory[index].formation = e.target.value;
+                            setSchemeHistory(newHistory);
+                          }}
+                        >
+                          <option value="">Select formation</option>
+                          <option value="4-3-3">4-3-3</option>
+                          <option value="4-2-3-1">4-2-3-1</option>
+                          <option value="4-4-2">4-4-2</option>
+                          <option value="4-2-2-2">4-2-2-2</option>
+                          <option value="4-3-1-2">4-3-1-2</option>
+                          <option value="3-4-3">3-4-3</option>
+                          <option value="3-3-3-1">3-3-3-1</option>
+                          <option value="3-3-4">3-3-4</option>
+                          <option value="3-3-2-2">3-3-2-2</option>
+                          <option value="3-4-1-2">3-4-1-2</option>
+                        </select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Team Name</Label>
+                        <Input
+                          placeholder="e.g., Norwich City"
+                          value={scheme.teamName}
+                          onChange={(e) => {
+                            const newHistory = [...schemeHistory];
+                            newHistory[index].teamName = e.target.value;
+                            setSchemeHistory(newHistory);
+                          }}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Position(s) in Formation</Label>
+                        <Input
+                          placeholder="e.g., ST, LW, CAM"
+                          value={scheme.positions.join(", ")}
+                          onChange={(e) => {
+                            const newHistory = [...schemeHistory];
+                            newHistory[index].positions = e.target.value.split(",").map(p => p.trim()).filter(Boolean);
+                            setSchemeHistory(newHistory);
+                          }}
+                        />
+                        <p className="text-xs text-muted-foreground">Separate multiple positions with commas</p>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Matches Played</Label>
+                        <Input
+                          type="number"
+                          placeholder="e.g., 25"
+                          value={scheme.matches}
+                          onChange={(e) => {
+                            const newHistory = [...schemeHistory];
+                            newHistory[index].matches = e.target.value;
+                            setSchemeHistory(newHistory);
+                          }}
+                        />
+                      </div>
+                      <div className="space-y-2 col-span-2">
+                        <Label>Club Logo Path</Label>
+                        <Input
+                          placeholder="/clubs/team-logo.png"
+                          value={scheme.clubLogo}
+                          onChange={(e) => {
+                            const newHistory = [...schemeHistory];
+                            newHistory[index].clubLogo = e.target.value;
+                            setSchemeHistory(newHistory);
+                          }}
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Upload logo to /public/clubs/ folder and enter path here
+                        </p>
+                        {scheme.clubLogo && (
+                          <div className="mt-2">
+                            <img 
+                              src={scheme.clubLogo} 
+                              alt="Club logo" 
+                              className="w-12 h-12 object-contain bg-secondary p-1 rounded border"
+                            />
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setSchemeHistory([...schemeHistory, {
+                    formation: "",
+                    positions: [],
+                    teamName: "",
+                    matches: "",
+                    clubLogo: ""
+                  }])}
+                >
+                  Add Scheme History Entry
                 </Button>
               </div>
 
