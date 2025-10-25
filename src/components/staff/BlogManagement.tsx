@@ -56,6 +56,7 @@ const BlogManagement = () => {
       const { data, error } = await supabase
         .from("blog_posts")
         .select("*")
+        .or("category.eq.news,category.eq.INSIDE:ACCESS,category.is.null")
         .order("created_at", { ascending: false });
 
       if (error) throw error;

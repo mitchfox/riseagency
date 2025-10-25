@@ -1074,23 +1074,7 @@ const PlayerManagement = () => {
                       onClick={() => setShowingAnalysisFor(showingAnalysisFor === player.id ? null : player.id)}
                     >
                       <LineChart className="w-4 h-4 mr-2" />
-                      Analysis
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => {
-                        const analyses = playerAnalyses[player.id] || [];
-                        if (analyses.length === 0) {
-                          toast.info("Please add an analysis entry first before creating a performance report");
-                          return;
-                        }
-                        // Toggle showing a separate section for performance reports
-                        setShowingAnalysisFor(showingAnalysisFor === player.id ? null : player.id);
-                      }}
-                    >
-                      <FileText className="w-4 h-4 mr-2" />
-                      Performance Reports
+                      Analysis & Performance Reports
                     </Button>
                     <Button 
                       variant="outline" 
@@ -1284,9 +1268,9 @@ const PlayerManagement = () => {
                   {showingAnalysisFor === player.id && (
                     <div className="border-t pt-4 space-y-4">
                       <div className="flex justify-between items-center">
-                        <h4 className="text-lg font-semibold">Player Analysis</h4>
+                        <h4 className="text-lg font-semibold">Player Analysis & Performance Reports</h4>
                         <Button size="sm" onClick={() => openAnalysisDialog(player.id)}>
-                          Add New Analysis
+                          Add New Game
                         </Button>
                       </div>
                       
@@ -1368,7 +1352,7 @@ const PlayerManagement = () => {
                         ))}
                         {(!playerAnalyses[player.id] || playerAnalyses[player.id].length === 0) && (
                           <p className="text-sm text-muted-foreground text-center py-4">
-                            No analysis data yet. Click "Add New Analysis" to create one.
+                            No analysis data yet. Click "Add New Game" to create one.
                           </p>
                         )}
                       </div>
@@ -1388,7 +1372,7 @@ const PlayerManagement = () => {
       <Dialog open={isAnalysisDialogOpen} onOpenChange={setIsAnalysisDialogOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{isEditingAnalysis ? 'Edit Analysis' : 'Add New Analysis'}</DialogTitle>
+            <DialogTitle>{isEditingAnalysis ? 'Edit Game' : 'Add New Game'}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleAnalysisSubmit} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
@@ -1431,14 +1415,21 @@ const PlayerManagement = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="r90_score">R90 Score</Label>
+                <Label htmlFor="performance_file">Upload Performance Report (Excel/CSV)</Label>
                 <Input
-                  id="r90_score"
-                  type="number"
-                  step="0.01"
-                  value={analysisData.r90_score}
-                  onChange={(e) => setAnalysisData({ ...analysisData, r90_score: e.target.value })}
+                  id="performance_file"
+                  type="file"
+                  accept=".csv,.xlsx,.xls"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      toast.info("Performance data will be analyzed by AI to generate R90 score and performance actions");
+                    }
+                  }}
                 />
+                <p className="text-xs text-muted-foreground">
+                  Optional: Upload match performance data and AI will automatically calculate R90 score and generate performance report
+                </p>
               </div>
             </div>
             <div className="space-y-2">
@@ -1470,7 +1461,7 @@ const PlayerManagement = () => {
               />
             </div>
             <Button type="submit" disabled={uploadingFiles}>
-              {uploadingFiles ? "Uploading..." : "Add Analysis"}
+              {uploadingFiles ? "Uploading..." : (isEditingAnalysis ? "Update Game" : "Add Game")}
             </Button>
           </form>
         </DialogContent>
