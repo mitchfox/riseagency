@@ -1106,8 +1106,7 @@ const PlayerManagement = () => {
                       <div className="space-y-2">
                         <Label>Matches Played</Label>
                         <Input
-                          type="number"
-                          placeholder="e.g., 25"
+                          placeholder="e.g., 25 or CURRENT CLUB"
                           value={scheme.matches}
                           onChange={(e) => {
                             const newHistory = [...schemeHistory];
