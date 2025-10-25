@@ -59,6 +59,11 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
                       Request Representation
                     </Button>
                   </div>
+                  <div className="absolute bottom-6 left-0 right-0 flex justify-center px-3">
+                    <h3 className="text-3xl md:text-4xl font-bebas uppercase tracking-wider text-white drop-shadow-lg">
+                      From <span className="text-primary">Striving</span>
+                    </h3>
+                  </div>
                 </div>
               </CarouselItem>
 
@@ -76,6 +81,11 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
                       alt="RISE Football" 
                       className="h-12 md:h-16"
                     />
+                  </div>
+                  <div className="absolute bottom-6 left-0 right-0 flex justify-center px-3">
+                    <h3 className="text-3xl md:text-4xl font-bebas uppercase tracking-wider text-white drop-shadow-lg">
+                      To <span className="text-primary">Rising</span>
+                    </h3>
                   </div>
                 </div>
               </CarouselItem>
@@ -97,6 +107,11 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
                       Enter Site
                     </Button>
                   </div>
+                  <div className="absolute bottom-6 left-0 right-0 flex justify-center px-3">
+                    <h3 className="text-3xl md:text-4xl font-bebas uppercase tracking-wider text-white drop-shadow-lg">
+                      To <span className="text-primary">Thriving</span>
+                    </h3>
+                  </div>
                 </div>
               </CarouselItem>
             </CarouselContent>
@@ -105,8 +120,13 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
           {/* Text Content */}
           <div className="p-4 md:p-6" style={{ backgroundImage: `url(${blackMarbleSmudged})`, backgroundSize: "cover" }}>
             <div className="text-center space-y-3">
-              <h2 className="text-2xl md:text-3xl font-bebas uppercase tracking-wider text-white">
-                From <span className="text-primary">Striving</span>, to <span className="text-primary">Rising</span>, to <span className="text-primary">Thriving</span>
+              <img 
+                src={logo} 
+                alt="RISE Football" 
+                className="h-12 md:h-16 mx-auto mb-2"
+              />
+              <h2 className="text-xl md:text-2xl font-bebas uppercase tracking-wider text-white">
+                Welcome to <span className="text-primary">RISE Football</span>
               </h2>
               <p className="text-xs md:text-sm text-white/90 leading-snug">
                 We have worked with many <span className="text-primary font-semibold">Premier League players</span> throughout their development.
