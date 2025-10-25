@@ -56,7 +56,7 @@ const BlogManagement = () => {
       const { data, error } = await supabase
         .from("blog_posts")
         .select("*")
-        .or("category.eq.news,category.eq.INSIDE:ACCESS,category.is.null")
+        .or("category.eq.PLAYER NEWS,category.eq.INSIDE:ACCESS,category.is.null")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -212,7 +212,7 @@ const BlogManagement = () => {
                     <SelectValue placeholder="Select a category (optional)" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="news">News</SelectItem>
+                    <SelectItem value="PLAYER NEWS">PLAYER NEWS</SelectItem>
                     <SelectItem value="INSIDE:ACCESS">INSIDE:ACCESS</SelectItem>
                   </SelectContent>
                 </Select>

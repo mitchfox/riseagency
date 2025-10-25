@@ -376,6 +376,39 @@ const PlayerManagement = () => {
   };
 
 
+  const handleDeleteAnalysis = async (analysisId: string, playerId: string) => {
+    if (!confirm("Are you sure you want to delete this analysis/game? This action cannot be undone.")) {
+      return;
+    }
+
+    try {
+      // Delete associated performance report actions first
+      const { error: actionsError } = await supabase
+        .from("performance_report_actions")
+        .delete()
+        .eq("analysis_id", analysisId);
+
+      if (actionsError) throw actionsError;
+
+      // Delete the analysis
+      const { error } = await supabase
+        .from("player_analysis")
+        .delete()
+        .eq("id", analysisId);
+
+      if (error) throw error;
+
+      toast.success("Analysis deleted successfully");
+      
+      // Refresh the analyses list
+      fetchAllAnalyses();
+    } catch (error: any) {
+      console.error("Error deleting analysis:", error);
+      toast.error("Failed to delete analysis: " + error.message);
+    }
+  };
+
+
   const startEdit = (player: Player) => {
     setEditingPlayer(player);
     setVisibleOnStarsPage(player.visible_on_stars_page || false);
@@ -1326,6 +1359,14 @@ const PlayerManagement = () => {
                             >
                               <Pencil className="w-4 h-4 mr-1" />
                               Edit
+                            </Button>
+                            
+                            <Button 
+                              variant="destructive" 
+                              size="sm"
+                              onClick={() => handleDeleteAnalysis(analysis.id, player.id)}
+                            >
+                              Delete
                             </Button>
                             
                             {analysis.pdf_url && (
