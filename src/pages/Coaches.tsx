@@ -40,19 +40,21 @@ const Coaches = () => {
             className="relative p-8 md:p-16 flex items-center"
             style={{ backgroundImage: `url(${blackMarble})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
           >
-            <div className="max-w-xl">
-              <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-[--gold] mb-6">
-                Results
-              </h2>
-              <p className="text-base md:text-xl text-white/90 leading-relaxed mb-4">
-                We showcase your coaching achievements and philosophy to clubs seeking experienced leadership. Your track record speaks volumes through our professional presentation.
-              </p>
+            <div className="max-w-xl space-y-6">
+              <div>
+                <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-[--gold] mb-6">
+                  Results
+                </h2>
+                <p className="text-base md:text-xl text-white/90 leading-relaxed">
+                  We showcase your coaching achievements and philosophy to clubs seeking experienced leadership. Your track record speaks volumes through our professional presentation.
+                </p>
+              </div>
               <Collapsible>
-                <CollapsibleTrigger className="flex items-center gap-2 text-[--gold] hover:text-[--gold]/80 transition-colors">
-                  <span className="text-sm uppercase tracking-wider">Learn More</span>
-                  <ChevronDown className="h-4 w-4" />
+                <CollapsibleTrigger className="group flex items-center gap-3 px-4 py-2.5 bg-[--gold]/10 hover:bg-[--gold]/20 border border-[--gold]/30 rounded-md transition-all">
+                  <span className="text-sm uppercase tracking-wider text-[--gold] font-medium">Learn More</span>
+                  <ChevronDown className="h-4 w-4 text-[--gold] transition-transform group-data-[state=open]:rotate-180" />
                 </CollapsibleTrigger>
-                <CollapsibleContent className="mt-4 space-y-4 text-sm md:text-base text-white/80 leading-relaxed">
+                <CollapsibleContent className="mt-6 space-y-4 text-sm md:text-base text-white/80 leading-relaxed">
                   <p>
                     To rise to the occasion, we must fully embrace the ethos that every day matters. We are not a standard fair-weather agent who only shows up during transfer windows; instead, we are there for the daily grind, supporting you every step of the way. We understand that success in your career is built on consistency and proper preparation.
                   </p>
@@ -82,19 +84,21 @@ const Coaches = () => {
             className="relative p-8 md:p-16 flex items-center order-1 md:order-2"
             style={{ backgroundImage: `url(${blackMarble})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
           >
-            <div className="max-w-xl">
-              <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-[--gold] mb-6">
-                Foster
-              </h2>
-              <p className="text-base md:text-xl text-white/90 leading-relaxed mb-4">
-                Build lasting relationships within the footballing community. We connect you with clubs, players, and industry professionals who value your coaching expertise.
-              </p>
+            <div className="max-w-xl space-y-6">
+              <div>
+                <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-[--gold] mb-6">
+                  Foster
+                </h2>
+                <p className="text-base md:text-xl text-white/90 leading-relaxed">
+                  Build lasting relationships within the footballing community. We connect you with clubs, players, and industry professionals who value your coaching expertise.
+                </p>
+              </div>
               <Collapsible>
-                <CollapsibleTrigger className="flex items-center gap-2 text-[--gold] hover:text-[--gold]/80 transition-colors">
-                  <span className="text-sm uppercase tracking-wider">Learn More</span>
-                  <ChevronDown className="h-4 w-4" />
+                <CollapsibleTrigger className="group flex items-center gap-3 px-4 py-2.5 bg-[--gold]/10 hover:bg-[--gold]/20 border border-[--gold]/30 rounded-md transition-all">
+                  <span className="text-sm uppercase tracking-wider text-[--gold] font-medium">Learn More</span>
+                  <ChevronDown className="h-4 w-4 text-[--gold] transition-transform group-data-[state=open]:rotate-180" />
                 </CollapsibleTrigger>
-                <CollapsibleContent className="mt-4 space-y-4 text-sm md:text-base text-white/80 leading-relaxed">
+                <CollapsibleContent className="mt-6 space-y-4 text-sm md:text-base text-white/80 leading-relaxed">
                   <p>
                     Pushing the limits of your players physically and mentally is key to discovering what they are truly capable of. Through our expertise in the performance space, we support the implementation of training protocols to eliminate their weaknesses while expanding on their strengths. Rest assured that no stone will be left unturned in each training week.
                   </p>
@@ -116,19 +120,21 @@ const Coaches = () => {
             className="relative p-8 md:p-16 flex items-center"
             style={{ backgroundImage: `url(${blackMarble})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
           >
-            <div className="max-w-xl">
-              <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-[--gold] mb-6">
-                Allure
-              </h2>
-              <p className="text-base md:text-xl text-white/90 leading-relaxed mb-4">
-                Position yourself for career advancement with strategic representation. We create opportunities that align with your ambitions and coaching philosophy.
-              </p>
+            <div className="max-w-xl space-y-6">
+              <div>
+                <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-[--gold] mb-6">
+                  Allure
+                </h2>
+                <p className="text-base md:text-xl text-white/90 leading-relaxed">
+                  Position yourself for career advancement with strategic representation. We create opportunities that align with your ambitions and coaching philosophy.
+                </p>
+              </div>
               <Collapsible>
-                <CollapsibleTrigger className="flex items-center gap-2 text-[--gold] hover:text-[--gold]/80 transition-colors">
-                  <span className="text-sm uppercase tracking-wider">Learn More</span>
-                  <ChevronDown className="h-4 w-4" />
+                <CollapsibleTrigger className="group flex items-center gap-3 px-4 py-2.5 bg-[--gold]/10 hover:bg-[--gold]/20 border border-[--gold]/30 rounded-md transition-all">
+                  <span className="text-sm uppercase tracking-wider text-[--gold] font-medium">Learn More</span>
+                  <ChevronDown className="h-4 w-4 text-[--gold] transition-transform group-data-[state=open]:rotate-180" />
                 </CollapsibleTrigger>
-                <CollapsibleContent className="mt-4 space-y-4 text-sm md:text-base text-white/80 leading-relaxed">
+                <CollapsibleContent className="mt-6 space-y-4 text-sm md:text-base text-white/80 leading-relaxed">
                   <p>
                     In a competitive market, the combination of greater finances, superior scouting and networking results in the greatest success on the pitch. Our work impacts all three to put you in the prime position to execute at a higher level than competitors. Ensure that you find, convince and sign the greatest and best-fitted talent each and every season; while simultaneously making wise decisions on the timing of departures for expert squad-building.
                   </p>
@@ -158,19 +164,21 @@ const Coaches = () => {
             className="relative p-8 md:p-16 flex items-center order-1 md:order-2"
             style={{ backgroundImage: `url(${blackMarble})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
           >
-            <div className="max-w-xl">
-              <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-[--gold] mb-6">
-                Progress
-              </h2>
-              <p className="text-base md:text-xl text-white/90 leading-relaxed mb-4">
-                Secure the best opportunities and contracts that reflect your value and expertise in the coaching profession.
-              </p>
+            <div className="max-w-xl space-y-6">
+              <div>
+                <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-[--gold] mb-6">
+                  Progress
+                </h2>
+                <p className="text-base md:text-xl text-white/90 leading-relaxed">
+                  Secure the best opportunities and contracts that reflect your value and expertise in the coaching profession.
+                </p>
+              </div>
               <Collapsible>
-                <CollapsibleTrigger className="flex items-center gap-2 text-[--gold] hover:text-[--gold]/80 transition-colors">
-                  <span className="text-sm uppercase tracking-wider">Learn More</span>
-                  <ChevronDown className="h-4 w-4" />
+                <CollapsibleTrigger className="group flex items-center gap-3 px-4 py-2.5 bg-[--gold]/10 hover:bg-[--gold]/20 border border-[--gold]/30 rounded-md transition-all">
+                  <span className="text-sm uppercase tracking-wider text-[--gold] font-medium">Learn More</span>
+                  <ChevronDown className="h-4 w-4 text-[--gold] transition-transform group-data-[state=open]:rotate-180" />
                 </CollapsibleTrigger>
-                <CollapsibleContent className="mt-4 space-y-4 text-sm md:text-base text-white/80 leading-relaxed">
+                <CollapsibleContent className="mt-6 space-y-4 text-sm md:text-base text-white/80 leading-relaxed">
                   <p>
                     Our role is then to negotiate the best possible contracts for our coaches. We recognise the sheer amount of dedication, hard work, and sacrifice that goes into a career, and we firmly believe in ensuring our coaches are fairly rewarded for their efforts.
                   </p>

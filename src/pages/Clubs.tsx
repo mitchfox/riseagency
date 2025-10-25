@@ -40,19 +40,21 @@ const Clubs = () => {
             className="relative p-8 md:p-16 flex items-center"
             style={{ backgroundImage: `url(${blackMarble})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
           >
-            <div className="max-w-xl">
-              <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-[--gold] mb-6">
-                Strategise
-              </h2>
-              <p className="text-base md:text-xl text-white/90 leading-relaxed mb-4">
-                Work alongside our recruitment team to identify talent that fits your club's philosophy and tactical needs. We provide comprehensive player analysis and market intelligence.
-              </p>
+            <div className="max-w-xl space-y-6">
+              <div>
+                <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-[--gold] mb-6">
+                  Strategise
+                </h2>
+                <p className="text-base md:text-xl text-white/90 leading-relaxed">
+                  Work alongside our recruitment team to identify talent that fits your club's philosophy and tactical needs. We provide comprehensive player analysis and market intelligence.
+                </p>
+              </div>
               <Collapsible>
-                <CollapsibleTrigger className="flex items-center gap-2 text-[--gold] hover:text-[--gold]/80 transition-colors">
-                  <span className="text-sm uppercase tracking-wider">Learn More</span>
-                  <ChevronDown className="h-4 w-4" />
+                <CollapsibleTrigger className="group flex items-center gap-3 px-4 py-2.5 bg-[--gold]/10 hover:bg-[--gold]/20 border border-[--gold]/30 rounded-md transition-all">
+                  <span className="text-sm uppercase tracking-wider text-[--gold] font-medium">Learn More</span>
+                  <ChevronDown className="h-4 w-4 text-[--gold] transition-transform group-data-[state=open]:rotate-180" />
                 </CollapsibleTrigger>
-                <CollapsibleContent className="mt-4 space-y-4 text-sm md:text-base text-white/80 leading-relaxed">
+                <CollapsibleContent className="mt-6 space-y-4 text-sm md:text-base text-white/80 leading-relaxed">
                   <p>
                     In order to beat the competition, effective and innovative strategies must be employed. We work to build winning sides both in the short term and long term through our bespoke approach. Whether a board of directors or heading up technical staff, our consultation provides essential insights to gain an advantage for your team. The major advantage we can guarantee to our clients is national exclusivity, providing our undivided time and resources, resulting in greater domestic success due to the prioritisation of your club over all others.
                   </p>
@@ -82,19 +84,21 @@ const Clubs = () => {
             className="relative p-8 md:p-16 flex items-center order-1 md:order-2"
             style={{ backgroundImage: `url(${blackMarble})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
           >
-            <div className="max-w-xl">
-              <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-[--gold] mb-6">
-                Recruit
-              </h2>
-              <p className="text-base md:text-xl text-white/90 leading-relaxed mb-4">
-                Access our extensive network of talented players across all levels. Our professional intermediaries facilitate seamless negotiations and contract discussions.
-              </p>
+            <div className="max-w-xl space-y-6">
+              <div>
+                <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-[--gold] mb-6">
+                  Recruit
+                </h2>
+                <p className="text-base md:text-xl text-white/90 leading-relaxed">
+                  Access our extensive network of talented players across all levels. Our professional intermediaries facilitate seamless negotiations and contract discussions.
+                </p>
+              </div>
               <Collapsible>
-                <CollapsibleTrigger className="flex items-center gap-2 text-[--gold] hover:text-[--gold]/80 transition-colors">
-                  <span className="text-sm uppercase tracking-wider">Learn More</span>
-                  <ChevronDown className="h-4 w-4" />
+                <CollapsibleTrigger className="group flex items-center gap-3 px-4 py-2.5 bg-[--gold]/10 hover:bg-[--gold]/20 border border-[--gold]/30 rounded-md transition-all">
+                  <span className="text-sm uppercase tracking-wider text-[--gold] font-medium">Learn More</span>
+                  <ChevronDown className="h-4 w-4 text-[--gold] transition-transform group-data-[state=open]:rotate-180" />
                 </CollapsibleTrigger>
-                <CollapsibleContent className="mt-4 space-y-4 text-sm md:text-base text-white/80 leading-relaxed">
+                <CollapsibleContent className="mt-6 space-y-4 text-sm md:text-base text-white/80 leading-relaxed">
                   <p>
                     In a competitive market, the combination of greater finances, superior scouting and networking results in the greatest success on the pitch. Our work impacts all three to put your club in the prime position to execute at a higher level than all its competitors. Ensure that you find, convince and sign the greatest and best-fitted talent each and every season; while simultaneously making wise decisions on the timing of departures for expert squad-building.
                   </p>
@@ -116,19 +120,21 @@ const Clubs = () => {
             className="relative p-8 md:p-16 flex items-center"
             style={{ backgroundImage: `url(${blackMarble})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
           >
-            <div className="max-w-xl">
-              <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-[--gold] mb-6">
-                Optimise
-              </h2>
-              <p className="text-base md:text-xl text-white/90 leading-relaxed mb-4">
-                Enhance your squad's performance through our player development programs. We provide physical and psychological support to maximize your team's potential.
-              </p>
+            <div className="max-w-xl space-y-6">
+              <div>
+                <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-[--gold] mb-6">
+                  Optimise
+                </h2>
+                <p className="text-base md:text-xl text-white/90 leading-relaxed">
+                  Enhance your squad's performance through our player development programs. We provide physical and psychological support to maximize your team's potential.
+                </p>
+              </div>
               <Collapsible>
-                <CollapsibleTrigger className="flex items-center gap-2 text-[--gold] hover:text-[--gold]/80 transition-colors">
-                  <span className="text-sm uppercase tracking-wider">Learn More</span>
-                  <ChevronDown className="h-4 w-4" />
+                <CollapsibleTrigger className="group flex items-center gap-3 px-4 py-2.5 bg-[--gold]/10 hover:bg-[--gold]/20 border border-[--gold]/30 rounded-md transition-all">
+                  <span className="text-sm uppercase tracking-wider text-[--gold] font-medium">Learn More</span>
+                  <ChevronDown className="h-4 w-4 text-[--gold] transition-transform group-data-[state=open]:rotate-180" />
                 </CollapsibleTrigger>
-                <CollapsibleContent className="mt-4 space-y-4 text-sm md:text-base text-white/80 leading-relaxed">
+                <CollapsibleContent className="mt-6 space-y-4 text-sm md:text-base text-white/80 leading-relaxed">
                   <p>
                     Where we stand apart from other agencies and help to elevate your side is in our unique expertise in the domain of performance. With a vast experience developing players and support staff, our consultation provides a platform to develop your personnel and improve results on the pitch.
                   </p>

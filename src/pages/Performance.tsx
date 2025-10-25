@@ -41,19 +41,21 @@ const Performance = () => {
             className="relative p-6 sm:p-8 md:p-12 lg:p-16 flex items-center"
             style={{ backgroundImage: `url(${blackMarble})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
           >
-            <div className="max-w-xl">
-              <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bebas uppercase tracking-wider text-[--gold] mb-4 md:mb-6">
-                Attract
-              </h2>
-              <p className="text-base sm:text-lg md:text-xl text-white/90 leading-relaxed mb-4">
-                Through our vast scouting network, we maximise visibility across the footballing world to ensure player interest and demand.
-              </p>
+            <div className="max-w-xl space-y-6">
+              <div>
+                <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bebas uppercase tracking-wider text-[--gold] mb-4 md:mb-6">
+                  Attract
+                </h2>
+                <p className="text-base sm:text-lg md:text-xl text-white/90 leading-relaxed">
+                  Through our vast scouting network, we maximise visibility across the footballing world to ensure player interest and demand.
+                </p>
+              </div>
               <Collapsible>
-                <CollapsibleTrigger className="flex items-center gap-2 text-[--gold] hover:text-[--gold]/80 transition-colors">
-                  <span className="text-sm uppercase tracking-wider">Learn More</span>
-                  <ChevronDown className="h-4 w-4" />
+                <CollapsibleTrigger className="group flex items-center gap-3 px-4 py-2.5 bg-[--gold]/10 hover:bg-[--gold]/20 border border-[--gold]/30 rounded-md transition-all">
+                  <span className="text-sm uppercase tracking-wider text-[--gold] font-medium">Learn More</span>
+                  <ChevronDown className="h-4 w-4 text-[--gold] transition-transform group-data-[state=open]:rotate-180" />
                 </CollapsibleTrigger>
-                <CollapsibleContent className="mt-4 space-y-4 text-sm md:text-base text-white/80 leading-relaxed">
+                <CollapsibleContent className="mt-6 space-y-4 text-sm md:text-base text-white/80 leading-relaxed">
                   <p>
                     One of the significant advantages of partnering with our agency is the breadth and depth of our connections within the industry. Over the years, we have cultivated a wide scouting network that spans across clubs, leagues, and continents.
                   </p>
@@ -86,19 +88,21 @@ const Performance = () => {
             className="relative p-6 sm:p-8 md:p-12 lg:p-16 flex items-center order-1 md:order-2"
             style={{ backgroundImage: `url(${blackMarble})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
           >
-            <div className="max-w-xl">
-              <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bebas uppercase tracking-wider text-[--gold] mb-4 md:mb-6">
-                Sign
-              </h2>
-              <p className="text-base sm:text-lg md:text-xl text-white/90 leading-relaxed mb-4">
-                Sign the dotted line after our team of intermediaries negotiate new and improved contracts. Retain confidence knowing your career opportunities are being created and finalised.
-              </p>
+            <div className="max-w-xl space-y-6">
+              <div>
+                <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bebas uppercase tracking-wider text-[--gold] mb-4 md:mb-6">
+                  Sign
+                </h2>
+                <p className="text-base sm:text-lg md:text-xl text-white/90 leading-relaxed">
+                  Sign the dotted line after our team of intermediaries negotiate new and improved contracts. Retain confidence knowing your career opportunities are being created and finalised.
+                </p>
+              </div>
               <Collapsible>
-                <CollapsibleTrigger className="flex items-center gap-2 text-[--gold] hover:text-[--gold]/80 transition-colors">
-                  <span className="text-sm uppercase tracking-wider">Learn More</span>
-                  <ChevronDown className="h-4 w-4" />
+                <CollapsibleTrigger className="group flex items-center gap-3 px-4 py-2.5 bg-[--gold]/10 hover:bg-[--gold]/20 border border-[--gold]/30 rounded-md transition-all">
+                  <span className="text-sm uppercase tracking-wider text-[--gold] font-medium">Learn More</span>
+                  <ChevronDown className="h-4 w-4 text-[--gold] transition-transform group-data-[state=open]:rotate-180" />
                 </CollapsibleTrigger>
-                <CollapsibleContent className="mt-4 space-y-4 text-sm md:text-base text-white/80 leading-relaxed">
+                <CollapsibleContent className="mt-6 space-y-4 text-sm md:text-base text-white/80 leading-relaxed">
                   <p>
                     Our role is then to negotiate the best possible contracts for our players. We recognise the sheer amount of dedication, hard work, and sacrifice that goes into a career, and we firmly believe in ensuring our players are fairly rewarded for their efforts.
                   </p>
@@ -123,19 +127,21 @@ const Performance = () => {
             className="relative p-6 sm:p-8 md:p-12 lg:p-16 flex items-center"
             style={{ backgroundImage: `url(${blackMarble})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
           >
-            <div className="max-w-xl">
-              <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bebas uppercase tracking-wider text-[--gold] mb-4 md:mb-6">
-                Develop
-              </h2>
-              <p className="text-base sm:text-lg md:text-xl text-white/90 leading-relaxed mb-4">
-                Receive expert training to maximise your physical capacity for performance. Push the limits of your body and mind to truly know how far you can go in your career.
-              </p>
+            <div className="max-w-xl space-y-6">
+              <div>
+                <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bebas uppercase tracking-wider text-[--gold] mb-4 md:mb-6">
+                  Develop
+                </h2>
+                <p className="text-base sm:text-lg md:text-xl text-white/90 leading-relaxed">
+                  Receive expert training to maximise your physical capacity for performance. Push the limits of your body and mind to truly know how far you can go in your career.
+                </p>
+              </div>
               <Collapsible>
-                <CollapsibleTrigger className="flex items-center gap-2 text-[--gold] hover:text-[--gold]/80 transition-colors">
-                  <span className="text-sm uppercase tracking-wider">Learn More</span>
-                  <ChevronDown className="h-4 w-4" />
+                <CollapsibleTrigger className="group flex items-center gap-3 px-4 py-2.5 bg-[--gold]/10 hover:bg-[--gold]/20 border border-[--gold]/30 rounded-md transition-all">
+                  <span className="text-sm uppercase tracking-wider text-[--gold] font-medium">Learn More</span>
+                  <ChevronDown className="h-4 w-4 text-[--gold] transition-transform group-data-[state=open]:rotate-180" />
                 </CollapsibleTrigger>
-                <CollapsibleContent className="mt-4 space-y-4 text-sm md:text-base text-white/80 leading-relaxed">
+                <CollapsibleContent className="mt-6 space-y-4 text-sm md:text-base text-white/80 leading-relaxed">
                   <p>
                     We believe that pushing the limits of your body and mind are key to discovering how far you can truly go in your career. Through our expert training, you can realise your true potential, resting assured that no stone will be left unturned in your journey to becoming the best you can possibly be.
                   </p>
@@ -165,19 +171,21 @@ const Performance = () => {
             className="relative p-6 sm:p-8 md:p-12 lg:p-16 flex items-center order-1 md:order-2"
             style={{ backgroundImage: `url(${blackMarble})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
           >
-            <div className="max-w-xl">
-              <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bebas uppercase tracking-wider text-[--gold] mb-4 md:mb-6">
-                Perform
-              </h2>
-              <p className="text-base sm:text-lg md:text-xl text-white/90 leading-relaxed mb-4">
-                Play your best on a consistent basis through smart preparation, including psychological training sessions and pre-match analysis specific to your individual matchups.
-              </p>
+            <div className="max-w-xl space-y-6">
+              <div>
+                <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bebas uppercase tracking-wider text-[--gold] mb-4 md:mb-6">
+                  Perform
+                </h2>
+                <p className="text-base sm:text-lg md:text-xl text-white/90 leading-relaxed">
+                  Play your best on a consistent basis through smart preparation, including psychological training sessions and pre-match analysis specific to your individual matchups.
+                </p>
+              </div>
               <Collapsible>
-                <CollapsibleTrigger className="flex items-center gap-2 text-[--gold] hover:text-[--gold]/80 transition-colors">
-                  <span className="text-sm uppercase tracking-wider">Learn More</span>
-                  <ChevronDown className="h-4 w-4" />
+                <CollapsibleTrigger className="group flex items-center gap-3 px-4 py-2.5 bg-[--gold]/10 hover:bg-[--gold]/20 border border-[--gold]/30 rounded-md transition-all">
+                  <span className="text-sm uppercase tracking-wider text-[--gold] font-medium">Learn More</span>
+                  <ChevronDown className="h-4 w-4 text-[--gold] transition-transform group-data-[state=open]:rotate-180" />
                 </CollapsibleTrigger>
-                <CollapsibleContent className="mt-4 space-y-4 text-sm md:text-base text-white/80 leading-relaxed">
+                <CollapsibleContent className="mt-6 space-y-4 text-sm md:text-base text-white/80 leading-relaxed">
                   <p>
                     To rise to the occasion, we must fully embrace the ethos that every day matters. We are not a standard fair-weather agent who only shows up during transfer windows; instead, we are there for the daily grind, supporting you every step of the way. We understand that success in your career is built on consistency and proper preparation.
                   </p>
@@ -196,45 +204,49 @@ const Performance = () => {
           </div>
         </section>
 
-        {/* STAKEHOLDER MANAGEMENT Section */}
-        <section className="py-16 md:py-24 bg-background">
+        {/* Additional Services Grid */}
+        <section className="py-20 md:py-28 bg-gradient-to-b from-background via-muted/20 to-background">
           <div className="container mx-auto px-4">
-            <div className="max-w-4xl mx-auto text-center">
-              <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bebas uppercase tracking-wider text-[--gold] mb-4 md:mb-6">
-                Stakeholder Management
-              </h2>
-              <p className="text-base sm:text-lg md:text-xl text-foreground/90 leading-relaxed">
-                Career management through contract negotiations, loans and transfers
-              </p>
-            </div>
-          </div>
-        </section>
+            <div className="grid md:grid-cols-3 gap-8 max-w-7xl mx-auto">
+              {/* STAKEHOLDER MANAGEMENT */}
+              <div className="group relative">
+                <div className="absolute inset-0 bg-gradient-to-br from-[--gold]/20 to-transparent rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="relative p-8 rounded-lg border border-border/50 bg-card hover:border-[--gold]/30 transition-all duration-300 h-full">
+                  <h3 className="text-2xl md:text-3xl lg:text-4xl font-bebas uppercase tracking-wider text-[--gold] mb-4">
+                    Stakeholder Management
+                  </h3>
+                  <p className="text-base md:text-lg text-muted-foreground leading-relaxed">
+                    Career management through contract negotiations, loans and transfers
+                  </p>
+                </div>
+              </div>
 
-        {/* BRAND Section */}
-        <section className="py-16 md:py-24 bg-muted/30">
-          <div className="container mx-auto px-4">
-            <div className="max-w-4xl mx-auto text-center">
-              <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bebas uppercase tracking-wider text-[--gold] mb-4 md:mb-6">
-                Brand
-              </h2>
-              <p className="text-xl font-semibold text-foreground mb-4">Image</p>
-              <p className="text-base sm:text-lg md:text-xl text-foreground/90 leading-relaxed">
-                Development of your brand image and management of public relations
-              </p>
-            </div>
-          </div>
-        </section>
+              {/* BRAND */}
+              <div className="group relative">
+                <div className="absolute inset-0 bg-gradient-to-br from-[--gold]/20 to-transparent rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="relative p-8 rounded-lg border border-border/50 bg-card hover:border-[--gold]/30 transition-all duration-300 h-full">
+                  <h3 className="text-2xl md:text-3xl lg:text-4xl font-bebas uppercase tracking-wider text-[--gold] mb-2">
+                    Brand
+                  </h3>
+                  <p className="text-lg font-semibold text-foreground mb-3">Image</p>
+                  <p className="text-base md:text-lg text-muted-foreground leading-relaxed">
+                    Development of your brand image and management of public relations
+                  </p>
+                </div>
+              </div>
 
-        {/* COMMERCIAL INTERESTS Section */}
-        <section className="py-16 md:py-24 bg-background">
-          <div className="container mx-auto px-4">
-            <div className="max-w-4xl mx-auto text-center">
-              <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bebas uppercase tracking-wider text-[--gold] mb-4 md:mb-6">
-                Commercial Interests
-              </h2>
-              <p className="text-base sm:text-lg md:text-xl text-foreground/90 leading-relaxed">
-                Creating relationships with major brands and negotiating the best sponsorship opportunities
-              </p>
+              {/* COMMERCIAL INTERESTS */}
+              <div className="group relative">
+                <div className="absolute inset-0 bg-gradient-to-br from-[--gold]/20 to-transparent rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="relative p-8 rounded-lg border border-border/50 bg-card hover:border-[--gold]/30 transition-all duration-300 h-full">
+                  <h3 className="text-2xl md:text-3xl lg:text-4xl font-bebas uppercase tracking-wider text-[--gold] mb-4">
+                    Commercial Interests
+                  </h3>
+                  <p className="text-base md:text-lg text-muted-foreground leading-relaxed">
+                    Creating relationships with major brands and negotiating the best sponsorship opportunities
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         </section>
