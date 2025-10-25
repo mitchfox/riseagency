@@ -14,3 +14,6 @@ verify_jwt = true
 
 [functions.replace-program]
 verify_jwt = false
+
+[functions.track-visit]
+verify_jwt = false

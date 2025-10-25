@@ -12,6 +12,7 @@ import BlogManagement from "@/components/staff/BlogManagement";
 import BetweenTheLinesManagement from "@/components/staff/BetweenTheLinesManagement";
 import { CoachingDatabase } from "@/components/staff/CoachingDatabase";
 import { FormSubmissionsManagement } from "@/components/staff/FormSubmissionsManagement";
+import { SiteVisitorsManagement } from "@/components/staff/SiteVisitorsManagement";
 
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
@@ -25,7 +26,7 @@ const Staff = () => {
   const [loading, setLoading] = useState(true);
   const [isStaff, setIsStaff] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
-  const [expandedSection, setExpandedSection] = useState<'players' | 'blog' | 'betweenthelines' | 'coaching' | 'submissions' | null>('players');
+  const [expandedSection, setExpandedSection] = useState<'players' | 'blog' | 'betweenthelines' | 'coaching' | 'submissions' | 'visitors' | null>('players');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -323,6 +324,26 @@ const Staff = () => {
             {expandedSection === 'submissions' && (
               <CardContent className="pt-6">
                 <FormSubmissionsManagement />
+              </CardContent>
+            )}
+          </Card>
+
+          {/* Site Visitors Section */}
+          <Card className="cursor-pointer">
+            <CardHeader 
+              onClick={() => setExpandedSection(expandedSection === 'visitors' ? null : 'visitors')}
+              className="hover:bg-accent/50 transition-colors"
+            >
+              <div className="flex justify-between items-center">
+                <CardTitle className="text-2xl">SITE VISITORS</CardTitle>
+                <div className="text-muted-foreground">
+                  {expandedSection === 'visitors' ? <ChevronDown size={24} /> : <ChevronRight size={24} />}
+                </div>
+              </div>
+            </CardHeader>
+            {expandedSection === 'visitors' && (
+              <CardContent className="pt-6">
+                <SiteVisitorsManagement />
               </CardContent>
             )}
           </Card>

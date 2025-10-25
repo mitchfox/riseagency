@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ScrollToTop } from "@/components/ScrollToTop";
+import { usePageTracking } from "@/hooks/usePageTracking";
 import Index from "./pages/Index";
 import Stars from "./pages/Stars";
 import Players from "./pages/Performance"; // Old Performance content now becomes Players
@@ -26,15 +27,18 @@ import ReplaceProgram from "./pages/ReplaceProgram";
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <ScrollToTop />
-      <Routes>
-        <Route path="/" element={<Index />} />
+const App = () => {
+  usePageTracking();
+  
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <ScrollToTop />
+        <Routes>
+          <Route path="/" element={<Index />} />
           <Route path="/stars" element={<Stars />} />
           <Route path="/stars/:playername" element={<PlayerDetail />} />
           <Route path="/players" element={<Players />} />
@@ -59,6 +63,7 @@ const App = () => (
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
-);
+  );
+};
 
 export default App;
