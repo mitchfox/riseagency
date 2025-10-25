@@ -965,25 +965,32 @@ const PlayerManagement = () => {
 
       {/* Filters */}
       <div className="flex gap-2 items-center flex-wrap">
-        <span className="text-sm font-medium text-muted-foreground">Representation:</span>
+        <span className="text-sm font-medium text-muted-foreground">Filter:</span>
+        <Button
+          variant={representationFilter === "all" ? "default" : "outline"}
+          size="sm"
+          onClick={() => setRepresentationFilter("all")}
+        >
+          All Players
+        </Button>
         <Button
           variant={representationFilter === "represented" ? "default" : "outline"}
           size="sm"
-          onClick={() => setRepresentationFilter(representationFilter === "represented" ? "all" : "represented")}
+          onClick={() => setRepresentationFilter("represented")}
         >
           Represented
         </Button>
         <Button
           variant={representationFilter === "mandated" ? "default" : "outline"}
           size="sm"
-          onClick={() => setRepresentationFilter(representationFilter === "mandated" ? "all" : "mandated")}
+          onClick={() => setRepresentationFilter("mandated")}
         >
           Mandated
         </Button>
         <Button
           variant={representationFilter === "other" ? "default" : "outline"}
           size="sm"
-          onClick={() => setRepresentationFilter(representationFilter === "other" ? "all" : "other")}
+          onClick={() => setRepresentationFilter("other")}
         >
           Other
         </Button>
