@@ -72,15 +72,18 @@ serve(async (req) => {
       );
     }
 
-    // Validate file type
+    // Validate file type (accept Excel and CSV files)
     const validTypes = [
       'application/vnd.ms-excel',
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      'application/vnd.ms-excel.sheet.macroEnabled.12'
+      'application/vnd.ms-excel.sheet.macroEnabled.12',
+      'text/csv',
+      'application/csv',
+      'text/plain' // Some browsers send CSV as text/plain
     ];
-    if (!validTypes.includes(file.type) && !file.name.match(/\.(xlsx?|xlsm)$/i)) {
+    if (!validTypes.includes(file.type) && !file.name.match(/\.(xlsx?|xlsm|csv)$/i)) {
       return new Response(
-        JSON.stringify({ error: 'Invalid file type. Please upload an Excel file.' }),
+        JSON.stringify({ error: 'Invalid file type. Please upload an Excel (.xlsx, .xls) or CSV (.csv) file.' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }

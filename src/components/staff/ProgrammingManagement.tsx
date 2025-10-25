@@ -224,25 +224,34 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
           const formData = new FormData();
           formData.append('file', excelFile);
 
+          // Get the session for authentication
+          const { data: { session } } = await supabase.auth.getSession();
+          if (!session) {
+            throw new Error('Authentication required');
+          }
+
           const response = await fetch(
             `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/parse-program-excel`,
             {
               method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${session.access_token}`,
+              },
               body: formData,
             }
           );
 
           if (!response.ok) {
             const errorData = await response.json();
-            throw new Error(errorData.error || 'Failed to parse Excel file');
+            throw new Error(errorData.error || 'Failed to parse file');
           }
 
           const result = await response.json();
           aiParsedData = result.data;
-          toast.success('Excel file parsed successfully!');
+          toast.success('File parsed successfully!');
         } catch (error: any) {
-          console.error('Error parsing Excel:', error);
-          toast.error(`Failed to parse Excel: ${error.message}`);
+          console.error('Error parsing file:', error);
+          toast.error(`Failed to parse file: ${error.message}`);
           setUploadingExcel(false);
           setLoading(false);
           return;
