@@ -656,65 +656,71 @@ const Dashboard = () => {
                                         Sessions
                                       </AccordionTrigger>
                                       <AccordionContent>
-                                        <Tabs value={selectedSession || firstSessionWithData} onValueChange={setSelectedSession} className="w-full">
-                                          {/* Main Session Tabs - Two Rows */}
-                                          <div className="space-y-2 mb-4">
-                                            {/* First Row: A, B, C, D */}
-                                            <div className="grid grid-cols-4 gap-2">
-                                              {['A', 'B', 'C', 'D'].map((mainKey) => {
-                                                const colors = getSessionColor(mainKey);
-                                                const hasData = hasSessionData(mainKey);
-                                                return (
-                                                  <TabsTrigger
-                                                    key={mainKey}
-                                                    value={mainKey}
-                                                    disabled={!hasData}
-                                                    className="font-bebas uppercase text-sm disabled:opacity-40 disabled:cursor-not-allowed"
-                                                    style={{
-                                                      backgroundColor: hasData ? colors.bg : 'hsl(0, 0%, 30%)',
-                                                      color: hasData ? colors.text : 'hsl(0, 0%, 60%)',
-                                                    }}
-                                                  >
-                                                    Session {mainKey}
-                                                  </TabsTrigger>
-                                                );
-                                              })}
-                                            </div>
-                                            
-                                            {/* Second Row: E, F, G, H */}
-                                            <div className="grid grid-cols-4 gap-2">
-                                              {['E', 'F', 'G', 'H'].map((mainKey) => {
-                                                const colors = getSessionColor(mainKey);
-                                                const hasData = hasSessionData(mainKey);
-                                                return (
-                                                  <TabsTrigger
-                                                    key={mainKey}
-                                                    value={mainKey}
-                                                    disabled={!hasData}
-                                                    className="font-bebas uppercase text-sm disabled:opacity-40 disabled:cursor-not-allowed"
-                                                    style={{
-                                                      backgroundColor: hasData ? colors.bg : 'hsl(0, 0%, 30%)',
-                                                      color: hasData ? colors.text : 'hsl(0, 0%, 60%)',
-                                                    }}
-                                                  >
-                                                    Session {mainKey}
-                                                  </TabsTrigger>
-                                                );
-                                              })}
-                                            </div>
+                                        {/* Main Session Tabs - Two Rows */}
+                                        <div className="space-y-2 mb-4">
+                                          {/* First Row: A, B, C, D */}
+                                          <div className="grid grid-cols-4 gap-2">
+                                            {['A', 'B', 'C', 'D'].map((mainKey) => {
+                                              const colors = getSessionColor(mainKey);
+                                              const hasData = hasSessionData(mainKey);
+                                              const isActive = (selectedSession || firstSessionWithData) === mainKey;
+                                              return (
+                                                <Button
+                                                  key={mainKey}
+                                                  onClick={() => setSelectedSession(mainKey)}
+                                                  disabled={!hasData}
+                                                  className="font-bebas uppercase text-sm disabled:opacity-40 disabled:cursor-not-allowed"
+                                                  style={{
+                                                    backgroundColor: hasData ? colors.bg : 'hsl(0, 0%, 30%)',
+                                                    color: hasData ? colors.text : 'hsl(0, 0%, 60%)',
+                                                    opacity: isActive ? 1 : 0.7,
+                                                    border: isActive ? '2px solid white' : 'none',
+                                                  }}
+                                                >
+                                                  Session {mainKey}
+                                                </Button>
+                                              );
+                                            })}
                                           </div>
                                           
-                                          {/* Main Session Content with Sub-tabs */}
-                                          {allSessions.map((mainKey) => {
+                                          {/* Second Row: E, F, G, H */}
+                                          <div className="grid grid-cols-4 gap-2">
+                                            {['E', 'F', 'G', 'H'].map((mainKey) => {
+                                              const colors = getSessionColor(mainKey);
+                                              const hasData = hasSessionData(mainKey);
+                                              const isActive = (selectedSession || firstSessionWithData) === mainKey;
+                                              return (
+                                                <Button
+                                                  key={mainKey}
+                                                  onClick={() => setSelectedSession(mainKey)}
+                                                  disabled={!hasData}
+                                                  className="font-bebas uppercase text-sm disabled:opacity-40 disabled:cursor-not-allowed"
+                                                  style={{
+                                                    backgroundColor: hasData ? colors.bg : 'hsl(0, 0%, 30%)',
+                                                    color: hasData ? colors.text : 'hsl(0, 0%, 60%)',
+                                                    opacity: isActive ? 1 : 0.7,
+                                                    border: isActive ? '2px solid white' : 'none',
+                                                  }}
+                                                >
+                                                  Session {mainKey}
+                                                </Button>
+                                              );
+                                            })}
+                                          </div>
+                                        </div>
+                                        
+                                        {/* Main Session Content with Sub-tabs */}
+                                        {allSessions.map((mainKey) => {
                                             const preKey = `PRE-${mainKey}`;
                                             const hasPreSession = program.sessions[preKey] || program.sessions[preKey.toLowerCase()];
                                             const mainSession = program.sessions[mainKey] || program.sessions[mainKey.toLowerCase()];
                                             
-                                            // Only render TabsContent if there's data for this session
-                                            if (!hasPreSession && !mainSession) return null;
-                                            
-                                            return (
-                                              <TabsContent key={mainKey} value={mainKey} className="mt-4">
+                                          // Only render content if there's data for this session and it's selected
+                                          if (!hasPreSession && !mainSession) return null;
+                                          if ((selectedSession || firstSessionWithData) !== mainKey) return null;
+                                          
+                                          return (
+                                            <div key={mainKey} className="mt-4">
                                                 <Tabs defaultValue={hasPreSession ? "pre" : "main"} className="w-full">
                                                   {/* Sub-tabs for Pre and Main Session */}
                                                   <TabsList className="grid w-full gap-2 grid-cols-2 mb-4">
@@ -980,10 +986,9 @@ const Dashboard = () => {
                                                     </TabsContent>
                                                   )}
                                                 </Tabs>
-                                              </TabsContent>
+                                              </div>
                                             );
                                           })}
-                                        </Tabs>
                                       </AccordionContent>
                                     </AccordionItem>
                                   );
