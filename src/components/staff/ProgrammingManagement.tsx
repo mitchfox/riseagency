@@ -36,7 +36,8 @@ interface SessionData {
 }
 
 interface WeeklySchedule {
-  week: string;
+  week?: string;
+  week_start_date: string;
   monday: string;
   tuesday: string;
   wednesday: string;
@@ -57,8 +58,6 @@ interface WeeklySchedule {
 interface ProgrammingData {
   phaseName: string;
   phaseDates: string;
-  phaseImageUrl: string;
-  playerImageUrl: string;
   overviewText: string;
   sessionA: SessionData;
   sessionB: SessionData;
@@ -99,6 +98,7 @@ const emptySession = (): SessionData => ({
 
 const emptyWeeklySchedule = (): WeeklySchedule => ({
   week: '',
+  week_start_date: '',
   monday: '', tuesday: '', wednesday: '', thursday: '', friday: '', saturday: '', sunday: '',
   mondayColor: '', tuesdayColor: '', wednesdayColor: '', thursdayColor: '', fridayColor: '', saturdayColor: '', sundayColor: '',
   scheduleNotes: ''
@@ -107,8 +107,6 @@ const emptyWeeklySchedule = (): WeeklySchedule => ({
 const initialProgrammingData = (): ProgrammingData => ({
   phaseName: '',
   phaseDates: '',
-  phaseImageUrl: '',
-  playerImageUrl: '',
   overviewText: '',
   sessionA: emptySession(),
   sessionB: emptySession(),
@@ -127,12 +125,12 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
   const [selectedProgram, setSelectedProgram] = useState<any | null>(null);
   const [programmingData, setProgrammingData] = useState<ProgrammingData>(initialProgrammingData());
   const [loading, setLoading] = useState(false);
-  const [uploadingImage, setUploadingImage] = useState(false);
   const [selectedSession, setSelectedSession] = useState<string | null>(null);
   const [isCreatingNew, setIsCreatingNew] = useState(false);
   const [newProgramName, setNewProgramName] = useState("");
   const [uploadingExcel, setUploadingExcel] = useState(false);
   const [excelFile, setExcelFile] = useState<File | null>(null);
+  const [showUploadProgram, setShowUploadProgram] = useState(false);
   const [saveToCoachingDB, setSaveToCoachingDB] = useState({
     programme: false,
     sessions: false,
@@ -180,17 +178,15 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
       setProgrammingData({
         phaseName: data.phase_name || '',
         phaseDates: data.phase_dates || '',
-        phaseImageUrl: data.phase_image_url || '',
-        playerImageUrl: data.player_image_url || '',
         overviewText: data.overview_text || '',
-        sessionA: sessions.sessionA || emptySession(),
-        sessionB: sessions.sessionB || emptySession(),
-        sessionC: sessions.sessionC || emptySession(),
-        sessionD: sessions.sessionD || emptySession(),
-        sessionE: sessions.sessionE || emptySession(),
-        sessionF: sessions.sessionF || emptySession(),
-        sessionG: sessions.sessionG || emptySession(),
-        sessionH: sessions.sessionH || emptySession(),
+        sessionA: sessions.A || sessions.sessionA || emptySession(),
+        sessionB: sessions.B || sessions.sessionB || emptySession(),
+        sessionC: sessions.C || sessions.sessionC || emptySession(),
+        sessionD: sessions.D || sessions.sessionD || emptySession(),
+        sessionE: sessions.E || sessions.sessionE || emptySession(),
+        sessionF: sessions.F || sessions.sessionF || emptySession(),
+        sessionG: sessions.G || sessions.sessionG || emptySession(),
+        sessionH: sessions.H || sessions.sessionH || emptySession(),
         weeklySchedules: weeklySchedules,
         testing: ''
       });
@@ -344,18 +340,16 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
         .update({
           phase_name: programmingData.phaseName,
           phase_dates: programmingData.phaseDates,
-          phase_image_url: programmingData.phaseImageUrl,
-          player_image_url: programmingData.playerImageUrl,
           overview_text: programmingData.overviewText,
           sessions: {
-            sessionA: programmingData.sessionA,
-            sessionB: programmingData.sessionB,
-            sessionC: programmingData.sessionC,
-            sessionD: programmingData.sessionD,
-            sessionE: programmingData.sessionE,
-            sessionF: programmingData.sessionF,
-            sessionG: programmingData.sessionG,
-            sessionH: programmingData.sessionH,
+            A: programmingData.sessionA,
+            B: programmingData.sessionB,
+            C: programmingData.sessionC,
+            D: programmingData.sessionD,
+            E: programmingData.sessionE,
+            F: programmingData.sessionF,
+            G: programmingData.sessionG,
+            H: programmingData.sessionH,
           } as any,
           weekly_schedules: programmingData.weeklySchedules as any,
         })
@@ -572,31 +566,6 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
     updateField('weeklySchedules', updated);
   };
 
-  const handleImageUpload = async (file: File, fieldName: 'phaseImageUrl' | 'playerImageUrl') => {
-    try {
-      setUploadingImage(true);
-      
-      const fileName = `${playerId}_${fieldName}_${Date.now()}_${file.name}`;
-      const { data, error } = await supabase.storage
-        .from('analysis-files')
-        .upload(`programming/${fileName}`, file);
-      
-      if (error) throw error;
-      
-      const { data: { publicUrl } } = supabase.storage
-        .from('analysis-files')
-        .getPublicUrl(`programming/${fileName}`);
-      
-      updateField(fieldName, publicUrl);
-      toast.success("Image uploaded successfully!");
-    } catch (error: any) {
-      console.error("Error uploading image:", error);
-      toast.error("Failed to upload image");
-    } finally {
-      setUploadingImage(false);
-    }
-  };
-
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
@@ -610,11 +579,71 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold">Programs</h3>
-              <Button onClick={() => setIsCreatingNew(true)}>
-                <Plus className="w-4 h-4 mr-2" />
-                New Program
-              </Button>
+              <div className="flex gap-2">
+                <Button onClick={() => setIsCreatingNew(true)}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  New Program
+                </Button>
+                <Button variant="outline" onClick={() => setShowUploadProgram(true)}>
+                  <Database className="w-4 h-4 mr-2" />
+                  Upload Program
+                </Button>
+              </div>
             </div>
+
+            {showUploadProgram && (
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label>Program Name</Label>
+                      <Input
+                        placeholder="Program name (e.g., Pre-Season 2025)"
+                        value={newProgramName}
+                        onChange={(e) => setNewProgramName(e.target.value)}
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="csv-upload">Upload CSV Program File</Label>
+                      <p className="text-xs text-muted-foreground">
+                        Upload a CSV file and the program structure will be imported automatically
+                      </p>
+                      <Input
+                        id="csv-upload"
+                        type="file"
+                        accept=".csv,.xlsx,.xls"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            setExcelFile(file);
+                          }
+                        }}
+                        disabled={uploadingExcel}
+                      />
+                      {excelFile && (
+                        <p className="text-sm text-muted-foreground">
+                          Selected: {excelFile.name}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="flex gap-2">
+                      <Button onClick={createNewProgram} disabled={loading || uploadingExcel || !newProgramName || !excelFile}>
+                        {uploadingExcel ? 'Processing File...' : loading ? 'Uploading...' : 'Upload Program'}
+                      </Button>
+                      <Button variant="outline" onClick={() => {
+                        setShowUploadProgram(false);
+                        setNewProgramName('');
+                        setExcelFile(null);
+                      }}>
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             {isCreatingNew && (
               <Card>
@@ -802,53 +831,6 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
                           value={programmingData.phaseDates}
                           onChange={(e) => updateField('phaseDates', e.target.value)}
                         />
-                      </div>
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="phaseImage">Phase Image</Label>
-                        <Input
-                          id="phaseImage"
-                          type="file"
-                          accept="image/*"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) handleImageUpload(file, 'phaseImageUrl');
-                          }}
-                          disabled={uploadingImage}
-                        />
-                        {programmingData.phaseImageUrl && (
-                          <div className="mt-2">
-                            <img 
-                              src={programmingData.phaseImageUrl} 
-                              alt="Phase" 
-                              className="w-32 h-32 object-cover rounded border"
-                            />
-                          </div>
-                        )}
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="playerImage">Player Image</Label>
-                        <Input
-                          id="playerImage"
-                          type="file"
-                          accept="image/*"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) handleImageUpload(file, 'playerImageUrl');
-                          }}
-                          disabled={uploadingImage}
-                        />
-                        {programmingData.playerImageUrl && (
-                          <div className="mt-2">
-                            <img 
-                              src={programmingData.playerImageUrl} 
-                              alt="Player" 
-                              className="w-32 h-32 object-cover rounded border"
-                            />
-                          </div>
-                        )}
                       </div>
                     </div>
 
@@ -1056,12 +1038,26 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
                       <Card key={idx} className="border-2">
                         <CardContent className="pt-6 space-y-4">
                           <div className="flex items-center justify-between mb-4">
-                            <Input
-                              placeholder="Week (e.g., Week 1)"
-                              value={schedule.week}
-                              onChange={(e) => updateWeeklySchedule(idx, 'week', e.target.value)}
-                              className="max-w-xs"
-                            />
+                            <div className="flex gap-4 flex-1">
+                              <div className="space-y-2">
+                                <Label className="text-sm">Week Start Date</Label>
+                                <Input
+                                  type="date"
+                                  value={schedule.week_start_date || ''}
+                                  onChange={(e) => updateWeeklySchedule(idx, 'week_start_date', e.target.value)}
+                                  className="max-w-xs"
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <Label className="text-sm">Week Label (optional)</Label>
+                                <Input
+                                  placeholder="Week 1"
+                                  value={schedule.week || ''}
+                                  onChange={(e) => updateWeeklySchedule(idx, 'week', e.target.value)}
+                                  className="max-w-xs"
+                                />
+                              </div>
+                            </div>
                             <Button
                               variant="destructive"
                               size="sm"
