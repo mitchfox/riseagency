@@ -57,6 +57,7 @@ export default function BetweenTheLines() {
         .from("blog_posts")
         .select("*")
         .eq("published", true)
+        .eq("category", "BETWEEN THE LINES")
         .order("created_at", { ascending: false });
 
       if (error) throw error;

@@ -62,7 +62,7 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
                   <Button 
                     variant="outline"
                     onClick={handleRequestRepresentation}
-                    className="font-bebas uppercase tracking-wider px-6 py-2 border-primary/50 text-white hover:bg-primary/20 backdrop-blur-sm"
+                    className="font-bebas uppercase tracking-wider px-6 py-2 border-primary/50 text-white hover:bg-white/10 hover:border-white/70 backdrop-blur-sm"
                   >
                     Request Representation
                   </Button>
