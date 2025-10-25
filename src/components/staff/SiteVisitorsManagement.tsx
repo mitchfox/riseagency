@@ -38,6 +38,8 @@ export const SiteVisitorsManagement = () => {
   const [pageFilter, setPageFilter] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [uniquePaths, setUniquePaths] = useState<string[]>([]);
+  const [selectedVisitor, setSelectedVisitor] = useState<string | null>(null);
+  const [visitorDetails, setVisitorDetails] = useState<SiteVisit[]>([]);
   const [stats, setStats] = useState({
     totalVisits: 0,
     uniqueVisitors: 0,
@@ -96,6 +98,32 @@ export const SiteVisitorsManagement = () => {
     }
   };
 
+  const loadVisitorDetails = async (visitorId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("site_visits")
+        .select("*")
+        .eq("visitor_id", visitorId)
+        .order("visited_at", { ascending: false });
+
+      if (error) throw error;
+
+      // Group by page and take the entry with highest duration for each page
+      const pageMap = new Map<string, SiteVisit>();
+      data?.forEach((visit) => {
+        const existing = pageMap.get(visit.page_path);
+        if (!existing || visit.duration > existing.duration) {
+          pageMap.set(visit.page_path, visit);
+        }
+      });
+
+      setVisitorDetails(Array.from(pageMap.values()));
+    } catch (error) {
+      console.error("Error loading visitor details:", error);
+      toast.error("Failed to load visitor details");
+    }
+  };
+
   useEffect(() => {
     loadVisits();
     loadUniquePaths();
@@ -122,6 +150,62 @@ export const SiteVisitorsManagement = () => {
     visit.visitor_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
     formatLocation(visit.location).toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  if (selectedVisitor) {
+    return (
+      <div className="space-y-4">
+        <Button
+          variant="outline"
+          onClick={() => {
+            setSelectedVisitor(null);
+            setVisitorDetails([]);
+          }}
+        >
+          ← Back to All Visitors
+        </Button>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Visitor Details: {selectedVisitor}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Page Path</TableHead>
+                    <TableHead>Duration</TableHead>
+                    <TableHead>Location</TableHead>
+                    <TableHead>Visited At</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {visitorDetails.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
+                        No visits found for this visitor
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    visitorDetails.map((visit) => (
+                      <TableRow key={visit.id}>
+                        <TableCell className="font-medium">{visit.page_path}</TableCell>
+                        <TableCell>{formatDuration(visit.duration)}</TableCell>
+                        <TableCell>{formatLocation(visit.location)}</TableCell>
+                        <TableCell className="text-sm">
+                          {new Date(visit.visited_at).toLocaleString()}
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -225,7 +309,14 @@ export const SiteVisitorsManagement = () => {
                   </TableRow>
                 ) : (
                   filteredVisits.map((visit) => (
-                    <TableRow key={visit.id}>
+                    <TableRow 
+                      key={visit.id}
+                      className="cursor-pointer hover:bg-muted/50"
+                      onClick={() => {
+                        setSelectedVisitor(visit.visitor_id);
+                        loadVisitorDetails(visit.visitor_id);
+                      }}
+                    >
                       <TableCell className="font-mono text-xs">
                         {visit.visitor_id.substring(0, 16)}...
                       </TableCell>
