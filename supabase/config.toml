@@ -11,3 +11,6 @@ verify_jwt = true
 
 [functions.import-program-csv]
 verify_jwt = true
+
+[functions.replace-program]
+verify_jwt = false

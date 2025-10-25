@@ -22,6 +22,7 @@ import BetweenTheLines from "./pages/BetweenTheLines";
 import PerformanceReport from "./pages/PerformanceReport";
 import NotFound from "./pages/NotFound";
 import ImportProgramCSV from "./pages/ImportProgramCSV";
+import ReplaceProgram from "./pages/ReplaceProgram";
 
 const queryClient = new QueryClient();
 
@@ -51,6 +52,7 @@ const App = () => (
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/performance-report/:analysisId" element={<PerformanceReport />} />
           <Route path="/import-program" element={<ImportProgramCSV />} />
+          <Route path="/replace-program" element={<ReplaceProgram />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
