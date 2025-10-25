@@ -49,6 +49,8 @@ const BetweenTheLinesManagement = () => {
     image_url: "",
     category: "",
   });
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
 
   useEffect(() => {
     getCurrentUser();
@@ -84,6 +86,29 @@ const BetweenTheLinesManagement = () => {
     setLoading(true);
 
     try {
+      let imageUrl = formData.image_url;
+
+      // Upload image if a new file is selected
+      if (imageFile) {
+        setUploadingImage(true);
+        const fileExt = imageFile.name.split('.').pop();
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+        const filePath = fileName;
+
+        const { error: uploadError } = await supabase.storage
+          .from('blog-images')
+          .upload(filePath, imageFile);
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('blog-images')
+          .getPublicUrl(filePath);
+
+        imageUrl = publicUrl;
+        setUploadingImage(false);
+      }
+
       if (editingPost) {
         const { error } = await supabase
           .from("blog_posts")
@@ -92,7 +117,7 @@ const BetweenTheLinesManagement = () => {
             content: formData.content,
             excerpt: formData.excerpt,
             published: formData.published,
-            image_url: formData.image_url,
+            image_url: imageUrl,
             category: formData.category || null,
           })
           .eq("id", editingPost.id);
@@ -107,7 +132,7 @@ const BetweenTheLinesManagement = () => {
             content: formData.content,
             excerpt: formData.excerpt,
             published: formData.published,
-            image_url: formData.image_url,
+            image_url: imageUrl,
             category: formData.category || null,
             author_id: userId,
           });
@@ -117,6 +142,7 @@ const BetweenTheLinesManagement = () => {
       }
 
       setFormData({ title: "", content: "", excerpt: "", published: false, image_url: "", category: "" });
+      setImageFile(null);
       setEditingPost(null);
       setIsDialogOpen(false);
       fetchPosts();
@@ -124,6 +150,7 @@ const BetweenTheLinesManagement = () => {
       toast.error("Failed to save article: " + error.message);
     } finally {
       setLoading(false);
+      setUploadingImage(false);
     }
   };
 
@@ -150,6 +177,7 @@ const BetweenTheLinesManagement = () => {
       image_url: post.image_url || "",
       category: post.category || "",
     });
+    setImageFile(null);
     setIsDialogOpen(true);
   };
 
@@ -166,6 +194,7 @@ const BetweenTheLinesManagement = () => {
             <Button onClick={() => {
               setEditingPost(null);
               setFormData({ title: "", content: "", excerpt: "", published: false, image_url: "", category: "" });
+              setImageFile(null);
             }}>
               Add New Post
             </Button>
@@ -204,14 +233,26 @@ const BetweenTheLinesManagement = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="image_url">Image URL *</Label>
+                <Label htmlFor="image">Image *</Label>
                 <Input
-                  id="image_url"
-                  value={formData.image_url}
-                  onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-                  placeholder="https://example.com/image.jpg"
-                  required
+                  id="image"
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) setImageFile(file);
+                  }}
+                  disabled={loading || uploadingImage}
                 />
+                {imageFile && (
+                  <p className="text-sm text-muted-foreground">Selected: {imageFile.name}</p>
+                )}
+                {formData.image_url && !imageFile && (
+                  <div className="mt-2">
+                    <p className="text-sm text-muted-foreground mb-1">Current image:</p>
+                    <img src={formData.image_url} alt="Current" className="h-20 object-cover rounded" />
+                  </div>
+                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="category">Category *</Label>
@@ -240,8 +281,8 @@ const BetweenTheLinesManagement = () => {
                 />
                 <Label htmlFor="published">Published</Label>
               </div>
-              <Button type="submit" disabled={loading}>
-                {loading ? "Saving..." : editingPost ? "Update Article" : "Create Article"}
+              <Button type="submit" disabled={loading || uploadingImage}>
+                {uploadingImage ? "Uploading image..." : loading ? "Saving..." : editingPost ? "Update Article" : "Create Article"}
               </Button>
             </form>
           </DialogContent>

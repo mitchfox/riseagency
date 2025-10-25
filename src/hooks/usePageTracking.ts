@@ -21,11 +21,29 @@ export const usePageTracking = () => {
     const startTime = Date.now();
     startTimeRef.current = startTime;
 
+    // Track page view immediately when page loads
+    const trackPageView = async () => {
+      try {
+        await supabase.functions.invoke("track-visit", {
+          body: {
+            visitorId: visitorIdRef.current,
+            pagePath: location.pathname,
+            duration: 0,
+            referrer: document.referrer,
+          },
+        });
+      } catch (error) {
+        console.error("Failed to track page view:", error);
+      }
+    };
+
+    trackPageView();
+
     return () => {
       const duration = Math.round((Date.now() - startTimeRef.current) / 1000);
       
-      // Track the visit when leaving the page
-      const trackVisit = async () => {
+      // Update the visit with duration when leaving the page
+      const updateVisit = async () => {
         try {
           await supabase.functions.invoke("track-visit", {
             body: {
@@ -36,7 +54,7 @@ export const usePageTracking = () => {
             },
           });
         } catch (error) {
-          console.error("Failed to track visit:", error);
+          console.error("Failed to update visit duration:", error);
         }
       };
 
@@ -57,7 +75,7 @@ export const usePageTracking = () => {
         const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/track-visit`;
         navigator.sendBeacon(url, blob);
       } else {
-        trackVisit();
+        updateVisit();
       }
     };
   }, [location.pathname]);
