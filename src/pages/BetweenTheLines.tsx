@@ -171,8 +171,9 @@ export default function BetweenTheLines() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredArticles.map((article) => (
-                <article
+                <a
                   key={article.id}
+                  href={`/news/${article.id}`}
                   className="group cursor-pointer overflow-hidden rounded-lg border border-border hover:border-primary transition-all"
                 >
                   <div className="relative aspect-[4/3] overflow-hidden bg-black">
@@ -205,7 +206,7 @@ export default function BetweenTheLines() {
                       </p>
                     )}
                   </div>
-                </article>
+                </a>
               ))}
             </div>
           )}

@@ -42,7 +42,7 @@ export const usePageTracking = () => {
     return () => {
       const duration = Math.round((Date.now() - startTimeRef.current) / 1000);
       
-      // Update the visit with duration when leaving the page
+      // Always use the regular function call to ensure authentication
       const updateVisit = async () => {
         try {
           await supabase.functions.invoke("track-visit", {
@@ -58,25 +58,7 @@ export const usePageTracking = () => {
         }
       };
 
-      // Use sendBeacon if available for more reliable tracking
-      if (navigator.sendBeacon) {
-        const blob = new Blob(
-          [
-            JSON.stringify({
-              visitorId: visitorIdRef.current,
-              pagePath: location.pathname,
-              duration,
-              referrer: document.referrer,
-            }),
-          ],
-          { type: "application/json" }
-        );
-        
-        const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/track-visit`;
-        navigator.sendBeacon(url, blob);
-      } else {
-        updateVisit();
-      }
+      updateVisit();
     };
   }, [location.pathname]);
 };

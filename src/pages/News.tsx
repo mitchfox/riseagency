@@ -88,11 +88,11 @@ const News = () => {
                 ) : (
                   <article>
                     {currentArticle.image_url && (
-                      <div className="aspect-[16/9] overflow-hidden rounded-lg mb-8">
+                      <div className="w-full mb-8">
                         <img 
                           src={currentArticle.image_url} 
                           alt={currentArticle.title}
-                          className="w-full h-full object-cover"
+                          className="w-full h-auto rounded-lg"
                         />
                       </div>
                     )}
