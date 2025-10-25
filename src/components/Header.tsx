@@ -95,7 +95,7 @@ export const Header = () => {
               </button>
             </DrawerTrigger>
             <DrawerContent 
-              className="h-full w-[240px] left-0 flex flex-col rounded-r-none bg-cover bg-center animate-slide-in-left transition-all duration-300 ease-out"
+              className="h-full w-[240px] left-0 flex flex-col rounded-r-none bg-cover bg-center animate-slide-in-left transition-all duration-300 ease-out overflow-y-auto"
               style={{ 
                 backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url(${blackMarbleBg})` 
               }}
@@ -110,7 +110,7 @@ export const Header = () => {
                   </button>
                 </DrawerClose>
               </div>
-              <nav className="flex flex-col gap-1 px-4 flex-1 pb-4">
+              <nav className="flex flex-col gap-1 px-4 flex-1 pb-4 overflow-y-auto min-h-0">
                 <DrawerClose asChild>
                   <Link
                     to="/"
@@ -202,15 +202,15 @@ export const Header = () => {
               </nav>
               
               {/* Player Portal Box */}
-              <div className="px-4 pb-3">
-                <div className="relative overflow-hidden rounded-lg h-24">
+              <div className="px-4 pb-3 flex-shrink-0">
+                <div className="relative overflow-hidden rounded-lg h-20">
                   <div 
                     className="absolute inset-0 bg-cover bg-top"
                     style={{ backgroundImage: `url(${playerPortalImage})` }}
                   />
                   <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70" />
-                  <div className="relative h-full flex flex-col items-center justify-between p-4">
-                    <h3 className="text-xl font-bebas uppercase tracking-wider text-white drop-shadow-lg text-center">
+                  <div className="relative h-full flex flex-col items-center justify-between p-3">
+                    <h3 className="text-lg font-bebas uppercase tracking-wider text-white drop-shadow-lg text-center">
                       Player Portal
                     </h3>
                     <DrawerClose asChild>
@@ -226,15 +226,15 @@ export const Header = () => {
               </div>
 
               {/* Working Together Box */}
-              <div className="px-4 pb-4">
-                <div className="relative overflow-hidden rounded-lg h-24">
+              <div className="px-4 pb-4 flex-shrink-0">
+                <div className="relative overflow-hidden rounded-lg h-20">
                   <div 
                     className="absolute inset-0 bg-cover bg-center"
                     style={{ backgroundImage: `url(${workingTogether})` }}
                   />
                   <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70" />
-                  <div className="relative h-full flex flex-col items-center justify-between p-4">
-                    <h3 className="text-xl font-bebas uppercase tracking-wider text-white drop-shadow-lg text-center">
+                  <div className="relative h-full flex flex-col items-center justify-between p-3">
+                    <h3 className="text-lg font-bebas uppercase tracking-wider text-white drop-shadow-lg text-center">
                       Realise Potential
                     </h3>
                     <DrawerClose asChild>
