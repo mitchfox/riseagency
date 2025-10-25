@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { toast } from "sonner";
+import smudgedMarbleBg from "@/assets/smudged-marble-login.png";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -52,19 +53,22 @@ const Login = () => {
       <Header />
       <main className="py-20 px-4">
         <div className="max-w-md mx-auto">
-          <Card className="w-full bg-marble">
+          <Card 
+            className="w-full bg-cover bg-center bg-no-repeat"
+            style={{ backgroundImage: `url(${smudgedMarbleBg})` }}
+          >
           <CardHeader className="space-y-1">
-            <CardTitle className="text-3xl font-bebas uppercase tracking-wider text-center">
+            <CardTitle className="text-3xl font-bebas uppercase tracking-wider text-center text-white">
               Player Portal
             </CardTitle>
-            <CardDescription className="text-center text-muted-foreground">
-              Access your personal analysis and programming
+            <CardDescription className="text-center text-white/90">
+              The player portal is for our represented players to view their personal analysis and programming
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleEmailLogin} className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="email">Email Address</Label>
+                <Label htmlFor="email" className="text-white">Login</Label>
                 <Input
                   id="email"
                   name="email"
@@ -75,10 +79,8 @@ const Login = () => {
                   required
                   disabled={loading}
                   autoComplete="email"
+                  className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
                 />
-                <p className="text-sm text-muted-foreground">
-                  Enter your email to access your portal
-                </p>
               </div>
               <Button 
                 type="submit" 
