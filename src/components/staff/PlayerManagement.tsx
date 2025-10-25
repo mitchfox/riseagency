@@ -1076,19 +1076,19 @@ const PlayerManagement = () => {
                       <LineChart className="w-4 h-4 mr-2" />
                       Analysis
                     </Button>
-                    <Button variant="outline" size="sm" onClick={() => {
-                      // First check if there are any analyses for this player
-                      const analyses = playerAnalyses[player.id] || [];
-                      if (analyses.length === 0) {
-                        toast.info("Please add an analysis entry first before creating a performance report");
-                        return;
-                      }
-                      // Use the most recent analysis
-                      const latestAnalysis = analyses[0];
-                      setSelectedAnalysisId(latestAnalysis.id);
-                      setSelectedPlayerName(player.name);
-                      setIsPerformanceActionsDialogOpen(true);
-                    }}>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => {
+                        const analyses = playerAnalyses[player.id] || [];
+                        if (analyses.length === 0) {
+                          toast.info("Please add an analysis entry first before creating a performance report");
+                          return;
+                        }
+                        // Toggle showing a separate section for performance reports
+                        setShowingAnalysisFor(showingAnalysisFor === player.id ? null : player.id);
+                      }}
+                    >
                       <FileText className="w-4 h-4 mr-2" />
                       Performance Reports
                     </Button>
@@ -1310,16 +1310,23 @@ const PlayerManagement = () => {
                             )}
                             
                             {analysis.r90_score !== null && analysis.r90_score !== undefined && (
-                              <button
-                                onClick={() => {
-                                  setSelectedAnalysisId(analysis.id);
-                                  setSelectedPlayerName(player.name);
-                                  setIsPerformanceActionsDialogOpen(true);
-                                }}
-                                className={`${getR90Color(analysis.r90_score)} text-white px-3 py-1 rounded font-bold hover:opacity-80 transition-opacity cursor-pointer`}
-                              >
-                                R90: {analysis.r90_score?.toFixed(2)}
-                              </button>
+                              <div className="flex items-center gap-2">
+                                <span className={`${getR90Color(analysis.r90_score)} text-white px-3 py-1 rounded font-bold`}>
+                                  R90: {analysis.r90_score?.toFixed(2)}
+                                </span>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => {
+                                    setSelectedAnalysisId(analysis.id);
+                                    setSelectedPlayerName(player.name);
+                                    setIsPerformanceActionsDialogOpen(true);
+                                  }}
+                                >
+                                  <FileText className="w-4 h-4 mr-1" />
+                                  View Report
+                                </Button>
+                              </div>
                             )}
                             
                             {analysis.minutes_played && (
