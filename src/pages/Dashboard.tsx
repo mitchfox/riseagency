@@ -521,12 +521,12 @@ const Dashboard = () => {
                                       <div className="space-y-6">
                                         {/* Weekly Schedule Table */}
                                         {program.weekly_schedules && Array.isArray(program.weekly_schedules) && program.weekly_schedules.length > 0 && (
-                                          <div className="bg-black/40 rounded-xl p-4 overflow-x-auto">
-                                            <div className="min-w-[800px]">
+                                          <div className="bg-black/40 rounded-xl p-2 md:p-4 overflow-x-auto">
+                                            <div>
                                             {/* Table Header */}
-                                            <div className="grid grid-cols-8 gap-2 mb-2">
+                                            <div className="grid grid-cols-8 gap-1 md:gap-2 mb-2">
                                               <div 
-                                                className="p-4 font-bebas uppercase text-lg text-center rounded-lg"
+                                                className="p-1 md:p-4 font-bebas uppercase text-xs md:text-lg text-center rounded-lg"
                                                 style={{ 
                                                   backgroundColor: 'hsl(45, 70%, 55%)',
                                                   color: 'hsl(0, 0%, 0%)'
@@ -534,30 +534,33 @@ const Dashboard = () => {
                                               >
                                                 Week
                                               </div>
-                                              {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((day) => (
+                                              {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, idx) => (
                                                 <div 
                                                   key={day}
-                                                  className="p-4 font-bebas uppercase text-lg text-center rounded-lg"
+                                                  className="p-1 md:p-4 font-bebas uppercase text-xs md:text-lg text-center rounded-lg"
                                                      style={{ 
                                                        backgroundColor: 'hsl(45, 70%, 55%)',
                                                        color: 'hsl(0, 0%, 0%)'
                                                      }}
                                                    >
-                                                     {day}
+                                                     <span className="hidden md:inline">
+                                                       {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'][idx]}
+                                                     </span>
+                                                     <span className="md:hidden">{day}</span>
                                                    </div>
                                                  ))}
                                                </div>
                                                
                                                {/* Table Rows */}
-                                               <div className="space-y-2">
+                                               <div className="space-y-1 md:space-y-2">
                                               {program.weekly_schedules.map((week: any, idx: number) => (
                                                 <div 
                                                   key={idx}
-                                                  className="grid grid-cols-8 gap-2"
+                                                  className="grid grid-cols-8 gap-1 md:gap-2"
                                                 >
                                                   {/* Week Cell */}
                                                   <div 
-                                                    className="p-6 text-base font-medium text-center flex items-center justify-center rounded-lg"
+                                                    className="p-1 md:p-6 text-xs md:text-base font-medium text-center flex items-center justify-center rounded-lg"
                                                     style={{ 
                                                       backgroundColor: 'hsl(0, 0%, 95%)',
                                                       color: 'hsl(0, 0%, 0%)'
@@ -577,10 +580,10 @@ const Dashboard = () => {
                                                       <div 
                                                         key={day}
                                                         onClick={() => sessionValue && handleSessionClick(sessionValue)}
-                                                        className={`p-3 flex items-center justify-center rounded-lg min-h-[40px] transition-all relative ${sessionValue ? 'cursor-pointer hover:scale-105' : ''}`}
+                                                        className={`p-1 md:p-3 flex items-center justify-center rounded-lg min-h-[40px] md:min-h-[60px] transition-all relative ${sessionValue ? 'cursor-pointer hover:scale-105' : ''}`}
                                                         style={{ 
                                                           backgroundColor: colors.bg,
-                                                          border: '2px solid rgba(255, 255, 255, 0.1)'
+                                                          border: '1px solid rgba(255, 255, 255, 0.1)'
                                                         }}
                                                         onMouseEnter={(e) => {
                                                           if (sessionValue && colors.hover) {
@@ -596,7 +599,7 @@ const Dashboard = () => {
                                                         {/* Day number in top right */}
                                                         {dayDate && (
                                                           <span 
-                                                            className="absolute top-2 right-2 text-xs opacity-60"
+                                                            className="absolute top-1 right-1 text-[10px] md:text-xs opacity-60"
                                                             style={{ color: colors.text }}
                                                           >
                                                             {format(dayDate, 'd')}
@@ -605,7 +608,7 @@ const Dashboard = () => {
                                                         
                                                         {sessionValue && (
                                                           <span 
-                                                            className="font-bebas text-2xl uppercase font-bold"
+                                                            className="font-bebas text-lg md:text-2xl uppercase font-bold"
                                                             style={{ 
                                                               color: colors.text,
                                                               textShadow: '0 2px 4px rgba(0, 0, 0, 0.3)'
