@@ -11,6 +11,7 @@ import PlayerManagement from "@/components/staff/PlayerManagement";
 import BlogManagement from "@/components/staff/BlogManagement";
 import BetweenTheLinesManagement from "@/components/staff/BetweenTheLinesManagement";
 import { CoachingDatabase } from "@/components/staff/CoachingDatabase";
+import { FormSubmissionsManagement } from "@/components/staff/FormSubmissionsManagement";
 
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
@@ -24,7 +25,7 @@ const Staff = () => {
   const [loading, setLoading] = useState(true);
   const [isStaff, setIsStaff] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
-  const [expandedSection, setExpandedSection] = useState<'players' | 'blog' | 'betweenthelines' | 'coaching' | null>('players');
+  const [expandedSection, setExpandedSection] = useState<'players' | 'blog' | 'betweenthelines' | 'coaching' | 'submissions' | null>('players');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -302,6 +303,26 @@ const Staff = () => {
             {expandedSection === 'betweenthelines' && (
               <CardContent className="pt-6">
                 <BetweenTheLinesManagement />
+              </CardContent>
+            )}
+          </Card>
+
+          {/* Form Submissions Section */}
+          <Card className="cursor-pointer">
+            <CardHeader 
+              onClick={() => setExpandedSection(expandedSection === 'submissions' ? null : 'submissions')}
+              className="hover:bg-accent/50 transition-colors"
+            >
+              <div className="flex justify-between items-center">
+                <CardTitle className="text-2xl">Form Submissions</CardTitle>
+                <div className="text-muted-foreground">
+                  {expandedSection === 'submissions' ? <ChevronDown size={24} /> : <ChevronRight size={24} />}
+                </div>
+              </div>
+            </CardHeader>
+            {expandedSection === 'submissions' && (
+              <CardContent className="pt-6">
+                <FormSubmissionsManagement />
               </CardContent>
             )}
           </Card>

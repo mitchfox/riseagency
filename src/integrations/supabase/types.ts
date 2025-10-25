@@ -277,6 +277,27 @@ export type Database = {
         }
         Relationships: []
       }
+      form_submissions: {
+        Row: {
+          created_at: string
+          data: Json
+          form_type: string
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          data: Json
+          form_type: string
+          id?: string
+        }
+        Update: {
+          created_at?: string
+          data?: Json
+          form_type?: string
+          id?: string
+        }
+        Relationships: []
+      }
       performance_report_actions: {
         Row: {
           action_description: string

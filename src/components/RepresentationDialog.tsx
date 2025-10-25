@@ -34,11 +34,17 @@ export const RepresentationDialog = ({ open, onOpenChange }: RepresentationDialo
     message: "",
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     try {
       representationSchema.parse(formData);
+      
+      const { error } = await supabase.functions.invoke("send-form-email", {
+        body: { formType: "representation", data: formData },
+      });
+
+      if (error) throw error;
       
       toast({
         title: "Request Submitted",
@@ -52,6 +58,13 @@ export const RepresentationDialog = ({ open, onOpenChange }: RepresentationDialo
         toast({
           title: "Validation Error",
           description: error.errors[0].message,
+          variant: "destructive",
+        });
+      } else {
+        console.error("Error submitting form:", error);
+        toast({
+          title: "Error",
+          description: "Failed to submit request. Please try again.",
           variant: "destructive",
         });
       }
