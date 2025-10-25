@@ -186,6 +186,7 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
   };
 
   const loadProgramDetails = async (programId: string) => {
+    console.log('Loading program details for:', programId);
     try {
       const { data, error } = await supabase
         .from('player_programs')
@@ -194,6 +195,9 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
         .single();
 
       if (error) throw error;
+      
+      console.log('Program data loaded:', data);
+      console.log('Sessions:', data.sessions);
 
       const sessions = (data.sessions || {}) as any;
       const weeklySchedules = (data.weekly_schedules || []) as any[];
@@ -222,6 +226,8 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
         weeklySchedules: weeklySchedules,
         testing: ''
       });
+      
+      console.log('Programming data set successfully');
     } catch (error) {
       console.error('Error loading program details:', error);
       toast.error('Failed to load program details');
@@ -326,6 +332,7 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
           'PRE-H': { exercises: [] },
         };
         programData.weekly_schedules = [];
+        console.log('Creating blank program with empty sessions:', programData);
       }
 
       const { error, data: newProgram } = await supabase
@@ -341,9 +348,10 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
       setExcelFile(null);
       setIsCreatingNew(false);
       
-      // If AI data was used, open the program for editing/review
-      if (aiParsedData && newProgram) {
-        loadProgramDetails(newProgram.id);
+      // Always open the program for editing after creation
+      if (newProgram) {
+        console.log('Opening newly created program:', newProgram.id);
+        await loadProgramDetails(newProgram.id);
       } else {
         loadPrograms();
       }
