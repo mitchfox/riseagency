@@ -258,8 +258,8 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <main className="pt-24 md:pt-20 pb-12 px-2 md:px-4">
-        <div className="container mx-auto max-w-6xl px-2 md:px-6">
+      <main className="pt-24 md:pt-20 pb-12 px-0 md:px-4">
+        <div className="container mx-auto max-w-6xl px-0 md:px-6">
           {/* Player Header */}
           <div className="relative mb-12">
             <div className="flex items-center gap-6 mb-8">
