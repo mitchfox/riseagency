@@ -13,7 +13,7 @@ import trainingAction from "@/assets/gallery/training-action.jpg";
 
 const Performance = () => {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background" key="players-page">
       <Header />
       
       <main className="pt-24 md:pt-16">

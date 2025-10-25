@@ -12,7 +12,7 @@ import coachesNetwork from "@/assets/coaches-network.jpg";
 
 const Coaches = () => {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background" key="coaches-page">
       <Header />
       
       <main className="pt-24 md:pt-16">

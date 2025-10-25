@@ -12,7 +12,7 @@ import clubsNetwork from "@/assets/clubs-network.jpg";
 
 const Clubs = () => {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background" key="clubs-page">
       <Header />
       
       <main className="pt-24 md:pt-16">
