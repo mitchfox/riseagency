@@ -566,7 +566,7 @@ const Dashboard = () => {
                                                       color: 'hsl(0, 0%, 0%)'
                                                     }}
                                                   >
-                                                    {week.week}
+                                                    {week.week_start_date ? format(parseISO(week.week_start_date), 'dd/MM/yy') : week.week}
                                                   </div>
                                                   
                                                   {/* Day Cells */}
@@ -816,10 +816,10 @@ const Dashboard = () => {
                                                                 <div 
                                                                   key={idx}
                                                                   onClick={() => handleExerciseClick(exercise)}
-                                                                  className="grid grid-cols-5 gap-0 border-t-2 border-white cursor-pointer hover:opacity-80 transition-opacity"
+                                                                  className="grid grid-cols-5 gap-0 border-t-2 border-white cursor-pointer hover:opacity-80 transition-opacity min-h-[60px] md:min-h-[80px]"
                                                                 >
                                                                   <div 
-                                                                    className="p-2 md:p-4 text-xs md:text-sm font-medium border-r-2 border-white flex items-center justify-center text-center"
+                                                                    className="p-2 md:p-4 text-xs md:text-sm font-medium border-r-2 border-white flex items-center justify-center text-center break-words"
                                                                     style={{ 
                                                                       backgroundColor: 'hsl(45, 40%, 80%)',
                                                                       color: 'hsl(0, 0%, 0%)'
@@ -828,7 +828,7 @@ const Dashboard = () => {
                                                                     {exercise.name || exercise}
                                                                   </div>
                                                                   <div 
-                                                                    className="p-2 md:p-4 text-xs md:text-sm italic border-r-2 border-white flex items-center justify-center"
+                                                                    className="p-2 md:p-4 text-xs md:text-sm italic border-r-2 border-white flex items-center justify-center text-center"
                                                                     style={{ 
                                                                       backgroundColor: 'hsl(0, 0%, 10%)',
                                                                       color: 'hsl(0, 0%, 100%)'
@@ -837,7 +837,7 @@ const Dashboard = () => {
                                                                     {exercise.repetitions || '-'}
                                                                   </div>
                                                                   <div 
-                                                                    className="p-2 md:p-4 text-xs md:text-sm italic border-r-2 border-white flex items-center justify-center"
+                                                                    className="p-2 md:p-4 text-xs md:text-sm italic border-r-2 border-white flex items-center justify-center text-center"
                                                                     style={{ 
                                                                       backgroundColor: 'hsl(0, 0%, 10%)',
                                                                       color: 'hsl(0, 0%, 100%)'
@@ -846,7 +846,7 @@ const Dashboard = () => {
                                                                     {exercise.sets || '-'}
                                                                   </div>
                                                                   <div 
-                                                                    className="p-2 md:p-4 text-xs md:text-sm italic border-r-2 border-white flex items-center justify-center"
+                                                                    className="p-2 md:p-4 text-xs md:text-sm italic border-r-2 border-white flex items-center justify-center text-center"
                                                                     style={{ 
                                                                       backgroundColor: 'hsl(0, 0%, 10%)',
                                                                       color: 'hsl(0, 0%, 100%)'
@@ -855,7 +855,7 @@ const Dashboard = () => {
                                                                     {exercise.load && exercise.load !== "'-" ? exercise.load : '-'}
                                                                   </div>
                                                                   <div 
-                                                                    className="p-2 md:p-4 text-xs md:text-sm italic flex items-center justify-center"
+                                                                    className="p-2 md:p-4 text-xs md:text-sm italic flex items-center justify-center text-center"
                                                                     style={{ 
                                                                       backgroundColor: 'hsl(0, 0%, 10%)',
                                                                       color: 'hsl(0, 0%, 100%)'
@@ -935,10 +935,10 @@ const Dashboard = () => {
                                                                 <div 
                                                                   key={idx}
                                                                   onClick={() => handleExerciseClick(exercise)}
-                                                                  className="grid grid-cols-5 gap-0 border-t-2 border-white cursor-pointer hover:opacity-80 transition-opacity"
+                                                                  className="grid grid-cols-5 gap-0 border-t-2 border-white cursor-pointer hover:opacity-80 transition-opacity min-h-[60px] md:min-h-[80px]"
                                                                 >
                                                                   <div 
-                                                                    className="p-2 md:p-4 text-xs md:text-sm font-medium border-r-2 border-white flex items-center justify-center text-center"
+                                                                    className="p-2 md:p-4 text-xs md:text-sm font-medium border-r-2 border-white flex items-center justify-center text-center break-words"
                                                                     style={{ 
                                                                       backgroundColor: 'hsl(45, 40%, 80%)',
                                                                       color: 'hsl(0, 0%, 0%)'
@@ -947,7 +947,7 @@ const Dashboard = () => {
                                                                     {exercise.name || exercise}
                                                                   </div>
                                                                   <div 
-                                                                    className="p-2 md:p-4 text-xs md:text-sm italic border-r-2 border-white flex items-center justify-center"
+                                                                    className="p-2 md:p-4 text-xs md:text-sm italic border-r-2 border-white flex items-center justify-center text-center"
                                                                     style={{ 
                                                                       backgroundColor: 'hsl(0, 0%, 10%)',
                                                                       color: 'hsl(0, 0%, 100%)'
@@ -956,7 +956,7 @@ const Dashboard = () => {
                                                                     {exercise.repetitions || '-'}
                                                                   </div>
                                                                   <div 
-                                                                    className="p-2 md:p-4 text-xs md:text-sm italic border-r-2 border-white flex items-center justify-center"
+                                                                    className="p-2 md:p-4 text-xs md:text-sm italic border-r-2 border-white flex items-center justify-center text-center"
                                                                     style={{ 
                                                                       backgroundColor: 'hsl(0, 0%, 10%)',
                                                                       color: 'hsl(0, 0%, 100%)'
@@ -965,7 +965,7 @@ const Dashboard = () => {
                                                                     {exercise.sets || '-'}
                                                                   </div>
                                                                   <div 
-                                                                    className="p-2 md:p-4 text-xs md:text-sm italic border-r-2 border-white flex items-center justify-center"
+                                                                    className="p-2 md:p-4 text-xs md:text-sm italic border-r-2 border-white flex items-center justify-center text-center"
                                                                     style={{ 
                                                                       backgroundColor: 'hsl(0, 0%, 10%)',
                                                                       color: 'hsl(0, 0%, 100%)'
@@ -974,7 +974,7 @@ const Dashboard = () => {
                                                                     {exercise.load && exercise.load !== "'-" ? exercise.load : '-'}
                                                                   </div>
                                                                   <div 
-                                                                    className="p-2 md:p-4 text-xs md:text-sm italic flex items-center justify-center"
+                                                                    className="p-2 md:p-4 text-xs md:text-sm italic flex items-center justify-center text-center"
                                                                     style={{ 
                                                                       backgroundColor: 'hsl(0, 0%, 10%)',
                                                                       color: 'hsl(0, 0%, 100%)'
