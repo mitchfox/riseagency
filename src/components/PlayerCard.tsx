@@ -14,14 +14,11 @@ export const PlayerCard = ({ player, viewMode = "grid" }: PlayerCardProps) => {
 
   // Extract club info from player data
   const getClubInfo = () => {
-    let currentClub = "";
-    let clubLogo = "";
-
-    // Get current club from player data
-    currentClub = player.currentClub || "";
+    let currentClub = player.currentClub || "";
+    let clubLogo = player.clubLogo || "";
     
-    // Get club logo from tactical formations if available
-    if (player.tacticalFormations && player.tacticalFormations[0]?.clubLogo) {
+    // Fallback to tactical formations if clubLogo not directly available
+    if (!clubLogo && player.tacticalFormations && player.tacticalFormations[0]?.clubLogo) {
       clubLogo = player.tacticalFormations[0].clubLogo;
     }
 

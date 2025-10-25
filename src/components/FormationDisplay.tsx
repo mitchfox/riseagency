@@ -188,13 +188,13 @@ export const FormationDisplay = ({ selectedPosition, selectedPositions, playerNa
           <div
             key={key}
             className={`absolute -translate-x-1/2 -translate-y-1/2 transition-all duration-300 ${
-              isPositionActive(pos.label) ? "opacity-100 scale-125" : "opacity-100 scale-100"
+              isPositionActive(key) ? "opacity-100 scale-125" : "opacity-100 scale-100"
             }`}
             style={{ top: `${pos.top}%`, left: `${pos.left}%` }}
           >
             <div className="relative group">
               {/* Surname above for active position - closer to image */}
-              {isPositionActive(pos.label) && playerName && (
+              {isPositionActive(key) && playerName && (
                 <div className="absolute -top-6 left-1/2 -translate-x-1/2 whitespace-nowrap">
                   <span className="text-sm font-bebas tracking-wider text-[--gold] font-bold">
                     {getSurname()}
@@ -203,7 +203,7 @@ export const FormationDisplay = ({ selectedPosition, selectedPositions, playerNa
               )}
               
               {/* Player Image in Oval Golden Frame for active position */}
-              {isPositionActive(pos.label) && playerImage ? (
+              {isPositionActive(key) && playerImage ? (
                 <div className="relative">
                   {/* Golden oval frame */}
                   <div className="w-12 h-16 rounded-full border-2 border-[--gold] shadow-[0_0_12px_rgba(212,175,55,0.8)] overflow-hidden">
@@ -223,7 +223,7 @@ export const FormationDisplay = ({ selectedPosition, selectedPositions, playerNa
               )}
               
               {/* Position label below - only show for non-active */}
-              {!isPositionActive(pos.label) && (
+              {!isPositionActive(key) && (
                 <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 whitespace-nowrap">
                   <span className="text-xs font-bebas tracking-wider text-muted-foreground">
                     {pos.label}

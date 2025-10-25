@@ -54,7 +54,50 @@ const Stars = () => {
         .order('name');
       
       if (!error && data) {
-        setPlayers(data);
+        // Parse bio to extract club info for each player
+        const playersWithParsedData = data.map((player: any) => {
+          let currentClub = '';
+          let clubLogo = '';
+          let tacticalFormations = [];
+          
+          if (player.bio) {
+            try {
+              const parsed = JSON.parse(player.bio);
+              if (typeof parsed === 'object' && parsed !== null) {
+                currentClub = parsed.currentClub || '';
+                
+                // Extract from schemeHistory or tacticalFormations
+                if (parsed.schemeHistory && Array.isArray(parsed.schemeHistory) && parsed.schemeHistory.length > 0) {
+                  clubLogo = parsed.schemeHistory[0].clubLogo || '';
+                  tacticalFormations = parsed.schemeHistory.map((scheme: any) => ({
+                    formation: scheme.formation,
+                    role: scheme.positions?.[0] || '',
+                    positions: scheme.positions || [],
+                    club: scheme.teamName,
+                    clubLogo: scheme.clubLogo,
+                    playerImage: scheme.playerImage,
+                    appearances: scheme.matches,
+                    matches: scheme.matches
+                  }));
+                } else if (parsed.tacticalFormations && Array.isArray(parsed.tacticalFormations) && parsed.tacticalFormations.length > 0) {
+                  clubLogo = parsed.tacticalFormations[0].clubLogo || '';
+                  tacticalFormations = parsed.tacticalFormations;
+                }
+              }
+            } catch (e) {
+              console.error('Error parsing player bio:', e);
+            }
+          }
+          
+          return {
+            ...player,
+            currentClub,
+            clubLogo,
+            tacticalFormations
+          };
+        });
+        
+        setPlayers(playersWithParsedData);
       }
       setLoading(false);
     };
