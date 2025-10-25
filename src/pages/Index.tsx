@@ -40,7 +40,7 @@ const Index = () => {
         .from('blog_posts')
         .select('id, title, excerpt, image_url, created_at')
         .eq('published', true)
-        .or('category.is.null,category.neq.INSIDE:ACCESS')
+        .eq('category', 'PLAYER NEWS')
         .order('created_at', { ascending: false })
         .limit(3);
 
