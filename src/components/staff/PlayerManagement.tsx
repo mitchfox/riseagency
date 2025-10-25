@@ -87,9 +87,11 @@ const PlayerManagement = () => {
     teamName: string;
     matches: string;
     clubLogo: string;
+    playerImage?: string;
   }>>([]);
   const [editingSchemeIndex, setEditingSchemeIndex] = useState<number | null>(null);
   const [uploadingSchemeClubLogo, setUploadingSchemeClubLogo] = useState(false);
+  const [uploadingSchemePlayerImage, setUploadingSchemePlayerImage] = useState(false);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -443,7 +445,8 @@ const PlayerManagement = () => {
             positions: tf.position ? [tf.position] : (tf.role ? [tf.role] : []),
             teamName: tf.club || '',
             matches: tf.appearances?.toString() || '',
-            clubLogo: tf.clubLogo || ''
+            clubLogo: tf.clubLogo || '',
+            playerImage: tf.playerImage || ''
           }));
           setSchemeHistory(convertedSchemes);
         } else {
@@ -717,6 +720,34 @@ const PlayerManagement = () => {
       toast.error("Failed to upload club logo");
     } finally {
       setUploadingSchemeClubLogo(false);
+    }
+  };
+
+  const handleSchemePlayerImageUpload = async (file: File, schemeIndex: number) => {
+    try {
+      setUploadingSchemePlayerImage(true);
+      
+      const fileName = `${Date.now()}_${file.name}`;
+      const { data, error } = await supabase.storage
+        .from('analysis-files')
+        .upload(`player-images/${fileName}`, file);
+      
+      if (error) throw error;
+      
+      const { data: publicUrl } = supabase.storage
+        .from('analysis-files')
+        .getPublicUrl(`player-images/${fileName}`);
+      
+      const newHistory = [...schemeHistory];
+      newHistory[schemeIndex].playerImage = publicUrl.publicUrl;
+      setSchemeHistory(newHistory);
+      
+      toast.success("Player image uploaded!");
+    } catch (error: any) {
+      console.error("Error uploading player image:", error);
+      toast.error("Failed to upload player image");
+    } finally {
+      setUploadingSchemePlayerImage(false);
     }
   };
 
@@ -1116,6 +1147,39 @@ const PlayerManagement = () => {
                         />
                       </div>
                       <div className="space-y-2 col-span-2">
+                        <Label>Player Image for this Team</Label>
+                        <Input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) handleSchemePlayerImageUpload(file, index);
+                          }}
+                          disabled={uploadingSchemePlayerImage}
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Upload a different player image for this team (optional)
+                        </p>
+                        <Input
+                          placeholder="/players/player-team-image.jpg"
+                          value={scheme.playerImage || ""}
+                          onChange={(e) => {
+                            const newHistory = [...schemeHistory];
+                            newHistory[index].playerImage = e.target.value;
+                            setSchemeHistory(newHistory);
+                          }}
+                        />
+                        {scheme.playerImage && (
+                          <div className="mt-2">
+                            <img 
+                              src={scheme.playerImage} 
+                              alt="Player image" 
+                              className="w-12 h-12 object-cover bg-secondary p-1 rounded-full border"
+                            />
+                          </div>
+                        )}
+                      </div>
+                      <div className="space-y-2 col-span-2">
                         <Label>Club Logo</Label>
                         <Input
                           type="file"
@@ -1162,7 +1226,8 @@ const PlayerManagement = () => {
                     positions: [],
                     teamName: "",
                     matches: "",
-                    clubLogo: ""
+                    clubLogo: "",
+                    playerImage: ""
                   }])}
                 >
                   Add Scheme History Entry

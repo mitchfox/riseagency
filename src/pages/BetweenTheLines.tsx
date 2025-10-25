@@ -53,11 +53,22 @@ export default function BetweenTheLines() {
 
   const fetchArticles = async () => {
     try {
+      const betweenTheLinesCategories = [
+        "TECHNICAL",
+        "NUTRITION",
+        "PSYCHOLOGY",
+        "TACTICAL",
+        "STRENGTH, POWER & SPEED",
+        "RECOVERY",
+        "COACHING",
+        "AGENTS",
+      ];
+
       const { data, error } = await supabase
         .from("blog_posts")
         .select("*")
         .eq("published", true)
-        .eq("category", "BETWEEN THE LINES")
+        .in("category", betweenTheLinesCategories)
         .order("created_at", { ascending: false });
 
       if (error) throw error;

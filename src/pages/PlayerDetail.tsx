@@ -51,8 +51,19 @@ const PlayerDetail = () => {
                 console.log('Outer bio parsed:', parsed);
                 
                 if (typeof parsed === 'object' && parsed !== null) {
-                  // Get tactical formations from outer level
-                  if (parsed.tacticalFormations) {
+                  // Get tactical formations from schemeHistory or tacticalFormations
+                  if (parsed.schemeHistory && Array.isArray(parsed.schemeHistory)) {
+                    // Convert schemeHistory to tacticalFormations format
+                    tacticalFormations = parsed.schemeHistory.map((scheme: any) => ({
+                      formation: scheme.formation,
+                      role: scheme.positions?.[0] || '', // Use first position as role
+                      club: scheme.teamName,
+                      clubLogo: scheme.clubLogo,
+                      playerImage: scheme.playerImage,
+                      appearances: scheme.matches,
+                      matches: scheme.matches
+                    }));
+                  } else if (parsed.tacticalFormations) {
                     tacticalFormations = parsed.tacticalFormations;
                   }
                   
@@ -509,9 +520,9 @@ const PlayerDetail = () => {
                   
                   {/* Formation Visual Below */}
                   <FormationDisplay 
-                    selectedPosition={player.position} 
+                    selectedPosition={player.tacticalFormations[currentFormationIndex].role} 
                     playerName={player.name} 
-                    playerImage={player.image_url}
+                    playerImage={player.tacticalFormations[currentFormationIndex].playerImage || player.image_url}
                     formation={player.tacticalFormations[currentFormationIndex].formation}
                   />
                 </div>
