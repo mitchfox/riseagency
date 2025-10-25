@@ -56,7 +56,8 @@ const PlayerDetail = () => {
                     // Convert schemeHistory to tacticalFormations format
                     tacticalFormations = parsed.schemeHistory.map((scheme: any) => ({
                       formation: scheme.formation,
-                      role: scheme.positions?.[0] || '', // Use first position as role
+                      role: scheme.positions?.[0] || '', // Use first position as role for display
+                      positions: scheme.positions || [], // Store all positions
                       club: scheme.teamName,
                       clubLogo: scheme.clubLogo,
                       playerImage: scheme.playerImage,
@@ -520,7 +521,7 @@ const PlayerDetail = () => {
                   
                   {/* Formation Visual Below */}
                   <FormationDisplay 
-                    selectedPosition={player.tacticalFormations[currentFormationIndex].role} 
+                    selectedPositions={player.tacticalFormations[currentFormationIndex].positions || [player.tacticalFormations[currentFormationIndex].role]} 
                     playerName={player.name} 
                     playerImage={player.tacticalFormations[currentFormationIndex].playerImage || player.image_url}
                     formation={player.tacticalFormations[currentFormationIndex].formation}

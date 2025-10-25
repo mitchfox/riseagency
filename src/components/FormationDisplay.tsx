@@ -2,12 +2,13 @@ import { X } from "lucide-react";
 
 interface FormationDisplayProps {
   selectedPosition?: string;
+  selectedPositions?: string[];
   playerName?: string;
   playerImage?: string;
   formation?: string;
 }
 
-export const FormationDisplay = ({ selectedPosition, playerName, playerImage, formation = "4-3-3" }: FormationDisplayProps) => {
+export const FormationDisplay = ({ selectedPosition, selectedPositions, playerName, playerImage, formation = "4-3-3" }: FormationDisplayProps) => {
   // Position coordinates based on formation
   const getFormationPositions = () => {
     switch (formation) {
@@ -102,13 +103,17 @@ export const FormationDisplay = ({ selectedPosition, playerName, playerImage, fo
   const positions = getFormationPositions();
 
   const isPositionActive = (pos: string) => {
-    if (!selectedPosition || selectedPosition === "all") return true;
+    // Use selectedPositions array if provided, otherwise fall back to selectedPosition
+    const positions = selectedPositions || (selectedPosition ? [selectedPosition] : []);
+    
+    if (positions.length === 0 || positions.includes("all")) return true;
     
     const posLabel = pos.trim().toUpperCase();
-    const selectedPos = selectedPosition.trim().toUpperCase();
     
-    // Exact match only - no interpretation or mapping
-    return posLabel === selectedPos;
+    // Check if any of the selected positions match this position exactly
+    return positions.some(selectedPos => 
+      selectedPos.trim().toUpperCase() === posLabel
+    );
   };
 
   // Get player's surname (last word in name)
