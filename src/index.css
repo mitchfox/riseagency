@@ -63,7 +63,8 @@ All colors MUST be HSL.
 
   html, body {
     overflow-x: hidden;
-    overflow-y: auto;
+    overflow-y: scroll;
+    -webkit-overflow-scrolling: touch;
     height: auto;
     min-height: 100%;
   }
