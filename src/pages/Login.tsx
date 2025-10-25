@@ -73,7 +73,7 @@ const Login = () => {
                   id="email"
                   name="email"
                   type="email"
-                  placeholder="your.email@example.com"
+                  placeholder="player-name"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
