@@ -97,10 +97,10 @@ const Index = () => {
               </div>
               
               <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
-                <Link to="/stars">
+                <Link to="/stars" className="w-full sm:w-auto">
                   <Button 
                     size="lg" 
-                    className="btn-shine text-lg font-bebas uppercase tracking-widest px-10 py-7 hover:scale-105 transition-all duration-300 shadow-xl"
+                    className="btn-shine text-lg font-bebas uppercase tracking-widest w-full sm:w-[240px] h-[60px] hover:scale-105 transition-all duration-300 shadow-xl"
                   >
                     View Our Stars
                   </Button>
@@ -109,7 +109,7 @@ const Index = () => {
                   <Button 
                     size="lg" 
                     variant="outline"
-                    className="text-lg font-bebas uppercase tracking-widest px-10 py-7 hover:scale-105 transition-all duration-300 bg-white/10 backdrop-blur-sm border-white/30 text-white hover:bg-white/20"
+                    className="text-lg font-bebas uppercase tracking-widest w-full sm:w-[240px] h-[60px] hover:scale-105 transition-all duration-300 bg-white/10 backdrop-blur-sm border-white/30 text-white hover:bg-white/20"
                   >
                     RISE WITH US
                   </Button>
