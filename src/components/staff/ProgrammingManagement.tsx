@@ -307,7 +307,24 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
         programData.sessions = aiParsedData.sessions;
         programData.weekly_schedules = aiParsedData.weeklySchedules;
       } else {
-        programData.sessions = {};
+        programData.sessions = {
+          A: { exercises: [] },
+          B: { exercises: [] },
+          C: { exercises: [] },
+          D: { exercises: [] },
+          E: { exercises: [] },
+          F: { exercises: [] },
+          G: { exercises: [] },
+          H: { exercises: [] },
+          'PRE-A': { exercises: [] },
+          'PRE-B': { exercises: [] },
+          'PRE-C': { exercises: [] },
+          'PRE-D': { exercises: [] },
+          'PRE-E': { exercises: [] },
+          'PRE-F': { exercises: [] },
+          'PRE-G': { exercises: [] },
+          'PRE-H': { exercises: [] },
+        };
         programData.weekly_schedules = [];
       }
 
@@ -567,23 +584,33 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
     setProgrammingData(prev => ({ ...prev, [field]: value }));
   };
 
-  const addExercise = (sessionKey: keyof Pick<ProgrammingData, 'sessionA' | 'sessionB' | 'sessionC' | 'sessionD' | 'sessionE' | 'sessionF' | 'sessionG' | 'sessionH'>) => {
+  type SessionKey = 'sessionA' | 'sessionB' | 'sessionC' | 'sessionD' | 'sessionE' | 'sessionF' | 'sessionG' | 'sessionH' | 'preSessionA' | 'preSessionB' | 'preSessionC' | 'preSessionD' | 'preSessionE' | 'preSessionF' | 'preSessionG' | 'preSessionH';
+
+  const addExercise = (sessionKey: SessionKey) => {
     const session = programmingData[sessionKey] as SessionData;
+    if (!session || !session.exercises) {
+      console.error('Session not found or invalid:', sessionKey);
+      return;
+    }
     updateField(sessionKey, {
       ...session,
       exercises: [...session.exercises, emptyExercise()]
     });
   };
 
-  const addExerciseFromDatabase = (sessionKey: keyof Pick<ProgrammingData, 'sessionA' | 'sessionB' | 'sessionC' | 'sessionD' | 'sessionE' | 'sessionF' | 'sessionG' | 'sessionH'>, exercise: Exercise) => {
+  const addExerciseFromDatabase = (sessionKey: SessionKey, exercise: Exercise) => {
     const session = programmingData[sessionKey] as SessionData;
+    if (!session || !session.exercises) {
+      console.error('Session not found or invalid:', sessionKey);
+      return;
+    }
     updateField(sessionKey, {
       ...session,
       exercises: [...session.exercises, exercise]
     });
   };
 
-  const removeExercise = (sessionKey: keyof Pick<ProgrammingData, 'sessionA' | 'sessionB' | 'sessionC' | 'sessionD' | 'sessionE' | 'sessionF' | 'sessionG' | 'sessionH'>, index: number) => {
+  const removeExercise = (sessionKey: SessionKey, index: number) => {
     const session = programmingData[sessionKey] as SessionData;
     updateField(sessionKey, {
       ...session,
@@ -591,7 +618,7 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
     });
   };
 
-  const updateExercise = (sessionKey: keyof Pick<ProgrammingData, 'sessionA' | 'sessionB' | 'sessionC' | 'sessionD' | 'sessionE' | 'sessionF' | 'sessionG' | 'sessionH'>, index: number, field: keyof Exercise, value: string) => {
+  const updateExercise = (sessionKey: SessionKey, index: number, field: keyof Exercise, value: string) => {
     const session = programmingData[sessionKey] as SessionData;
     const updatedExercises = [...session.exercises];
     updatedExercises[index] = { ...updatedExercises[index], [field]: value };
@@ -601,7 +628,7 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
     });
   };
 
-  const moveExercise = (sessionKey: keyof Pick<ProgrammingData, 'sessionA' | 'sessionB' | 'sessionC' | 'sessionD' | 'sessionE' | 'sessionF' | 'sessionG' | 'sessionH'>, index: number, direction: 'up' | 'down') => {
+  const moveExercise = (sessionKey: SessionKey, index: number, direction: 'up' | 'down') => {
     const session = programmingData[sessionKey] as SessionData;
     const exercises = [...session.exercises];
     
@@ -644,24 +671,21 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold">Programs</h3>
-              <div className="flex gap-2">
-                <Button onClick={() => setIsCreatingNew(true)}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  New Program
-                </Button>
-                <Button variant="outline" onClick={() => setShowUploadProgram(true)}>
-                  <Database className="w-4 h-4 mr-2" />
-                  Upload Program
-                </Button>
-              </div>
+              <Button onClick={() => {
+                setIsCreatingNew(true);
+                setShowUploadProgram(false);
+              }}>
+                <Plus className="w-4 h-4 mr-2" />
+                New Program
+              </Button>
             </div>
 
-            {showUploadProgram && (
+            {isCreatingNew && (
               <Card>
                 <CardContent className="pt-6">
                   <div className="space-y-4">
                     <div className="space-y-2">
-                      <Label>Program Name</Label>
+                      <Label>Program Name *</Label>
                       <Input
                         placeholder="Program name (e.g., Pre-Season 2025)"
                         value={newProgramName}
@@ -670,12 +694,12 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
                     </div>
                     
                     <div className="space-y-2">
-                      <Label htmlFor="csv-upload">Upload CSV Program File</Label>
+                      <Label htmlFor="file-upload">Upload File (Optional)</Label>
                       <p className="text-xs text-muted-foreground">
-                        Upload a CSV file and the program structure will be imported automatically
+                        Upload a CSV or Excel file to automatically import program structure, or leave empty to create manually
                       </p>
                       <Input
-                        id="csv-upload"
+                        id="file-upload"
                         type="file"
                         accept=".csv,.xlsx,.xls"
                         onChange={(e) => {
@@ -694,61 +718,8 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
                     </div>
 
                     <div className="flex gap-2">
-                      <Button onClick={createNewProgram} disabled={loading || uploadingExcel || !newProgramName || !excelFile}>
-                        {uploadingExcel ? 'Processing File...' : loading ? 'Uploading...' : 'Upload Program'}
-                      </Button>
-                      <Button variant="outline" onClick={() => {
-                        setShowUploadProgram(false);
-                        setNewProgramName('');
-                        setExcelFile(null);
-                      }}>
-                        Cancel
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {isCreatingNew && (
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="space-y-4">
-                    <div className="flex gap-2">
-                      <Input
-                        placeholder="Program name (e.g., Pre-Season 2025)"
-                        value={newProgramName}
-                        onChange={(e) => setNewProgramName(e.target.value)}
-                      />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="excel-upload">Upload Excel File (Optional)</Label>
-                      <p className="text-xs text-muted-foreground">
-                        Upload an Excel file and AI will automatically extract the program structure for you
-                      </p>
-                      <Input
-                        id="excel-upload"
-                        type="file"
-                        accept=".xlsx,.xls,.csv"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) {
-                            setExcelFile(file);
-                          }
-                        }}
-                        disabled={uploadingExcel}
-                      />
-                      {excelFile && (
-                        <p className="text-sm text-muted-foreground">
-                          Selected: {excelFile.name}
-                        </p>
-                      )}
-                    </div>
-
-                    <div className="flex gap-2">
-                      <Button onClick={createNewProgram} disabled={loading || uploadingExcel}>
-                        {uploadingExcel ? 'Processing Excel...' : loading ? 'Creating...' : 'Create'}
+                      <Button onClick={createNewProgram} disabled={loading || uploadingExcel || !newProgramName.trim()}>
+                        {uploadingExcel ? 'Processing File...' : loading ? 'Creating...' : excelFile ? 'Import & Create' : 'Create Empty'}
                       </Button>
                       <Button variant="outline" onClick={() => {
                         setIsCreatingNew(false);
@@ -952,7 +923,7 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
                               <Button
                                 type="button"
                                 size="sm"
-                                onClick={() => addExercise(selectedSession as any)}
+                                onClick={() => addExercise(selectedSession as SessionKey)}
                               >
                                 <Plus className="w-4 h-4 mr-2" />
                                 Add Manual
@@ -985,7 +956,7 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
                                             variant="ghost"
                                             size="icon"
                                             className="h-8 w-8"
-                                            onClick={() => moveExercise(selectedSession as any, idx, 'up')}
+                                            onClick={() => moveExercise(selectedSession as SessionKey, idx, 'up')}
                                             disabled={idx === 0}
                                           >
                                             <ChevronUp className="w-4 h-4" />
@@ -994,7 +965,7 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
                                             variant="ghost"
                                             size="icon"
                                             className="h-8 w-8"
-                                            onClick={() => moveExercise(selectedSession as any, idx, 'down')}
+                                            onClick={() => moveExercise(selectedSession as SessionKey, idx, 'down')}
                                             disabled={idx === (programmingData[selectedSession as keyof ProgrammingData] as SessionData).exercises.length - 1}
                                           >
                                             <ChevronDown className="w-4 h-4" />
@@ -1005,7 +976,7 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
                                         <Input
                                           placeholder="Exercise name"
                                           value={exercise.name}
-                                          onChange={(e) => updateExercise(selectedSession as any, idx, 'name', e.target.value)}
+                                          onChange={(e) => updateExercise(selectedSession as SessionKey, idx, 'name', e.target.value)}
                                           className="text-sm"
                                         />
                                       </td>
@@ -1013,7 +984,7 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
                                         <Input
                                           placeholder="Description"
                                           value={exercise.description}
-                                          onChange={(e) => updateExercise(selectedSession as any, idx, 'description', e.target.value)}
+                                          onChange={(e) => updateExercise(selectedSession as SessionKey, idx, 'description', e.target.value)}
                                           className="text-sm"
                                         />
                                       </td>
@@ -1021,7 +992,7 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
                                         <Input
                                           placeholder="Reps"
                                           value={exercise.repetitions}
-                                          onChange={(e) => updateExercise(selectedSession as any, idx, 'repetitions', e.target.value)}
+                                          onChange={(e) => updateExercise(selectedSession as SessionKey, idx, 'repetitions', e.target.value)}
                                           className="text-sm"
                                         />
                                       </td>
@@ -1029,7 +1000,7 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
                                         <Input
                                           placeholder="Sets"
                                           value={exercise.sets}
-                                          onChange={(e) => updateExercise(selectedSession as any, idx, 'sets', e.target.value)}
+                                          onChange={(e) => updateExercise(selectedSession as SessionKey, idx, 'sets', e.target.value)}
                                           className="text-sm"
                                         />
                                       </td>
@@ -1037,7 +1008,7 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
                                         <Input
                                           placeholder="Load"
                                           value={exercise.load}
-                                          onChange={(e) => updateExercise(selectedSession as any, idx, 'load', e.target.value)}
+                                          onChange={(e) => updateExercise(selectedSession as SessionKey, idx, 'load', e.target.value)}
                                           className="text-sm"
                                         />
                                       </td>
@@ -1045,7 +1016,7 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
                                         <Input
                                           placeholder="Recovery"
                                           value={exercise.recoveryTime}
-                                          onChange={(e) => updateExercise(selectedSession as any, idx, 'recoveryTime', e.target.value)}
+                                          onChange={(e) => updateExercise(selectedSession as SessionKey, idx, 'recoveryTime', e.target.value)}
                                           className="text-sm"
                                         />
                                       </td>
@@ -1053,7 +1024,7 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
                                         <Input
                                           placeholder="Video URL"
                                           value={exercise.videoUrl}
-                                          onChange={(e) => updateExercise(selectedSession as any, idx, 'videoUrl', e.target.value)}
+                                          onChange={(e) => updateExercise(selectedSession as SessionKey, idx, 'videoUrl', e.target.value)}
                                           className="text-sm"
                                         />
                                       </td>
@@ -1061,7 +1032,7 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
                                         <Button
                                           variant="ghost"
                                           size="icon"
-                                          onClick={() => removeExercise(selectedSession as any, idx)}
+                                          onClick={() => removeExercise(selectedSession as SessionKey, idx)}
                                         >
                                           <Trash2 className="w-4 h-4" />
                                         </Button>
@@ -1267,7 +1238,7 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
       onClose={() => setIsExerciseSelectorOpen(false)}
       onSelect={(exercise) => {
         if (selectedSession) {
-          addExerciseFromDatabase(selectedSession as any, exercise);
+          addExerciseFromDatabase(selectedSession as SessionKey, exercise);
         }
       }}
     />
