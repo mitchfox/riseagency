@@ -34,7 +34,7 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
     <>
       <Dialog open={open} onOpenChange={handleDialogChange}>
         <DialogContent 
-          className="w-[min(90vw,1080px)] max-h-[90vh] p-0 border-primary/20 overflow-hidden bg-transparent [&>button]:hidden"
+          className="w-[min(90vw,1080px)] max-h-[95vh] p-0 border-primary/20 overflow-y-auto bg-transparent [&>button]:hidden"
         >
           <div className="relative">
             {/* Main Image */}
@@ -50,25 +50,25 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
                 <h2 className="text-2xl md:text-3xl font-bebas uppercase tracking-wider text-white">
                   From Striving. To Rising. To Thriving.
                 </h2>
-                <p className="text-sm md:text-base text-white/90 leading-relaxed max-w-xl mx-auto">
-                  We have worked with many <span className="text-primary font-semibold">Premier League players</span> throughout their development journey.
+                <p className="text-sm md:text-base text-white/90 leading-relaxed max-w-2xl mx-auto">
+                  We take pride in scouting across the entirety of professional football in Europe and have guided many Premier League players to success through their development journey.
                 </p>
                 
                 {/* Gold Line Separator */}
                 <div className="w-full h-[2px] bg-gradient-to-r from-transparent via-primary to-transparent my-6"></div>
                 
                 {/* Buttons */}
-                <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
+                <div className="flex flex-row gap-3 justify-center items-center">
                   <Button 
                     variant="outline"
                     onClick={handleRequestRepresentation}
-                    className="font-bebas uppercase tracking-wider px-6 py-2 border-primary/50 text-white hover:bg-white/10 hover:border-white/70 backdrop-blur-sm"
+                    className="font-bebas uppercase tracking-wider px-4 md:px-6 py-2 border-primary/50 text-white hover:bg-white/10 hover:border-white/70 backdrop-blur-sm text-xs md:text-sm flex-1 max-w-[180px]"
                   >
                     Request Representation
                   </Button>
                   <Button 
                     onClick={handleEnterSite}
-                    className="btn-shine font-bebas uppercase tracking-wider px-6 py-2"
+                    className="btn-shine font-bebas uppercase tracking-wider px-4 md:px-6 py-2 text-xs md:text-sm flex-1 max-w-[180px]"
                   >
                     Enter Site
                   </Button>
