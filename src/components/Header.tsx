@@ -39,34 +39,34 @@ export const Header = () => {
         <div className="fixed top-0 left-0 right-0 z-50 bg-black/95 backdrop-blur-md border-b border-white/10">
         <div className="container mx-auto px-2 md:px-4">
           <div className="flex items-center justify-between h-9 md:h-10">
-            <div className="flex items-center gap-2 md:gap-6">
+            <div className="flex flex-wrap items-center gap-1 md:gap-4">
               <button
                 onClick={() => setDeclareInterestOpen(true)}
-                className="text-[10px] md:text-xs font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-colors flex items-center gap-1"
+                className="text-[9px] md:text-xs font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-colors flex items-center gap-1"
               >
                 <Users className="w-3 h-3 hidden sm:block" />
-                <span className="hidden sm:inline">Declare Interest In Player</span>
-                <span className="sm:hidden">Declare Interest</span>
+                <span>Declare Interest</span>
               </button>
               <Link
                 to="/contact"
-                className="text-[10px] md:text-xs font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-colors flex items-center gap-1"
+                className="text-[9px] md:text-xs font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-colors flex items-center gap-1"
               >
                 <MessageCircle className="w-3 h-3 hidden sm:block" />
                 Contact
               </Link>
             </div>
-            <div className="flex items-center gap-2 md:gap-6">
+            <div className="flex flex-wrap items-center gap-1 md:gap-4">
               <button
                 onClick={() => setRepresentationOpen(true)}
-                className="text-[10px] md:text-xs font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-colors flex items-center gap-1 hidden sm:flex"
+                className="text-[9px] md:text-xs font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-colors flex items-center gap-1"
               >
-                <MessageCircle className="w-3 h-3" />
-                Request Representation
+                <MessageCircle className="w-3 h-3 hidden sm:block" />
+                <span className="hidden sm:inline">Request Representation</span>
+                <span className="sm:hidden">Representation</span>
               </button>
               <Link
                 to="/login"
-                className="text-[10px] md:text-xs font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-colors flex items-center gap-1"
+                className="text-[9px] md:text-xs font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-colors flex items-center gap-1"
               >
                 <LogIn className="w-3 h-3 hidden sm:block" />
                 <span className="hidden sm:inline">Player Portal</span>
