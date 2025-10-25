@@ -433,9 +433,19 @@ const PlayerManagement = () => {
         const parsed = JSON.parse(player.bio);
         additionalData = parsed;
         
-        // Load scheme history
+        // Load scheme history from schemeHistory OR convert from tacticalFormations
         if (parsed.schemeHistory && Array.isArray(parsed.schemeHistory)) {
           setSchemeHistory(parsed.schemeHistory);
+        } else if (parsed.tacticalFormations && Array.isArray(parsed.tacticalFormations)) {
+          // Convert old tacticalFormations format to new schemeHistory format
+          const convertedSchemes = parsed.tacticalFormations.map((tf: any) => ({
+            formation: tf.formation || '',
+            positions: tf.position ? [tf.position] : (tf.role ? [tf.role] : []),
+            teamName: tf.club || '',
+            matches: tf.appearances?.toString() || '',
+            clubLogo: tf.clubLogo || ''
+          }));
+          setSchemeHistory(convertedSchemes);
         } else {
           setSchemeHistory([]);
         }

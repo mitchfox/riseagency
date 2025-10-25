@@ -36,12 +36,12 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
         <DialogContent 
           className="w-[min(90vw,1080px)] max-h-[98vh] p-0 border-primary/20 overflow-y-auto bg-transparent [&>button]:hidden sm:max-w-[1080px]"
         >
-          <div className="relative flex flex-col">
+          <div className="relative flex flex-col items-stretch">
             {/* Main Image */}
             <img 
               src={introImage} 
               alt="RISE Football - From Striving to Rising to Thriving" 
-              className="w-full h-auto object-contain"
+              className="w-full h-auto object-contain block"
             />
             
             {/* Overlay Content */}
