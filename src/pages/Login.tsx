@@ -14,6 +14,7 @@ const Login = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
 
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,8 +36,12 @@ const Login = () => {
         return;
       }
 
-      // Store email in session storage for dashboard access
-      sessionStorage.setItem("player_email", email);
+      // Store email in session or local storage based on remember me
+      if (rememberMe) {
+        localStorage.setItem("player_email", email);
+      } else {
+        sessionStorage.setItem("player_email", email);
+      }
       
       toast.success("Welcome to your portal!");
       navigate("/dashboard");
@@ -73,7 +78,7 @@ const Login = () => {
                   id="email"
                   name="email"
                   type="email"
-                  placeholder="player-name"
+                  placeholder=""
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -81,6 +86,18 @@ const Login = () => {
                   autoComplete="email"
                   className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
                 />
+              </div>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="remember"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="w-4 h-4 rounded border-white/20 bg-white/10 text-primary focus:ring-primary focus:ring-offset-0"
+                />
+                <Label htmlFor="remember" className="text-white text-sm cursor-pointer">
+                  Remember me
+                </Label>
               </div>
               <Button 
                 type="submit" 

@@ -96,10 +96,11 @@ serve(async (req) => {
     const base64 = btoa(String.fromCharCode(...bytes));
 
     // Parse the Excel file using Lovable's document parser
-    const parseResponse = await fetch('https://api.lovable.app/document-parser/parse', {
+    const parseResponse = await fetch('https://api.lovable.dev/v1/ai/tools/parse-document', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': authHeader,
       },
       body: JSON.stringify({
         file: base64,

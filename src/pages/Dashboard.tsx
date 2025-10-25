@@ -118,7 +118,8 @@ const Dashboard = () => {
 
   const checkAuth = async () => {
     try {
-      const playerEmail = sessionStorage.getItem("player_email");
+      // Check both session and local storage
+      const playerEmail = sessionStorage.getItem("player_email") || localStorage.getItem("player_email");
       
       if (!playerEmail) {
         navigate("/login");
@@ -229,6 +230,7 @@ const Dashboard = () => {
 
   const handleLogout = async () => {
     sessionStorage.removeItem("player_email");
+    localStorage.removeItem("player_email");
     toast.success("Logged out successfully");
     navigate("/login");
   };
@@ -496,7 +498,7 @@ const Dashboard = () => {
                                             {/* Table Header */}
                                             <div className="grid grid-cols-8 gap-1 md:gap-2 mb-2">
                                               <div 
-                                                className="p-1 md:p-4 font-bebas uppercase text-[10px] md:text-lg text-center rounded-lg leading-tight"
+                                                className="p-1 md:p-4 font-bebas uppercase text-[10px] md:text-lg flex items-center justify-center rounded-lg leading-tight"
                                                 style={{ 
                                                   backgroundColor: 'hsl(45, 70%, 55%)',
                                                   color: 'hsl(0, 0%, 0%)'
@@ -508,7 +510,7 @@ const Dashboard = () => {
                                               {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, idx) => (
                                                 <div 
                                                   key={day}
-                                                  className="p-1 md:p-4 font-bebas uppercase text-xs md:text-lg text-center rounded-lg"
+                                                  className="p-1 md:p-4 font-bebas uppercase text-xs md:text-lg flex items-center justify-center rounded-lg"
                                                      style={{ 
                                                        backgroundColor: 'hsl(45, 70%, 55%)',
                                                        color: 'hsl(0, 0%, 0%)'
@@ -531,7 +533,7 @@ const Dashboard = () => {
                                                 >
                                                   {/* Week Cell */}
                                                   <div 
-                                                    className="p-1 md:p-6 text-[10px] md:text-base font-medium text-center flex items-center justify-center rounded-lg leading-tight"
+                                                    className="p-1 md:p-6 text-[10px] md:text-base font-medium italic flex items-center justify-center rounded-lg leading-tight"
                                                     style={{ 
                                                       backgroundColor: 'hsl(0, 0%, 95%)',
                                                       color: 'hsl(0, 0%, 0%)'
