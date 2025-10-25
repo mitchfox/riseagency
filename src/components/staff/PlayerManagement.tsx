@@ -1126,7 +1126,14 @@ const PlayerManagement = () => {
                           value={scheme.positions.join(", ")}
                           onChange={(e) => {
                             const newHistory = [...schemeHistory];
-                            newHistory[index].positions = e.target.value.split(",").map(p => p.trim()).filter(Boolean);
+                            const value = e.target.value;
+                            // Only split and filter when there's actual content or when user finishes typing
+                            if (value.trim() === "") {
+                              newHistory[index].positions = [];
+                            } else {
+                              // Allow commas and spaces while typing, only trim individual positions
+                              newHistory[index].positions = value.split(",").map(p => p.trim());
+                            }
                             setSchemeHistory(newHistory);
                           }}
                         />
