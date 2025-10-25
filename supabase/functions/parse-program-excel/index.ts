@@ -115,11 +115,12 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: `You are a sports programming assistant. Extract structured training program data from the provided text. 
+             content: `You are a sports programming assistant. Extract structured training program data from the provided text. 
 The program should have:
 - Phase information (name, dates)
 - Overview text
 - Sessions A-H with exercises (name, description, reps, sets, load, recovery time, video URL if any)
+- Pre-sessions (PRE-A through PRE-H) with exercises if present
 - Weekly schedules with activities for each day and colors
 - Testing protocols
 
@@ -131,11 +132,15 @@ Format the output as a JSON object with this structure:
   "sessions": {
     "sessionA": { "exercises": [{ "name": "", "description": "", "repetitions": "", "sets": "", "load": "", "recoveryTime": "", "videoUrl": "" }] },
     "sessionB": { "exercises": [] },
-    ... (up to sessionH)
+    ... (up to sessionH),
+    "PRE-A": { "exercises": [] },
+    "PRE-B": { "exercises": [] },
+    ... (up to PRE-H if present)
   },
   "weeklySchedules": [
     {
       "week": "Week 1",
+      "week_start_date": "2025-10-27",
       "monday": "Activity", "tuesday": "", "wednesday": "", "thursday": "", "friday": "", "saturday": "", "sunday": "",
       "mondayColor": "blue", "tuesdayColor": "", ... (colors can be: red, blue, green, yellow, purple, orange, gray),
       "scheduleNotes": "Notes for this week"
@@ -144,7 +149,8 @@ Format the output as a JSON object with this structure:
   "testing": "Testing protocols text"
 }
 
-If certain data is not present in the document, use empty strings or empty arrays. Be thorough in extracting all exercises and details.`
+CRITICAL: Always extract week_start_date for each weekly schedule entry. Parse dates from the document.
+If certain data is not present in the document, use empty strings or empty arrays. Be thorough in extracting all exercises and details including PRE sessions.`
           },
           {
             role: 'user',
@@ -192,7 +198,15 @@ If certain data is not present in the document, use empty strings or empty array
                       sessionE: { type: 'object', properties: { exercises: { type: 'array' } } },
                       sessionF: { type: 'object', properties: { exercises: { type: 'array' } } },
                       sessionG: { type: 'object', properties: { exercises: { type: 'array' } } },
-                      sessionH: { type: 'object', properties: { exercises: { type: 'array' } } }
+                      sessionH: { type: 'object', properties: { exercises: { type: 'array' } } },
+                      'PRE-A': { type: 'object', properties: { exercises: { type: 'array' } } },
+                      'PRE-B': { type: 'object', properties: { exercises: { type: 'array' } } },
+                      'PRE-C': { type: 'object', properties: { exercises: { type: 'array' } } },
+                      'PRE-D': { type: 'object', properties: { exercises: { type: 'array' } } },
+                      'PRE-E': { type: 'object', properties: { exercises: { type: 'array' } } },
+                      'PRE-F': { type: 'object', properties: { exercises: { type: 'array' } } },
+                      'PRE-G': { type: 'object', properties: { exercises: { type: 'array' } } },
+                      'PRE-H': { type: 'object', properties: { exercises: { type: 'array' } } }
                     }
                   },
                   weeklySchedules: {
@@ -201,6 +215,7 @@ If certain data is not present in the document, use empty strings or empty array
                       type: 'object',
                       properties: {
                         week: { type: 'string' },
+                        week_start_date: { type: 'string' },
                         monday: { type: 'string' },
                         tuesday: { type: 'string' },
                         wednesday: { type: 'string' },

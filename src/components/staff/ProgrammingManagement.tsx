@@ -67,18 +67,34 @@ interface ProgrammingData {
   sessionF: SessionData;
   sessionG: SessionData;
   sessionH: SessionData;
+  preSessionA: SessionData;
+  preSessionB: SessionData;
+  preSessionC: SessionData;
+  preSessionD: SessionData;
+  preSessionE: SessionData;
+  preSessionF: SessionData;
+  preSessionG: SessionData;
+  preSessionH: SessionData;
   weeklySchedules: WeeklySchedule[];
   testing: string;
 }
 
 const sessionLabels = [
+  { key: 'preSessionA', label: 'Pre-A' },
   { key: 'sessionA', label: 'Session A' },
+  { key: 'preSessionB', label: 'Pre-B' },
   { key: 'sessionB', label: 'Session B' },
+  { key: 'preSessionC', label: 'Pre-C' },
   { key: 'sessionC', label: 'Session C' },
+  { key: 'preSessionD', label: 'Pre-D' },
   { key: 'sessionD', label: 'Session D' },
+  { key: 'preSessionE', label: 'Pre-E' },
   { key: 'sessionE', label: 'Session E' },
+  { key: 'preSessionF', label: 'Pre-F' },
   { key: 'sessionF', label: 'Session F' },
+  { key: 'preSessionG', label: 'Pre-G' },
   { key: 'sessionG', label: 'Session G' },
+  { key: 'preSessionH', label: 'Pre-H' },
   { key: 'sessionH', label: 'Session H' },
 ];
 
@@ -116,6 +132,14 @@ const initialProgrammingData = (): ProgrammingData => ({
   sessionF: emptySession(),
   sessionG: emptySession(),
   sessionH: emptySession(),
+  preSessionA: emptySession(),
+  preSessionB: emptySession(),
+  preSessionC: emptySession(),
+  preSessionD: emptySession(),
+  preSessionE: emptySession(),
+  preSessionF: emptySession(),
+  preSessionG: emptySession(),
+  preSessionH: emptySession(),
   weeklySchedules: [],
   testing: '',
 });
@@ -187,6 +211,14 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
         sessionF: sessions.F || sessions.sessionF || emptySession(),
         sessionG: sessions.G || sessions.sessionG || emptySession(),
         sessionH: sessions.H || sessions.sessionH || emptySession(),
+        preSessionA: sessions['PRE-A'] || sessions.preSessionA || emptySession(),
+        preSessionB: sessions['PRE-B'] || sessions.preSessionB || emptySession(),
+        preSessionC: sessions['PRE-C'] || sessions.preSessionC || emptySession(),
+        preSessionD: sessions['PRE-D'] || sessions.preSessionD || emptySession(),
+        preSessionE: sessions['PRE-E'] || sessions.preSessionE || emptySession(),
+        preSessionF: sessions['PRE-F'] || sessions.preSessionF || emptySession(),
+        preSessionG: sessions['PRE-G'] || sessions.preSessionG || emptySession(),
+        preSessionH: sessions['PRE-H'] || sessions.preSessionH || emptySession(),
         weeklySchedules: weeklySchedules,
         testing: ''
       });
@@ -359,6 +391,14 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
             F: programmingData.sessionF,
             G: programmingData.sessionG,
             H: programmingData.sessionH,
+            'PRE-A': programmingData.preSessionA,
+            'PRE-B': programmingData.preSessionB,
+            'PRE-C': programmingData.preSessionC,
+            'PRE-D': programmingData.preSessionD,
+            'PRE-E': programmingData.preSessionE,
+            'PRE-F': programmingData.preSessionF,
+            'PRE-G': programmingData.preSessionG,
+            'PRE-H': programmingData.preSessionH,
           } as any,
           weekly_schedules: programmingData.weeklySchedules as any,
         })
@@ -379,13 +419,21 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
       if (saveToCoachingDB.sessions) {
         const sessionsToSave = [];
         for (const [key, session] of Object.entries({
+          'Pre-A': programmingData.preSessionA,
           'A': programmingData.sessionA,
+          'Pre-B': programmingData.preSessionB,
           'B': programmingData.sessionB,
+          'Pre-C': programmingData.preSessionC,
           'C': programmingData.sessionC,
+          'Pre-D': programmingData.preSessionD,
           'D': programmingData.sessionD,
+          'Pre-E': programmingData.preSessionE,
           'E': programmingData.sessionE,
+          'Pre-F': programmingData.preSessionF,
           'F': programmingData.sessionF,
+          'Pre-G': programmingData.preSessionG,
           'G': programmingData.sessionG,
+          'Pre-H': programmingData.preSessionH,
           'H': programmingData.sessionH,
         })) {
           if (session.exercises.length > 0) {
@@ -413,14 +461,22 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
         const allExercises = [];
 
         for (const session of Object.values({
-          ...programmingData.sessionA,
-          ...programmingData.sessionB,
-          ...programmingData.sessionC,
-          ...programmingData.sessionD,
-          ...programmingData.sessionE,
-          ...programmingData.sessionF,
-          ...programmingData.sessionG,
-          ...programmingData.sessionH,
+          'A': programmingData.sessionA,
+          'B': programmingData.sessionB,
+          'C': programmingData.sessionC,
+          'D': programmingData.sessionD,
+          'E': programmingData.sessionE,
+          'F': programmingData.sessionF,
+          'G': programmingData.sessionG,
+          'H': programmingData.sessionH,
+          'PRE-A': programmingData.preSessionA,
+          'PRE-B': programmingData.preSessionB,
+          'PRE-C': programmingData.preSessionC,
+          'PRE-D': programmingData.preSessionD,
+          'PRE-E': programmingData.preSessionE,
+          'PRE-F': programmingData.preSessionF,
+          'PRE-G': programmingData.preSessionG,
+          'PRE-H': programmingData.preSessionH,
         })) {
           if (Array.isArray(session)) {
             for (const ex of session as Exercise[]) {
