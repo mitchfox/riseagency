@@ -258,6 +258,7 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
       let aiParsedData: any = null;
       if (excelFile) {
         setUploadingExcel(true);
+        console.log('Starting file upload for:', excelFile.name);
         try {
           const formData = new FormData();
           formData.append('file', excelFile);
@@ -265,9 +266,10 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
           // Get the session for authentication
           const { data: { session } } = await supabase.auth.getSession();
           if (!session) {
-            throw new Error('Authentication required');
+            throw new Error('Authentication required - please log in again');
           }
 
+          console.log('Calling parse-program-excel edge function...');
           const response = await fetch(
             `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/parse-program-excel`,
             {
@@ -279,23 +281,48 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
             }
           );
 
+          console.log('Response status:', response.status);
+          
           if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || 'Failed to parse file');
+            let errorMessage = 'Failed to parse file';
+            try {
+              const errorData = await response.json();
+              errorMessage = errorData.error || errorData.message || errorMessage;
+              console.error('Server error response:', errorData);
+            } catch (e) {
+              console.error('Could not parse error response');
+            }
+            throw new Error(errorMessage);
           }
 
           const result = await response.json();
+          console.log('Parse result:', result);
+          
+          if (!result.data) {
+            throw new Error('No data returned from parser');
+          }
+          
           aiParsedData = result.data;
-          toast.success('File parsed successfully!');
+          toast.success('✅ File parsed successfully! Creating program...');
         } catch (error: any) {
-          console.error('Error parsing file:', error);
-          toast.error(`Failed to parse file: ${error.message}`);
+          console.error('File parsing error:', error);
+          toast.error(
+            <div>
+              <p className="font-semibold">Failed to parse file</p>
+              <p className="text-xs">{error.message}</p>
+              <p className="text-xs mt-1">Try creating a blank program instead and adding exercises manually.</p>
+            </div>,
+            { duration: 8000 }
+          );
           setUploadingExcel(false);
           setLoading(false);
           return;
         } finally {
           setUploadingExcel(false);
         }
+      } else {
+        console.log('No file uploaded - creating blank program');
+        toast.success('Creating blank program with empty sessions...');
       }
 
       // Create the program with AI-parsed data if available
@@ -343,7 +370,8 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
 
       if (error) throw error;
 
-      toast.success('Program created successfully');
+      console.log('Program created successfully:', newProgram);
+      toast.success('✅ Program created! Opening for editing...');
       setNewProgramName('');
       setExcelFile(null);
       setIsCreatingNew(false);
@@ -351,7 +379,13 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
       // Always open the program for editing after creation
       if (newProgram) {
         console.log('Opening newly created program:', newProgram.id);
-        await loadProgramDetails(newProgram.id);
+        // Small delay to ensure state updates properly
+        setTimeout(async () => {
+          await loadProgramDetails(newProgram.id);
+          // Auto-select first session tab
+          setSelectedSession('preSessionA');
+          toast.success('Program ready! Add exercises to any session tab.');
+        }, 100);
       } else {
         loadPrograms();
       }
@@ -679,32 +713,47 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold">Programs</h3>
-              <Button onClick={() => {
-                setIsCreatingNew(true);
-                setShowUploadProgram(false);
-              }}>
-                <Plus className="w-4 h-4 mr-2" />
-                New Program
-              </Button>
+              <div className="flex gap-2">
+                <Button onClick={() => {
+                  setIsCreatingNew(true);
+                  setExcelFile(null);
+                  setShowUploadProgram(false);
+                }} variant="default">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create Blank Program
+                </Button>
+              </div>
             </div>
 
             {isCreatingNew && (
-              <Card>
-                <CardContent className="pt-6">
+              <Card className="border-2 border-primary">
+                <CardHeader>
+                  <CardTitle>Create New Program</CardTitle>
+                </CardHeader>
+                <CardContent>
                   <div className="space-y-4">
+                    <div className="bg-muted p-4 rounded-lg">
+                      <p className="font-semibold mb-2">You can either:</p>
+                      <ul className="list-disc list-inside space-y-1 text-sm">
+                        <li>Create a BLANK program and add sessions manually</li>
+                        <li>Upload a CSV/Excel file to import the structure automatically</li>
+                      </ul>
+                    </div>
+
                     <div className="space-y-2">
                       <Label>Program Name *</Label>
                       <Input
-                        placeholder="Program name (e.g., Pre-Season 2025)"
+                        placeholder="e.g., Pre-Season 2025, In-Season Phase 1"
                         value={newProgramName}
                         onChange={(e) => setNewProgramName(e.target.value)}
+                        autoFocus
                       />
                     </div>
                     
                     <div className="space-y-2">
-                      <Label htmlFor="file-upload">Upload File (Optional)</Label>
+                      <Label htmlFor="file-upload">Upload CSV/Excel File (OPTIONAL)</Label>
                       <p className="text-xs text-muted-foreground">
-                        Upload a CSV or Excel file to automatically import program structure, or leave empty to create manually
+                        Leave empty to create a blank program with all session tabs ready for manual input
                       </p>
                       <Input
                         id="file-upload"
@@ -719,15 +768,32 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
                         disabled={uploadingExcel}
                       />
                       {excelFile && (
-                        <p className="text-sm text-muted-foreground">
-                          Selected: {excelFile.name}
-                        </p>
+                        <div className="flex items-center justify-between bg-muted p-2 rounded">
+                          <p className="text-sm font-medium">
+                            📄 {excelFile.name}
+                          </p>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setExcelFile(null);
+                              const fileInput = document.getElementById('file-upload') as HTMLInputElement;
+                              if (fileInput) fileInput.value = '';
+                            }}
+                          >
+                            Remove
+                          </Button>
+                        </div>
                       )}
                     </div>
 
                     <div className="flex gap-2">
-                      <Button onClick={createNewProgram} disabled={loading || uploadingExcel || !newProgramName.trim()}>
-                        {uploadingExcel ? 'Processing File...' : loading ? 'Creating...' : excelFile ? 'Import & Create' : 'Create Empty'}
+                      <Button 
+                        onClick={createNewProgram} 
+                        disabled={loading || uploadingExcel || !newProgramName.trim()}
+                        className="flex-1"
+                      >
+                        {uploadingExcel ? '⏳ Processing File...' : loading ? '⏳ Creating...' : excelFile ? '📤 Import & Create Program' : '✨ Create Blank Program'}
                       </Button>
                       <Button variant="outline" onClick={() => {
                         setIsCreatingNew(false);
