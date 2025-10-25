@@ -41,12 +41,12 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
         >
           <Carousel className="w-full">
             <CarouselContent>
-              {/* Slide 1: Striving - Journey with Request Representation */}
+              {/* Slide 1: Striving - Journey Image 1 with Request Representation */}
               <CarouselItem>
                 <div className="relative overflow-hidden">
                   <img 
                     src={omotoyeJourney} 
-                    alt="From striving - Young player's journey" 
+                    alt="From striving" 
                     className="w-full h-auto"
                   />
                   <div className="absolute top-3 left-0 right-0 flex justify-center px-3">
@@ -59,20 +59,20 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
                       Request Representation
                     </Button>
                   </div>
-                  <div className="absolute bottom-6 left-0 right-0 flex justify-center px-3">
-                    <h3 className="text-3xl md:text-4xl font-bebas uppercase tracking-wider text-white drop-shadow-lg">
-                      From <span className="text-primary">Striving</span>
+                  <div className="absolute bottom-8 left-0 right-0 flex justify-center px-3">
+                    <h3 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]">
+                      From Striving
                     </h3>
                   </div>
                 </div>
               </CarouselItem>
 
-              {/* Slide 2: Rising - Journey with RISE Logo */}
+              {/* Slide 2: Rising - Journey Image 2 with RISE Logo */}
               <CarouselItem>
                 <div className="relative overflow-hidden">
                   <img 
                     src={omotoyeJourney} 
-                    alt="To rising - Professional development" 
+                    alt="To rising" 
                     className="w-full h-auto"
                   />
                   <div className="absolute top-3 left-0 right-0 flex justify-center px-3">
@@ -82,9 +82,9 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
                       className="h-12 md:h-16"
                     />
                   </div>
-                  <div className="absolute bottom-6 left-0 right-0 flex justify-center px-3">
-                    <h3 className="text-3xl md:text-4xl font-bebas uppercase tracking-wider text-white drop-shadow-lg">
-                      To <span className="text-primary">Rising</span>
+                  <div className="absolute bottom-8 left-0 right-0 flex justify-center px-3">
+                    <h3 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]">
+                      To Rising
                     </h3>
                   </div>
                 </div>
@@ -95,7 +95,7 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
                 <div className="relative overflow-hidden">
                   <img 
                     src={trophySilhouette} 
-                    alt="To thriving - Future success" 
+                    alt="To thriving" 
                     className="w-full h-auto"
                   />
                   <div className="absolute top-3 left-0 right-0 flex justify-center px-3">
@@ -107,9 +107,9 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
                       Enter Site
                     </Button>
                   </div>
-                  <div className="absolute bottom-6 left-0 right-0 flex justify-center px-3">
-                    <h3 className="text-3xl md:text-4xl font-bebas uppercase tracking-wider text-white drop-shadow-lg">
-                      To <span className="text-primary">Thriving</span>
+                  <div className="absolute bottom-8 left-0 right-0 flex justify-center px-3">
+                    <h3 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]">
+                      To Thriving
                     </h3>
                   </div>
                 </div>
