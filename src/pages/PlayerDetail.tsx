@@ -482,20 +482,46 @@ const PlayerDetail = () => {
                 <div className="bg-secondary/30 backdrop-blur-sm p-6 rounded-lg space-y-6">
                   {player.topStats && player.topStats.length > 0 ? (
                     player.topStats.map((stat, index) => (
-                      <div key={index} className="space-y-2">
-                        <div className="flex items-baseline justify-between">
-                          <span className="text-sm text-muted-foreground uppercase tracking-wider">
-                            {stat.label}
-                          </span>
-                          <span className="text-4xl font-bebas text-primary">
-                            {stat.value}
-                          </span>
+                      <div key={index} className="space-y-3">
+                        <div className="flex items-start gap-4">
+                          {/* Icon/Graphic */}
+                          <div className="flex-shrink-0 w-16 h-16 bg-primary/10 rounded-lg flex items-center justify-center">
+                            {stat.label.includes('OFFENSIVE DUELS') ? (
+                              <svg className="w-10 h-10 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                                <path d="M2 17l10 5 10-5"/>
+                                <path d="M2 12l10 5 10-5"/>
+                              </svg>
+                            ) : (
+                              <svg className="w-10 h-10 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <circle cx="12" cy="12" r="3"/>
+                                <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+                              </svg>
+                            )}
+                          </div>
+                          
+                          {/* Content */}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-baseline gap-3 mb-2">
+                              <span className="text-5xl font-bebas text-primary leading-none">
+                                {stat.value}
+                              </span>
+                              {stat.value === '#1' && (
+                                <span className="text-lg font-bebas text-primary/80 uppercase">
+                                  IN LEAGUE
+                                </span>
+                              )}
+                            </div>
+                            <span className="text-sm text-muted-foreground uppercase tracking-wider block mb-2">
+                              {stat.label}
+                            </span>
+                            {stat.description && (
+                              <p className="text-sm text-foreground/70 leading-relaxed">
+                                {stat.description}
+                              </p>
+                            )}
+                          </div>
                         </div>
-                        {stat.description && (
-                          <p className="text-xs text-muted-foreground/70">
-                            {stat.description}
-                          </p>
-                        )}
                         {index < player.topStats.length - 1 && (
                           <div className="h-px bg-border/50 mt-4" />
                         )}
