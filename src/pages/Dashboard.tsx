@@ -534,7 +534,7 @@ const Dashboard = () => {
                                                 >
                                                    {/* Week Cell */}
                                                     <div 
-                                                      className="p-1 md:p-6 text-[9px] md:text-sm font-medium italic flex flex-col items-start justify-center rounded-lg leading-tight"
+                                                      className="p-1 md:p-6 text-[9px] md:text-sm font-medium italic flex flex-col items-start justify-start rounded-lg leading-tight"
                                                       style={{ 
                                                         backgroundColor: 'hsl(0, 0%, 95%)',
                                                         color: 'hsl(0, 0%, 0%)'
