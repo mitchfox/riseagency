@@ -4,6 +4,7 @@ import { players } from "@/data/players";
 import { supabase } from "@/integrations/supabase/client";
 import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ArrowLeft, MessageCircle, ExternalLink, Video } from "lucide-react";
 import { FormationDisplay } from "@/components/FormationDisplay";
 import { getCountryFlagUrl } from "@/lib/countryFlags";
@@ -17,7 +18,7 @@ const PlayerDetail = () => {
   const [dbHighlights, setDbHighlights] = useState<any[]>([]);
   const [player, setPlayer] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [bioExpanded, setBioExpanded] = useState(false);
+  const [bioDialogOpen, setBioDialogOpen] = useState(false);
   
   // Fetch player from database
   useEffect(() => {
@@ -268,7 +269,7 @@ const PlayerDetail = () => {
                     rel="noopener noreferrer"
                   >
                     <MessageCircle className="mr-2 h-4 w-4" />
-                    Contact About This Player
+                    Enquire About This Player
                   </a>
                 </Button>
               )}
@@ -362,20 +363,36 @@ const PlayerDetail = () => {
 
               {/* Bio - With line breaks preserved and read more */}
               <div className="flex-1">
-                <p className={`text-foreground/80 leading-relaxed text-base whitespace-pre-line ${!bioExpanded ? 'line-clamp-[12]' : ''}`}>
+                <p className="text-foreground/80 leading-relaxed text-base whitespace-pre-line line-clamp-[12]">
                   {player.bio}
                 </p>
                 {player.bio && player.bio.length > 500 && (
                   <button
-                    onClick={() => setBioExpanded(!bioExpanded)}
+                    onClick={() => setBioDialogOpen(true)}
                     className="mt-4 text-primary hover:text-primary/80 font-bebas uppercase text-sm tracking-wider transition-colors"
                   >
-                    {bioExpanded ? 'Read Less' : 'Read More'}
+                    Read More
                   </button>
                 )}
               </div>
             </div>
           </div>
+
+          {/* Biography Dialog */}
+          <Dialog open={bioDialogOpen} onOpenChange={setBioDialogOpen}>
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle className="text-2xl font-bebas uppercase tracking-wider text-primary">
+                  {player.name} - Biography
+                </DialogTitle>
+              </DialogHeader>
+              <div className="mt-4">
+                <p className="text-foreground/80 leading-relaxed text-base whitespace-pre-line">
+                  {player.bio}
+                </p>
+              </div>
+            </DialogContent>
+          </Dialog>
 
           {/* Stats - Full Width */}
           <div className="mb-12">
