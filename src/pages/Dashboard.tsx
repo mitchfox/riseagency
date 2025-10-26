@@ -534,7 +534,7 @@ const Dashboard = () => {
                                                 >
                                                    {/* Week Cell */}
                                                     <div 
-                                                      className="p-1 md:p-6 text-[9px] md:text-sm font-medium italic flex flex-col items-start justify-start rounded-lg leading-tight"
+                                                      className="p-1 md:p-6 text-[9px] md:text-sm font-medium italic flex flex-col items-start justify-start rounded-lg leading-tight text-left"
                                                       style={{ 
                                                         backgroundColor: 'hsl(0, 0%, 95%)',
                                                         color: 'hsl(0, 0%, 0%)'
@@ -547,10 +547,10 @@ const Dashboard = () => {
                                                                       day.endsWith('2') && day !== '12' ? 'nd' :
                                                                       day.endsWith('3') && day !== '13' ? 'rd' : 'th';
                                                         return (
-                                                          <>
-                                                            <span className="font-bold text-[11px] md:text-base">{day}{suffix}</span>
-                                                            <span className="text-[9px] md:text-sm">{format(date, 'MMMM')}</span>
-                                                          </>
+                                                          <div className="text-left w-full">
+                                                            <div className="font-bold text-[11px] md:text-base">{day}{suffix}</div>
+                                                            <div className="text-[9px] md:text-sm">{format(date, 'MMMM')}</div>
+                                                          </div>
                                                         );
                                                       })() : <span>{week.week}</span>}
                                                     </div>
