@@ -84,12 +84,7 @@ const PlayerDetail = () => {
                     strengthsAndPlayStyle: parsed.strengthsAndPlayStyle,
                     topStats: parsed.topStats,
                     tacticalFormations: tacticalFormations,
-                    seasonStats: parsed.seasonStats || [
-                      { header: "Goals", value: statsData?.goals?.toString() || "0" },
-                      { header: "Assists", value: statsData?.assists?.toString() || "0" },
-                      { header: "Matches", value: statsData?.matches?.toString() || "0" },
-                      { header: "Minutes", value: statsData?.minutes?.toString() || "0" }
-                    ]
+                    seasonStats: parsed.seasonStats
                   };
                   
                   // Check if bio property exists and is a string (might be nested JSON)
@@ -263,22 +258,20 @@ const PlayerDetail = () => {
                 {player.currentClub}
               </p>
               
-              {player.whatsapp && (
-                <Button 
-                  asChild
-                  size="default"
-                  className="btn-shine text-sm md:text-base font-bebas uppercase tracking-wider w-full md:w-auto md:ml-auto flex-shrink-0"
+              <Button 
+                asChild
+                size="default"
+                className="btn-shine text-sm md:text-base font-bebas uppercase tracking-wider w-full md:w-auto md:ml-auto flex-shrink-0"
+              >
+                <a 
+                  href={player.whatsapp ? `https://wa.me/${player.whatsapp.replace(/\+/g, '')}` : "https://wa.me/447508342901"}
+                  target="_blank"
+                  rel="noopener noreferrer"
                 >
-                  <a 
-                    href={`https://wa.me/${player.whatsapp.replace(/\+/g, '')}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <MessageCircle className="mr-2 h-4 w-4" />
-                    Enquire About This Player
-                  </a>
-                </Button>
-              )}
+                  <MessageCircle className="mr-2 h-4 w-4" />
+                  Enquire About This Player
+                </a>
+              </Button>
             </div>
           </div>
 
@@ -401,23 +394,25 @@ const PlayerDetail = () => {
           </Dialog>
 
           {/* Stats - Full Width */}
-          <div className="mb-12">
-            <h2 className="text-2xl font-bebas text-primary uppercase tracking-widest mb-6">
-              Season Stats
-            </h2>
-            <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
-              {player.seasonStats?.map((stat: any, idx: number) => (
-                <div key={idx} className="text-center p-6 bg-background">
-                  <div className="text-4xl font-bbh text-primary mb-2">
-                    {stat.value || "0"}
+          {player.seasonStats && player.seasonStats.length > 0 && (
+            <div className="mb-12">
+              <h2 className="text-2xl font-bebas text-primary uppercase tracking-widest mb-6">
+                Season Stats
+              </h2>
+              <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
+                {player.seasonStats.map((stat: any, idx: number) => (
+                  <div key={idx} className="text-center p-6 bg-background">
+                    <div className="text-4xl font-bbh text-primary mb-2">
+                      {stat.value || "0"}
+                    </div>
+                    <div className="text-sm text-muted-foreground uppercase tracking-widest font-semibold">
+                      {stat.header}
+                    </div>
                   </div>
-                  <div className="text-sm text-muted-foreground uppercase tracking-widest font-semibold">
-                    {stat.header}
-                  </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Strengths, In Numbers, Scheme History Grid */}
           <div className="grid lg:grid-cols-2 gap-8 mb-12">
@@ -531,7 +526,15 @@ const PlayerDetail = () => {
                         {player.tacticalFormations[currentFormationIndex].club === player.currentClub 
                           ? 'CURRENT CLUB'
                           : `${player.tacticalFormations[currentFormationIndex].appearances || player.tacticalFormations[currentFormationIndex].matches || 0} Matches`
-                        } • {player.tacticalFormations[currentFormationIndex].formation}
+                        } • {(() => {
+                          const formation = player.tacticalFormations[currentFormationIndex].formation;
+                          // Simplify formations like "4-1-2-3" to "4-3-3" by summing middle numbers
+                          const parts = formation.split('-').map(Number);
+                          if (parts.length === 4) {
+                            return `${parts[0]}-${parts[1] + parts[2]}-${parts[3]}`;
+                          }
+                          return formation;
+                        })()}
                       </div>
                     </div>
                   </div>
