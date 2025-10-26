@@ -532,15 +532,7 @@ const PlayerDetail = () => {
                         {player.tacticalFormations[currentFormationIndex].club === player.currentClub 
                           ? 'CURRENT CLUB'
                           : `${player.tacticalFormations[currentFormationIndex].appearances || player.tacticalFormations[currentFormationIndex].matches || 0} Matches`
-                        } • {(() => {
-                          const formation = player.tacticalFormations[currentFormationIndex].formation;
-                          // Simplify formations like "4-1-2-3" to "4-3-3" by summing middle numbers
-                          const parts = formation.split('-').map(Number);
-                          if (parts.length === 4) {
-                            return `${parts[0]}-${parts[1] + parts[2]}-${parts[3]}`;
-                          }
-                          return formation;
-                        })()}
+                        } • {player.tacticalFormations[currentFormationIndex].formation}
                       </div>
                     </div>
                   </div>
