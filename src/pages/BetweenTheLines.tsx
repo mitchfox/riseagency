@@ -4,6 +4,14 @@ import { Footer } from "@/components/Footer";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
+import Autoplay from "embla-carousel-autoplay";
 
 interface Article {
   id: string;
@@ -51,6 +59,9 @@ export default function BetweenTheLines() {
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState("ALL POSTS");
   const [selectedPosition, setSelectedPosition] = useState("ALL POSITIONS");
+  const [autoplayPlugin] = useState(() =>
+    Autoplay({ delay: 4000, stopOnInteraction: true })
+  );
 
   useEffect(() => {
     fetchArticles();
@@ -127,29 +138,6 @@ export default function BetweenTheLines() {
             </p>
           </div>
 
-          {/* RISE Broadcast Advertisement */}
-          <section className="py-8 md:py-12 mb-12">
-            <div className="max-w-3xl mx-auto p-8 rounded-lg border border-primary/20 bg-primary/5 relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent"></div>
-              <div className="text-center relative z-10">
-                <h2 className="text-2xl md:text-3xl font-bebas uppercase tracking-wider text-primary mb-3">
-                  Join RISE Broadcast on Instagram
-                </h2>
-                <p className="text-foreground mb-6 text-base md:text-lg leading-relaxed">
-                  Get daily updates on agency insights, performance optimization, coaching systems, and player development strategies
-                </p>
-                <a
-                  href="https://www.instagram.com/channel/AbY33s3ZhuxaNwuo/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-8 py-4 bg-primary text-background font-bebas uppercase tracking-wider text-lg hover:bg-primary/90 hover:scale-105 transition-all rounded shadow-lg"
-                >
-                  Join the Channel
-                </a>
-              </div>
-            </div>
-          </section>
-
           {/* Category Filters */}
           <div className="mb-6 pb-4 border-b border-border/50 overflow-x-auto">
             <div className="flex gap-4 min-w-max">
@@ -188,10 +176,10 @@ export default function BetweenTheLines() {
             </div>
           </div>
 
-          {/* Articles Grid */}
+          {/* Articles Carousel */}
           {loading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {[...Array(6)].map((_, i) => (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {[...Array(3)].map((_, i) => (
                 <div key={i} className="space-y-4">
                   <Skeleton className="h-80 w-full rounded-lg" />
                   <Skeleton className="h-4 w-24" />
@@ -206,50 +194,85 @@ export default function BetweenTheLines() {
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {filteredArticles.map((article) => (
-                <a
-                  key={article.id}
-                  href={`/between-the-lines/${createSlug(article.title)}`}
-                  className="group cursor-pointer overflow-hidden rounded-lg border border-border hover:border-primary/50 transition-all hover:shadow-lg"
-                >
-                  <div className="relative aspect-[4/3] overflow-hidden bg-black">
-                    {article.image_url ? (
-                      <>
-                        <img
-                          src={article.image_url}
-                          alt={article.title}
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent opacity-60 group-hover:opacity-80 transition-opacity" />
-                      </>
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-muted">
-                        <p className="text-muted-foreground">No image</p>
+            <Carousel
+              plugins={[autoplayPlugin]}
+              opts={{
+                align: "start",
+                loop: true,
+              }}
+              className="w-full"
+            >
+              <CarouselContent className="-ml-4">
+                {filteredArticles.map((article) => (
+                  <CarouselItem key={article.id} className="pl-4 md:basis-1/2 lg:basis-1/3">
+                    <a
+                      href={`/between-the-lines/${createSlug(article.title)}`}
+                      className="group cursor-pointer overflow-hidden rounded-lg border border-border hover:border-primary/50 transition-all hover:shadow-lg block h-full"
+                    >
+                      <div className="relative aspect-[4/3] overflow-hidden bg-black">
+                        {article.image_url ? (
+                          <>
+                            <img
+                              src={article.image_url}
+                              alt={article.title}
+                              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent opacity-60 group-hover:opacity-80 transition-opacity" />
+                          </>
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-muted">
+                            <p className="text-muted-foreground">No image</p>
+                          </div>
+                        )}
+                        {article.category && (
+                          <div className="absolute top-4 left-4">
+                            <Badge className="bg-primary text-background font-bebas uppercase tracking-wider shadow-lg">
+                              {article.category}
+                            </Badge>
+                          </div>
+                        )}
                       </div>
-                    )}
-                    {article.category && (
-                      <div className="absolute top-4 left-4">
-                        <Badge className="bg-primary text-background font-bebas uppercase tracking-wider shadow-lg">
-                          {article.category}
-                        </Badge>
+                      <div className="p-6 bg-card">
+                        <h3 className="text-xl md:text-2xl font-bebas uppercase tracking-wider text-foreground group-hover:text-primary transition-colors mb-2 line-clamp-2">
+                          {article.title}
+                        </h3>
+                        {article.excerpt && (
+                          <p className="text-sm text-muted-foreground line-clamp-3 leading-relaxed">
+                            {article.excerpt}
+                          </p>
+                        )}
                       </div>
-                    )}
-                  </div>
-                  <div className="p-6 bg-card">
-                    <h3 className="text-xl md:text-2xl font-bebas uppercase tracking-wider text-foreground group-hover:text-primary transition-colors mb-2 line-clamp-2">
-                      {article.title}
-                    </h3>
-                    {article.excerpt && (
-                      <p className="text-sm text-muted-foreground line-clamp-3 leading-relaxed">
-                        {article.excerpt}
-                      </p>
-                    )}
-                  </div>
-                </a>
-              ))}
-            </div>
+                    </a>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <CarouselPrevious className="hidden md:flex" />
+              <CarouselNext className="hidden md:flex" />
+            </Carousel>
           )}
+
+          {/* RISE Broadcast Advertisement */}
+          <section className="py-12 md:py-16 mt-16">
+            <div className="max-w-3xl mx-auto p-8 rounded-lg border border-primary/20 bg-primary/5 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent"></div>
+              <div className="text-center relative z-10">
+                <h2 className="text-2xl md:text-3xl font-bebas uppercase tracking-wider text-primary mb-3">
+                  Join RISE Broadcast on Instagram
+                </h2>
+                <p className="text-foreground mb-6 text-base md:text-lg leading-relaxed">
+                  Get daily updates on agency insights, performance optimization, coaching systems, and player development strategies
+                </p>
+                <a
+                  href="https://www.instagram.com/channel/AbY33s3ZhuxaNwuo/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-8 py-4 bg-primary text-background font-bebas uppercase tracking-wider text-lg hover:bg-primary/90 hover:scale-105 transition-all rounded shadow-lg"
+                >
+                  Join the Channel
+                </a>
+              </div>
+            </div>
+          </section>
         </div>
       </main>
       <Footer />
