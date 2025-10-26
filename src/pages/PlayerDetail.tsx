@@ -23,10 +23,13 @@ const PlayerDetail = () => {
     if (playername) {
       const fetchPlayer = async () => {
         try {
+          // Convert slug back to searchable format (replace hyphens with spaces)
+          const searchName = playername.replace(/-/g, ' ');
+          
           const { data, error } = await supabase
             .from('players')
             .select('*')
-            .eq('id', playername)
+            .ilike('name', searchName)
             .single();
           
           if (error) throw error;
@@ -36,7 +39,7 @@ const PlayerDetail = () => {
             const { data: statsData } = await supabase
               .from('player_stats')
               .select('*')
-              .eq('player_id', playername)
+              .eq('player_id', data.id)
               .single();
             
             // Parse bio to get additional data
@@ -289,6 +292,12 @@ const PlayerDetail = () => {
                     }}
                     onLoadStart={() => console.log('Video loading started')}
                     onLoadedData={() => console.log('Video loaded successfully')}
+                    onEnded={() => {
+                      // Auto-play next video when current one ends
+                      if (typeof currentVideoType === 'number' && currentVideoType < dbHighlights.length - 1) {
+                        setCurrentVideoType(currentVideoType + 1);
+                      }
+                    }}
                   >
                     <source src={dbHighlights[currentVideoType].videoUrl} type="video/mp4" />
                     Your browser does not support the video tag.

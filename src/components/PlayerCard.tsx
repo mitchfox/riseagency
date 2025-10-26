@@ -8,9 +8,19 @@ interface PlayerCardProps {
   viewMode?: "grid" | "list";
 }
 
+// Convert player name to URL slug
+const createPlayerSlug = (name: string): string => {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '') // Remove special characters
+    .trim()
+    .replace(/\s+/g, '-'); // Replace spaces with hyphens
+};
+
 export const PlayerCard = ({ player, viewMode = "grid" }: PlayerCardProps) => {
   const cardRef = useRef<HTMLAnchorElement>(null);
   const [isInView, setIsInView] = useState(false);
+  const playerSlug = createPlayerSlug(player.name);
 
   // Extract club info from player data
   const getClubInfo = () => {
@@ -50,7 +60,7 @@ export const PlayerCard = ({ player, viewMode = "grid" }: PlayerCardProps) => {
     return (
       <Link
         ref={cardRef}
-        to={`/stars/${player.id}`}
+        to={`/stars/${playerSlug}`}
         className="group relative flex items-center gap-8 p-8 overflow-hidden transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
       >
         {/* Hover and focus glow effect - desktop only */}
@@ -92,7 +102,7 @@ export const PlayerCard = ({ player, viewMode = "grid" }: PlayerCardProps) => {
   return (
     <Link
       ref={cardRef}
-      to={`/stars/${player.id}`}
+      to={`/stars/${playerSlug}`}
       className="group relative block overflow-hidden transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
     >
       {/* Hover and focus glow effect - desktop only */}
