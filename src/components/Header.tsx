@@ -37,7 +37,7 @@ export const Header = () => {
       {/* Top Utility Bar - only on homepage */}
       {showTopBar && (
         <div className="fixed top-0 left-0 right-0 z-50 bg-black/95 backdrop-blur-md border-b border-white/10">
-        <div className="container mx-auto px-2 md:px-4">
+          <div className="container mx-auto px-2 md:px-4">
           <div className="flex items-center justify-between h-9 md:h-10">
             <div className="flex flex-wrap items-center gap-1 md:gap-4">
               <Link
@@ -48,6 +48,7 @@ export const Header = () => {
                 <span className="hidden md:inline">Contact Us</span>
                 <span className="md:hidden">Contact</span>
               </Link>
+              <div className="w-px h-4 bg-white/20 md:hidden" />
               <button
                 onClick={() => setDeclareInterestOpen(true)}
                 className="text-xs md:text-sm font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-colors flex items-center gap-1.5"
@@ -66,6 +67,7 @@ export const Header = () => {
                 <span className="hidden md:inline">Request Representation</span>
                 <span className="md:hidden">Represent Me</span>
               </button>
+              <div className="w-px h-4 bg-white/20 md:hidden" />
               <Link
                 to="/login"
                 className="text-xs md:text-sm font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-colors flex items-center gap-1.5"

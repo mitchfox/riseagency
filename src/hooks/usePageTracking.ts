@@ -20,18 +20,24 @@ export const usePageTracking = () => {
   useEffect(() => {
     const startTime = Date.now();
     startTimeRef.current = startTime;
+    let visitId: string | null = null;
 
     // Track page view immediately when page loads
     const trackPageView = async () => {
       try {
-        await supabase.functions.invoke("track-visit", {
+        const response = await supabase.functions.invoke("track-visit", {
           body: {
             visitorId: visitorIdRef.current,
             pagePath: location.pathname,
             duration: 0,
             referrer: document.referrer,
+            isInitial: true,
           },
         });
+        
+        if (response.data?.visitId) {
+          visitId = response.data.visitId;
+        }
       } catch (error) {
         console.error("Failed to track page view:", error);
       }
@@ -42,7 +48,7 @@ export const usePageTracking = () => {
     return () => {
       const duration = Math.round((Date.now() - startTimeRef.current) / 1000);
       
-      // Always use the regular function call to ensure authentication
+      // Update the visit duration when leaving the page
       const updateVisit = async () => {
         try {
           await supabase.functions.invoke("track-visit", {
@@ -51,6 +57,8 @@ export const usePageTracking = () => {
               pagePath: location.pathname,
               duration,
               referrer: document.referrer,
+              isInitial: false,
+              visitId: visitId,
             },
           });
         } catch (error) {
@@ -58,7 +66,10 @@ export const usePageTracking = () => {
         }
       };
 
-      updateVisit();
+      // Only update if we stayed for at least 1 second
+      if (duration >= 1) {
+        updateVisit();
+      }
     };
   }, [location.pathname]);
 };
