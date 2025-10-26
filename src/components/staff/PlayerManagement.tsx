@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Edit, FileText, LineChart, BookOpen, Pencil, Video } from "lucide-react";
+import { Edit, FileText, LineChart, BookOpen, Video } from "lucide-react";
 import { PerformanceActionsDialog } from "./PerformanceActionsDialog";
 import { ProgrammingManagement } from "./ProgrammingManagement";
 
@@ -53,7 +53,6 @@ const PlayerManagement = () => {
   const [stats, setStats] = useState<Record<string, PlayerStats>>({});
   const [loading, setLoading] = useState(true);
   const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
-  const [editingStats, setEditingStats] = useState<PlayerStats | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [expandedPlayerId, setExpandedPlayerId] = useState<string | null>(null);
   const [showingAnalysisFor, setShowingAnalysisFor] = useState<string | null>(null);
@@ -131,15 +130,6 @@ const PlayerManagement = () => {
 
   const [externalLinks, setExternalLinks] = useState<{ label: string; url: string }[]>([]);
   const [strengthsAndPlayStyle, setStrengthsAndPlayStyle] = useState<string[]>([]);
-
-  const [statsData, setStatsData] = useState({
-    goals: "",
-    assists: "",
-    matches: "",
-    minutes: "",
-    clean_sheets: "",
-    saves: "",
-  });
 
   const [seasonStats, setSeasonStats] = useState([
     { header: "Goals", value: "" },
@@ -247,7 +237,7 @@ const PlayerManagement = () => {
       }
 
       // Combine bio text with additional structured data
-      const bioData: ExpandedPlayerData & { bio?: string; tacticalFormations?: any[]; schemeHistory?: any[] } = {
+      const bioData: ExpandedPlayerData & { bio?: string; tacticalFormations?: any[]; schemeHistory?: any[]; seasonStats?: any[] } = {
         bio: formData.bio,
         dateOfBirth: formData.dateOfBirth || undefined,
         number: formData.number ? parseInt(formData.number) : undefined,
@@ -256,6 +246,7 @@ const PlayerManagement = () => {
         externalLinks: externalLinks.length > 0 ? externalLinks : undefined,
         strengthsAndPlayStyle: strengthsAndPlayStyle.length > 0 ? strengthsAndPlayStyle : undefined,
         schemeHistory: schemeHistory.length > 0 ? schemeHistory : undefined,
+        seasonStats: seasonStats.length > 0 ? seasonStats : undefined,
       };
 
       // Update or add current club in tacticalFormations
@@ -358,6 +349,12 @@ const PlayerManagement = () => {
       setExternalLinks([]);
       setStrengthsAndPlayStyle([]);
       setSchemeHistory([]);
+      setSeasonStats([
+        { header: "Goals", value: "" },
+        { header: "Assists", value: "" },
+        { header: "Matches", value: "" },
+        { header: "Minutes", value: "" }
+      ]);
       setEditingPlayer(null);
       setIsDialogOpen(false);
       fetchPlayers();
@@ -367,34 +364,6 @@ const PlayerManagement = () => {
       setLoading(false);
     }
   };
-
-  const handleStatsSubmit = async (playerId: string) => {
-    setLoading(true);
-
-    try {
-      const { error } = await supabase
-        .from("player_stats")
-        .upsert({
-          player_id: playerId,
-          goals: parseInt(statsData.goals) || 0,
-          assists: parseInt(statsData.assists) || 0,
-          matches: parseInt(statsData.matches) || 0,
-          minutes: parseInt(statsData.minutes) || 0,
-          clean_sheets: statsData.clean_sheets ? parseInt(statsData.clean_sheets) : null,
-          saves: statsData.saves ? parseInt(statsData.saves) : null,
-        });
-
-      if (error) throw error;
-      toast.success("Stats updated successfully");
-      setEditingStats(null);
-      fetchPlayers();
-    } catch (error: any) {
-      toast.error("Failed to update stats: " + error.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
 
   const handleDeleteAnalysis = async (analysisId: string, playerId: string) => {
     if (!confirm("Are you sure you want to delete this analysis/game? This action cannot be undone.")) {
@@ -441,6 +410,20 @@ const PlayerManagement = () => {
       if (player.bio && player.bio.startsWith('{')) {
         const parsed = JSON.parse(player.bio);
         additionalData = parsed;
+        
+        // Load season stats
+        if (parsed.seasonStats && Array.isArray(parsed.seasonStats)) {
+          setSeasonStats(parsed.seasonStats);
+        } else {
+          // Default season stats
+          const playerStats = stats[player.id];
+          setSeasonStats([
+            { header: "Goals", value: playerStats?.goals?.toString() || "0" },
+            { header: "Assists", value: playerStats?.assists?.toString() || "0" },
+            { header: "Matches", value: playerStats?.matches?.toString() || "0" },
+            { header: "Minutes", value: playerStats?.minutes?.toString() || "0" }
+          ]);
+        }
         
         // Load scheme history from schemeHistory OR convert from tacticalFormations
         if (parsed.schemeHistory && Array.isArray(parsed.schemeHistory)) {
@@ -491,80 +474,6 @@ const PlayerManagement = () => {
     setExternalLinks(additionalData.externalLinks || []);
     setStrengthsAndPlayStyle(additionalData.strengthsAndPlayStyle || []);
     setIsDialogOpen(true);
-  };
-
-  const startEditStats = (playerId: string) => {
-    const playerStats = stats[playerId];
-    const player = players.find(p => p.id === playerId);
-    
-    if (playerStats) {
-      setEditingStats(playerStats);
-      setStatsData({
-        goals: playerStats.goals.toString(),
-        assists: playerStats.assists.toString(),
-        matches: playerStats.matches.toString(),
-        minutes: playerStats.minutes.toString(),
-        clean_sheets: playerStats.clean_sheets?.toString() || "",
-        saves: playerStats.saves?.toString() || "",
-      });
-      
-      // Load custom season stats from player bio if available
-      let customStats = [
-        { header: "Goals", value: playerStats.goals.toString() },
-        { header: "Assists", value: playerStats.assists.toString() },
-        { header: "Matches", value: playerStats.matches.toString() },
-        { header: "Minutes", value: playerStats.minutes.toString() }
-      ];
-      
-      try {
-        if (player?.bio && player.bio.startsWith('{')) {
-          const bioData = JSON.parse(player.bio);
-          if (bioData.seasonStats && Array.isArray(bioData.seasonStats)) {
-            customStats = bioData.seasonStats;
-          }
-        }
-      } catch (e) {
-        // Use defaults
-      }
-      
-      setSeasonStats(customStats);
-    }
-  };
-
-  const handleSeasonStatsSubmit = async (playerId: string) => {
-    setLoading(true);
-    
-    try {
-      const player = players.find(p => p.id === playerId);
-      let bioData: any = {};
-      
-      // Parse existing bio data
-      try {
-        if (player?.bio && player.bio.startsWith('{')) {
-          bioData = JSON.parse(player.bio);
-        }
-      } catch (e) {
-        bioData = {};
-      }
-      
-      // Update seasonStats in bio
-      bioData.seasonStats = seasonStats;
-      
-      const { error } = await supabase
-        .from("players")
-        .update({ bio: JSON.stringify(bioData) })
-        .eq("id", playerId);
-      
-      if (error) throw error;
-      
-      toast.success("Season stats updated successfully");
-      setEditingStats(null);
-      fetchPlayers();
-    } catch (error: any) {
-      toast.error("Failed to update season stats: " + error.message);
-    } finally {
-      setLoading(false);
-    }
   };
 
   const getR90Color = (score: number) => {
@@ -844,6 +753,12 @@ const PlayerManagement = () => {
               setExternalLinks([]);
               setStrengthsAndPlayStyle([]);
               setSchemeHistory([]);
+              setSeasonStats([
+                { header: "Goals", value: "" },
+                { header: "Assists", value: "" },
+                { header: "Matches", value: "" },
+                { header: "Minutes", value: "" }
+              ]);
               setPlayerCategory("Other");
               setRepresentationStatus("other");
               setVisibleOnStarsPage(false);
@@ -1307,6 +1222,44 @@ const PlayerManagement = () => {
                 </Button>
               </div>
 
+              {/* Season Stats */}
+              <div className="space-y-3 border-t pt-4">
+                <Label className="text-base font-semibold">Season Stats (4 customizable stats)</Label>
+                <p className="text-sm text-muted-foreground">
+                  Customize the 4 stat headers and values that will be displayed for this player.
+                </p>
+                {seasonStats.map((stat, index) => (
+                  <div key={index} className="grid grid-cols-2 gap-3">
+                    <div className="space-y-2">
+                      <Label htmlFor={`stat-header-${index}`}>Stat Header {index + 1}</Label>
+                      <Input
+                        id={`stat-header-${index}`}
+                        value={stat.header}
+                        onChange={(e) => {
+                          const newStats = [...seasonStats];
+                          newStats[index].header = e.target.value;
+                          setSeasonStats(newStats);
+                        }}
+                        placeholder="e.g., Goals, Apps, etc."
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor={`stat-value-${index}`}>Value</Label>
+                      <Input
+                        id={`stat-value-${index}`}
+                        value={stat.value}
+                        onChange={(e) => {
+                          const newStats = [...seasonStats];
+                          newStats[index].value = e.target.value;
+                          setSeasonStats(newStats);
+                        }}
+                        placeholder="e.g., 12, 25, etc."
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+
               {/* Visible on Stars Page Toggle */}
               <div className="flex items-center space-x-2">
                 <input
@@ -1425,10 +1378,6 @@ const PlayerManagement = () => {
                     <Button variant="outline" size="sm" onClick={() => startEdit(player)}>
                       <Edit className="w-4 h-4 mr-2" />
                       Player Details
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={() => startEditStats(player.id)}>
-                      <Pencil className="w-4 h-4 mr-2" />
-                      Season Stats
                     </Button>
                     <Button variant="outline" size="sm" onClick={() => {
                       setSelectedProgrammingPlayerId(player.id);
@@ -1630,7 +1579,7 @@ const PlayerManagement = () => {
                                       }}
                                       title="Edit"
                                     >
-                                      <Pencil className="w-3 h-3" />
+                                      <Edit className="w-3 h-3" />
                                     </Button>
                                     <Button
                                       type="button"
@@ -1729,7 +1678,7 @@ const PlayerManagement = () => {
                               size="sm"
                               onClick={() => openEditAnalysisDialog(analysis)}
                             >
-                              <Pencil className="w-4 h-4 mr-1" />
+                              <Edit className="w-4 h-4 mr-1" />
                               Edit
                             </Button>
                             
@@ -1887,61 +1836,6 @@ const PlayerManagement = () => {
         analysisId={selectedAnalysisId || ""}
         playerName={selectedPlayerName}
       />
-
-      {/* Season Stats Edit Dialog */}
-      <Dialog open={editingStats !== null} onOpenChange={(open) => !open && setEditingStats(null)}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Edit Season Stats</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <p className="text-sm text-muted-foreground">
-              Customize the 4 stat headers and values that will be displayed for this player.
-            </p>
-            {seasonStats.map((stat, index) => (
-              <div key={index} className="grid grid-cols-2 gap-3">
-                <div className="space-y-2">
-                  <Label htmlFor={`stat-header-${index}`}>Stat Header {index + 1}</Label>
-                  <Input
-                    id={`stat-header-${index}`}
-                    value={stat.header}
-                    onChange={(e) => {
-                      const newStats = [...seasonStats];
-                      newStats[index].header = e.target.value;
-                      setSeasonStats(newStats);
-                    }}
-                    placeholder="e.g., Goals, Apps, etc."
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor={`stat-value-${index}`}>Value</Label>
-                  <Input
-                    id={`stat-value-${index}`}
-                    value={stat.value}
-                    onChange={(e) => {
-                      const newStats = [...seasonStats];
-                      newStats[index].value = e.target.value;
-                      setSeasonStats(newStats);
-                    }}
-                    placeholder="e.g., 12, 25, etc."
-                  />
-                </div>
-              </div>
-            ))}
-            <div className="flex gap-2">
-              <Button 
-                onClick={() => editingStats && handleSeasonStatsSubmit(editingStats.player_id)}
-                disabled={loading}
-              >
-                {loading ? "Saving..." : "Save Stats"}
-              </Button>
-              <Button variant="outline" onClick={() => setEditingStats(null)}>
-                Cancel
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
 
       {/* Programming Management Dialog */}
       <ProgrammingManagement
