@@ -223,55 +223,61 @@ const PlayerDetail = () => {
 
           {/* Player Name, Info, and Contact - Full width */}
           <div className="mb-1 relative border-2 border-[hsl(var(--gold))] bg-secondary/20 backdrop-blur-sm rounded-lg overflow-hidden">
-            <div className="relative flex flex-col md:flex-row md:flex-nowrap items-start md:items-center gap-4 md:gap-6 lg:gap-8 p-4 md:p-5">
-              {/* Player Name with Golden Gloss */}
-              <div className="relative w-full md:w-auto md:flex-shrink-0">
-                <div className="absolute inset-0 bg-gradient-to-r from-[hsl(var(--gold))]/20 via-[hsl(var(--gold))]/10 to-transparent blur-xl" />
-                <h1 className="relative text-2xl md:text-3xl font-bebas uppercase font-bold text-foreground leading-none tracking-wide whitespace-nowrap">
-                  {player.name}
-                </h1>
+            <div className="relative p-4 md:p-5">
+              {/* Info Row - Wraps when needed */}
+              <div className="flex flex-wrap items-center gap-4 md:gap-6 lg:gap-8 mb-4">
+                {/* Player Name with Golden Gloss */}
+                <div className="relative">
+                  <div className="absolute inset-0 bg-gradient-to-r from-[hsl(var(--gold))]/20 via-[hsl(var(--gold))]/10 to-transparent blur-xl" />
+                  <h1 className="relative text-2xl md:text-3xl font-bebas uppercase font-bold text-foreground leading-none tracking-wide whitespace-nowrap">
+                    {player.name}
+                  </h1>
+                </div>
+                
+                <p className="text-lg md:text-xl text-muted-foreground uppercase tracking-wide font-bebas leading-none whitespace-nowrap">
+                  {player.position}
+                </p>
+                
+                <p className="text-lg md:text-xl text-muted-foreground uppercase tracking-wide font-bebas leading-none flex items-center gap-2 whitespace-nowrap">
+                  {player.dateOfBirth} <span className="text-muted-foreground/70">({player.age})</span>
+                </p>
+                
+                <p className="text-lg md:text-xl text-muted-foreground uppercase tracking-wide font-bebas leading-none flex items-center gap-2 whitespace-nowrap">
+                  <img 
+                    src={getCountryFlagUrl(player.nationality)} 
+                    alt={player.nationality}
+                    className="w-6 h-4 object-cover rounded"
+                  />
+                  {player.nationality}
+                </p>
+                
+                <p className="text-lg md:text-xl text-muted-foreground uppercase tracking-wide font-bebas leading-none flex items-center gap-2 whitespace-nowrap">
+                  <img 
+                    src={player.currentClubLogo || player.tacticalFormations?.[0]?.clubLogo} 
+                    alt={player.currentClub}
+                    className="w-6 h-6 md:w-8 md:h-8 object-contain"
+                  />
+                  {player.currentClub}
+                </p>
               </div>
-              
-              <p className="text-lg md:text-xl text-muted-foreground uppercase tracking-wide font-bebas leading-none whitespace-nowrap">
-                {player.position}
-              </p>
-              
-              <p className="text-lg md:text-xl text-muted-foreground uppercase tracking-wide font-bebas leading-none flex items-center gap-2 whitespace-nowrap">
-                {player.dateOfBirth} <span className="text-muted-foreground/70">({player.age})</span>
-              </p>
-              
-              <p className="text-lg md:text-xl text-muted-foreground uppercase tracking-wide font-bebas leading-none flex items-center gap-2 whitespace-nowrap">
-                <img 
-                  src={getCountryFlagUrl(player.nationality)} 
-                  alt={player.nationality}
-                  className="w-6 h-4 object-cover rounded"
-                />
-                {player.nationality}
-              </p>
-              
-              <p className="text-lg md:text-xl text-muted-foreground uppercase tracking-wide font-bebas leading-none flex items-center gap-2 whitespace-nowrap">
-                <img 
-                  src={player.currentClubLogo || player.tacticalFormations?.[0]?.clubLogo} 
-                  alt={player.currentClub}
-                  className="w-6 h-6 md:w-8 md:h-8 object-contain"
-                />
-                {player.currentClub}
-              </p>
-              
-              <Button 
-                asChild
-                size="default"
-                className="btn-shine text-sm md:text-base font-bebas uppercase tracking-wider w-full md:w-auto md:ml-auto flex-shrink-0"
-              >
-                <a 
-                  href={player.whatsapp ? `https://wa.me/${player.whatsapp.replace(/\+/g, '')}` : "https://wa.me/447508342901"}
-                  target="_blank"
-                  rel="noopener noreferrer"
+
+              {/* Button Row */}
+              <div className="w-full">
+                <Button 
+                  asChild
+                  size="default"
+                  className="btn-shine text-sm md:text-base font-bebas uppercase tracking-wider w-full md:w-auto"
                 >
-                  <MessageCircle className="mr-2 h-4 w-4" />
-                  Enquire About This Player
-                </a>
-              </Button>
+                  <a 
+                    href={player.whatsapp ? `https://wa.me/${player.whatsapp.replace(/\+/g, '')}` : "https://wa.me/447508342901"}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <MessageCircle className="mr-2 h-4 w-4" />
+                    Enquire About This Player
+                  </a>
+                </Button>
+              </div>
             </div>
           </div>
 
