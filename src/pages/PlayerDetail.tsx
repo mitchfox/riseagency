@@ -17,6 +17,7 @@ const PlayerDetail = () => {
   const [dbHighlights, setDbHighlights] = useState<any[]>([]);
   const [player, setPlayer] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [bioExpanded, setBioExpanded] = useState(false);
   
   // Fetch player from database
   useEffect(() => {
@@ -348,22 +349,30 @@ const PlayerDetail = () => {
             <h2 className="text-sm font-bebas text-primary uppercase tracking-widest mb-4 text-lg">
               BIOGRAPHY
             </h2>
-            <div className="flex gap-6 items-start">
-              {/* Player Image - Responsive height based on bio */}
-              <div className="relative overflow-hidden w-48 rounded-lg flex-shrink-0">
+            <div className="flex gap-6 items-stretch">
+              {/* Player Image - Matches text height */}
+              <div className="relative overflow-hidden w-48 rounded-lg flex-shrink-0 self-start">
                 <img
                   src={player.image_url}
                   alt={player.name}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover min-h-[300px]"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
               </div>
 
-              {/* Bio - Full text displayed */}
+              {/* Bio - With line breaks preserved and read more */}
               <div className="flex-1">
-                <p className="text-foreground/80 leading-relaxed text-base">
+                <p className={`text-foreground/80 leading-relaxed text-base whitespace-pre-line ${!bioExpanded ? 'line-clamp-[12]' : ''}`}>
                   {player.bio}
                 </p>
+                {player.bio && player.bio.length > 500 && (
+                  <button
+                    onClick={() => setBioExpanded(!bioExpanded)}
+                    className="mt-4 text-primary hover:text-primary/80 font-bebas uppercase text-sm tracking-wider transition-colors"
+                  >
+                    {bioExpanded ? 'Read Less' : 'Read More'}
+                  </button>
+                )}
               </div>
             </div>
           </div>
