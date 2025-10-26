@@ -1410,41 +1410,6 @@ const PlayerManagement = () => {
                       Highlights
                     </Button>
                   </div>
-                  
-                  {/* Season Stats Display */}
-                  {(() => {
-                    let customStats = [
-                      { header: "Goals", value: playerStats?.goals?.toString() || "0" },
-                      { header: "Assists", value: playerStats?.assists?.toString() || "0" },
-                      { header: "Matches", value: playerStats?.matches?.toString() || "0" },
-                      { header: "Minutes", value: playerStats?.minutes?.toString() || "0" }
-                    ];
-                    
-                    try {
-                      if (player.bio && player.bio.startsWith('{')) {
-                        const bioData = JSON.parse(player.bio);
-                        if (bioData.seasonStats && Array.isArray(bioData.seasonStats)) {
-                          customStats = bioData.seasonStats;
-                        }
-                      }
-                    } catch (e) {
-                      // Use defaults
-                    }
-                    
-                    return (
-                      <div className="mt-4 p-4 border rounded-md bg-accent/10">
-                        <h4 className="text-sm font-semibold mb-3">Season Stats</h4>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                          {customStats.map((stat, idx) => (
-                            <div key={idx} className="text-center">
-                              <div className="text-2xl font-bold text-primary">{stat.value || "0"}</div>
-                              <div className="text-xs text-muted-foreground">{stat.header}</div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    );
-                  })()}
 
                   {showingHighlightsFor === player.id && (
                     <>
