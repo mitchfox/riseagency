@@ -19,8 +19,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 import { toast } from "sonner";
-import { Eye, MapPin, Clock, RefreshCw, EyeOff } from "lucide-react";
+import { Eye, MapPin, Clock, RefreshCw, EyeOff, CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 
 interface SiteVisit {
   id: string;
@@ -44,6 +52,7 @@ export const SiteVisitorsManagement = () => {
   const [visitorDetails, setVisitorDetails] = useState<SiteVisit[]>([]);
   const [showUniqueOnly, setShowUniqueOnly] = useState(true); // Default to true
   const [showHidden, setShowHidden] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date()); // Default to today
   const [stats, setStats] = useState({
     totalVisits: 0,
     uniqueVisitors: 0,
@@ -53,9 +62,17 @@ export const SiteVisitorsManagement = () => {
   const loadVisits = async () => {
     setLoading(true);
     try {
+      // Get start and end of selected date
+      const startOfDay = new Date(selectedDate);
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(selectedDate);
+      endOfDay.setHours(23, 59, 59, 999);
+
       let query = supabase
         .from("site_visits")
         .select("*")
+        .gte("visited_at", startOfDay.toISOString())
+        .lte("visited_at", endOfDay.toISOString())
         .order("visited_at", { ascending: false })
         .limit(100);
 
@@ -134,7 +151,7 @@ export const SiteVisitorsManagement = () => {
   useEffect(() => {
     loadVisits();
     loadUniquePaths();
-  }, [pageFilter, showHidden]);
+  }, [pageFilter, showHidden, selectedDate]);
 
   const hideVisitor = async (visitorId: string) => {
     try {
@@ -348,11 +365,11 @@ export const SiteVisitorsManagement = () => {
               placeholder="Search by path, visitor ID, or location..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="md:w-1/2"
+              className="md:w-1/3"
             />
             
             <Select value={pageFilter} onValueChange={setPageFilter}>
-              <SelectTrigger className="md:w-1/3">
+              <SelectTrigger className="md:w-1/4">
                 <SelectValue placeholder="Filter by page" />
               </SelectTrigger>
               <SelectContent>
@@ -364,6 +381,30 @@ export const SiteVisitorsManagement = () => {
                 ))}
               </SelectContent>
             </Select>
+
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "md:w-1/4 justify-start text-left font-normal",
+                    !selectedDate && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {selectedDate ? format(selectedDate, "PPP") : <span>Pick a date</span>}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={(date) => date && setSelectedDate(date)}
+                  initialFocus
+                  className="p-3 pointer-events-auto"
+                />
+              </PopoverContent>
+            </Popover>
 
             <Button
               onClick={loadVisits}
