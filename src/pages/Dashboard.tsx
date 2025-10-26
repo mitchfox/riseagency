@@ -534,7 +534,7 @@ const Dashboard = () => {
                                                 >
                                                    {/* Week Cell */}
                                                     <div 
-                                                      className="p-1 md:p-6 text-[9px] md:text-sm font-medium italic flex flex-col items-center justify-center rounded-lg leading-tight text-center"
+                                                      className="p-3 md:p-6 flex flex-col items-center justify-center rounded-lg"
                                                       style={{ 
                                                         backgroundColor: 'hsl(0, 0%, 95%)',
                                                         color: 'hsl(0, 0%, 0%)'
@@ -547,9 +547,9 @@ const Dashboard = () => {
                                                                       day.endsWith('2') && day !== '12' ? 'nd' :
                                                                       day.endsWith('3') && day !== '13' ? 'rd' : 'th';
                                                         return (
-                                                          <div className="text-center w-full">
-                                                            <div className="font-bold text-[11px] md:text-base">{day}{suffix}</div>
-                                                            <div className="text-[9px] md:text-sm">{format(date, 'MMMM')}</div>
+                                                          <div className="text-center">
+                                                            <div className="text-2xl md:text-3xl font-bold mb-1">{day}<sup className="text-base">{suffix}</sup></div>
+                                                            <div className="text-sm md:text-base font-medium italic">{format(date, 'MMMM')}</div>
                                                           </div>
                                                         );
                                                       })() : <span>{week.week}</span>}
@@ -561,6 +561,8 @@ const Dashboard = () => {
                                                     const colors = sessionValue ? getSessionColor(sessionValue) : { bg: 'hsl(0, 0%, 10%)', text: 'hsl(0, 0%, 100%)', hover: 'hsl(0, 0%, 15%)' };
                                                     const weekDates = getWeekDates(week.week_start_date);
                                                     const dayDate = weekDates ? weekDates[day as keyof typeof weekDates] : null;
+                                                    const dayImageKey = `${day}Image`; // Use camelCase for image field
+                                                    const clubLogoUrl = week[dayImageKey];
                                                     
                                                     return (
                                                       <div 
@@ -585,29 +587,34 @@ const Dashboard = () => {
                                                          {/* Day number in top right */}
                                                          {dayDate && (
                                                            <span 
-                                                             className="absolute top-0.5 right-0.5 text-[8px] md:text-xs opacity-50 leading-none"
+                                                             className="absolute top-0.5 right-0.5 text-[8px] md:text-xs opacity-50 leading-none z-30"
                                                              style={{ color: colors.text }}
                                                            >
                                                              {format(dayDate, 'd')}
                                                            </span>
                                                          )}
                                                          
-                                                         {/* Display club logo if available */}
-                                                         {week[`${day}_image`] && (
-                                                           <img 
-                                                             src={week[`${day}_image`]} 
-                                                             alt={`${day} session`}
-                                                             className="absolute inset-0 w-full h-full object-contain p-2 rounded-lg opacity-30"
-                                                             style={{ filter: 'brightness(1.2)' }}
-                                                           />
+                                                         {/* Display club logo if available - BEHIND the session letter */}
+                                                         {clubLogoUrl && (
+                                                           <div className="absolute inset-0 flex items-center justify-center p-3 z-0">
+                                                             <img 
+                                                               src={clubLogoUrl} 
+                                                               alt={`${day} club logo`}
+                                                               className="max-w-full max-h-full object-contain opacity-25"
+                                                               onError={(e) => {
+                                                                 console.error('Failed to load club logo:', clubLogoUrl);
+                                                                 e.currentTarget.style.display = 'none';
+                                                               }}
+                                                             />
+                                                           </div>
                                                          )}
                                                          
                                                          {sessionValue && (
                                                            <span 
-                                                             className="font-bebas text-base md:text-2xl uppercase font-bold relative z-10"
+                                                             className="font-bebas text-base md:text-2xl uppercase font-bold relative z-20"
                                                              style={{ 
                                                                color: colors.text,
-                                                               textShadow: '0 2px 4px rgba(0, 0, 0, 0.3)'
+                                                               textShadow: '0 2px 8px rgba(0, 0, 0, 0.5)'
                                                              }}
                                                            >
                                                              {sessionValue}
