@@ -28,14 +28,29 @@ export const Footer = () => {
               <Link to="/stars" className="text-muted-foreground hover:text-primary transition-colors text-sm">
                 Stars
               </Link>
+              <Link to="/players" className="text-muted-foreground hover:text-primary transition-colors text-sm">
+                Players
+              </Link>
+              <Link to="/clubs" className="text-muted-foreground hover:text-primary transition-colors text-sm">
+                Clubs
+              </Link>
+              <Link to="/coaches" className="text-muted-foreground hover:text-primary transition-colors text-sm">
+                Coaches
+              </Link>
+              <Link to="/scouts" className="text-muted-foreground hover:text-primary transition-colors text-sm">
+                Scouts
+              </Link>
+              <Link to="/performance" className="text-muted-foreground hover:text-primary transition-colors text-sm">
+                Realise Potential
+              </Link>
+              <Link to="/about" className="text-muted-foreground hover:text-primary transition-colors text-sm">
+                About
+              </Link>
               <Link to="/news" className="text-muted-foreground hover:text-primary transition-colors text-sm">
                 News
               </Link>
               <Link to="/between-the-lines" className="text-muted-foreground hover:text-primary transition-colors text-sm">
                 Between The Lines
-              </Link>
-              <Link to="/about" className="text-muted-foreground hover:text-primary transition-colors text-sm">
-                About
               </Link>
               <Link to="/contact" className="text-muted-foreground hover:text-primary transition-colors text-sm">
                 Contact
@@ -48,21 +63,21 @@ export const Footer = () => {
             <h3 className="font-bebas text-xl uppercase tracking-wider text-foreground mb-4">
               Contact
             </h3>
-            <ul className="space-y-2">
+            <ul className="space-y-3">
               <li>
                 <a 
                   href="mailto:jolon.levene@risefootballagency.com"
-                  className="text-muted-foreground hover:text-primary transition-colors text-sm block"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 hover:bg-primary/20 text-foreground hover:text-primary transition-colors text-sm rounded border border-primary/20"
                 >
-                  jolon.levene@risefootballagency.com
+                  General Enquiries
                 </a>
               </li>
               <li>
                 <a 
                   href="mailto:kuda.butawo@risefootballagency.com"
-                  className="text-muted-foreground hover:text-primary transition-colors text-sm block"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 hover:bg-primary/20 text-foreground hover:text-primary transition-colors text-sm rounded border border-primary/20"
                 >
-                  kuda.butawo@risefootballagency.com
+                  Media & Sponsors
                 </a>
               </li>
               <li>
@@ -70,7 +85,7 @@ export const Footer = () => {
                   href="http://wa.link/mabnsw"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-muted-foreground hover:text-primary transition-colors text-sm block"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 hover:bg-primary/20 text-foreground hover:text-primary transition-colors text-sm rounded border border-primary/20"
                 >
                   WhatsApp
                 </a>

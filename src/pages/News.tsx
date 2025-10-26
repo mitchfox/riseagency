@@ -135,11 +135,22 @@ const News = () => {
                     )}
                     
                     <div className="prose prose-lg max-w-none text-foreground">
-                      {currentArticle.content.split('\n').map((paragraph, index) => (
-                        <p key={index} className="mb-4 leading-relaxed">
-                          {paragraph}
-                        </p>
-                      ))}
+                      {currentArticle.content.split('\n').map((paragraph, index) => {
+                        // Handle bold text wrapped in **
+                        const formattedParagraph = paragraph.split(/(\*\*.*?\*\*)/).map((part, i) => {
+                          if (part.startsWith('**') && part.endsWith('**')) {
+                            // Remove the ** and make it bold
+                            return <strong key={i}>{part.slice(2, -2)}</strong>;
+                          }
+                          return part;
+                        });
+                        
+                        return (
+                          <p key={index} className="mb-4 leading-relaxed">
+                            {formattedParagraph}
+                          </p>
+                        );
+                      })}
                     </div>
                   </article>
                 )}

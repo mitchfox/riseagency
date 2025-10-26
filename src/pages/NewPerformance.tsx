@@ -91,6 +91,31 @@ const NewPerformance = () => {
             </Button>
           </div>
         </section>
+
+        {/* RISE Broadcast Advertisement */}
+        <section className="py-12 md:py-16 px-4 bg-background">
+          <div className="container mx-auto">
+            <div className="max-w-3xl mx-auto p-8 rounded-lg border border-primary/20 bg-primary/5 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent"></div>
+              <div className="text-center relative z-10">
+                <h2 className="text-2xl md:text-3xl font-bebas uppercase tracking-wider text-primary mb-3">
+                  Join RISE Broadcast on Instagram
+                </h2>
+                <p className="text-foreground mb-6 text-base md:text-lg leading-relaxed">
+                  Get daily updates on agency insights, performance optimization, coaching systems, and player development strategies
+                </p>
+                <a
+                  href="https://www.instagram.com/channel/AbY33s3ZhuxaNwuo/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-8 py-4 bg-primary text-background font-bebas uppercase tracking-wider text-lg hover:bg-primary/90 hover:scale-105 transition-all rounded shadow-lg"
+                >
+                  Join the Channel
+                </a>
+              </div>
+            </div>
+          </div>
+        </section>
       </main>
 
       <Footer />
