@@ -674,7 +674,7 @@ const PlayerDetail = () => {
                   className="w-full font-bebas uppercase tracking-wider"
                 >
                   <a href="mailto:kuda.butawo@risefootballagency.com?subject=Media%20Inquiry">
-                    Email Us
+                    Contact
                   </a>
                 </Button>
               </div>
