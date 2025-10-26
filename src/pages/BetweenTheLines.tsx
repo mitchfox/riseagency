@@ -36,6 +36,15 @@ const positions = [
   "WINGER",
 ];
 
+const createSlug = (title: string): string => {
+  return title
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .trim();
+};
+
 export default function BetweenTheLines() {
   const [articles, setArticles] = useState<Article[]>([]);
   const [filteredArticles, setFilteredArticles] = useState<Article[]>([]);
@@ -173,7 +182,7 @@ export default function BetweenTheLines() {
               {filteredArticles.map((article) => (
                 <a
                   key={article.id}
-                  href={`/news/${article.id}`}
+                  href={`/between-the-lines/${createSlug(article.title)}`}
                   className="group cursor-pointer overflow-hidden rounded-lg border border-border hover:border-primary transition-all"
                 >
                   <div className="relative aspect-[4/3] overflow-hidden bg-black">

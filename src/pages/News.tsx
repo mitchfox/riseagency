@@ -17,6 +17,15 @@ interface NewsArticle {
   created_at: string;
 }
 
+const createSlug = (title: string): string => {
+  return title
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .trim();
+};
+
 const News = () => {
   const { articleId } = useParams();
   const [newsItems, setNewsItems] = useState<NewsArticle[]>([]);
@@ -31,17 +40,22 @@ const News = () => {
     }
   }, [articleId]);
 
-  const fetchArticle = async (id: string) => {
+  const fetchArticle = async (slug: string) => {
     try {
+      // Fetch all published articles (both news and between the lines)
       const { data, error } = await supabase
         .from("blog_posts")
         .select("*")
-        .eq("id", id)
-        .eq("published", true)
-        .single();
+        .eq("published", true);
 
       if (error) throw error;
-      setCurrentArticle(data);
+
+      // Find the article that matches the slug
+      const article = data?.find(article => createSlug(article.title) === slug);
+      
+      if (article) {
+        setCurrentArticle(article);
+      }
     } catch (error) {
       console.error("Error fetching article:", error);
     } finally {
@@ -161,7 +175,7 @@ const News = () => {
                 ) : (
                   <div className="space-y-8">
                     {newsItems.map((item) => (
-                      <Link key={item.id} to={`/news/${item.id}`}>
+                      <Link key={item.id} to={`/news/${createSlug(item.title)}`}>
                         <Card className="border-primary/20 hover:border-primary transition-all cursor-pointer">
                           {item.image_url && (
                             <div className="aspect-[16/9] overflow-hidden">

@@ -48,6 +48,7 @@ const App = () => {
           <Route path="/news" element={<News />} />
           <Route path="/news/:articleId" element={<News />} />
           <Route path="/between-the-lines" element={<BetweenTheLines />} />
+          <Route path="/between-the-lines/:articleId" element={<News />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/about" element={<About />} />
           <Route path="/staff" element={<Staff />} />
