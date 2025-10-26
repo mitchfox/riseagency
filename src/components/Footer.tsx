@@ -28,26 +28,17 @@ export const Footer = () => {
               <Link to="/stars" className="text-muted-foreground hover:text-primary transition-colors text-sm">
                 Stars
               </Link>
-              <Link to="/players" className="text-muted-foreground hover:text-primary transition-colors text-sm">
-                Players
+              <Link to="/news" className="text-muted-foreground hover:text-primary transition-colors text-sm">
+                News
               </Link>
-              <Link to="/clubs" className="text-muted-foreground hover:text-primary transition-colors text-sm">
-                Clubs
-              </Link>
-              <Link to="/coaches" className="text-muted-foreground hover:text-primary transition-colors text-sm">
-                Coaches
-              </Link>
-              <Link to="/scouts" className="text-muted-foreground hover:text-primary transition-colors text-sm">
-                Scouts
-              </Link>
-              <Link to="/performance" className="text-muted-foreground hover:text-primary transition-colors text-sm">
-                Realise Potential
+              <Link to="/between-the-lines" className="text-muted-foreground hover:text-primary transition-colors text-sm">
+                Between The Lines
               </Link>
               <Link to="/about" className="text-muted-foreground hover:text-primary transition-colors text-sm">
                 About
               </Link>
-              <Link to="/news" className="text-muted-foreground hover:text-primary transition-colors text-sm">
-                News
+              <Link to="/contact" className="text-muted-foreground hover:text-primary transition-colors text-sm">
+                Contact
               </Link>
             </div>
           </div>
@@ -59,24 +50,19 @@ export const Footer = () => {
             </h3>
             <ul className="space-y-2">
               <li>
-                <Link to="/contact" className="text-muted-foreground hover:text-primary transition-colors text-sm">
-                  Get In Touch
-                </Link>
-              </li>
-              <li>
                 <a 
                   href="mailto:jolon.levene@risefootballagency.com"
-                  className="text-muted-foreground hover:text-primary transition-colors text-sm"
+                  className="text-muted-foreground hover:text-primary transition-colors text-sm block"
                 >
-                  General Enquiries
+                  jolon.levene@risefootballagency.com
                 </a>
               </li>
               <li>
                 <a 
                   href="mailto:kuda.butawo@risefootballagency.com"
-                  className="text-muted-foreground hover:text-primary transition-colors text-sm"
+                  className="text-muted-foreground hover:text-primary transition-colors text-sm block"
                 >
-                  Media & Sponsors
+                  kuda.butawo@risefootballagency.com
                 </a>
               </li>
               <li>
@@ -84,7 +70,7 @@ export const Footer = () => {
                   href="http://wa.link/mabnsw"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-muted-foreground hover:text-primary transition-colors text-sm"
+                  className="text-muted-foreground hover:text-primary transition-colors text-sm block"
                 >
                   WhatsApp
                 </a>
@@ -146,17 +132,17 @@ export const Footer = () => {
             </p>
             <div className="flex gap-6">
               <a 
-                href="https://www.youtube.com/@RISEFootball" 
+                href="https://open.spotify.com/show/1Ep6k8p6j4rMT1a0AFqX8C" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="text-muted-foreground hover:text-primary transition-colors"
               >
                 RISE Podcast
               </a>
-              <Link to="/privacy" className="text-muted-foreground hover:text-primary transition-colors">
+              <Link to="/privacy-policy" className="text-muted-foreground hover:text-primary transition-colors">
                 Privacy Policy
               </Link>
-              <Link to="/terms" className="text-muted-foreground hover:text-primary transition-colors">
+              <Link to="/terms-of-service" className="text-muted-foreground hover:text-primary transition-colors">
                 Terms of Service
               </Link>
             </div>

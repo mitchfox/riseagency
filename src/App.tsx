@@ -25,6 +25,8 @@ import PerformanceReport from "./pages/PerformanceReport";
 import NotFound from "./pages/NotFound";
 import ImportProgramCSV from "./pages/ImportProgramCSV";
 import ReplaceProgram from "./pages/ReplaceProgram";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsOfService from "./pages/TermsOfService";
 
 const queryClient = new QueryClient();
 
@@ -60,6 +62,8 @@ const App = () => {
           <Route path="/performance-report/:analysisId" element={<PerformanceReport />} />
           <Route path="/import-program" element={<ImportProgramCSV />} />
           <Route path="/replace-program" element={<ReplaceProgram />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+          <Route path="/terms-of-service" element={<TermsOfService />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

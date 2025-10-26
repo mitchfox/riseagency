@@ -113,46 +113,54 @@ export default function BetweenTheLines() {
       <main className="flex-1 pt-32 pb-16 touch-pan-y overflow-x-hidden">
         <div className="container mx-auto px-4">
           {/* Page Title */}
-          <div className="text-center mb-8">
-            <h1 className="text-5xl md:text-7xl font-bebas uppercase tracking-wider text-primary mb-4">
-              Between The Lines
+          <div className="text-center mb-12 space-y-3 animate-fade-in">
+            <div className="inline-block">
+              <span className="text-sm font-bebas uppercase tracking-widest text-primary border border-primary/30 px-6 py-2 rounded-full">
+                Expert Content
+              </span>
+            </div>
+            <h1 className="text-5xl md:text-7xl lg:text-8xl font-bebas uppercase tracking-wider text-foreground mb-4">
+              Between <span className="text-primary">The Lines</span>
             </h1>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
               Expert insights, tactical analysis, and professional development content for football players and coaches
             </p>
           </div>
 
           {/* RISE Broadcast Advertisement */}
-          <div className="max-w-3xl mx-auto mb-12 p-6 rounded-lg border border-primary/20 bg-primary/5">
-            <div className="text-center">
-              <h2 className="text-2xl md:text-3xl font-bebas uppercase tracking-wider text-primary mb-3">
-                Join RISE Broadcast on Instagram
-              </h2>
-              <p className="text-foreground mb-4">
-                Get daily updates on agency insights, performance optimization, coaching systems, and player development strategies
-              </p>
-              <a
-                href="https://www.instagram.com/channel/AbY33s3ZhuxaNwuo/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-background font-bebas uppercase tracking-wider text-lg hover:bg-primary/90 transition-colors rounded"
-              >
-                Join the Channel
-              </a>
+          <section className="py-8 md:py-12 mb-12">
+            <div className="max-w-3xl mx-auto p-8 rounded-lg border border-primary/20 bg-primary/5 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent"></div>
+              <div className="text-center relative z-10">
+                <h2 className="text-2xl md:text-3xl font-bebas uppercase tracking-wider text-primary mb-3">
+                  Join RISE Broadcast on Instagram
+                </h2>
+                <p className="text-foreground mb-6 text-base md:text-lg leading-relaxed">
+                  Get daily updates on agency insights, performance optimization, coaching systems, and player development strategies
+                </p>
+                <a
+                  href="https://www.instagram.com/channel/AbY33s3ZhuxaNwuo/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-8 py-4 bg-primary text-background font-bebas uppercase tracking-wider text-lg hover:bg-primary/90 hover:scale-105 transition-all rounded shadow-lg"
+                >
+                  Join the Channel
+                </a>
+              </div>
             </div>
-          </div>
+          </section>
 
           {/* Category Filters */}
-          <div className="mb-6 pb-4 border-b border-border overflow-x-auto">
+          <div className="mb-6 pb-4 border-b border-border/50 overflow-x-auto">
             <div className="flex gap-4 min-w-max">
               {categories.map((category) => (
                 <button
                   key={category}
                   onClick={() => setSelectedCategory(category)}
-                  className={`text-sm font-bebas uppercase tracking-wider px-4 py-2 transition-colors whitespace-nowrap ${
+                  className={`text-sm font-bebas uppercase tracking-wider px-4 py-2 rounded transition-all whitespace-nowrap ${
                     selectedCategory === category
-                      ? "text-primary border-b-2 border-primary"
-                      : "text-muted-foreground hover:text-foreground"
+                      ? "text-primary bg-primary/10 border border-primary/30"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                   }`}
                 >
                   {category}
@@ -162,16 +170,16 @@ export default function BetweenTheLines() {
           </div>
 
           {/* Position Filters */}
-          <div className="mb-12 pb-4 border-b border-border overflow-x-auto">
+          <div className="mb-12 pb-4 border-b border-border/50 overflow-x-auto">
             <div className="flex gap-4 min-w-max">
               {positions.map((position) => (
                 <button
                   key={position}
                   onClick={() => setSelectedPosition(position)}
-                  className={`text-sm font-bebas uppercase tracking-wider px-4 py-2 transition-colors whitespace-nowrap ${
+                  className={`text-sm font-bebas uppercase tracking-wider px-4 py-2 rounded transition-all whitespace-nowrap ${
                     selectedPosition === position
-                      ? "text-primary border-b-2 border-primary"
-                      : "text-muted-foreground hover:text-foreground"
+                      ? "text-primary bg-primary/10 border border-primary/30"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                   }`}
                 >
                   {position}
@@ -182,36 +190,39 @@ export default function BetweenTheLines() {
 
           {/* Articles Grid */}
           {loading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {[...Array(6)].map((_, i) => (
                 <div key={i} className="space-y-4">
-                  <Skeleton className="h-64 w-full" />
+                  <Skeleton className="h-80 w-full rounded-lg" />
                   <Skeleton className="h-4 w-24" />
                   <Skeleton className="h-6 w-full" />
                 </div>
               ))}
             </div>
           ) : filteredArticles.length === 0 ? (
-            <div className="text-center py-16">
+            <div className="text-center py-20">
               <p className="text-xl text-muted-foreground">
                 No articles found for the selected filters
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {filteredArticles.map((article) => (
                 <a
                   key={article.id}
                   href={`/between-the-lines/${createSlug(article.title)}`}
-                  className="group cursor-pointer overflow-hidden rounded-lg border border-border hover:border-primary transition-all"
+                  className="group cursor-pointer overflow-hidden rounded-lg border border-border hover:border-primary/50 transition-all hover:shadow-lg"
                 >
                   <div className="relative aspect-[4/3] overflow-hidden bg-black">
                     {article.image_url ? (
-                      <img
-                        src={article.image_url}
-                        alt={article.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
+                      <>
+                        <img
+                          src={article.image_url}
+                          alt={article.title}
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent opacity-60 group-hover:opacity-80 transition-opacity" />
+                      </>
                     ) : (
                       <div className="w-full h-full flex items-center justify-center bg-muted">
                         <p className="text-muted-foreground">No image</p>
@@ -219,18 +230,18 @@ export default function BetweenTheLines() {
                     )}
                     {article.category && (
                       <div className="absolute top-4 left-4">
-                        <Badge className="bg-primary/90 text-black font-bebas uppercase tracking-wider">
+                        <Badge className="bg-primary text-background font-bebas uppercase tracking-wider shadow-lg">
                           {article.category}
                         </Badge>
                       </div>
                     )}
                   </div>
-                  <div className="p-6">
-                    <h3 className="text-xl font-bebas uppercase tracking-wider text-foreground group-hover:text-primary transition-colors mb-2">
+                  <div className="p-6 bg-card">
+                    <h3 className="text-xl md:text-2xl font-bebas uppercase tracking-wider text-foreground group-hover:text-primary transition-colors mb-2 line-clamp-2">
                       {article.title}
                     </h3>
                     {article.excerpt && (
-                      <p className="text-sm text-muted-foreground line-clamp-2">
+                      <p className="text-sm text-muted-foreground line-clamp-3 leading-relaxed">
                         {article.excerpt}
                       </p>
                     )}
