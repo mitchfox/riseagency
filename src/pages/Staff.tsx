@@ -25,9 +25,17 @@ const Staff = () => {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(true);
   const [isStaff, setIsStaff] = useState(false);
-  const [rememberMe, setRememberMe] = useState(true);
+  const [rememberMe, setRememberMe] = useState(false);
   const [expandedSection, setExpandedSection] = useState<'players' | 'blog' | 'betweenthelines' | 'coaching' | 'submissions' | 'visitors' | null>('players');
   const navigate = useNavigate();
+
+  // Load saved email and remember me preference on mount
+  useEffect(() => {
+    const savedEmail = localStorage.getItem("staff_saved_email");
+    const savedRememberMe = localStorage.getItem("staff_remember_me");
+    if (savedEmail) setEmail(savedEmail);
+    if (savedRememberMe === "true") setRememberMe(true);
+  }, []);
 
   useEffect(() => {
     // Set up auth state listener
@@ -96,6 +104,15 @@ const Staff = () => {
       }
 
       if (data.user) {
+        // Save email and remember me preference if checked
+        if (rememberMe) {
+          localStorage.setItem("staff_saved_email", email);
+          localStorage.setItem("staff_remember_me", "true");
+        } else {
+          localStorage.removeItem("staff_saved_email");
+          localStorage.removeItem("staff_remember_me");
+        }
+        
         await checkStaffRole(data.user.id);
         toast.success("Login successful");
       }

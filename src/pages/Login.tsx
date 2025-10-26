@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,14 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
+
+  // Load saved email and remember me preference on mount
+  useEffect(() => {
+    const savedEmail = localStorage.getItem("player_saved_email");
+    const savedRememberMe = localStorage.getItem("player_remember_me");
+    if (savedEmail) setEmail(savedEmail);
+    if (savedRememberMe === "true") setRememberMe(true);
+  }, []);
 
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,10 +44,14 @@ const Login = () => {
         return;
       }
 
-      // Store email in session or local storage based on remember me
+      // Save email to localStorage if remember me is checked
       if (rememberMe) {
+        localStorage.setItem("player_saved_email", email);
+        localStorage.setItem("player_remember_me", "true");
         localStorage.setItem("player_email", email);
       } else {
+        localStorage.removeItem("player_saved_email");
+        localStorage.removeItem("player_remember_me");
         sessionStorage.setItem("player_email", email);
       }
       

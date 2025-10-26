@@ -118,8 +118,8 @@ const Dashboard = () => {
 
   const checkAuth = async () => {
     try {
-      // Check both session and local storage
-      const playerEmail = sessionStorage.getItem("player_email") || localStorage.getItem("player_email");
+      // Check localStorage first (persistent), then sessionStorage (session only)
+      const playerEmail = localStorage.getItem("player_email") || sessionStorage.getItem("player_email");
       
       if (!playerEmail) {
         navigate("/login");
@@ -229,6 +229,7 @@ const Dashboard = () => {
   };
 
   const handleLogout = async () => {
+    // Clear both session and persistent storage
     sessionStorage.removeItem("player_email");
     localStorage.removeItem("player_email");
     toast.success("Logged out successfully");
@@ -531,25 +532,28 @@ const Dashboard = () => {
                                                   key={idx}
                                                   className="grid grid-cols-8 gap-1 md:gap-2"
                                                 >
-                                                  {/* Week Cell */}
-                                                   <div 
-                                                     className="p-1 md:p-6 text-[10px] md:text-base font-medium italic flex items-center rounded-lg leading-tight"
-                                                     style={{ 
-                                                       backgroundColor: 'hsl(0, 0%, 95%)',
-                                                       color: 'hsl(0, 0%, 0%)'
-                                                     }}
-                                                   >
-                                                     <span className="text-left w-full">
-                                                       {week.week_start_date ? (() => {
-                                                         const date = parseISO(week.week_start_date);
-                                                         const day = format(date, 'd');
-                                                         const suffix = day.endsWith('1') && day !== '11' ? 'st' :
-                                                                       day.endsWith('2') && day !== '12' ? 'nd' :
-                                                                       day.endsWith('3') && day !== '13' ? 'rd' : 'th';
-                                                         return `${day}${suffix} ${format(date, 'MMMM')}`;
-                                                       })() : week.week}
-                                                     </span>
-                                                   </div>
+                                                   {/* Week Cell */}
+                                                    <div 
+                                                      className="p-1 md:p-6 text-[9px] md:text-sm font-medium italic flex flex-col items-start justify-center rounded-lg leading-tight"
+                                                      style={{ 
+                                                        backgroundColor: 'hsl(0, 0%, 95%)',
+                                                        color: 'hsl(0, 0%, 0%)'
+                                                      }}
+                                                    >
+                                                      {week.week_start_date ? (() => {
+                                                        const date = parseISO(week.week_start_date);
+                                                        const day = format(date, 'd');
+                                                        const suffix = day.endsWith('1') && day !== '11' ? 'st' :
+                                                                      day.endsWith('2') && day !== '12' ? 'nd' :
+                                                                      day.endsWith('3') && day !== '13' ? 'rd' : 'th';
+                                                        return (
+                                                          <>
+                                                            <span className="font-bold text-[11px] md:text-base">{day}{suffix}</span>
+                                                            <span className="text-[9px] md:text-sm">{format(date, 'MMMM')}</span>
+                                                          </>
+                                                        );
+                                                      })() : <span>{week.week}</span>}
+                                                    </div>
                                                   
                                                   {/* Day Cells */}
                                                   {['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map((day, dayIdx) => {
@@ -578,27 +582,36 @@ const Dashboard = () => {
                                                           }
                                                         }}
                                                       >
-                                                        {/* Day number in top right */}
-                                                        {dayDate && (
-                                                          <span 
-                                                            className="absolute top-0.5 right-0.5 text-[8px] md:text-xs opacity-50 leading-none"
-                                                            style={{ color: colors.text }}
-                                                          >
-                                                            {format(dayDate, 'd')}
-                                                          </span>
-                                                        )}
-                                                        
-                                                        {sessionValue && (
-                                                          <span 
-                                                            className="font-bebas text-base md:text-2xl uppercase font-bold"
-                                                            style={{ 
-                                                              color: colors.text,
-                                                              textShadow: '0 2px 4px rgba(0, 0, 0, 0.3)'
-                                                            }}
-                                                          >
-                                                            {sessionValue}
-                                                          </span>
-                                                        )}
+                                                         {/* Day number in top right */}
+                                                         {dayDate && (
+                                                           <span 
+                                                             className="absolute top-0.5 right-0.5 text-[8px] md:text-xs opacity-50 leading-none"
+                                                             style={{ color: colors.text }}
+                                                           >
+                                                             {format(dayDate, 'd')}
+                                                           </span>
+                                                         )}
+                                                         
+                                                         {/* Display image if available */}
+                                                         {week[`${day}_image`] && (
+                                                           <img 
+                                                             src={week[`${day}_image`]} 
+                                                             alt={`${day} session`}
+                                                             className="absolute inset-0 w-full h-full object-cover rounded-lg opacity-20"
+                                                           />
+                                                         )}
+                                                         
+                                                         {sessionValue && (
+                                                           <span 
+                                                             className="font-bebas text-base md:text-2xl uppercase font-bold relative z-10"
+                                                             style={{ 
+                                                               color: colors.text,
+                                                               textShadow: '0 2px 4px rgba(0, 0, 0, 0.3)'
+                                                             }}
+                                                           >
+                                                             {sessionValue}
+                                                           </span>
+                                                         )}
                                                       </div>
                                                    );
                                                  })}
