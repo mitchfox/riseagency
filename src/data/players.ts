@@ -64,6 +64,7 @@ export interface Player {
     label: string;
     value: string | number;
     description?: string;
+    icon?: string;
   }[];
 }
 
@@ -176,8 +177,8 @@ export const players: Player[] = [
       { club: "Previous Club", formation: "4-3-3", matches: 15, clubLogo: "https://upload.wikimedia.org/wikipedia/en/thumb/c/cc/Chelsea_FC.svg/200px-Chelsea_FC.svg.png" }
     ],
     topStats: [
-      { label: "Interceptions", value: "#1 In League", description: "14.0 per 90 minutes" },
-      { label: "Passing Accuracy", value: "92%", description: "Exceptional distribution" }
+      { label: "Interceptions", value: "#1 In League", description: "14.0 per 90 minutes", icon: "shield" },
+      { label: "Passing Accuracy", value: "92%", description: "Exceptional distribution", icon: "target" }
     ],
     news: [
       {

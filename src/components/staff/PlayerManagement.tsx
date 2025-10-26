@@ -138,7 +138,7 @@ const PlayerManagement = () => {
     { header: "Minutes", value: "" }
   ]);
 
-  const [topStats, setTopStats] = useState<{ label: string; value: string; description: string }[]>([]);
+  const [topStats, setTopStats] = useState<{ label: string; value: string; description: string; icon?: string }[]>([]);
 
   const [analysisData, setAnalysisData] = useState({
     opponent: "",
@@ -1330,12 +1330,33 @@ const PlayerManagement = () => {
                         placeholder="e.g., 14.0 per 90 minutes"
                       />
                     </div>
+                    <div className="space-y-2">
+                      <Label htmlFor={`top-stat-icon-${index}`}>Icon</Label>
+                      <select
+                        id={`top-stat-icon-${index}`}
+                        value={stat.icon || 'default'}
+                        onChange={(e) => {
+                          const newStats = [...topStats];
+                          newStats[index].icon = e.target.value;
+                          setTopStats(newStats);
+                        }}
+                        className="w-full h-10 px-3 py-2 text-sm bg-background border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+                      >
+                        <option value="default">Default (Target)</option>
+                        <option value="shield">Shield (Defense)</option>
+                        <option value="target">Target (Accuracy)</option>
+                        <option value="zap">Lightning (Speed/Power)</option>
+                        <option value="muscle">Muscle (Strength)</option>
+                        <option value="1v1">1v1 (Dribbling)</option>
+                        <option value="trophy">Trophy (Achievement)</option>
+                      </select>
+                    </div>
                   </div>
                 ))}
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => setTopStats([...topStats, { label: "", value: "", description: "" }])}
+                  onClick={() => setTopStats([...topStats, { label: "", value: "", description: "", icon: "default" }])}
                 >
                   Add Top Stat
                 </Button>
