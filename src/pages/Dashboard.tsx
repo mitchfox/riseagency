@@ -498,16 +498,16 @@ const Dashboard = () => {
                                             <div>
                                             {/* Table Header */}
                                             <div className="grid grid-cols-8 gap-1 md:gap-2 mb-2">
-                                               <div 
-                                                 className="p-1 md:p-4 font-bebas uppercase text-[10px] md:text-lg flex items-center rounded-lg leading-tight"
-                                                 style={{ 
-                                                   backgroundColor: 'hsl(45, 70%, 55%)',
-                                                   color: 'hsl(0, 0%, 0%)'
-                                                 }}
-                                               >
-                                                 <span className="hidden md:inline text-left w-full">Week Start Date</span>
-                                                 <span className="md:hidden text-left w-full">Week Start</span>
-                                               </div>
+                                                <div 
+                                                  className="p-1 md:p-4 font-bebas uppercase text-[10px] md:text-lg flex items-center justify-center rounded-lg leading-tight"
+                                                  style={{ 
+                                                    backgroundColor: 'hsl(45, 70%, 55%)',
+                                                    color: 'hsl(0, 0%, 0%)'
+                                                  }}
+                                                >
+                                                  <span className="hidden md:inline text-center w-full">Week Start Date</span>
+                                                  <span className="md:hidden text-center w-full">Week Start</span>
+                                                </div>
                                               {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, idx) => (
                                                 <div 
                                                   key={day}
@@ -534,7 +534,7 @@ const Dashboard = () => {
                                                 >
                                                    {/* Week Cell */}
                                                     <div 
-                                                      className="p-1 md:p-6 text-[9px] md:text-sm font-medium italic flex flex-col items-start justify-start rounded-lg leading-tight text-left"
+                                                      className="p-1 md:p-6 text-[9px] md:text-sm font-medium italic flex flex-col items-center justify-center rounded-lg leading-tight text-center"
                                                       style={{ 
                                                         backgroundColor: 'hsl(0, 0%, 95%)',
                                                         color: 'hsl(0, 0%, 0%)'
@@ -547,7 +547,7 @@ const Dashboard = () => {
                                                                       day.endsWith('2') && day !== '12' ? 'nd' :
                                                                       day.endsWith('3') && day !== '13' ? 'rd' : 'th';
                                                         return (
-                                                          <div className="text-left w-full">
+                                                          <div className="text-center w-full">
                                                             <div className="font-bold text-[11px] md:text-base">{day}{suffix}</div>
                                                             <div className="text-[9px] md:text-sm">{format(date, 'MMMM')}</div>
                                                           </div>
@@ -592,12 +592,13 @@ const Dashboard = () => {
                                                            </span>
                                                          )}
                                                          
-                                                         {/* Display image if available */}
+                                                         {/* Display club logo if available */}
                                                          {week[`${day}_image`] && (
                                                            <img 
                                                              src={week[`${day}_image`]} 
                                                              alt={`${day} session`}
-                                                             className="absolute inset-0 w-full h-full object-cover rounded-lg opacity-20"
+                                                             className="absolute inset-0 w-full h-full object-contain p-2 rounded-lg opacity-30"
+                                                             style={{ filter: 'brightness(1.2)' }}
                                                            />
                                                          )}
                                                          
