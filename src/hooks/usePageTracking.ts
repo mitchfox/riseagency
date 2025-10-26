@@ -49,26 +49,32 @@ export const usePageTracking = () => {
       const duration = Math.round((Date.now() - startTimeRef.current) / 1000);
       
       // Update the visit duration when leaving the page
-      const updateVisit = async () => {
-        try {
-          await supabase.functions.invoke("track-visit", {
-            body: {
-              visitorId: visitorIdRef.current,
-              pagePath: location.pathname,
-              duration,
-              referrer: document.referrer,
-              isInitial: false,
-              visitId: visitId,
-            },
-          });
-        } catch (error) {
-          console.error("Failed to update visit duration:", error);
-        }
-      };
+      // Use sendBeacon for more reliable tracking on page unload
+      if (duration >= 1 && visitId) {
+        const updateData = {
+          visitorId: visitorIdRef.current,
+          pagePath: location.pathname,
+          duration,
+          referrer: document.referrer,
+          isInitial: false,
+          visitId: visitId,
+        };
 
-      // Only update if we stayed for at least 1 second
-      if (duration >= 1) {
-        updateVisit();
+        // Try sendBeacon first (more reliable), fallback to fetch
+        const blob = new Blob([JSON.stringify(updateData)], { type: 'application/json' });
+        const sent = navigator.sendBeacon(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/track-visit`,
+          blob
+        );
+
+        if (!sent) {
+          // Fallback to regular fetch if sendBeacon fails
+          supabase.functions.invoke("track-visit", {
+            body: updateData,
+          }).catch((error) => {
+            console.error("Failed to update visit duration:", error);
+          });
+        }
       }
     };
   }, [location.pathname]);

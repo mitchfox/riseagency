@@ -58,6 +58,11 @@ export const SiteVisitorsManagement = () => {
     uniqueVisitors: 0,
     avgDuration: 0,
   });
+  const [allTimeStats, setAllTimeStats] = useState({
+    totalVisits: 0,
+    uniqueVisitors: 0,
+    avgDuration: 0,
+  });
 
   const loadVisits = async () => {
     setLoading(true);
@@ -89,14 +94,33 @@ export const SiteVisitorsManagement = () => {
 
       setVisits(data || []);
       
-      // Calculate stats
+      // Calculate daily stats (excluding 0-duration visits from average)
       const uniqueVisitorIds = new Set(data?.map((v) => v.visitor_id) || []);
-      const totalDuration = data?.reduce((acc, v) => acc + (v.duration || 0), 0) || 0;
+      const visitsWithDuration = data?.filter(v => v.duration > 0) || [];
+      const totalDuration = visitsWithDuration.reduce((acc, v) => acc + v.duration, 0);
       
       setStats({
         totalVisits: data?.length || 0,
         uniqueVisitors: uniqueVisitorIds.size,
-        avgDuration: data?.length ? Math.round(totalDuration / data.length) : 0,
+        avgDuration: visitsWithDuration.length ? Math.round(totalDuration / visitsWithDuration.length) : 0,
+      });
+
+      // Load all-time stats
+      const { data: allTimeData, error: allTimeError } = await supabase
+        .from("site_visits")
+        .select("*")
+        .eq("hidden", showHidden);
+
+      if (allTimeError) throw allTimeError;
+
+      const allTimeUniqueVisitors = new Set(allTimeData?.map((v) => v.visitor_id) || []);
+      const allTimeVisitsWithDuration = allTimeData?.filter(v => v.duration > 0) || [];
+      const allTimeTotalDuration = allTimeVisitsWithDuration.reduce((acc, v) => acc + v.duration, 0);
+
+      setAllTimeStats({
+        totalVisits: allTimeData?.length || 0,
+        uniqueVisitors: allTimeUniqueVisitors.size,
+        avgDuration: allTimeVisitsWithDuration.length ? Math.round(allTimeTotalDuration / allTimeVisitsWithDuration.length) : 0,
       });
     } catch (error) {
       console.error("Error loading visits:", error);
@@ -306,37 +330,78 @@ export const SiteVisitorsManagement = () => {
 
   return (
     <div className="space-y-6">
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Visits</CardTitle>
-            <Eye className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalVisits}</div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Unique Visitors</CardTitle>
-            <MapPin className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.uniqueVisitors}</div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Avg. Duration</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{formatDuration(stats.avgDuration)}</div>
-          </CardContent>
-        </Card>
+      {/* All-Time Stats Cards */}
+      <div>
+        <h3 className="text-sm font-medium text-muted-foreground mb-3">All Time</h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Visits</CardTitle>
+              <Eye className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{allTimeStats.totalVisits}</div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Unique Visitors</CardTitle>
+              <MapPin className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{allTimeStats.uniqueVisitors}</div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Avg. Duration</CardTitle>
+              <Clock className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{formatDuration(allTimeStats.avgDuration)}</div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* Daily Stats Cards */}
+      <div>
+        <h3 className="text-sm font-medium text-muted-foreground mb-3">
+          {format(selectedDate, "MMMM d, yyyy")}
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Visits</CardTitle>
+              <Eye className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.totalVisits}</div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Unique Visitors</CardTitle>
+              <MapPin className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.uniqueVisitors}</div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Avg. Duration</CardTitle>
+              <Clock className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{formatDuration(stats.avgDuration)}</div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       {/* Filters */}
