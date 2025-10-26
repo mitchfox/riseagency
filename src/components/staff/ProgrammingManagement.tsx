@@ -163,6 +163,9 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
   const [isExerciseSelectorOpen, setIsExerciseSelectorOpen] = useState(false);
   const [showPasteDialog, setShowPasteDialog] = useState(false);
   const [pasteText, setPasteText] = useState("");
+  const [showPasteScheduleDialog, setShowPasteScheduleDialog] = useState(false);
+  const [pasteScheduleText, setPasteScheduleText] = useState("");
+  const [pasteScheduleWeekIndex, setPasteScheduleWeekIndex] = useState<number | null>(null);
 
   useEffect(() => {
     if (isOpen && playerId) {
@@ -747,6 +750,58 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
     updateField('weeklySchedules', updated);
   };
 
+  const getSessionColor = (sessionLetter: string): string => {
+    const upperLetter = sessionLetter.toUpperCase().trim();
+    const colorMap: { [key: string]: string } = {
+      'A': 'red',
+      'B': 'blue', 
+      'C': 'green',
+      'D': 'yellow',
+      'E': 'purple',
+      'F': 'orange',
+      'G': 'gray',
+      'H': 'red'
+    };
+    return colorMap[upperLetter] || 'gray';
+  };
+
+  const parsePastedSchedule = () => {
+    if (pasteScheduleWeekIndex === null || !pasteScheduleText.trim()) {
+      toast.error("Please paste schedule data");
+      return;
+    }
+
+    const lines = pasteScheduleText.trim().split('\n').filter(line => line.trim());
+    const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+    const updated = [...programmingData.weeklySchedules];
+    
+    lines.forEach((line, idx) => {
+      if (idx >= 7) return; // Only process first 7 lines (one per day)
+      
+      const fields = line.split('\t').map(f => f.trim());
+      const dayIndex = idx;
+      const activity = fields[0] || '';
+      
+      if (activity && dayIndex < 7) {
+        const day = days[dayIndex];
+        updated[pasteScheduleWeekIndex][day as keyof WeeklySchedule] = activity;
+        
+        // Auto-determine color from session letter
+        const sessionLetter = activity.match(/\b([A-H])\b/i)?.[0];
+        if (sessionLetter) {
+          const color = getSessionColor(sessionLetter);
+          updated[pasteScheduleWeekIndex][`${day}Color` as keyof WeeklySchedule] = color;
+        }
+      }
+    });
+
+    updateField('weeklySchedules', updated);
+    toast.success("Schedule pasted successfully");
+    setShowPasteScheduleDialog(false);
+    setPasteScheduleText("");
+    setPasteScheduleWeekIndex(null);
+  };
+
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
@@ -1223,14 +1278,26 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
                                 />
                               </div>
                             </div>
-                            <Button
-                              variant="destructive"
-                              size="sm"
-                              onClick={() => removeWeeklySchedule(idx)}
-                            >
-                              <Trash2 className="w-4 h-4 mr-2" />
-                              Remove Week
-                            </Button>
+                            <div className="flex gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  setPasteScheduleWeekIndex(idx);
+                                  setShowPasteScheduleDialog(true);
+                                }}
+                              >
+                                📋 Paste Week
+                              </Button>
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => removeWeeklySchedule(idx)}
+                              >
+                                <Trash2 className="w-4 h-4 mr-2" />
+                                Remove Week
+                              </Button>
+                            </div>
                           </div>
 
                           <div className="overflow-x-auto">
@@ -1239,28 +1306,43 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
                                 <div key={day} className="space-y-2">
                                   <Label className="text-xs capitalize">{day}</Label>
                                   <Input
-                                    placeholder="Activity"
+                                    placeholder="Session (e.g., A, B, Rest)"
                                     value={schedule[day as keyof WeeklySchedule] as string}
-                                    onChange={(e) => updateWeeklySchedule(idx, day as keyof WeeklySchedule, e.target.value)}
+                                    onChange={(e) => {
+                                      const value = e.target.value;
+                                      updateWeeklySchedule(idx, day as keyof WeeklySchedule, value);
+                                      
+                                      // Auto-set color based on session letter
+                                      const sessionLetter = value.match(/\b([A-H])\b/i)?.[0];
+                                      if (sessionLetter) {
+                                        const color = getSessionColor(sessionLetter);
+                                        updateWeeklySchedule(idx, `${day}Color` as keyof WeeklySchedule, color);
+                                      }
+                                    }}
                                     className="text-xs"
                                   />
-                                  <Select
-                                    value={schedule[`${day}Color` as keyof WeeklySchedule] as string}
-                                    onValueChange={(value) => updateWeeklySchedule(idx, `${day}Color` as keyof WeeklySchedule, value)}
-                                  >
-                                    <SelectTrigger className="text-xs">
-                                      <SelectValue placeholder="Color" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="red">Red</SelectItem>
-                                      <SelectItem value="blue">Blue</SelectItem>
-                                      <SelectItem value="green">Green</SelectItem>
-                                      <SelectItem value="yellow">Yellow</SelectItem>
-                                      <SelectItem value="purple">Purple</SelectItem>
-                                      <SelectItem value="orange">Orange</SelectItem>
-                                      <SelectItem value="gray">Gray</SelectItem>
-                                    </SelectContent>
-                                  </Select>
+                                  <div className="text-xs text-muted-foreground text-center">
+                                    {schedule[`${day}Color` as keyof WeeklySchedule] && (
+                                      <span className="inline-block px-2 py-1 rounded" style={{
+                                        backgroundColor: (() => {
+                                          const color = schedule[`${day}Color` as keyof WeeklySchedule] as string;
+                                          const colorMap: { [key: string]: string } = {
+                                            'red': '#ef4444',
+                                            'blue': '#3b82f6',
+                                            'green': '#22c55e',
+                                            'yellow': '#eab308',
+                                            'purple': '#a855f7',
+                                            'orange': '#f97316',
+                                            'gray': '#6b7280'
+                                          };
+                                          return colorMap[color] || '#6b7280';
+                                        })(),
+                                        color: 'white'
+                                      }}>
+                                        {schedule[`${day}Color` as keyof WeeklySchedule]}
+                                      </span>
+                                    )}
+                                  </div>
                                 </div>
                               ))}
                             </div>
@@ -1401,6 +1483,42 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
             </Button>
             <Button onClick={parsePastedExercises}>
               Import Exercises
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+
+    <Dialog open={showPasteScheduleDialog} onOpenChange={setShowPasteScheduleDialog}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Paste Weekly Schedule</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div className="bg-muted p-4 rounded-lg text-sm space-y-2">
+            <p className="font-semibold">Format: One day per line (Monday to Sunday)</p>
+            <p className="text-muted-foreground">Just paste the activity/session for each day</p>
+            <p className="text-xs text-muted-foreground mt-2">
+              Example: Copy 7 lines from Excel/Sheets with one activity per line. Colors will be auto-assigned based on session letters (A-H).
+            </p>
+          </div>
+          <Textarea
+            placeholder="Paste your weekly schedule here (one day per line)...&#10;&#10;Example:&#10;Session A&#10;Rest&#10;Session B&#10;Rest&#10;Session C&#10;Rest&#10;Recovery"
+            value={pasteScheduleText}
+            onChange={(e) => setPasteScheduleText(e.target.value)}
+            rows={10}
+            className="font-mono text-sm"
+          />
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => {
+              setShowPasteScheduleDialog(false);
+              setPasteScheduleText("");
+              setPasteScheduleWeekIndex(null);
+            }}>
+              Cancel
+            </Button>
+            <Button onClick={parsePastedSchedule}>
+              Import Schedule
             </Button>
           </div>
         </div>
