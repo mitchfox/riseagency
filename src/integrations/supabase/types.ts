@@ -631,6 +631,7 @@ export type Database = {
         Row: {
           created_at: string
           duration: number | null
+          hidden: boolean | null
           id: string
           location: Json | null
           page_path: string
@@ -642,6 +643,7 @@ export type Database = {
         Insert: {
           created_at?: string
           duration?: number | null
+          hidden?: boolean | null
           id?: string
           location?: Json | null
           page_path: string
@@ -653,6 +655,7 @@ export type Database = {
         Update: {
           created_at?: string
           duration?: number | null
+          hidden?: boolean | null
           id?: string
           location?: Json | null
           page_path?: string

@@ -20,7 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Eye, MapPin, Clock, RefreshCw } from "lucide-react";
+import { Eye, MapPin, Clock, RefreshCw, EyeOff } from "lucide-react";
 
 interface SiteVisit {
   id: string;
@@ -31,6 +31,7 @@ interface SiteVisit {
   user_agent: string;
   referrer: string | null;
   visited_at: string;
+  hidden: boolean;
 }
 
 export const SiteVisitorsManagement = () => {
@@ -42,6 +43,7 @@ export const SiteVisitorsManagement = () => {
   const [selectedVisitor, setSelectedVisitor] = useState<string | null>(null);
   const [visitorDetails, setVisitorDetails] = useState<SiteVisit[]>([]);
   const [showUniqueOnly, setShowUniqueOnly] = useState(true); // Default to true
+  const [showHidden, setShowHidden] = useState(false);
   const [stats, setStats] = useState({
     totalVisits: 0,
     uniqueVisitors: 0,
@@ -60,6 +62,9 @@ export const SiteVisitorsManagement = () => {
       if (pageFilter !== "all") {
         query = query.eq("page_path", pageFilter);
       }
+
+      // Filter based on showHidden state
+      query = query.eq("hidden", showHidden);
 
       const { data, error } = await query;
 
@@ -129,7 +134,45 @@ export const SiteVisitorsManagement = () => {
   useEffect(() => {
     loadVisits();
     loadUniquePaths();
-  }, [pageFilter]);
+  }, [pageFilter, showHidden]);
+
+  const hideVisitor = async (visitorId: string) => {
+    try {
+      const { error } = await supabase
+        .from("site_visits")
+        .update({ hidden: true })
+        .eq("visitor_id", visitorId);
+
+      if (error) throw error;
+
+      toast.success("Visitor hidden successfully");
+      setSelectedVisitor(null);
+      setVisitorDetails([]);
+      loadVisits();
+    } catch (error) {
+      console.error("Error hiding visitor:", error);
+      toast.error("Failed to hide visitor");
+    }
+  };
+
+  const unhideVisitor = async (visitorId: string) => {
+    try {
+      const { error } = await supabase
+        .from("site_visits")
+        .update({ hidden: false })
+        .eq("visitor_id", visitorId);
+
+      if (error) throw error;
+
+      toast.success("Visitor unhidden successfully");
+      setSelectedVisitor(null);
+      setVisitorDetails([]);
+      loadVisits();
+    } catch (error) {
+      console.error("Error unhiding visitor:", error);
+      toast.error("Failed to unhide visitor");
+    }
+  };
 
   const formatDuration = (seconds: number) => {
     if (seconds < 60) return `${seconds}s`;
@@ -167,17 +210,39 @@ export const SiteVisitorsManagement = () => {
     : filteredVisits;
 
   if (selectedVisitor) {
+    const isVisitorHidden = visitorDetails.length > 0 && visitorDetails[0].hidden;
+    
     return (
       <div className="space-y-4">
-        <Button
-          variant="outline"
-          onClick={() => {
-            setSelectedVisitor(null);
-            setVisitorDetails([]);
-          }}
-        >
-          ← Back to All Visitors
-        </Button>
+        <div className="flex items-center justify-between">
+          <Button
+            variant="outline"
+            onClick={() => {
+              setSelectedVisitor(null);
+              setVisitorDetails([]);
+            }}
+          >
+            ← Back to All Visitors
+          </Button>
+
+          {isVisitorHidden ? (
+            <Button
+              variant="default"
+              onClick={() => unhideVisitor(selectedVisitor)}
+            >
+              <Eye className="h-4 w-4 mr-2" />
+              Unhide Visitor
+            </Button>
+          ) : (
+            <Button
+              variant="destructive"
+              onClick={() => hideVisitor(selectedVisitor)}
+            >
+              <EyeOff className="h-4 w-4 mr-2" />
+              Hide Visitor
+            </Button>
+          )}
+        </div>
 
         <Card>
           <CardHeader>
@@ -260,7 +325,22 @@ export const SiteVisitorsManagement = () => {
       {/* Filters */}
       <Card>
         <CardHeader>
-          <CardTitle>Site Visitors</CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle>{showHidden ? "Hidden Visitors" : "Site Visitors"}</CardTitle>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="showHidden"
+                checked={showHidden}
+                onCheckedChange={(checked) => setShowHidden(checked as boolean)}
+              />
+              <label
+                htmlFor="showHidden"
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+              >
+                Show hidden visitors
+              </label>
+            </div>
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex flex-col md:flex-row gap-4">
