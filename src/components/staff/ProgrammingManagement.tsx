@@ -161,6 +161,8 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
     exercises: false
   });
   const [isExerciseSelectorOpen, setIsExerciseSelectorOpen] = useState(false);
+  const [showPasteDialog, setShowPasteDialog] = useState(false);
+  const [pasteText, setPasteText] = useState("");
 
   useEffect(() => {
     if (isOpen && playerId) {
@@ -652,6 +654,51 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
     });
   };
 
+  const parsePastedExercises = () => {
+    if (!selectedSession || !pasteText.trim()) {
+      toast.error("Please paste exercise data");
+      return;
+    }
+
+    const lines = pasteText.trim().split('\n').filter(line => line.trim());
+    const newExercises: Exercise[] = [];
+
+    for (const line of lines) {
+      const fields = line.split('\t').map(f => f.trim());
+      
+      if (fields.length < 4) {
+        console.warn(`Skipping invalid line (needs at least 4 fields): ${line.substring(0, 50)}...`);
+        continue;
+      }
+
+      const exercise: Exercise = {
+        name: fields[0] || '',
+        description: fields[1] || '',
+        repetitions: fields[2] || '',
+        sets: fields[3] || '',
+        load: '',
+        recoveryTime: '',
+        videoUrl: fields[4] || '',
+      };
+
+      newExercises.push(exercise);
+    }
+
+    if (newExercises.length > 0) {
+      const session = programmingData[selectedSession as SessionKey] as SessionData;
+      updateField(selectedSession as SessionKey, {
+        ...session,
+        exercises: [...session.exercises, ...newExercises]
+      });
+
+      toast.success(`Added ${newExercises.length} exercise${newExercises.length > 1 ? 's' : ''}`);
+      setShowPasteDialog(false);
+      setPasteText("");
+    } else {
+      toast.error("No valid exercises found in pasted data");
+    }
+  };
+
   const removeExercise = (sessionKey: SessionKey, index: number) => {
     const session = programmingData[sessionKey] as SessionData;
     updateField(sessionKey, {
@@ -997,6 +1044,14 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
                               <Button
                                 type="button"
                                 size="sm"
+                                variant="outline"
+                                onClick={() => setShowPasteDialog(true)}
+                              >
+                                📋 Paste Exercises
+                              </Button>
+                              <Button
+                                type="button"
+                                size="sm"
                                 onClick={() => addExercise(selectedSession as SessionKey)}
                               >
                                 <Plus className="w-4 h-4 mr-2" />
@@ -1316,6 +1371,41 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
         }
       }}
     />
+
+    <Dialog open={showPasteDialog} onOpenChange={setShowPasteDialog}>
+      <DialogContent className="max-w-3xl">
+        <DialogHeader>
+          <DialogTitle>Paste Exercises</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div className="bg-muted p-4 rounded-lg text-sm space-y-2">
+            <p className="font-semibold">Format: Tab-separated values (one exercise per line)</p>
+            <p className="text-muted-foreground">Order: Name → Description → Reps → Sets → Video URL (optional)</p>
+            <p className="text-xs text-muted-foreground mt-2">
+              Example: Copy from Excel/Sheets where columns are: Exercise Name | Description | Reps | Sets | Video URL
+            </p>
+          </div>
+          <Textarea
+            placeholder="Paste your exercises here (tab-separated)...&#10;&#10;Example:&#10;Wall Volleys - Single-Leg Standing	Stand 1–2 metres from a wall...	90s (45s each side)	2&#10;Reverse Nordic Curl	Kneel on a padded surface...	8	2	https://video-url.com"
+            value={pasteText}
+            onChange={(e) => setPasteText(e.target.value)}
+            rows={12}
+            className="font-mono text-sm"
+          />
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => {
+              setShowPasteDialog(false);
+              setPasteText("");
+            }}>
+              Cancel
+            </Button>
+            <Button onClick={parsePastedExercises}>
+              Import Exercises
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
     </>
   );
 };
