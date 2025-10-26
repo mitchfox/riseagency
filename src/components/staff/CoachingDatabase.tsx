@@ -351,10 +351,10 @@ export const CoachingDatabase = () => {
 
         {Object.entries(tableConfigs).map(([key, config]) => (
           <TabsContent key={key} value={key} className="space-y-4">
-            <div className="flex justify-end">
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-end gap-4">
               <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                 <DialogTrigger asChild>
-                  <Button onClick={resetForm}>
+                  <Button onClick={resetForm} className="w-full sm:w-auto">
                     <Plus className="w-4 h-4 mr-2" />
                     Add {config.singular}
                   </Button>
