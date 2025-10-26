@@ -60,7 +60,7 @@ export default function BetweenTheLines() {
   const [selectedCategory, setSelectedCategory] = useState("ALL POSTS");
   const [selectedPosition, setSelectedPosition] = useState("ALL POSITIONS");
   const [autoplayPlugin] = useState(() =>
-    Autoplay({ delay: 4000, stopOnInteraction: true })
+    Autoplay({ delay: 2000, stopOnInteraction: false, stopOnMouseEnter: true })
   );
 
   useEffect(() => {
@@ -252,7 +252,7 @@ export default function BetweenTheLines() {
           )}
 
           {/* RISE Broadcast Advertisement */}
-          <section className="py-12 md:py-16 mt-16">
+          <section className="py-8">
             <div className="max-w-3xl mx-auto p-8 rounded-lg border border-primary/20 bg-primary/5 relative overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent"></div>
               <div className="text-center relative z-10">
