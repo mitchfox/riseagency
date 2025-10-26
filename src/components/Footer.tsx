@@ -1,6 +1,8 @@
 import { Link } from "react-router-dom";
 import { FaInstagram, FaTwitter, FaLinkedin, FaYoutube } from "react-icons/fa";
 import logo from "@/assets/logo.png";
+import { WorkWithUsDialog } from "@/components/WorkWithUsDialog";
+import { Button } from "@/components/ui/button";
 
 export const Footer = () => {
   return (
@@ -63,26 +65,14 @@ export const Footer = () => {
             <h3 className="font-bebas text-2xl uppercase tracking-wider text-foreground mb-6">
               Get In Touch
             </h3>
-            <div className="space-y-4">
-              <a 
-                href="mailto:jolon.levene@risefootballagency.com"
-                className="block group"
+            <WorkWithUsDialog>
+              <Button 
+                size="lg"
+                className="w-full btn-shine font-bebas uppercase tracking-wider text-lg"
               >
-                <div className="p-4 bg-primary/5 hover:bg-primary/10 rounded-lg border border-primary/20 hover:border-primary/40 transition-all">
-                  <p className="text-xs font-bebas uppercase tracking-wider text-primary mb-1">General Enquiries</p>
-                  <p className="text-sm text-foreground group-hover:text-primary transition-colors">jolon.levene@risefootballagency.com</p>
-                </div>
-              </a>
-              <a 
-                href="mailto:kuda.butawo@risefootballagency.com"
-                className="block group"
-              >
-                <div className="p-4 bg-primary/5 hover:bg-primary/10 rounded-lg border border-primary/20 hover:border-primary/40 transition-all">
-                  <p className="text-xs font-bebas uppercase tracking-wider text-primary mb-1">Media & Sponsors</p>
-                  <p className="text-sm text-foreground group-hover:text-primary transition-colors">kuda.butawo@risefootballagency.com</p>
-                </div>
-              </a>
-            </div>
+                Contact Us
+              </Button>
+            </WorkWithUsDialog>
           </div>
 
           {/* Social Media */}
