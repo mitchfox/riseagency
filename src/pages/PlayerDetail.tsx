@@ -487,10 +487,22 @@ const PlayerDetail = () => {
                           {/* Icon/Graphic */}
                           <div className="flex-shrink-0 w-16 h-16 bg-primary/10 rounded-lg flex items-center justify-center">
                             {stat.label.includes('OFFENSIVE DUELS') ? (
-                              <svg className="w-10 h-10 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-                                <path d="M2 17l10 5 10-5"/>
-                                <path d="M2 12l10 5 10-5"/>
+                              <svg className="w-10 h-10 text-primary" viewBox="0 0 24 24" fill="currentColor">
+                                {/* Flexed bicep/muscle icon */}
+                                <path d="M9 4c0-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2-2-.9-2-2zm6 14.8V20c0 1.1-.9 2-2 2h-2c-1.1 0-2-.9-2-2v-5.2c-.6-.3-1-.9-1-1.6V10c0-1.1.9-2 2-2h1V7c0-.6.4-1 1-1s1 .4 1 1v1h1c1.1 0 2 .9 2 2v3.2c0 .7-.4 1.3-1 1.6zm-2-.8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"/>
+                              </svg>
+                            ) : stat.label.includes('DRIBBLES') ? (
+                              <svg className="w-10 h-10 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                {/* 1v1 - Two players facing each other */}
+                                <circle cx="7" cy="5" r="2"/>
+                                <circle cx="17" cy="5" r="2"/>
+                                <path d="M5.5 9c.3-.5.8-1 1.5-1s1.2.5 1.5 1"/>
+                                <path d="M15.5 9c.3-.5.8-1 1.5-1s1.2.5 1.5 1"/>
+                                <path d="M5 10v8l2 2"/>
+                                <path d="M9 10v8l-2 2"/>
+                                <path d="M15 10v8l2 2"/>
+                                <path d="M19 10v8l-2 2"/>
+                                <line x1="10" y1="12" x2="14" y2="12" strokeWidth="3" strokeLinecap="round"/>
                               </svg>
                             ) : (
                               <svg className="w-10 h-10 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
