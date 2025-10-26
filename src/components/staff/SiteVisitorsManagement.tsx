@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Table,
   TableBody,
@@ -40,6 +41,7 @@ export const SiteVisitorsManagement = () => {
   const [uniquePaths, setUniquePaths] = useState<string[]>([]);
   const [selectedVisitor, setSelectedVisitor] = useState<string | null>(null);
   const [visitorDetails, setVisitorDetails] = useState<SiteVisit[]>([]);
+  const [showUniqueOnly, setShowUniqueOnly] = useState(true); // Default to true
   const [stats, setStats] = useState({
     totalVisits: 0,
     uniqueVisitors: 0,
@@ -152,6 +154,17 @@ export const SiteVisitorsManagement = () => {
       formatLocation(visit.location).toLowerCase().includes(searchTerm.toLowerCase())
     )
   );
+
+  // Filter to show unique visitors only if checkbox is enabled
+  const displayedVisits = showUniqueOnly
+    ? filteredVisits.reduce((acc, visit) => {
+        // Only keep the first visit per visitor_id
+        if (!acc.find(v => v.visitor_id === visit.visitor_id)) {
+          acc.push(visit);
+        }
+        return acc;
+      }, [] as SiteVisit[])
+    : filteredVisits;
 
   if (selectedVisitor) {
     return (
@@ -283,6 +296,21 @@ export const SiteVisitorsManagement = () => {
             </Button>
           </div>
 
+          {/* Unique Visitors Filter */}
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="uniqueVisitors"
+              checked={showUniqueOnly}
+              onCheckedChange={(checked) => setShowUniqueOnly(checked as boolean)}
+            />
+            <label
+              htmlFor="uniqueVisitors"
+              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+            >
+              Show unique visitors only
+            </label>
+          </div>
+
           {/* Visits Table */}
           <div className="rounded-md border">
             <Table>
@@ -292,7 +320,7 @@ export const SiteVisitorsManagement = () => {
                   <TableHead>Page</TableHead>
                   <TableHead>Duration</TableHead>
                   <TableHead>Location</TableHead>
-                  <TableHead>Referrer</TableHead>
+                  <TableHead>Entry Site</TableHead>
                   <TableHead>Visited At</TableHead>
                 </TableRow>
               </TableHeader>
@@ -303,14 +331,14 @@ export const SiteVisitorsManagement = () => {
                       Loading...
                     </TableCell>
                   </TableRow>
-                ) : filteredVisits.length === 0 ? (
+                ) : displayedVisits.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                       No visits found
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredVisits.map((visit) => (
+                  displayedVisits.map((visit) => (
                     <TableRow 
                       key={visit.id}
                       className="cursor-pointer hover:bg-muted/50"
