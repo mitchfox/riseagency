@@ -52,6 +52,13 @@ interface WeeklySchedule {
   fridayColor: string;
   saturdayColor: string;
   sundayColor: string;
+  mondayImage?: string;
+  tuesdayImage?: string;
+  wednesdayImage?: string;
+  thursdayImage?: string;
+  fridayImage?: string;
+  saturdayImage?: string;
+  sundayImage?: string;
   scheduleNotes: string;
 }
 
@@ -117,6 +124,7 @@ const emptyWeeklySchedule = (): WeeklySchedule => ({
   week_start_date: '',
   monday: '', tuesday: '', wednesday: '', thursday: '', friday: '', saturday: '', sunday: '',
   mondayColor: '', tuesdayColor: '', wednesdayColor: '', thursdayColor: '', fridayColor: '', saturdayColor: '', sundayColor: '',
+  mondayImage: '', tuesdayImage: '', wednesdayImage: '', thursdayImage: '', fridayImage: '', saturdayImage: '', sundayImage: '',
   scheduleNotes: ''
 });
 
@@ -1069,15 +1077,21 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
                   <CardContent>
                     <div className="space-y-4">
                       <div className="flex flex-wrap gap-2">
-                        {sessionLabels.map((session) => (
-                          <Button
-                            key={session.key}
-                            variant={selectedSession === session.key ? "default" : "outline"}
-                            onClick={() => setSelectedSession(session.key)}
-                          >
-                            {session.label}
-                          </Button>
-                        ))}
+                        {sessionLabels.map((session) => {
+                          const sessionData = programmingData[session.key as keyof ProgrammingData] as SessionData;
+                          const isEmpty = !sessionData?.exercises || sessionData.exercises.length === 0;
+                          
+                          return (
+                            <Button
+                              key={session.key}
+                              variant={selectedSession === session.key ? "default" : "outline"}
+                              onClick={() => setSelectedSession(session.key)}
+                              className={isEmpty ? "opacity-50" : ""}
+                            >
+                              {session.label}
+                            </Button>
+                          );
+                        })}
                       </div>
 
                       {selectedSession ? (
@@ -1304,9 +1318,9 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
                             <div className="grid grid-cols-7 gap-2 min-w-[600px] md:min-w-0">
                               {['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map((day) => (
                                 <div key={day} className="space-y-2">
-                                  <Label className="text-xs capitalize">{day}</Label>
+                                  <Label className="text-xs capitalize font-semibold">{day}</Label>
                                   <Input
-                                    placeholder="Session (e.g., A, B, Rest)"
+                                    placeholder="A / B / Rest"
                                     value={schedule[day as keyof WeeklySchedule] as string}
                                     onChange={(e) => {
                                       const value = e.target.value;
@@ -1319,8 +1333,59 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
                                         updateWeeklySchedule(idx, `${day}Color` as keyof WeeklySchedule, color);
                                       }
                                     }}
-                                    className="text-xs"
+                                    className="text-xs text-center font-medium"
+                                    maxLength={20}
                                   />
+                                  <div className="space-y-1">
+                                    <Input
+                                      type="file"
+                                      accept="image/*"
+                                      onChange={async (e) => {
+                                        const file = e.target.files?.[0];
+                                        if (!file) return;
+                                        
+                                        try {
+                                          const fileExt = file.name.split('.').pop();
+                                          const fileName = `${Math.random()}.${fileExt}`;
+                                          const filePath = `${fileName}`;
+
+                                          const { error: uploadError } = await supabase.storage
+                                            .from('blog-images')
+                                            .upload(filePath, file);
+
+                                          if (uploadError) throw uploadError;
+
+                                          const { data: { publicUrl } } = supabase.storage
+                                            .from('blog-images')
+                                            .getPublicUrl(filePath);
+
+                                          updateWeeklySchedule(idx, `${day}Image` as keyof WeeklySchedule, publicUrl);
+                                          toast.success('Logo uploaded');
+                                        } catch (error) {
+                                          console.error('Error uploading:', error);
+                                          toast.error('Failed to upload logo');
+                                        }
+                                      }}
+                                      className="text-xs h-8"
+                                    />
+                                    {schedule[`${day}Image` as keyof WeeklySchedule] && (
+                                      <div className="relative">
+                                        <img 
+                                          src={schedule[`${day}Image` as keyof WeeklySchedule] as string}
+                                          alt={`${day} logo`}
+                                          className="w-full h-12 object-contain rounded border"
+                                        />
+                                        <Button
+                                          variant="destructive"
+                                          size="icon"
+                                          className="absolute -top-2 -right-2 h-5 w-5"
+                                          onClick={() => updateWeeklySchedule(idx, `${day}Image` as keyof WeeklySchedule, '')}
+                                        >
+                                          <Trash2 className="w-3 h-3" />
+                                        </Button>
+                                      </div>
+                                    )}
+                                  </div>
                                   <div className="text-xs text-muted-foreground text-center">
                                     {schedule[`${day}Color` as keyof WeeklySchedule] && (
                                       <span className="inline-block px-2 py-1 rounded" style={{
