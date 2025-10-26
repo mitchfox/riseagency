@@ -172,7 +172,7 @@ export const players: Player[] = [
       "High work rate and tactical discipline"
     ],
     tacticalFormations: [
-      { club: "TJ Jiskra Domazlice", formation: "4-3-3", matches: 26, clubLogo: tjJiskraLogo },
+      { club: "TJ Jiskra Domazlice", formation: "4-2-3-1", matches: 26, clubLogo: tjJiskraLogo },
       { club: "Previous Club", formation: "4-3-3", matches: 15, clubLogo: "https://upload.wikimedia.org/wikipedia/en/thumb/c/cc/Chelsea_FC.svg/200px-Chelsea_FC.svg.png" }
     ],
     topStats: [
