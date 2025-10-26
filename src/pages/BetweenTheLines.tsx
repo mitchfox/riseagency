@@ -128,7 +128,7 @@ export default function BetweenTheLines() {
               <h2 className="text-2xl md:text-3xl font-bebas uppercase tracking-wider text-primary mb-3">
                 Join RISE Broadcast on Instagram
               </h2>
-              <p className="text-muted-foreground mb-4">
+              <p className="text-foreground mb-4">
                 Get daily updates on agency insights, performance optimization, coaching systems, and player development strategies
               </p>
               <a

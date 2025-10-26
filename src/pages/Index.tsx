@@ -160,6 +160,30 @@ const Index = () => {
           </div>
         </section>
 
+        {/* RISE Broadcast Advertisement */}
+        <section className="py-12 md:py-16 px-4 bg-background">
+          <div className="container mx-auto">
+            <div className="max-w-3xl mx-auto p-6 rounded-lg border border-primary/20 bg-primary/5">
+              <div className="text-center">
+                <h2 className="text-2xl md:text-3xl font-bebas uppercase tracking-wider text-primary mb-3">
+                  Join RISE Broadcast on Instagram
+                </h2>
+                <p className="text-foreground mb-4">
+                  Get daily updates on agency insights, performance optimization, coaching systems, and player development strategies
+                </p>
+                <a
+                  href="https://www.instagram.com/channel/AbY33s3ZhuxaNwuo/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-background font-bebas uppercase tracking-wider text-lg hover:bg-primary/90 transition-colors rounded"
+                >
+                  Join the Channel
+                </a>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* News Section */}
         <section className="py-12 md:py-16 px-4 bg-background">
           <div className="container mx-auto max-w-7xl w-full">
