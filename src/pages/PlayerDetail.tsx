@@ -653,8 +653,8 @@ const PlayerDetail = () => {
                   size="lg"
                   className="w-full font-bebas uppercase tracking-wider"
                 >
-                  <a href={`https://wa.me/${player.whatsapp?.replace(/\+/g, '')}`} target="_blank" rel="noopener noreferrer">
-                    Contact Us
+                  <a href="https://wa.me/447508342901" target="_blank" rel="noopener noreferrer">
+                    Enquire About This Player
                   </a>
                 </Button>
               </div>
@@ -673,7 +673,7 @@ const PlayerDetail = () => {
                   size="lg"
                   className="w-full font-bebas uppercase tracking-wider"
                 >
-                  <a href="mailto:jolon.levene@risefootballagency.com?subject=Media%20Inquiry">
+                  <a href="mailto:kuda.butawo@risefootballagency.com?subject=Media%20Inquiry">
                     Email Us
                   </a>
                 </Button>
@@ -693,8 +693,8 @@ const PlayerDetail = () => {
                   size="lg"
                   className="w-full font-bebas uppercase tracking-wider"
                 >
-                  <a href="mailto:jolon.levene@risefootballagency.com?subject=Sponsorship%20Inquiry">
-                    Learn More
+                  <a href="https://wa.me/447446365438" target="_blank" rel="noopener noreferrer">
+                    Reach Out
                   </a>
                 </Button>
               </div>
