@@ -349,8 +349,8 @@ const PlayerDetail = () => {
               BIOGRAPHY
             </h2>
             <div className="flex gap-6 items-start">
-              {/* Player Image - Smaller */}
-              <div className="relative overflow-hidden w-48 h-64 rounded-lg flex-shrink-0">
+              {/* Player Image - Responsive height based on bio */}
+              <div className="relative overflow-hidden w-48 rounded-lg flex-shrink-0">
                 <img
                   src={player.image_url}
                   alt={player.name}
@@ -359,9 +359,9 @@ const PlayerDetail = () => {
                 <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
               </div>
 
-              {/* Bio - Wider, approximately 5 lines */}
+              {/* Bio - Full text displayed */}
               <div className="flex-1">
-                <p className="text-foreground/80 leading-relaxed text-base line-clamp-5">
+                <p className="text-foreground/80 leading-relaxed text-base">
                   {player.bio}
                 </p>
               </div>
