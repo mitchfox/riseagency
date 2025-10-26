@@ -141,6 +141,13 @@ const PlayerManagement = () => {
     saves: "",
   });
 
+  const [seasonStats, setSeasonStats] = useState([
+    { header: "Goals", value: "" },
+    { header: "Assists", value: "" },
+    { header: "Matches", value: "" },
+    { header: "Minutes", value: "" }
+  ]);
+
   const [analysisData, setAnalysisData] = useState({
     opponent: "",
     result: "",
@@ -488,6 +495,8 @@ const PlayerManagement = () => {
 
   const startEditStats = (playerId: string) => {
     const playerStats = stats[playerId];
+    const player = players.find(p => p.id === playerId);
+    
     if (playerStats) {
       setEditingStats(playerStats);
       setStatsData({
@@ -498,6 +507,63 @@ const PlayerManagement = () => {
         clean_sheets: playerStats.clean_sheets?.toString() || "",
         saves: playerStats.saves?.toString() || "",
       });
+      
+      // Load custom season stats from player bio if available
+      let customStats = [
+        { header: "Goals", value: playerStats.goals.toString() },
+        { header: "Assists", value: playerStats.assists.toString() },
+        { header: "Matches", value: playerStats.matches.toString() },
+        { header: "Minutes", value: playerStats.minutes.toString() }
+      ];
+      
+      try {
+        if (player?.bio && player.bio.startsWith('{')) {
+          const bioData = JSON.parse(player.bio);
+          if (bioData.seasonStats && Array.isArray(bioData.seasonStats)) {
+            customStats = bioData.seasonStats;
+          }
+        }
+      } catch (e) {
+        // Use defaults
+      }
+      
+      setSeasonStats(customStats);
+    }
+  };
+
+  const handleSeasonStatsSubmit = async (playerId: string) => {
+    setLoading(true);
+    
+    try {
+      const player = players.find(p => p.id === playerId);
+      let bioData: any = {};
+      
+      // Parse existing bio data
+      try {
+        if (player?.bio && player.bio.startsWith('{')) {
+          bioData = JSON.parse(player.bio);
+        }
+      } catch (e) {
+        bioData = {};
+      }
+      
+      // Update seasonStats in bio
+      bioData.seasonStats = seasonStats;
+      
+      const { error } = await supabase
+        .from("players")
+        .update({ bio: JSON.stringify(bioData) })
+        .eq("id", playerId);
+      
+      if (error) throw error;
+      
+      toast.success("Season stats updated successfully");
+      setEditingStats(null);
+      fetchPlayers();
+    } catch (error: any) {
+      toast.error("Failed to update season stats: " + error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -1360,6 +1426,10 @@ const PlayerManagement = () => {
                       <Edit className="w-4 h-4 mr-2" />
                       Player Details
                     </Button>
+                    <Button variant="outline" size="sm" onClick={() => startEditStats(player.id)}>
+                      <Pencil className="w-4 h-4 mr-2" />
+                      Season Stats
+                    </Button>
                     <Button variant="outline" size="sm" onClick={() => {
                       setSelectedProgrammingPlayerId(player.id);
                       setSelectedProgrammingPlayerName(player.name);
@@ -1391,6 +1461,41 @@ const PlayerManagement = () => {
                       Highlights
                     </Button>
                   </div>
+                  
+                  {/* Season Stats Display */}
+                  {(() => {
+                    let customStats = [
+                      { header: "Goals", value: playerStats?.goals?.toString() || "0" },
+                      { header: "Assists", value: playerStats?.assists?.toString() || "0" },
+                      { header: "Matches", value: playerStats?.matches?.toString() || "0" },
+                      { header: "Minutes", value: playerStats?.minutes?.toString() || "0" }
+                    ];
+                    
+                    try {
+                      if (player.bio && player.bio.startsWith('{')) {
+                        const bioData = JSON.parse(player.bio);
+                        if (bioData.seasonStats && Array.isArray(bioData.seasonStats)) {
+                          customStats = bioData.seasonStats;
+                        }
+                      }
+                    } catch (e) {
+                      // Use defaults
+                    }
+                    
+                    return (
+                      <div className="mt-4 p-4 border rounded-md bg-accent/10">
+                        <h4 className="text-sm font-semibold mb-3">Season Stats</h4>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                          {customStats.map((stat, idx) => (
+                            <div key={idx} className="text-center">
+                              <div className="text-2xl font-bold text-primary">{stat.value || "0"}</div>
+                              <div className="text-xs text-muted-foreground">{stat.header}</div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })()}
 
                   {showingHighlightsFor === player.id && (
                     <>
@@ -1782,6 +1887,61 @@ const PlayerManagement = () => {
         analysisId={selectedAnalysisId || ""}
         playerName={selectedPlayerName}
       />
+
+      {/* Season Stats Edit Dialog */}
+      <Dialog open={editingStats !== null} onOpenChange={(open) => !open && setEditingStats(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Edit Season Stats</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Customize the 4 stat headers and values that will be displayed for this player.
+            </p>
+            {seasonStats.map((stat, index) => (
+              <div key={index} className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label htmlFor={`stat-header-${index}`}>Stat Header {index + 1}</Label>
+                  <Input
+                    id={`stat-header-${index}`}
+                    value={stat.header}
+                    onChange={(e) => {
+                      const newStats = [...seasonStats];
+                      newStats[index].header = e.target.value;
+                      setSeasonStats(newStats);
+                    }}
+                    placeholder="e.g., Goals, Apps, etc."
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor={`stat-value-${index}`}>Value</Label>
+                  <Input
+                    id={`stat-value-${index}`}
+                    value={stat.value}
+                    onChange={(e) => {
+                      const newStats = [...seasonStats];
+                      newStats[index].value = e.target.value;
+                      setSeasonStats(newStats);
+                    }}
+                    placeholder="e.g., 12, 25, etc."
+                  />
+                </div>
+              </div>
+            ))}
+            <div className="flex gap-2">
+              <Button 
+                onClick={() => editingStats && handleSeasonStatsSubmit(editingStats.player_id)}
+                disabled={loading}
+              >
+                {loading ? "Saving..." : "Save Stats"}
+              </Button>
+              <Button variant="outline" onClick={() => setEditingStats(null)}>
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Programming Management Dialog */}
       <ProgrammingManagement
