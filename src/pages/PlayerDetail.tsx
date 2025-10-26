@@ -83,7 +83,13 @@ const PlayerDetail = () => {
                     externalLinks: parsed.externalLinks,
                     strengthsAndPlayStyle: parsed.strengthsAndPlayStyle,
                     topStats: parsed.topStats,
-                    tacticalFormations: tacticalFormations
+                    tacticalFormations: tacticalFormations,
+                    seasonStats: parsed.seasonStats || [
+                      { header: "Goals", value: statsData?.goals?.toString() || "0" },
+                      { header: "Assists", value: statsData?.assists?.toString() || "0" },
+                      { header: "Matches", value: statsData?.matches?.toString() || "0" },
+                      { header: "Minutes", value: statsData?.minutes?.toString() || "0" }
+                    ]
                   };
                   
                   // Check if bio property exists and is a string (might be nested JSON)
@@ -399,71 +405,17 @@ const PlayerDetail = () => {
             <h2 className="text-2xl font-bebas text-primary uppercase tracking-widest mb-6">
               Season Stats
             </h2>
-            <div className={`grid gap-4 ${
-              player.position === 'GK' 
-                ? 'grid-cols-2 sm:grid-cols-2 lg:grid-cols-4'
-                : 'grid-cols-2 lg:grid-cols-4'
-            }`}>
-              <div className="text-center p-6 bg-background">
-                <div className="text-3xl font-bbh text-primary mb-2">
-                  {player.stats.matches}
-                </div>
-                <div className="text-xs text-muted-foreground uppercase tracking-widest font-semibold">
-                  Matches
-                </div>
-              </div>
-              <div className="text-center p-6 bg-background">
-                <div className="text-3xl font-bbh text-primary mb-2">
-                  {player.stats.minutes}
-                </div>
-                <div className="text-xs text-muted-foreground uppercase tracking-widest font-semibold">
-                  Minutes
-                </div>
-              </div>
-              {player.position !== 'GK' && (
-                <>
-                  <div className="text-center p-6 bg-background">
-                    <div className="text-4xl font-bbh text-primary mb-2">
-                      {player.stats?.goals || 0}
-                    </div>
-                    <div className="text-sm text-muted-foreground uppercase tracking-widest font-semibold">
-                      Goals
-                    </div>
+            <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
+              {player.seasonStats?.map((stat: any, idx: number) => (
+                <div key={idx} className="text-center p-6 bg-background">
+                  <div className="text-4xl font-bbh text-primary mb-2">
+                    {stat.value || "0"}
                   </div>
-                  <div className="text-center p-6 bg-background">
-                    <div className="text-4xl font-bbh text-primary mb-2">
-                      {player.stats?.assists || 0}
-                    </div>
-                    <div className="text-sm text-muted-foreground uppercase tracking-widest font-semibold">
-                      Assists
-                    </div>
+                  <div className="text-sm text-muted-foreground uppercase tracking-widest font-semibold">
+                    {stat.header}
                   </div>
-                </>
-              )}
-              {player.position === 'GK' && (
-                <>
-                  {player.stats?.cleanSheets != null && (
-                    <div className="text-center p-6 bg-background">
-                      <div className="text-4xl font-bbh text-primary mb-2">
-                        {player.stats.cleanSheets}
-                      </div>
-                      <div className="text-sm text-muted-foreground uppercase tracking-widest font-semibold">
-                        Clean Sheets
-                      </div>
-                    </div>
-                  )}
-                  {player.stats?.saves != null && (
-                    <div className="text-center p-6 bg-background">
-                      <div className="text-4xl font-bbh text-primary mb-2">
-                        {player.stats.saves}
-                      </div>
-                      <div className="text-sm text-muted-foreground uppercase tracking-widest font-semibold">
-                        Saves
-                      </div>
-                    </div>
-                  )}
-                </>
-              )}
+                </div>
+              ))}
             </div>
           </div>
 
