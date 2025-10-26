@@ -1319,23 +1319,48 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
                               {['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map((day) => (
                                 <div key={day} className="space-y-2">
                                   <Label className="text-xs capitalize font-semibold">{day}</Label>
-                                  <Input
-                                    placeholder="A / B / Rest"
-                                    value={schedule[day as keyof WeeklySchedule] as string}
-                                    onChange={(e) => {
-                                      const value = e.target.value;
-                                      updateWeeklySchedule(idx, day as keyof WeeklySchedule, value);
-                                      
-                                      // Auto-set color based on session letter
-                                      const sessionLetter = value.match(/\b([A-H])\b/i)?.[0];
-                                      if (sessionLetter) {
-                                        const color = getSessionColor(sessionLetter);
-                                        updateWeeklySchedule(idx, `${day}Color` as keyof WeeklySchedule, color);
-                                      }
-                                    }}
-                                    className="text-xs text-center font-medium"
-                                    maxLength={20}
-                                  />
+                                  <div className="space-y-1">
+                                    <Input
+                                      placeholder="A / B / Rest"
+                                      value={schedule[day as keyof WeeklySchedule] as string || ''}
+                                      onChange={(e) => {
+                                        const value = e.target.value;
+                                        updateWeeklySchedule(idx, day as keyof WeeklySchedule, value);
+                                      }}
+                                      className="text-sm text-center font-bold uppercase"
+                                      maxLength={20}
+                                    />
+                                    {/* Display preview with session letter color */}
+                                    {schedule[day as keyof WeeklySchedule] && (
+                                      <div 
+                                        className="text-xs text-center font-bold uppercase p-2 rounded"
+                                        style={{
+                                          backgroundColor: (() => {
+                                            const value = (schedule[day as keyof WeeklySchedule] as string).toUpperCase();
+                                            const colors: Record<string, string> = {
+                                              'A': 'hsl(220, 70%, 35%)',
+                                              'B': 'hsl(140, 50%, 30%)',
+                                              'C': 'hsl(0, 50%, 35%)',
+                                              'D': 'hsl(45, 70%, 45%)',
+                                              'E': 'hsl(70, 20%, 40%)',
+                                              'F': 'hsl(270, 60%, 40%)',
+                                              'G': 'hsl(190, 70%, 45%)',
+                                              'H': 'hsl(30, 50%, 35%)',
+                                              'R': 'hsl(0, 0%, 85%)',
+                                              'REST': 'hsl(0, 0%, 85%)',
+                                            };
+                                            return colors[value] || colors[value.match(/([A-H])/)?.[0] || ''] || 'hsl(0, 0%, 30%)';
+                                          })(),
+                                          color: (() => {
+                                            const value = (schedule[day as keyof WeeklySchedule] as string).toUpperCase();
+                                            return (value === 'R' || value === 'REST') ? 'hsl(45, 100%, 45%)' : 'hsl(45, 100%, 60%)';
+                                          })()
+                                        }}
+                                      >
+                                        {schedule[day as keyof WeeklySchedule]}
+                                      </div>
+                                    )}
+                                  </div>
                                   <div className="space-y-1">
                                     <Input
                                       type="file"
