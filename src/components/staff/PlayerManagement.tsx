@@ -138,6 +138,8 @@ const PlayerManagement = () => {
     { header: "Minutes", value: "" }
   ]);
 
+  const [topStats, setTopStats] = useState<{ label: string; value: string; description: string }[]>([]);
+
   const [analysisData, setAnalysisData] = useState({
     opponent: "",
     result: "",
@@ -237,7 +239,7 @@ const PlayerManagement = () => {
       }
 
       // Combine bio text with additional structured data
-      const bioData: ExpandedPlayerData & { bio?: string; tacticalFormations?: any[]; schemeHistory?: any[]; seasonStats?: any[] } = {
+      const bioData: ExpandedPlayerData & { bio?: string; tacticalFormations?: any[]; schemeHistory?: any[]; seasonStats?: any[]; topStats?: any[] } = {
         bio: formData.bio,
         dateOfBirth: formData.dateOfBirth || undefined,
         number: formData.number ? parseInt(formData.number) : undefined,
@@ -247,6 +249,7 @@ const PlayerManagement = () => {
         strengthsAndPlayStyle: strengthsAndPlayStyle.length > 0 ? strengthsAndPlayStyle : undefined,
         schemeHistory: schemeHistory.length > 0 ? schemeHistory : undefined,
         seasonStats: seasonStats.length > 0 ? seasonStats : undefined,
+        topStats: topStats.length > 0 ? topStats : undefined,
       };
 
       // Update or add current club in tacticalFormations
@@ -349,6 +352,7 @@ const PlayerManagement = () => {
       setExternalLinks([]);
       setStrengthsAndPlayStyle([]);
       setSchemeHistory([]);
+      setTopStats([]);
       setSeasonStats([
         { header: "Goals", value: "" },
         { header: "Assists", value: "" },
@@ -411,6 +415,13 @@ const PlayerManagement = () => {
         const parsed = JSON.parse(player.bio);
         additionalData = parsed;
         
+        // Load top stats (IN NUMBERS)
+        if (parsed.topStats && Array.isArray(parsed.topStats)) {
+          setTopStats(parsed.topStats);
+        } else {
+          setTopStats([]);
+        }
+
         // Load season stats
         if (parsed.seasonStats && Array.isArray(parsed.seasonStats)) {
           setSeasonStats(parsed.seasonStats);
@@ -753,6 +764,7 @@ const PlayerManagement = () => {
               setExternalLinks([]);
               setStrengthsAndPlayStyle([]);
               setSchemeHistory([]);
+              setTopStats([]);
               setSeasonStats([
                 { header: "Goals", value: "" },
                 { header: "Assists", value: "" },
@@ -1258,6 +1270,75 @@ const PlayerManagement = () => {
                     </div>
                   </div>
                 ))}
+              </div>
+
+              {/* Top Stats (IN NUMBERS) */}
+              <div className="space-y-3 border-t pt-4">
+                <Label className="text-base font-semibold">In Numbers (Top Stats)</Label>
+                <p className="text-sm text-muted-foreground">
+                  Add key statistics that will be highlighted in the "IN NUMBERS" section on the player's detail page.
+                </p>
+                {topStats.map((stat, index) => (
+                  <div key={index} className="space-y-2 p-4 border rounded-lg">
+                    <div className="flex justify-between items-center mb-2">
+                      <Label className="font-semibold">Stat {index + 1}</Label>
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => setTopStats(topStats.filter((_, i) => i !== index))}
+                      >
+                        Remove
+                      </Button>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor={`top-stat-label-${index}`}>Label</Label>
+                      <Input
+                        id={`top-stat-label-${index}`}
+                        value={stat.label}
+                        onChange={(e) => {
+                          const newStats = [...topStats];
+                          newStats[index].label = e.target.value;
+                          setTopStats(newStats);
+                        }}
+                        placeholder="e.g., Interceptions, Passing Accuracy"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor={`top-stat-value-${index}`}>Value</Label>
+                      <Input
+                        id={`top-stat-value-${index}`}
+                        value={stat.value}
+                        onChange={(e) => {
+                          const newStats = [...topStats];
+                          newStats[index].value = e.target.value;
+                          setTopStats(newStats);
+                        }}
+                        placeholder="e.g., #1 In League, 92%"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor={`top-stat-description-${index}`}>Description</Label>
+                      <Input
+                        id={`top-stat-description-${index}`}
+                        value={stat.description}
+                        onChange={(e) => {
+                          const newStats = [...topStats];
+                          newStats[index].description = e.target.value;
+                          setTopStats(newStats);
+                        }}
+                        placeholder="e.g., 14.0 per 90 minutes"
+                      />
+                    </div>
+                  </div>
+                ))}
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setTopStats([...topStats, { label: "", value: "", description: "" }])}
+                >
+                  Add Top Stat
+                </Button>
               </div>
 
               {/* Visible on Stars Page Toggle */}
