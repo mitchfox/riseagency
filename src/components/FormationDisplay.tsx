@@ -82,6 +82,20 @@ export const FormationDisplay = ({ selectedPosition, selectedPositions, playerNa
           LST: { top: 15, left: 38, label: "ST" },
           RST: { top: 15, left: 62, label: "ST" },
         };
+      case "3-4-3":
+        return {
+          GK: { top: 90, left: 50, label: "GK" },
+          LCB: { top: 70, left: 25, label: "CB" },
+          CB: { top: 70, left: 50, label: "CB" },
+          RCB: { top: 70, left: 75, label: "CB" },
+          LM: { top: 45, left: 15, label: "LM" },
+          LCM: { top: 45, left: 38, label: "CM" },
+          RCM: { top: 45, left: 62, label: "CM" },
+          RM: { top: 45, left: 85, label: "RM" },
+          LW: { top: 20, left: 20, label: "LW" },
+          ST: { top: 15, left: 50, label: "ST" },
+          RW: { top: 20, left: 80, label: "RW" },
+        };
       case "4-3-3":
       default:
         return {
@@ -90,9 +104,9 @@ export const FormationDisplay = ({ selectedPosition, selectedPositions, playerNa
           LCB: { top: 70, left: 38, label: "CB" },
           RCB: { top: 70, left: 62, label: "CB" },
           RB: { top: 70, left: 85, label: "RB" },
-          LCM: { top: 45, left: 30, label: "CM" },
-          CM: { top: 45, left: 50, label: "CM" },
-          RCM: { top: 45, left: 70, label: "CM" },
+          LCM: { top: 42, left: 30, label: "CM" },
+          CM: { top: 50, left: 50, label: "CDM" },
+          RCM: { top: 42, left: 70, label: "CM" },
           LW: { top: 20, left: 20, label: "LW" },
           ST: { top: 15, left: 50, label: "ST" },
           RW: { top: 20, left: 80, label: "RW" },

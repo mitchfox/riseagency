@@ -172,13 +172,12 @@ export const players: Player[] = [
       "High work rate and tactical discipline"
     ],
     tacticalFormations: [
-      { club: "TJ Jiskra Domazlice", formation: "4-2-3-1", matches: 26, clubLogo: tjJiskraLogo },
+      { club: "TJ Jiskra Domazlice", formation: "4-3-3", matches: 26, clubLogo: tjJiskraLogo },
       { club: "Previous Club", formation: "4-3-3", matches: 15, clubLogo: "https://upload.wikimedia.org/wikipedia/en/thumb/c/cc/Chelsea_FC.svg/200px-Chelsea_FC.svg.png" }
     ],
     topStats: [
-      { label: "Tackles Per Game", value: "5.2", description: "League leading" },
-      { label: "Pass Completion", value: "89%", description: "Excellent distribution" },
-      { label: "Interceptions", value: "3.8", description: "Per 90 minutes" }
+      { label: "Interceptions", value: "#1 In League", description: "14.0 per 90 minutes" },
+      { label: "Passing Accuracy", value: "92%", description: "Exceptional distribution" }
     ],
     news: [
       {
