@@ -497,16 +497,16 @@ const Dashboard = () => {
                                             <div>
                                             {/* Table Header */}
                                             <div className="grid grid-cols-8 gap-1 md:gap-2 mb-2">
-                                              <div 
-                                                className="p-1 md:p-4 font-bebas uppercase text-[10px] md:text-lg flex items-center justify-center rounded-lg leading-tight"
-                                                style={{ 
-                                                  backgroundColor: 'hsl(45, 70%, 55%)',
-                                                  color: 'hsl(0, 0%, 0%)'
-                                                }}
-                                              >
-                                                <span className="hidden md:inline">Week Start Date</span>
-                                                <span className="md:hidden">Week Start</span>
-                                              </div>
+                                               <div 
+                                                 className="p-1 md:p-4 font-bebas uppercase text-[10px] md:text-lg flex items-center rounded-lg leading-tight"
+                                                 style={{ 
+                                                   backgroundColor: 'hsl(45, 70%, 55%)',
+                                                   color: 'hsl(0, 0%, 0%)'
+                                                 }}
+                                               >
+                                                 <span className="hidden md:inline text-left w-full">Week Start Date</span>
+                                                 <span className="md:hidden text-left w-full">Week Start</span>
+                                               </div>
                                               {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, idx) => (
                                                 <div 
                                                   key={day}
@@ -532,22 +532,24 @@ const Dashboard = () => {
                                                   className="grid grid-cols-8 gap-1 md:gap-2"
                                                 >
                                                   {/* Week Cell */}
-                                                  <div 
-                                                    className="p-1 md:p-6 text-[10px] md:text-base font-medium italic flex items-center justify-center rounded-lg leading-tight"
-                                                    style={{ 
-                                                      backgroundColor: 'hsl(0, 0%, 95%)',
-                                                      color: 'hsl(0, 0%, 0%)'
-                                                    }}
-                                                  >
-                                                    {week.week_start_date ? (() => {
-                                                      const date = parseISO(week.week_start_date);
-                                                      const day = format(date, 'd');
-                                                      const suffix = day.endsWith('1') && day !== '11' ? 'st' :
-                                                                    day.endsWith('2') && day !== '12' ? 'nd' :
-                                                                    day.endsWith('3') && day !== '13' ? 'rd' : 'th';
-                                                      return `${day}${suffix} ${format(date, 'MMMM')}`;
-                                                    })() : week.week}
-                                                  </div>
+                                                   <div 
+                                                     className="p-1 md:p-6 text-[10px] md:text-base font-medium italic flex items-center rounded-lg leading-tight"
+                                                     style={{ 
+                                                       backgroundColor: 'hsl(0, 0%, 95%)',
+                                                       color: 'hsl(0, 0%, 0%)'
+                                                     }}
+                                                   >
+                                                     <span className="text-left w-full">
+                                                       {week.week_start_date ? (() => {
+                                                         const date = parseISO(week.week_start_date);
+                                                         const day = format(date, 'd');
+                                                         const suffix = day.endsWith('1') && day !== '11' ? 'st' :
+                                                                       day.endsWith('2') && day !== '12' ? 'nd' :
+                                                                       day.endsWith('3') && day !== '13' ? 'rd' : 'th';
+                                                         return `${day}${suffix} ${format(date, 'MMMM')}`;
+                                                       })() : week.week}
+                                                     </span>
+                                                   </div>
                                                   
                                                   {/* Day Cells */}
                                                   {['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map((day, dayIdx) => {
@@ -642,54 +644,56 @@ const Dashboard = () => {
                                         {/* Main Session Tabs - Two Rows */}
                                         <div className="space-y-2 mb-4">
                                           {/* First Row: A, B, C, D */}
-                                          <div className="grid grid-cols-4 gap-2">
-                                            {['A', 'B', 'C', 'D'].map((mainKey) => {
-                                              const colors = getSessionColor(mainKey);
-                                              const hasData = hasSessionData(mainKey);
-                                              const isActive = (selectedSession || firstSessionWithData) === mainKey;
-                                              return (
-                                                <Button
-                                                  key={mainKey}
-                                                  onClick={() => setSelectedSession(mainKey)}
-                                                  disabled={!hasData}
-                                                  className="font-bebas uppercase text-sm disabled:opacity-40 disabled:cursor-not-allowed"
-                                                  style={{
-                                                    backgroundColor: hasData ? colors.bg : 'hsl(0, 0%, 30%)',
-                                                    color: hasData ? colors.text : 'hsl(0, 0%, 60%)',
-                                                    opacity: isActive ? 1 : 0.7,
-                                                    border: isActive ? '2px solid white' : 'none',
-                                                  }}
-                                                >
-                                                  Session {mainKey}
-                                                </Button>
-                                              );
-                                            })}
-                                          </div>
-                                          
-                                          {/* Second Row: E, F, G, H */}
-                                          <div className="grid grid-cols-4 gap-2">
-                                            {['E', 'F', 'G', 'H'].map((mainKey) => {
-                                              const colors = getSessionColor(mainKey);
-                                              const hasData = hasSessionData(mainKey);
-                                              const isActive = (selectedSession || firstSessionWithData) === mainKey;
-                                              return (
-                                                <Button
-                                                  key={mainKey}
-                                                  onClick={() => setSelectedSession(mainKey)}
-                                                  disabled={!hasData}
-                                                  className="font-bebas uppercase text-sm disabled:opacity-40 disabled:cursor-not-allowed"
-                                                  style={{
-                                                    backgroundColor: hasData ? colors.bg : 'hsl(0, 0%, 30%)',
-                                                    color: hasData ? colors.text : 'hsl(0, 0%, 60%)',
-                                                    opacity: isActive ? 1 : 0.7,
-                                                    border: isActive ? '2px solid white' : 'none',
-                                                  }}
-                                                >
-                                                  Session {mainKey}
-                                                </Button>
-                                              );
-                                            })}
-                                          </div>
+                                           <div className="grid grid-cols-4 gap-2">
+                                             {['A', 'B', 'C', 'D'].map((mainKey) => {
+                                               const colors = getSessionColor(mainKey);
+                                               const hasData = hasSessionData(mainKey);
+                                               const isActive = (selectedSession || firstSessionWithData) === mainKey;
+                                               return (
+                                                 <Button
+                                                   key={mainKey}
+                                                   onClick={() => hasData && setSelectedSession(mainKey)}
+                                                   disabled={!hasData}
+                                                   className="font-bebas uppercase text-sm"
+                                                   style={{
+                                                     backgroundColor: hasData ? colors.bg : 'hsl(0, 0%, 20%)',
+                                                     color: hasData ? colors.text : 'hsl(0, 0%, 40%)',
+                                                     opacity: hasData ? (isActive ? 1 : 0.7) : 0.3,
+                                                     border: isActive ? '2px solid white' : 'none',
+                                                     cursor: hasData ? 'pointer' : 'not-allowed',
+                                                   }}
+                                                 >
+                                                   Session {mainKey}
+                                                 </Button>
+                                               );
+                                             })}
+                                           </div>
+                                           
+                                           {/* Second Row: E, F, G, H */}
+                                           <div className="grid grid-cols-4 gap-2">
+                                             {['E', 'F', 'G', 'H'].map((mainKey) => {
+                                               const colors = getSessionColor(mainKey);
+                                               const hasData = hasSessionData(mainKey);
+                                               const isActive = (selectedSession || firstSessionWithData) === mainKey;
+                                               return (
+                                                 <Button
+                                                   key={mainKey}
+                                                   onClick={() => hasData && setSelectedSession(mainKey)}
+                                                   disabled={!hasData}
+                                                   className="font-bebas uppercase text-sm"
+                                                   style={{
+                                                     backgroundColor: hasData ? colors.bg : 'hsl(0, 0%, 20%)',
+                                                     color: hasData ? colors.text : 'hsl(0, 0%, 40%)',
+                                                     opacity: hasData ? (isActive ? 1 : 0.7) : 0.3,
+                                                     border: isActive ? '2px solid white' : 'none',
+                                                     cursor: hasData ? 'pointer' : 'not-allowed',
+                                                   }}
+                                                 >
+                                                   Session {mainKey}
+                                                 </Button>
+                                               );
+                                             })}
+                                           </div>
                                         </div>
                                         
                                         {/* Main Session Content with Sub-tabs */}
@@ -702,36 +706,36 @@ const Dashboard = () => {
                                           if (!hasPreSession && !mainSession) return null;
                                           if ((selectedSession || firstSessionWithData) !== mainKey) return null;
                                           
-                                          return (
-                                            <div key={mainKey} className="mt-4">
-                                                <Tabs defaultValue={hasPreSession ? "pre" : "main"} className="w-full">
-                                                  {/* Sub-tabs for Pre and Main Session */}
-                                                  <TabsList className="grid w-full gap-2 grid-cols-2 mb-4">
-                                                    {hasPreSession && (
-                                                      <TabsTrigger
-                                                        value="pre"
-                                                        className="font-bebas uppercase text-sm data-[state=active]:bg-[hsl(45,70%,55%)] data-[state=active]:text-black"
-                                                        style={{
-                                                          backgroundColor: getSessionColor(preKey).bg,
-                                                          color: getSessionColor(preKey).text,
-                                                        }}
-                                                      >
-                                                        Pre-{mainKey}
-                                                      </TabsTrigger>
-                                                    )}
-                                                    {mainSession && (
-                                                      <TabsTrigger
-                                                        value="main"
-                                                        className="font-bebas uppercase text-sm data-[state=active]:bg-[hsl(45,70%,55%)] data-[state=active]:text-black"
-                                                        style={{
-                                                          backgroundColor: getSessionColor(mainKey).bg,
-                                                          color: getSessionColor(mainKey).text,
-                                                        }}
-                                                      >
-                                                        Session {mainKey}
-                                                      </TabsTrigger>
-                                                    )}
-                                                  </TabsList>
+                                           return (
+                                             <div key={mainKey} className="mt-4">
+                                                 <Tabs defaultValue={hasPreSession ? "pre" : "main"} className="w-full">
+                                                   {/* Sub-tabs for Pre and Main Session */}
+                                                   <TabsList className="grid w-full gap-2 grid-cols-2 mb-4">
+                                                     {hasPreSession && (
+                                                       <TabsTrigger
+                                                         value="pre"
+                                                         className="font-bebas uppercase text-sm data-[state=active]:bg-[hsl(45,70%,55%)] data-[state=active]:text-black"
+                                                         style={{
+                                                           backgroundColor: getSessionColor(preKey).bg,
+                                                           color: getSessionColor(preKey).text,
+                                                         }}
+                                                       >
+                                                         Pre-{mainKey}
+                                                       </TabsTrigger>
+                                                     )}
+                                                     {mainSession && (
+                                                       <TabsTrigger
+                                                         value="main"
+                                                         className="font-bebas uppercase text-sm data-[state=active]:bg-[hsl(45,70%,55%)] data-[state=active]:text-black"
+                                                         style={{
+                                                           backgroundColor: getSessionColor(mainKey).bg,
+                                                           color: getSessionColor(mainKey).text,
+                                                         }}
+                                                       >
+                                                         Session {mainKey}
+                                                       </TabsTrigger>
+                                                     )}
+                                                   </TabsList>
                                                   
                                                   {/* Pre Session Content */}
                                                   {hasPreSession && (
