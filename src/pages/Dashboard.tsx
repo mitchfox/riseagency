@@ -625,11 +625,15 @@ const Dashboard = () => {
                                   // Define all possible sessions A-H
                                   const allSessions = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
                                   
-                                  // Check which sessions have data
+                                  // Check which sessions have actual exercise data
                                   const hasSessionData = (sessionKey: string) => {
                                     const mainSession = program.sessions[sessionKey] || program.sessions[sessionKey.toLowerCase()];
                                     const preSession = program.sessions[`PRE-${sessionKey}`] || program.sessions[`pre-${sessionKey.toLowerCase()}`];
-                                    return !!(mainSession || preSession);
+                                    
+                                    const mainHasData = mainSession && mainSession.exercises && Array.isArray(mainSession.exercises) && mainSession.exercises.length > 0;
+                                    const preHasData = preSession && preSession.exercises && Array.isArray(preSession.exercises) && preSession.exercises.length > 0;
+                                    
+                                    return !!(mainHasData || preHasData);
                                   };
                                   
                                   // Find first session with data
@@ -699,11 +703,15 @@ const Dashboard = () => {
                                         {/* Main Session Content with Sub-tabs */}
                                         {allSessions.map((mainKey) => {
                                             const preKey = `PRE-${mainKey}`;
-                                            const hasPreSession = program.sessions[preKey] || program.sessions[preKey.toLowerCase()];
+                                            const preSessionData = program.sessions[preKey] || program.sessions[preKey.toLowerCase()];
                                             const mainSession = program.sessions[mainKey] || program.sessions[mainKey.toLowerCase()];
                                             
+                                            // Check if sessions have actual exercise data
+                                            const hasPreSession = preSessionData && preSessionData.exercises && Array.isArray(preSessionData.exercises) && preSessionData.exercises.length > 0;
+                                            const hasMainSession = mainSession && mainSession.exercises && Array.isArray(mainSession.exercises) && mainSession.exercises.length > 0;
+                                            
                                           // Only render content if there's data for this session and it's selected
-                                          if (!hasPreSession && !mainSession) return null;
+                                          if (!hasPreSession && !hasMainSession) return null;
                                           if ((selectedSession || firstSessionWithData) !== mainKey) return null;
                                           
                                            return (
@@ -711,36 +719,36 @@ const Dashboard = () => {
                                                  <Tabs defaultValue={hasPreSession ? "pre" : "main"} className="w-full">
                                                    {/* Sub-tabs for Pre and Main Session */}
                                                    <TabsList className="grid w-full gap-2 grid-cols-2 mb-4">
-                                                     {hasPreSession && (
-                                                       <TabsTrigger
-                                                         value="pre"
-                                                         className="font-bebas uppercase text-sm data-[state=active]:bg-[hsl(45,70%,55%)] data-[state=active]:text-black"
-                                                         style={{
-                                                           backgroundColor: getSessionColor(preKey).bg,
-                                                           color: getSessionColor(preKey).text,
-                                                         }}
-                                                       >
-                                                         Pre-{mainKey}
-                                                       </TabsTrigger>
-                                                     )}
-                                                     {mainSession && (
-                                                       <TabsTrigger
-                                                         value="main"
-                                                         className="font-bebas uppercase text-sm data-[state=active]:bg-[hsl(45,70%,55%)] data-[state=active]:text-black"
-                                                         style={{
-                                                           backgroundColor: getSessionColor(mainKey).bg,
-                                                           color: getSessionColor(mainKey).text,
-                                                         }}
-                                                       >
-                                                         Session {mainKey}
-                                                       </TabsTrigger>
-                                                     )}
+                                                      {hasPreSession && (
+                                                        <TabsTrigger
+                                                          value="pre"
+                                                          className="font-bebas uppercase text-sm data-[state=active]:bg-[hsl(45,70%,55%)] data-[state=active]:text-black"
+                                                          style={{
+                                                            backgroundColor: getSessionColor(preKey).bg,
+                                                            color: getSessionColor(preKey).text,
+                                                          }}
+                                                        >
+                                                          Pre-{mainKey}
+                                                        </TabsTrigger>
+                                                      )}
+                                                      {hasMainSession && (
+                                                        <TabsTrigger
+                                                          value="main"
+                                                          className="font-bebas uppercase text-sm data-[state=active]:bg-[hsl(45,70%,55%)] data-[state=active]:text-black"
+                                                          style={{
+                                                            backgroundColor: getSessionColor(mainKey).bg,
+                                                            color: getSessionColor(mainKey).text,
+                                                          }}
+                                                        >
+                                                          Session {mainKey}
+                                                        </TabsTrigger>
+                                                      )}
                                                    </TabsList>
                                                   
-                                                  {/* Pre Session Content */}
-                                                  {hasPreSession && (
-                                                    <TabsContent value="pre">
-                                                      {hasPreSession.exercises && Array.isArray(hasPreSession.exercises) && hasPreSession.exercises.length > 0 && (
+                                                   {/* Pre Session Content */}
+                                                   {hasPreSession && (
+                                                     <TabsContent value="pre">
+                                                       {preSessionData.exercises && Array.isArray(preSessionData.exercises) && preSessionData.exercises.length > 0 && (
                                                         <div className="space-y-4">
                                                            {/* Exercise Table */}
                                                           <div className="border-2 border-white rounded-lg overflow-hidden">
@@ -795,8 +803,8 @@ const Dashboard = () => {
                                                               </div>
                                                             </div>
                                                             
-                                                            <div>
-                                                              {hasPreSession.exercises.map((exercise: any, idx: number) => (
+                                                             <div>
+                                                               {preSessionData.exercises.map((exercise: any, idx: number) => (
                                                                 <div 
                                                                   key={idx}
                                                                   onClick={() => handleExerciseClick(exercise)}
@@ -856,10 +864,10 @@ const Dashboard = () => {
                                                     </TabsContent>
                                                   )}
                                                   
-                                                  {/* Main Session Content */}
-                                                  {mainSession && (
-                                                    <TabsContent value="main">
-                                                      {mainSession.exercises && Array.isArray(mainSession.exercises) && mainSession.exercises.length > 0 && (
+                                                   {/* Main Session Content */}
+                                                   {hasMainSession && (
+                                                     <TabsContent value="main">
+                                                       {mainSession.exercises && Array.isArray(mainSession.exercises) && mainSession.exercises.length > 0 && (
                                                         <div className="space-y-4">
                                                           {/* Exercise Table */}
                                                           <div className="border-2 border-white rounded-lg overflow-hidden">
