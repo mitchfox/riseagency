@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { NotificationPermission } from "@/components/NotificationPermission";
 import { toast } from "sonner";
 import { FileText, ExternalLink } from "lucide-react";
 import { addDays, format, parseISO } from "date-fns";
@@ -291,6 +292,10 @@ const Dashboard = () => {
                 Log Out
               </Button>
             </div>
+          </div>
+
+          <div className="mb-6">
+            <NotificationPermission />
           </div>
 
           <Tabs defaultValue="analysis" className="w-full">
