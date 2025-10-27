@@ -283,14 +283,7 @@ const PlayerDetail = () => {
 
           {/* Highlights Video - Full Width 16:9 with Club Logo Overlays */}
           <div className="mb-8">
-            <div className="relative aspect-video bg-secondary/30 rounded-lg overflow-hidden border-2 md:border-4 border-[hsl(var(--gold))]">
-              {/* Recent Match Highlights Overlay */}
-              <div className="absolute top-4 left-4 z-20 bg-[hsl(var(--gold))]/20 backdrop-blur-sm px-3 py-1.5 rounded-md border border-[hsl(var(--gold))]/40">
-                <p className="text-foreground font-bebas uppercase tracking-wider text-sm md:text-base">
-                  Recent Match Highlights
-                </p>
-              </div>
-              
+            <div className="relative aspect-video bg-secondary/30 rounded-lg overflow-hidden border-4 md:border-[6px] border-[hsl(var(--gold))]">
               {dbHighlights.length > 0 && typeof currentVideoType === 'number' && dbHighlights[currentVideoType]?.videoUrl ? (
                 <>
                   <video
@@ -327,6 +320,15 @@ const PlayerDetail = () => {
                   </p>
                   <p className="text-xs md:text-sm text-muted-foreground">
                     Coming Soon
+                  </p>
+                </div>
+              )}
+              
+              {/* Recent Match Highlights Overlay - Above Club Logos */}
+              {dbHighlights.length > 0 && (
+                <div className="absolute bottom-12 md:bottom-16 left-1/2 -translate-x-1/2 z-20 bg-[hsl(var(--gold))]/20 backdrop-blur-sm px-3 py-1.5 rounded-md border border-[hsl(var(--gold))]/40">
+                  <p className="text-foreground font-bebas uppercase tracking-wider text-sm md:text-base whitespace-nowrap">
+                    Recent Match Highlights
                   </p>
                 </div>
               )}
