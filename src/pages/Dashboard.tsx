@@ -299,14 +299,14 @@ const Dashboard = () => {
           </div>
 
           <Tabs defaultValue="analysis" className="w-full">
-            <TabsList className="grid w-full grid-cols-3 mb-8 bg-muted">
+            <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 mb-8 bg-muted">
               <TabsTrigger value="analysis" className="font-bebas uppercase text-base">
                 Performance Analysis
               </TabsTrigger>
               <TabsTrigger value="physical" className="font-bebas uppercase text-base">
                 Physical Programming
               </TabsTrigger>
-              <TabsTrigger value="highlights" className="font-bebas uppercase text-base">
+              <TabsTrigger value="highlights" className="font-bebas uppercase text-base col-span-2 md:col-span-1">
                 Match Highlights
               </TabsTrigger>
             </TabsList>
