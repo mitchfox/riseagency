@@ -11,7 +11,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { NotificationPermission } from "@/components/NotificationPermission";
 import { toast } from "sonner";
-import { FileText, ExternalLink } from "lucide-react";
+import { FileText, Play } from "lucide-react";
 import { addDays, format, parseISO } from "date-fns";
 
 interface Analysis {
@@ -1088,11 +1088,6 @@ const Dashboard = () => {
                               <h3 className="font-bebas text-xl uppercase tracking-wider">
                                 {highlight.name || `Match Highlight ${index + 1}`}
                               </h3>
-                              {highlight.addedAt && (
-                                <p className="text-xs text-muted-foreground mt-1">
-                                  {new Date(highlight.addedAt).toLocaleDateString('en-GB')}
-                                </p>
-                              )}
                             </div>
                             <div className="flex gap-2">
                               {highlight.videoUrl && (
@@ -1103,7 +1098,7 @@ const Dashboard = () => {
                                     onClick={() => window.open(highlight.videoUrl, '_blank')}
                                     className="flex-1"
                                   >
-                                    <ExternalLink className="w-4 h-4 mr-2" />
+                                    <Play className="w-4 h-4 mr-2" />
                                     Watch
                                   </Button>
                                   <Button 
@@ -1166,7 +1161,7 @@ const Dashboard = () => {
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 text-primary hover:underline"
                 >
-                  <ExternalLink className="w-4 h-4" />
+                  <Play className="w-4 h-4" />
                   Watch Exercise Video
                 </a>
               </div>
