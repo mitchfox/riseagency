@@ -34,6 +34,7 @@ export const countryCodeMap: Record<string, string> = {
   'Egypt': 'eg',
   'Algeria': 'dz',
   'South Africa': 'za',
+  'Cape Verde': 'cv',
   'Turkey': 'tr',
   'Ukraine': 'ua',
   'Sweden': 'se',
