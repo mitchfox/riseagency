@@ -11,7 +11,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { NotificationPermission } from "@/components/NotificationPermission";
 import { toast } from "sonner";
-import { FileText, Play } from "lucide-react";
+import { FileText, Play, Download } from "lucide-react";
 import { addDays, format, parseISO } from "date-fns";
 
 interface Analysis {
@@ -1135,7 +1135,8 @@ const Dashboard = () => {
                                     }}
                                     className="flex-1"
                                   >
-                                    📥 Download
+                                    <Download className="w-4 h-4 mr-2" />
+                                    Download
                                   </Button>
                                 </>
                               )}
