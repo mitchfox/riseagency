@@ -284,9 +284,16 @@ const PlayerDetail = () => {
           {/* Highlights Video - Full Width 16:9 with Club Logo Overlays */}
           <div className="mb-8">
             <div className="relative aspect-video bg-secondary/30 rounded-lg overflow-hidden border-2 md:border-4 border-[hsl(var(--gold))]">
+              {/* Recent Match Highlights Overlay */}
+              <div className="absolute top-4 left-4 z-20 bg-primary/90 backdrop-blur-sm px-3 py-1.5 rounded-md">
+                <p className="text-primary-foreground font-bebas uppercase tracking-wider text-sm md:text-base">
+                  Recent Match Highlights
+                </p>
+              </div>
+              
               {dbHighlights.length > 0 && typeof currentVideoType === 'number' && dbHighlights[currentVideoType]?.videoUrl ? (
                 <>
-                  <video 
+                  <video
                     key={dbHighlights[currentVideoType].videoUrl}
                     className="w-full h-full object-contain bg-black"
                     controls
