@@ -1104,14 +1104,34 @@ const Dashboard = () => {
                                   <Button 
                                     variant="default" 
                                     size="sm"
-                                    onClick={() => {
-                                      const link = document.createElement('a');
-                                      link.href = highlight.videoUrl || highlight.url;
-                                      link.download = highlight.name || highlight.title || `highlight-${index + 1}`;
-                                      document.body.appendChild(link);
-                                      link.click();
-                                      document.body.removeChild(link);
-                                      toast.success("Download started");
+                                    onClick={async () => {
+                                      try {
+                                        const videoUrl = highlight.videoUrl || highlight.url;
+                                        const fileName = highlight.name || highlight.title || `highlight-${index + 1}`;
+                                        
+                                        toast.info("Starting download...");
+                                        
+                                        // Fetch the video
+                                        const response = await fetch(videoUrl);
+                                        const blob = await response.blob();
+                                        
+                                        // Create blob URL and download
+                                        const blobUrl = window.URL.createObjectURL(blob);
+                                        const link = document.createElement('a');
+                                        link.href = blobUrl;
+                                        link.download = fileName;
+                                        document.body.appendChild(link);
+                                        link.click();
+                                        document.body.removeChild(link);
+                                        
+                                        // Clean up blob URL
+                                        window.URL.revokeObjectURL(blobUrl);
+                                        
+                                        toast.success("Download completed");
+                                      } catch (error) {
+                                        console.error('Download error:', error);
+                                        toast.error("Download failed");
+                                      }
                                     }}
                                     className="flex-1"
                                   >
