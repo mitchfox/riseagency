@@ -1050,49 +1050,57 @@ const Dashboard = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {!playerData?.highlights || playerData.highlights.length === 0 ? (
-                    <div className="py-8 text-center text-muted-foreground">
-                      No highlights available yet.
-                    </div>
-                  ) : (
-                    <div className="grid gap-4 md:grid-cols-2">
-                      {playerData.highlights.map((highlight: any, index: number) => (
+                  {(() => {
+                    let highlights = [];
+                    try {
+                      highlights = playerData?.highlights ? JSON.parse(playerData.highlights) : [];
+                    } catch (e) {
+                      console.error('Error parsing highlights:', e);
+                      highlights = [];
+                    }
+                    
+                    if (!highlights || highlights.length === 0) {
+                      return (
+                        <div className="py-8 text-center text-muted-foreground">
+                          No highlights available yet.
+                        </div>
+                      );
+                    }
+                    
+                    return (
+                      <div className="grid gap-4 md:grid-cols-2">
+                        {highlights.map((highlight: any, index: number) => (
                         <div 
                           key={index}
                           className="border rounded-lg overflow-hidden hover:border-primary transition-colors bg-card"
                         >
-                          {highlight.thumbnail && (
+                          {highlight.clubLogo && (
                             <div className="relative aspect-video bg-black">
                               <img 
-                                src={highlight.thumbnail} 
-                                alt={highlight.title || `Highlight ${index + 1}`}
-                                className="w-full h-full object-cover"
+                                src={highlight.clubLogo} 
+                                alt={highlight.name || `Highlight ${index + 1}`}
+                                className="w-full h-full object-contain p-8"
                               />
                             </div>
                           )}
                           <div className="p-4 space-y-3">
                             <div>
                               <h3 className="font-bebas text-xl uppercase tracking-wider">
-                                {highlight.title || `Match Highlight ${index + 1}`}
+                                {highlight.name || `Match Highlight ${index + 1}`}
                               </h3>
-                              {highlight.description && (
-                                <p className="text-sm text-muted-foreground mt-1">
-                                  {highlight.description}
-                                </p>
-                              )}
-                              {highlight.date && (
+                              {highlight.addedAt && (
                                 <p className="text-xs text-muted-foreground mt-1">
-                                  {new Date(highlight.date).toLocaleDateString('en-GB')}
+                                  {new Date(highlight.addedAt).toLocaleDateString('en-GB')}
                                 </p>
                               )}
                             </div>
                             <div className="flex gap-2">
-                              {highlight.url && (
+                              {highlight.videoUrl && (
                                 <>
                                   <Button 
                                     variant="outline" 
                                     size="sm"
-                                    onClick={() => window.open(highlight.url, '_blank')}
+                                    onClick={() => window.open(highlight.videoUrl, '_blank')}
                                     className="flex-1"
                                   >
                                     <ExternalLink className="w-4 h-4 mr-2" />
@@ -1103,8 +1111,8 @@ const Dashboard = () => {
                                     size="sm"
                                     onClick={() => {
                                       const link = document.createElement('a');
-                                      link.href = highlight.url;
-                                      link.download = highlight.title || `highlight-${index + 1}`;
+                                      link.href = highlight.videoUrl || highlight.url;
+                                      link.download = highlight.name || highlight.title || `highlight-${index + 1}`;
                                       document.body.appendChild(link);
                                       link.click();
                                       document.body.removeChild(link);
@@ -1121,7 +1129,8 @@ const Dashboard = () => {
                         </div>
                       ))}
                     </div>
-                  )}
+                    );
+                  })()}
                 </CardContent>
               </Card>
             </TabsContent>
