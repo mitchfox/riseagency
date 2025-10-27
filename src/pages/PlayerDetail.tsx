@@ -286,13 +286,14 @@ const PlayerDetail = () => {
             <div className="relative aspect-video bg-secondary/30 rounded-lg overflow-hidden border-4 md:border-[6px] border-[hsl(var(--gold))]">
               {dbHighlights.length > 0 && typeof currentVideoType === 'number' && dbHighlights[currentVideoType]?.videoUrl ? (
                 <>
-                  <video
+                  <video 
                     key={dbHighlights[currentVideoType].videoUrl}
                     className="w-full h-full object-contain bg-black"
                     controls
                     autoPlay
                     playsInline
                     preload="metadata"
+                    loop={false}
                     onError={(e) => {
                       console.error('Video error:', e);
                       console.log('Video URL:', dbHighlights[currentVideoType].videoUrl);
@@ -300,9 +301,17 @@ const PlayerDetail = () => {
                     onLoadStart={() => console.log('Video loading started')}
                     onLoadedData={() => console.log('Video loaded successfully')}
                     onEnded={() => {
+                      console.log('Video ended, current index:', currentVideoType, 'total videos:', dbHighlights.length);
                       // Auto-play next video when current one ends
-                      if (typeof currentVideoType === 'number' && currentVideoType < dbHighlights.length - 1) {
-                        setCurrentVideoType(currentVideoType + 1);
+                      if (typeof currentVideoType === 'number') {
+                        const nextIndex = currentVideoType + 1;
+                        if (nextIndex < dbHighlights.length) {
+                          console.log('Moving to next video:', nextIndex);
+                          setCurrentVideoType(nextIndex);
+                        } else {
+                          console.log('Last video finished, looping to first');
+                          setCurrentVideoType(0);
+                        }
                       }
                     }}
                   >
