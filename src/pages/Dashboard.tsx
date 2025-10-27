@@ -299,12 +299,15 @@ const Dashboard = () => {
           </div>
 
           <Tabs defaultValue="analysis" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-8 bg-muted">
+            <TabsList className="grid w-full grid-cols-3 mb-8 bg-muted">
               <TabsTrigger value="analysis" className="font-bebas uppercase text-base">
                 Performance Analysis
               </TabsTrigger>
               <TabsTrigger value="physical" className="font-bebas uppercase text-base">
                 Physical Programming
+              </TabsTrigger>
+              <TabsTrigger value="highlights" className="font-bebas uppercase text-base">
+                Match Highlights
               </TabsTrigger>
             </TabsList>
 
@@ -1034,6 +1037,90 @@ const Dashboard = () => {
                         );
                       })}
                     </>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="highlights" className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-3xl font-bebas uppercase tracking-wider">
+                    Match Highlights
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {!playerData?.highlights || playerData.highlights.length === 0 ? (
+                    <div className="py-8 text-center text-muted-foreground">
+                      No highlights available yet.
+                    </div>
+                  ) : (
+                    <div className="grid gap-4 md:grid-cols-2">
+                      {playerData.highlights.map((highlight: any, index: number) => (
+                        <div 
+                          key={index}
+                          className="border rounded-lg overflow-hidden hover:border-primary transition-colors bg-card"
+                        >
+                          {highlight.thumbnail && (
+                            <div className="relative aspect-video bg-black">
+                              <img 
+                                src={highlight.thumbnail} 
+                                alt={highlight.title || `Highlight ${index + 1}`}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                          )}
+                          <div className="p-4 space-y-3">
+                            <div>
+                              <h3 className="font-bebas text-xl uppercase tracking-wider">
+                                {highlight.title || `Match Highlight ${index + 1}`}
+                              </h3>
+                              {highlight.description && (
+                                <p className="text-sm text-muted-foreground mt-1">
+                                  {highlight.description}
+                                </p>
+                              )}
+                              {highlight.date && (
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  {new Date(highlight.date).toLocaleDateString('en-GB')}
+                                </p>
+                              )}
+                            </div>
+                            <div className="flex gap-2">
+                              {highlight.url && (
+                                <>
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm"
+                                    onClick={() => window.open(highlight.url, '_blank')}
+                                    className="flex-1"
+                                  >
+                                    <ExternalLink className="w-4 h-4 mr-2" />
+                                    Watch
+                                  </Button>
+                                  <Button 
+                                    variant="default" 
+                                    size="sm"
+                                    onClick={() => {
+                                      const link = document.createElement('a');
+                                      link.href = highlight.url;
+                                      link.download = highlight.title || `highlight-${index + 1}`;
+                                      document.body.appendChild(link);
+                                      link.click();
+                                      document.body.removeChild(link);
+                                      toast.success("Download started");
+                                    }}
+                                    className="flex-1"
+                                  >
+                                    📥 Download
+                                  </Button>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   )}
                 </CardContent>
               </Card>
