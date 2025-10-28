@@ -47,6 +47,11 @@ interface PlayerFixture {
   fixtures: Fixture;
 }
 
+interface PlayerAnalysis {
+  r90_score: number | null;
+  fixture_id: string;
+}
+
 export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, triggerOpen, onDialogOpenChange }: PlayerFixturesProps) => {
   const [playerFixtures, setPlayerFixtures] = useState<PlayerFixture[]>([]);
   const [allFixtures, setAllFixtures] = useState<Fixture[]>([]);
@@ -55,6 +60,8 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, trigger
   const [selectedFixtureId, setSelectedFixtureId] = useState("");
   const [minutesPlayed, setMinutesPlayed] = useState<number | null>(null);
   const [editingPlayerFixture, setEditingPlayerFixture] = useState<PlayerFixture | null>(null);
+  const [playerTeam, setPlayerTeam] = useState<string>("");
+  const [r90Scores, setR90Scores] = useState<Map<string, number>>(new Map());
   const [manualFixture, setManualFixture] = useState({
     home_team: "",
     away_team: "",
@@ -81,9 +88,31 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, trigger
   }, [triggerOpen]);
 
   useEffect(() => {
+    fetchPlayerTeam();
     fetchPlayerFixtures();
     fetchAllFixtures();
   }, [playerId]);
+
+  const fetchPlayerTeam = async () => {
+    try {
+      const { data: playerData } = await supabase
+        .from("players")
+        .select("bio")
+        .eq("id", playerId)
+        .single();
+
+      if (playerData?.bio) {
+        try {
+          const bioData = JSON.parse(playerData.bio);
+          setPlayerTeam(bioData.currentClub || "");
+        } catch (e) {
+          console.error("Error parsing bio:", e);
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching player team:", error);
+    }
+  };
 
   const fetchPlayerFixtures = async () => {
     try {
@@ -106,6 +135,26 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, trigger
       }) || [];
       
       setPlayerFixtures(sortedData);
+
+      // Fetch R90 scores for all fixtures
+      const fixtureIds = sortedData.map((pf: any) => pf.fixture_id);
+      if (fixtureIds.length > 0) {
+        const { data: analysisData } = await supabase
+          .from("player_analysis")
+          .select("fixture_id, r90_score")
+          .eq("player_id", playerId)
+          .in("fixture_id", fixtureIds);
+
+        if (analysisData) {
+          const r90Map = new Map<string, number>();
+          analysisData.forEach((analysis: any) => {
+            if (analysis.r90_score !== null) {
+              r90Map.set(analysis.fixture_id, analysis.r90_score);
+            }
+          });
+          setR90Scores(r90Map);
+        }
+      }
     } catch (error: any) {
       console.error("Error fetching player fixtures:", error);
       toast.error("Failed to fetch fixtures");
@@ -872,64 +921,89 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, trigger
         </div>
 
         <div className="space-y-2">
-          {playerFixtures.slice(0, displayCount).map((pf) => (
-            <div 
-              key={pf.id} 
-              className="flex items-center gap-3 border rounded-lg p-3 hover:border-primary transition-colors"
-            >
-              <input
-                type="checkbox"
-                checked={selectedFixtures.has(pf.id)}
-                onChange={() => toggleFixtureSelection(pf.id)}
-                className="cursor-pointer h-4 w-4"
-              />
-              
-              <span className="text-sm text-muted-foreground min-w-[80px]">
-                {new Date(pf.fixtures.match_date).toLocaleDateString('en-GB')}
-              </span>
+          {playerFixtures.slice(0, displayCount).map((pf) => {
+            const isHomeTeam = playerTeam && pf.fixtures.home_team.includes(playerTeam);
+            const opponent = isHomeTeam ? pf.fixtures.away_team : pf.fixtures.home_team;
+            const hasScore = pf.fixtures.home_score !== null && pf.fixtures.away_score !== null;
             
-            <div className="flex flex-col min-w-[150px]">
-              <span className="text-sm font-medium">
-                {pf.fixtures.home_team} vs {pf.fixtures.away_team}
-              </span>
-              {pf.fixtures.competition && (
-                <span className="text-xs text-muted-foreground">{pf.fixtures.competition}</span>
-              )}
-              {(pf.fixtures.home_score !== null && pf.fixtures.away_score !== null) && (
-                <span className="text-xs text-muted-foreground">
-                  {pf.fixtures.home_score} - {pf.fixtures.away_score}
-                </span>
-              )}
-            </div>
-            
-            {pf.minutes_played && (
-              <span className="text-sm text-muted-foreground">
-                {pf.minutes_played} min
-              </span>
-            )}
-            
-            <div className="ml-auto flex gap-2">
-              {onCreateAnalysis && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => onCreateAnalysis(pf.fixture_id)}
-                >
-                  <FileText className="w-4 h-4 mr-1" />
-                  Analysis
-                </Button>
-              )}
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => handleOpenDialog(pf)}
+            let result = "";
+            if (hasScore) {
+              if (isHomeTeam) {
+                if (pf.fixtures.home_score! > pf.fixtures.away_score!) result = "(W)";
+                else if (pf.fixtures.home_score! < pf.fixtures.away_score!) result = "(L)";
+                else result = "(D)";
+              } else {
+                if (pf.fixtures.away_score! > pf.fixtures.home_score!) result = "(W)";
+                else if (pf.fixtures.away_score! < pf.fixtures.home_score!) result = "(L)";
+                else result = "(D)";
+              }
+            }
+
+            const r90Score = r90Scores.get(pf.fixture_id);
+            const r90Color = r90Score ? (r90Score < 1 ? "bg-yellow-500" : "bg-green-500") : "bg-gray-500";
+
+            return (
+              <div 
+                key={pf.id} 
+                className="flex items-center gap-3 border rounded-lg p-3 hover:border-primary transition-colors"
               >
-                <Pencil className="w-4 h-4 mr-1" />
-                Edit
-              </Button>
-            </div>
-            </div>
-          ))}
+                <input
+                  type="checkbox"
+                  checked={selectedFixtures.has(pf.id)}
+                  onChange={() => toggleFixtureSelection(pf.id)}
+                  className="cursor-pointer h-4 w-4"
+                />
+                
+                <span className="text-sm text-muted-foreground min-w-[80px]">
+                  {new Date(pf.fixtures.match_date).toLocaleDateString('en-GB')}
+                </span>
+              
+                <div className="flex flex-col flex-1">
+                  <span className="text-sm font-medium">
+                    vs {opponent}
+                  </span>
+                  {hasScore && (
+                    <span className="text-xs text-muted-foreground">
+                      {pf.fixtures.home_score}-{pf.fixtures.away_score} {result}
+                    </span>
+                  )}
+                </div>
+                
+                {pf.minutes_played && (
+                  <span className="text-sm text-muted-foreground">
+                    {pf.minutes_played} min
+                  </span>
+                )}
+                
+                {r90Score !== undefined && (
+                  <div className={`${r90Color} text-white text-sm font-bold px-3 py-1 rounded`}>
+                    R90: {r90Score.toFixed(2)}
+                  </div>
+                )}
+                
+                <div className="flex gap-2">
+                  {onCreateAnalysis && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => onCreateAnalysis(pf.fixture_id)}
+                    >
+                      <FileText className="w-4 h-4 mr-1" />
+                      Analysis
+                    </Button>
+                  )}
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleOpenDialog(pf)}
+                  >
+                    <Pencil className="w-4 h-4 mr-1" />
+                    Edit
+                  </Button>
+                </div>
+              </div>
+            );
+          })}
           {playerFixtures.length > displayCount && (
             <Button
               variant="outline"
