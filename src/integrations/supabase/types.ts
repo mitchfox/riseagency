@@ -22,6 +22,7 @@ export type Database = {
           concept: string | null
           created_at: string
           explanation: string | null
+          fixture_id: string | null
           home_score: number | null
           home_team: string | null
           id: string
@@ -46,6 +47,7 @@ export type Database = {
           concept?: string | null
           created_at?: string
           explanation?: string | null
+          fixture_id?: string | null
           home_score?: number | null
           home_team?: string | null
           id?: string
@@ -70,6 +72,7 @@ export type Database = {
           concept?: string | null
           created_at?: string
           explanation?: string | null
+          fixture_id?: string | null
           home_score?: number | null
           home_team?: string | null
           id?: string
@@ -87,7 +90,15 @@ export type Database = {
           title?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "analyses_fixture_id_fkey"
+            columns: ["fixture_id"]
+            isOneToOne: false
+            referencedRelation: "fixtures"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       blog_posts: {
         Row: {
@@ -352,6 +363,45 @@ export type Database = {
         }
         Relationships: []
       }
+      fixtures: {
+        Row: {
+          away_score: number | null
+          away_team: string
+          competition: string | null
+          created_at: string
+          home_score: number | null
+          home_team: string
+          id: string
+          match_date: string
+          updated_at: string
+          venue: string | null
+        }
+        Insert: {
+          away_score?: number | null
+          away_team: string
+          competition?: string | null
+          created_at?: string
+          home_score?: number | null
+          home_team: string
+          id?: string
+          match_date: string
+          updated_at?: string
+          venue?: string | null
+        }
+        Update: {
+          away_score?: number | null
+          away_team?: string
+          competition?: string | null
+          created_at?: string
+          home_score?: number | null
+          home_team?: string
+          id?: string
+          match_date?: string
+          updated_at?: string
+          venue?: string | null
+        }
+        Relationships: []
+      }
       form_submissions: {
         Row: {
           created_at: string
@@ -425,6 +475,7 @@ export type Database = {
           analysis_date: string
           analysis_writer_id: string | null
           created_at: string
+          fixture_id: string | null
           id: string
           minutes_played: number | null
           notes: string | null
@@ -441,6 +492,7 @@ export type Database = {
           analysis_date: string
           analysis_writer_id?: string | null
           created_at?: string
+          fixture_id?: string | null
           id?: string
           minutes_played?: number | null
           notes?: string | null
@@ -457,6 +509,7 @@ export type Database = {
           analysis_date?: string
           analysis_writer_id?: string | null
           created_at?: string
+          fixture_id?: string | null
           id?: string
           minutes_played?: number | null
           notes?: string | null
@@ -478,6 +531,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "player_analysis_fixture_id_fkey"
+            columns: ["fixture_id"]
+            isOneToOne: false
+            referencedRelation: "fixtures"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "player_analysis_player_id_fkey"
             columns: ["player_id"]
             isOneToOne: false
@@ -486,6 +546,52 @@ export type Database = {
           },
           {
             foreignKeyName: "player_analysis_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      player_fixtures: {
+        Row: {
+          created_at: string
+          fixture_id: string
+          id: string
+          minutes_played: number | null
+          player_id: string
+        }
+        Insert: {
+          created_at?: string
+          fixture_id: string
+          id?: string
+          minutes_played?: number | null
+          player_id: string
+        }
+        Update: {
+          created_at?: string
+          fixture_id?: string
+          id?: string
+          minutes_played?: number | null
+          player_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "player_fixtures_fixture_id_fkey"
+            columns: ["fixture_id"]
+            isOneToOne: false
+            referencedRelation: "fixtures"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "player_fixtures_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "player_fixtures_player_id_fkey"
             columns: ["player_id"]
             isOneToOne: false
             referencedRelation: "players_public"
