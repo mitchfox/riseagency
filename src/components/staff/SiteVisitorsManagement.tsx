@@ -85,8 +85,10 @@ export const SiteVisitorsManagement = () => {
         query = query.eq("page_path", pageFilter);
       }
 
-      // Filter based on showHidden state
-      query = query.eq("hidden", showHidden);
+      // Only filter by hidden status when not showing hidden visitors
+      if (!showHidden) {
+        query = query.eq("hidden", false);
+      }
 
       const { data, error } = await query;
 
@@ -106,10 +108,16 @@ export const SiteVisitorsManagement = () => {
       });
 
       // Load all-time stats
-      const { data: allTimeData, error: allTimeError } = await supabase
+      let allTimeQuery = supabase
         .from("site_visits")
-        .select("*")
-        .eq("hidden", showHidden);
+        .select("*");
+
+      // Only filter by hidden status when not showing hidden visitors
+      if (!showHidden) {
+        allTimeQuery = allTimeQuery.eq("hidden", false);
+      }
+
+      const { data: allTimeData, error: allTimeError } = await allTimeQuery;
 
       if (allTimeError) throw allTimeError;
 
