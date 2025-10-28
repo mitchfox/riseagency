@@ -1,4 +1,4 @@
-import { useState, useEffect, forwardRef, useImperativeHandle } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,10 +27,6 @@ interface PlayerFixturesProps {
   onCreateAnalysis?: (fixtureId: string) => void;
 }
 
-export interface PlayerFixturesRef {
-  openAddDialog: () => void;
-}
-
 interface Fixture {
   id: string;
   home_team: string;
@@ -49,8 +45,7 @@ interface PlayerFixture {
   fixtures: Fixture;
 }
 
-export const PlayerFixtures = forwardRef<PlayerFixturesRef, PlayerFixturesProps>(
-  ({ playerId, playerName, onCreateAnalysis }, ref) => {
+export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis }: PlayerFixturesProps) => {
   const [playerFixtures, setPlayerFixtures] = useState<PlayerFixture[]>([]);
   const [allFixtures, setAllFixtures] = useState<Fixture[]>([]);
   const [loading, setLoading] = useState(true);
@@ -71,10 +66,6 @@ export const PlayerFixtures = forwardRef<PlayerFixturesRef, PlayerFixturesProps>
   const [fetchingAiFixtures, setFetchingAiFixtures] = useState(false);
   const [selectedAiFixtures, setSelectedAiFixtures] = useState<Set<number>>(new Set());
   const [displayCount, setDisplayCount] = useState(10);
-
-  useImperativeHandle(ref, () => ({
-    openAddDialog: () => handleOpenDialog(),
-  }));
 
   useEffect(() => {
     fetchPlayerFixtures();
@@ -621,6 +612,4 @@ export const PlayerFixtures = forwardRef<PlayerFixturesRef, PlayerFixturesProps>
       </div>
     </div>
   );
-});
-
-PlayerFixtures.displayName = "PlayerFixtures";
+};
