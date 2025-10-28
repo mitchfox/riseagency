@@ -45,6 +45,7 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [analyses, setAnalyses] = useState<Analysis[]>([]);
+  const [concepts, setConcepts] = useState<any[]>([]);
   const [playerData, setPlayerData] = useState<any>(null);
   const [programs, setPrograms] = useState<PlayerProgram[]>([]);
   const [selectedProgramId, setSelectedProgramId] = useState<string | null>(null);
@@ -176,6 +177,20 @@ const Dashboard = () => {
 
       if (analysisError) throw analysisError;
       setAnalyses(analysisData || []);
+
+      // Fetch concepts linked to this player
+      const { data: conceptsData, error: conceptsError } = await supabase
+        .from("analyses")
+        .select("*")
+        .eq("analysis_type", "concept")
+        .in("id", (analysisData || [])
+          .filter(a => a.analysis_writer_id)
+          .map(a => a.analysis_writer_id)
+        );
+
+      if (!conceptsError && conceptsData) {
+        setConcepts(conceptsData);
+      }
     } catch (error: any) {
       console.error("Error fetching analyses:", error);
       toast.error("Failed to load analysis data");
@@ -299,14 +314,17 @@ const Dashboard = () => {
           </div>
 
           <Tabs defaultValue="analysis" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 mb-8 bg-muted">
+            <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 mb-8 bg-muted">
               <TabsTrigger value="analysis" className="font-bebas uppercase text-base">
                 Performance Analysis
+              </TabsTrigger>
+              <TabsTrigger value="concepts" className="font-bebas uppercase text-base">
+                Concepts
               </TabsTrigger>
               <TabsTrigger value="physical" className="font-bebas uppercase text-base">
                 Physical Programming
               </TabsTrigger>
-              <TabsTrigger value="highlights" className="font-bebas uppercase text-base col-span-2 md:col-span-1">
+              <TabsTrigger value="highlights" className="font-bebas uppercase text-base">
                 Match Highlights
               </TabsTrigger>
             </TabsList>
@@ -382,6 +400,65 @@ const Dashboard = () => {
                               </Button>
                             )}
                           </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="concepts" className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-3xl font-bebas uppercase tracking-wider">
+                    Concepts
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {concepts.length === 0 ? (
+                    <div className="py-8">
+                      <p className="text-center text-muted-foreground">No concepts available yet.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-8">
+                      {concepts.map((concept) => (
+                        <div key={concept.id} className="border rounded-lg p-6 space-y-4">
+                          <h3 className="text-2xl font-bebas uppercase tracking-wider">
+                            {concept.title || "Untitled Concept"}
+                          </h3>
+                          {concept.concept && (
+                            <div className="space-y-2">
+                              <h4 className="font-semibold text-lg">Concept</h4>
+                              <p className="text-muted-foreground whitespace-pre-wrap">{concept.concept}</p>
+                            </div>
+                          )}
+                          {concept.points && Array.isArray(concept.points) && concept.points.length > 0 && (
+                            <div className="grid gap-4">
+                              {concept.points.map((point: any, index: number) => (
+                                <div key={index} className="space-y-2">
+                                  {point.images && Array.isArray(point.images) && point.images.length > 0 && (
+                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                                      {point.images.map((img: string, imgIndex: number) => (
+                                        <img
+                                          key={imgIndex}
+                                          src={img}
+                                          alt={`Concept image ${imgIndex + 1}`}
+                                          className="w-full h-48 object-cover rounded-lg"
+                                        />
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          {concept.explanation && (
+                            <div className="space-y-2">
+                              <h4 className="font-semibold text-lg">Explanation</h4>
+                              <p className="text-muted-foreground whitespace-pre-wrap">{concept.explanation}</p>
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>

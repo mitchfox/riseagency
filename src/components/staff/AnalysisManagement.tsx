@@ -31,6 +31,8 @@ interface Analysis {
   title: string | null;
   home_team?: string | null;
   away_team?: string | null;
+  home_score?: number | null;
+  away_score?: number | null;
   key_details?: string | null;
   opposition_strengths?: string | null;
   opposition_weaknesses?: string | null;
@@ -73,10 +75,24 @@ export const AnalysisManagement = () => {
     matchups: [],
   });
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [players, setPlayers] = useState<any[]>([]);
+  const [selectedPlayerId, setSelectedPlayerId] = useState<string>("");
+  const [performanceReports, setPerformanceReports] = useState<any[]>([]);
+  const [selectedPerformanceReportId, setSelectedPerformanceReportId] = useState<string>("");
 
   useEffect(() => {
     fetchAnalyses();
+    fetchPlayers();
   }, []);
+
+  useEffect(() => {
+    if (selectedPlayerId) {
+      fetchPerformanceReports(selectedPlayerId);
+    } else {
+      setPerformanceReports([]);
+      setSelectedPerformanceReportId("");
+    }
+  }, [selectedPlayerId]);
 
   const fetchAnalyses = async () => {
     try {
@@ -95,14 +111,57 @@ export const AnalysisManagement = () => {
     }
   };
 
-  const handleOpenDialog = (type: AnalysisType, analysis?: Analysis) => {
+  const fetchPlayers = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("players")
+        .select("id, name")
+        .order("name");
+
+      if (error) throw error;
+      setPlayers(data || []);
+    } catch (error: any) {
+      console.error("Failed to fetch players:", error);
+    }
+  };
+
+  const fetchPerformanceReports = async (playerId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("player_analysis")
+        .select("*")
+        .eq("player_id", playerId)
+        .order("analysis_date", { ascending: false });
+
+      if (error) throw error;
+      setPerformanceReports(data || []);
+    } catch (error: any) {
+      console.error("Failed to fetch performance reports:", error);
+    }
+  };
+
+  const handleOpenDialog = async (type: AnalysisType, analysis?: Analysis) => {
     setAnalysisType(type);
     if (analysis) {
       setEditingAnalysis(analysis);
       setFormData(analysis);
+      
+      // Fetch which player_analysis record this is linked to
+      const { data } = await supabase
+        .from("player_analysis")
+        .select("player_id, id")
+        .eq("analysis_writer_id", analysis.id)
+        .maybeSingle();
+      
+      if (data) {
+        setSelectedPlayerId(data.player_id);
+        setSelectedPerformanceReportId(data.id);
+      }
     } else {
       setEditingAnalysis(null);
       setFormData({ analysis_type: type, points: [], matchups: [] });
+      setSelectedPlayerId("");
+      setSelectedPerformanceReportId("");
     }
     setDialogOpen(true);
   };
@@ -111,6 +170,8 @@ export const AnalysisManagement = () => {
     setDialogOpen(false);
     setEditingAnalysis(null);
     setFormData({ points: [], matchups: [] });
+    setSelectedPlayerId("");
+    setSelectedPerformanceReportId("");
   };
 
   const handleImageUpload = async (
@@ -170,6 +231,8 @@ export const AnalysisManagement = () => {
         analysis_type: analysisType,
       };
 
+      let analysisId = editingAnalysis?.id;
+
       if (editingAnalysis) {
         const { error } = await supabase
           .from("analyses")
@@ -179,10 +242,28 @@ export const AnalysisManagement = () => {
         if (error) throw error;
         toast.success("Analysis updated successfully");
       } else {
-        const { error } = await supabase.from("analyses").insert([dataToSave]);
+        const { data, error } = await supabase
+          .from("analyses")
+          .insert([dataToSave])
+          .select()
+          .single();
 
         if (error) throw error;
+        analysisId = data.id;
         toast.success("Analysis created successfully");
+      }
+
+      // Link to performance report if selected
+      if (selectedPerformanceReportId && analysisId) {
+        const { error: linkError } = await supabase
+          .from("player_analysis")
+          .update({ analysis_writer_id: analysisId })
+          .eq("id", selectedPerformanceReportId);
+
+        if (linkError) {
+          console.error("Failed to link analysis:", linkError);
+          toast.error("Analysis saved but failed to link to performance report");
+        }
       }
 
       handleCloseDialog();
@@ -334,6 +415,9 @@ export const AnalysisManagement = () => {
                     </div>
                     <div>
                       <Label>Opposition Strengths</Label>
+                      <p className="text-xs text-muted-foreground mb-2">
+                        Use bullet points (one per line)
+                      </p>
                       <Textarea
                         value={formData.opposition_strengths || ""}
                         onChange={(e) =>
@@ -342,10 +426,14 @@ export const AnalysisManagement = () => {
                             opposition_strengths: e.target.value,
                           })
                         }
+                        placeholder="• Strong aerial presence&#10;• Quick counter-attacks&#10;• Solid defensive organization"
                       />
                     </div>
                     <div>
                       <Label>Opposition Weaknesses</Label>
+                      <p className="text-xs text-muted-foreground mb-2">
+                        Use bullet points (one per line)
+                      </p>
                       <Textarea
                         value={formData.opposition_weaknesses || ""}
                         onChange={(e) =>
@@ -354,6 +442,7 @@ export const AnalysisManagement = () => {
                             opposition_weaknesses: e.target.value,
                           })
                         }
+                        placeholder="• Weak on the left flank&#10;• Slow to transition&#10;• Vulnerable to through balls"
                       />
                     </div>
 
@@ -497,11 +586,33 @@ export const AnalysisManagement = () => {
                         />
                       </div>
                       <div>
+                        <Label>Home Score</Label>
+                        <Input
+                          type="number"
+                          value={formData.home_score || ""}
+                          onChange={(e) =>
+                            setFormData({ ...formData, home_score: parseInt(e.target.value) || undefined })
+                          }
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
                         <Label>Away Team</Label>
                         <Input
                           value={formData.away_team || ""}
                           onChange={(e) =>
                             setFormData({ ...formData, away_team: e.target.value })
+                          }
+                        />
+                      </div>
+                      <div>
+                        <Label>Away Score</Label>
+                        <Input
+                          type="number"
+                          value={formData.away_score || ""}
+                          onChange={(e) =>
+                            setFormData({ ...formData, away_score: parseInt(e.target.value) || undefined })
                           }
                         />
                       </div>
@@ -517,6 +628,9 @@ export const AnalysisManagement = () => {
                     </div>
                     <div>
                       <Label>Strengths & Areas For Improvement</Label>
+                      <p className="text-xs text-muted-foreground mb-2">
+                        Format: Green: text | Yellow: text | Red: text (use bullet points with |)
+                      </p>
                       <Textarea
                         value={formData.strengths_improvements || ""}
                         onChange={(e) =>
@@ -525,6 +639,7 @@ export const AnalysisManagement = () => {
                             strengths_improvements: e.target.value,
                           })
                         }
+                        placeholder="Green: Great positioning | Yellow: Work on first touch | Red: Needs better decision making"
                       />
                     </div>
                   </div>
@@ -564,6 +679,49 @@ export const AnalysisManagement = () => {
                   </div>
                 </>
               )}
+
+              {/* Link to Player Performance Report */}
+              <div className="space-y-4 border-t pt-4">
+                <h3 className="font-semibold">Link to Performance Report</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>Player</Label>
+                    <Select value={selectedPlayerId} onValueChange={setSelectedPlayerId}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select player" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">None</SelectItem>
+                        {players.map((player) => (
+                          <SelectItem key={player.id} value={player.id}>
+                            {player.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Performance Report</Label>
+                    <Select 
+                      value={selectedPerformanceReportId} 
+                      onValueChange={setSelectedPerformanceReportId}
+                      disabled={!selectedPlayerId}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select report" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">None</SelectItem>
+                        {performanceReports.map((report) => (
+                          <SelectItem key={report.id} value={report.id}>
+                            {report.opponent} - {new Date(report.analysis_date).toLocaleDateString()}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
 
               {/* Points section - common for all types */}
               {(analysisType === "pre-match" || analysisType === "post-match" || analysisType === "concept") && (

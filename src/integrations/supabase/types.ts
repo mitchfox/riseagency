@@ -17,10 +17,12 @@ export type Database = {
       analyses: {
         Row: {
           analysis_type: string
+          away_score: number | null
           away_team: string | null
           concept: string | null
           created_at: string
           explanation: string | null
+          home_score: number | null
           home_team: string | null
           id: string
           key_details: string | null
@@ -39,10 +41,12 @@ export type Database = {
         }
         Insert: {
           analysis_type: string
+          away_score?: number | null
           away_team?: string | null
           concept?: string | null
           created_at?: string
           explanation?: string | null
+          home_score?: number | null
           home_team?: string | null
           id?: string
           key_details?: string | null
@@ -61,10 +65,12 @@ export type Database = {
         }
         Update: {
           analysis_type?: string
+          away_score?: number | null
           away_team?: string | null
           concept?: string | null
           created_at?: string
           explanation?: string | null
+          home_score?: number | null
           home_team?: string | null
           id?: string
           key_details?: string | null
