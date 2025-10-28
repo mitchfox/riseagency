@@ -1375,7 +1375,19 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, trigger
             }
 
             const r90Score = r90Scores.get(pf.fixture_id);
-            const r90Color = r90Score ? (r90Score < 1 ? "bg-yellow-500" : "bg-green-500") : "bg-gray-500";
+            const getR90Color = (score: number) => {
+              if (score < 0) return "bg-red-950"; // Dark red for negative
+              if (score >= 0 && score < 0.2) return "bg-red-600"; // Red
+              if (score >= 0.2 && score < 0.4) return "bg-red-400"; // Light red
+              if (score >= 0.4 && score < 0.6) return "bg-orange-700"; // Orange-brown
+              if (score >= 0.6 && score < 0.8) return "bg-orange-500"; // Yellow-orange
+              if (score >= 0.8 && score < 1.0) return "bg-yellow-400"; // Yellow
+              if (score >= 1.0 && score < 1.4) return "bg-lime-400"; // Light Green
+              if (score >= 1.4 && score < 1.8) return "bg-green-500"; // Green
+              if (score >= 1.8 && score < 2.5) return "bg-green-700"; // Dark green
+              return "bg-yellow-600"; // Gold for 2.5+
+            };
+            const r90Color = r90Score ? getR90Color(r90Score) : "bg-gray-500";
 
             return (
               <div 
