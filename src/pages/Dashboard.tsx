@@ -423,11 +423,7 @@ const Dashboard = () => {
                                     variant="outline" 
                                     size="sm"
                                     onClick={() => {
-                                      const analysisType = analysis.analysis_writer_data.analysis_type;
-                                      const path = analysisType === "pre-match" 
-                                        ? `/between-the-lines/${analysis.analysis_writer_id}?type=pre-match`
-                                        : `/between-the-lines/${analysis.analysis_writer_id}?type=post-match`;
-                                      navigate(path);
+                                      navigate(`/performance-report/${analysis.analysis_writer_id}`);
                                     }}
                                     className="text-xs"
                                   >
