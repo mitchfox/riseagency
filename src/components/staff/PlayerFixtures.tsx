@@ -261,6 +261,8 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, trigger
               match_date: fixture.match_date,
               competition: fixture.competition,
               venue: fixture.venue,
+              home_score: fixture.home_score ?? null,
+              away_score: fixture.away_score ?? null,
             },
           ])
           .select()
@@ -401,14 +403,18 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, trigger
                 <Button variant="outline" onClick={handleCloseDialog}>
                   Cancel
                 </Button>
-                <Button variant="destructive" onClick={() => {
-                  if (editingPlayerFixture) {
-                    handleDelete(editingPlayerFixture.id);
-                  }
-                }}>
-                  Delete
+                <Button 
+                  variant="destructive" 
+                  onClick={() => {
+                    if (editingPlayerFixture) {
+                      handleDelete(editingPlayerFixture.id);
+                    }
+                  }}
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Delete Fixture
                 </Button>
-                <Button onClick={handleSave}>Save</Button>
+                <Button onClick={handleSave}>Save Changes</Button>
               </div>
             </div>
           ) : (
@@ -630,6 +636,11 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, trigger
                                 <div>
                                   <div className="font-medium">
                                     {fixture.home_team} vs {fixture.away_team}
+                                    {(fixture.home_score !== null && fixture.away_score !== null) && (
+                                      <span className="text-primary ml-2">
+                                        {fixture.home_score}-{fixture.away_score}
+                                      </span>
+                                    )}
                                   </div>
                                   <div className="text-sm text-muted-foreground">
                                     {new Date(fixture.match_date).toLocaleDateString()} •{" "}

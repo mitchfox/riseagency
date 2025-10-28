@@ -67,6 +67,7 @@ Deno.serve(async (req) => {
 CRITICAL INSTRUCTIONS:
 - Extract EVERY match visible in the image
 - Include the home team, away team, and match date for each fixture
+- **IMPORTANT**: If a match shows a SCORE/RESULT (e.g., "2-1", "0-0"), include it in home_score and away_score
 - Preserve the exact team names as shown in the image
 - If a date is visible, use it exactly as shown (convert to YYYY-MM-DD format)
 - If only partial dates are visible (e.g., "07/11"), assume the year is ${currentYear}
@@ -80,11 +81,14 @@ Return ONLY a valid JSON array with NO markdown formatting:
     "away_team": "Exact Team Name",
     "match_date": "YYYY-MM-DD",
     "competition": "League/Competition Name",
-    "venue": "Venue Name or TBD"
+    "venue": "Venue Name or TBD",
+    "home_score": null or number (if match result is shown),
+    "away_score": null or number (if match result is shown)
   }
 ]
 
-Extract ALL fixtures visible, even if there are many. Do NOT summarize or skip any matches.`
+Extract ALL fixtures visible, even if there are many. Do NOT summarize or skip any matches.
+If a match shows a result/score, include the home_score and away_score as numbers. If no score is shown, set both to null.`
               },
               {
                 type: "image_url",
