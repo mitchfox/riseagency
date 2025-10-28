@@ -65,6 +65,7 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis }: Playe
   const [aiFixtures, setAiFixtures] = useState<any[]>([]);
   const [fetchingAiFixtures, setFetchingAiFixtures] = useState(false);
   const [selectedAiFixtures, setSelectedAiFixtures] = useState<Set<number>>(new Set());
+  const [displayCount, setDisplayCount] = useState(10);
 
   useEffect(() => {
     fetchPlayerFixtures();
@@ -361,20 +362,27 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis }: Playe
               </div>
 
               <div>
-                <Label>Minutes Played</Label>
+                <Label>Minutes Played (Optional)</Label>
                 <Input
                   type="number"
                   value={minutesPlayed || ""}
                   onChange={(e) =>
                     setMinutesPlayed(e.target.value ? parseInt(e.target.value) : null)
                   }
-                  placeholder="90"
+                  placeholder="Leave blank if not yet played"
                 />
               </div>
 
               <div className="flex justify-end gap-2 pt-4">
                 <Button variant="outline" onClick={handleCloseDialog}>
                   Cancel
+                </Button>
+                <Button variant="destructive" onClick={() => {
+                  if (editingPlayerFixture) {
+                    handleDelete(editingPlayerFixture.id);
+                  }
+                }}>
+                  Delete
                 </Button>
                 <Button onClick={handleSave}>Save</Button>
               </div>
@@ -551,65 +559,69 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis }: Playe
         {playerFixtures.length === 0 ? (
           <p className="text-sm text-muted-foreground">No fixtures added yet.</p>
         ) : (
-          playerFixtures.map((pf) => (
-            <Card key={pf.id}>
-              <CardContent className="pt-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">
-                        {pf.fixtures.home_team}{" "}
-                        {pf.fixtures.home_score !== null &&
-                          pf.fixtures.away_score !== null && (
-                            <span className="text-primary">
-                              {pf.fixtures.home_score} - {pf.fixtures.away_score}
-                            </span>
-                          )}{" "}
-                        {pf.fixtures.away_team}
-                      </span>
-                      {pf.fixtures.competition && (
-                        <span className="text-xs text-muted-foreground">
-                          • {pf.fixtures.competition}
+          <>
+            {playerFixtures.slice(0, displayCount).map((pf) => (
+              <Card key={pf.id}>
+                <CardContent className="pt-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">
+                          {pf.fixtures.home_team}{" "}
+                          {pf.fixtures.home_score !== null &&
+                            pf.fixtures.away_score !== null && (
+                              <span className="text-primary">
+                                {pf.fixtures.home_score} - {pf.fixtures.away_score}
+                              </span>
+                            )}{" "}
+                          {pf.fixtures.away_team}
                         </span>
+                        {pf.fixtures.competition && (
+                          <span className="text-xs text-muted-foreground">
+                            • {pf.fixtures.competition}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex gap-4 text-sm text-muted-foreground mt-1">
+                        <span>
+                          {new Date(pf.fixtures.match_date).toLocaleDateString()}
+                        </span>
+                        {pf.minutes_played && <span>• {pf.minutes_played} mins</span>}
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      {onCreateAnalysis && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => onCreateAnalysis(pf.fixture_id)}
+                        >
+                          <FileText className="w-4 h-4 mr-1" />
+                          Analysis
+                        </Button>
                       )}
-                    </div>
-                    <div className="flex gap-4 text-sm text-muted-foreground mt-1">
-                      <span>
-                        {new Date(pf.fixtures.match_date).toLocaleDateString()}
-                      </span>
-                      {pf.minutes_played && <span>• {pf.minutes_played} mins</span>}
-                    </div>
-                  </div>
-                  <div className="flex gap-2">
-                    {onCreateAnalysis && (
                       <Button
                         size="sm"
-                        variant="outline"
-                        onClick={() => onCreateAnalysis(pf.fixture_id)}
+                        variant="ghost"
+                        onClick={() => handleOpenDialog(pf)}
                       >
-                        <FileText className="w-4 h-4 mr-1" />
-                        Analysis
+                        <Pencil className="w-4 h-4" />
                       </Button>
-                    )}
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => handleOpenDialog(pf)}
-                    >
-                      <Pencil className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => handleDelete(pf.id)}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
+                    </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))
+                </CardContent>
+              </Card>
+            ))}
+            {playerFixtures.length > displayCount && (
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => setDisplayCount(prev => prev + 10)}
+              >
+                Show More
+              </Button>
+            )}
+          </>
         )}
       </div>
     </div>

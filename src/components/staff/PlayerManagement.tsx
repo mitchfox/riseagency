@@ -1569,23 +1569,17 @@ const PlayerManagement = () => {
                     <div className="border-t pt-4 space-y-4">
                       <div className="flex justify-between items-center">
                         <h4 className="text-lg font-semibold">Fixtures</h4>
-                        <Button size="sm" onClick={() => setIsAddingFixture(true)}>
-                          <Plus className="w-4 h-4 mr-2" />
-                          Add Fixture
-                        </Button>
                       </div>
 
-                      {isAddingFixture && (
-                        <PlayerFixtures 
-                          playerId={player.id} 
-                          playerName={player.name}
-                          onCreateAnalysis={(fixtureId) => {
-                            setCurrentPlayerId(player.id);
-                            setSelectedAnalysisWriterId(fixtureId);
-                            setIsAnalysisDialogOpen(true);
-                          }}
-                        />
-                      )}
+                      <PlayerFixtures 
+                        playerId={player.id} 
+                        playerName={player.name}
+                        onCreateAnalysis={(fixtureId) => {
+                          setCurrentPlayerId(player.id);
+                          setSelectedAnalysisWriterId(fixtureId);
+                          setIsAnalysisDialogOpen(true);
+                        }}
+                      />
                       
                       {(playerAnalyses[player.id] || []).length > 0 ? (
                         <div className="space-y-2">
