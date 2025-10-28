@@ -93,10 +93,18 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, trigger
           fixtures(*)
         `)
         .eq("player_id", playerId)
-        .order("fixtures(match_date)", { ascending: false });
+        .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setPlayerFixtures((data as any) || []);
+      
+      // Sort by fixture date descending (newest first)
+      const sortedData = (data as any[])?.sort((a, b) => {
+        const dateA = new Date(a.fixtures.match_date).getTime();
+        const dateB = new Date(b.fixtures.match_date).getTime();
+        return dateB - dateA; // Newest first
+      }) || [];
+      
+      setPlayerFixtures(sortedData);
     } catch (error: any) {
       console.error("Error fetching player fixtures:", error);
       toast.error("Failed to fetch fixtures");
@@ -643,8 +651,9 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, trigger
                                     )}
                                   </div>
                                   <div className="text-sm text-muted-foreground">
-                                    {new Date(fixture.match_date).toLocaleDateString()} •{" "}
-                                    {fixture.competition}
+                                    {new Date(fixture.match_date).toLocaleDateString()}
+                                    {fixture.competition && ` • ${fixture.competition}`}
+                                    {fixture.minutes_played && ` • ${fixture.minutes_played} min`}
                                   </div>
                                 </div>
                                 {selectedAiFixtures.has(index) && (

@@ -64,10 +64,11 @@ Deno.serve(async (req) => {
                 type: "text",
                 text: `Extract ALL football fixtures from this image. Today's date is ${today}.
 
-CRITICAL INSTRUCTIONS:
+CRITICAL INSTRUCTIONS - READ CAREFULLY:
 - Extract EVERY match visible in the image
 - Include the home team, away team, and match date for each fixture
-- **IMPORTANT**: If a match shows a SCORE/RESULT (e.g., "2-1", "0-0"), include it in home_score and away_score
+- **SCORES/RESULTS**: If a match displays a SCORE or RESULT (like "2-1", "0-0", "3-2"), extract the home_score and away_score as numbers
+- **MINUTES PLAYED**: If the image shows minutes played for ${teamName} (like "90 min", "45 min", "60'"), extract it as minutes_played
 - Preserve the exact team names as shown in the image
 - If a date is visible, use it exactly as shown (convert to YYYY-MM-DD format)
 - If only partial dates are visible (e.g., "07/11"), assume the year is ${currentYear}
@@ -82,13 +83,21 @@ Return ONLY a valid JSON array with NO markdown formatting:
     "match_date": "YYYY-MM-DD",
     "competition": "League/Competition Name",
     "venue": "Venue Name or TBD",
-    "home_score": null or number (if match result is shown),
-    "away_score": null or number (if match result is shown)
+    "home_score": null or number (REQUIRED if match result/score is visible),
+    "away_score": null or number (REQUIRED if match result/score is visible),
+    "minutes_played": null or number (if minutes played info is shown for ${teamName})
   }
 ]
 
-Extract ALL fixtures visible, even if there are many. Do NOT summarize or skip any matches.
-If a match shows a result/score, include the home_score and away_score as numbers. If no score is shown, set both to null.`
+IMPORTANT EXAMPLES:
+- If you see "Jihlava 2-1 Prague" → home_score: 2, away_score: 1
+- If you see "0-0 (FT)" → home_score: 0, away_score: 0
+- If you see "90 min" or "90'" → minutes_played: 90
+- If you see "45 min" → minutes_played: 45
+- If no score is shown → home_score: null, away_score: null
+- If no minutes shown → minutes_played: null
+
+Extract ALL fixtures visible. Do NOT skip any matches or information.`
               },
               {
                 type: "image_url",
