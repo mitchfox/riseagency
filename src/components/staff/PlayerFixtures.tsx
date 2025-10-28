@@ -59,6 +59,7 @@ interface PlayerAnalysis {
   video_url: string | null;
   analysis_date?: string;
   minutes_played?: number | null;
+  analysis_writer_id?: string | null;
 }
 
 interface OpponentData {
@@ -170,7 +171,7 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, onViewR
       // Fetch ALL analyses for this player (including those without fixture_id)
       const { data: fetchedAnalysisData } = await supabase
         .from("player_analysis")
-        .select("id, fixture_id, r90_score, opponent, result, pdf_url, video_url, analysis_date, minutes_played")
+        .select("id, fixture_id, r90_score, opponent, result, pdf_url, video_url, analysis_date, minutes_played, analysis_writer_id")
         .eq("player_id", playerId)
         .order("analysis_date", { ascending: false });
 
@@ -1493,6 +1494,22 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, onViewR
                     >
                       <FileText className="w-4 h-4 mr-1" />
                       View Report
+                    </Button>
+                  )}
+                  {analysisData.has(pf.fixture_id) && analysisData.get(pf.fixture_id)?.analysis_writer_id && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const analysis = analysisData.get(pf.fixture_id);
+                        if (analysis?.analysis_writer_id && onCreateAnalysis) {
+                          onCreateAnalysis(analysis.analysis_writer_id);
+                        }
+                      }}
+                    >
+                      <FileText className="w-4 h-4 mr-1" />
+                      View Analysis
                     </Button>
                   )}
                   {analysisData.has(pf.fixture_id) && analysisData.get(pf.fixture_id)?.pdf_url && (
