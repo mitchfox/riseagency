@@ -1105,6 +1105,14 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, trigger
 
         <div className="space-y-2">
           {playerFixtures.slice(0, displayCount).map((pf) => {
+            // Replace "For" with actual player team name for display
+            const displayHomeTeam = (pf.fixtures.home_team === "For" || pf.fixtures.home_team.toLowerCase() === "for") 
+              ? (playerTeam || "TBD") 
+              : pf.fixtures.home_team;
+            const displayAwayTeam = (pf.fixtures.away_team === "For" || pf.fixtures.away_team.toLowerCase() === "for") 
+              ? (playerTeam || "TBD") 
+              : pf.fixtures.away_team;
+
             // First try to get opponent from analysis data
             const analysisInfo = opponentData.get(pf.fixture_id);
             let opponent = analysisInfo?.opponent || "";
@@ -1112,11 +1120,10 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, trigger
             
             // If no analysis data, determine opponent from fixture
             if (!opponent) {
-              // "For" is a placeholder for the player's team
-              // The OTHER team is the opponent
-              if (pf.fixtures.home_team === "For" || pf.fixtures.home_team.toLowerCase().includes("for")) {
+              // "For" is a placeholder - the OTHER team is the opponent
+              if (pf.fixtures.home_team === "For" || pf.fixtures.home_team.toLowerCase() === "for") {
                 opponent = pf.fixtures.away_team;
-              } else if (pf.fixtures.away_team === "For" || pf.fixtures.away_team.toLowerCase().includes("for")) {
+              } else if (pf.fixtures.away_team === "For" || pf.fixtures.away_team.toLowerCase() === "for") {
                 opponent = pf.fixtures.home_team;
               } else if (playerTeam) {
                 // Match against player's actual team
@@ -1128,18 +1135,18 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, trigger
                 } else if (isAwayTeam) {
                   opponent = pf.fixtures.home_team;
                 } else {
-                  // Can't determine, show both
-                  opponent = `${pf.fixtures.home_team} vs ${pf.fixtures.away_team}`;
+                  // Can't determine, show both (with For replaced)
+                  opponent = `${displayHomeTeam} vs ${displayAwayTeam}`;
                 }
               } else {
-                opponent = `${pf.fixtures.home_team} vs ${pf.fixtures.away_team}`;
+                opponent = `${displayHomeTeam} vs ${displayAwayTeam}`;
               }
               
               // Determine result from score if available
               const hasScore = pf.fixtures.home_score !== null && pf.fixtures.away_score !== null;
               if (hasScore) {
                 const isPlayerHome = pf.fixtures.home_team === "For" || 
-                                    pf.fixtures.home_team.toLowerCase().includes("for") ||
+                                    pf.fixtures.home_team.toLowerCase() === "for" ||
                                     (playerTeam && pf.fixtures.home_team.toLowerCase().includes(playerTeam.toLowerCase()));
                 
                 if (isPlayerHome) {
