@@ -1571,19 +1571,7 @@ const PlayerManagement = () => {
                         <h4 className="text-lg font-semibold">Fixtures</h4>
                         <Button 
                           size="sm" 
-                          onClick={() => {
-                            const currentPlayer = player;
-                            setShowingFixturesFor(null);
-                            setTimeout(() => {
-                              setShowingFixturesFor(currentPlayer.id);
-                              setTimeout(() => {
-                                const elem = document.querySelector(`[data-player-id="${currentPlayer.id}"] [data-trigger-add-fixture]`);
-                                if (elem instanceof HTMLElement) {
-                                  elem.click();
-                                }
-                              }, 50);
-                            }, 50);
-                          }}
+                          onClick={() => setIsAddingFixture(true)}
                         >
                           <Plus className="w-4 h-4 mr-2" />
                           Add Fixture
@@ -1598,6 +1586,8 @@ const PlayerManagement = () => {
                           setSelectedAnalysisWriterId(fixtureId);
                           setIsAnalysisDialogOpen(true);
                         }}
+                        triggerOpen={isAddingFixture && player.id === showingFixturesFor}
+                        onDialogOpenChange={() => setIsAddingFixture(false)}
                       />
                       
                       {(playerAnalyses[player.id] || []).length > 0 ? (
@@ -1653,14 +1643,6 @@ const PlayerManagement = () => {
                             >
                               <Edit className="w-4 h-4 mr-1" />
                               Edit
-                            </Button>
-                            
-                            <Button 
-                              variant="destructive" 
-                              size="sm"
-                              onClick={() => handleDeleteAnalysis(analysis.id, player.id)}
-                            >
-                              Delete
                             </Button>
                             
                             {analysis.pdf_url && (
