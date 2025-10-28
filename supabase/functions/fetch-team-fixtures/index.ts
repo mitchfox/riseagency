@@ -1,5 +1,3 @@
-const LOVABLE_AI_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
-
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -43,9 +41,9 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Call Lovable AI Gateway
-    console.log("Calling Lovable AI Gateway...");
-    const aiResponse = await fetch(LOVABLE_AI_URL, {
+    // Call Lovable AI
+    console.log("Calling Lovable AI...");
+    const aiResponse = await fetch("https://integrate.api.lovable.app/api/ai", {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${LOVABLE_API_KEY}`,
@@ -81,7 +79,7 @@ Deno.serve(async (req) => {
 
     if (!aiResponse.ok) {
       const errorText = await aiResponse.text();
-      console.error("AI Gateway error:", aiResponse.status, errorText);
+      console.error("AI API error:", errorText);
       
       if (aiResponse.status === 429) {
         return new Response(
@@ -109,7 +107,7 @@ Deno.serve(async (req) => {
         );
       }
       
-      throw new Error(`AI Gateway error: ${aiResponse.status} ${errorText}`);
+      throw new Error(`AI API error: ${errorText}`);
     }
 
     const aiData = await aiResponse.json();
