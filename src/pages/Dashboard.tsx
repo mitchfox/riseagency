@@ -24,6 +24,8 @@ interface Analysis {
   opponent: string | null;
   result: string | null;
   minutes_played: number | null;
+  analysis_writer_id?: string | null;
+  analysis_writer_data?: any;
 }
 
 interface PlayerProgram {
@@ -178,18 +180,45 @@ const Dashboard = () => {
       if (analysisError) throw analysisError;
       setAnalyses(analysisData || []);
 
-      // Fetch concepts linked to this player
-      const { data: conceptsData, error: conceptsError } = await supabase
-        .from("analyses")
-        .select("*")
-        .eq("analysis_type", "concept")
-        .in("id", (analysisData || [])
-          .filter(a => a.analysis_writer_id)
-          .map(a => a.analysis_writer_id)
-        );
+      // Fetch all analyses (pre-match, post-match, concepts) linked to this player
+      const linkedAnalysisIds = (analysisData || [])
+        .filter(a => a.analysis_writer_id)
+        .map(a => a.analysis_writer_id);
 
-      if (!conceptsError && conceptsData) {
-        setConcepts(conceptsData);
+      if (linkedAnalysisIds.length > 0) {
+        const { data: allAnalysesData, error: allAnalysesError } = await supabase
+          .from("analyses")
+          .select("*")
+          .in("id", linkedAnalysisIds);
+
+        if (!allAnalysesError && allAnalysesData) {
+          // Separate concepts from other analyses
+          setConcepts(allAnalysesData.filter(a => a.analysis_type === "concept"));
+          
+          // Add pre-match and post-match analyses to the analyses array
+          const matchAnalyses = allAnalysesData.filter(a => 
+            a.analysis_type === "pre-match" || a.analysis_type === "post-match"
+          );
+          
+          // Merge with existing player_analysis data
+          const mergedAnalyses = [...(analysisData || [])] as Analysis[];
+          matchAnalyses.forEach(matchAnalysis => {
+            const playerAnalysis = (analysisData || []).find(
+              pa => pa.analysis_writer_id === matchAnalysis.id
+            );
+            if (playerAnalysis) {
+              // Update the existing analysis with details from analyses table
+              const index = mergedAnalyses.findIndex(a => a.id === playerAnalysis.id);
+              if (index !== -1) {
+                mergedAnalyses[index] = {
+                  ...mergedAnalyses[index],
+                  analysis_writer_data: matchAnalysis
+                } as Analysis;
+              }
+            }
+          });
+          setAnalyses(mergedAnalyses);
+        }
       }
     } catch (error: any) {
       console.error("Error fetching analyses:", error);
@@ -387,6 +416,24 @@ const Dashboard = () => {
                                   >
                                     R90: {analysis.r90_score.toFixed(2)}
                                   </button>
+                                )}
+                                
+                                {analysis.analysis_writer_data && (
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm"
+                                    onClick={() => {
+                                      const analysisType = analysis.analysis_writer_data.analysis_type;
+                                      const path = analysisType === "pre-match" 
+                                        ? `/between-the-lines/${analysis.analysis_writer_id}?type=pre-match`
+                                        : `/between-the-lines/${analysis.analysis_writer_id}?type=post-match`;
+                                      navigate(path);
+                                    }}
+                                    className="text-xs"
+                                  >
+                                    <FileText className="w-3 h-3 md:w-4 md:h-4 mr-1" />
+                                    {analysis.analysis_writer_data.analysis_type === "pre-match" ? "Pre-Match" : "Post-Match"} Analysis
+                                  </Button>
                                 )}
                                 
                                 {analysis.pdf_url && (
