@@ -1561,10 +1561,16 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, onViewR
                 const r90Score = analysis.r90_score;
                 let r90Color = "bg-gray-500";
                 if (r90Score !== null && r90Score !== undefined) {
-                  if (r90Score >= 1.5) r90Color = "bg-green-500";
-                  else if (r90Score >= 1.0) r90Color = "bg-blue-500";
-                  else if (r90Score >= 0.5) r90Color = "bg-yellow-500";
-                  else r90Color = "bg-red-500";
+                  if (r90Score < 0) r90Color = "bg-red-950";
+                  else if (r90Score >= 0 && r90Score < 0.2) r90Color = "bg-red-600";
+                  else if (r90Score >= 0.2 && r90Score < 0.4) r90Color = "bg-red-400";
+                  else if (r90Score >= 0.4 && r90Score < 0.6) r90Color = "bg-orange-700";
+                  else if (r90Score >= 0.6 && r90Score < 0.8) r90Color = "bg-orange-500";
+                  else if (r90Score >= 0.8 && r90Score < 1.0) r90Color = "bg-yellow-400";
+                  else if (r90Score >= 1.0 && r90Score < 1.4) r90Color = "bg-lime-400";
+                  else if (r90Score >= 1.4 && r90Score < 1.8) r90Color = "bg-green-500";
+                  else if (r90Score >= 1.8 && r90Score < 2.5) r90Color = "bg-green-700";
+                  else r90Color = "bg-yellow-600";
                 }
 
                 return (
