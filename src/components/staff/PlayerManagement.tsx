@@ -1564,19 +1564,110 @@ const PlayerManagement = () => {
                   </div>
 
                   {showingFixturesFor === player.id && (
-                    <div className="border-t pt-4 mt-4">
-                      <PlayerFixtures 
-                        playerId={player.id} 
-                        playerName={player.name}
-                        onCreateAnalysis={(fixtureId) => {
-                          // Open the analysis dialog and set the fixture
-                          setCurrentPlayerId(player.id);
-                          setSelectedAnalysisWriterId(fixtureId);
-                          setIsAnalysisDialogOpen(true);
-                        }}
-                      />
-                    </div>
-                  )}
+                    <div className="border-t pt-4 space-y-4">
+                      <div className="flex justify-between items-center">
+                        <h4 className="text-lg font-semibold">Performance Reports & Games</h4>
+                        <Button size="sm" onClick={() => openAnalysisDialog(player.id)}>
+                          <FileText className="w-4 h-4 mr-2" />
+                          Add Performance Report
+                        </Button>
+                      </div>
+                      
+                      <p className="text-sm text-muted-foreground">
+                        Performance reports and game records for {player.name}.
+                      </p>
+                      
+                      {(playerAnalyses[player.id] || []).length > 0 ? (
+                        <div className="space-y-2">
+                          {(playerAnalyses[player.id] || []).map((analysis) => (
+                          <div 
+                            key={analysis.id} 
+                            className="flex items-center gap-3 border rounded-lg p-3 hover:border-primary transition-colors"
+                          >
+                            <span className="text-sm text-muted-foreground min-w-[80px]">
+                              {new Date(analysis.analysis_date).toLocaleDateString('en-GB')}
+                            </span>
+                            
+                            {analysis.opponent && (
+                              <div className="flex flex-col min-w-[150px]">
+                                <span className="text-sm font-medium">vs {analysis.opponent}</span>
+                                {analysis.result && (
+                                  <span className="text-xs text-muted-foreground">{analysis.result}</span>
+                                )}
+                              </div>
+                            )}
+                            
+                            {analysis.r90_score !== null && analysis.r90_score !== undefined && (
+                              <div className="flex items-center gap-2">
+                                <span className={`${getR90Color(analysis.r90_score)} text-white px-3 py-1 rounded font-bold`}>
+                                  R90: {analysis.r90_score?.toFixed(2)}
+                                </span>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => {
+                                    setSelectedAnalysisId(analysis.id);
+                                    setSelectedPlayerName(player.name);
+                                    setIsPerformanceActionsDialogOpen(true);
+                                  }}
+                                >
+                                  <FileText className="w-4 h-4 mr-1" />
+                                  View Report
+                                </Button>
+                              </div>
+                            )}
+                            
+                            {analysis.minutes_played && (
+                              <span className="text-sm text-muted-foreground">
+                                {analysis.minutes_played} min
+                              </span>
+                            )}
+                            
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => openEditAnalysisDialog(analysis)}
+                            >
+                              <Edit className="w-4 h-4 mr-1" />
+                              Edit
+                            </Button>
+                            
+                            <Button 
+                              variant="destructive" 
+                              size="sm"
+                              onClick={() => handleDeleteAnalysis(analysis.id, player.id)}
+                            >
+                              Delete
+                            </Button>
+                            
+                            {analysis.pdf_url && (
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => window.open(analysis.pdf_url, '_blank')}
+                              >
+                                <FileText className="w-4 h-4 mr-1" />
+                                PDF
+                              </Button>
+                            )}
+                            
+                            {analysis.video_url && (
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => window.open(analysis.video_url, '_blank')}
+                              >
+                                📹 Video
+                              </Button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">No performance reports yet.</p>
+                    )}
+                  </div>
+                )}
 
                   {showingHighlightsFor === player.id && (
                     <>
@@ -1754,106 +1845,92 @@ const PlayerManagement = () => {
                   {showingAnalysisFor === player.id && (
                     <div className="border-t pt-4 space-y-4">
                       <div className="flex justify-between items-center">
-                        <h4 className="text-lg font-semibold">Analysis & Performance Reports</h4>
-                        <Button size="sm" onClick={() => openAnalysisDialog(player.id)}>
-                          <FileText className="w-4 h-4 mr-2" />
-                          Add Performance Report
-                        </Button>
-                      </div>
-                      
-                      <p className="text-sm text-muted-foreground">
-                        Use the button above to add a new performance report or write an analysis from fixtures.
-                      </p>
-                      
-                      {(playerAnalyses[player.id] || []).length > 0 && (
-                        <div className="space-y-2">
-                          {(playerAnalyses[player.id] || []).map((analysis) => (
-                          <div 
-                            key={analysis.id} 
-                            className="flex items-center gap-3 border rounded-lg p-3 hover:border-primary transition-colors"
+                        <h4 className="text-lg font-semibold">Analysis Writer</h4>
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              setCurrentPlayerId(player.id);
+                              // Set to pre-match analysis type
+                              setIsAnalysisDialogOpen(true);
+                            }}
                           >
-                            <span className="text-sm text-muted-foreground min-w-[80px]">
-                              {new Date(analysis.analysis_date).toLocaleDateString('en-GB')}
-                            </span>
-                            
-                            {analysis.opponent && (
-                              <div className="flex flex-col min-w-[150px]">
-                                <span className="text-sm font-medium">vs {analysis.opponent}</span>
-                                {analysis.result && (
-                                  <span className="text-xs text-muted-foreground">{analysis.result}</span>
-                                )}
-                              </div>
-                            )}
-                            
-                            {analysis.r90_score !== null && analysis.r90_score !== undefined && (
-                              <div className="flex items-center gap-2">
-                                <span className={`${getR90Color(analysis.r90_score)} text-white px-3 py-1 rounded font-bold`}>
-                                  R90: {analysis.r90_score?.toFixed(2)}
-                                </span>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => {
-                                    setSelectedAnalysisId(analysis.id);
-                                    setSelectedPlayerName(player.name);
-                                    setIsPerformanceActionsDialogOpen(true);
-                                  }}
-                                >
-                                  <FileText className="w-4 h-4 mr-1" />
-                                  View Report
-                                </Button>
-                              </div>
-                            )}
-                            
-                            {analysis.minutes_played && (
-                              <span className="text-sm text-muted-foreground">
-                                {analysis.minutes_played} min
-                              </span>
-                            )}
-                            
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => openEditAnalysisDialog(analysis)}
-                            >
-                              <Edit className="w-4 h-4 mr-1" />
-                              Edit
-                            </Button>
-                            
-                            <Button 
-                              variant="destructive" 
-                              size="sm"
-                              onClick={() => handleDeleteAnalysis(analysis.id, player.id)}
-                            >
-                              Delete
-                            </Button>
-                            
-                            {analysis.pdf_url && (
-                              <Button 
-                                variant="outline" 
-                                size="sm"
-                                onClick={() => window.open(analysis.pdf_url, '_blank')}
-                              >
-                                <FileText className="w-4 h-4 mr-1" />
-                                PDF
-                              </Button>
-                            )}
-                            
-                            {analysis.video_url && (
-                              <Button 
-                                variant="outline" 
-                                size="sm"
-                                onClick={() => window.open(analysis.video_url, '_blank')}
-                              >
-                                📹 Video
-                              </Button>
-                            )}
-                          </div>
-                        ))}
+                            Add Pre-Match
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              setCurrentPlayerId(player.id);
+                              // Set to post-match analysis type
+                              setIsAnalysisDialogOpen(true);
+                            }}
+                          >
+                            Add Post-Match
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => openAnalysisDialog(player.id)}
+                          >
+                            <FileText className="w-4 h-4 mr-2" />
+                            Add Performance Report
+                          </Button>
+                        </div>
                       </div>
-                    )}
-                  </div>
-                )}
+                      
+                      <PlayerFixtures 
+                        playerId={player.id} 
+                        playerName={player.name}
+                        onCreateAnalysis={(fixtureId) => {
+                          setCurrentPlayerId(player.id);
+                          setSelectedAnalysisWriterId(fixtureId);
+                          setIsAnalysisDialogOpen(true);
+                        }}
+                      />
+                      
+                      {availableAnalyses.filter(a => 
+                        playerAnalyses[player.id]?.some(pa => pa.analysis_writer_id === a.id)
+                      ).length > 0 && (
+                        <div className="border-t pt-4">
+                          <h5 className="font-semibold mb-2">Linked Analyses</h5>
+                          <div className="space-y-2">
+                            {availableAnalyses
+                              .filter(a => 
+                                playerAnalyses[player.id]?.some(pa => pa.analysis_writer_id === a.id)
+                              )
+                              .map((analysis) => (
+                                <Card key={analysis.id}>
+                                  <CardContent className="p-3">
+                                    <div className="flex items-center justify-between">
+                                      <div>
+                                        <span className="font-medium">
+                                          {analysis.analysis_type === 'pre_match' && '⚽ Pre-Match: '}
+                                          {analysis.analysis_type === 'post_match' && '📊 Post-Match: '}
+                                          {analysis.analysis_type === 'concept' && '💡 Concept: '}
+                                          {analysis.title || `${analysis.home_team} vs ${analysis.away_team}` || analysis.concept}
+                                        </span>
+                                      </div>
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => {
+                                          // Navigate to view the analysis
+                                          window.open(`/performance/${playerAnalyses[player.id].find(pa => pa.analysis_writer_id === analysis.id)?.id}`, '_blank');
+                                        }}
+                                      >
+                                        View
+                                      </Button>
+                                    </div>
+                                  </CardContent>
+                                </Card>
+                              ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </CardContent>
               )}
             </Card>
