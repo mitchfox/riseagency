@@ -78,6 +78,7 @@ const PlayerManagement = () => {
   const [visibleOnStarsPage, setVisibleOnStarsPage] = useState(false);
   const [playerCategory, setPlayerCategory] = useState<string>("Other");
   const [representationStatus, setRepresentationStatus] = useState<string>("other");
+  const [addFixtureCallback, setAddFixtureCallback] = useState<(() => void) | null>(null);
   const [isProgrammingDialogOpen, setIsProgrammingDialogOpen] = useState(false);
   const [selectedProgrammingPlayerId, setSelectedProgrammingPlayerId] = useState<string>("");
   const [selectedProgrammingPlayerName, setSelectedProgrammingPlayerName] = useState<string>("");
@@ -1571,19 +1572,7 @@ const PlayerManagement = () => {
                         <h4 className="text-lg font-semibold">Fixtures</h4>
                         <Button 
                           size="sm" 
-                          onClick={() => {
-                            const currentPlayer = player;
-                            setShowingFixturesFor(null);
-                            setTimeout(() => {
-                              setShowingFixturesFor(currentPlayer.id);
-                              setTimeout(() => {
-                                const elem = document.querySelector(`[data-player-id="${currentPlayer.id}"] [data-trigger-add-fixture]`);
-                                if (elem instanceof HTMLElement) {
-                                  elem.click();
-                                }
-                              }, 50);
-                            }, 50);
-                          }}
+                          onClick={() => addFixtureCallback?.()}
                         >
                           <Plus className="w-4 h-4 mr-2" />
                           Add Fixture
@@ -1598,8 +1587,16 @@ const PlayerManagement = () => {
                           setSelectedAnalysisWriterId(fixtureId);
                           setIsAnalysisDialogOpen(true);
                         }}
+                        onAddFixtureClick={(openDialog) => {
+                          setAddFixtureCallback(() => openDialog);
+                        }}
                       />
-                      
+                    </div>
+                   )}
+
+                  {showingAnalysisFor === player.id && (
+                    <div className="border-t pt-4 space-y-4">
+                      <h4 className="text-lg font-semibold mb-2">Performance Reports</h4>
                       {(playerAnalyses[player.id] || []).length > 0 ? (
                         <div className="space-y-2">
                           {(playerAnalyses[player.id] || []).map((analysis) => (
@@ -1686,188 +1683,11 @@ const PlayerManagement = () => {
                           </div>
                         ))}
                       </div>
-                    ) : (
-                      <p className="text-sm text-muted-foreground">No performance reports yet.</p>
-                    )}
-                  </div>
-                )}
+                       ) : (
+                        <p className="text-sm text-muted-foreground">No performance reports yet.</p>
+                      )}
 
-                  {showingHighlightsFor === player.id && (
-                    <>
-                      {/* Highlights Section */}
-                      <div className="border-t pt-4 space-y-4 mt-4">
-                        <div className="flex items-center justify-between">
-                          <h4 className="text-lg font-semibold">Player Highlights</h4>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => {
-                              setCurrentPlayerId(player.id);
-                              setIsHighlightsDialogOpen(true);
-                            }}
-                          >
-                            <Video className="w-4 h-4 mr-2" />
-                            Add Highlight
-                          </Button>
-                        </div>
-                        {(() => {
-                          let highlights: any[] = [];
-                          try {
-                            if (player.highlights) {
-                              highlights = typeof player.highlights === 'string' 
-                                ? JSON.parse(player.highlights) 
-                                : player.highlights;
-                              highlights = Array.isArray(highlights) ? highlights : [];
-                            }
-                          } catch {
-                            highlights = [];
-                          }
-                          
-                          return highlights.length > 0 ? (
-                            <div className="space-y-2">
-                              {highlights.map((highlight, index) => (
-                                <div key={index} className="flex items-center gap-3 p-3 border rounded-lg bg-secondary/5">
-                                  <span className="text-muted-foreground font-bold">{index + 1}</span>
-                                  
-                                  {highlight.clubLogo && (
-                                    <img 
-                                      src={highlight.clubLogo} 
-                                      alt="Club logo"
-                                      className="w-10 h-10 object-contain bg-white rounded p-1"
-                                    />
-                                  )}
-                                  
-                                  {highlight.videoUrl && (
-                                    <video 
-                                      src={highlight.videoUrl}
-                                      className="w-20 h-14 object-cover rounded border cursor-pointer"
-                                      muted
-                                      onClick={() => window.open(highlight.videoUrl, '_blank')}
-                                    />
-                                  )}
-                                  
-                                  <div className="flex-1">
-                                    <p className="text-sm font-medium">{highlight.name || `Highlight ${index + 1}`}</p>
-                                    {highlight.addedAt && (
-                                      <p className="text-xs text-muted-foreground">
-                                        Added {new Date(highlight.addedAt).toLocaleDateString()}
-                                      </p>
-                                    )}
-                                  </div>
-                                  
-                                  <div className="flex gap-1">
-                                    <Button
-                                      type="button"
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={async () => {
-                                        if (index > 0) {
-                                          const newHighlights = [...highlights];
-                                          [newHighlights[index - 1], newHighlights[index]] = [newHighlights[index], newHighlights[index - 1]];
-                                          
-                                          try {
-                                            const { error } = await supabase
-                                              .from("players")
-                                              .update({ highlights: JSON.stringify(newHighlights) })
-                                              .eq("id", player.id);
-                                            
-                                            if (error) throw error;
-                                            toast.success("Highlight moved up");
-                                            fetchPlayers();
-                                          } catch (error: any) {
-                                            toast.error("Failed to reorder");
-                                          }
-                                        }
-                                      }}
-                                      disabled={index === 0}
-                                      title="Move up"
-                                    >
-                                      ↑
-                                    </Button>
-                                    <Button
-                                      type="button"
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={async () => {
-                                        if (index < highlights.length - 1) {
-                                          const newHighlights = [...highlights];
-                                          [newHighlights[index], newHighlights[index + 1]] = [newHighlights[index + 1], newHighlights[index]];
-                                          
-                                          try {
-                                            const { error } = await supabase
-                                              .from("players")
-                                              .update({ highlights: JSON.stringify(newHighlights) })
-                                              .eq("id", player.id);
-                                            
-                                            if (error) throw error;
-                                            toast.success("Highlight moved down");
-                                            fetchPlayers();
-                                          } catch (error: any) {
-                                            toast.error("Failed to reorder");
-                                          }
-                                        }
-                                      }}
-                                      disabled={index === highlights.length - 1}
-                                      title="Move down"
-                                    >
-                                      ↓
-                                    </Button>
-                                     <Button
-                                      type="button"
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => {
-                                        setCurrentPlayerId(player.id);
-                                        setEditingHighlightIndex(index);
-                                        setHighlightName(highlight.name || "");
-                                        setExistingHighlights(highlights);
-                                        setIsHighlightsDialogOpen(true);
-                                      }}
-                                      title="Edit"
-                                    >
-                                      <Edit className="w-3 h-3" />
-                                    </Button>
-                                    <Button
-                                      type="button"
-                                      variant="destructive"
-                                      size="sm"
-                                      onClick={async () => {
-                                        const newHighlights = highlights.filter((_, i) => i !== index);
-                                        
-                                        try {
-                                          const { error } = await supabase
-                                            .from("players")
-                                            .update({ highlights: JSON.stringify(newHighlights) })
-                                            .eq("id", player.id);
-                                          
-                                          if (error) throw error;
-                                          toast.success("Highlight deleted");
-                                          fetchPlayers();
-                                        } catch (error: any) {
-                                          toast.error("Failed to delete");
-                                        }
-                                      }}
-                                      title="Delete"
-                                    >
-                                      Delete
-                                    </Button>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          ) : (
-                            <p className="text-sm text-muted-foreground text-center py-4">
-                              No highlights yet. Click "Add Highlight" to create one.
-                            </p>
-                          );
-                        })()}
-                      </div>
-                    </>
-                  )}
-
-                  {showingAnalysisFor === player.id && (
-                    <div className="border-t pt-4 space-y-4">
-                      <h4 className="text-xl font-semibold mb-4">Analysis</h4>
+                       <h4 className="text-xl font-semibold mb-4 mt-6">Analysis</h4>
                       
                       <Tabs defaultValue="pre-match" className="w-full">
                         <TabsList className="grid w-full grid-cols-4">
@@ -2137,6 +1957,180 @@ const PlayerManagement = () => {
                       </Tabs>
                     </div>
                   )}
+
+                  {showingHighlightsFor === player.id && (
+                    <>
+                      {/* Highlights Section */}
+                      <div className="border-t pt-4 space-y-4 mt-4">
+                        <div className="flex items-center justify-between">
+                          <h4 className="text-lg font-semibold">Player Highlights</h4>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => {
+                              setCurrentPlayerId(player.id);
+                              setIsHighlightsDialogOpen(true);
+                            }}
+                          >
+                            <Video className="w-4 h-4 mr-2" />
+                            Add Highlight
+                          </Button>
+                        </div>
+                        {(() => {
+                          let highlights: any[] = [];
+                          try {
+                            if (player.highlights) {
+                              highlights = typeof player.highlights === 'string' 
+                                ? JSON.parse(player.highlights) 
+                                : player.highlights;
+                              highlights = Array.isArray(highlights) ? highlights : [];
+                            }
+                          } catch {
+                            highlights = [];
+                          }
+                          
+                          return highlights.length > 0 ? (
+                            <div className="space-y-2">
+                              {highlights.map((highlight, index) => (
+                                <div key={index} className="flex items-center gap-3 p-3 border rounded-lg bg-secondary/5">
+                                  <span className="text-muted-foreground font-bold">{index + 1}</span>
+                                  
+                                  {highlight.clubLogo && (
+                                    <img 
+                                      src={highlight.clubLogo} 
+                                      alt="Club logo"
+                                      className="w-10 h-10 object-contain bg-white rounded p-1"
+                                    />
+                                  )}
+                                  
+                                  {highlight.videoUrl && (
+                                    <video 
+                                      src={highlight.videoUrl}
+                                      className="w-20 h-14 object-cover rounded border cursor-pointer"
+                                      muted
+                                      onClick={() => window.open(highlight.videoUrl, '_blank')}
+                                    />
+                                  )}
+                                  
+                                  <div className="flex-1">
+                                    <p className="text-sm font-medium">{highlight.name || `Highlight ${index + 1}`}</p>
+                                    {highlight.addedAt && (
+                                      <p className="text-xs text-muted-foreground">
+                                        Added {new Date(highlight.addedAt).toLocaleDateString()}
+                                      </p>
+                                    )}
+                                  </div>
+                                  
+                                  <div className="flex gap-1">
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={async () => {
+                                        if (index > 0) {
+                                          const newHighlights = [...highlights];
+                                          [newHighlights[index - 1], newHighlights[index]] = [newHighlights[index], newHighlights[index - 1]];
+                                          
+                                          try {
+                                            const { error } = await supabase
+                                              .from("players")
+                                              .update({ highlights: JSON.stringify(newHighlights) })
+                                              .eq("id", player.id);
+                                            
+                                            if (error) throw error;
+                                            toast.success("Highlight moved up");
+                                            fetchPlayers();
+                                          } catch (error: any) {
+                                            toast.error("Failed to reorder");
+                                          }
+                                        }
+                                      }}
+                                      disabled={index === 0}
+                                      title="Move up"
+                                    >
+                                      ↑
+                                    </Button>
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={async () => {
+                                        if (index < highlights.length - 1) {
+                                          const newHighlights = [...highlights];
+                                          [newHighlights[index], newHighlights[index + 1]] = [newHighlights[index + 1], newHighlights[index]];
+                                          
+                                          try {
+                                            const { error } = await supabase
+                                              .from("players")
+                                              .update({ highlights: JSON.stringify(newHighlights) })
+                                              .eq("id", player.id);
+                                            
+                                            if (error) throw error;
+                                            toast.success("Highlight moved down");
+                                            fetchPlayers();
+                                          } catch (error: any) {
+                                            toast.error("Failed to reorder");
+                                          }
+                                        }
+                                      }}
+                                      disabled={index === highlights.length - 1}
+                                      title="Move down"
+                                    >
+                                      ↓
+                                    </Button>
+                                     <Button
+                                      type="button"
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => {
+                                        setCurrentPlayerId(player.id);
+                                        setEditingHighlightIndex(index);
+                                        setHighlightName(highlight.name || "");
+                                        setExistingHighlights(highlights);
+                                        setIsHighlightsDialogOpen(true);
+                                      }}
+                                      title="Edit"
+                                    >
+                                      <Edit className="w-3 h-3" />
+                                    </Button>
+                                    <Button
+                                      type="button"
+                                      variant="destructive"
+                                      size="sm"
+                                      onClick={async () => {
+                                        const newHighlights = highlights.filter((_, i) => i !== index);
+                                        
+                                        try {
+                                          const { error } = await supabase
+                                            .from("players")
+                                            .update({ highlights: JSON.stringify(newHighlights) })
+                                            .eq("id", player.id);
+                                          
+                                          if (error) throw error;
+                                          toast.success("Highlight deleted");
+                                          fetchPlayers();
+                                        } catch (error: any) {
+                                          toast.error("Failed to delete");
+                                        }
+                                      }}
+                                      title="Delete"
+                                    >
+                                      Delete
+                                    </Button>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <p className="text-sm text-muted-foreground text-center py-4">
+                              No highlights yet. Click "Add Highlight" to create one.
+                            </p>
+                          );
+                        })()}
+                      </div>
+                    </>
+                  )}
+
                 </CardContent>
               )}
             </Card>
