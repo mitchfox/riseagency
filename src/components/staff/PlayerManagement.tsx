@@ -1510,7 +1510,11 @@ const PlayerManagement = () => {
                     <Button 
                       variant={showingFixturesFor === player.id ? "default" : "outline"}
                       size="sm" 
-                      onClick={() => setShowingFixturesFor(showingFixturesFor === player.id ? null : player.id)}
+                      onClick={() => {
+                        setShowingFixturesFor(showingFixturesFor === player.id ? null : player.id);
+                        setShowingAnalysisFor(null);
+                        setShowingHighlightsFor(null);
+                      }}
                     >
                       <Calendar className="w-4 h-4 mr-2" />
                       Fixtures
@@ -1518,15 +1522,37 @@ const PlayerManagement = () => {
                     <Button 
                       variant={showingAnalysisFor === player.id ? "default" : "outline"}
                       size="sm" 
-                      onClick={() => setShowingAnalysisFor(showingAnalysisFor === player.id ? null : player.id)}
+                      onClick={() => {
+                        setShowingAnalysisFor(showingAnalysisFor === player.id ? null : player.id);
+                        setShowingFixturesFor(null);
+                        setShowingHighlightsFor(null);
+                      }}
                     >
                       <LineChart className="w-4 h-4 mr-2" />
-                      Analysis & Performance Reports
+                      Analysis
+                    </Button>
+                    <Button 
+                      variant={isProgrammingDialogOpen && selectedProgrammingPlayerId === player.id ? "default" : "outline"}
+                      size="sm" 
+                      onClick={() => {
+                        setSelectedProgrammingPlayerId(player.id);
+                        setSelectedProgrammingPlayerName(player.name);
+                        setIsProgrammingDialogOpen(true);
+                        setShowingFixturesFor(null);
+                        setShowingHighlightsFor(null);
+                      }}
+                    >
+                      <BookOpen className="w-4 h-4 mr-2" />
+                      Programming
                     </Button>
                     <Button 
                       variant={showingHighlightsFor === player.id ? "default" : "outline"}
                       size="sm"
-                      onClick={() => setShowingHighlightsFor(showingHighlightsFor === player.id ? null : player.id)}
+                      onClick={() => {
+                        setShowingHighlightsFor(showingHighlightsFor === player.id ? null : player.id);
+                        setShowingFixturesFor(null);
+                        setShowingAnalysisFor(null);
+                      }}
                     >
                       <Video className="w-4 h-4 mr-2" />
                       Highlights
@@ -1534,14 +1560,6 @@ const PlayerManagement = () => {
                     <Button variant="outline" size="sm" onClick={() => startEdit(player)}>
                       <Edit className="w-4 h-4 mr-2" />
                       Player Details
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={() => {
-                      setSelectedProgrammingPlayerId(player.id);
-                      setSelectedProgrammingPlayerName(player.name);
-                      setIsProgrammingDialogOpen(true);
-                    }}>
-                      <BookOpen className="w-4 h-4 mr-2" />
-                      Programming
                     </Button>
                   </div>
 
@@ -1736,14 +1754,20 @@ const PlayerManagement = () => {
                   {showingAnalysisFor === player.id && (
                     <div className="border-t pt-4 space-y-4">
                       <div className="flex justify-between items-center">
-                        <h4 className="text-lg font-semibold">Player Analysis & Performance Reports</h4>
+                        <h4 className="text-lg font-semibold">Analysis & Performance Reports</h4>
                         <Button size="sm" onClick={() => openAnalysisDialog(player.id)}>
-                          Add New Game
+                          <FileText className="w-4 h-4 mr-2" />
+                          Add Performance Report
                         </Button>
                       </div>
                       
-                      <div className="space-y-2">
-                        {(playerAnalyses[player.id] || []).map((analysis) => (
+                      <p className="text-sm text-muted-foreground">
+                        Use the button above to add a new performance report or write an analysis from fixtures.
+                      </p>
+                      
+                      {(playerAnalyses[player.id] || []).length > 0 && (
+                        <div className="space-y-2">
+                          {(playerAnalyses[player.id] || []).map((analysis) => (
                           <div 
                             key={analysis.id} 
                             className="flex items-center gap-3 border rounded-lg p-3 hover:border-primary transition-colors"
@@ -1826,14 +1850,10 @@ const PlayerManagement = () => {
                             )}
                           </div>
                         ))}
-                        {(!playerAnalyses[player.id] || playerAnalyses[player.id].length === 0) && (
-                          <p className="text-sm text-muted-foreground text-center py-4">
-                            No analysis data yet. Click "Add New Game" to create one.
-                          </p>
-                        )}
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
+                )}
                 </CardContent>
               )}
             </Card>

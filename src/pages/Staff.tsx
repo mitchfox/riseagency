@@ -12,7 +12,6 @@ import BlogManagement from "@/components/staff/BlogManagement";
 import BetweenTheLinesManagement from "@/components/staff/BetweenTheLinesManagement";
 import { CoachingDatabase } from "@/components/staff/CoachingDatabase";
 import { AnalysisManagement } from "@/components/staff/AnalysisManagement";
-import { FixturesManagement } from "@/components/staff/FixturesManagement";
 import { FormSubmissionsManagement } from "@/components/staff/FormSubmissionsManagement";
 import { SiteVisitorsManagement } from "@/components/staff/SiteVisitorsManagement";
 
@@ -28,7 +27,7 @@ const Staff = () => {
   const [loading, setLoading] = useState(true);
   const [isStaff, setIsStaff] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-  const [expandedSection, setExpandedSection] = useState<'players' | 'blog' | 'betweenthelines' | 'coaching' | 'analysis' | 'fixtures' | 'submissions' | 'visitors' | null>('players');
+  const [expandedSection, setExpandedSection] = useState<'players' | 'blog' | 'betweenthelines' | 'coaching' | 'analysis' | 'submissions' | 'visitors' | null>('players');
   const navigate = useNavigate();
 
   // Load saved email and remember me preference on mount
@@ -307,25 +306,6 @@ const Staff = () => {
             )}
           </Card>
 
-          {/* Fixtures Section */}
-          <Card className="cursor-pointer">
-            <CardHeader 
-              onClick={() => setExpandedSection(expandedSection === 'fixtures' ? null : 'fixtures')}
-              className="hover:bg-accent/50 transition-colors"
-            >
-              <div className="flex justify-between items-center">
-                <CardTitle className="text-2xl">Fixtures</CardTitle>
-                <div className="text-muted-foreground">
-                  {expandedSection === 'fixtures' ? <ChevronDown size={24} /> : <ChevronRight size={24} />}
-                </div>
-              </div>
-            </CardHeader>
-            {expandedSection === 'fixtures' && (
-              <CardContent className="pt-6">
-                <FixturesManagement />
-              </CardContent>
-            )}
-          </Card>
 
           {/* News Articles Section */}
           <Card className="cursor-pointer">
