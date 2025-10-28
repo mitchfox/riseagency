@@ -759,13 +759,30 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, trigger
       />
       
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>
-              {editingPlayerFixture ? "Edit" : "Add"} Fixture
-            </DialogTitle>
+        <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col">
+          <DialogHeader className="flex-shrink-0">
+            <div className="flex items-center justify-between">
+              <DialogTitle>
+                {editingPlayerFixture ? "Edit" : "Add"} Fixture
+              </DialogTitle>
+              {editingPlayerFixture && (
+                <Button 
+                  variant="destructive" 
+                  size="sm"
+                  onClick={() => {
+                    if (editingPlayerFixture) {
+                      handleDelete(editingPlayerFixture.id);
+                    }
+                  }}
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Delete Fixture
+                </Button>
+              )}
+            </div>
           </DialogHeader>
 
+          <div className="flex-1 overflow-y-auto">
           {editingPlayerFixture ? (
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
@@ -892,17 +909,6 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, trigger
               <div className="flex justify-end gap-2 pt-4">
                 <Button variant="outline" onClick={handleCloseDialog}>
                   Cancel
-                </Button>
-                <Button 
-                  variant="destructive" 
-                  onClick={() => {
-                    if (editingPlayerFixture) {
-                      handleDelete(editingPlayerFixture.id);
-                    }
-                  }}
-                >
-                  <Trash2 className="w-4 h-4 mr-2" />
-                  Delete Fixture
                 </Button>
                 <Button onClick={handleSaveEditGame}>Update Game</Button>
               </div>
@@ -1274,6 +1280,7 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, trigger
               </TabsContent>
             </Tabs>
           )}
+          </div>
         </DialogContent>
       </Dialog>
 
