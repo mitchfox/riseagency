@@ -26,6 +26,7 @@ interface PlayerFixturesProps {
   playerId: string;
   playerName: string;
   onCreateAnalysis?: (fixtureId: string) => void;
+  onViewReport?: (analysisId: string, playerName: string) => void;
   triggerOpen?: boolean;
   onDialogOpenChange?: (open: boolean) => void;
 }
@@ -49,9 +50,13 @@ interface PlayerFixture {
 }
 
 interface PlayerAnalysis {
+  id: string;
   r90_score: number | null;
   fixture_id: string;
   opponent: string | null;
+  result: string | null;
+  pdf_url: string | null;
+  video_url: string | null;
 }
 
 interface OpponentData {
@@ -59,7 +64,7 @@ interface OpponentData {
   result: string;
 }
 
-export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, triggerOpen, onDialogOpenChange }: PlayerFixturesProps) => {
+export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, onViewReport, triggerOpen, onDialogOpenChange }: PlayerFixturesProps) => {
   const [playerFixtures, setPlayerFixtures] = useState<PlayerFixture[]>([]);
   const [allFixtures, setAllFixtures] = useState<Fixture[]>([]);
   const [loading, setLoading] = useState(true);
@@ -70,6 +75,7 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, trigger
   const [playerTeam, setPlayerTeam] = useState<string>("");
   const [r90Scores, setR90Scores] = useState<Map<string, number>>(new Map());
   const [opponentData, setOpponentData] = useState<Map<string, OpponentData>>(new Map());
+  const [analysisData, setAnalysisData] = useState<Map<string, PlayerAnalysis>>(new Map());
   const [editingAnalysis, setEditingAnalysis] = useState<any | null>(null);
   const [editGameData, setEditGameData] = useState({
     opponent: "",
@@ -161,17 +167,18 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, trigger
       // Fetch R90 scores and opponent info from analysis
       const fixtureIds = sortedData.map((pf: any) => pf.fixture_id);
       if (fixtureIds.length > 0) {
-        const { data: analysisData } = await supabase
+        const { data: fetchedAnalysisData } = await supabase
           .from("player_analysis")
-          .select("fixture_id, r90_score, opponent, result")
+          .select("id, fixture_id, r90_score, opponent, result, pdf_url, video_url")
           .eq("player_id", playerId)
           .in("fixture_id", fixtureIds);
 
-        if (analysisData) {
+        if (fetchedAnalysisData) {
           const r90Map = new Map<string, number>();
           const opponentMap = new Map<string, OpponentData>();
+          const analysisMap = new Map<string, PlayerAnalysis>();
           
-          analysisData.forEach((analysis: any) => {
+          fetchedAnalysisData.forEach((analysis: any) => {
             if (analysis.r90_score !== null) {
               r90Map.set(analysis.fixture_id, analysis.r90_score);
             }
@@ -181,10 +188,12 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, trigger
                 result: analysis.result || ""
               });
             }
+            analysisMap.set(analysis.fixture_id, analysis);
           });
           
           setR90Scores(r90Map);
           setOpponentData(opponentMap);
+          setAnalysisData(analysisMap);
         }
       }
     } catch (error: any) {
@@ -1438,7 +1447,7 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, trigger
                 )}
                 
                 <div className="flex gap-2">
-                  {onCreateAnalysis && (
+                  {onCreateAnalysis && !r90Score && (
                     <Button
                       size="sm"
                       variant="outline"
@@ -1448,7 +1457,54 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, trigger
                       }}
                     >
                       <FileText className="w-4 h-4 mr-1" />
-                      Analysis
+                      Create Analysis
+                    </Button>
+                  )}
+                  {r90Score !== undefined && analysisData.has(pf.fixture_id) && onViewReport && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const analysis = analysisData.get(pf.fixture_id);
+                        if (analysis) {
+                          onViewReport(analysis.id, playerName);
+                        }
+                      }}
+                    >
+                      <FileText className="w-4 h-4 mr-1" />
+                      View Report
+                    </Button>
+                  )}
+                  {analysisData.has(pf.fixture_id) && analysisData.get(pf.fixture_id)?.pdf_url && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const analysis = analysisData.get(pf.fixture_id);
+                        if (analysis?.pdf_url) {
+                          window.open(analysis.pdf_url, '_blank');
+                        }
+                      }}
+                    >
+                      <FileText className="w-4 h-4 mr-1" />
+                      PDF
+                    </Button>
+                  )}
+                  {analysisData.has(pf.fixture_id) && analysisData.get(pf.fixture_id)?.video_url && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const analysis = analysisData.get(pf.fixture_id);
+                        if (analysis?.video_url) {
+                          window.open(analysis.video_url, '_blank');
+                        }
+                      }}
+                    >
+                      📹 Video
                     </Button>
                   )}
                   <Button

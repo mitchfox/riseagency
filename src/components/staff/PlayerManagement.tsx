@@ -1583,6 +1583,11 @@ const PlayerManagement = () => {
                           setSelectedAnalysisWriterId(fixtureId);
                           setIsAnalysisDialogOpen(true);
                         }}
+                        onViewReport={(analysisId, playerName) => {
+                          setSelectedAnalysisId(analysisId);
+                          setSelectedPlayerName(playerName);
+                          setIsPerformanceActionsDialogOpen(true);
+                        }}
                         triggerOpen={isAddingFixture && player.id === showingFixturesFor}
                         onDialogOpenChange={() => setIsAddingFixture(false)}
                       />
