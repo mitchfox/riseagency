@@ -19,12 +19,14 @@ interface PerformanceAction {
 }
 
 interface StrikerStats {
+  // Common stats (both positions)
   xGChain?: number;
   xGChain_per90?: number;
   xG_adj?: number;
   xG_adj_per90?: number;
   xA_adj?: number;
   xA_adj_per90?: number;
+  // Striker-specific stats
   movement_in_behind_xC?: number;
   movement_in_behind_xC_per90?: number;
   movement_down_side_xC?: number;
@@ -35,6 +37,15 @@ interface StrikerStats {
   movement_to_feet_xC_per90?: number;
   crossing_movement_xC?: number;
   crossing_movement_xC_per90?: number;
+  // Defensive midfielder stats
+  interceptions?: number;
+  interceptions_per90?: number;
+  regains_adj?: number;
+  regains_adj_per90?: number;
+  turnovers_adj?: number;
+  turnovers_adj_per90?: number;
+  progressive_passes_adj?: number;
+  progressive_passes_adj_per90?: number;
 }
 
 interface AnalysisDetails {
@@ -211,7 +222,7 @@ const PerformanceReport = () => {
 
             {analysis.striker_stats && (
               <div className="mt-6 p-4 bg-accent/10 rounded-lg border-2 border-primary/20">
-                <h3 className="font-bold text-lg mb-4 text-primary">Additional Striker Statistics</h3>
+                <h3 className="font-bold text-lg mb-4 text-primary">Additional Statistics</h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   {analysis.striker_stats.xGChain !== undefined && (
                     <div className="text-center p-3 bg-background rounded-md">
@@ -267,6 +278,34 @@ const PerformanceReport = () => {
                       <p className="text-xs text-muted-foreground mb-1">Crossing Movement xC</p>
                       <p className="font-bold text-lg">{analysis.striker_stats.crossing_movement_xC.toFixed(3)}</p>
                       <p className="text-xs text-muted-foreground mt-1">per 90: {analysis.striker_stats.crossing_movement_xC_per90?.toFixed(3)}</p>
+                    </div>
+                  )}
+                  {analysis.striker_stats.interceptions !== undefined && (
+                    <div className="text-center p-3 bg-background rounded-md">
+                      <p className="text-xs text-muted-foreground mb-1">Interceptions</p>
+                      <p className="font-bold text-lg">{analysis.striker_stats.interceptions}</p>
+                      <p className="text-xs text-muted-foreground mt-1">per 90: {analysis.striker_stats.interceptions_per90?.toFixed(2)}</p>
+                    </div>
+                  )}
+                  {analysis.striker_stats.regains_adj !== undefined && (
+                    <div className="text-center p-3 bg-background rounded-md">
+                      <p className="text-xs text-muted-foreground mb-1">Regains (Adj.)</p>
+                      <p className="font-bold text-lg">{analysis.striker_stats.regains_adj}</p>
+                      <p className="text-xs text-muted-foreground mt-1">per 90: {analysis.striker_stats.regains_adj_per90?.toFixed(2)}</p>
+                    </div>
+                  )}
+                  {analysis.striker_stats.turnovers_adj !== undefined && (
+                    <div className="text-center p-3 bg-background rounded-md">
+                      <p className="text-xs text-muted-foreground mb-1">Turnovers (Adj.)</p>
+                      <p className="font-bold text-lg">{analysis.striker_stats.turnovers_adj}</p>
+                      <p className="text-xs text-muted-foreground mt-1">per 90: {analysis.striker_stats.turnovers_adj_per90?.toFixed(2)}</p>
+                    </div>
+                  )}
+                  {analysis.striker_stats.progressive_passes_adj !== undefined && (
+                    <div className="text-center p-3 bg-background rounded-md">
+                      <p className="text-xs text-muted-foreground mb-1">Progressive Passes (Adj.)</p>
+                      <p className="font-bold text-lg">{analysis.striker_stats.progressive_passes_adj}</p>
+                      <p className="text-xs text-muted-foreground mt-1">per 90: {analysis.striker_stats.progressive_passes_adj_per90?.toFixed(2)}</p>
                     </div>
                   )}
                 </div>
