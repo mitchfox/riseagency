@@ -52,11 +52,13 @@ interface PlayerFixture {
 interface PlayerAnalysis {
   id: string;
   r90_score: number | null;
-  fixture_id: string;
+  fixture_id: string | null;
   opponent: string | null;
   result: string | null;
   pdf_url: string | null;
   video_url: string | null;
+  analysis_date?: string;
+  minutes_played?: number | null;
 }
 
 interface OpponentData {
@@ -106,6 +108,7 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, onViewR
   const [processingImage, setProcessingImage] = useState(false);
   const [displayCount, setDisplayCount] = useState(10);
   const [selectedFixtures, setSelectedFixtures] = useState<Set<string>>(new Set());
+  const [unlinkedAnalyses, setUnlinkedAnalyses] = useState<PlayerAnalysis[]>([]);
 
   useEffect(() => {
     if (triggerOpen) {
@@ -164,21 +167,21 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, onViewR
       
       setPlayerFixtures(sortedData);
 
-      // Fetch R90 scores and opponent info from analysis
-      const fixtureIds = sortedData.map((pf: any) => pf.fixture_id);
-      if (fixtureIds.length > 0) {
-        const { data: fetchedAnalysisData } = await supabase
-          .from("player_analysis")
-          .select("id, fixture_id, r90_score, opponent, result, pdf_url, video_url")
-          .eq("player_id", playerId)
-          .in("fixture_id", fixtureIds);
+      // Fetch ALL analyses for this player (including those without fixture_id)
+      const { data: fetchedAnalysisData } = await supabase
+        .from("player_analysis")
+        .select("id, fixture_id, r90_score, opponent, result, pdf_url, video_url, analysis_date, minutes_played")
+        .eq("player_id", playerId)
+        .order("analysis_date", { ascending: false });
 
-        if (fetchedAnalysisData) {
-          const r90Map = new Map<string, number>();
-          const opponentMap = new Map<string, OpponentData>();
-          const analysisMap = new Map<string, PlayerAnalysis>();
-          
-          fetchedAnalysisData.forEach((analysis: any) => {
+      if (fetchedAnalysisData) {
+        const r90Map = new Map<string, number>();
+        const opponentMap = new Map<string, OpponentData>();
+        const analysisMap = new Map<string, PlayerAnalysis>();
+        
+        fetchedAnalysisData.forEach((analysis: any) => {
+          // For analyses with fixture_id, use fixture_id as key
+          if (analysis.fixture_id) {
             if (analysis.r90_score !== null) {
               r90Map.set(analysis.fixture_id, analysis.r90_score);
             }
@@ -189,12 +192,28 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, onViewR
               });
             }
             analysisMap.set(analysis.fixture_id, analysis);
-          });
-          
-          setR90Scores(r90Map);
-          setOpponentData(opponentMap);
-          setAnalysisData(analysisMap);
-        }
+          } else {
+            // For analyses without fixture_id, use analysis id as key
+            if (analysis.r90_score !== null) {
+              r90Map.set(analysis.id, analysis.r90_score);
+            }
+            if (analysis.opponent) {
+              opponentMap.set(analysis.id, {
+                opponent: analysis.opponent,
+                result: analysis.result || ""
+              });
+            }
+            analysisMap.set(analysis.id, analysis);
+          }
+        });
+        
+        setR90Scores(r90Map);
+        setOpponentData(opponentMap);
+        setAnalysisData(analysisMap);
+        
+        // Store unlinked analyses separately
+        const unlinkedAnalyses = fetchedAnalysisData.filter((a: any) => !a.fixture_id);
+        setUnlinkedAnalyses(unlinkedAnalyses);
       }
     } catch (error: any) {
       console.error("Error fetching player fixtures:", error);
@@ -1532,6 +1551,113 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, onViewR
             </Button>
           )}
         </div>
+
+        {/* Unlinked Performance Reports Section */}
+        {unlinkedAnalyses.length > 0 && (
+          <div className="mt-6">
+            <h3 className="text-lg font-semibold mb-4">Performance Reports (Not Linked to Fixtures)</h3>
+            <div className="space-y-2">
+              {unlinkedAnalyses.map((analysis) => {
+                const r90Score = analysis.r90_score;
+                let r90Color = "bg-gray-500";
+                if (r90Score !== null && r90Score !== undefined) {
+                  if (r90Score >= 1.5) r90Color = "bg-green-500";
+                  else if (r90Score >= 1.0) r90Color = "bg-blue-500";
+                  else if (r90Score >= 0.5) r90Color = "bg-yellow-500";
+                  else r90Color = "bg-red-500";
+                }
+
+                return (
+                  <div 
+                    key={analysis.id} 
+                    className="flex items-center gap-3 border rounded-lg p-3 hover:border-primary transition-colors"
+                  >
+                    <span className="text-sm text-muted-foreground min-w-[80px]">
+                      {analysis.analysis_date ? new Date(analysis.analysis_date).toLocaleDateString('en-GB') : 'No date'}
+                    </span>
+                  
+                    <div className="flex flex-col flex-1">
+                      <span className="text-sm font-medium">
+                        {analysis.opponent ? `vs ${analysis.opponent}` : 'No opponent'}
+                      </span>
+                      {analysis.result && (
+                        <span className="text-xs text-muted-foreground">
+                          {analysis.result}
+                        </span>
+                      )}
+                    </div>
+                    
+                    {analysis.minutes_played !== null && analysis.minutes_played !== undefined && (
+                      <span className="text-sm text-muted-foreground">
+                        {analysis.minutes_played} min
+                      </span>
+                    )}
+                    
+                    {r90Score !== undefined && r90Score !== null && (
+                      <div className={`${r90Color} text-white text-sm font-bold px-3 py-1 rounded`}>
+                        R90: {r90Score.toFixed(2)}
+                      </div>
+                    )}
+                    
+                    <div className="flex gap-2">
+                      {onViewReport && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => onViewReport(analysis.id, playerName)}
+                        >
+                          <FileText className="w-4 h-4 mr-1" />
+                          View Report
+                        </Button>
+                      )}
+                      {analysis.pdf_url && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => window.open(analysis.pdf_url!, '_blank')}
+                        >
+                          <FileText className="w-4 h-4 mr-1" />
+                          PDF
+                        </Button>
+                      )}
+                      {analysis.video_url && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => window.open(analysis.video_url!, '_blank')}
+                        >
+                          📹 Video
+                        </Button>
+                      )}
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={async () => {
+                          if (confirm('Delete this performance report?')) {
+                            try {
+                              const { error } = await supabase
+                                .from('player_analysis')
+                                .delete()
+                                .eq('id', analysis.id);
+                              
+                              if (error) throw error;
+                              toast.success('Performance report deleted');
+                              fetchPlayerFixtures();
+                            } catch (error: any) {
+                              toast.error('Failed to delete report');
+                            }
+                          }
+                        }}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
