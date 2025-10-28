@@ -839,14 +839,14 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, trigger
               <div>
                 <Label htmlFor="edit_analysis_writer">Link to Analysis Writer (Optional)</Label>
                 <Select
-                  value={editGameData.analysis_writer_id}
-                  onValueChange={(value) => setEditGameData({ ...editGameData, analysis_writer_id: value })}
+                  value={editGameData.analysis_writer_id || "none"}
+                  onValueChange={(value) => setEditGameData({ ...editGameData, analysis_writer_id: value === "none" ? "" : value })}
                 >
                   <SelectTrigger id="edit_analysis_writer">
                     <SelectValue placeholder="None" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">None</SelectItem>
+                    <SelectItem value="none">None</SelectItem>
                     {availableAnalyses.map((analysis) => (
                       <SelectItem key={analysis.id} value={analysis.id}>
                         {analysis.title} ({analysis.analysis_type})
