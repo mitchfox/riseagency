@@ -759,66 +759,65 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, trigger
 
       <div className="space-y-2">
         {playerFixtures.slice(0, displayCount).map((pf) => (
-              <Card key={pf.id}>
-                <CardContent className="pt-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">
-                          {pf.fixtures.home_team}{" "}
-                          {pf.fixtures.home_score !== null &&
-                            pf.fixtures.away_score !== null && (
-                              <span className="text-primary">
-                                {pf.fixtures.home_score} - {pf.fixtures.away_score}
-                              </span>
-                            )}{" "}
-                          {pf.fixtures.away_team}
-                        </span>
-                        {pf.fixtures.competition && (
-                          <span className="text-xs text-muted-foreground">
-                            • {pf.fixtures.competition}
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex gap-4 text-sm text-muted-foreground mt-1">
-                        <span>
-                          {new Date(pf.fixtures.match_date).toLocaleDateString()}
-                        </span>
-                        {pf.minutes_played && <span>• {pf.minutes_played} mins</span>}
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      {onCreateAnalysis && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => onCreateAnalysis(pf.fixture_id)}
-                        >
-                          <FileText className="w-4 h-4 mr-1" />
-                          Analysis
-                        </Button>
-                      )}
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleOpenDialog(pf)}
-                      >
-                        <Pencil className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-            {playerFixtures.length > displayCount && (
-              <Button
-                variant="outline"
-                className="w-full"
-                onClick={() => setDisplayCount(prev => prev + 10)}
-              >
-                Show More
-              </Button>
+          <div 
+            key={pf.id} 
+            className="flex items-center gap-3 border rounded-lg p-3 hover:border-primary transition-colors"
+          >
+            <span className="text-sm text-muted-foreground min-w-[80px]">
+              {new Date(pf.fixtures.match_date).toLocaleDateString('en-GB')}
+            </span>
+            
+            <div className="flex flex-col min-w-[150px]">
+              <span className="text-sm font-medium">
+                {pf.fixtures.home_team} vs {pf.fixtures.away_team}
+              </span>
+              {pf.fixtures.competition && (
+                <span className="text-xs text-muted-foreground">{pf.fixtures.competition}</span>
+              )}
+              {(pf.fixtures.home_score !== null && pf.fixtures.away_score !== null) && (
+                <span className="text-xs text-muted-foreground">
+                  {pf.fixtures.home_score} - {pf.fixtures.away_score}
+                </span>
+              )}
+            </div>
+            
+            {pf.minutes_played && (
+              <span className="text-sm text-muted-foreground">
+                {pf.minutes_played} min
+              </span>
             )}
+            
+            <div className="ml-auto flex gap-2">
+              {onCreateAnalysis && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => onCreateAnalysis(pf.fixture_id)}
+                >
+                  <FileText className="w-4 h-4 mr-1" />
+                  Analysis
+                </Button>
+              )}
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => handleOpenDialog(pf)}
+              >
+                <Pencil className="w-4 h-4 mr-1" />
+                Edit
+              </Button>
+            </div>
+          </div>
+        ))}
+        {playerFixtures.length > displayCount && (
+          <Button
+            variant="outline"
+            className="w-full"
+            onClick={() => setDisplayCount(prev => prev + 10)}
+          >
+            Show More
+          </Button>
+        )}
       </div>
     </div>
   );
