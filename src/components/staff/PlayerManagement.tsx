@@ -8,9 +8,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Edit, FileText, LineChart, BookOpen, Video } from "lucide-react";
+import { Edit, FileText, LineChart, BookOpen, Video, Calendar } from "lucide-react";
 import { PerformanceActionsDialog } from "./PerformanceActionsDialog";
 import { ProgrammingManagement } from "./ProgrammingManagement";
+import { PlayerFixtures } from "./PlayerFixtures";
 
 interface Player {
   id: string;
@@ -58,6 +59,7 @@ const PlayerManagement = () => {
   const [expandedPlayerId, setExpandedPlayerId] = useState<string | null>(null);
   const [showingAnalysisFor, setShowingAnalysisFor] = useState<string | null>(null);
   const [showingHighlightsFor, setShowingHighlightsFor] = useState<string | null>(null);
+  const [showingFixturesFor, setShowingFixturesFor] = useState<string | null>(null);
   const [playerAnalyses, setPlayerAnalyses] = useState<Record<string, any[]>>({});
   const [isAnalysisDialogOpen, setIsAnalysisDialogOpen] = useState(false);
   const [currentPlayerId, setCurrentPlayerId] = useState<string | null>(null);
@@ -1466,9 +1468,14 @@ const PlayerManagement = () => {
                 }
                 
                 return (
-                  <Card key={player.id} className="cursor-pointer">
+                   <Card key={player.id} className="cursor-pointer">
                     <CardHeader 
-                      onClick={() => setExpandedPlayerId(isExpanded ? null : player.id)}
+                      onClick={() => {
+                        const newExpanded = isExpanded ? null : player.id;
+                        setExpandedPlayerId(newExpanded);
+                        // Auto-open fixtures when expanding a player
+                        setShowingFixturesFor(newExpanded);
+                      }}
                       className="hover:bg-accent/50 transition-colors"
                     >
                       <div className="flex justify-between items-center">
@@ -1500,6 +1507,30 @@ const PlayerManagement = () => {
               {isExpanded && (
                 <CardContent className="space-y-4">
                   <div className="flex flex-wrap gap-2">
+                    <Button 
+                      variant={showingFixturesFor === player.id ? "default" : "outline"}
+                      size="sm" 
+                      onClick={() => setShowingFixturesFor(showingFixturesFor === player.id ? null : player.id)}
+                    >
+                      <Calendar className="w-4 h-4 mr-2" />
+                      Fixtures
+                    </Button>
+                    <Button 
+                      variant={showingAnalysisFor === player.id ? "default" : "outline"}
+                      size="sm" 
+                      onClick={() => setShowingAnalysisFor(showingAnalysisFor === player.id ? null : player.id)}
+                    >
+                      <LineChart className="w-4 h-4 mr-2" />
+                      Analysis & Performance Reports
+                    </Button>
+                    <Button 
+                      variant={showingHighlightsFor === player.id ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setShowingHighlightsFor(showingHighlightsFor === player.id ? null : player.id)}
+                    >
+                      <Video className="w-4 h-4 mr-2" />
+                      Highlights
+                    </Button>
                     <Button variant="outline" size="sm" onClick={() => startEdit(player)}>
                       <Edit className="w-4 h-4 mr-2" />
                       Player Details
@@ -1512,29 +1543,22 @@ const PlayerManagement = () => {
                       <BookOpen className="w-4 h-4 mr-2" />
                       Programming
                     </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => setShowingAnalysisFor(showingAnalysisFor === player.id ? null : player.id)}
-                    >
-                      <LineChart className="w-4 h-4 mr-2" />
-                      Analysis & Performance Reports
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => {
-                        if (showingHighlightsFor === player.id) {
-                          setShowingHighlightsFor(null);
-                        } else {
-                          setShowingHighlightsFor(player.id);
-                        }
-                      }}
-                    >
-                      <Video className="w-4 h-4 mr-2" />
-                      Highlights
-                    </Button>
                   </div>
+
+                  {showingFixturesFor === player.id && (
+                    <div className="border-t pt-4 mt-4">
+                      <PlayerFixtures 
+                        playerId={player.id} 
+                        playerName={player.name}
+                        onCreateAnalysis={(fixtureId) => {
+                          // Open the analysis dialog and set the fixture
+                          setCurrentPlayerId(player.id);
+                          setSelectedAnalysisWriterId(fixtureId);
+                          setIsAnalysisDialogOpen(true);
+                        }}
+                      />
+                    </div>
+                  )}
 
                   {showingHighlightsFor === player.id && (
                     <>
