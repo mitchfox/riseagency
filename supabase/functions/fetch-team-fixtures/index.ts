@@ -41,8 +41,8 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Call Lovable AI Gateway
-    console.log("Calling Lovable AI Gateway...");
+    // Call Lovable AI Gateway with web search
+    console.log("Searching web for fixtures...");
     const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -50,28 +50,31 @@ Deno.serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "openai/gpt-5-mini",
         messages: [
           {
+            role: "system",
+            content: "You are a football fixtures researcher. Use web search to find accurate, real fixture data. Always return valid JSON arrays only."
+          },
+          {
             role: "user",
-            content: `Find the next 5-10 upcoming fixtures for the football team "${teamName}". Search for their official fixtures including league and cup matches.
+            content: `Search the internet and find the next 5-10 REAL upcoming fixtures for "${teamName}". Find their actual scheduled matches from their league website, official team site, or sports news sites.
             
-            Return ONLY a valid JSON array with this exact structure (no markdown, no explanation, no code blocks):
+            Return ONLY a valid JSON array (no markdown, no explanation):
             [
               {
                 "home_team": "Team Name",
-                "away_team": "Team Name",
+                "away_team": "Team Name", 
                 "match_date": "YYYY-MM-DD",
                 "competition": "League/Cup Name",
                 "venue": "Stadium Name"
               }
             ]
             
-            If you cannot find any fixtures, return an empty array: []
-            
-            Make sure the response is pure JSON without any markdown formatting.`,
-          },
+            If you cannot find real fixtures, return: []`
+          }
         ],
+        web_search: true
       }),
     });
 

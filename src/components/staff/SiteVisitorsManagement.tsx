@@ -239,16 +239,21 @@ export const SiteVisitorsManagement = () => {
     return parts.join(", ") || "Unknown";
   };
 
-  const filteredVisits = visits.filter((visit) =>
-    visit.visitor_id !== "visitor_1761434517054_gd6h507zq" &&
-    // Explicitly filter out hidden visitors when not showing them
-    (showHidden || !visit.hidden) &&
-    (
+  const filteredVisits = visits.filter((visit) => {
+    // Filter out specific visitor IDs and Bedford, England location
+    if (visit.visitor_id === "visitor_1761434517054_gd6h507zq") return false;
+    
+    const location = formatLocation(visit.location);
+    if (location.includes("Bedford") && location.includes("England")) return false;
+    
+    // Filter by search term
+    const searchMatch = 
       visit.page_path.toLowerCase().includes(searchTerm.toLowerCase()) ||
       visit.visitor_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      formatLocation(visit.location).toLowerCase().includes(searchTerm.toLowerCase())
-    )
-  );
+      location.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    return searchMatch;
+  });
 
   // Filter to show unique visitors only if checkbox is enabled
   const displayedVisits = showUniqueOnly
