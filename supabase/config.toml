@@ -17,3 +17,9 @@ verify_jwt = false
 
 [functions.track-visit]
 verify_jwt = false
+
+[functions.fetch-team-fixtures]
+verify_jwt = true
+
+[functions.extract-fixtures-from-image]
+verify_jwt = true
