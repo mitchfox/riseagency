@@ -1177,12 +1177,21 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, trigger
             return (
               <div 
                 key={pf.id} 
-                className="flex items-center gap-3 border rounded-lg p-3 hover:border-primary transition-colors"
+                className="flex items-center gap-3 border rounded-lg p-3 hover:border-primary transition-colors cursor-pointer"
+                onClick={(e) => {
+                  // Don't trigger if clicking checkbox or buttons
+                  if ((e.target as HTMLElement).tagName !== 'INPUT' && 
+                      (e.target as HTMLElement).tagName !== 'BUTTON' &&
+                      !(e.target as HTMLElement).closest('button')) {
+                    handleOpenDialog(pf);
+                  }
+                }}
               >
                 <input
                   type="checkbox"
                   checked={selectedFixtures.has(pf.id)}
                   onChange={() => toggleFixtureSelection(pf.id)}
+                  onClick={(e) => e.stopPropagation()}
                   className="cursor-pointer h-4 w-4"
                 />
                 
@@ -1201,7 +1210,7 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, trigger
                   )}
                 </div>
                 
-                {pf.minutes_played && (
+                {pf.minutes_played !== null && pf.minutes_played !== undefined && (
                   <span className="text-sm text-muted-foreground">
                     {pf.minutes_played} min
                   </span>
@@ -1218,7 +1227,10 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, trigger
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => onCreateAnalysis(pf.fixture_id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onCreateAnalysis(pf.fixture_id);
+                      }}
                     >
                       <FileText className="w-4 h-4 mr-1" />
                       Analysis
@@ -1227,7 +1239,10 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, trigger
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => handleOpenDialog(pf)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleOpenDialog(pf);
+                    }}
                   >
                     <Pencil className="w-4 h-4 mr-1" />
                     Edit
