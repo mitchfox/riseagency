@@ -605,7 +605,7 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, trigger
                       )}
                       <Button
                         size="sm"
-                        variant="ghost"
+                        variant="outline"
                         onClick={() => handleOpenDialog(pf)}
                       >
                         <Pencil className="w-4 h-4" />

@@ -240,7 +240,10 @@ export const SiteVisitorsManagement = () => {
   };
 
   const filteredVisits = visits.filter((visit) =>
-    visit.visitor_id !== "visitor_1761434517054_gd6h507zq" && (
+    visit.visitor_id !== "visitor_1761434517054_gd6h507zq" &&
+    // Explicitly filter out hidden visitors when not showing them
+    (showHidden || !visit.hidden) &&
+    (
       visit.page_path.toLowerCase().includes(searchTerm.toLowerCase()) ||
       visit.visitor_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
       formatLocation(visit.location).toLowerCase().includes(searchTerm.toLowerCase())
