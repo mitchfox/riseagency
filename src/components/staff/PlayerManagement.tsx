@@ -1567,18 +1567,11 @@ const PlayerManagement = () => {
 
                    {showingFixturesFor === player.id && (
                     <div className="border-t pt-4 space-y-4">
-                      <div className="flex justify-between items-center">
-                        <h4 className="text-lg font-semibold">Fixtures</h4>
-                        <Button 
-                          size="sm" 
-                          onClick={() => setIsAddingFixture(true)}
-                        >
-                          <Plus className="w-4 h-4 mr-2" />
-                          Add Fixture
-                        </Button>
+                      <div>
+                        <h4 className="text-lg font-semibold mb-4">Fixtures</h4>
                       </div>
 
-                      <PlayerFixtures 
+                      <PlayerFixtures
                         playerId={player.id} 
                         playerName={player.name}
                         onCreateAnalysis={(fixtureId) => {

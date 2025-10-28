@@ -729,10 +729,11 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, trigger
   };
 
   const toggleSelectAll = () => {
-    if (selectedFixtures.size === playerFixtures.slice(0, displayCount).length) {
+    const visibleFixtures = playerFixtures.slice(0, displayCount);
+    if (selectedFixtures.size === visibleFixtures.length && visibleFixtures.length > 0) {
       setSelectedFixtures(new Set());
     } else {
-      setSelectedFixtures(new Set(playerFixtures.slice(0, displayCount).map(f => f.id)));
+      setSelectedFixtures(new Set(visibleFixtures.map(f => f.id)));
     }
   };
 
@@ -1289,7 +1290,7 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, trigger
           <div className="flex gap-2 items-center">
             <input
               type="checkbox"
-              checked={selectedFixtures.size === playerFixtures.slice(0, displayCount).length && playerFixtures.length > 0}
+              checked={playerFixtures.slice(0, displayCount).length > 0 && selectedFixtures.size === playerFixtures.slice(0, displayCount).length}
               onChange={toggleSelectAll}
               className="cursor-pointer h-4 w-4"
             />
@@ -1298,15 +1299,16 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, trigger
             </span>
           </div>
           <div className="flex gap-2">
-            <Button 
-              variant="destructive" 
-              size="sm"
-              onClick={handleBulkDelete}
-              disabled={selectedFixtures.size === 0}
-            >
-              <Trash2 className="mr-2 h-4 w-4" />
-              Remove Fixtures ({selectedFixtures.size})
-            </Button>
+            {selectedFixtures.size > 0 && (
+              <Button 
+                variant="destructive" 
+                size="sm"
+                onClick={handleBulkDelete}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Remove Fixtures ({selectedFixtures.size})
+              </Button>
+            )}
             <Button size="sm" onClick={() => handleOpenDialog()}>
               <Plus className="mr-2 h-4 w-4" />
               Add Fixture
