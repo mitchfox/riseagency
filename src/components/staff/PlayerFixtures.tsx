@@ -71,6 +71,7 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, trigger
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [processingImage, setProcessingImage] = useState(false);
   const [displayCount, setDisplayCount] = useState(10);
+  const [selectedFixtures, setSelectedFixtures] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (triggerOpen) {
@@ -357,6 +358,48 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, trigger
       toast.error("Failed to remove fixture");
       console.error(error);
     }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedFixtures.size === 0) {
+      toast.error("Please select fixtures to delete");
+      return;
+    }
+
+    if (!confirm(`Are you sure you want to remove ${selectedFixtures.size} fixture(s)?`)) return;
+
+    try {
+      const { error } = await supabase
+        .from("player_fixtures")
+        .delete()
+        .in("id", Array.from(selectedFixtures));
+
+      if (error) throw error;
+      toast.success(`Removed ${selectedFixtures.size} fixture(s)`);
+      setSelectedFixtures(new Set());
+      fetchPlayerFixtures();
+    } catch (error: any) {
+      toast.error("Failed to remove fixtures");
+      console.error(error);
+    }
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedFixtures.size === playerFixtures.slice(0, displayCount).length) {
+      setSelectedFixtures(new Set());
+    } else {
+      setSelectedFixtures(new Set(playerFixtures.slice(0, displayCount).map(f => f.id)));
+    }
+  };
+
+  const toggleFixtureSelection = (fixtureId: string) => {
+    const newSelected = new Set(selectedFixtures);
+    if (newSelected.has(fixtureId)) {
+      newSelected.delete(fixtureId);
+    } else {
+      newSelected.add(fixtureId);
+    }
+    setSelectedFixtures(newSelected);
   };
 
   if (loading) {
@@ -798,15 +841,52 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, trigger
         </DialogContent>
       </Dialog>
 
-      <div className="space-y-2">
-        {playerFixtures.slice(0, displayCount).map((pf) => (
-          <div 
-            key={pf.id} 
-            className="flex items-center gap-3 border rounded-lg p-3 hover:border-primary transition-colors"
-          >
-            <span className="text-sm text-muted-foreground min-w-[80px]">
-              {new Date(pf.fixtures.match_date).toLocaleDateString('en-GB')}
+      <div className="space-y-4">
+        <div className="flex justify-between items-center">
+          <div className="flex gap-2 items-center">
+            <input
+              type="checkbox"
+              checked={selectedFixtures.size === playerFixtures.slice(0, displayCount).length && playerFixtures.length > 0}
+              onChange={toggleSelectAll}
+              className="cursor-pointer h-4 w-4"
+            />
+            <span className="text-sm text-muted-foreground">
+              Select All
             </span>
+          </div>
+          <div className="flex gap-2">
+            <Button 
+              variant="destructive" 
+              size="sm"
+              onClick={handleBulkDelete}
+              disabled={selectedFixtures.size === 0}
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Remove Fixtures ({selectedFixtures.size})
+            </Button>
+            <Button size="sm" onClick={() => handleOpenDialog()}>
+              <Plus className="mr-2 h-4 w-4" />
+              Add Fixture
+            </Button>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          {playerFixtures.slice(0, displayCount).map((pf) => (
+            <div 
+              key={pf.id} 
+              className="flex items-center gap-3 border rounded-lg p-3 hover:border-primary transition-colors"
+            >
+              <input
+                type="checkbox"
+                checked={selectedFixtures.has(pf.id)}
+                onChange={() => toggleFixtureSelection(pf.id)}
+                className="cursor-pointer h-4 w-4"
+              />
+              
+              <span className="text-sm text-muted-foreground min-w-[80px]">
+                {new Date(pf.fixtures.match_date).toLocaleDateString('en-GB')}
+              </span>
             
             <div className="flex flex-col min-w-[150px]">
               <span className="text-sm font-medium">
@@ -848,17 +928,18 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, trigger
                 Edit
               </Button>
             </div>
-          </div>
-        ))}
-        {playerFixtures.length > displayCount && (
-          <Button
-            variant="outline"
-            className="w-full"
-            onClick={() => setDisplayCount(prev => prev + 10)}
-          >
-            Show More
-          </Button>
-        )}
+            </div>
+          ))}
+          {playerFixtures.length > displayCount && (
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => setDisplayCount(prev => prev + 10)}
+            >
+              Show More
+            </Button>
+          )}
+        </div>
       </div>
     </div>
   );
