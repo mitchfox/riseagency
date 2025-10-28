@@ -206,73 +206,77 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, trigger
   };
 
   const handleOpenDialog = async (playerFixture?: PlayerFixture) => {
-    if (playerFixture) {
-      setEditingPlayerFixture(playerFixture);
-      setSelectedFixtureId(playerFixture.fixture_id);
-      setMinutesPlayed(playerFixture.minutes_played);
-      
-      // Fetch existing analysis for this fixture
-      const { data: analysisData } = await supabase
-        .from("player_analysis")
-        .select("*")
-        .eq("player_id", playerId)
-        .eq("fixture_id", playerFixture.fixture_id)
-        .maybeSingle();
-      
-      setEditingAnalysis(analysisData);
-      
-      // Determine opponent based on player's team
-      const isHomeTeam = playerTeam && playerFixture.fixtures.home_team.includes(playerTeam);
-      const opponent = isHomeTeam ? playerFixture.fixtures.away_team : playerFixture.fixtures.home_team;
-      
-      // Pre-fill edit form with existing data
-      // Determine opponent - "For" is a placeholder for player's team
-      let opponentName = "";
-      if (playerFixture.fixtures.home_team === "For" || playerFixture.fixtures.home_team.toLowerCase().includes("for")) {
-        opponentName = playerFixture.fixtures.away_team;
-      } else if (playerFixture.fixtures.away_team === "For" || playerFixture.fixtures.away_team.toLowerCase().includes("for")) {
-        opponentName = playerFixture.fixtures.home_team;
-      } else if (playerTeam) {
-        const isHomeTeam = playerFixture.fixtures.home_team.toLowerCase().includes(playerTeam.toLowerCase());
-        opponentName = isHomeTeam ? playerFixture.fixtures.away_team : playerFixture.fixtures.home_team;
+    try {
+      if (playerFixture) {
+        setEditingPlayerFixture(playerFixture);
+        setSelectedFixtureId(playerFixture.fixture_id);
+        setMinutesPlayed(playerFixture.minutes_played);
+        
+        // Fetch existing analysis for this fixture
+        const { data: analysisData, error: analysisError } = await supabase
+          .from("player_analysis")
+          .select("*")
+          .eq("player_id", playerId)
+          .eq("fixture_id", playerFixture.fixture_id)
+          .maybeSingle();
+        
+        if (analysisError) {
+          console.error("Error fetching analysis:", analysisError);
+        }
+        
+        setEditingAnalysis(analysisData);
+        
+        // Determine opponent - "For" is a placeholder for player's team
+        let opponentName = "";
+        if (playerFixture.fixtures.home_team === "For" || playerFixture.fixtures.home_team.toLowerCase().includes("for")) {
+          opponentName = playerFixture.fixtures.away_team;
+        } else if (playerFixture.fixtures.away_team === "For" || playerFixture.fixtures.away_team.toLowerCase().includes("for")) {
+          opponentName = playerFixture.fixtures.home_team;
+        } else if (playerTeam) {
+          const isHomeTeam = playerFixture.fixtures.home_team.toLowerCase().includes(playerTeam.toLowerCase());
+          opponentName = isHomeTeam ? playerFixture.fixtures.away_team : playerFixture.fixtures.home_team;
+        }
+        
+        setEditGameData({
+          opponent: analysisData?.opponent || opponentName,
+          result: analysisData?.result || "",
+          match_date: playerFixture.fixtures.match_date,
+          minutes_played: playerFixture.minutes_played?.toString() || "",
+          notes: analysisData?.notes || "",
+          pdf_file: null,
+          video_file: null,
+        });
+      } else {
+        setEditingPlayerFixture(null);
+        setSelectedFixtureId("");
+        setMinutesPlayed(null);
+        setEditingAnalysis(null);
+        setEditGameData({
+          opponent: "",
+          result: "",
+          match_date: "",
+          minutes_played: "",
+          notes: "",
+          pdf_file: null,
+          video_file: null,
+        });
+        setManualFixture({
+          home_team: "",
+          away_team: "",
+          home_score: null,
+          away_score: null,
+          match_date: "",
+          competition: "",
+          venue: "",
+        });
+        setAiFixtures([]);
+        setSelectedAiFixtures(new Set());
       }
-      
-      setEditGameData({
-        opponent: analysisData?.opponent || opponentName,
-        result: analysisData?.result || "",
-        match_date: playerFixture.fixtures.match_date,
-        minutes_played: playerFixture.minutes_played?.toString() || "",
-        notes: analysisData?.notes || "",
-        pdf_file: null,
-        video_file: null,
-      });
-    } else {
-      setEditingPlayerFixture(null);
-      setSelectedFixtureId("");
-      setMinutesPlayed(null);
-      setEditingAnalysis(null);
-      setEditGameData({
-        opponent: "",
-        result: "",
-        match_date: "",
-        minutes_played: "",
-        notes: "",
-        pdf_file: null,
-        video_file: null,
-      });
-      setManualFixture({
-        home_team: "",
-        away_team: "",
-        home_score: null,
-        away_score: null,
-        match_date: "",
-        competition: "",
-        venue: "",
-      });
-      setAiFixtures([]);
-      setSelectedAiFixtures(new Set());
+      setDialogOpen(true);
+    } catch (error: any) {
+      console.error("Error opening dialog:", error);
+      toast.error("Failed to load fixture data");
     }
-    setDialogOpen(true);
   };
 
   const fetchAiFixtures = async (teamName: string) => {
@@ -405,11 +409,12 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, trigger
 
         if (fixtureError) throw fixtureError;
 
-        // Link to player
+        // Link to player with minutes played
         await supabase.from("player_fixtures").insert([
           {
             player_id: playerId,
             fixture_id: newFixture.id,
+            minutes_played: fixture.minutes_played ?? null,
           },
         ]);
       }
@@ -527,12 +532,17 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, trigger
         .delete()
         .eq("id", id);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Delete error:", error);
+        throw error;
+      }
+      
       toast.success("Fixture removed successfully");
+      handleCloseDialog();
       fetchPlayerFixtures();
     } catch (error: any) {
-      toast.error("Failed to remove fixture");
-      console.error(error);
+      console.error("Failed to remove fixture:", error);
+      toast.error(`Failed to remove fixture: ${error.message || 'Unknown error'}`);
     }
   };
 

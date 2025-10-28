@@ -165,7 +165,20 @@ Extract ALL fixtures visible. Do NOT skip any matches.`
       
       console.log("Cleaned content for parsing:", cleanContent);
       fixtures = JSON.parse(cleanContent);
-      console.log("Successfully parsed fixtures:", fixtures.length);
+      
+      // CRITICAL: Replace "For" with actual team name
+      // The AI sometimes extracts "For" as a placeholder instead of the team name
+      fixtures = fixtures.map((fixture: any) => ({
+        ...fixture,
+        home_team: fixture.home_team === "For" || fixture.home_team.toLowerCase() === "for" 
+          ? teamName 
+          : fixture.home_team,
+        away_team: fixture.away_team === "For" || fixture.away_team.toLowerCase() === "for"
+          ? teamName
+          : fixture.away_team,
+      }));
+      
+      console.log("Successfully parsed and processed fixtures:", fixtures.length);
     } catch (e) {
       console.error("Failed to parse AI response as JSON:", e);
       console.error("Content was:", content);
