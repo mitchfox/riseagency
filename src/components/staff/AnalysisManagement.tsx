@@ -346,25 +346,21 @@ export const AnalysisManagement = () => {
   return (
     <div className="space-y-4">
       <div className="flex gap-2">
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={() => handleOpenDialog("pre-match")}>
-              <Plus className="w-4 h-4 mr-2" />
-              New Pre-Match Analysis
-            </Button>
-          </DialogTrigger>
-          <DialogTrigger asChild>
-            <Button onClick={() => handleOpenDialog("post-match")}>
-              <Plus className="w-4 h-4 mr-2" />
-              New Post-Match Analysis
-            </Button>
-          </DialogTrigger>
-          <DialogTrigger asChild>
-            <Button onClick={() => handleOpenDialog("concept")}>
-              <Plus className="w-4 h-4 mr-2" />
-              New Concept
-            </Button>
-          </DialogTrigger>
+        <Button onClick={() => handleOpenDialog("pre-match")}>
+          <Plus className="w-4 h-4 mr-2" />
+          New Pre-Match Analysis
+        </Button>
+        <Button onClick={() => handleOpenDialog("post-match")}>
+          <Plus className="w-4 h-4 mr-2" />
+          New Post-Match Analysis
+        </Button>
+        <Button onClick={() => handleOpenDialog("concept")}>
+          <Plus className="w-4 h-4 mr-2" />
+          New Concept
+        </Button>
+      </div>
+
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
 
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
@@ -828,8 +824,7 @@ export const AnalysisManagement = () => {
               </div>
             </div>
           </DialogContent>
-        </Dialog>
-      </div>
+      </Dialog>
 
       <div className="grid gap-4">
         {analyses.map((analysis) => (
