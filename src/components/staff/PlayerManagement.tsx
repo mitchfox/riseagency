@@ -1470,7 +1470,7 @@ const PlayerManagement = () => {
                 }
                 
                 return (
-                   <Card key={player.id} className="cursor-pointer">
+                   <Card key={player.id} data-player-id={player.id} className="cursor-pointer">
                     <CardHeader 
                       onClick={() => {
                         const newExpanded = isExpanded ? null : player.id;
@@ -1565,10 +1565,29 @@ const PlayerManagement = () => {
                     </Button>
                   </div>
 
-                  {showingFixturesFor === player.id && (
+                   {showingFixturesFor === player.id && (
                     <div className="border-t pt-4 space-y-4">
                       <div className="flex justify-between items-center">
                         <h4 className="text-lg font-semibold">Fixtures</h4>
+                        <Button 
+                          size="sm" 
+                          onClick={() => {
+                            const currentPlayer = player;
+                            setShowingFixturesFor(null);
+                            setTimeout(() => {
+                              setShowingFixturesFor(currentPlayer.id);
+                              setTimeout(() => {
+                                const elem = document.querySelector(`[data-player-id="${currentPlayer.id}"] [data-trigger-add-fixture]`);
+                                if (elem instanceof HTMLElement) {
+                                  elem.click();
+                                }
+                              }, 50);
+                            }, 50);
+                          }}
+                        >
+                          <Plus className="w-4 h-4 mr-2" />
+                          Add Fixture
+                        </Button>
                       </div>
 
                       <PlayerFixtures 
