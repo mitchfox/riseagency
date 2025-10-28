@@ -25,7 +25,8 @@ interface PlayerFixturesProps {
   playerId: string;
   playerName: string;
   onCreateAnalysis?: (fixtureId: string) => void;
-  onAddFixtureClick?: (openDialog: () => void) => void;
+  triggerOpen?: boolean;
+  onDialogOpenChange?: (open: boolean) => void;
 }
 
 interface Fixture {
@@ -46,7 +47,7 @@ interface PlayerFixture {
   fixtures: Fixture;
 }
 
-export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, onAddFixtureClick }: PlayerFixturesProps) => {
+export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, triggerOpen, onDialogOpenChange }: PlayerFixturesProps) => {
   const [playerFixtures, setPlayerFixtures] = useState<PlayerFixture[]>([]);
   const [allFixtures, setAllFixtures] = useState<Fixture[]>([]);
   const [loading, setLoading] = useState(true);
@@ -69,10 +70,11 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, onAddFi
   const [displayCount, setDisplayCount] = useState(10);
 
   useEffect(() => {
-    if (onAddFixtureClick) {
-      onAddFixtureClick(() => handleOpenDialog());
+    if (triggerOpen) {
+      handleOpenDialog();
+      onDialogOpenChange?.(false);
     }
-  }, [onAddFixtureClick]);
+  }, [triggerOpen]);
 
   useEffect(() => {
     fetchPlayerFixtures();
@@ -333,6 +335,12 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, onAddFi
 
   return (
     <div className="space-y-4">
+      <button 
+        data-trigger-add-fixture 
+        onClick={() => handleOpenDialog()} 
+        style={{ display: 'none' }}
+      />
+      
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
