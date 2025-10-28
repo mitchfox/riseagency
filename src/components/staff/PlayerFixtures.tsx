@@ -555,11 +555,7 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis }: Playe
       </Dialog>
 
       <div className="space-y-2">
-        {playerFixtures.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No fixtures added yet.</p>
-        ) : (
-          <>
-            {playerFixtures.slice(0, displayCount).map((pf) => (
+        {playerFixtures.slice(0, displayCount).map((pf) => (
               <Card key={pf.id}>
                 <CardContent className="pt-4">
                   <div className="flex items-center justify-between">
@@ -620,8 +616,6 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis }: Playe
                 Show More
               </Button>
             )}
-          </>
-        )}
       </div>
     </div>
   );

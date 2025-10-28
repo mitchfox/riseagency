@@ -1,4 +1,4 @@
-const LOVABLE_AI_URL = "https://api.lovable.app/v1/ai";
+const LOVABLE_AI_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -8,12 +8,7 @@ const corsHeaders = {
 Deno.serve(async (req) => {
   // Handle CORS
   if (req.method === 'OPTIONS') {
-    return new Response(null, {
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-      }
-    });
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
@@ -27,17 +22,33 @@ Deno.serve(async (req) => {
           status: 400, 
           headers: { 
             "Content-Type": "application/json",
-            'Access-Control-Allow-Origin': '*',
+            ...corsHeaders,
           } 
         }
       );
     }
 
-    // Call Lovable AI to fetch upcoming fixtures for the team
-    console.log("Calling Lovable AI...");
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) {
+      console.error("LOVABLE_API_KEY not configured");
+      return new Response(
+        JSON.stringify({ error: "AI service not configured", fixtures: [] }),
+        { 
+          status: 500, 
+          headers: { 
+            "Content-Type": "application/json",
+            ...corsHeaders,
+          } 
+        }
+      );
+    }
+
+    // Call Lovable AI Gateway
+    console.log("Calling Lovable AI Gateway...");
     const aiResponse = await fetch(LOVABLE_AI_URL, {
       method: "POST",
       headers: {
+        "Authorization": `Bearer ${LOVABLE_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
@@ -70,8 +81,35 @@ Deno.serve(async (req) => {
 
     if (!aiResponse.ok) {
       const errorText = await aiResponse.text();
-      console.error("AI API error:", errorText);
-      throw new Error(`AI API error: ${aiResponse.statusText}`);
+      console.error("AI Gateway error:", aiResponse.status, errorText);
+      
+      if (aiResponse.status === 429) {
+        return new Response(
+          JSON.stringify({ error: "Rate limit exceeded. Please try again later.", fixtures: [] }),
+          { 
+            status: 429, 
+            headers: { 
+              "Content-Type": "application/json",
+              ...corsHeaders,
+            } 
+          }
+        );
+      }
+      
+      if (aiResponse.status === 402) {
+        return new Response(
+          JSON.stringify({ error: "AI credits exhausted. Please add credits to your workspace.", fixtures: [] }),
+          { 
+            status: 402, 
+            headers: { 
+              "Content-Type": "application/json",
+              ...corsHeaders,
+            } 
+          }
+        );
+      }
+      
+      throw new Error(`AI Gateway error: ${aiResponse.status} ${errorText}`);
     }
 
     const aiData = await aiResponse.json();
@@ -102,7 +140,7 @@ Deno.serve(async (req) => {
       { 
         headers: { 
           "Content-Type": "application/json",
-          'Access-Control-Allow-Origin': '*',
+          ...corsHeaders,
         } 
       }
     );
@@ -115,7 +153,7 @@ Deno.serve(async (req) => {
         status: 500, 
         headers: { 
           "Content-Type": "application/json",
-          'Access-Control-Allow-Origin': '*',
+          ...corsHeaders,
         } 
       }
     );
