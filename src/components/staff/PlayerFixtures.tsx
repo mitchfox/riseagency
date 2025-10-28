@@ -326,13 +326,6 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis }: Playe
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end">
-        <Button size="sm" onClick={() => handleOpenDialog()}>
-          <Plus className="w-4 h-4 mr-2" />
-          Add Fixture
-        </Button>
-      </div>
-
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
