@@ -185,7 +185,10 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, trigger
             "Content-Type": "application/json",
             Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
           },
-          body: JSON.stringify({ teamName: currentClub }),
+          body: JSON.stringify({ 
+            teamName: currentClub,
+            playerTeam: currentClub // Also pass as playerTeam for clarity
+          }),
         }
       );
 
@@ -573,6 +576,23 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, trigger
                           setAiRawResponse("");
                           
                           try {
+                            // Get player's current club from bio
+                            const { data: playerData } = await supabase
+                              .from("players")
+                              .select("bio, name")
+                              .eq("id", playerId)
+                              .single();
+
+                            let playerTeam = playerName;
+                            if (playerData?.bio) {
+                              try {
+                                const bioData = JSON.parse(playerData.bio);
+                                playerTeam = bioData.currentClub || playerName;
+                              } catch (e) {
+                                // Use player name as fallback
+                              }
+                            }
+
                             const response = await fetch(
                               `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/extract-fixtures-from-image`,
                               {
@@ -583,7 +603,8 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, trigger
                                 },
                                 body: JSON.stringify({ 
                                   image: uploadedImage,
-                                  teamName: playerName
+                                  teamName: playerTeam,
+                                  playerName: playerData?.name || playerName
                                 }),
                               }
                             );

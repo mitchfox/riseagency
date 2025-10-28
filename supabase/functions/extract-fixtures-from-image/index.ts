@@ -10,8 +10,8 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { image, teamName } = await req.json();
-    console.log("Processing fixture list image for team:", teamName);
+    const { image, teamName, playerName } = await req.json();
+    console.log("Processing fixture list image for team:", teamName, "player:", playerName);
 
     if (!image) {
       return new Response(
@@ -62,42 +62,42 @@ Deno.serve(async (req) => {
             content: [
               {
                 type: "text",
-                text: `Extract ALL football fixtures from this image. Today's date is ${today}.
+                text: `Extract ALL football fixtures from this image for the player's team: ${teamName}. Today's date is ${today}.
 
 CRITICAL INSTRUCTIONS - READ CAREFULLY:
+- The player plays for ${teamName} - this is THEIR team
 - Extract EVERY match visible in the image
-- Include the home team, away team, and match date for each fixture
-- **SCORES/RESULTS**: If a match displays a SCORE or RESULT (like "2-1", "0-0", "3-2"), extract the home_score and away_score as numbers
-- **MINUTES PLAYED**: If the image shows minutes played for ${teamName} (like "90 min", "45 min", "60'"), extract it as minutes_played
-- Preserve the exact team names as shown in the image
-- If a date is visible, use it exactly as shown (convert to YYYY-MM-DD format)
-- If only partial dates are visible (e.g., "07/11"), assume the year is ${currentYear}
-- Include the competition name if visible (e.g., FNL, Czech Cup, etc.)
-- Include venue if visible
+- **TEAM IDENTIFICATION**: Figure out which team in each match is ${teamName} (the player's team) and which is the opponent
+- **COLOR CODING**: The image likely uses color coding for results:
+  * GREEN background/highlight = WIN (${teamName} scored more)
+  * BLUE background/highlight = DRAW (equal scores)
+  * RED background/highlight = LOSS (${teamName} scored less)
+- **SCORES/RESULTS**: Extract the score. Use the color to verify who won:
+  * If GREEN and score shows "2-1", ${teamName} scored 2, opponent scored 1
+  * If RED and score shows "0-1", ${teamName} scored 0, opponent scored 1
+  * If BLUE and score shows "1-1", it's a draw
+- **MINUTES PLAYED**: If the image shows minutes played for ${playerName || 'the player'} (like "90 min", "45 min", "60'"), extract it
+- Preserve exact team names as shown
+- Convert dates to YYYY-MM-DD format (if only "07/11" shown, assume ${currentYear})
+- Include competition name if visible (FNL, Czech Cup, etc.)
 
 Return ONLY a valid JSON array with NO markdown formatting:
 [
   {
-    "home_team": "Exact Team Name",
-    "away_team": "Exact Team Name",
+    "home_team": "Team Name",
+    "away_team": "Team Name",
     "match_date": "YYYY-MM-DD",
-    "competition": "League/Competition Name",
+    "competition": "League Name",
     "venue": "Venue Name or TBD",
-    "home_score": null or number (REQUIRED if match result/score is visible),
-    "away_score": null or number (REQUIRED if match result/score is visible),
-    "minutes_played": null or number (if minutes played info is shown for ${teamName})
+    "home_score": number or null,
+    "away_score": number or null,
+    "minutes_played": number or null
   }
 ]
 
-IMPORTANT EXAMPLES:
-- If you see "Jihlava 2-1 Prague" → home_score: 2, away_score: 1
-- If you see "0-0 (FT)" → home_score: 0, away_score: 0
-- If you see "90 min" or "90'" → minutes_played: 90
-- If you see "45 min" → minutes_played: 45
-- If no score is shown → home_score: null, away_score: null
-- If no minutes shown → minutes_played: null
+CRITICAL: Make sure home_team and away_team are assigned correctly. One of them should be ${teamName}. Use the color coding and score to determine which team won.
 
-Extract ALL fixtures visible. Do NOT skip any matches or information.`
+Extract ALL fixtures visible. Do NOT skip any matches.`
               },
               {
                 type: "image_url",
