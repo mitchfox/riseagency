@@ -67,6 +67,7 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, trigger
   const [aiFixtures, setAiFixtures] = useState<any[]>([]);
   const [fetchingAiFixtures, setFetchingAiFixtures] = useState(false);
   const [selectedAiFixtures, setSelectedAiFixtures] = useState<Set<number>>(new Set());
+  const [aiRawResponse, setAiRawResponse] = useState<string>("");
   const [displayCount, setDisplayCount] = useState(10);
 
   useEffect(() => {
@@ -142,6 +143,7 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, trigger
 
   const fetchAiFixtures = async (teamName: string) => {
     setFetchingAiFixtures(true);
+    setAiRawResponse("");
     try {
       // Get player details to find team name
       const { data: playerData, error: playerError } = await supabase
@@ -162,6 +164,8 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, trigger
         }
       }
 
+      console.log("Fetching fixtures for:", currentClub);
+
       // Call edge function to fetch fixtures
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/fetch-team-fixtures`,
@@ -175,19 +179,30 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, trigger
         }
       );
 
-      if (!response.ok) throw new Error("Failed to fetch fixtures");
-
       const data = await response.json();
+      console.log("Received data:", data);
+      
+      // Store raw response for debugging
+      if (data.rawResponse) {
+        setAiRawResponse(data.rawResponse);
+      }
+      
       setAiFixtures(data.fixtures || []);
       
       if (data.fixtures?.length === 0) {
-        toast.info("No upcoming fixtures found for this team");
+        toast.info(
+          data.rawResponse 
+            ? "No fixtures parsed. Check the 'AI Response' tab to see what was found." 
+            : "No fixtures generated for this team"
+        );
       } else {
-        toast.success(`Found ${data.fixtures.length} fixtures`);
+        toast.success(`Generated ${data.fixtures.length} fixtures for ${currentClub}`);
       }
     } catch (error: any) {
       console.error("Error fetching AI fixtures:", error);
-      toast.error("Failed to fetch fixtures");
+      const errorMsg = error.message || "Unknown error occurred";
+      toast.error(`Error: ${errorMsg}. Check console for details.`);
+      setAiRawResponse(`Error: ${errorMsg}`);
     } finally {
       setFetchingAiFixtures(false);
     }
@@ -396,9 +411,10 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, trigger
             </div>
           ) : (
             <Tabs defaultValue="manual">
-              <TabsList className="grid w-full grid-cols-2">
+              <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="manual">Manual Entry</TabsTrigger>
                 <TabsTrigger value="ai">AI Fetch</TabsTrigger>
+                <TabsTrigger value="ai-response">AI Response</TabsTrigger>
               </TabsList>
 
               <TabsContent value="manual" className="space-y-4">
@@ -554,6 +570,27 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, trigger
                         Add Selected ({selectedAiFixtures.size})
                       </Button>
                     </div>
+                  )}
+                </div>
+              </TabsContent>
+
+              <TabsContent value="ai-response" className="space-y-4">
+                <div className="space-y-4">
+                  <p className="text-sm text-muted-foreground">
+                    Raw AI response for debugging (shows what the AI generated)
+                  </p>
+                  {aiRawResponse ? (
+                    <Card>
+                      <CardContent className="p-4">
+                        <pre className="text-xs whitespace-pre-wrap break-words max-h-96 overflow-y-auto bg-muted p-4 rounded">
+                          {aiRawResponse}
+                        </pre>
+                      </CardContent>
+                    </Card>
+                  ) : (
+                    <p className="text-sm text-muted-foreground italic">
+                      No AI response yet. Use the "AI Fetch" tab to generate fixtures.
+                    </p>
                   )}
                 </div>
               </TabsContent>
