@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Edit, FileText, LineChart, BookOpen, Video } from "lucide-react";
 import { PerformanceActionsDialog } from "./PerformanceActionsDialog";
@@ -91,6 +92,8 @@ const PlayerManagement = () => {
   const [editingSchemeIndex, setEditingSchemeIndex] = useState<number | null>(null);
   const [uploadingSchemeClubLogo, setUploadingSchemeClubLogo] = useState(false);
   const [uploadingSchemePlayerImage, setUploadingSchemePlayerImage] = useState(false);
+  const [availableAnalyses, setAvailableAnalyses] = useState<any[]>([]);
+  const [selectedAnalysisWriterId, setSelectedAnalysisWriterId] = useState<string>("");
 
   const [formData, setFormData] = useState({
     name: "",
@@ -157,6 +160,7 @@ const PlayerManagement = () => {
   useEffect(() => {
     fetchPlayers();
     fetchAllAnalyses();
+    fetchAvailableAnalyses();
   }, []);
 
   const fetchPlayers = async () => {
@@ -208,6 +212,20 @@ const PlayerManagement = () => {
       setPlayerAnalyses(analysesMap);
     } catch (error: any) {
       toast.error("Failed to fetch analyses: " + error.message);
+    }
+  };
+
+  const fetchAvailableAnalyses = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("analyses")
+        .select("id, analysis_type, title, home_team, away_team, concept")
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      setAvailableAnalyses(data || []);
+    } catch (error: any) {
+      console.error("Failed to fetch available analyses:", error);
     }
   };
 
@@ -544,6 +562,7 @@ const PlayerManagement = () => {
           minutes_played: parseInt(analysisData.minutes_played) || null,
           r90_score: analysisData.r90_score ? parseFloat(analysisData.r90_score) : null,
           notes: analysisData.notes || null,
+          analysis_writer_id: selectedAnalysisWriterId || null,
         };
         
         // Only update URLs if new files were uploaded
@@ -571,6 +590,7 @@ const PlayerManagement = () => {
             notes: analysisData.notes || null,
             pdf_url: pdfUrl,
             video_url: videoUrl,
+            analysis_writer_id: selectedAnalysisWriterId || null,
           });
 
         if (error) throw error;
@@ -580,6 +600,7 @@ const PlayerManagement = () => {
       setIsAnalysisDialogOpen(false);
       setIsEditingAnalysis(false);
       setEditingAnalysisId(null);
+      setSelectedAnalysisWriterId("");
       setAnalysisData({
         opponent: "",
         result: "",
@@ -602,6 +623,7 @@ const PlayerManagement = () => {
     setCurrentPlayerId(playerId);
     setIsEditingAnalysis(false);
     setEditingAnalysisId(null);
+    setSelectedAnalysisWriterId("");
     setAnalysisData({
       opponent: "",
       result: "",
@@ -618,6 +640,7 @@ const PlayerManagement = () => {
   const openEditAnalysisDialog = (analysis: any) => {
     setIsEditingAnalysis(true);
     setEditingAnalysisId(analysis.id);
+    setSelectedAnalysisWriterId(analysis.analysis_writer_id || "");
     setAnalysisData({
       opponent: analysis.opponent || "",
       result: analysis.result || "",
@@ -1860,6 +1883,29 @@ const PlayerManagement = () => {
                   Optional: Upload match performance data and AI will automatically calculate R90 score and generate performance report
                 </p>
               </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="linked_analysis">Link to Analysis Writer (Optional)</Label>
+              <Select value={selectedAnalysisWriterId} onValueChange={setSelectedAnalysisWriterId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select an analysis to link" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">None</SelectItem>
+                  {availableAnalyses.map((analysis) => (
+                    <SelectItem key={analysis.id} value={analysis.id}>
+                      {analysis.analysis_type === "pre-match"
+                        ? `Pre-Match: ${analysis.home_team} vs ${analysis.away_team}`
+                        : analysis.analysis_type === "post-match"
+                        ? `Post-Match: ${analysis.home_team} vs ${analysis.away_team}`
+                        : `Concept: ${analysis.title || analysis.concept}`}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Link this performance report to a detailed analysis from Analysis Writer
+              </p>
             </div>
             <div className="space-y-2">
               <Label htmlFor="notes">Notes / Comments</Label>

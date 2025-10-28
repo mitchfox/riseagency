@@ -14,6 +14,75 @@ export type Database = {
   }
   public: {
     Tables: {
+      analyses: {
+        Row: {
+          analysis_type: string
+          away_team: string | null
+          concept: string | null
+          created_at: string
+          explanation: string | null
+          home_team: string | null
+          id: string
+          key_details: string | null
+          matchups: Json | null
+          opposition_strengths: string | null
+          opposition_weaknesses: string | null
+          player_image_url: string | null
+          points: Json | null
+          scheme_image_url: string | null
+          scheme_paragraph_1: string | null
+          scheme_paragraph_2: string | null
+          scheme_title: string | null
+          strengths_improvements: string | null
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          analysis_type: string
+          away_team?: string | null
+          concept?: string | null
+          created_at?: string
+          explanation?: string | null
+          home_team?: string | null
+          id?: string
+          key_details?: string | null
+          matchups?: Json | null
+          opposition_strengths?: string | null
+          opposition_weaknesses?: string | null
+          player_image_url?: string | null
+          points?: Json | null
+          scheme_image_url?: string | null
+          scheme_paragraph_1?: string | null
+          scheme_paragraph_2?: string | null
+          scheme_title?: string | null
+          strengths_improvements?: string | null
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          analysis_type?: string
+          away_team?: string | null
+          concept?: string | null
+          created_at?: string
+          explanation?: string | null
+          home_team?: string | null
+          id?: string
+          key_details?: string | null
+          matchups?: Json | null
+          opposition_strengths?: string | null
+          opposition_weaknesses?: string | null
+          player_image_url?: string | null
+          points?: Json | null
+          scheme_image_url?: string | null
+          scheme_paragraph_1?: string | null
+          scheme_paragraph_2?: string | null
+          scheme_title?: string | null
+          strengths_improvements?: string | null
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       blog_posts: {
         Row: {
           author_id: string
@@ -348,6 +417,7 @@ export type Database = {
       player_analysis: {
         Row: {
           analysis_date: string
+          analysis_writer_id: string | null
           created_at: string
           id: string
           minutes_played: number | null
@@ -363,6 +433,7 @@ export type Database = {
         }
         Insert: {
           analysis_date: string
+          analysis_writer_id?: string | null
           created_at?: string
           id?: string
           minutes_played?: number | null
@@ -378,6 +449,7 @@ export type Database = {
         }
         Update: {
           analysis_date?: string
+          analysis_writer_id?: string | null
           created_at?: string
           id?: string
           minutes_played?: number | null
@@ -392,6 +464,13 @@ export type Database = {
           video_url?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "player_analysis_analysis_writer_id_fkey"
+            columns: ["analysis_writer_id"]
+            isOneToOne: false
+            referencedRelation: "analyses"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "player_analysis_player_id_fkey"
             columns: ["player_id"]

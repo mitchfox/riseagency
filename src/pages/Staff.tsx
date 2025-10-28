@@ -11,6 +11,7 @@ import PlayerManagement from "@/components/staff/PlayerManagement";
 import BlogManagement from "@/components/staff/BlogManagement";
 import BetweenTheLinesManagement from "@/components/staff/BetweenTheLinesManagement";
 import { CoachingDatabase } from "@/components/staff/CoachingDatabase";
+import { AnalysisManagement } from "@/components/staff/AnalysisManagement";
 import { FormSubmissionsManagement } from "@/components/staff/FormSubmissionsManagement";
 import { SiteVisitorsManagement } from "@/components/staff/SiteVisitorsManagement";
 
@@ -26,7 +27,7 @@ const Staff = () => {
   const [loading, setLoading] = useState(true);
   const [isStaff, setIsStaff] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-  const [expandedSection, setExpandedSection] = useState<'players' | 'blog' | 'betweenthelines' | 'coaching' | 'submissions' | 'visitors' | null>('players');
+  const [expandedSection, setExpandedSection] = useState<'players' | 'blog' | 'betweenthelines' | 'coaching' | 'analysis' | 'submissions' | 'visitors' | null>('players');
   const navigate = useNavigate();
 
   // Load saved email and remember me preference on mount
@@ -281,6 +282,26 @@ const Staff = () => {
             {expandedSection === 'coaching' && (
               <CardContent className="pt-6">
                 <CoachingDatabase />
+              </CardContent>
+            )}
+          </Card>
+
+          {/* Analysis Writer Section */}
+          <Card className="cursor-pointer">
+            <CardHeader 
+              onClick={() => setExpandedSection(expandedSection === 'analysis' ? null : 'analysis')}
+              className="hover:bg-accent/50 transition-colors"
+            >
+              <div className="flex justify-between items-center">
+                <CardTitle className="text-2xl">Analysis Writer</CardTitle>
+                <div className="text-muted-foreground">
+                  {expandedSection === 'analysis' ? <ChevronDown size={24} /> : <ChevronRight size={24} />}
+                </div>
+              </div>
+            </CardHeader>
+            {expandedSection === 'analysis' && (
+              <CardContent className="pt-6">
+                <AnalysisManagement />
               </CardContent>
             )}
           </Card>
