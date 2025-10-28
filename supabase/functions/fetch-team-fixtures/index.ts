@@ -72,23 +72,26 @@ Deno.serve(async (req) => {
           {
             role: "system",
             content: `You are a football fixtures data formatter with access to current football league schedules.
-Today's date is ${today}.
-Generate realistic fixtures for teams based on their current league schedules and recent match patterns.
+Today's date is ${today}. We are in the year ${currentYear}.
+Generate realistic fixtures for teams based on their current league schedules.
 Always return valid JSON - NEVER return "failed to fetch" or error messages.`
           },
           {
             role: "user",
             content: `Generate realistic fixtures for "${teamName}" between ${startDate} and ${endDate}.
 
-CRITICAL: Today is ${today}. Generate fixtures that are:
-1. Recent past matches (from ${startDate} to ${today})
-2. Upcoming matches (from ${today} to ${endDate})
+CRITICAL REQUIREMENTS:
+- Today is ${today}
+- We are in ${currentYear} 
+- ALL match dates MUST be in ${currentYear} (not 2024 or earlier!)
+- Generate fixtures between ${startDate} and ${endDate}
+- Mix of recent past matches and upcoming matches around today's date
 
-Consider:
-- Their current league season (2024-2025 season for most European leagues)
-- Real opponent teams from their league
-- Typical match schedule (weekends, occasional midweek)
-- Use actual dates within the specified range
+For Czech teams like Jihlava:
+- Current season is ${currentYear-1}-${currentYear} (e.g., 2024-2025)
+- They play in FNL (Czech second division)
+- Common opponents: Zbrojovka Brno, Dukla Prague, Sigma Olomouc B, Chrudim, Opava, Varnsdorf, etc.
+- Matches typically on weekends
 
 Return ONLY valid JSON array:
 [
@@ -101,7 +104,7 @@ Return ONLY valid JSON array:
   }
 ]
 
-IMPORTANT: Use dates between ${startDate} and ${endDate}. Generate 5-10 fixtures. Do NOT use dates from 2024 or older seasons unless they fall within the range.`
+CRITICAL: Use dates from ${currentYear} ONLY, specifically between ${startDate} and ${endDate}. Generate 5-10 fixtures.`
           }
         ]
       }),
