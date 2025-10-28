@@ -351,6 +351,14 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, trigger
 
   const handleSaveManualFixture = async () => {
     try {
+      // Validate required fields
+      if (!manualFixture.home_team || !manualFixture.away_team || !manualFixture.match_date) {
+        toast.error("Please fill in Home Team, Away Team, and Match Date");
+        return;
+      }
+
+      console.log("Creating fixture:", manualFixture);
+
       // First create the fixture
       const { data: newFixture, error: fixtureError } = await supabase
         .from("fixtures")
@@ -358,7 +366,12 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, trigger
         .select()
         .single();
 
-      if (fixtureError) throw fixtureError;
+      if (fixtureError) {
+        console.error("Fixture error:", fixtureError);
+        throw fixtureError;
+      }
+
+      console.log("Fixture created:", newFixture);
 
       // Then link it to the player
       const { error: linkError } = await supabase
@@ -371,20 +384,28 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, trigger
           },
         ]);
 
-      if (linkError) throw linkError;
+      if (linkError) {
+        console.error("Link error:", linkError);
+        throw linkError;
+      }
 
       // Determine opponent and result for the analysis record
       let opponent = "";
       let result = "";
       
-      if (manualFixture.home_team === playerTeam) {
+      // Check if either team matches the player's team (case insensitive)
+      const homeTeamLower = manualFixture.home_team.toLowerCase();
+      const awayTeamLower = manualFixture.away_team.toLowerCase();
+      const playerTeamLower = playerTeam?.toLowerCase() || "";
+      
+      if (playerTeamLower && homeTeamLower.includes(playerTeamLower)) {
         opponent = manualFixture.away_team;
         if (manualFixture.home_score !== null && manualFixture.away_score !== null) {
           if (manualFixture.home_score > manualFixture.away_score) result = "(W)";
           else if (manualFixture.home_score < manualFixture.away_score) result = "(L)";
           else result = "(D)";
         }
-      } else if (manualFixture.away_team === playerTeam) {
+      } else if (playerTeamLower && awayTeamLower.includes(playerTeamLower)) {
         opponent = manualFixture.home_team;
         if (manualFixture.home_score !== null && manualFixture.away_score !== null) {
           if (manualFixture.away_score > manualFixture.home_score) result = "(W)";
@@ -392,6 +413,7 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, trigger
           else result = "(D)";
         }
       } else {
+        // Can't determine player's team, show both teams
         opponent = `${manualFixture.home_team} vs ${manualFixture.away_team}`;
       }
 
@@ -417,8 +439,8 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, trigger
       fetchPlayerFixtures();
       fetchAllFixtures();
     } catch (error: any) {
-      toast.error("Failed to save fixture");
-      console.error(error);
+      console.error("Save manual fixture error:", error);
+      toast.error(`Failed to save fixture: ${error.message || 'Unknown error'}`);
     }
   };
 
