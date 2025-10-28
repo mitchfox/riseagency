@@ -380,50 +380,11 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis }: Playe
               </div>
             </div>
           ) : (
-            <Tabs defaultValue="select">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="select">Select Existing</TabsTrigger>
+            <Tabs defaultValue="manual">
+              <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="manual">Manual Entry</TabsTrigger>
                 <TabsTrigger value="ai">AI Fetch</TabsTrigger>
               </TabsList>
-
-              <TabsContent value="select" className="space-y-4">
-                <div>
-                  <Label>Fixture</Label>
-                  <Select value={selectedFixtureId} onValueChange={setSelectedFixtureId}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select fixture" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {allFixtures.map((fixture) => (
-                        <SelectItem key={fixture.id} value={fixture.id}>
-                          {fixture.home_team} vs {fixture.away_team} -{" "}
-                          {new Date(fixture.match_date).toLocaleDateString()}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label>Minutes Played</Label>
-                  <Input
-                    type="number"
-                    value={minutesPlayed || ""}
-                    onChange={(e) =>
-                      setMinutesPlayed(e.target.value ? parseInt(e.target.value) : null)
-                    }
-                    placeholder="90"
-                  />
-                </div>
-
-                <div className="flex justify-end gap-2 pt-4">
-                  <Button variant="outline" onClick={handleCloseDialog}>
-                    Cancel
-                  </Button>
-                  <Button onClick={handleSave}>Add Fixture</Button>
-                </div>
-              </TabsContent>
 
               <TabsContent value="manual" className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
@@ -492,36 +453,14 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis }: Playe
                 </div>
 
                 <div>
-                  <Label>Competition</Label>
-                  <Input
-                    value={manualFixture.competition}
-                    onChange={(e) =>
-                      setManualFixture({ ...manualFixture, competition: e.target.value })
-                    }
-                    placeholder="League, Cup, etc."
-                  />
-                </div>
-
-                <div>
-                  <Label>Venue</Label>
-                  <Input
-                    value={manualFixture.venue}
-                    onChange={(e) =>
-                      setManualFixture({ ...manualFixture, venue: e.target.value })
-                    }
-                    placeholder="Stadium name"
-                  />
-                </div>
-
-                <div>
-                  <Label>Minutes Played</Label>
+                  <Label>Minutes Played (Optional)</Label>
                   <Input
                     type="number"
                     value={minutesPlayed || ""}
                     onChange={(e) =>
                       setMinutesPlayed(e.target.value ? parseInt(e.target.value) : null)
                     }
-                    placeholder="90"
+                    placeholder="Leave blank if not yet played"
                   />
                 </div>
 

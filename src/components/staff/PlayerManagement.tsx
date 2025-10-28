@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Edit, FileText, LineChart, BookOpen, Video, Calendar } from "lucide-react";
+import { Edit, FileText, LineChart, BookOpen, Video, Calendar, Plus } from "lucide-react";
 import { PerformanceActionsDialog } from "./PerformanceActionsDialog";
 import { ProgrammingManagement } from "./ProgrammingManagement";
 import { PlayerFixtures } from "./PlayerFixtures";
@@ -1566,16 +1566,12 @@ const PlayerManagement = () => {
                   {showingFixturesFor === player.id && (
                     <div className="border-t pt-4 space-y-4">
                       <div className="flex justify-between items-center">
-                        <h4 className="text-lg font-semibold">Performance Reports & Games</h4>
+                        <h4 className="text-lg font-semibold">Fixtures</h4>
                         <Button size="sm" onClick={() => openAnalysisDialog(player.id)}>
-                          <FileText className="w-4 h-4 mr-2" />
-                          Add Performance Report
+                          <Plus className="w-4 h-4 mr-2" />
+                          Add Fixture
                         </Button>
                       </div>
-                      
-                      <p className="text-sm text-muted-foreground">
-                        Performance reports and game records for {player.name}.
-                      </p>
                       
                       {(playerAnalyses[player.id] || []).length > 0 ? (
                         <div className="space-y-2">
@@ -1843,92 +1839,207 @@ const PlayerManagement = () => {
                   )}
 
                   {showingAnalysisFor === player.id && (
-                    <div className="border-t pt-4 space-y-4">
-                      <div className="flex justify-between items-center">
-                        <h4 className="text-lg font-semibold">Analysis Writer</h4>
-                        <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => {
-                              setCurrentPlayerId(player.id);
-                              // Set to pre-match analysis type
-                              setIsAnalysisDialogOpen(true);
-                            }}
-                          >
-                            Add Pre-Match
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => {
-                              setCurrentPlayerId(player.id);
-                              // Set to post-match analysis type
-                              setIsAnalysisDialogOpen(true);
-                            }}
-                          >
-                            Add Post-Match
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => openAnalysisDialog(player.id)}
-                          >
-                            <FileText className="w-4 h-4 mr-2" />
-                            Add Performance Report
-                          </Button>
-                        </div>
-                      </div>
+                    <div className="border-t pt-4 space-y-6">
+                      <h4 className="text-xl font-semibold">Analysis</h4>
                       
-                      <PlayerFixtures 
-                        playerId={player.id} 
-                        playerName={player.name}
-                        onCreateAnalysis={(fixtureId) => {
-                          setCurrentPlayerId(player.id);
-                          setSelectedAnalysisWriterId(fixtureId);
-                          setIsAnalysisDialogOpen(true);
-                        }}
-                      />
-                      
-                      {availableAnalyses.filter(a => 
-                        playerAnalyses[player.id]?.some(pa => pa.analysis_writer_id === a.id)
-                      ).length > 0 && (
-                        <div className="border-t pt-4">
-                          <h5 className="font-semibold mb-2">Linked Analyses</h5>
-                          <div className="space-y-2">
-                            {availableAnalyses
-                              .filter(a => 
-                                playerAnalyses[player.id]?.some(pa => pa.analysis_writer_id === a.id)
-                              )
-                              .map((analysis) => (
-                                <Card key={analysis.id}>
-                                  <CardContent className="p-3">
-                                    <div className="flex items-center justify-between">
-                                      <div>
-                                        <span className="font-medium">
-                                          {analysis.analysis_type === 'pre_match' && '⚽ Pre-Match: '}
-                                          {analysis.analysis_type === 'post_match' && '📊 Post-Match: '}
-                                          {analysis.analysis_type === 'concept' && '💡 Concept: '}
-                                          {analysis.title || `${analysis.home_team} vs ${analysis.away_team}` || analysis.concept}
-                                        </span>
-                                      </div>
+                      {/* Pre-Match Analysis Section */}
+                      <Card>
+                        <CardHeader>
+                          <div className="flex justify-between items-center">
+                            <CardTitle className="text-lg">⚽ Pre-Match Analysis</CardTitle>
+                            <Button
+                              size="sm"
+                              onClick={() => {
+                                setCurrentPlayerId(player.id);
+                                setIsAnalysisDialogOpen(true);
+                              }}
+                            >
+                              <Plus className="w-4 h-4 mr-2" />
+                              Add Pre-Match
+                            </Button>
+                          </div>
+                        </CardHeader>
+                        <CardContent>
+                          {availableAnalyses
+                            .filter(a => 
+                              a.analysis_type === 'pre_match' &&
+                              playerAnalyses[player.id]?.some(pa => pa.analysis_writer_id === a.id)
+                            ).length > 0 ? (
+                            <div className="space-y-2">
+                              {availableAnalyses
+                                .filter(a => 
+                                  a.analysis_type === 'pre_match' &&
+                                  playerAnalyses[player.id]?.some(pa => pa.analysis_writer_id === a.id)
+                                )
+                                .map((analysis) => (
+                                  <div key={analysis.id} className="flex items-center justify-between p-3 border rounded-lg hover:border-primary transition-colors">
+                                    <div className="flex-1">
+                                      <p className="font-medium">
+                                        {analysis.home_team} vs {analysis.away_team}
+                                      </p>
+                                      {analysis.title && (
+                                        <p className="text-sm text-muted-foreground">{analysis.title}</p>
+                                      )}
+                                    </div>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => {
+                                        const linkedAnalysis = playerAnalyses[player.id].find(pa => pa.analysis_writer_id === analysis.id);
+                                        if (linkedAnalysis) {
+                                          window.open(`/performance/${linkedAnalysis.id}`, '_blank');
+                                        }
+                                      }}
+                                    >
+                                      View
+                                    </Button>
+                                  </div>
+                                ))}
+                            </div>
+                          ) : (
+                            <p className="text-sm text-muted-foreground text-center py-4">
+                              No pre-match analyses yet
+                            </p>
+                          )}
+                        </CardContent>
+                      </Card>
+
+                      {/* Post-Match Analysis Section */}
+                      <Card>
+                        <CardHeader>
+                          <div className="flex justify-between items-center">
+                            <CardTitle className="text-lg">📊 Post-Match Analysis</CardTitle>
+                            <Button
+                              size="sm"
+                              onClick={() => {
+                                setCurrentPlayerId(player.id);
+                                setIsAnalysisDialogOpen(true);
+                              }}
+                            >
+                              <Plus className="w-4 h-4 mr-2" />
+                              Add Post-Match
+                            </Button>
+                          </div>
+                        </CardHeader>
+                        <CardContent>
+                          {availableAnalyses
+                            .filter(a => 
+                              a.analysis_type === 'post_match' &&
+                              playerAnalyses[player.id]?.some(pa => pa.analysis_writer_id === a.id)
+                            ).length > 0 ? (
+                            <div className="space-y-2">
+                              {availableAnalyses
+                                .filter(a => 
+                                  a.analysis_type === 'post_match' &&
+                                  playerAnalyses[player.id]?.some(pa => pa.analysis_writer_id === a.id)
+                                )
+                                .map((analysis) => (
+                                  <div key={analysis.id} className="flex items-center justify-between p-3 border rounded-lg hover:border-primary transition-colors">
+                                    <div className="flex-1">
+                                      <p className="font-medium">
+                                        {analysis.home_team} vs {analysis.away_team}
+                                      </p>
+                                      {analysis.title && (
+                                        <p className="text-sm text-muted-foreground">{analysis.title}</p>
+                                      )}
+                                    </div>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => {
+                                        const linkedAnalysis = playerAnalyses[player.id].find(pa => pa.analysis_writer_id === analysis.id);
+                                        if (linkedAnalysis) {
+                                          window.open(`/performance/${linkedAnalysis.id}`, '_blank');
+                                        }
+                                      }}
+                                    >
+                                      View
+                                    </Button>
+                                  </div>
+                                ))}
+                            </div>
+                          ) : (
+                            <p className="text-sm text-muted-foreground text-center py-4">
+                              No post-match analyses yet
+                            </p>
+                          )}
+                        </CardContent>
+                      </Card>
+
+                      {/* Performance Reports Section */}
+                      <Card>
+                        <CardHeader>
+                          <div className="flex justify-between items-center">
+                            <CardTitle className="text-lg">📈 Performance Reports</CardTitle>
+                            <Button
+                              size="sm"
+                              onClick={() => openAnalysisDialog(player.id)}
+                            >
+                              <Plus className="w-4 h-4 mr-2" />
+                              Add Report
+                            </Button>
+                          </div>
+                        </CardHeader>
+                        <CardContent>
+                          {(playerAnalyses[player.id] || []).filter(a => a.r90_score !== null && a.r90_score !== undefined).length > 0 ? (
+                            <div className="space-y-2">
+                              {(playerAnalyses[player.id] || [])
+                                .filter(a => a.r90_score !== null && a.r90_score !== undefined)
+                                .map((analysis) => (
+                                  <div 
+                                    key={analysis.id} 
+                                    className="flex items-center justify-between p-3 border rounded-lg hover:border-primary transition-colors"
+                                  >
+                                    <div className="flex items-center gap-3 flex-1">
+                                      <span className="text-sm text-muted-foreground min-w-[80px]">
+                                        {new Date(analysis.analysis_date).toLocaleDateString('en-GB')}
+                                      </span>
+                                      
+                                      {analysis.opponent && (
+                                        <div className="flex flex-col">
+                                          <span className="text-sm font-medium">vs {analysis.opponent}</span>
+                                          {analysis.result && (
+                                            <span className="text-xs text-muted-foreground">{analysis.result}</span>
+                                          )}
+                                        </div>
+                                      )}
+                                      
+                                      <span className={`${getR90Color(analysis.r90_score)} text-white px-3 py-1 rounded font-bold text-sm`}>
+                                        R90: {analysis.r90_score?.toFixed(2)}
+                                      </span>
+                                    </div>
+                                    
+                                    <div className="flex gap-2">
                                       <Button
                                         size="sm"
                                         variant="outline"
                                         onClick={() => {
-                                          // Navigate to view the analysis
-                                          window.open(`/performance/${playerAnalyses[player.id].find(pa => pa.analysis_writer_id === analysis.id)?.id}`, '_blank');
+                                          setSelectedAnalysisId(analysis.id);
+                                          setSelectedPlayerName(player.name);
+                                          setIsPerformanceActionsDialogOpen(true);
                                         }}
                                       >
+                                        <FileText className="w-4 h-4 mr-1" />
                                         View
                                       </Button>
+                                      <Button 
+                                        variant="ghost" 
+                                        size="sm"
+                                        onClick={() => openEditAnalysisDialog(analysis)}
+                                      >
+                                        <Edit className="w-4 h-4" />
+                                      </Button>
                                     </div>
-                                  </CardContent>
-                                </Card>
-                              ))}
-                          </div>
-                        </div>
-                      )}
+                                  </div>
+                                ))}
+                            </div>
+                          ) : (
+                            <p className="text-sm text-muted-foreground text-center py-4">
+                              No performance reports yet
+                            </p>
+                          )}
+                        </CardContent>
+                      </Card>
                     </div>
                   )}
                 </CardContent>
