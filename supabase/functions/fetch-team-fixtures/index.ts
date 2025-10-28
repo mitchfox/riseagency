@@ -42,7 +42,7 @@ Deno.serve(async (req) => {
     }
 
     // Call Lovable AI Gateway with web search
-    console.log("Searching web for fixtures...");
+    console.log("Searching SofaScore for fixtures...");
     const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -50,28 +50,28 @@ Deno.serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "openai/gpt-5-mini",
+        model: "google/gemini-2.5-flash",
         messages: [
           {
             role: "system",
-            content: "You are a football fixtures researcher. Use web search to find accurate, real fixture data. Always return valid JSON arrays only."
+            content: "You are a football fixtures researcher. Search SofaScore.com to find real upcoming fixtures. Return only valid JSON arrays."
           },
           {
             role: "user",
-            content: `Search the internet and find the next 5-10 REAL upcoming fixtures for "${teamName}". Find their actual scheduled matches from their league website, official team site, or sports news sites.
+            content: `Search SofaScore.com for "${teamName}" and find their next 5-10 upcoming fixtures. Look for the team page on SofaScore (e.g., sofascore.com/team/football/team-name/id) and extract their scheduled matches.
             
-            Return ONLY a valid JSON array (no markdown, no explanation):
-            [
-              {
-                "home_team": "Team Name",
-                "away_team": "Team Name", 
-                "match_date": "YYYY-MM-DD",
-                "competition": "League/Cup Name",
-                "venue": "Stadium Name"
-              }
-            ]
-            
-            If you cannot find real fixtures, return: []`
+            Return ONLY a valid JSON array with no markdown formatting:
+[
+  {
+    "home_team": "Team Name",
+    "away_team": "Team Name", 
+    "match_date": "YYYY-MM-DD",
+    "competition": "League/Cup Name",
+    "venue": "Stadium Name"
+  }
+]
+
+If no fixtures found, return: []`
           }
         ],
         web_search: true
