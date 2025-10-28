@@ -51,6 +51,12 @@ interface PlayerFixture {
 interface PlayerAnalysis {
   r90_score: number | null;
   fixture_id: string;
+  opponent: string | null;
+}
+
+interface OpponentData {
+  opponent: string;
+  result: string;
 }
 
 export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, triggerOpen, onDialogOpenChange }: PlayerFixturesProps) => {
@@ -63,6 +69,7 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, trigger
   const [editingPlayerFixture, setEditingPlayerFixture] = useState<PlayerFixture | null>(null);
   const [playerTeam, setPlayerTeam] = useState<string>("");
   const [r90Scores, setR90Scores] = useState<Map<string, number>>(new Map());
+  const [opponentData, setOpponentData] = useState<Map<string, OpponentData>>(new Map());
   const [editingAnalysis, setEditingAnalysis] = useState<any | null>(null);
   const [editGameData, setEditGameData] = useState({
     opponent: "",
@@ -147,23 +154,33 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, trigger
       
       setPlayerFixtures(sortedData);
 
-      // Fetch R90 scores for all fixtures
+      // Fetch R90 scores and opponent info from analysis
       const fixtureIds = sortedData.map((pf: any) => pf.fixture_id);
       if (fixtureIds.length > 0) {
         const { data: analysisData } = await supabase
           .from("player_analysis")
-          .select("fixture_id, r90_score")
+          .select("fixture_id, r90_score, opponent, result")
           .eq("player_id", playerId)
           .in("fixture_id", fixtureIds);
 
         if (analysisData) {
           const r90Map = new Map<string, number>();
+          const opponentMap = new Map<string, OpponentData>();
+          
           analysisData.forEach((analysis: any) => {
             if (analysis.r90_score !== null) {
               r90Map.set(analysis.fixture_id, analysis.r90_score);
             }
+            if (analysis.opponent) {
+              opponentMap.set(analysis.fixture_id, {
+                opponent: analysis.opponent,
+                result: analysis.result || ""
+              });
+            }
           });
+          
           setR90Scores(r90Map);
+          setOpponentData(opponentMap);
         }
       }
     } catch (error: any) {
@@ -1077,20 +1094,40 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, trigger
 
         <div className="space-y-2">
           {playerFixtures.slice(0, displayCount).map((pf) => {
-            const isHomeTeam = playerTeam && pf.fixtures.home_team.includes(playerTeam);
-            const opponent = isHomeTeam ? pf.fixtures.away_team : pf.fixtures.home_team;
-            const hasScore = pf.fixtures.home_score !== null && pf.fixtures.away_score !== null;
+            // First try to get opponent from analysis data
+            const analysisInfo = opponentData.get(pf.fixture_id);
+            let opponent = analysisInfo?.opponent || "";
+            let result = analysisInfo?.result || "";
             
-            let result = "";
-            if (hasScore) {
+            // If no analysis data, try to infer from fixture
+            if (!opponent) {
+              // Try to match player's team with home or away team
+              const isHomeTeam = playerTeam && pf.fixtures.home_team.toLowerCase().includes(playerTeam.toLowerCase());
+              const isAwayTeam = playerTeam && pf.fixtures.away_team.toLowerCase().includes(playerTeam.toLowerCase());
+              
               if (isHomeTeam) {
-                if (pf.fixtures.home_score! > pf.fixtures.away_score!) result = "(W)";
-                else if (pf.fixtures.home_score! < pf.fixtures.away_score!) result = "(L)";
-                else result = "(D)";
+                opponent = pf.fixtures.away_team;
+              } else if (isAwayTeam) {
+                opponent = pf.fixtures.home_team;
               } else {
-                if (pf.fixtures.away_score! > pf.fixtures.home_score!) result = "(W)";
-                else if (pf.fixtures.away_score! < pf.fixtures.home_score!) result = "(L)";
-                else result = "(D)";
+                // Can't determine player's team, show both
+                opponent = `${pf.fixtures.home_team} vs ${pf.fixtures.away_team}`;
+              }
+              
+              // Try to determine result from score
+              const hasScore = pf.fixtures.home_score !== null && pf.fixtures.away_score !== null;
+              if (hasScore && (isHomeTeam || isAwayTeam)) {
+                if (isHomeTeam) {
+                  if (pf.fixtures.home_score! > pf.fixtures.away_score!) result = "(W)";
+                  else if (pf.fixtures.home_score! < pf.fixtures.away_score!) result = "(L)";
+                  else result = "(D)";
+                } else {
+                  if (pf.fixtures.away_score! > pf.fixtures.home_score!) result = "(W)";
+                  else if (pf.fixtures.away_score! < pf.fixtures.home_score!) result = "(L)";
+                  else result = "(D)";
+                }
+              } else if (hasScore) {
+                result = `${pf.fixtures.home_score}-${pf.fixtures.away_score}`;
               }
             }
 
@@ -1115,11 +1152,11 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, trigger
               
                 <div className="flex flex-col flex-1">
                   <span className="text-sm font-medium">
-                    vs {opponent}
+                    {opponent.includes(" vs ") ? opponent : `vs ${opponent}`}
                   </span>
-                  {hasScore && (
+                  {result && (
                     <span className="text-xs text-muted-foreground">
-                      {pf.fixtures.home_score}-{pf.fixtures.away_score} {result}
+                      {result}
                     </span>
                   )}
                 </div>
