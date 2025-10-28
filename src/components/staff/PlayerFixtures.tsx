@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Plus, Pencil, Trash2, FileText, Sparkles } from "lucide-react";
 import {
@@ -62,6 +63,16 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, trigger
   const [editingPlayerFixture, setEditingPlayerFixture] = useState<PlayerFixture | null>(null);
   const [playerTeam, setPlayerTeam] = useState<string>("");
   const [r90Scores, setR90Scores] = useState<Map<string, number>>(new Map());
+  const [editingAnalysis, setEditingAnalysis] = useState<any | null>(null);
+  const [editGameData, setEditGameData] = useState({
+    opponent: "",
+    result: "",
+    match_date: "",
+    minutes_played: "",
+    notes: "",
+    pdf_file: null as File | null,
+    video_file: null as File | null,
+  });
   const [manualFixture, setManualFixture] = useState({
     home_team: "",
     away_team: "",
@@ -177,15 +188,50 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, trigger
     }
   };
 
-  const handleOpenDialog = (playerFixture?: PlayerFixture) => {
+  const handleOpenDialog = async (playerFixture?: PlayerFixture) => {
     if (playerFixture) {
       setEditingPlayerFixture(playerFixture);
       setSelectedFixtureId(playerFixture.fixture_id);
       setMinutesPlayed(playerFixture.minutes_played);
+      
+      // Fetch existing analysis for this fixture
+      const { data: analysisData } = await supabase
+        .from("player_analysis")
+        .select("*")
+        .eq("player_id", playerId)
+        .eq("fixture_id", playerFixture.fixture_id)
+        .maybeSingle();
+      
+      setEditingAnalysis(analysisData);
+      
+      // Determine opponent based on player's team
+      const isHomeTeam = playerTeam && playerFixture.fixtures.home_team.includes(playerTeam);
+      const opponent = isHomeTeam ? playerFixture.fixtures.away_team : playerFixture.fixtures.home_team;
+      
+      // Pre-fill edit form with existing data
+      setEditGameData({
+        opponent: opponent || "",
+        result: analysisData?.result || "",
+        match_date: playerFixture.fixtures.match_date,
+        minutes_played: playerFixture.minutes_played?.toString() || "",
+        notes: analysisData?.notes || "",
+        pdf_file: null,
+        video_file: null,
+      });
     } else {
       setEditingPlayerFixture(null);
       setSelectedFixtureId("");
       setMinutesPlayed(null);
+      setEditingAnalysis(null);
+      setEditGameData({
+        opponent: "",
+        result: "",
+        match_date: "",
+        minutes_played: "",
+        notes: "",
+        pdf_file: null,
+        video_file: null,
+      });
       setManualFixture({
         home_team: "",
         away_team: "",
@@ -357,36 +403,89 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, trigger
     setMinutesPlayed(null);
   };
 
-  const handleSave = async () => {
+  const handleSaveEditGame = async () => {
     try {
-      if (editingPlayerFixture) {
-        const { error } = await supabase
-          .from("player_fixtures")
-          .update({
-            fixture_id: selectedFixtureId,
-            minutes_played: minutesPlayed,
-          })
-          .eq("id", editingPlayerFixture.id);
+      if (!editingPlayerFixture) return;
 
-        if (error) throw error;
-        toast.success("Fixture updated successfully");
-      } else {
-        const { error } = await supabase.from("player_fixtures").insert([
-          {
-            player_id: playerId,
-            fixture_id: selectedFixtureId,
-            minutes_played: minutesPlayed,
-          },
-        ]);
+      const minutesValue = editGameData.minutes_played ? parseInt(editGameData.minutes_played) : null;
 
-        if (error) throw error;
-        toast.success("Fixture added successfully");
+      // Update player_fixtures minutes
+      const { error: fixtureError } = await supabase
+        .from("player_fixtures")
+        .update({
+          minutes_played: minutesValue,
+        })
+        .eq("id", editingPlayerFixture.id);
+
+      if (fixtureError) throw fixtureError;
+
+      // Upload files if provided
+      let pdfUrl = editingAnalysis?.pdf_url || null;
+      let videoUrl = editingAnalysis?.video_url || null;
+
+      if (editGameData.pdf_file) {
+        const pdfPath = `${playerId}/${Date.now()}_${editGameData.pdf_file.name}`;
+        const { error: pdfError } = await supabase.storage
+          .from("analysis-files")
+          .upload(pdfPath, editGameData.pdf_file);
+        
+        if (!pdfError) {
+          const { data: { publicUrl } } = supabase.storage
+            .from("analysis-files")
+            .getPublicUrl(pdfPath);
+          pdfUrl = publicUrl;
+        }
       }
 
+      if (editGameData.video_file) {
+        const videoPath = `${playerId}/${Date.now()}_${editGameData.video_file.name}`;
+        const { error: videoError } = await supabase.storage
+          .from("analysis-files")
+          .upload(videoPath, editGameData.video_file);
+        
+        if (!videoError) {
+          const { data: { publicUrl } } = supabase.storage
+            .from("analysis-files")
+            .getPublicUrl(videoPath);
+          videoUrl = publicUrl;
+        }
+      }
+
+      // Create or update player_analysis
+      const analysisPayload = {
+        player_id: playerId,
+        fixture_id: editingPlayerFixture.fixture_id,
+        analysis_date: editGameData.match_date,
+        opponent: editGameData.opponent,
+        result: editGameData.result,
+        minutes_played: minutesValue,
+        notes: editGameData.notes,
+        pdf_url: pdfUrl,
+        video_url: videoUrl,
+      };
+
+      if (editingAnalysis) {
+        // Update existing analysis
+        const { error: analysisError } = await supabase
+          .from("player_analysis")
+          .update(analysisPayload)
+          .eq("id", editingAnalysis.id);
+
+        if (analysisError) throw analysisError;
+      } else {
+        // Create new analysis
+        const { error: analysisError } = await supabase
+          .from("player_analysis")
+          .insert([analysisPayload]);
+
+        if (analysisError) throw analysisError;
+      }
+
+      toast.success("Game updated successfully");
       handleCloseDialog();
       fetchPlayerFixtures();
     } catch (error: any) {
-      toast.error("Failed to save fixture");
+      toast.error("Failed to update game");
       console.error(error);
     }
   };
@@ -473,33 +572,89 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, trigger
 
           {editingPlayerFixture ? (
             <div className="space-y-4">
-              <div>
-                <Label>Fixture</Label>
-                <Select value={selectedFixtureId} onValueChange={setSelectedFixtureId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select fixture" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {allFixtures.map((fixture) => (
-                      <SelectItem key={fixture.id} value={fixture.id}>
-                        {fixture.home_team} vs {fixture.away_team} -{" "}
-                        {new Date(fixture.match_date).toLocaleDateString()}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="edit_opponent">Opponent *</Label>
+                  <Input
+                    id="edit_opponent"
+                    value={editGameData.opponent}
+                    onChange={(e) => setEditGameData({ ...editGameData, opponent: e.target.value })}
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="edit_result">Result *</Label>
+                  <Input
+                    id="edit_result"
+                    placeholder="e.g., 4-2 (W)"
+                    value={editGameData.result}
+                    onChange={(e) => setEditGameData({ ...editGameData, result: e.target.value })}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="edit_date">Date *</Label>
+                  <Input
+                    id="edit_date"
+                    type="date"
+                    value={editGameData.match_date}
+                    onChange={(e) => setEditGameData({ ...editGameData, match_date: e.target.value })}
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="edit_minutes">Minutes Played</Label>
+                  <Input
+                    id="edit_minutes"
+                    type="number"
+                    value={editGameData.minutes_played}
+                    onChange={(e) => setEditGameData({ ...editGameData, minutes_played: e.target.value })}
+                  />
+                </div>
               </div>
 
               <div>
-                <Label>Minutes Played (Optional)</Label>
-                <Input
-                  type="number"
-                  value={minutesPlayed || ""}
-                  onChange={(e) =>
-                    setMinutesPlayed(e.target.value ? parseInt(e.target.value) : null)
-                  }
-                  placeholder="Leave blank if not yet played"
+                <Label htmlFor="edit_notes">Notes / Comments</Label>
+                <Textarea
+                  id="edit_notes"
+                  value={editGameData.notes}
+                  onChange={(e) => setEditGameData({ ...editGameData, notes: e.target.value })}
+                  rows={3}
+                  placeholder="e.g., Strong match performance with excellent positioning"
                 />
+              </div>
+
+              <div>
+                <Label htmlFor="edit_pdf">PDF Report</Label>
+                <Input
+                  id="edit_pdf"
+                  type="file"
+                  accept=".pdf"
+                  onChange={(e) => setEditGameData({ ...editGameData, pdf_file: e.target.files?.[0] || null })}
+                />
+                {editingAnalysis?.pdf_url && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Current PDF: <a href={editingAnalysis.pdf_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">View</a>
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <Label htmlFor="edit_video">Video Analysis</Label>
+                <Input
+                  id="edit_video"
+                  type="file"
+                  accept="video/*"
+                  onChange={(e) => setEditGameData({ ...editGameData, video_file: e.target.files?.[0] || null })}
+                />
+                {editingAnalysis?.video_url && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Current Video: <a href={editingAnalysis.video_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">View</a>
+                  </p>
+                )}
               </div>
 
               <div className="flex justify-end gap-2 pt-4">
@@ -517,7 +672,7 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, trigger
                   <Trash2 className="w-4 h-4 mr-2" />
                   Delete Fixture
                 </Button>
-                <Button onClick={handleSave}>Save Changes</Button>
+                <Button onClick={handleSaveEditGame}>Update Game</Button>
               </div>
             </div>
           ) : (
