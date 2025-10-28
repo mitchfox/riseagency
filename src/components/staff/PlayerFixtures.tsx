@@ -79,7 +79,10 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, trigger
     notes: "",
     pdf_file: null as File | null,
     video_file: null as File | null,
+    performance_report_file: null as File | null,
+    analysis_writer_id: "" as string,
   });
+  const [availableAnalyses, setAvailableAnalyses] = useState<any[]>([]);
   const [manualFixture, setManualFixture] = useState({
     home_team: "",
     away_team: "",
@@ -109,6 +112,7 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, trigger
     fetchPlayerTeam();
     fetchPlayerFixtures();
     fetchAllFixtures();
+    fetchAvailableAnalyses();
   }, [playerId]);
 
   const fetchPlayerTeam = async () => {
@@ -205,6 +209,20 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, trigger
     }
   };
 
+  const fetchAvailableAnalyses = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("analyses")
+        .select("id, title, analysis_type")
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      setAvailableAnalyses(data || []);
+    } catch (error: any) {
+      console.error("Error fetching analyses:", error);
+    }
+  };
+
   const handleOpenDialog = async (playerFixture?: PlayerFixture) => {
     try {
       if (playerFixture) {
@@ -245,6 +263,8 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, trigger
           notes: analysisData?.notes || "",
           pdf_file: null,
           video_file: null,
+          performance_report_file: null,
+          analysis_writer_id: analysisData?.analysis_writer_id || "",
         });
       } else {
         setEditingPlayerFixture(null);
@@ -259,6 +279,8 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, trigger
           notes: "",
           pdf_file: null,
           video_file: null,
+          performance_report_file: null,
+          analysis_writer_id: "",
         });
         setManualFixture({
           home_team: "",
@@ -595,7 +617,10 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, trigger
         notes: editGameData.notes,
         pdf_url: pdfUrl,
         video_url: videoUrl,
+        analysis_writer_id: editGameData.analysis_writer_id || null,
       };
+
+      let analysisId = editingAnalysis?.id;
 
       if (editingAnalysis) {
         // Update existing analysis
@@ -607,11 +632,44 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, trigger
         if (analysisError) throw analysisError;
       } else {
         // Create new analysis
-        const { error: analysisError } = await supabase
+        const { data: newAnalysis, error: analysisError } = await supabase
           .from("player_analysis")
-          .insert([analysisPayload]);
+          .insert([analysisPayload])
+          .select()
+          .single();
 
         if (analysisError) throw analysisError;
+        analysisId = newAnalysis.id;
+      }
+
+      // Handle performance report upload and processing
+      if (editGameData.performance_report_file && analysisId) {
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+          try {
+            const content = e.target?.result;
+            if (typeof content === 'string') {
+              // Call edge function to process the performance report
+              const { data, error } = await supabase.functions.invoke('import-program-csv', {
+                body: {
+                  playerId: playerId,
+                  analysisId: analysisId,
+                  csvContent: content,
+                }
+              });
+
+              if (error) {
+                console.error("Error processing performance report:", error);
+                toast.error("Performance report uploaded but processing failed");
+              } else {
+                toast.success("Performance report processed successfully");
+              }
+            }
+          } catch (error) {
+            console.error("Error reading performance report:", error);
+          }
+        };
+        reader.readAsText(editGameData.performance_report_file);
       }
 
       toast.success("Game updated successfully");
@@ -763,6 +821,42 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, trigger
                   rows={3}
                   placeholder="e.g., Strong match performance with excellent positioning"
                 />
+              </div>
+
+              <div>
+                <Label htmlFor="edit_performance_report">Upload Performance Report (Excel/CSV)</Label>
+                <Input
+                  id="edit_performance_report"
+                  type="file"
+                  accept=".xlsx,.xls,.csv"
+                  onChange={(e) => setEditGameData({ ...editGameData, performance_report_file: e.target.files?.[0] || null })}
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Optional: Upload match performance data and AI will automatically calculate R90 score and generate performance report
+                </p>
+              </div>
+
+              <div>
+                <Label htmlFor="edit_analysis_writer">Link to Analysis Writer (Optional)</Label>
+                <Select
+                  value={editGameData.analysis_writer_id}
+                  onValueChange={(value) => setEditGameData({ ...editGameData, analysis_writer_id: value })}
+                >
+                  <SelectTrigger id="edit_analysis_writer">
+                    <SelectValue placeholder="None" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">None</SelectItem>
+                    {availableAnalyses.map((analysis) => (
+                      <SelectItem key={analysis.id} value={analysis.id}>
+                        {analysis.title} ({analysis.analysis_type})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Link this performance report to a detailed analysis from Analysis Writer
+                </p>
               </div>
 
               <div>
