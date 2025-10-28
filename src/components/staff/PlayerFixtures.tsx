@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, forwardRef, useImperativeHandle } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,6 +27,10 @@ interface PlayerFixturesProps {
   onCreateAnalysis?: (fixtureId: string) => void;
 }
 
+export interface PlayerFixturesRef {
+  openAddDialog: () => void;
+}
+
 interface Fixture {
   id: string;
   home_team: string;
@@ -45,7 +49,8 @@ interface PlayerFixture {
   fixtures: Fixture;
 }
 
-export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis }: PlayerFixturesProps) => {
+export const PlayerFixtures = forwardRef<PlayerFixturesRef, PlayerFixturesProps>(
+  ({ playerId, playerName, onCreateAnalysis }, ref) => {
   const [playerFixtures, setPlayerFixtures] = useState<PlayerFixture[]>([]);
   const [allFixtures, setAllFixtures] = useState<Fixture[]>([]);
   const [loading, setLoading] = useState(true);
@@ -66,6 +71,10 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis }: Playe
   const [fetchingAiFixtures, setFetchingAiFixtures] = useState(false);
   const [selectedAiFixtures, setSelectedAiFixtures] = useState<Set<number>>(new Set());
   const [displayCount, setDisplayCount] = useState(10);
+
+  useImperativeHandle(ref, () => ({
+    openAddDialog: () => handleOpenDialog(),
+  }));
 
   useEffect(() => {
     fetchPlayerFixtures();
@@ -326,14 +335,6 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis }: Playe
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold">Fixtures</h3>
-        <Button size="sm" onClick={() => handleOpenDialog()}>
-          <Plus className="w-4 h-4 mr-2" />
-          Add Fixture
-        </Button>
-      </div>
-
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
@@ -620,4 +621,6 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis }: Playe
       </div>
     </div>
   );
-};
+});
+
+PlayerFixtures.displayName = "PlayerFixtures";
