@@ -41,8 +41,25 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Get current date and date range for filtering
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1; // JavaScript months are 0-indexed
+    const currentDay = now.getDate();
+    const today = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(currentDay).padStart(2, '0')}`;
+    
+    // Calculate one month ago and one month ahead
+    const oneMonthAgo = new Date(now);
+    oneMonthAgo.setMonth(now.getMonth() - 1);
+    const oneMonthAhead = new Date(now);
+    oneMonthAhead.setMonth(now.getMonth() + 1);
+    
+    const startDate = `${oneMonthAgo.getFullYear()}-${String(oneMonthAgo.getMonth() + 1).padStart(2, '0')}-${String(oneMonthAgo.getDate()).padStart(2, '0')}`;
+    const endDate = `${oneMonthAhead.getFullYear()}-${String(oneMonthAhead.getMonth() + 1).padStart(2, '0')}-${String(oneMonthAhead.getDate()).padStart(2, '0')}`;
+
+    console.log(`Generating fixtures for team: ${teamName} between ${startDate} and ${endDate}`);
+    
     // Call Lovable AI to generate fixtures based on team knowledge
-    console.log("Generating fixtures for team:", teamName);
     const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -54,20 +71,24 @@ Deno.serve(async (req) => {
         messages: [
           {
             role: "system",
-            content: `You are a football fixtures data formatter. You know about major football leagues and teams.
-For the team provided, generate realistic upcoming fixtures based on your knowledge of their league schedule.
-Always return valid JSON - NEVER return "failed to fetch" or error messages.
-If you're unsure about exact fixtures, generate realistic ones based on typical league patterns.`
+            content: `You are a football fixtures data formatter with access to current football league schedules.
+Today's date is ${today}.
+Generate realistic fixtures for teams based on their current league schedules and recent match patterns.
+Always return valid JSON - NEVER return "failed to fetch" or error messages.`
           },
           {
             role: "user",
-            content: `Generate 5-10 realistic upcoming fixtures for "${teamName}". 
-            
+            content: `Generate realistic fixtures for "${teamName}" between ${startDate} and ${endDate}.
+
+CRITICAL: Today is ${today}. Generate fixtures that are:
+1. Recent past matches (from ${startDate} to ${today})
+2. Upcoming matches (from ${today} to ${endDate})
+
 Consider:
-- Their league (if Czech team, likely FNL or similar)
-- Typical match schedule (weekends, some midweek)
+- Their current league season (2024-2025 season for most European leagues)
 - Real opponent teams from their league
-- Reasonable dates (next few months)
+- Typical match schedule (weekends, occasional midweek)
+- Use actual dates within the specified range
 
 Return ONLY valid JSON array:
 [
@@ -80,8 +101,7 @@ Return ONLY valid JSON array:
   }
 ]
 
-IMPORTANT: Return fixtures even if you're not 100% certain. Generate realistic data based on typical league patterns.
-Do NOT return empty array unless you truly have zero information about this team.`
+IMPORTANT: Use dates between ${startDate} and ${endDate}. Generate 5-10 fixtures. Do NOT use dates from 2024 or older seasons unless they fall within the range.`
           }
         ]
       }),
@@ -140,8 +160,20 @@ Do NOT return empty array unless you truly have zero information about this team
         .trim();
       
       console.log("Cleaned content for parsing:", cleanContent);
-      fixtures = JSON.parse(cleanContent);
-      console.log("Successfully parsed fixtures:", fixtures.length);
+      const parsedFixtures = JSON.parse(cleanContent);
+      
+      // Filter fixtures to only include those within our date range
+      const oneMonthAgo = new Date(now);
+      oneMonthAgo.setMonth(now.getMonth() - 1);
+      const oneMonthAhead = new Date(now);
+      oneMonthAhead.setMonth(now.getMonth() + 1);
+      
+      fixtures = parsedFixtures.filter((fixture: any) => {
+        const fixtureDate = new Date(fixture.match_date);
+        return fixtureDate >= oneMonthAgo && fixtureDate <= oneMonthAhead;
+      });
+      
+      console.log(`Filtered to ${fixtures.length} fixtures within date range (from ${parsedFixtures.length} total)`);
     } catch (e) {
       console.error("Failed to parse AI response as JSON:", e);
       console.error("Content was:", content);
@@ -156,7 +188,8 @@ Do NOT return empty array unless you truly have zero information about this team
         fixtures,
         rawResponse, // Include raw AI response so user can see what was generated
         teamName,
-        source: "AI-generated based on team knowledge"
+        dateRange: { start: startDate, end: endDate, today },
+        source: "AI-generated based on team knowledge, filtered to recent/upcoming matches"
       }),
       { 
         headers: { 
