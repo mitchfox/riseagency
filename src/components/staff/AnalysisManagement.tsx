@@ -76,9 +76,9 @@ export const AnalysisManagement = () => {
   });
   const [uploadingImage, setUploadingImage] = useState(false);
   const [players, setPlayers] = useState<any[]>([]);
-  const [selectedPlayerId, setSelectedPlayerId] = useState<string>("");
+  const [selectedPlayerId, setSelectedPlayerId] = useState<string>("none");
   const [performanceReports, setPerformanceReports] = useState<any[]>([]);
-  const [selectedPerformanceReportId, setSelectedPerformanceReportId] = useState<string>("");
+  const [selectedPerformanceReportId, setSelectedPerformanceReportId] = useState<string>("none");
 
   useEffect(() => {
     fetchAnalyses();
@@ -86,11 +86,11 @@ export const AnalysisManagement = () => {
   }, []);
 
   useEffect(() => {
-    if (selectedPlayerId) {
+    if (selectedPlayerId && selectedPlayerId !== "none") {
       fetchPerformanceReports(selectedPlayerId);
     } else {
       setPerformanceReports([]);
-      setSelectedPerformanceReportId("");
+      setSelectedPerformanceReportId("none");
     }
   }, [selectedPlayerId]);
 
@@ -160,8 +160,8 @@ export const AnalysisManagement = () => {
     } else {
       setEditingAnalysis(null);
       setFormData({ analysis_type: type, points: [], matchups: [] });
-      setSelectedPlayerId("");
-      setSelectedPerformanceReportId("");
+      setSelectedPlayerId("none");
+      setSelectedPerformanceReportId("none");
     }
     setDialogOpen(true);
   };
@@ -170,8 +170,8 @@ export const AnalysisManagement = () => {
     setDialogOpen(false);
     setEditingAnalysis(null);
     setFormData({ points: [], matchups: [] });
-    setSelectedPlayerId("");
-    setSelectedPerformanceReportId("");
+    setSelectedPlayerId("none");
+    setSelectedPerformanceReportId("none");
   };
 
   const handleImageUpload = async (
@@ -254,7 +254,7 @@ export const AnalysisManagement = () => {
       }
 
       // Link to performance report if selected
-      if (selectedPerformanceReportId && analysisId) {
+      if (selectedPerformanceReportId && selectedPerformanceReportId !== "none" && analysisId) {
         const { error: linkError } = await supabase
           .from("player_analysis")
           .update({ analysis_writer_id: analysisId })
@@ -687,7 +687,7 @@ export const AnalysisManagement = () => {
                         <SelectValue placeholder="Select player" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">None</SelectItem>
+                        <SelectItem value="none">None</SelectItem>
                         {players.map((player) => (
                           <SelectItem key={player.id} value={player.id}>
                             {player.name}
@@ -701,13 +701,13 @@ export const AnalysisManagement = () => {
                     <Select 
                       value={selectedPerformanceReportId} 
                       onValueChange={setSelectedPerformanceReportId}
-                      disabled={!selectedPlayerId}
+                      disabled={!selectedPlayerId || selectedPlayerId === "none"}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select report" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">None</SelectItem>
+                        <SelectItem value="none">None</SelectItem>
                         {performanceReports.map((report) => (
                           <SelectItem key={report.id} value={report.id}>
                             {report.opponent} - {new Date(report.analysis_date).toLocaleDateString()}

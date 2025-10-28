@@ -97,7 +97,7 @@ const PlayerManagement = () => {
   const [uploadingSchemeClubLogo, setUploadingSchemeClubLogo] = useState(false);
   const [uploadingSchemePlayerImage, setUploadingSchemePlayerImage] = useState(false);
   const [availableAnalyses, setAvailableAnalyses] = useState<any[]>([]);
-  const [selectedAnalysisWriterId, setSelectedAnalysisWriterId] = useState<string>("");
+  const [selectedAnalysisWriterId, setSelectedAnalysisWriterId] = useState<string>("none");
 
   const [formData, setFormData] = useState({
     name: "",
@@ -566,7 +566,7 @@ const PlayerManagement = () => {
           minutes_played: parseInt(analysisData.minutes_played) || null,
           r90_score: analysisData.r90_score ? parseFloat(analysisData.r90_score) : null,
           notes: analysisData.notes || null,
-          analysis_writer_id: selectedAnalysisWriterId || null,
+          analysis_writer_id: selectedAnalysisWriterId && selectedAnalysisWriterId !== "none" ? selectedAnalysisWriterId : null,
         };
         
         // Only update URLs if new files were uploaded
@@ -594,7 +594,7 @@ const PlayerManagement = () => {
             notes: analysisData.notes || null,
             pdf_url: pdfUrl,
             video_url: videoUrl,
-            analysis_writer_id: selectedAnalysisWriterId || null,
+            analysis_writer_id: selectedAnalysisWriterId && selectedAnalysisWriterId !== "none" ? selectedAnalysisWriterId : null,
           });
 
         if (error) throw error;
@@ -604,7 +604,7 @@ const PlayerManagement = () => {
       setIsAnalysisDialogOpen(false);
       setIsEditingAnalysis(false);
       setEditingAnalysisId(null);
-      setSelectedAnalysisWriterId("");
+      setSelectedAnalysisWriterId("none");
       setAnalysisData({
         opponent: "",
         result: "",
@@ -627,7 +627,7 @@ const PlayerManagement = () => {
     setCurrentPlayerId(playerId);
     setIsEditingAnalysis(false);
     setEditingAnalysisId(null);
-    setSelectedAnalysisWriterId("");
+    setSelectedAnalysisWriterId("none");
     setAnalysisData({
       opponent: "",
       result: "",
@@ -644,7 +644,7 @@ const PlayerManagement = () => {
   const openEditAnalysisDialog = (analysis: any) => {
     setIsEditingAnalysis(true);
     setEditingAnalysisId(analysis.id);
-    setSelectedAnalysisWriterId(analysis.analysis_writer_id || "");
+    setSelectedAnalysisWriterId(analysis.analysis_writer_id || "none");
     setAnalysisData({
       opponent: analysis.opponent || "",
       result: analysis.result || "",
@@ -2200,7 +2200,7 @@ const PlayerManagement = () => {
                   <SelectValue placeholder="Select an analysis to link" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">None</SelectItem>
+                  <SelectItem value="none">None</SelectItem>
                   {availableAnalyses.map((analysis) => (
                     <SelectItem key={analysis.id} value={analysis.id}>
                       {analysis.analysis_type === "pre-match"
