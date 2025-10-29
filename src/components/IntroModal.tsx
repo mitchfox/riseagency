@@ -27,25 +27,25 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
     { 
       image: "/players/michael-mulligan.png", 
       name: "Michael Mulligan",
-      age: 21,
-      nationality: "🇮🇪",
-      position: "CM",
+      age: 23,
+      nationality: "🇨🇿",
+      position: "CDM",
       club: "/clubs/bohemians-1905-official.png"
     },
     { 
       image: "/players/tyrese-omotoye.png", 
       name: "Tyrese Omotoye",
-      age: 23,
-      nationality: "🇧🇪",
+      age: 21,
+      nationality: "🇳🇬",
       position: "CF",
       club: "/clubs/fc-vysocina-jihlava-official.png"
     },
     { 
       image: "/players/jaroslav-svoboda.jpg", 
       name: "Jaroslav Svoboda",
-      age: 19,
+      age: 16,
       nationality: "🇨🇿",
-      position: "LW",
+      position: "CM",
       club: "/clubs/tj-jiskra-domazlice-official.png"
     },
   ];
@@ -158,37 +158,37 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
                 <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/80" />
                 
                 {/* Age - Top Left */}
-                <div className="absolute top-3 left-3">
-                  <div className="text-3xl font-bold text-white/90 font-bebas leading-none">{starPlayers[starIndex].age}</div>
-                  <div className="text-[8px] text-white/70 uppercase tracking-wider">Age</div>
+                <div className="absolute top-4 left-4">
+                  <div className="text-4xl font-bold text-white font-bebas leading-none">{starPlayers[starIndex].age}</div>
+                  <div className="text-[9px] text-white/80 uppercase tracking-wider mt-0.5">Age</div>
                 </div>
                 
                 {/* Nationality - Top Right */}
-                <div className="absolute top-3 right-3">
-                  <div className="text-3xl leading-none">{starPlayers[starIndex].nationality}</div>
-                  <div className="text-[8px] text-white/70 uppercase tracking-wider text-right">Nationality</div>
+                <div className="absolute top-4 right-4 text-right">
+                  <div className="text-4xl leading-none mb-0.5">{starPlayers[starIndex].nationality}</div>
+                  <div className="text-[9px] text-white/80 uppercase tracking-wider">Nationality</div>
                 </div>
                 
                 {/* Position - Bottom Left */}
-                <div className="absolute bottom-20 left-3">
-                  <div className="text-2xl font-bold text-white/90 font-bebas leading-none">{starPlayers[starIndex].position}</div>
-                  <div className="text-[8px] text-white/70 uppercase tracking-wider">Position</div>
+                <div className="absolute bottom-16 left-4">
+                  <div className="text-3xl font-bold text-white font-bebas leading-none">{starPlayers[starIndex].position}</div>
+                  <div className="text-[9px] text-white/80 uppercase tracking-wider mt-0.5">Position</div>
                 </div>
                 
                 {/* Club - Bottom Right */}
-                <div className="absolute bottom-20 right-3">
+                <div className="absolute bottom-16 right-4 flex flex-col items-end">
                   <img 
                     src={starPlayers[starIndex].club} 
                     alt="Club" 
-                    className="w-10 h-10 object-contain mb-1"
+                    className="w-12 h-12 object-contain"
                   />
-                  <div className="text-[8px] text-white/70 uppercase tracking-wider text-right">Club</div>
+                  <div className="text-[9px] text-white/80 uppercase tracking-wider mt-1">Club</div>
                 </div>
                 
-                {/* Player Profile Button */}
+                {/* Our Stars Button */}
                 <div className="absolute bottom-0 left-0 right-0 p-3">
-                  <div className="bg-[#B8A574] text-black font-bebas uppercase tracking-wider text-xs py-2 px-4 text-center rounded">
-                    Player Profile →
+                  <div className="bg-[#B8A574] text-black font-bebas uppercase tracking-wider text-sm py-2.5 px-4 text-center rounded">
+                    OUR STARS
                   </div>
                 </div>
               </div>
