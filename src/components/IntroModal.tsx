@@ -108,13 +108,13 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
               <div className="flex flex-col gap-1.5">
                 <Button 
                   onClick={handleRequestRepresentation}
-                  className="bg-gray-300 text-black hover:bg-gray-400 font-bebas uppercase tracking-wider px-4 py-1.5 text-[10px] w-full border-0"
+                  className="bg-gray-300 text-black hover:bg-gray-400 font-bebas uppercase tracking-wider px-4 py-1.5 text-[10px] w-[340px] border-0"
                 >
                   Request Representation
                 </Button>
                 <Button 
                   onClick={handleEnterSite}
-                  className="btn-shine font-bebas uppercase tracking-wider px-4 py-1.5 text-[10px] w-full"
+                  className="btn-shine font-bebas uppercase tracking-wider px-4 py-1.5 text-[10px] w-[340px]"
                 >
                   Enter Site
                 </Button>
