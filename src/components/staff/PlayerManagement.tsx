@@ -1781,18 +1781,6 @@ const PlayerManagement = () => {
 
                         {/* Pre-Match Tab */}
                         <TabsContent value="pre-match" className="space-y-4">
-                          <div className="flex justify-end">
-                            <Button
-                              size="sm"
-                              onClick={() => {
-                                setCurrentPlayerId(player.id);
-                                setIsAnalysisDialogOpen(true);
-                              }}
-                            >
-                              <Plus className="w-4 h-4 mr-2" />
-                              Add Pre-Match Analysis
-                            </Button>
-                          </div>
                           
                           {availableAnalyses
                             .filter(a => 
@@ -1821,13 +1809,10 @@ const PlayerManagement = () => {
                                           size="sm"
                                           variant="outline"
                                           onClick={() => {
-                                            const linkedAnalysis = playerAnalyses[player.id].find(pa => pa.analysis_writer_id === analysis.id);
-                                            if (linkedAnalysis) {
-                                              window.open(`/performance/${linkedAnalysis.id}`, '_blank');
-                                            }
+                                            window.open(`/analysis/${analysis.id}`, '_blank');
                                           }}
                                         >
-                                          View
+                                          View Analysis
                                         </Button>
                                       </div>
                                     </CardContent>
@@ -1843,18 +1828,6 @@ const PlayerManagement = () => {
 
                         {/* Post-Match Tab */}
                         <TabsContent value="post-match" className="space-y-4">
-                          <div className="flex justify-end">
-                            <Button
-                              size="sm"
-                              onClick={() => {
-                                setCurrentPlayerId(player.id);
-                                setIsAnalysisDialogOpen(true);
-                              }}
-                            >
-                              <Plus className="w-4 h-4 mr-2" />
-                              Add Post-Match Analysis
-                            </Button>
-                          </div>
                           
                           {availableAnalyses
                             .filter(a => 
@@ -1883,13 +1856,10 @@ const PlayerManagement = () => {
                                           size="sm"
                                           variant="outline"
                                           onClick={() => {
-                                            const linkedAnalysis = playerAnalyses[player.id].find(pa => pa.analysis_writer_id === analysis.id);
-                                            if (linkedAnalysis) {
-                                              window.open(`/performance/${linkedAnalysis.id}`, '_blank');
-                                            }
+                                            window.open(`/analysis/${analysis.id}`, '_blank');
                                           }}
                                         >
-                                          View
+                                          View Analysis
                                         </Button>
                                       </div>
                                     </CardContent>
@@ -1977,18 +1947,6 @@ const PlayerManagement = () => {
 
                         {/* Concepts Tab */}
                         <TabsContent value="concepts" className="space-y-4">
-                          <div className="flex justify-end">
-                            <Button
-                              size="sm"
-                              onClick={() => {
-                                setCurrentPlayerId(player.id);
-                                setIsAnalysisDialogOpen(true);
-                              }}
-                            >
-                              <Plus className="w-4 h-4 mr-2" />
-                              Add Concept
-                            </Button>
-                          </div>
                           
                           {availableAnalyses
                             .filter(a => 

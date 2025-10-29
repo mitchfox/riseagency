@@ -1003,13 +1003,13 @@ export const AnalysisManagement = () => {
                             }
                             disabled={uploadingImage}
                           />
-                          <div className="flex flex-wrap gap-2 mt-2">
+                          <div className="flex flex-wrap gap-4 mt-2">
                             {point.images?.map((img, imgIndex) => (
                               <div key={imgIndex} className="relative">
                                 <img
                                   src={img}
                                   alt={`Point ${index + 1} Image ${imgIndex + 1}`}
-                                  className="w-20 h-20 object-cover rounded"
+                                  className="w-48 h-48 object-cover rounded shadow-lg"
                                 />
                                 <Button
                                   variant="destructive"

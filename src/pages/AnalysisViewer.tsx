@@ -233,17 +233,17 @@ const AnalysisViewer = () => {
                     <ChevronDown className="w-5 h-5 text-black transition-transform duration-200" />
                   </AccordionTrigger>
                   <AccordionContent>
-                    <Card className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-t-none border-t-0 animate-accordion-down">
+                    <Card className="bg-gradient-to-br from-green-800 to-green-900 rounded-t-none border-t-0 animate-accordion-down">
                       <CardContent className="p-8">
-                        <div className="space-y-4 max-w-3xl mx-auto">
+                        <div className="space-y-4 max-w-4xl mx-auto">
                           {analysis.opposition_strengths.split('\n').filter(line => line.trim()).map((line, idx) => {
                             const cleanLine = line.trim().replace(/^[-•]\s*/, '');
                             return (
-                              <div key={idx} className="flex items-start gap-3 bg-white/70 p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow">
-                                <div className="bg-green-600 rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0 mt-0.5">
-                                  <span className="text-white font-bold text-sm">✓</span>
+                              <div key={idx} className="flex items-center justify-center gap-3 bg-white/10 backdrop-blur-sm p-5 rounded-lg shadow-lg hover:bg-white/15 transition-all">
+                                <div className="bg-green-500 rounded-full w-10 h-10 flex items-center justify-center flex-shrink-0">
+                                  <span className="text-white font-bold text-lg">✓</span>
                                 </div>
-                                <p className="text-gray-800 text-base leading-relaxed flex-1">{cleanLine}</p>
+                                <p className="text-white text-lg leading-relaxed flex-1 text-center font-medium">{cleanLine}</p>
                               </div>
                             );
                           })}
@@ -264,17 +264,17 @@ const AnalysisViewer = () => {
                     <ChevronDown className="w-5 h-5 text-black transition-transform duration-200" />
                   </AccordionTrigger>
                   <AccordionContent>
-                    <Card className="bg-gradient-to-br from-red-50 to-orange-50 rounded-t-none border-t-0 animate-accordion-down">
+                    <Card className="bg-gradient-to-br from-red-900 to-orange-900 rounded-t-none border-t-0 animate-accordion-down">
                       <CardContent className="p-8">
-                        <div className="space-y-4 max-w-3xl mx-auto">
+                        <div className="space-y-4 max-w-4xl mx-auto">
                           {analysis.opposition_weaknesses.split('\n').filter(line => line.trim()).map((line, idx) => {
                             const cleanLine = line.trim().replace(/^[-•]\s*/, '');
                             return (
-                              <div key={idx} className="flex items-start gap-3 bg-white/70 p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow">
-                                <div className="bg-red-600 rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0 mt-0.5">
-                                  <span className="text-white font-bold text-sm">!</span>
+                              <div key={idx} className="flex items-center justify-center gap-3 bg-white/10 backdrop-blur-sm p-5 rounded-lg shadow-lg hover:bg-white/15 transition-all">
+                                <div className="bg-red-500 rounded-full w-10 h-10 flex items-center justify-center flex-shrink-0">
+                                  <span className="text-white font-bold text-lg">!</span>
                                 </div>
-                                <p className="text-gray-800 text-base leading-relaxed flex-1">{cleanLine}</p>
+                                <p className="text-white text-lg leading-relaxed flex-1 text-center font-medium">{cleanLine}</p>
                               </div>
                             );
                           })}
@@ -333,7 +333,7 @@ const AnalysisViewer = () => {
 
               {/* Scheme Section */}
               {(analysis.scheme_title || analysis.selected_scheme) && (
-                <AccordionItem value="scheme" className="mb-8 border-0">
+                <AccordionItem value="scheme" className="mb-8 border-0 print:page-break-after-always">
                   <AccordionTrigger className="w-full bg-primary/90 text-center py-3 rounded-t-lg hover:bg-primary flex items-center justify-center gap-2 transition-colors [&[data-state=open]>svg]:rotate-180">
                     <h2 className="text-2xl font-bebas uppercase tracking-widest text-black">
                       {analysis.scheme_title || "Tactical Scheme"}
@@ -420,13 +420,13 @@ const AnalysisViewer = () => {
                                 </p>
                               )}
                               {point.images && point.images.length > 0 && (
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="flex flex-col items-center gap-6">
                                   {point.images.map((img: string, imgIndex: number) => (
                                     <img
                                       key={imgIndex}
                                       src={img}
                                       alt={`${point.title} - Image ${imgIndex + 1}`}
-                                      className="w-full rounded-lg shadow-md"
+                                      className="w-full max-w-4xl rounded-lg shadow-md"
                                     />
                                   ))}
                                 </div>
