@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import blackMarbleSmudged from "@/assets/black-marble-smudged.png";
 import introImage from "@/assets/intro-modal-new.png";
+import { supabase } from "@/integrations/supabase/client";
 
 interface IntroModalProps {
   open: boolean;
@@ -15,6 +16,7 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
   const [showRepresentation, setShowRepresentation] = useState(false);
   const [newsIndex, setNewsIndex] = useState(0);
   const [starIndex, setStarIndex] = useState(0);
+  const [starPlayers, setStarPlayers] = useState<any[]>([]);
   const navigate = useNavigate();
 
   const newsItems = [
@@ -23,32 +25,28 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
     { image: "/news/sandra-cape-verde-callup.png", title: "Sandra Cape Verde Callup" },
   ];
 
-  const starPlayers = [
-    { 
-      image: "/players/michael-mulligan.png", 
-      name: "Michael Mulligan",
-      age: 23,
-      nationality: "🇨🇿",
-      position: "CDM",
-      club: "/clubs/bohemians-1905-official.png"
-    },
-    { 
-      image: "/players/tyrese-omotoye.png", 
-      name: "Tyrese Omotoye",
-      age: 21,
-      nationality: "🇳🇬",
-      position: "CF",
-      club: "/clubs/fc-vysocina-jihlava-official.png"
-    },
-    { 
-      image: "/players/jaroslav-svoboda.jpg", 
-      name: "Jaroslav Svoboda",
-      age: 16,
-      nationality: "🇨🇿",
-      position: "CM",
-      club: "/clubs/tj-jiskra-domazlice-official.png"
-    },
-  ];
+  useEffect(() => {
+    const fetchStarPlayers = async () => {
+      const { data, error } = await supabase
+        .from('players')
+        .select('*')
+        .eq('visible_on_stars_page', true)
+        .limit(3);
+      
+      if (data && !error) {
+        setStarPlayers(data.map(player => ({
+          image: player.image_url,
+          name: player.name,
+          age: player.age,
+          nationality: player.nationality,
+          position: player.position,
+          club: player.image_url // Using player image as fallback for club logo
+        })));
+      }
+    };
+
+    fetchStarPlayers();
+  }, []);
 
   useEffect(() => {
     const newsInterval = setInterval(() => {
@@ -63,7 +61,7 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
       clearInterval(newsInterval);
       clearInterval(starInterval);
     };
-  }, []);
+  }, [starPlayers.length]);
 
   const handleDialogChange = (newOpen: boolean) => {
     if (!newOpen) {
@@ -141,58 +139,50 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
             </div>
 
             {/* Our Stars Slider - Bottom Left */}
-            <div 
-              onClick={() => {
-                handleDialogChange(false);
-                navigate("/stars");
-              }}
-              className="absolute left-6 bottom-6 w-[220px] cursor-pointer hover:scale-[1.02] transition-transform"
-            >
-              <div className="relative w-full aspect-[3/4] rounded-lg overflow-hidden group border-2 border-[#B8A574]">
-                {/* Player Image with Dark Overlay */}
-                <img 
-                  src={starPlayers[starIndex].image} 
-                  alt={starPlayers[starIndex].name}
-                  className="w-full h-full object-cover transition-opacity duration-500" 
-                />
-                <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/80" />
-                
-                {/* Age - Top Left */}
-                <div className="absolute top-4 left-4">
-                  <div className="text-4xl font-bold text-white font-bebas leading-none">{starPlayers[starIndex].age}</div>
-                  <div className="text-[9px] text-white/80 uppercase tracking-wider mt-0.5">Age</div>
-                </div>
-                
-                {/* Nationality - Top Right */}
-                <div className="absolute top-4 right-4 text-right">
-                  <div className="text-4xl leading-none mb-0.5">{starPlayers[starIndex].nationality}</div>
-                  <div className="text-[9px] text-white/80 uppercase tracking-wider">Nationality</div>
-                </div>
-                
-                {/* Position - Bottom Left */}
-                <div className="absolute bottom-16 left-4">
-                  <div className="text-3xl font-bold text-white font-bebas leading-none">{starPlayers[starIndex].position}</div>
-                  <div className="text-[9px] text-white/80 uppercase tracking-wider mt-0.5">Position</div>
-                </div>
-                
-                {/* Club - Bottom Right */}
-                <div className="absolute bottom-16 right-4 flex flex-col items-end">
+            {starPlayers.length > 0 && (
+              <div 
+                onClick={() => {
+                  handleDialogChange(false);
+                  navigate("/stars");
+                }}
+                className="absolute left-6 bottom-6 w-[220px] cursor-pointer hover:scale-[1.02] transition-transform"
+              >
+                <div className="relative w-full aspect-[3/4] rounded-lg overflow-hidden group border-2 border-[#B8A574]">
+                  {/* Player Image with Dark Overlay */}
                   <img 
-                    src={starPlayers[starIndex].club} 
-                    alt="Club" 
-                    className="w-12 h-12 object-contain"
+                    src={starPlayers[starIndex]?.image} 
+                    alt={starPlayers[starIndex]?.name}
+                    className="w-full h-full object-cover transition-opacity duration-500" 
                   />
-                  <div className="text-[9px] text-white/80 uppercase tracking-wider mt-1">Club</div>
-                </div>
+                  <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/80" />
                 
-                {/* Our Stars Button */}
-                <div className="absolute bottom-0 left-0 right-0 p-3">
-                  <div className="bg-[#B8A574] text-black font-bebas uppercase tracking-wider text-sm py-2.5 px-4 text-center rounded">
-                    OUR STARS
+                  {/* Age - Top Left */}
+                  <div className="absolute top-4 left-4">
+                    <div className="text-4xl font-bold text-white font-bebas leading-none">{starPlayers[starIndex]?.age}</div>
+                    <div className="text-[9px] text-white/80 uppercase tracking-wider mt-0.5">Age</div>
+                  </div>
+                  
+                  {/* Nationality - Top Right */}
+                  <div className="absolute top-4 right-4 text-right">
+                    <div className="text-4xl leading-none mb-0.5">{starPlayers[starIndex]?.nationality}</div>
+                    <div className="text-[9px] text-white/80 uppercase tracking-wider">Nationality</div>
+                  </div>
+                  
+                  {/* Position - Bottom Left */}
+                  <div className="absolute bottom-16 left-4">
+                    <div className="text-3xl font-bold text-white font-bebas leading-none">{starPlayers[starIndex]?.position}</div>
+                    <div className="text-[9px] text-white/80 uppercase tracking-wider mt-0.5">Position</div>
+                  </div>
+                  
+                  {/* Our Stars Button */}
+                  <div className="absolute bottom-0 left-0 right-0 p-3">
+                    <div className="bg-[#B8A574] text-black font-bebas uppercase tracking-wider text-sm py-2.5 px-4 text-center rounded">
+                      OUR STARS
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
+            )}
           </div>
         </DialogContent>
       </Dialog>
