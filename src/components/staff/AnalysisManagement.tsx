@@ -35,7 +35,8 @@ interface Analysis {
   home_team_logo?: string | null;
   away_team_logo?: string | null;
   match_image_url?: string | null;
-  title_bg_color?: string | null;
+  home_team_bg_color?: string | null;
+  away_team_bg_color?: string | null;
   home_score?: number | null;
   away_score?: number | null;
   key_details?: string | null;
@@ -535,18 +536,33 @@ export const AnalysisManagement = () => {
                       </div>
                     </div>
                     
-                    <div>
-                      <Label>Title Background Color</Label>
-                      <p className="text-xs text-muted-foreground mb-2">
-                        Background color for section titles (Overview, Strengths, etc.)
-                      </p>
-                      <Input
-                        type="color"
-                        value={formData.title_bg_color || '#1a1a1a'}
-                        onChange={(e) =>
-                          setFormData({ ...formData, title_bg_color: e.target.value })
-                        }
-                      />
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label>Home Team Background Color</Label>
+                        <p className="text-xs text-muted-foreground mb-2">
+                          Background color for home team sections (Overview, Matchups, Scheme, Points)
+                        </p>
+                        <Input
+                          type="color"
+                          value={formData.home_team_bg_color || '#1a1a1a'}
+                          onChange={(e) =>
+                            setFormData({ ...formData, home_team_bg_color: e.target.value })
+                          }
+                        />
+                      </div>
+                      <div>
+                        <Label>Away Team Background Color</Label>
+                        <p className="text-xs text-muted-foreground mb-2">
+                          Background color for opposition sections (Strengths, Weaknesses)
+                        </p>
+                        <Input
+                          type="color"
+                          value={formData.away_team_bg_color || '#8B0000'}
+                          onChange={(e) =>
+                            setFormData({ ...formData, away_team_bg_color: e.target.value })
+                          }
+                        />
+                      </div>
                     </div>
 
                     <div>

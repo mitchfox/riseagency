@@ -21,7 +21,8 @@ interface Analysis {
   match_date: string | null;
   home_team_logo: string | null;
   away_team_logo: string | null;
-  title_bg_color: string | null;
+  home_team_bg_color: string | null;
+  away_team_bg_color: string | null;
   selected_scheme: string | null;
   starting_xi: any;
   kit_primary_color: string | null;
@@ -87,7 +88,8 @@ const AnalysisViewer = () => {
         home_team_logo: data.home_team_logo || null,
         away_team_logo: data.away_team_logo || null,
         match_image_url: data.match_image_url || null,
-        title_bg_color: data.title_bg_color || '#1a1a1a',
+        home_team_bg_color: data.home_team_bg_color || '#1a1a1a',
+        away_team_bg_color: data.away_team_bg_color || '#8B0000',
         selected_scheme: data.selected_scheme || null,
         starting_xi: Array.isArray(data.starting_xi) ? data.starting_xi : [],
         kit_primary_color: data.kit_primary_color || '#FFD700',
@@ -218,7 +220,7 @@ const AnalysisViewer = () => {
                 <AccordionItem value="overview" className="mb-8 border-0 data-[state=open]:border-4 data-[state=open]:border-primary data-[state=open]:rounded-lg">
                   <AccordionTrigger 
                     className="w-full text-center py-4 rounded-t-lg hover:opacity-90 flex items-center justify-center gap-2 transition-all [&[data-state=open]>svg]:rotate-180"
-                    style={{ backgroundColor: analysis.title_bg_color || '#1a1a1a' }}
+                    style={{ backgroundColor: analysis.home_team_bg_color || '#1a1a1a' }}
                   >
                     <h2 className="text-3xl font-bebas uppercase tracking-widest text-white">
                       Overview
@@ -242,7 +244,7 @@ const AnalysisViewer = () => {
                 <AccordionItem value="strengths" className="mb-8 border-0 data-[state=open]:border-4 data-[state=open]:border-primary data-[state=open]:rounded-lg">
                   <AccordionTrigger 
                     className="w-full text-center py-4 rounded-t-lg hover:opacity-90 flex items-center justify-center gap-2 transition-all [&[data-state=open]>svg]:rotate-180"
-                    style={{ backgroundColor: analysis.title_bg_color || '#1a1a1a' }}
+                    style={{ backgroundColor: analysis.away_team_bg_color || '#8B0000' }}
                   >
                     <h2 className="text-3xl font-bebas uppercase tracking-widest text-white">
                       Opposition Strengths
@@ -276,7 +278,7 @@ const AnalysisViewer = () => {
                 <AccordionItem value="weaknesses" className="mb-8 border-0 data-[state=open]:border-4 data-[state=open]:border-primary data-[state=open]:rounded-lg">
                   <AccordionTrigger 
                     className="w-full text-center py-4 rounded-t-lg hover:opacity-90 flex items-center justify-center gap-2 transition-all [&[data-state=open]>svg]:rotate-180"
-                    style={{ backgroundColor: analysis.title_bg_color || '#1a1a1a' }}
+                    style={{ backgroundColor: analysis.away_team_bg_color || '#8B0000' }}
                   >
                     <h2 className="text-3xl font-bebas uppercase tracking-widest text-white">
                       Opposition Weaknesses
@@ -310,7 +312,7 @@ const AnalysisViewer = () => {
                 <AccordionItem value="matchups" className="mb-8 border-0 data-[state=open]:border-4 data-[state=open]:border-primary data-[state=open]:rounded-lg">
                   <AccordionTrigger 
                     className="w-full text-center py-4 rounded-t-lg hover:opacity-90 flex items-center justify-center gap-2 transition-all [&[data-state=open]>svg]:rotate-180"
-                    style={{ backgroundColor: analysis.title_bg_color || '#1a1a1a' }}
+                    style={{ backgroundColor: analysis.home_team_bg_color || '#1a1a1a' }}
                   >
                     <h2 className="text-3xl font-bebas uppercase tracking-widest text-white">
                       Potential Matchup(s)
@@ -359,7 +361,7 @@ const AnalysisViewer = () => {
                 <AccordionItem value="scheme" className="mb-8 border-0 data-[state=open]:border-4 data-[state=open]:border-primary data-[state=open]:rounded-lg print:page-break-after-always">
                   <AccordionTrigger 
                     className="w-full text-center py-4 rounded-t-lg hover:opacity-90 flex items-center justify-center gap-2 transition-all [&[data-state=open]>svg]:rotate-180"
-                    style={{ backgroundColor: analysis.title_bg_color || '#1a1a1a' }}
+                    style={{ backgroundColor: analysis.home_team_bg_color || '#1a1a1a' }}
                   >
                     <h2 className="text-3xl font-bebas uppercase tracking-widest text-white">
                       {analysis.scheme_title || "Tactical Scheme"}
@@ -445,7 +447,7 @@ const AnalysisViewer = () => {
                       <AccordionItem key={index} value={`point-${index}`} className={`border-0 data-[state=open]:border-4 data-[state=open]:border-primary data-[state=open]:rounded-lg ${index > 0 ? 'mt-0' : ''}`}>
                         <AccordionTrigger 
                           className="w-full text-center py-4 rounded-t-lg hover:opacity-90 flex items-center justify-center gap-2 transition-all [&[data-state=open]>svg]:rotate-180"
-                          style={{ backgroundColor: analysis.title_bg_color || '#1a1a1a' }}
+                          style={{ backgroundColor: analysis.home_team_bg_color || '#1a1a1a' }}
                         >
                           <h2 className="text-3xl font-bebas uppercase tracking-widest text-white">
                             {point.title}

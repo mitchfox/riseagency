@@ -19,6 +19,7 @@ export type Database = {
           analysis_type: string
           away_score: number | null
           away_team: string | null
+          away_team_bg_color: string | null
           away_team_logo: string | null
           concept: string | null
           created_at: string
@@ -26,6 +27,7 @@ export type Database = {
           fixture_id: string | null
           home_score: number | null
           home_team: string | null
+          home_team_bg_color: string | null
           home_team_logo: string | null
           id: string
           key_details: string | null
@@ -46,13 +48,13 @@ export type Database = {
           starting_xi: Json | null
           strengths_improvements: string | null
           title: string | null
-          title_bg_color: string | null
           updated_at: string
         }
         Insert: {
           analysis_type: string
           away_score?: number | null
           away_team?: string | null
+          away_team_bg_color?: string | null
           away_team_logo?: string | null
           concept?: string | null
           created_at?: string
@@ -60,6 +62,7 @@ export type Database = {
           fixture_id?: string | null
           home_score?: number | null
           home_team?: string | null
+          home_team_bg_color?: string | null
           home_team_logo?: string | null
           id?: string
           key_details?: string | null
@@ -80,13 +83,13 @@ export type Database = {
           starting_xi?: Json | null
           strengths_improvements?: string | null
           title?: string | null
-          title_bg_color?: string | null
           updated_at?: string
         }
         Update: {
           analysis_type?: string
           away_score?: number | null
           away_team?: string | null
+          away_team_bg_color?: string | null
           away_team_logo?: string | null
           concept?: string | null
           created_at?: string
@@ -94,6 +97,7 @@ export type Database = {
           fixture_id?: string | null
           home_score?: number | null
           home_team?: string | null
+          home_team_bg_color?: string | null
           home_team_logo?: string | null
           id?: string
           key_details?: string | null
@@ -114,7 +118,6 @@ export type Database = {
           starting_xi?: Json | null
           strengths_improvements?: string | null
           title?: string | null
-          title_bg_color?: string | null
           updated_at?: string
         }
         Relationships: [
