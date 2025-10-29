@@ -577,6 +577,29 @@ const AnalysisViewer = () => {
                   </div>
                 )}
 
+                {/* Overview Section */}
+                {analysis.key_details && (
+                  <AccordionItem value="overview" className="mb-8 border-0 data-[state=open]:border-4 data-[state=open]:border-primary data-[state=open]:rounded-lg">
+                    <AccordionTrigger 
+                      className="w-full text-center bg-primary py-4 rounded-t-lg hover:opacity-90 flex items-center justify-center gap-2 transition-all [&[data-state=open]>svg]:rotate-180"
+                    >
+                      <h2 className="text-3xl font-bebas uppercase tracking-widest text-black">
+                        Overview
+                      </h2>
+                      <ChevronDown className="w-5 h-5 text-black transition-transform duration-200" />
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <Card className="rounded-t-none border-t-0 border-0 animate-accordion-down" style={{ backgroundColor: 'rgba(245, 245, 245, 0.95)' }}>
+                        <CardContent className="p-3">
+                          <p className="text-gray-800 leading-relaxed whitespace-pre-wrap">
+                            {analysis.key_details}
+                          </p>
+                        </CardContent>
+                      </Card>
+                    </AccordionContent>
+                  </AccordionItem>
+                )}
+
                 {/* Strengths & Areas for Improvement */}
                 {analysis.strengths_improvements && (
                   <AccordionItem value="strengths-improvements" className="mb-8 border-0 data-[state=open]:border-4 data-[state=open]:border-primary data-[state=open]:rounded-lg">
