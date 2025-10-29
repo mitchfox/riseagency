@@ -99,7 +99,7 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
             />
             
             {/* Overlay Content - Top Left, using all black space */}
-            <div className="absolute top-6 left-6 right-[35%] pr-6 space-y-1.5">
+            <div className="absolute top-[9px] left-6 right-[35%] pr-6 space-y-1.5">
               <p id="intro-modal-description" className="text-sm text-white leading-relaxed">
                 We scout across the entirety of professional football in Europe and have guided many Premier League players to success through their development journey to RISE through the game and realise potential.
               </p>
