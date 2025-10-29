@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -68,6 +69,7 @@ interface OpponentData {
 }
 
 export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, onViewReport, triggerOpen, onDialogOpenChange }: PlayerFixturesProps) => {
+  const navigate = useNavigate();
   const [playerFixtures, setPlayerFixtures] = useState<PlayerFixture[]>([]);
   const [allFixtures, setAllFixtures] = useState<Fixture[]>([]);
   const [loading, setLoading] = useState(true);
@@ -1490,8 +1492,8 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, onViewR
                       onClick={(e) => {
                         e.stopPropagation();
                         const analysis = analysisData.get(pf.fixture_id);
-                        if (analysis?.analysis_writer_id && onCreateAnalysis) {
-                          onCreateAnalysis(analysis.analysis_writer_id);
+                        if (analysis?.analysis_writer_id) {
+                          navigate(`/analysis/${analysis.analysis_writer_id}`);
                         }
                       }}
                     >
