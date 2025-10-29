@@ -12,12 +12,12 @@ import { toast } from "sonner";
 import { Plus, Edit, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
 
 
-type TableType = 'coaching_sessions' | 'coaching_programmes' | 'coaching_drills' | 'coaching_exercises' | 'coaching_analysis' | 'psychological_sessions';
+type TableType = 'coaching_sessions' | 'coaching_programmes' | 'coaching_drills' | 'coaching_exercises' | 'coaching_analysis' | 'psychological_sessions' | 'coaching_aphorisms';
 
 interface CoachingItem {
   id: string;
   title: string;
-  description: string | null;
+  description?: string | null;
   content: string | null;
   category: string | null;
   tags: string[] | null;
@@ -35,6 +35,7 @@ interface CoachingItem {
   analysis_type?: string | null;
   video_url?: string | null;
   is_own_video?: boolean | null;
+  author?: string | null;
 }
 
 const tableConfigs = {
@@ -67,6 +68,11 @@ const tableConfigs = {
     label: 'Psychological Sessions',
     singular: 'Psychological Session',
     fields: ['title', 'description', 'content', 'duration', 'category'],
+  },
+  coaching_aphorisms: {
+    label: 'Aphorisms',
+    singular: 'Aphorism',
+    fields: ['title', 'content', 'author', 'category'],
   },
 };
 
@@ -341,7 +347,7 @@ export const CoachingDatabase = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TableType)}>
-        <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-1">
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-1">
           {Object.entries(tableConfigs).map(([key, config]) => (
             <TabsTrigger key={key} value={key} className="text-xs md:text-sm">
               {config.label}
@@ -386,7 +392,7 @@ export const CoachingDatabase = () => {
                       />
                     </div>
 
-                    {key !== 'coaching_exercises' && (
+                    {key !== 'coaching_exercises' && key !== 'coaching_aphorisms' && (
                       <div className="space-y-2">
                         <Label htmlFor="content">Content</Label>
                         <Textarea
@@ -564,6 +570,18 @@ export const CoachingDatabase = () => {
                           id="analysis_type"
                           value={formData.analysis_type}
                           onChange={(e) => setFormData({ ...formData, analysis_type: e.target.value })}
+                        />
+                      </div>
+                    )}
+
+                    {key === 'coaching_aphorisms' && (
+                      <div className="space-y-2">
+                        <Label htmlFor="author">Author</Label>
+                        <Input
+                          id="author"
+                          value={formData.author}
+                          onChange={(e) => setFormData({ ...formData, author: e.target.value })}
+                          placeholder="Optional"
                         />
                       </div>
                     )}

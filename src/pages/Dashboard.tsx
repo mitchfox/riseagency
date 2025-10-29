@@ -55,6 +55,7 @@ const Dashboard = () => {
   const [accordionValue, setAccordionValue] = useState<string[]>([]);
   const [selectedExercise, setSelectedExercise] = useState<any>(null);
   const [exerciseDialogOpen, setExerciseDialogOpen] = useState(false);
+  const [dailyAphorism, setDailyAphorism] = useState<any>(null);
 
   // Session color mapping with hover states
   const getSessionColor = (sessionKey: string) => {
@@ -118,6 +119,7 @@ const Dashboard = () => {
 
   useEffect(() => {
     checkAuth();
+    fetchDailyAphorism();
   }, [navigate]);
 
   const checkAuth = async () => {
@@ -264,6 +266,27 @@ const Dashboard = () => {
     }
   };
 
+  const fetchDailyAphorism = async () => {
+    try {
+      // Fetch all aphorisms
+      const { data, error } = await supabase
+        .from("coaching_aphorisms")
+        .select("*");
+
+      if (error) throw error;
+      if (!data || data.length === 0) return;
+
+      // Use current date as seed for consistent daily selection
+      const today = new Date();
+      const dayOfYear = Math.floor((today.getTime() - new Date(today.getFullYear(), 0, 0).getTime()) / 86400000);
+      const index = dayOfYear % data.length;
+      
+      setDailyAphorism(data[index]);
+    } catch (error) {
+      console.error("Error fetching daily aphorism:", error);
+    }
+  };
+
   const getR90Color = (score: number) => {
     if (score < 0) return "bg-red-950"; // Dark red for negative
     if (score >= 0 && score < 0.2) return "bg-red-600"; // Red
@@ -341,6 +364,23 @@ const Dashboard = () => {
               </Button>
             </div>
           </div>
+
+          {dailyAphorism && (
+            <div className="mb-8 px-4 md:px-0">
+              <Card className="bg-card/50 border-primary/20">
+                <CardContent className="py-6 px-6 text-center">
+                  <p className="text-lg md:text-xl font-medium text-foreground italic">
+                    "{dailyAphorism.content}"
+                  </p>
+                  {dailyAphorism.author && (
+                    <p className="text-sm text-muted-foreground mt-2">
+                      — {dailyAphorism.author}
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          )}
 
           <div className="mb-6">
             <NotificationPermission />

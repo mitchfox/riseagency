@@ -186,6 +186,39 @@ export type Database = {
         }
         Relationships: []
       }
+      coaching_aphorisms: {
+        Row: {
+          author: string | null
+          category: string | null
+          content: string
+          created_at: string
+          id: string
+          tags: string[] | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          author?: string | null
+          category?: string | null
+          content: string
+          created_at?: string
+          id?: string
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          author?: string | null
+          category?: string | null
+          content?: string
+          created_at?: string
+          id?: string
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       coaching_drills: {
         Row: {
           attachments: Json | null
