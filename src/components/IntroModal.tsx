@@ -5,7 +5,6 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import blackMarbleSmudged from "@/assets/black-marble-smudged.png";
 import introImage from "@/assets/intro-modal-background.png";
-import logoImage from "@/assets/logo.png";
 import { supabase } from "@/integrations/supabase/client";
 import { getCountryFlagUrl } from "@/lib/countryFlags";
 
@@ -112,18 +111,9 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
             
             {/* Overlay Content - Top Left, using all black space */}
             <div className="absolute top-[9px] left-6 right-[35%] pr-6 space-y-1.5">
-              <div className="flex items-start gap-3">
-                <p id="intro-modal-description" className="text-sm text-white leading-relaxed text-justify flex-1">
-                  We scout across the entirety of professional football in Europe and have guided many Premier League players to success through their development journey to RISE through the game and realise potential.
-                </p>
-                
-                {/* RISE Logo */}
-                <img 
-                  src={logoImage} 
-                  alt="RISE Football" 
-                  className="w-16 h-auto object-contain flex-shrink-0"
-                />
-              </div>
+              <p id="intro-modal-description" className="text-sm text-white leading-relaxed">
+                We scout across the entirety of professional football in Europe and have guided many Premier League players to success through their development journey to RISE through the game and realise potential.
+              </p>
               
               {/* Buttons */}
               <div className="flex flex-col gap-1.5">
