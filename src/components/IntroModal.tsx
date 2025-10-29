@@ -192,12 +192,6 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
                   </div>
                 </div>
               </div>
-              
-              {/* Player Name & Info Below Card */}
-              <div className="mt-2 bg-black/70 backdrop-blur-sm border border-white/10 rounded p-2">
-                <h3 className="text-white font-bebas text-sm uppercase tracking-wider">{starPlayers[starIndex].name}</h3>
-                <p className="text-white/70 text-[10px]">AGE {starPlayers[starIndex].age} • {starPlayers[starIndex].position}</p>
-              </div>
             </div>
           </div>
         </DialogContent>
