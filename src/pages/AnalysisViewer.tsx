@@ -498,82 +498,157 @@ const AnalysisViewer = () => {
 
           {/* Post-Match Content */}
           {isPostMatch && (
-            <div className="space-y-8">
-              {/* Header */}
-              <div className="text-center mb-8">
-                <span className="text-sm font-bebas uppercase tracking-widest text-primary border border-primary/30 px-4 py-1 rounded-full inline-block">
-                  Post-Match Analysis
-                </span>
-                <h1 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider text-white mt-4 mb-4">
-                  {analysis.title || "Post-Match Analysis"}
-                </h1>
-                <div className="flex items-center justify-center gap-4 text-xl text-white/80">
-                  <span>{analysis.home_team}</span>
-                  {analysis.home_score !== null && analysis.away_score !== null && (
-                    <span className="font-bold text-primary">
-                      {analysis.home_score} - {analysis.away_score}
-                    </span>
+            <div className="border-4 border-primary rounded-lg">
+              <Accordion type="single" collapsible className="space-y-0">
+                {/* Teams Header with Custom Background Colors */}
+                <div className="relative border-t-4 border-b-4 border-primary rounded-lg overflow-hidden bg-primary">
+                  <div className="flex items-center justify-between">
+                    {/* Home Team */}
+                    <div 
+                      className="flex-1 flex items-center justify-center gap-3 py-2 px-4"
+                      style={{ backgroundColor: analysis.home_team_bg_color || '#1a1a1a' }}
+                    >
+                      {analysis.home_team_logo && (
+                        <div className="w-16 h-16 rounded-lg flex items-center justify-center overflow-hidden p-1">
+                          <img
+                            src={analysis.home_team_logo}
+                            alt={analysis.home_team || "Home team"}
+                            className="w-full h-full object-contain"
+                          />
+                        </div>
+                      )}
+                      <span className="text-2xl md:text-3xl font-bebas text-white tracking-wide uppercase">
+                        {analysis.home_team}
+                      </span>
+                    </div>
+
+                    {/* Score Divider */}
+                    <div className="px-4 bg-black flex items-center gap-2">
+                      {analysis.home_score !== null && analysis.away_score !== null && (
+                        <span className="text-primary text-xl font-bebas">
+                          {analysis.home_score} - {analysis.away_score}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Away Team */}
+                    <div 
+                      className="flex-1 flex items-center justify-center gap-3 py-2 px-4"
+                      style={{ backgroundColor: analysis.away_team_bg_color || '#8B0000' }}
+                    >
+                      <span className="text-2xl md:text-3xl font-bebas text-white tracking-wide uppercase">
+                        {analysis.away_team}
+                      </span>
+                      {analysis.away_team_logo && (
+                        <div className="w-16 h-16 rounded-lg flex items-center justify-center overflow-hidden p-1">
+                          <img
+                            src={analysis.away_team_logo}
+                            alt={analysis.away_team || "Away team"}
+                            className="w-full h-full object-contain"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  {/* Match Date underneath teams in italics */}
+                  {analysis.match_date && (
+                    <div 
+                      className="text-center text-white/90 text-base font-bebas tracking-wide italic py-2 bg-cover bg-center"
+                      style={{ backgroundImage: `url(${smudgedMarbleDate})` }}
+                    >
+                      {new Date(analysis.match_date).toLocaleDateString('en-GB', {
+                        weekday: 'long',
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                      })}
+                    </div>
                   )}
-                  <span>{analysis.away_team}</span>
                 </div>
-              </div>
 
-              {analysis.player_image_url && (
-                <img
-                  src={analysis.player_image_url}
-                  alt="Player"
-                  className="w-full max-h-48 object-cover rounded-lg"
-                />
-              )}
+                {/* Optional Player Image */}
+                {analysis.player_image_url && (
+                  <div className="mb-8 flex justify-center mt-8">
+                    <img
+                      src={analysis.player_image_url}
+                      alt="Player"
+                      className="w-full max-w-5xl rounded-lg shadow-lg max-h-48 object-cover"
+                    />
+                  </div>
+                )}
 
-              {analysis.strengths_improvements && (
-                <Card className="bg-card/50 border-primary/20">
-                  <CardContent className="p-6">
-                    <h3 className="text-2xl font-bebas uppercase tracking-wider text-primary mb-4">
-                      Strengths & Areas for Improvement
-                    </h3>
-                    <p className="text-white/90 leading-relaxed whitespace-pre-wrap">
-                      {analysis.strengths_improvements}
-                    </p>
-                  </CardContent>
-                </Card>
-              )}
-
-              {analysis.points && analysis.points.length > 0 && (
-                <div className="space-y-6">
-                  {analysis.points.map((point: any, index: number) => (
-                    <Card key={index} className="bg-card/50 border-primary/20">
-                      <CardContent className="p-6 space-y-4">
-                        <h3 className="text-2xl font-bebas uppercase tracking-wider text-primary">
-                          {point.title}
-                        </h3>
-                        {point.paragraph_1 && (
-                          <p className="text-white/90 leading-relaxed whitespace-pre-wrap">
-                            {point.paragraph_1}
+                {/* Strengths & Areas for Improvement */}
+                {analysis.strengths_improvements && (
+                  <AccordionItem value="strengths-improvements" className="mb-8 border-0 data-[state=open]:border-4 data-[state=open]:border-primary data-[state=open]:rounded-lg">
+                    <AccordionTrigger 
+                      className="w-full text-center bg-primary py-4 rounded-t-lg hover:opacity-90 flex items-center justify-center gap-2 transition-all [&[data-state=open]>svg]:rotate-180"
+                    >
+                      <h2 className="text-3xl font-bebas uppercase tracking-widest text-black">
+                        Strengths & Areas for Improvement
+                      </h2>
+                      <ChevronDown className="w-5 h-5 text-black transition-transform duration-200" />
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <Card className="rounded-t-none border-t-0 border-0 animate-accordion-down" style={{ backgroundColor: 'rgba(245, 245, 245, 0.95)' }}>
+                        <CardContent className="p-3">
+                          <p className="text-gray-800 leading-relaxed whitespace-pre-wrap">
+                            {analysis.strengths_improvements}
                           </p>
-                        )}
-                        {point.images && point.images.length > 0 && (
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {point.images.map((img: string, imgIndex: number) => (
-                              <img
-                                key={imgIndex}
-                                src={img}
-                                alt={`${point.title} - Image ${imgIndex + 1}`}
-                                className="w-full rounded-lg"
-                              />
-                            ))}
-                          </div>
-                        )}
-                        {point.paragraph_2 && (
-                          <p className="text-white/90 leading-relaxed whitespace-pre-wrap">
-                            {point.paragraph_2}
-                          </p>
-                        )}
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              )}
+                        </CardContent>
+                      </Card>
+                    </AccordionContent>
+                  </AccordionItem>
+                )}
+
+                {/* Additional Sections from Points */}
+                {analysis.points && analysis.points.length > 0 && (
+                  <div className="mt-12 space-y-0">
+                    {analysis.points.map((point: any, index: number) => {
+                      const bgColor = index % 2 === 0 ? 'bg-gray-300' : 'bg-gray-400';
+                      return (
+                        <AccordionItem key={index} value={`point-${index}`} className={`border-0 data-[state=open]:border-4 data-[state=open]:border-primary data-[state=open]:rounded-lg ${index > 0 ? 'mt-0' : ''}`}>
+                          <AccordionTrigger 
+                            className={`w-full text-center py-4 rounded-t-lg hover:opacity-90 flex items-center justify-center gap-2 transition-all [&[data-state=open]>svg]:rotate-180 ${bgColor}`}
+                          >
+                            <h2 className="text-3xl font-bebas uppercase tracking-widest text-black">
+                              {point.title}
+                            </h2>
+                            <ChevronDown className="w-5 h-5 text-black transition-transform duration-200" />
+                          </AccordionTrigger>
+                          <AccordionContent>
+                            <Card className="rounded-t-none border-t-0 border-0 animate-accordion-down" style={{ backgroundColor: 'rgba(245, 245, 245, 0.95)' }}>
+                              <CardContent className="p-3 space-y-3">
+                                {point.paragraph_1 && (
+                                  <p className="text-gray-800 leading-relaxed whitespace-pre-wrap">
+                                    {point.paragraph_1}
+                                  </p>
+                                )}
+                                {point.images && point.images.length > 0 && (
+                                  <div className="bg-primary -mx-3 px-3 py-3 flex flex-col items-center gap-3">
+                                    {point.images.map((img: string, imgIndex: number) => (
+                                      <img
+                                        key={imgIndex}
+                                        src={img}
+                                        alt={`${point.title} - Image ${imgIndex + 1}`}
+                                        className="w-full max-w-4xl rounded-lg shadow-md"
+                                      />
+                                    ))}
+                                  </div>
+                                )}
+                                {point.paragraph_2 && (
+                                  <p className="text-gray-800 leading-relaxed whitespace-pre-wrap">
+                                    {point.paragraph_2}
+                                  </p>
+                                )}
+                              </CardContent>
+                            </Card>
+                          </AccordionContent>
+                        </AccordionItem>
+                      );
+                    })}
+                  </div>
+                )}
+              </Accordion>
             </div>
           )}
 
