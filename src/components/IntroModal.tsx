@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import blackMarbleSmudged from "@/assets/black-marble-smudged.png";
 import introImage from "@/assets/intro-modal-background.png";
+import riseLogo from "@/assets/logo.png";
 import { supabase } from "@/integrations/supabase/client";
 import { getCountryFlagUrl } from "@/lib/countryFlags";
 
@@ -98,6 +99,13 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
               src={introImage} 
               alt="RISE Football - From Striving to Rising to Thriving" 
               className="w-full h-auto object-contain"
+            />
+            
+            {/* RISE Logo - Top Right Corner */}
+            <img 
+              src={riseLogo} 
+              alt="RISE Football" 
+              className="absolute top-4 right-4 w-32 h-auto object-contain"
             />
             
             {/* Overlay Content - Top Left, using all black space */}
