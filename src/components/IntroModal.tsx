@@ -148,7 +148,7 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
               }}
               className="absolute left-6 bottom-6 w-[220px] cursor-pointer hover:scale-[1.02] transition-transform"
             >
-              <div className="relative w-full aspect-[3/4] rounded-lg overflow-hidden group">
+              <div className="relative w-full aspect-[3/4] rounded-lg overflow-hidden group border-2 border-[#B8A574]">
                 {/* Player Image with Dark Overlay */}
                 <img 
                   src={starPlayers[starIndex].image} 
