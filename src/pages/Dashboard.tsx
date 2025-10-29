@@ -1218,20 +1218,30 @@ const Dashboard = () => {
               <Card>
                 <CardHeader>
                   <CardTitle className="text-3xl font-bebas uppercase tracking-wider">
-                    Match Highlights
+                    Highlights
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent>
                   {(() => {
-                    let highlights = [];
+                    let highlightsData = { matchHighlights: [], bestClips: [] };
                     try {
-                      highlights = playerData?.highlights ? JSON.parse(playerData.highlights) : [];
+                      const parsed = playerData?.highlights ? JSON.parse(playerData.highlights) : [];
+                      // Handle legacy array format or new object format
+                      if (Array.isArray(parsed)) {
+                        highlightsData = { matchHighlights: parsed, bestClips: [] };
+                      } else {
+                        highlightsData = {
+                          matchHighlights: parsed.matchHighlights || [],
+                          bestClips: parsed.bestClips || []
+                        };
+                      }
                     } catch (e) {
                       console.error('Error parsing highlights:', e);
-                      highlights = [];
                     }
                     
-                    if (!highlights || highlights.length === 0) {
+                    const hasContent = highlightsData.matchHighlights.length > 0 || highlightsData.bestClips.length > 0;
+                    
+                    if (!hasContent) {
                       return (
                         <div className="py-8 text-center text-muted-foreground">
                           No highlights available yet.
@@ -1240,83 +1250,182 @@ const Dashboard = () => {
                     }
                     
                     return (
-                      <div className="grid gap-4 md:grid-cols-2">
-                        {highlights.map((highlight: any, index: number) => (
-                        <div 
-                          key={index}
-                          className="border rounded-lg overflow-hidden hover:border-primary transition-colors bg-card"
-                        >
-                          {highlight.clubLogo && (
-                            <div className="relative aspect-video bg-black">
-                              <img 
-                                src={highlight.clubLogo} 
-                                alt={highlight.name || `Highlight ${index + 1}`}
-                                className="w-full h-full object-contain p-8"
-                              />
+                      <Tabs defaultValue="match" className="w-full">
+                        <TabsList className="grid w-full grid-cols-2 mb-6">
+                          <TabsTrigger value="match" className="font-bebas uppercase">
+                            Match Highlights
+                          </TabsTrigger>
+                          <TabsTrigger value="best" className="font-bebas uppercase">
+                            Best Clips
+                          </TabsTrigger>
+                        </TabsList>
+                        
+                        <TabsContent value="match">
+                          {highlightsData.matchHighlights.length === 0 ? (
+                            <div className="py-8 text-center text-muted-foreground">
+                              No match highlights available yet.
+                            </div>
+                          ) : (
+                            <div className="grid gap-4 md:grid-cols-2">
+                              {highlightsData.matchHighlights.map((highlight: any, index: number) => (
+                                <div 
+                                  key={index}
+                                  className="border rounded-lg overflow-hidden hover:border-primary transition-colors bg-card"
+                                >
+                                  {highlight.clubLogo && (
+                                    <div className="relative aspect-video bg-black">
+                                      <img 
+                                        src={highlight.clubLogo} 
+                                        alt={highlight.name || `Highlight ${index + 1}`}
+                                        className="w-full h-full object-contain p-8"
+                                      />
+                                    </div>
+                                  )}
+                                  <div className="p-4 space-y-3">
+                                    <div>
+                                      <h3 className="font-bebas text-xl uppercase tracking-wider">
+                                        {highlight.name || `Match Highlight ${index + 1}`}
+                                      </h3>
+                                    </div>
+                                    <div className="flex gap-2">
+                                      {highlight.videoUrl && (
+                                        <>
+                                          <Button 
+                                            variant="outline" 
+                                            size="sm"
+                                            onClick={() => window.open(highlight.videoUrl, '_blank')}
+                                            className="flex-1"
+                                          >
+                                            <Play className="w-4 h-4 mr-2" />
+                                            Watch
+                                          </Button>
+                                          <Button 
+                                            variant="default" 
+                                            size="sm"
+                                            onClick={async () => {
+                                              try {
+                                                const videoUrl = highlight.videoUrl || highlight.url;
+                                                const fileName = highlight.name || highlight.title || `highlight-${index + 1}`;
+                                                
+                                                toast.info("Starting download...");
+                                                
+                                                const response = await fetch(videoUrl);
+                                                const blob = await response.blob();
+                                                
+                                                const blobUrl = window.URL.createObjectURL(blob);
+                                                const link = document.createElement('a');
+                                                link.href = blobUrl;
+                                                link.download = fileName;
+                                                document.body.appendChild(link);
+                                                link.click();
+                                                document.body.removeChild(link);
+                                                
+                                                window.URL.revokeObjectURL(blobUrl);
+                                                
+                                                toast.success("Download completed");
+                                              } catch (error) {
+                                                console.error('Download error:', error);
+                                                toast.error("Download failed");
+                                              }
+                                            }}
+                                            className="flex-1"
+                                          >
+                                            <Download className="w-4 h-4 mr-2" />
+                                            Download
+                                          </Button>
+                                        </>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
                             </div>
                           )}
-                          <div className="p-4 space-y-3">
-                            <div>
-                              <h3 className="font-bebas text-xl uppercase tracking-wider">
-                                {highlight.name || `Match Highlight ${index + 1}`}
-                              </h3>
+                        </TabsContent>
+                        
+                        <TabsContent value="best">
+                          {highlightsData.bestClips.length === 0 ? (
+                            <div className="py-8 text-center text-muted-foreground">
+                              No best clips available yet.
                             </div>
-                            <div className="flex gap-2">
-                              {highlight.videoUrl && (
-                                <>
-                                  <Button 
-                                    variant="outline" 
-                                    size="sm"
-                                    onClick={() => window.open(highlight.videoUrl, '_blank')}
-                                    className="flex-1"
-                                  >
-                                    <Play className="w-4 h-4 mr-2" />
-                                    Watch
-                                  </Button>
-                                  <Button 
-                                    variant="default" 
-                                    size="sm"
-                                    onClick={async () => {
-                                      try {
-                                        const videoUrl = highlight.videoUrl || highlight.url;
-                                        const fileName = highlight.name || highlight.title || `highlight-${index + 1}`;
-                                        
-                                        toast.info("Starting download...");
-                                        
-                                        // Fetch the video
-                                        const response = await fetch(videoUrl);
-                                        const blob = await response.blob();
-                                        
-                                        // Create blob URL and download
-                                        const blobUrl = window.URL.createObjectURL(blob);
-                                        const link = document.createElement('a');
-                                        link.href = blobUrl;
-                                        link.download = fileName;
-                                        document.body.appendChild(link);
-                                        link.click();
-                                        document.body.removeChild(link);
-                                        
-                                        // Clean up blob URL
-                                        window.URL.revokeObjectURL(blobUrl);
-                                        
-                                        toast.success("Download completed");
-                                      } catch (error) {
-                                        console.error('Download error:', error);
-                                        toast.error("Download failed");
-                                      }
-                                    }}
-                                    className="flex-1"
-                                  >
-                                    <Download className="w-4 h-4 mr-2" />
-                                    Download
-                                  </Button>
-                                </>
-                              )}
+                          ) : (
+                            <div className="grid gap-4 md:grid-cols-2">
+                              {highlightsData.bestClips.map((highlight: any, index: number) => (
+                                <div 
+                                  key={index}
+                                  className="border rounded-lg overflow-hidden hover:border-primary transition-colors bg-card"
+                                >
+                                  {highlight.clubLogo && (
+                                    <div className="relative aspect-video bg-black">
+                                      <img 
+                                        src={highlight.clubLogo} 
+                                        alt={highlight.name || `Clip ${index + 1}`}
+                                        className="w-full h-full object-contain p-8"
+                                      />
+                                    </div>
+                                  )}
+                                  <div className="p-4 space-y-3">
+                                    <div>
+                                      <h3 className="font-bebas text-xl uppercase tracking-wider">
+                                        {highlight.name || `Best Clip ${index + 1}`}
+                                      </h3>
+                                    </div>
+                                    <div className="flex gap-2">
+                                      {highlight.videoUrl && (
+                                        <>
+                                          <Button 
+                                            variant="outline" 
+                                            size="sm"
+                                            onClick={() => window.open(highlight.videoUrl, '_blank')}
+                                            className="flex-1"
+                                          >
+                                            <Play className="w-4 h-4 mr-2" />
+                                            Watch
+                                          </Button>
+                                          <Button 
+                                            variant="default" 
+                                            size="sm"
+                                            onClick={async () => {
+                                              try {
+                                                const videoUrl = highlight.videoUrl || highlight.url;
+                                                const fileName = highlight.name || highlight.title || `clip-${index + 1}`;
+                                                
+                                                toast.info("Starting download...");
+                                                
+                                                const response = await fetch(videoUrl);
+                                                const blob = await response.blob();
+                                                
+                                                const blobUrl = window.URL.createObjectURL(blob);
+                                                const link = document.createElement('a');
+                                                link.href = blobUrl;
+                                                link.download = fileName;
+                                                document.body.appendChild(link);
+                                                link.click();
+                                                document.body.removeChild(link);
+                                                
+                                                window.URL.revokeObjectURL(blobUrl);
+                                                
+                                                toast.success("Download completed");
+                                              } catch (error) {
+                                                console.error('Download error:', error);
+                                                toast.error("Download failed");
+                                              }
+                                            }}
+                                            className="flex-1"
+                                          >
+                                            <Download className="w-4 h-4 mr-2" />
+                                            Download
+                                          </Button>
+                                        </>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
                             </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+                          )}
+                        </TabsContent>
+                      </Tabs>
                     );
                   })()}
                 </CardContent>
