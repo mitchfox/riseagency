@@ -35,6 +35,7 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
       <Dialog open={open} onOpenChange={handleDialogChange}>
         <DialogContent 
           className="w-[min(90vw,1080px)] max-h-[98vh] p-0 border-primary/20 overflow-y-auto bg-transparent [&>button]:hidden sm:max-w-[1080px]"
+          aria-describedby="intro-modal-description"
         >
           <div className="relative flex flex-col items-stretch">
             {/* Main Image */}
@@ -61,7 +62,7 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
                     <div className="text-xl md:text-3xl font-bebas uppercase tracking-wider text-primary">Thriving</div>
                   </div>
                 </div>
-                <p className="text-sm md:text-base text-white/90 leading-relaxed max-w-2xl mx-auto">
+                <p id="intro-modal-description" className="text-sm md:text-base text-white/90 leading-relaxed max-w-2xl mx-auto">
                   We scout across the entirety of professional football in Europe and have guided many Premier League players to success through their development journey to RISE through the game and realise potential.
                 </p>
                 
