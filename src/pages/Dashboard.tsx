@@ -11,7 +11,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { NotificationPermission } from "@/components/NotificationPermission";
 import { toast } from "sonner";
-import { FileText, Play, Download } from "lucide-react";
+import { FileText, Play, Download, Upload } from "lucide-react";
 import { addDays, format, parseISO } from "date-fns";
 
 interface Analysis {
@@ -1345,11 +1345,135 @@ const Dashboard = () => {
                         
                         <TabsContent value="best">
                           {highlightsData.bestClips.length === 0 ? (
-                            <div className="py-8 text-center text-muted-foreground">
-                              No best clips available yet.
+                            <div className="py-8 text-center space-y-4">
+                              <p className="text-muted-foreground">No best clips available yet.</p>
+                              <Button 
+                                onClick={() => {
+                                  const input = document.createElement('input');
+                                  input.type = 'file';
+                                  input.accept = 'video/mp4,video/quicktime,video/x-msvideo,video/*';
+                                  input.onchange = async (e: any) => {
+                                    const file = e.target.files?.[0];
+                                    if (!file) return;
+                                    
+                                    const clipName = prompt('Enter a name for this clip:');
+                                    if (!clipName) return;
+                                    
+                                    try {
+                                      toast.info("Uploading clip...");
+                                      
+                                      const fileName = `${playerData.id}_${Date.now()}_${file.name}`;
+                                      const { error: uploadError } = await supabase.storage
+                                        .from('analysis-files')
+                                        .upload(`highlights/${fileName}`, file);
+                                      
+                                      if (uploadError) throw uploadError;
+                                      
+                                      const { data: { publicUrl } } = supabase.storage
+                                        .from('analysis-files')
+                                        .getPublicUrl(`highlights/${fileName}`);
+                                      
+                                      const parsed = playerData?.highlights ? JSON.parse(playerData.highlights) : {};
+                                      const updatedHighlights = {
+                                        matchHighlights: parsed.matchHighlights || [],
+                                        bestClips: [
+                                          ...(parsed.bestClips || []),
+                                          {
+                                            name: clipName,
+                                            videoUrl: publicUrl,
+                                            addedAt: new Date().toISOString()
+                                          }
+                                        ]
+                                      };
+                                      
+                                      const { error: updateError } = await supabase
+                                        .from('players')
+                                        .update({ highlights: JSON.stringify(updatedHighlights) })
+                                        .eq('id', playerData.id);
+                                      
+                                      if (updateError) throw updateError;
+                                      
+                                      toast.success("Clip uploaded successfully!");
+                                      window.location.reload();
+                                    } catch (error) {
+                                      console.error('Upload error:', error);
+                                      toast.error("Failed to upload clip");
+                                    }
+                                  };
+                                  input.click();
+                                }}
+                                variant="outline"
+                              >
+                                <Upload className="w-4 h-4 mr-2" />
+                                Upload Clip
+                              </Button>
                             </div>
                           ) : (
-                            <div className="grid gap-4 md:grid-cols-2">
+                            <div className="space-y-4">
+                              <div className="flex justify-end">
+                                <Button 
+                                  onClick={() => {
+                                    const input = document.createElement('input');
+                                    input.type = 'file';
+                                    input.accept = 'video/mp4,video/quicktime,video/x-msvideo,video/*';
+                                    input.onchange = async (e: any) => {
+                                      const file = e.target.files?.[0];
+                                      if (!file) return;
+                                      
+                                      const clipName = prompt('Enter a name for this clip:');
+                                      if (!clipName) return;
+                                      
+                                      try {
+                                        toast.info("Uploading clip...");
+                                        
+                                        const fileName = `${playerData.id}_${Date.now()}_${file.name}`;
+                                        const { error: uploadError } = await supabase.storage
+                                          .from('analysis-files')
+                                          .upload(`highlights/${fileName}`, file);
+                                        
+                                        if (uploadError) throw uploadError;
+                                        
+                                        const { data: { publicUrl } } = supabase.storage
+                                          .from('analysis-files')
+                                          .getPublicUrl(`highlights/${fileName}`);
+                                        
+                                        const parsed = playerData?.highlights ? JSON.parse(playerData.highlights) : {};
+                                        const updatedHighlights = {
+                                          matchHighlights: parsed.matchHighlights || [],
+                                          bestClips: [
+                                            ...(parsed.bestClips || []),
+                                            {
+                                              name: clipName,
+                                              videoUrl: publicUrl,
+                                              addedAt: new Date().toISOString()
+                                            }
+                                          ]
+                                        };
+                                        
+                                        const { error: updateError } = await supabase
+                                          .from('players')
+                                          .update({ highlights: JSON.stringify(updatedHighlights) })
+                                          .eq('id', playerData.id);
+                                        
+                                        if (updateError) throw updateError;
+                                        
+                                        toast.success("Clip uploaded successfully!");
+                                        window.location.reload();
+                                      } catch (error) {
+                                        console.error('Upload error:', error);
+                                        toast.error("Failed to upload clip");
+                                      }
+                                    };
+                                    input.click();
+                                  }}
+                                  variant="outline"
+                                  size="sm"
+                                >
+                                  <Upload className="w-4 h-4 mr-2" />
+                                  Upload Clip
+                                </Button>
+                              </div>
+                              <div className="grid gap-4 md:grid-cols-2">
                               {highlightsData.bestClips.map((highlight: any, index: number) => (
                                 <div 
                                   key={index}
@@ -1416,12 +1540,13 @@ const Dashboard = () => {
                                             <Download className="w-4 h-4 mr-2" />
                                             Download
                                           </Button>
-                                        </>
-                                      )}
-                                    </div>
-                                  </div>
-                                </div>
-                              ))}
+                                         </>
+                                       )}
+                                     </div>
+                                   </div>
+                                 </div>
+                               ))}
+                              </div>
                             </div>
                           )}
                         </TabsContent>

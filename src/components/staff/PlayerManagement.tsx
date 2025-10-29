@@ -2425,8 +2425,8 @@ const PlayerManagement = () => {
                 videoUrl = publicUrl;
               }
               
-              // Upload club logo file if provided
-              if (highlightClubLogoFile) {
+              // Upload club logo file if provided (only for match highlights)
+              if (highlightClubLogoFile && highlightType === 'match') {
                 const logoFileName = `${currentPlayerId}_${Date.now()}_${highlightClubLogoFile.name}`;
                 const { error: logoError } = await supabase.storage
                   .from('analysis-files')
@@ -2454,18 +2454,22 @@ const PlayerManagement = () => {
                 updatedArray[editingHighlightIndex] = {
                   name: highlightName,
                   videoUrl: videoUrl || existingHighlight.videoUrl,
-                  clubLogo: logoUrl || existingHighlight.clubLogo,
+                  clubLogo: highlightType === 'match' ? (logoUrl || existingHighlight.clubLogo) : undefined,
                   addedAt: existingHighlight.addedAt,
                   updatedAt: new Date().toISOString()
                 };
               } else {
                 // Add new highlight
-                const newHighlight = {
+                const newHighlight: any = {
                   name: highlightName,
                   videoUrl: videoUrl!,
-                  clubLogo: logoUrl!,
                   addedAt: new Date().toISOString()
                 };
+                
+                // Only add clubLogo for match highlights
+                if (highlightType === 'match') {
+                  newHighlight.clubLogo = logoUrl!;
+                }
                 
                 updatedArray = [...currentArray, newHighlight];
               }
@@ -2530,7 +2534,7 @@ const PlayerManagement = () => {
             
             <div className="space-y-2">
               <Label htmlFor="highlight_video">
-                Highlight Video {editingHighlightIndex === null ? "*" : "(optional - leave blank to keep current)"}
+                {highlightType === 'best' ? 'Clip' : 'Highlight Video'} {editingHighlightIndex === null ? "*" : "(optional - leave blank to keep current)"}
               </Label>
               <Input
                 id="highlight_video"
@@ -2556,36 +2560,38 @@ const PlayerManagement = () => {
               </p>
             </div>
             
-            <div className="space-y-2">
-              <Label htmlFor="club_logo">
-                Club Logo {editingHighlightIndex === null ? "*" : "(optional - leave blank to keep current)"}
-              </Label>
-              <Input
-                id="club_logo"
-                type="file"
-                accept="image/png,image/jpeg,image/jpg,image/webp,image/*"
-                onChange={(e) => setHighlightClubLogoFile(e.target.files?.[0] || null)}
-                required={editingHighlightIndex === null}
-              />
-              {editingHighlightIndex !== null && existingHighlights[editingHighlightIndex]?.clubLogo && (
-                <div className="mt-2">
-                  <p className="text-xs text-muted-foreground mb-1">Current logo:</p>
-                  <img 
-                    src={existingHighlights[editingHighlightIndex].clubLogo}
-                    alt="Current club logo"
-                    className="w-20 h-20 object-contain bg-secondary p-2 rounded border"
-                  />
-                </div>
-              )}
-              <p className="text-xs text-muted-foreground">
-                {editingHighlightIndex === null
-                  ? "Upload a club logo image (PNG, JPG, JPEG, WEBP)"
-                  : "Upload a new logo to replace the current one, or leave blank to keep it"}
-              </p>
-            </div>
+            {highlightType === 'match' && (
+              <div className="space-y-2">
+                <Label htmlFor="club_logo">
+                  Club Logo {editingHighlightIndex === null ? "*" : "(optional - leave blank to keep current)"}
+                </Label>
+                <Input
+                  id="club_logo"
+                  type="file"
+                  accept="image/png,image/jpeg,image/jpg,image/webp,image/*"
+                  onChange={(e) => setHighlightClubLogoFile(e.target.files?.[0] || null)}
+                  required={editingHighlightIndex === null}
+                />
+                {editingHighlightIndex !== null && existingHighlights[editingHighlightIndex]?.clubLogo && (
+                  <div className="mt-2">
+                    <p className="text-xs text-muted-foreground mb-1">Current logo:</p>
+                    <img 
+                      src={existingHighlights[editingHighlightIndex].clubLogo}
+                      alt="Current club logo"
+                      className="w-20 h-20 object-contain bg-secondary p-2 rounded border"
+                    />
+                  </div>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  {editingHighlightIndex === null
+                    ? "Upload a club logo image (PNG, JPG, JPEG, WEBP)"
+                    : "Upload a new logo to replace the current one, or leave blank to keep it"}
+                </p>
+              </div>
+            )}
             
-            <Button type="submit" disabled={uploadingFiles || !highlightName || (editingHighlightIndex === null && (!highlightVideoFile || !highlightClubLogoFile))}>
-              {uploadingFiles ? "Uploading..." : (editingHighlightIndex !== null ? "Update Highlight" : "Add Highlight")}
+            <Button type="submit" disabled={uploadingFiles || !highlightName || (editingHighlightIndex === null && (!highlightVideoFile || (highlightType === 'match' && !highlightClubLogoFile)))}>
+              {uploadingFiles ? "Uploading..." : (editingHighlightIndex !== null ? "Update" : `Add ${highlightType === 'best' ? 'Clip' : 'Highlight'}`)}
             </Button>
           </form>
         </DialogContent>
