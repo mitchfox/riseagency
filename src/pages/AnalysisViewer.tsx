@@ -216,7 +216,7 @@ const AnalysisViewer = () => {
                     <img 
                       src={analysis.match_image_url} 
                       alt="Match" 
-                      className="w-full max-w-5xl rounded-lg shadow-lg max-h-[1080px] object-cover"
+                      className="w-full max-w-5xl rounded-lg shadow-lg max-h-[540px] object-cover"
                     />
                   </div>
                 )}
