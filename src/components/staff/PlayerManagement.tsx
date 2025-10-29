@@ -1790,7 +1790,7 @@ const PlayerManagement = () => {
                             <div className="space-y-2">
                               {availableAnalyses
                                 .filter(a => 
-                                  a.analysis_type === 'pre_match' &&
+                                  a.analysis_type === 'pre-match' &&
                                   playerAnalyses[player.id]?.some(pa => pa.analysis_writer_id === a.id)
                                 )
                                 .map((analysis) => (
@@ -1831,13 +1831,13 @@ const PlayerManagement = () => {
                           
                           {availableAnalyses
                             .filter(a => 
-                              a.analysis_type === 'post_match' &&
+                              a.analysis_type === 'post-match' &&
                               playerAnalyses[player.id]?.some(pa => pa.analysis_writer_id === a.id)
                             ).length > 0 ? (
                             <div className="space-y-2">
                               {availableAnalyses
                                 .filter(a => 
-                                  a.analysis_type === 'post_match' &&
+                                  a.analysis_type === 'post-match' &&
                                   playerAnalyses[player.id]?.some(pa => pa.analysis_writer_id === a.id)
                                 )
                                 .map((analysis) => (
