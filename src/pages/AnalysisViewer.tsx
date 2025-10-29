@@ -143,7 +143,7 @@ const AnalysisViewer = () => {
 
           {/* Pre-Match Content - Redesigned */}
           {isPreMatch && (
-            <div className="border-4 border-primary rounded-lg p-4">
+            <div className="border-4 border-primary rounded-lg">
               <Accordion type="single" collapsible className="space-y-0">
                 {/* Teams Header with Gold Border */}
                 <div className="relative bg-gradient-to-r from-primary/10 via-primary/20 to-primary/10 border-t-4 border-b-4 border-primary rounded-lg p-4 mb-8">
@@ -230,7 +230,7 @@ const AnalysisViewer = () => {
                   </AccordionTrigger>
                   <AccordionContent>
                     <Card className="bg-gradient-to-br from-gray-900 to-black rounded-t-none border-t-0 border-0 animate-accordion-down">
-                      <CardContent className="p-4">
+                      <CardContent className="p-3 pb-3">
                         <div className="space-y-3 max-w-4xl mx-auto">
                           {analysis.opposition_strengths.split('\n').filter(line => line.trim()).map((line, idx) => {
                             const cleanLine = line.trim().replace(/^[-•]\s*/, '');
@@ -261,7 +261,7 @@ const AnalysisViewer = () => {
                   </AccordionTrigger>
                   <AccordionContent>
                     <Card className="bg-gradient-to-br from-gray-900 to-black rounded-t-none border-t-0 border-0 animate-accordion-down">
-                      <CardContent className="p-4">
+                      <CardContent className="p-3 pb-3">
                         <div className="space-y-3 max-w-4xl mx-auto">
                           {analysis.opposition_weaknesses.split('\n').filter(line => line.trim()).map((line, idx) => {
                             const cleanLine = line.trim().replace(/^[-•]\s*/, '');
@@ -291,8 +291,8 @@ const AnalysisViewer = () => {
                     <ChevronDown className="w-5 h-5 text-black transition-transform duration-200" />
                   </AccordionTrigger>
                   <AccordionContent>
-                    <div className="rounded-t-none border-t-0 bg-transparent py-4 animate-accordion-down">
-                      <div className="p-4">
+                    <div className="rounded-t-none border-t-0 bg-transparent animate-accordion-down">
+                      <div className="p-3 pb-3">
                         <div className={`flex justify-center items-center gap-8 flex-wrap max-w-5xl mx-auto`}>
                           {analysis.matchups.map((matchup: any, index: number) => (
                             <div key={index} className="text-center flex-shrink-0" style={{ 
@@ -329,7 +329,7 @@ const AnalysisViewer = () => {
 
               {/* Scheme Section */}
               {(analysis.scheme_title || analysis.selected_scheme) && (
-                <AccordionItem value="scheme" className="mb-8 border-0 data-[state=open]:border-4 data-[state=open]:border-primary data-[state=open]:rounded-lg">
+                <AccordionItem value="scheme" className="mb-8 border-0 data-[state=open]:border-4 data-[state=open]:border-primary data-[state=open]:rounded-lg print:page-break-after-always">
                   <AccordionTrigger className="w-full bg-primary/90 text-center py-3 rounded-t-lg hover:bg-primary flex items-center justify-center gap-2 transition-colors [&[data-state=open]>svg]:rotate-180">
                     <h2 className="text-2xl font-bebas uppercase tracking-widest text-black">
                       {analysis.scheme_title || "Tactical Scheme"}
@@ -409,7 +409,7 @@ const AnalysisViewer = () => {
 
               {/* Additional Sections from Points with Gap and Silver Colors */}
               {analysis.points && analysis.points.length > 0 && (
-                <div className="mt-6 space-y-0 print:page-break-before-always">
+                <div className="mt-6 space-y-0">
                   {analysis.points.map((point: any, index: number) => {
                     const isEven = index % 2 === 0;
                     const silverColor = isEven ? 'bg-gray-300/90' : 'bg-gray-400/90';
