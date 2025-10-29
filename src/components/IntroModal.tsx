@@ -219,7 +219,8 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
                       const clubLogo = bio.tacticalFormations?.[0]?.clubLogo;
                       return clubLogo ? (
                         <div className="absolute bottom-16 right-4">
-                          <img src={clubLogo} alt="Club" className="w-12 h-12 object-contain" />
+                          <img src={clubLogo} alt="Club" className="w-12 h-12 object-contain mb-0.5" />
+                          <div className="text-[9px] text-white/80 uppercase tracking-wider text-center">Club</div>
                         </div>
                       ) : null;
                     } catch {
