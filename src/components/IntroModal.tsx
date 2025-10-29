@@ -109,22 +109,22 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
             />
             
             {/* Overlay Content - Top Left, using all black space */}
-            <div className="absolute top-[6px] left-3 right-[35%] pr-3 space-y-1 sm:top-[9px] sm:left-6 sm:right-[35%] sm:pr-6 sm:space-y-1.5">
-              <p id="intro-modal-description" className="text-xs text-white leading-tight sm:text-sm sm:leading-relaxed">
+            <div className="absolute top-[8px] left-3 right-[35%] pr-3 space-y-1.5 sm:top-[9px] sm:left-6 sm:right-[35%] sm:pr-6 sm:space-y-1.5">
+              <p id="intro-modal-description" className="text-[11px] text-white leading-tight sm:text-sm sm:leading-relaxed">
                 We scout across the entirety of professional football in Europe and have guided many Premier League players to success through their development journey to RISE through the game and realise potential.
               </p>
               
               {/* Buttons */}
-              <div className="flex flex-col gap-1 sm:gap-1.5">
+              <div className="flex flex-col gap-1.5 sm:gap-1.5">
                 <Button 
                   onClick={handleRequestRepresentation}
-                  className="bg-gray-300 text-black hover:bg-gray-400 font-bebas uppercase tracking-wider px-3 py-0 text-xs w-[180px] border-0 h-4 sm:px-4 sm:py-2 sm:text-base sm:w-full sm:h-auto"
+                  className="bg-gray-300 text-black hover:bg-gray-400 font-bebas uppercase tracking-wider px-3 py-1.5 text-xs w-[180px] border-0 h-7 sm:px-4 sm:py-2 sm:text-base sm:w-full sm:h-auto"
                 >
                   Request Representation
                 </Button>
                 <Button 
                   onClick={handleEnterSite}
-                  className="btn-shine font-bebas uppercase tracking-wider px-3 py-0 text-xs w-[180px] h-4 sm:px-4 sm:py-2 sm:text-base sm:w-full sm:h-auto"
+                  className="btn-shine font-bebas uppercase tracking-wider px-3 py-1.5 text-xs w-[180px] h-7 sm:px-4 sm:py-2 sm:text-base sm:w-full sm:h-auto"
                 >
                   Enter Site
                 </Button>
