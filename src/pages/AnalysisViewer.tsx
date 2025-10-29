@@ -143,59 +143,60 @@ const AnalysisViewer = () => {
 
           {/* Pre-Match Content - Redesigned */}
           {isPreMatch && (
-            <Accordion type="single" collapsible className="space-y-0">
-              {/* Teams Header with Gold Border */}
-              <div className="relative bg-gradient-to-r from-primary/10 via-primary/20 to-primary/10 border-t-4 border-b-4 border-primary rounded-lg p-6 mb-8">
-                <div className="flex items-center justify-between mb-4">
-                  {/* Home Team */}
-                  <div className="flex-1 flex items-center justify-center gap-4">
-                    {analysis.home_team_logo && (
-                      <div className="w-24 h-24 rounded-lg flex items-center justify-center overflow-hidden bg-white/5 p-2">
-                        <img
-                          src={analysis.home_team_logo}
-                          alt={analysis.home_team || "Home team"}
-                          className="w-full h-full object-contain"
-                        />
-                      </div>
-                    )}
-                    <span className="text-2xl md:text-3xl font-bebas text-white tracking-wide">
-                      {analysis.home_team}
-                    </span>
-                  </div>
+            <div className="border-4 border-primary rounded-lg p-4">
+              <Accordion type="single" collapsible className="space-y-0">
+                {/* Teams Header with Gold Border */}
+                <div className="relative bg-gradient-to-r from-primary/10 via-primary/20 to-primary/10 border-t-4 border-b-4 border-primary rounded-lg p-4 mb-8">
+                  <div className="flex items-center justify-between mb-2">
+                    {/* Home Team */}
+                    <div className="flex-1 flex items-center justify-center gap-4">
+                      {analysis.home_team_logo && (
+                        <div className="w-20 h-20 rounded-lg flex items-center justify-center overflow-hidden bg-white/5 p-2">
+                          <img
+                            src={analysis.home_team_logo}
+                            alt={analysis.home_team || "Home team"}
+                            className="w-full h-full object-contain"
+                          />
+                        </div>
+                      )}
+                      <span className="text-2xl md:text-3xl font-bebas text-white tracking-wide">
+                        {analysis.home_team}
+                      </span>
+                    </div>
 
-                  {/* VS Divider */}
-                  <div className="px-8">
-                    <span className="text-white/60 text-xl font-bebas">VS</span>
-                  </div>
+                    {/* VS Divider */}
+                    <div className="px-8">
+                      <span className="text-white/60 text-xl font-bebas">VS</span>
+                    </div>
 
-                  {/* Away Team */}
-                  <div className="flex-1 flex items-center justify-center gap-4">
-                    <span className="text-2xl md:text-3xl font-bebas text-white tracking-wide">
-                      {analysis.away_team}
-                    </span>
-                    {analysis.away_team_logo && (
-                      <div className="w-24 h-24 rounded-lg flex items-center justify-center overflow-hidden bg-white/5 p-2">
-                        <img
-                          src={analysis.away_team_logo}
-                          alt={analysis.away_team || "Away team"}
-                          className="w-full h-full object-contain"
-                        />
-                      </div>
-                    )}
+                    {/* Away Team */}
+                    <div className="flex-1 flex items-center justify-center gap-4">
+                      <span className="text-2xl md:text-3xl font-bebas text-white tracking-wide">
+                        {analysis.away_team}
+                      </span>
+                      {analysis.away_team_logo && (
+                        <div className="w-20 h-20 rounded-lg flex items-center justify-center overflow-hidden bg-white/5 p-2">
+                          <img
+                            src={analysis.away_team_logo}
+                            alt={analysis.away_team || "Away team"}
+                            className="w-full h-full object-contain"
+                          />
+                        </div>
+                      )}
+                    </div>
                   </div>
+                  {/* Match Date underneath teams in italics */}
+                  {analysis.match_date && (
+                    <div className="text-center text-white/80 text-base font-bebas tracking-wide italic">
+                      {new Date(analysis.match_date).toLocaleDateString('en-GB', {
+                        weekday: 'long',
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                      })}
+                    </div>
+                  )}
                 </div>
-                {/* Match Date underneath teams */}
-                {analysis.match_date && (
-                  <div className="text-center text-white/80 text-lg font-bebas tracking-wide">
-                    {new Date(analysis.match_date).toLocaleDateString('en-GB', {
-                      weekday: 'long',
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric'
-                    })}
-                  </div>
-                )}
-              </div>
 
               {/* Overview Section with Gold Header */}
               {analysis.key_details && (
@@ -290,8 +291,8 @@ const AnalysisViewer = () => {
                     <ChevronDown className="w-5 h-5 text-black transition-transform duration-200" />
                   </AccordionTrigger>
                   <AccordionContent>
-                    <Card className="rounded-t-none border-t-0 border-0 animate-accordion-down" style={{ backgroundColor: 'rgba(245, 245, 245, 0.95)' }}>
-                      <CardContent className="p-4">
+                    <div className="rounded-t-none border-t-0 bg-transparent py-4 animate-accordion-down">
+                      <div className="p-4">
                         <div className={`flex justify-center items-center gap-8 flex-wrap max-w-5xl mx-auto`}>
                           {analysis.matchups.map((matchup: any, index: number) => (
                             <div key={index} className="text-center flex-shrink-0" style={{ 
@@ -311,24 +312,24 @@ const AnalysisViewer = () => {
                                   <div className="text-gray-400 text-sm">No image</div>
                                 )}
                               </div>
-                              <p className="font-bold text-gray-800 text-lg">{matchup.name}</p>
+                              <p className="font-bold text-white text-lg">{matchup.name}</p>
                               {matchup.shirt_number && (
-                                <p className="text-sm text-gray-600 font-semibold">
+                                <p className="text-sm text-white/80 font-semibold">
                                   #{matchup.shirt_number}
                                 </p>
                               )}
                             </div>
                           ))}
                         </div>
-                      </CardContent>
-                    </Card>
+                      </div>
+                    </div>
                   </AccordionContent>
                 </AccordionItem>
               )}
 
               {/* Scheme Section */}
               {(analysis.scheme_title || analysis.selected_scheme) && (
-                <AccordionItem value="scheme" className="mb-8 border-0 data-[state=open]:border-4 data-[state=open]:border-primary data-[state=open]:rounded-lg print:page-break-after-always">
+                <AccordionItem value="scheme" className="mb-8 border-0 data-[state=open]:border-4 data-[state=open]:border-primary data-[state=open]:rounded-lg">
                   <AccordionTrigger className="w-full bg-primary/90 text-center py-3 rounded-t-lg hover:bg-primary flex items-center justify-center gap-2 transition-colors [&[data-state=open]>svg]:rotate-180">
                     <h2 className="text-2xl font-bebas uppercase tracking-widest text-black">
                       {analysis.scheme_title || "Tactical Scheme"}
@@ -408,7 +409,7 @@ const AnalysisViewer = () => {
 
               {/* Additional Sections from Points with Gap and Silver Colors */}
               {analysis.points && analysis.points.length > 0 && (
-                <div className="mt-6 space-y-0">
+                <div className="mt-6 space-y-0 print:page-break-before-always">
                   {analysis.points.map((point: any, index: number) => {
                     const isEven = index % 2 === 0;
                     const silverColor = isEven ? 'bg-gray-300/90' : 'bg-gray-400/90';
@@ -453,7 +454,8 @@ const AnalysisViewer = () => {
                   })}
                 </div>
               )}
-            </Accordion>
+              </Accordion>
+            </div>
           )}
 
           {/* Post-Match Content */}
