@@ -29,6 +29,8 @@ export type Database = {
           home_team_logo: string | null
           id: string
           key_details: string | null
+          kit_primary_color: string | null
+          kit_secondary_color: string | null
           match_date: string | null
           matchups: Json | null
           opposition_strengths: string | null
@@ -59,6 +61,8 @@ export type Database = {
           home_team_logo?: string | null
           id?: string
           key_details?: string | null
+          kit_primary_color?: string | null
+          kit_secondary_color?: string | null
           match_date?: string | null
           matchups?: Json | null
           opposition_strengths?: string | null
@@ -89,6 +93,8 @@ export type Database = {
           home_team_logo?: string | null
           id?: string
           key_details?: string | null
+          kit_primary_color?: string | null
+          kit_secondary_color?: string | null
           match_date?: string | null
           matchups?: Json | null
           opposition_strengths?: string | null

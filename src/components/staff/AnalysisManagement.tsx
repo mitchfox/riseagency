@@ -42,6 +42,8 @@ interface Analysis {
   matchups?: any[];
   selected_scheme?: string | null;
   starting_xi?: any[];
+  kit_primary_color?: string | null;
+  kit_secondary_color?: string | null;
   scheme_title?: string | null;
   scheme_paragraph_1?: string | null;
   scheme_paragraph_2?: string | null;
@@ -649,6 +651,29 @@ export const AnalysisManagement = () => {
 
                     {formData.selected_scheme && formData.starting_xi && formData.starting_xi.length > 0 && (
                       <div>
+                        <div className="grid grid-cols-2 gap-4 mb-4">
+                          <div>
+                            <Label>Kit Primary Color</Label>
+                            <Input
+                              type="color"
+                              value={formData.kit_primary_color || '#FFD700'}
+                              onChange={(e) =>
+                                setFormData({ ...formData, kit_primary_color: e.target.value })
+                              }
+                            />
+                          </div>
+                          <div>
+                            <Label>Kit Secondary Color</Label>
+                            <Input
+                              type="color"
+                              value={formData.kit_secondary_color || '#000000'}
+                              onChange={(e) =>
+                                setFormData({ ...formData, kit_secondary_color: e.target.value })
+                              }
+                            />
+                          </div>
+                        </div>
+
                         <Label className="mb-2 block">Starting XI Preview</Label>
                         <div className="relative bg-green-700 rounded-lg p-8 min-h-[400px]">
                           <div className="text-white text-center mb-2 text-lg font-bold">
@@ -664,13 +689,16 @@ export const AnalysisManagement = () => {
                                 transform: 'translate(-50%, -50%)'
                               }}
                             >
-                              <div className="bg-white rounded-full w-12 h-12 flex flex-col items-center justify-center text-xs shadow-lg mb-1">
-                                <div className="font-bold text-gray-800 text-[10px]">
-                                  {player.surname || player.position}
-                                </div>
-                                {player.number && (
-                                  <div className="text-[8px] text-gray-600">#{player.number}</div>
-                                )}
+                              <svg width="48" height="48" viewBox="0 0 100 100" className="drop-shadow-lg mb-1">
+                                <path d="M30 25 L25 35 L25 65 L30 75 L70 75 L75 65 L75 35 L70 25 Z" fill={formData.kit_primary_color || '#FFD700'} stroke={formData.kit_secondary_color || '#000000'} strokeWidth="3"/>
+                                <rect x="42" y="25" width="16" height="50" fill={formData.kit_secondary_color || '#000000'} opacity="0.8"/>
+                                <circle cx="50" cy="25" r="8" fill={formData.kit_primary_color || '#FFD700'} stroke={formData.kit_secondary_color || '#000000'} strokeWidth="2"/>
+                                <text x="50" y="55" textAnchor="middle" fontSize="24" fontWeight="bold" fill="white" stroke="black" strokeWidth="1.5">
+                                  {player.number || '0'}
+                                </text>
+                              </svg>
+                              <div className="bg-black/80 text-white px-1 py-0.5 rounded text-[8px] font-bold text-center whitespace-nowrap">
+                                {player.surname || player.position}
                               </div>
                             </div>
                           ))}
