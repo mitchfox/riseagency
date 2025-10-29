@@ -34,34 +34,34 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
     <>
       <Dialog open={open} onOpenChange={handleDialogChange}>
         <DialogContent 
-          className="w-[1080px] h-[1300px] max-w-[90vw] max-h-[90vh] p-0 border-primary/20 bg-transparent [&>button]:hidden overflow-hidden"
+          className="max-w-2xl w-full p-0 border-primary/20 bg-transparent [&>button]:hidden overflow-hidden"
           aria-describedby="intro-modal-description"
         >
-          <div className="relative w-full h-full">
-            {/* Main Image - Fixed dimensions, no stretching */}
+          <div className="relative w-full">
+            {/* Main Image - Natural size, no stretching */}
             <img 
               src={introImage} 
               alt="RISE Football - From Striving to Rising to Thriving" 
-              className="w-full h-full object-cover"
+              className="w-full h-auto object-contain"
             />
             
-            {/* Overlay Content - Top Left */}
-            <div className="absolute top-8 left-8 right-8 max-w-md">
-              <p id="intro-modal-description" className="text-sm text-white/90 leading-relaxed mb-4">
+            {/* Overlay Content - Top Left, using all black space */}
+            <div className="absolute top-6 left-6 right-1/2 pr-6 space-y-6">
+              <p id="intro-modal-description" className="text-base md:text-lg text-white leading-relaxed">
                 We scout across the entirety of professional football in Europe and have guided many Premier League players to success through their development journey to RISE through the game and realise potential.
               </p>
               
               {/* Buttons */}
-              <div className="flex flex-row gap-3">
+              <div className="flex flex-col gap-3">
                 <Button 
                   onClick={handleRequestRepresentation}
-                  className="bg-gray-300 text-black hover:bg-gray-400 font-bebas uppercase tracking-wider px-4 py-2 text-xs"
+                  className="bg-gray-300 text-black hover:bg-gray-400 font-bebas uppercase tracking-wider px-6 py-3 text-sm w-full"
                 >
                   Request Representation
                 </Button>
                 <Button 
                   onClick={handleEnterSite}
-                  className="btn-shine font-bebas uppercase tracking-wider px-4 py-2 text-xs"
+                  className="btn-shine font-bebas uppercase tracking-wider px-6 py-3 text-sm w-full"
                 >
                   Enter Site
                 </Button>
