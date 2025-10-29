@@ -167,9 +167,33 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
                     <div className="text-[9px] text-white/80 uppercase tracking-wider mt-0.5">Age</div>
                   </div>
                   
-                  {/* Nationality - Top Right */}
+                  {/* Nationality Flag - Top Right */}
                   <div className="absolute top-4 right-4 text-right">
-                    <div className="text-4xl leading-none mb-0.5">{starPlayers[starIndex]?.nationality}</div>
+                    <div className="text-4xl leading-none mb-0.5">
+                      {(() => {
+                        const nat = starPlayers[starIndex]?.nationality;
+                        if (!nat) return '';
+                        const countryFlags: Record<string, string> = {
+                          'Czech Republic': '🇨🇿',
+                          'Belgium': '🇧🇪',
+                          'Cape Verdean': '🇨🇻',
+                          'Cape Verde': '🇨🇻',
+                          'England': '🏴󠁧󠁢󠁥󠁮󠁧󠁿',
+                          'Scotland': '🏴󠁧󠁢󠁳󠁣󠁴󠁿',
+                          'Wales': '🏴󠁧󠁢󠁷󠁬󠁳󠁿',
+                          'Ireland': '🇮🇪',
+                          'France': '🇫🇷',
+                          'Germany': '🇩🇪',
+                          'Spain': '🇪🇸',
+                          'Italy': '🇮🇹',
+                          'Portugal': '🇵🇹',
+                          'Netherlands': '🇳🇱',
+                          'Brazil': '🇧🇷',
+                          'Argentina': '🇦🇷'
+                        };
+                        return countryFlags[nat] || nat;
+                      })()}
+                    </div>
                     <div className="text-[9px] text-white/80 uppercase tracking-wider">Nationality</div>
                   </div>
                   
@@ -178,6 +202,21 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
                     <div className="text-3xl font-bold text-white font-bebas leading-none">{starPlayers[starIndex]?.position}</div>
                     <div className="text-[9px] text-white/80 uppercase tracking-wider mt-0.5">Position</div>
                   </div>
+                  
+                  {/* Club Logo - Bottom Right */}
+                  {(() => {
+                    try {
+                      const bio = JSON.parse(starPlayers[starIndex]?.bio || '{}');
+                      const clubLogo = bio.tacticalFormations?.[0]?.clubLogo;
+                      return clubLogo ? (
+                        <div className="absolute bottom-16 right-4">
+                          <img src={clubLogo} alt="Club" className="w-12 h-12 object-contain" />
+                        </div>
+                      ) : null;
+                    } catch {
+                      return null;
+                    }
+                  })()}
                   
                   {/* Our Stars Button */}
                   <div className="absolute bottom-0 left-0 right-0 p-3">
