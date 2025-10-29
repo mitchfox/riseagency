@@ -151,16 +151,13 @@ const AnalysisViewer = () => {
           {isPreMatch && (
             <div className="border-4 border-primary rounded-lg">
               <Accordion type="single" collapsible className="space-y-0">
-                {/* Teams Header with Custom Background Colors */}
+                {/* Teams Header */}
                 <div className="relative border-t-4 border-b-4 border-primary rounded-lg overflow-hidden mb-8">
-                  <div className="flex items-center justify-between p-4">
+                  <div className="flex items-center justify-between p-2">
                     {/* Home Team */}
-                    <div 
-                      className="flex-1 flex items-center justify-center gap-4 py-6 px-4 rounded-l-lg"
-                      style={{ backgroundColor: analysis.home_team_bg_color || '#1a1a1a' }}
-                    >
+                    <div className="flex-1 flex items-center justify-center gap-4 py-2 px-4 rounded-l-lg">
                       {analysis.home_team_logo && (
-                        <div className="w-20 h-20 rounded-lg flex items-center justify-center overflow-hidden bg-white/10 p-2">
+                        <div className="w-32 h-32 rounded-lg flex items-center justify-center overflow-hidden bg-white/10 p-2">
                           <img
                             src={analysis.home_team_logo}
                             alt={analysis.home_team || "Home team"}
@@ -179,15 +176,12 @@ const AnalysisViewer = () => {
                     </div>
 
                     {/* Away Team */}
-                    <div 
-                      className="flex-1 flex items-center justify-center gap-4 py-6 px-4 rounded-r-lg"
-                      style={{ backgroundColor: analysis.away_team_bg_color || '#8B0000' }}
-                    >
+                    <div className="flex-1 flex items-center justify-center gap-4 py-2 px-4 rounded-r-lg">
                       <span className="text-2xl md:text-3xl font-bebas text-white tracking-wide">
                         {analysis.away_team}
                       </span>
                       {analysis.away_team_logo && (
-                        <div className="w-20 h-20 rounded-lg flex items-center justify-center overflow-hidden bg-white/10 p-2">
+                        <div className="w-32 h-32 rounded-lg flex items-center justify-center overflow-hidden bg-white/10 p-2">
                           <img
                             src={analysis.away_team_logo}
                             alt={analysis.away_team || "Away team"}
@@ -515,13 +509,11 @@ const AnalysisViewer = () => {
               </div>
 
               {analysis.player_image_url && (
-                <div className="w-full">
-                  <img
-                    src={analysis.player_image_url}
-                    alt="Player"
-                    className="w-full max-h-96 object-cover rounded-lg"
-                  />
-                </div>
+                <img
+                  src={analysis.player_image_url}
+                  alt="Player"
+                  className="w-full max-h-48 object-cover rounded-lg"
+                />
               )}
 
               {analysis.strengths_improvements && (
