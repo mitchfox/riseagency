@@ -224,7 +224,7 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
                       return (
                         <div
                           key={`nat-${player.id}`}
-                          className="transition-opacity duration-1000 ease-in-out"
+                          className="flex flex-col items-center transition-opacity duration-1000 ease-in-out"
                           style={{ 
                             opacity: index === starIndex ? 1 : 0,
                             position: index === starIndex ? 'relative' : 'absolute',
@@ -234,7 +234,7 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
                           <img 
                             src={flagUrl} 
                             alt={`${normalizedNat} flag`}
-                            className="w-6 h-4 object-contain mb-0.5 sm:w-10 sm:h-8"
+                            className="w-6 h-4 object-contain mb-0.5 sm:w-10 sm:h-8 sm:mb-1"
                           />
                           <div className="text-[6px] text-white/80 uppercase tracking-wider text-center sm:text-[9px]">Nationality</div>
                         </div>
@@ -269,14 +269,14 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
                         return clubLogo ? (
                           <div
                             key={`club-${player.id}`}
-                            className="transition-opacity duration-1000 ease-in-out"
+                            className="flex flex-col items-center transition-opacity duration-1000 ease-in-out"
                             style={{ 
                               opacity: index === starIndex ? 1 : 0,
                               position: index === starIndex ? 'relative' : 'absolute',
                               visibility: index === starIndex ? 'visible' : 'hidden'
                             }}
                           >
-                            <img src={clubLogo} alt="Club" className="w-6 h-6 object-contain mb-0.5 sm:w-12 sm:h-12" />
+                            <img src={clubLogo} alt="Club" className="w-6 h-6 object-contain mb-0.5 sm:w-12 sm:h-12 sm:mb-1" />
                             <div className="text-[6px] text-white/80 uppercase tracking-wider text-center sm:text-[9px]">Club</div>
                           </div>
                         ) : null;
