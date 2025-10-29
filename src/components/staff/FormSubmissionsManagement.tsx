@@ -3,9 +3,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { Mail, Users, MessageSquare, Calendar } from "lucide-react";
+import { Mail, Users, MessageSquare, Calendar, Send } from "lucide-react";
+import { EmailResponseDialog } from "./EmailResponseDialog";
 
 interface FormSubmission {
   id: string;
@@ -17,6 +19,8 @@ interface FormSubmission {
 export const FormSubmissionsManagement = () => {
   const [submissions, setSubmissions] = useState<FormSubmission[]>([]);
   const [loading, setLoading] = useState(true);
+  const [emailDialogOpen, setEmailDialogOpen] = useState(false);
+  const [selectedSubmission, setSelectedSubmission] = useState<FormSubmission | null>(null);
 
   useEffect(() => {
     fetchSubmissions();
@@ -67,6 +71,24 @@ export const FormSubmissionsManagement = () => {
       default:
         return formType;
     }
+  };
+
+  const getSubmissionEmail = (submission: FormSubmission) => {
+    return submission.data.email || null;
+  };
+
+  const getSubmissionName = (submission: FormSubmission) => {
+    return submission.data.name || "Recipient";
+  };
+
+  const handleSendEmail = (submission: FormSubmission) => {
+    const email = getSubmissionEmail(submission);
+    if (!email) {
+      toast.error("No email address found for this submission");
+      return;
+    }
+    setSelectedSubmission(submission);
+    setEmailDialogOpen(true);
   };
 
   const renderSubmissionDetails = (submission: FormSubmission) => {
@@ -180,9 +202,22 @@ export const FormSubmissionsManagement = () => {
                           {getFormTypeLabel(submission.form_type)}
                         </Badge>
                       </div>
-                      <span className="text-sm text-muted-foreground">
-                        {format(new Date(submission.created_at), "MMM d, yyyy 'at' h:mm a")}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-muted-foreground">
+                          {format(new Date(submission.created_at), "MMM d, yyyy 'at' h:mm a")}
+                        </span>
+                        {getSubmissionEmail(submission) && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleSendEmail(submission)}
+                            className="gap-2"
+                          >
+                            <Send className="w-4 h-4" />
+                            Send Email
+                          </Button>
+                        )}
+                      </div>
                     </div>
                     {renderSubmissionDetails(submission)}
                   </CardContent>
@@ -200,9 +235,22 @@ export const FormSubmissionsManagement = () => {
                       <Badge variant="secondary">
                         {getFormTypeLabel(submission.form_type)}
                       </Badge>
-                      <span className="text-sm text-muted-foreground">
-                        {format(new Date(submission.created_at), "MMM d, yyyy 'at' h:mm a")}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-muted-foreground">
+                          {format(new Date(submission.created_at), "MMM d, yyyy 'at' h:mm a")}
+                        </span>
+                        {getSubmissionEmail(submission) && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleSendEmail(submission)}
+                            className="gap-2"
+                          >
+                            <Send className="w-4 h-4" />
+                            Send Email
+                          </Button>
+                        )}
+                      </div>
                     </div>
                     {renderSubmissionDetails(submission)}
                   </CardContent>
@@ -212,6 +260,16 @@ export const FormSubmissionsManagement = () => {
           ))}
         </Tabs>
       </CardContent>
+
+      {selectedSubmission && (
+        <EmailResponseDialog
+          open={emailDialogOpen}
+          onOpenChange={setEmailDialogOpen}
+          recipientEmail={getSubmissionEmail(selectedSubmission) || ""}
+          recipientName={getSubmissionName(selectedSubmission)}
+          submissionType={getFormTypeLabel(selectedSubmission.form_type)}
+        />
+      )}
     </Card>
   );
 };
