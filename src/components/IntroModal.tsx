@@ -105,12 +105,12 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
             <img 
               src={riseLogo} 
               alt="RISE Football" 
-              className="absolute top-2 right-2 w-16 h-auto object-contain sm:top-4 sm:right-4 sm:w-32"
+              className="absolute top-2 right-2 w-32 h-auto object-contain sm:top-4 sm:right-4 sm:w-32"
             />
             
             {/* Overlay Content - Top Left, using all black space */}
             <div className="absolute top-[6px] left-3 right-[35%] pr-3 space-y-1 sm:top-[9px] sm:left-6 sm:pr-6 sm:space-y-1.5">
-              <p id="intro-modal-description" className="text-[10px] text-white leading-tight sm:text-sm sm:leading-relaxed">
+              <p id="intro-modal-description" className="text-[11px] text-white leading-tight sm:text-sm sm:leading-relaxed">
                 We scout across the entirety of professional football in Europe and have guided many Premier League players to success through their development journey to RISE through the game and realise potential.
               </p>
               
@@ -118,13 +118,13 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
               <div className="flex flex-col gap-1 sm:gap-1.5">
                 <Button 
                   onClick={handleRequestRepresentation}
-                  className="bg-gray-300 text-black hover:bg-gray-400 font-bebas uppercase tracking-wider px-2 py-0 text-xs w-[140px] border-0 sm:px-4 sm:text-base sm:w-[240px]"
+                  className="bg-gray-300 text-black hover:bg-gray-400 font-bebas uppercase tracking-wider px-2 py-0.5 text-xs w-[160px] border-0 h-5 sm:px-4 sm:text-base sm:w-[240px] sm:h-auto"
                 >
                   Request Representation
                 </Button>
                 <Button 
                   onClick={handleEnterSite}
-                  className="btn-shine font-bebas uppercase tracking-wider px-2 py-0 text-xs w-[140px] sm:px-4 sm:text-base sm:w-[240px]"
+                  className="btn-shine font-bebas uppercase tracking-wider px-2 py-0.5 text-xs w-[160px] h-5 sm:px-4 sm:text-base sm:w-[240px] sm:h-auto"
                 >
                   Enter Site
                 </Button>
@@ -138,12 +138,12 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
                   handleDialogChange(false);
                   navigate("/news");
                 }}
-                className="absolute right-3 bottom-3 w-[120px] bg-black/70 backdrop-blur-sm border border-white rounded-lg overflow-hidden cursor-pointer hover:bg-black/80 transition-all sm:right-6 sm:bottom-6 sm:w-[220px] sm:border-2"
+                className="absolute right-3 bottom-3 w-[140px] bg-black/70 backdrop-blur-sm border border-white rounded-lg overflow-hidden cursor-pointer hover:bg-black/80 transition-all sm:right-6 sm:bottom-6 sm:w-[220px] sm:border-2"
               >
                 <img 
                   src={newsItems[newsIndex]?.image_url} 
                   alt="Latest News" 
-                  className="w-full h-16 object-cover transition-opacity duration-500 sm:h-32" 
+                  className="w-full h-24 object-cover transition-opacity duration-500 sm:h-32" 
                 />
                 <div className="p-1.5 sm:p-3">
                   <h3 className="text-white font-bebas text-[10px] uppercase tracking-wider mb-0.5 sm:text-base sm:mb-1">Latest News</h3>
@@ -159,7 +159,7 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
                   handleDialogChange(false);
                   navigate("/stars");
                 }}
-                className="absolute left-3 bottom-3 w-[120px] cursor-pointer hover:scale-[1.02] transition-transform sm:left-6 sm:bottom-6 sm:w-[220px]"
+                className="absolute left-3 bottom-3 w-[140px] cursor-pointer hover:scale-[1.02] transition-transform sm:left-6 sm:bottom-6 sm:w-[220px]"
               >
                 <div className="relative w-full aspect-[3/4] rounded-lg overflow-hidden group border border-[#B8A574] sm:border-2">
                   {/* Player Image with Dark Overlay */}
