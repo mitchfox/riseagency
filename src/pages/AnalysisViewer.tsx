@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 interface Analysis {
   id: string;
@@ -142,7 +143,7 @@ const AnalysisViewer = () => {
 
           {/* Pre-Match Content - Redesigned */}
           {isPreMatch && (
-            <div className="space-y-0">
+            <Accordion type="single" collapsible className="space-y-0">{" "}
               {/* Match Title - Now showing date */}
               <div className="text-center mb-6">
                 <h1 className="text-3xl md:text-4xl font-bebas uppercase tracking-wider text-white">
@@ -203,36 +204,36 @@ const AnalysisViewer = () => {
 
               {/* Overview Section with Gold Header */}
               {analysis.key_details && (
-                <Collapsible className="mb-8" defaultOpen={false}>
-                  <CollapsibleTrigger className="w-full bg-primary/90 text-center py-3 rounded-t-lg hover:bg-primary flex items-center justify-center gap-2 transition-colors">
+                <AccordionItem value="overview" className="mb-8 border-0">
+                  <AccordionTrigger className="w-full bg-primary/90 text-center py-3 rounded-t-lg hover:bg-primary flex items-center justify-center gap-2 transition-colors [&[data-state=open]>svg]:rotate-180">
                     <h2 className="text-2xl font-bebas uppercase tracking-widest text-black">
                       Overview
                     </h2>
-                    <ChevronDown className="w-5 h-5 text-black" />
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <Card className="bg-white/95 rounded-t-none border-t-0">
+                    <ChevronDown className="w-5 h-5 text-black transition-transform duration-200" />
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <Card className="bg-white/95 rounded-t-none border-t-0 animate-accordion-down">
                       <CardContent className="p-6">
                         <p className="text-gray-800 leading-relaxed whitespace-pre-wrap">
                           {analysis.key_details}
                         </p>
                       </CardContent>
                     </Card>
-                  </CollapsibleContent>
-                </Collapsible>
+                  </AccordionContent>
+                </AccordionItem>
               )}
 
               {/* Opposition Strengths */}
               {analysis.opposition_strengths && (
-                <Collapsible className="mb-8" defaultOpen={false}>
-                  <CollapsibleTrigger className="w-full bg-primary/90 text-center py-3 rounded-t-lg hover:bg-primary flex items-center justify-center gap-2 transition-colors">
+                <AccordionItem value="strengths" className="mb-8 border-0">
+                  <AccordionTrigger className="w-full bg-primary/90 text-center py-3 rounded-t-lg hover:bg-primary flex items-center justify-center gap-2 transition-colors [&[data-state=open]>svg]:rotate-180">
                     <h2 className="text-2xl font-bebas uppercase tracking-widest text-black">
                       Opposition Strengths
                     </h2>
-                    <ChevronDown className="w-5 h-5 text-black" />
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <Card className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-t-none border-t-0">
+                    <ChevronDown className="w-5 h-5 text-black transition-transform duration-200" />
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <Card className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-t-none border-t-0 animate-accordion-down">
                       <CardContent className="p-8">
                         <div className="space-y-4 max-w-3xl mx-auto">
                           {analysis.opposition_strengths.split('\n').filter(line => line.trim()).map((line, idx) => {
@@ -249,21 +250,21 @@ const AnalysisViewer = () => {
                         </div>
                       </CardContent>
                     </Card>
-                  </CollapsibleContent>
-                </Collapsible>
+                  </AccordionContent>
+                </AccordionItem>
               )}
 
               {/* Opposition Weaknesses */}
               {analysis.opposition_weaknesses && (
-                <Collapsible className="mb-8" defaultOpen={false}>
-                  <CollapsibleTrigger className="w-full bg-primary/90 text-center py-3 rounded-t-lg hover:bg-primary flex items-center justify-center gap-2 transition-colors">
+                <AccordionItem value="weaknesses" className="mb-8 border-0">
+                  <AccordionTrigger className="w-full bg-primary/90 text-center py-3 rounded-t-lg hover:bg-primary flex items-center justify-center gap-2 transition-colors [&[data-state=open]>svg]:rotate-180">
                     <h2 className="text-2xl font-bebas uppercase tracking-widest text-black">
                       Opposition Weaknesses
                     </h2>
-                    <ChevronDown className="w-5 h-5 text-black" />
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <Card className="bg-gradient-to-br from-red-50 to-orange-50 rounded-t-none border-t-0">
+                    <ChevronDown className="w-5 h-5 text-black transition-transform duration-200" />
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <Card className="bg-gradient-to-br from-red-50 to-orange-50 rounded-t-none border-t-0 animate-accordion-down">
                       <CardContent className="p-8">
                         <div className="space-y-4 max-w-3xl mx-auto">
                           {analysis.opposition_weaknesses.split('\n').filter(line => line.trim()).map((line, idx) => {
@@ -280,21 +281,21 @@ const AnalysisViewer = () => {
                         </div>
                       </CardContent>
                     </Card>
-                  </CollapsibleContent>
-                </Collapsible>
+                  </AccordionContent>
+                </AccordionItem>
               )}
 
               {/* Key Matchups */}
               {analysis.matchups && analysis.matchups.length > 0 && (
-                <Collapsible className="mb-8" defaultOpen={false}>
-                  <CollapsibleTrigger className="w-full bg-primary/90 text-center py-3 rounded-t-lg hover:bg-primary flex items-center justify-center gap-2 transition-colors">
+                <AccordionItem value="matchups" className="mb-8 border-0">
+                  <AccordionTrigger className="w-full bg-primary/90 text-center py-3 rounded-t-lg hover:bg-primary flex items-center justify-center gap-2 transition-colors [&[data-state=open]>svg]:rotate-180">
                     <h2 className="text-2xl font-bebas uppercase tracking-widest text-black">
                       Potential Matchup(s)
                     </h2>
-                    <ChevronDown className="w-5 h-5 text-black" />
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <Card className="bg-white/95 rounded-t-none border-t-0">
+                    <ChevronDown className="w-5 h-5 text-black transition-transform duration-200" />
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <Card className="bg-white/95 rounded-t-none border-t-0 animate-accordion-down">
                       <CardContent className="p-8">
                         <div className={`flex justify-center items-center gap-8 flex-wrap max-w-5xl mx-auto`}>
                           {analysis.matchups.map((matchup: any, index: number) => (
@@ -326,24 +327,30 @@ const AnalysisViewer = () => {
                         </div>
                       </CardContent>
                     </Card>
-                  </CollapsibleContent>
-                </Collapsible>
+                  </AccordionContent>
+                </AccordionItem>
               )}
 
               {/* Scheme Section */}
               {(analysis.scheme_title || analysis.selected_scheme) && (
-                <Collapsible className="mb-8" defaultOpen={false}>
-                  <CollapsibleTrigger className="w-full bg-primary/90 text-center py-3 rounded-t-lg hover:bg-primary flex items-center justify-center gap-2 transition-colors">
+                <AccordionItem value="scheme" className="mb-8 border-0">
+                  <AccordionTrigger className="w-full bg-primary/90 text-center py-3 rounded-t-lg hover:bg-primary flex items-center justify-center gap-2 transition-colors [&[data-state=open]>svg]:rotate-180">
                     <h2 className="text-2xl font-bebas uppercase tracking-widest text-black">
                       {analysis.scheme_title || "Tactical Scheme"}
                     </h2>
-                    <ChevronDown className="w-5 h-5 text-black" />
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <Card className="bg-white/95 rounded-t-none border-t-0">
-                      <CardContent className="p-6 space-y-4">
+                    <ChevronDown className="w-5 h-5 text-black transition-transform duration-200" />
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <Card className="bg-white/95 rounded-t-none border-t-0 animate-accordion-down">
+                      <CardContent className="p-6 space-y-6">
+                        {analysis.scheme_paragraph_1 && (
+                          <p className="text-gray-800 leading-relaxed whitespace-pre-wrap">
+                            {analysis.scheme_paragraph_1}
+                          </p>
+                        )}
+                        
                         {analysis.selected_scheme && (
-                          <div className="relative bg-gradient-to-b from-green-700 to-green-800 rounded-lg p-8 min-h-[500px] border-4 border-white shadow-xl">
+                          <div className="relative bg-gradient-to-b from-green-700 to-green-800 rounded-lg p-8 min-h-[600px] border-4 border-white shadow-xl">
                             <div className="text-white text-center mb-4 text-2xl font-bebas tracking-wider">
                               {analysis.selected_scheme}
                             </div>
@@ -378,11 +385,7 @@ const AnalysisViewer = () => {
                             )}
                           </div>
                         )}
-                        {analysis.scheme_paragraph_1 && (
-                          <p className="text-gray-800 leading-relaxed whitespace-pre-wrap">
-                            {analysis.scheme_paragraph_1}
-                          </p>
-                        )}
+                        
                         {analysis.scheme_paragraph_2 && (
                           <p className="text-gray-800 leading-relaxed whitespace-pre-wrap">
                             {analysis.scheme_paragraph_2}
@@ -390,54 +393,58 @@ const AnalysisViewer = () => {
                         )}
                       </CardContent>
                     </Card>
-                  </CollapsibleContent>
-                </Collapsible>
+                  </AccordionContent>
+                </AccordionItem>
               )}
 
-              {/* Additional Sections from Points */}
+              {/* Additional Sections from Points with Gap and Silver Colors */}
               {analysis.points && analysis.points.length > 0 && (
-                <div className="space-y-0">
-                  {analysis.points.map((point: any, index: number) => (
-                    <Collapsible key={index} className="mb-8" defaultOpen={false}>
-                      <CollapsibleTrigger className="w-full bg-primary/90 text-center py-3 rounded-t-lg hover:bg-primary flex items-center justify-center gap-2 transition-colors">
-                        <h2 className="text-2xl font-bebas uppercase tracking-widest text-black">
-                          {point.title}
-                        </h2>
-                        <ChevronDown className="w-5 h-5 text-black" />
-                      </CollapsibleTrigger>
-                      <CollapsibleContent>
-                        <Card className="bg-white/95 rounded-t-none border-t-0">
-                          <CardContent className="p-6 space-y-4">
-                            {point.paragraph_1 && (
-                              <p className="text-gray-800 leading-relaxed whitespace-pre-wrap">
-                                {point.paragraph_1}
-                              </p>
-                            )}
-                            {point.images && point.images.length > 0 && (
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {point.images.map((img: string, imgIndex: number) => (
-                                  <img
-                                    key={imgIndex}
-                                    src={img}
-                                    alt={`${point.title} - Image ${imgIndex + 1}`}
-                                    className="w-full rounded-lg"
-                                  />
-                                ))}
-                              </div>
-                            )}
-                            {point.paragraph_2 && (
-                              <p className="text-gray-800 leading-relaxed whitespace-pre-wrap">
-                                {point.paragraph_2}
-                              </p>
-                            )}
-                          </CardContent>
-                        </Card>
-                      </CollapsibleContent>
-                    </Collapsible>
-                  ))}
+                <div className="mt-12 space-y-0">
+                  {analysis.points.map((point: any, index: number) => {
+                    const isEven = index % 2 === 0;
+                    const silverColor = isEven ? 'bg-gray-300/90' : 'bg-gray-400/90';
+                    return (
+                      <AccordionItem key={index} value={`point-${index}`} className="mb-8 border-0">
+                        <AccordionTrigger className={`w-full ${silverColor} text-center py-3 rounded-t-lg hover:opacity-90 flex items-center justify-center gap-2 transition-all [&[data-state=open]>svg]:rotate-180`}>
+                          <h2 className="text-2xl font-bebas uppercase tracking-widest text-black">
+                            {point.title}
+                          </h2>
+                          <ChevronDown className="w-5 h-5 text-black transition-transform duration-200" />
+                        </AccordionTrigger>
+                        <AccordionContent>
+                          <Card className="bg-white/95 rounded-t-none border-t-0 animate-accordion-down">
+                            <CardContent className="p-6 space-y-6">
+                              {point.paragraph_1 && (
+                                <p className="text-gray-800 leading-relaxed whitespace-pre-wrap">
+                                  {point.paragraph_1}
+                                </p>
+                              )}
+                              {point.images && point.images.length > 0 && (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                  {point.images.map((img: string, imgIndex: number) => (
+                                    <img
+                                      key={imgIndex}
+                                      src={img}
+                                      alt={`${point.title} - Image ${imgIndex + 1}`}
+                                      className="w-full rounded-lg shadow-md"
+                                    />
+                                  ))}
+                                </div>
+                              )}
+                              {point.paragraph_2 && (
+                                <p className="text-gray-800 leading-relaxed whitespace-pre-wrap">
+                                  {point.paragraph_2}
+                                </p>
+                              )}
+                            </CardContent>
+                          </Card>
+                        </AccordionContent>
+                      </AccordionItem>
+                    );
+                  })}
                 </div>
               )}
-            </div>
+            </Accordion>
           )}
 
           {/* Post-Match Content */}
