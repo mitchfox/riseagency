@@ -140,15 +140,32 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
                 }}
                 className="absolute right-3 bottom-3 w-[140px] bg-black/70 backdrop-blur-sm border border-white rounded-lg overflow-hidden cursor-pointer hover:bg-black/80 sm:right-6 sm:bottom-6 sm:w-[220px] sm:border-2"
               >
-                <img 
-                  key={newsItems[newsIndex]?.id}
-                  src={newsItems[newsIndex]?.image_url} 
-                  alt="Latest News" 
-                  className="w-full aspect-square object-cover animate-fade-in sm:h-32 sm:aspect-auto" 
-                />
-                <div key={`news-text-${newsItems[newsIndex]?.id}`} className="p-1.5 sm:p-3 animate-fade-in">
-                  <h3 className="text-white font-bebas text-[10px] uppercase tracking-wider mb-0.5 sm:text-base sm:mb-1">Latest News</h3>
-                  <p className="text-white/80 text-[8px] line-clamp-2 sm:text-xs">{newsItems[newsIndex]?.title}</p>
+                <div className="relative w-full aspect-square sm:h-32 sm:aspect-auto">
+                  {newsItems.map((item, index) => (
+                    <img 
+                      key={item.id}
+                      src={item.image_url} 
+                      alt="Latest News" 
+                      className="absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ease-in-out"
+                      style={{ opacity: index === newsIndex ? 1 : 0 }}
+                    />
+                  ))}
+                </div>
+                <div className="relative p-1.5 sm:p-3">
+                  {newsItems.map((item, index) => (
+                    <div 
+                      key={`news-text-${item.id}`}
+                      className="transition-opacity duration-1000 ease-in-out"
+                      style={{ 
+                        opacity: index === newsIndex ? 1 : 0,
+                        position: index === newsIndex ? 'relative' : 'absolute',
+                        visibility: index === newsIndex ? 'visible' : 'hidden'
+                      }}
+                    >
+                      <h3 className="text-white font-bebas text-[10px] uppercase tracking-wider mb-0.5 sm:text-base sm:mb-1">Latest News</h3>
+                      <p className="text-white/80 text-[8px] line-clamp-2 sm:text-xs">{item.title}</p>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
@@ -163,61 +180,111 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
                 className="absolute left-3 bottom-3 w-[180px] cursor-pointer hover:scale-[1.02] transition-transform sm:left-6 sm:bottom-6 sm:w-[220px]"
               >
                 <div className="relative w-full aspect-[3/4] rounded-lg overflow-hidden group border border-[#B8A574] sm:border-2">
-                  {/* Player Image with Dark Overlay */}
-                  <img 
-                    key={starPlayers[starIndex]?.id}
-                    src={starPlayers[starIndex]?.image_url} 
-                    alt={starPlayers[starIndex]?.name}
-                    className="w-full h-full object-cover animate-fade-in" 
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/80" />
+                  {/* Player Images with Dark Overlay - All rendered with opacity transitions */}
+                  {starPlayers.map((player, index) => (
+                    <div
+                      key={player.id}
+                      className="absolute inset-0 transition-opacity duration-1000 ease-in-out"
+                      style={{ opacity: index === starIndex ? 1 : 0 }}
+                    >
+                      <img 
+                        src={player.image_url} 
+                        alt={player.name}
+                        className="w-full h-full object-cover" 
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/80" />
+                    </div>
+                  ))}
                 
                   {/* Age - Top Left */}
-                  <div key={`age-${starPlayers[starIndex]?.id}`} className="absolute top-2 left-2 flex flex-col items-center min-w-[30px] sm:top-4 sm:left-4 sm:min-w-[60px] animate-fade-in">
-                    <div className="text-xl font-bold text-white font-bebas leading-none text-center sm:text-4xl">{starPlayers[starIndex]?.age}</div>
-                    <div className="text-[6px] text-white/80 uppercase tracking-wider mt-0.5 text-center sm:text-[9px]">Age</div>
+                  <div className="absolute top-2 left-2 flex flex-col items-center min-w-[30px] sm:top-4 sm:left-4 sm:min-w-[60px]">
+                    {starPlayers.map((player, index) => (
+                      <div
+                        key={`age-${player.id}`}
+                        className="transition-opacity duration-1000 ease-in-out"
+                        style={{ 
+                          opacity: index === starIndex ? 1 : 0,
+                          position: index === starIndex ? 'relative' : 'absolute',
+                          visibility: index === starIndex ? 'visible' : 'hidden'
+                        }}
+                      >
+                        <div className="text-xl font-bold text-white font-bebas leading-none text-center sm:text-4xl">{player.age}</div>
+                        <div className="text-[6px] text-white/80 uppercase tracking-wider mt-0.5 text-center sm:text-[9px]">Age</div>
+                      </div>
+                    ))}
                   </div>
                   
                   {/* Nationality Flag - Top Right */}
-                  <div key={`nat-${starPlayers[starIndex]?.id}`} className="absolute top-2 right-2 flex flex-col items-center min-w-[30px] sm:top-4 sm:right-4 sm:min-w-[60px] animate-fade-in">
-                    {(() => {
-                      const nat = starPlayers[starIndex]?.nationality;
+                  <div className="absolute top-2 right-2 flex flex-col items-center min-w-[30px] sm:top-4 sm:right-4 sm:min-w-[60px]">
+                    {starPlayers.map((player, index) => {
+                      const nat = player.nationality;
                       if (!nat) return null;
-                      // Handle "Cape Verdean" -> "Cape Verde" mapping
                       const normalizedNat = nat === 'Cape Verdean' ? 'Cape Verde' : nat;
                       const flagUrl = getCountryFlagUrl(normalizedNat);
                       return (
-                        <img 
-                          src={flagUrl} 
-                          alt={`${normalizedNat} flag`}
-                          className="w-6 h-4 object-contain mb-0.5 sm:w-10 sm:h-8"
-                        />
+                        <div
+                          key={`nat-${player.id}`}
+                          className="transition-opacity duration-1000 ease-in-out"
+                          style={{ 
+                            opacity: index === starIndex ? 1 : 0,
+                            position: index === starIndex ? 'relative' : 'absolute',
+                            visibility: index === starIndex ? 'visible' : 'hidden'
+                          }}
+                        >
+                          <img 
+                            src={flagUrl} 
+                            alt={`${normalizedNat} flag`}
+                            className="w-6 h-4 object-contain mb-0.5 sm:w-10 sm:h-8"
+                          />
+                          <div className="text-[6px] text-white/80 uppercase tracking-wider text-center sm:text-[9px]">Nationality</div>
+                        </div>
                       );
-                    })()}
-                    <div className="text-[6px] text-white/80 uppercase tracking-wider text-center sm:text-[9px]">Nationality</div>
+                    })}
                   </div>
                   
                   {/* Position - Bottom Left */}
-                  <div key={`pos-${starPlayers[starIndex]?.id}`} className="absolute bottom-8 left-2 flex flex-col items-center min-w-[30px] sm:bottom-16 sm:left-4 sm:min-w-[60px] animate-fade-in">
-                    <div className="text-lg font-bold text-white font-bebas leading-none text-center sm:text-3xl">{starPlayers[starIndex]?.position}</div>
-                    <div className="text-[6px] text-white/80 uppercase tracking-wider mt-0.5 text-center sm:text-[9px]">Position</div>
+                  <div className="absolute bottom-8 left-2 flex flex-col items-center min-w-[30px] sm:bottom-16 sm:left-4 sm:min-w-[60px]">
+                    {starPlayers.map((player, index) => (
+                      <div
+                        key={`pos-${player.id}`}
+                        className="transition-opacity duration-1000 ease-in-out"
+                        style={{ 
+                          opacity: index === starIndex ? 1 : 0,
+                          position: index === starIndex ? 'relative' : 'absolute',
+                          visibility: index === starIndex ? 'visible' : 'hidden'
+                        }}
+                      >
+                        <div className="text-lg font-bold text-white font-bebas leading-none text-center sm:text-3xl">{player.position}</div>
+                        <div className="text-[6px] text-white/80 uppercase tracking-wider mt-0.5 text-center sm:text-[9px]">Position</div>
+                      </div>
+                    ))}
                   </div>
                   
                   {/* Club Logo - Bottom Right */}
-                  {(() => {
-                    try {
-                      const bio = JSON.parse(starPlayers[starIndex]?.bio || '{}');
-                      const clubLogo = bio.tacticalFormations?.[0]?.clubLogo;
-                      return clubLogo ? (
-                        <div key={`club-${starPlayers[starIndex]?.id}`} className="absolute bottom-8 right-2 flex flex-col items-center min-w-[30px] sm:bottom-16 sm:right-4 sm:min-w-[60px] animate-fade-in">
-                          <img src={clubLogo} alt="Club" className="w-6 h-6 object-contain mb-0.5 sm:w-12 sm:h-12" />
-                          <div className="text-[6px] text-white/80 uppercase tracking-wider text-center sm:text-[9px]">Club</div>
-                        </div>
-                      ) : null;
-                    } catch {
-                      return null;
-                    }
-                  })()}
+                  <div className="absolute bottom-8 right-2 flex flex-col items-center min-w-[30px] sm:bottom-16 sm:right-4 sm:min-w-[60px]">
+                    {starPlayers.map((player, index) => {
+                      try {
+                        const bio = JSON.parse(player.bio || '{}');
+                        const clubLogo = bio.tacticalFormations?.[0]?.clubLogo;
+                        return clubLogo ? (
+                          <div
+                            key={`club-${player.id}`}
+                            className="transition-opacity duration-1000 ease-in-out"
+                            style={{ 
+                              opacity: index === starIndex ? 1 : 0,
+                              position: index === starIndex ? 'relative' : 'absolute',
+                              visibility: index === starIndex ? 'visible' : 'hidden'
+                            }}
+                          >
+                            <img src={clubLogo} alt="Club" className="w-6 h-6 object-contain mb-0.5 sm:w-12 sm:h-12" />
+                            <div className="text-[6px] text-white/80 uppercase tracking-wider text-center sm:text-[9px]">Club</div>
+                          </div>
+                        ) : null;
+                      } catch {
+                        return null;
+                      }
+                    })}
+                  </div>
                   
                   {/* Our Stars Button */}
                   <div className="absolute bottom-0 left-0 right-0 p-1.5 sm:p-3">
