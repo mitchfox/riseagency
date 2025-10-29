@@ -385,25 +385,25 @@ const Dashboard = () => {
           </div>
 
           <Tabs defaultValue="analysis" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 mb-8 bg-muted">
-              <TabsTrigger value="analysis" className="font-bebas uppercase text-base">
+            <TabsList className="grid w-full grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 mb-8 bg-muted h-auto p-2">
+              <TabsTrigger value="analysis" className="font-bebas uppercase text-sm sm:text-base">
                 Analysis
               </TabsTrigger>
-              <TabsTrigger value="physical" className="font-bebas uppercase text-base">
+              <TabsTrigger value="physical" className="font-bebas uppercase text-sm sm:text-base">
                 Physical Programming
               </TabsTrigger>
-              <TabsTrigger value="highlights" className="font-bebas uppercase text-base">
-                Match Highlights
+              <TabsTrigger value="highlights" className="font-bebas uppercase text-sm sm:text-base">
+                Highlights
               </TabsTrigger>
             </TabsList>
 
             <TabsContent value="analysis" className="space-y-6">
               <Tabs defaultValue="performance" className="w-full">
-                <TabsList className="grid w-full grid-cols-2 mb-4 bg-muted">
-                  <TabsTrigger value="performance" className="font-bebas uppercase">
+                <TabsList className="grid w-full grid-cols-1 sm:grid-cols-2 gap-2 mb-4 bg-muted h-auto p-2">
+                  <TabsTrigger value="performance" className="font-bebas uppercase text-sm sm:text-base">
                     Performance Analysis
                   </TabsTrigger>
-                  <TabsTrigger value="concepts" className="font-bebas uppercase">
+                  <TabsTrigger value="concepts" className="font-bebas uppercase text-sm sm:text-base">
                     Concepts
                   </TabsTrigger>
                 </TabsList>
