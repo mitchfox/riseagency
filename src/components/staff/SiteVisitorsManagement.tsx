@@ -107,17 +107,17 @@ export const SiteVisitorsManagement = () => {
         avgDuration: visitsWithDuration.length ? Math.round(totalDuration / visitsWithDuration.length) : 0,
       });
 
-      // Load all-time stats
-      let allTimeQuery = supabase
+      // Load all-time stats - use count for total visits
+      let countQuery = supabase
         .from("site_visits")
-        .select("*");
+        .select("*", { count: 'exact', head: false });
 
       // Only filter by hidden status when not showing hidden visitors
       if (!showHidden) {
-        allTimeQuery = allTimeQuery.eq("hidden", false);
+        countQuery = countQuery.eq("hidden", false);
       }
 
-      const { data: allTimeData, error: allTimeError } = await allTimeQuery;
+      const { data: allTimeData, error: allTimeError, count: totalCount } = await countQuery;
 
       if (allTimeError) throw allTimeError;
 
@@ -126,7 +126,7 @@ export const SiteVisitorsManagement = () => {
       const allTimeTotalDuration = allTimeVisitsWithDuration.reduce((acc, v) => acc + v.duration, 0);
 
       setAllTimeStats({
-        totalVisits: allTimeData?.length || 0,
+        totalVisits: totalCount || 0,
         uniqueVisitors: allTimeUniqueVisitors.size,
         avgDuration: allTimeVisitsWithDuration.length ? Math.round(allTimeTotalDuration / allTimeVisitsWithDuration.length) : 0,
       });
@@ -274,6 +274,17 @@ export const SiteVisitorsManagement = () => {
         return acc;
       }, [] as SiteVisit[])
     : filteredVisits;
+
+  // Calculate total duration per visitor across all their visits
+  const visitorDurations = new Map<string, number>();
+  visits.forEach(visit => {
+    const current = visitorDurations.get(visit.visitor_id) || 0;
+    visitorDurations.set(visit.visitor_id, current + visit.duration);
+  });
+
+  const getVisitorTotalDuration = (visitorId: string) => {
+    return visitorDurations.get(visitorId) || 0;
+  };
 
   if (selectedVisitor) {
     const isVisitorHidden = visitorDetails.length > 0 && visitorDetails[0].hidden;
@@ -575,7 +586,7 @@ export const SiteVisitorsManagement = () => {
                         {visit.visitor_id.substring(0, 16)}...
                       </TableCell>
                       <TableCell className="font-medium">{visit.page_path}</TableCell>
-                      <TableCell>{formatDuration(visit.duration)}</TableCell>
+                      <TableCell>{formatDuration(getVisitorTotalDuration(visit.visitor_id))}</TableCell>
                       <TableCell>{formatLocation(visit.location)}</TableCell>
                       <TableCell className="text-sm text-muted-foreground truncate max-w-[200px]">
                         {visit.referrer || "-"}
