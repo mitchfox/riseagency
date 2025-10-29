@@ -56,6 +56,7 @@ interface Analysis {
   concept?: string | null;
   explanation?: string | null;
   points?: any[];
+  video_url?: string | null;
   created_at: string;
 }
 
@@ -316,6 +317,38 @@ export const AnalysisManagement = () => {
       toast.success("Image uploaded successfully");
     } catch (error: any) {
       toast.error("Failed to upload image");
+      console.error(error);
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  const handleVideoUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setUploadingImage(true);
+    try {
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${Math.random()}.${fileExt}`;
+      const filePath = `${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("analysis-videos")
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from("analysis-videos").getPublicUrl(filePath);
+
+      setFormData({ ...formData, video_url: publicUrl });
+      toast.success("Video uploaded successfully");
+    } catch (error: any) {
+      toast.error("Failed to upload video");
       console.error(error);
     } finally {
       setUploadingImage(false);
@@ -654,6 +687,38 @@ Title: ${formData.scheme_title || 'Not specified'}`;
                             onClick={() => setFormData({ ...formData, match_image_url: null })}
                           >
                             <X className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+
+                    <div>
+                      <Label>Analysis Video (Optional)</Label>
+                      <p className="text-xs text-muted-foreground mb-2">
+                        Upload a video for this analysis that players can watch
+                      </p>
+                      <Input
+                        type="file"
+                        accept="video/*"
+                        onChange={handleVideoUpload}
+                        disabled={uploadingImage}
+                      />
+                      {formData.video_url && (
+                        <div className="mt-2">
+                          <video
+                            src={formData.video_url}
+                            controls
+                            className="w-full max-w-md rounded-lg"
+                          />
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="sm"
+                            className="mt-2"
+                            onClick={() => setFormData({ ...formData, video_url: null })}
+                          >
+                            <X className="w-4 h-4 mr-2" />
+                            Remove Video
                           </Button>
                         </div>
                       )}

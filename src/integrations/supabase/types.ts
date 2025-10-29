@@ -49,6 +49,7 @@ export type Database = {
           strengths_improvements: string | null
           title: string | null
           updated_at: string
+          video_url: string | null
         }
         Insert: {
           analysis_type: string
@@ -84,6 +85,7 @@ export type Database = {
           strengths_improvements?: string | null
           title?: string | null
           updated_at?: string
+          video_url?: string | null
         }
         Update: {
           analysis_type?: string
@@ -119,6 +121,7 @@ export type Database = {
           strengths_improvements?: string | null
           title?: string | null
           updated_at?: string
+          video_url?: string | null
         }
         Relationships: [
           {

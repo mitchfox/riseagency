@@ -42,6 +42,7 @@ interface Analysis {
   concept: string | null;
   explanation: string | null;
   points: any;
+  video_url: string | null;
 }
 
 // Kit SVG Component - Larger size
@@ -139,14 +140,25 @@ const AnalysisViewer = () => {
       <Header />
       <main className="pt-24 pb-12 px-4">
         <div className="container mx-auto max-w-5xl">
-          <Button
-            variant="ghost"
-            onClick={() => navigate(-1)}
-            className="mb-6 text-white hover:text-primary"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back
-          </Button>
+          <div className="flex justify-between items-center mb-6">
+            <Button
+              variant="ghost"
+              onClick={() => navigate(-1)}
+              className="text-white hover:text-primary"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back
+            </Button>
+
+            {analysis.video_url && (
+              <Button
+                onClick={() => window.open(analysis.video_url!, '_blank')}
+                className="btn-shine font-bebas uppercase tracking-wider"
+              >
+                Watch Analysis Video
+              </Button>
+            )}
+          </div>
 
           {/* Pre-Match Content - Redesigned */}
           {isPreMatch && (
