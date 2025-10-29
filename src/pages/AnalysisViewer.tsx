@@ -34,6 +34,7 @@ interface Analysis {
   scheme_paragraph_2: string | null;
   scheme_image_url: string | null;
   player_image_url: string | null;
+  match_image_url: string | null;
   strengths_improvements: string | null;
   concept: string | null;
   explanation: string | null;
@@ -84,6 +85,7 @@ const AnalysisViewer = () => {
         match_date: data.match_date || null,
         home_team_logo: data.home_team_logo || null,
         away_team_logo: data.away_team_logo || null,
+        match_image_url: data.match_image_url || null,
         selected_scheme: data.selected_scheme || null,
         starting_xi: Array.isArray(data.starting_xi) ? data.starting_xi : [],
         kit_primary_color: data.kit_primary_color || '#FFD700',
@@ -198,6 +200,17 @@ const AnalysisViewer = () => {
                   )}
                 </div>
 
+                {/* Optional Match Image */}
+                {analysis.match_image_url && (
+                  <div className="mb-8 flex justify-center">
+                    <img 
+                      src={analysis.match_image_url} 
+                      alt="Match" 
+                      className="w-full max-w-5xl rounded-lg shadow-lg"
+                    />
+                  </div>
+                )}
+
               {/* Overview Section with Gold Header */}
               {analysis.key_details && (
                 <AccordionItem value="overview" className="mb-8 border-0 data-[state=open]:border-4 data-[state=open]:border-primary data-[state=open]:rounded-lg">
@@ -230,7 +243,7 @@ const AnalysisViewer = () => {
                   </AccordionTrigger>
                   <AccordionContent>
                     <Card className="bg-gradient-to-br from-gray-900 to-black rounded-t-none border-t-0 border-0 animate-accordion-down">
-                      <CardContent className="p-3 pb-3">
+                      <CardContent className="p-3">
                         <div className="space-y-3 max-w-4xl mx-auto">
                           {analysis.opposition_strengths.split('\n').filter(line => line.trim()).map((line, idx) => {
                             const cleanLine = line.trim().replace(/^[-•]\s*/, '');
@@ -261,7 +274,7 @@ const AnalysisViewer = () => {
                   </AccordionTrigger>
                   <AccordionContent>
                     <Card className="bg-gradient-to-br from-gray-900 to-black rounded-t-none border-t-0 border-0 animate-accordion-down">
-                      <CardContent className="p-3 pb-3">
+                      <CardContent className="p-3">
                         <div className="space-y-3 max-w-4xl mx-auto">
                           {analysis.opposition_weaknesses.split('\n').filter(line => line.trim()).map((line, idx) => {
                             const cleanLine = line.trim().replace(/^[-•]\s*/, '');
@@ -292,7 +305,7 @@ const AnalysisViewer = () => {
                   </AccordionTrigger>
                   <AccordionContent>
                     <div className="rounded-t-none border-t-0 bg-transparent animate-accordion-down">
-                      <div className="p-3 pb-3">
+                      <div className="py-3 px-3">
                         <div className={`flex justify-center items-center gap-8 flex-wrap max-w-5xl mx-auto`}>
                           {analysis.matchups.map((matchup: any, index: number) => (
                             <div key={index} className="text-center flex-shrink-0" style={{ 
@@ -409,12 +422,12 @@ const AnalysisViewer = () => {
 
               {/* Additional Sections from Points with Gap and Silver Colors */}
               {analysis.points && analysis.points.length > 0 && (
-                <div className="mt-6 space-y-0">
+                <div className="mt-12 space-y-0">
                   {analysis.points.map((point: any, index: number) => {
                     const isEven = index % 2 === 0;
                     const silverColor = isEven ? 'bg-gray-300/90' : 'bg-gray-400/90';
                     return (
-                      <AccordionItem key={index} value={`point-${index}`} className="mb-8 border-0 data-[state=open]:border-4 data-[state=open]:border-primary data-[state=open]:rounded-lg">
+                      <AccordionItem key={index} value={`point-${index}`} className={`border-0 data-[state=open]:border-4 data-[state=open]:border-primary data-[state=open]:rounded-lg ${index > 0 ? 'mt-0' : ''}`}>
                         <AccordionTrigger className={`w-full ${silverColor} text-center py-3 rounded-t-lg hover:opacity-90 flex items-center justify-center gap-2 transition-all [&[data-state=open]>svg]:rotate-180`}>
                           <h2 className="text-2xl font-bebas uppercase tracking-widest text-black">
                             {point.title}

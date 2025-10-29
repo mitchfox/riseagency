@@ -32,6 +32,7 @@ export type Database = {
           kit_primary_color: string | null
           kit_secondary_color: string | null
           match_date: string | null
+          match_image_url: string | null
           matchups: Json | null
           opposition_strengths: string | null
           opposition_weaknesses: string | null
@@ -64,6 +65,7 @@ export type Database = {
           kit_primary_color?: string | null
           kit_secondary_color?: string | null
           match_date?: string | null
+          match_image_url?: string | null
           matchups?: Json | null
           opposition_strengths?: string | null
           opposition_weaknesses?: string | null
@@ -96,6 +98,7 @@ export type Database = {
           kit_primary_color?: string | null
           kit_secondary_color?: string | null
           match_date?: string | null
+          match_image_url?: string | null
           matchups?: Json | null
           opposition_strengths?: string | null
           opposition_weaknesses?: string | null

@@ -34,6 +34,7 @@ interface Analysis {
   match_date?: string | null;
   home_team_logo?: string | null;
   away_team_logo?: string | null;
+  match_image_url?: string | null;
   home_score?: number | null;
   away_score?: number | null;
   key_details?: string | null;
@@ -532,6 +533,38 @@ export const AnalysisManagement = () => {
                         )}
                       </div>
                     </div>
+                    
+                    <div>
+                      <Label>Match Image (Optional)</Label>
+                      <p className="text-xs text-muted-foreground mb-2">
+                        Image displayed between team names and overview section
+                      </p>
+                      <Input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => handleImageUpload(e, "match_image_url")}
+                        disabled={uploadingImage}
+                      />
+                      {formData.match_image_url && (
+                        <div className="relative mt-2">
+                          <img
+                            src={formData.match_image_url}
+                            alt="Match"
+                            className="w-full max-w-md rounded-lg"
+                          />
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="icon"
+                            className="absolute top-2 right-2"
+                            onClick={() => setFormData({ ...formData, match_image_url: null })}
+                          >
+                            <X className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                    
                     <div>
                       <Label>Key Details</Label>
                       <Textarea
