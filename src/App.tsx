@@ -27,6 +27,7 @@ import ImportProgramCSV from "./pages/ImportProgramCSV";
 import ReplaceProgram from "./pages/ReplaceProgram";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
+import AnalysisViewer from "./pages/AnalysisViewer";
 
 const queryClient = new QueryClient();
 
@@ -60,6 +61,7 @@ const App = () => {
           <Route path="/login" element={<Login />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/performance-report/:analysisId" element={<PerformanceReport />} />
+          <Route path="/analysis/:analysisId" element={<AnalysisViewer />} />
           <Route path="/import-program" element={<ImportProgramCSV />} />
           <Route path="/replace-program" element={<ReplaceProgram />} />
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />

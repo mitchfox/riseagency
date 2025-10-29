@@ -463,7 +463,7 @@ const Dashboard = () => {
                                     variant="outline" 
                                     size="sm"
                                     onClick={() => {
-                                      navigate(`/performance-report/${analysis.analysis_writer_id}`);
+                                      navigate(`/analysis/${analysis.analysis_writer_id}`);
                                     }}
                                     className="text-xs"
                                   >
