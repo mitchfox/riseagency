@@ -1,7 +1,8 @@
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { RepresentationDialog } from "@/components/RepresentationDialog";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import blackMarbleSmudged from "@/assets/black-marble-smudged.png";
 import introImage from "@/assets/intro-modal-new.png";
 
@@ -12,6 +13,16 @@ interface IntroModalProps {
 
 export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
   const [showRepresentation, setShowRepresentation] = useState(false);
+  const [currentSlide, setCurrentSlide] = useState<"news" | "stars">("news");
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentSlide(prev => prev === "news" ? "stars" : "news");
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   const handleDialogChange = (newOpen: boolean) => {
     if (!newOpen) {
@@ -30,6 +41,11 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
     setShowRepresentation(true);
   };
 
+  const handleSlideClick = () => {
+    handleDialogChange(false);
+    navigate(currentSlide === "news" ? "/news" : "/stars");
+  };
+
   return (
     <>
       <Dialog open={open} onOpenChange={handleDialogChange}>
@@ -46,7 +62,7 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
             />
             
             {/* Overlay Content - Top Left, using all black space */}
-            <div className="absolute top-6 left-6 right-[38%] pr-6 space-y-2">
+            <div className="absolute top-6 left-6 right-[35%] pr-6 space-y-1.5">
               <p id="intro-modal-description" className="text-sm text-white leading-relaxed">
                 We scout across the entirety of professional football in Europe and have guided many Premier League players to success through their development journey to RISE through the game and realise potential.
               </p>
@@ -68,19 +84,23 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
               </div>
             </div>
 
-            {/* News Section - Left Side */}
-            <div className="absolute left-6 top-[280px] w-[180px] bg-black/60 backdrop-blur-sm border border-white/10 rounded-lg p-3">
-              <h3 className="text-white font-bebas text-sm uppercase tracking-wider mb-2">Latest News</h3>
-              <div className="space-y-1.5">
-                <p className="text-white/80 text-xs leading-tight">Transfer updates & player achievements</p>
+            {/* Slideshow Section - Left Side */}
+            <div 
+              onClick={handleSlideClick}
+              className="absolute left-6 top-[280px] w-[180px] bg-black/60 backdrop-blur-sm border border-white/10 rounded-lg p-3 cursor-pointer hover:bg-black/70 transition-colors"
+            >
+              <div className={`${currentSlide === "news" ? "animate-fade-in" : "animate-fade-out"} ${currentSlide === "news" ? "block" : "hidden"}`}>
+                <h3 className="text-white font-bebas text-sm uppercase tracking-wider mb-2">Latest News</h3>
+                <div className="space-y-1.5">
+                  <p className="text-white/80 text-xs leading-tight">Transfer updates & player achievements</p>
+                </div>
               </div>
-            </div>
-
-            {/* Our Stars Section - Bottom Left */}
-            <div className="absolute left-6 top-[380px] w-[180px] bg-black/60 backdrop-blur-sm border border-white/10 rounded-lg p-3">
-              <h3 className="text-white font-bebas text-sm uppercase tracking-wider mb-2">Our Stars</h3>
-              <div className="space-y-1.5">
-                <p className="text-white/80 text-xs leading-tight">Featured talent & success stories</p>
+              
+              <div className={`${currentSlide === "stars" ? "animate-fade-in" : "animate-fade-out"} ${currentSlide === "stars" ? "block" : "hidden"}`}>
+                <h3 className="text-white font-bebas text-sm uppercase tracking-wider mb-2">Our Stars</h3>
+                <div className="space-y-1.5">
+                  <p className="text-white/80 text-xs leading-tight">Featured talent & success stories</p>
+                </div>
               </div>
             </div>
           </div>
