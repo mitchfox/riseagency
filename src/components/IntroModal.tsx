@@ -56,7 +56,7 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
   useEffect(() => {
     const newsInterval = setInterval(() => {
       setNewsIndex(prev => (prev + 1) % newsItems.length);
-    }, 5000);
+    }, 6000);
 
     const starInterval = setInterval(() => {
       setStarIndex(prev => (prev + 1) % starPlayers.length);
@@ -138,13 +138,13 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
                   handleDialogChange(false);
                   navigate("/news");
                 }}
-                className="absolute right-3 bottom-3 w-[180px] bg-black/70 backdrop-blur-sm border border-white rounded-lg overflow-hidden cursor-pointer hover:bg-black/80 transition-all sm:right-6 sm:bottom-6 sm:w-[220px] sm:border-2"
+                className="absolute right-3 bottom-3 w-[140px] bg-black/70 backdrop-blur-sm border border-white rounded-lg overflow-hidden cursor-pointer hover:bg-black/80 sm:right-6 sm:bottom-6 sm:w-[220px] sm:border-2"
               >
                 <img 
                   key={newsItems[newsIndex]?.id}
                   src={newsItems[newsIndex]?.image_url} 
                   alt="Latest News" 
-                  className="w-full h-24 object-cover animate-fade-in sm:h-32" 
+                  className="w-full aspect-square object-cover animate-fade-in sm:h-32 sm:aspect-auto" 
                 />
                 <div key={`news-text-${newsItems[newsIndex]?.id}`} className="p-1.5 sm:p-3 animate-fade-in">
                   <h3 className="text-white font-bebas text-[10px] uppercase tracking-wider mb-0.5 sm:text-base sm:mb-1">Latest News</h3>
