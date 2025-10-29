@@ -40,9 +40,9 @@ interface Analysis {
   points: any;
 }
 
-// Kit SVG Component
+// Kit SVG Component - Larger size
 const PlayerKit = ({ primaryColor, secondaryColor, number }: { primaryColor: string; secondaryColor: string; number: string }) => (
-  <svg width="60" height="60" viewBox="0 0 100 100" className="drop-shadow-lg">
+  <svg width="80" height="80" viewBox="0 0 100 100" className="drop-shadow-lg">
     {/* Kit Body */}
     <path d="M30 25 L25 35 L25 65 L30 75 L70 75 L75 65 L75 35 L70 25 Z" fill={primaryColor} stroke={secondaryColor} strokeWidth="2"/>
     {/* Stripes */}
@@ -143,26 +143,10 @@ const AnalysisViewer = () => {
 
           {/* Pre-Match Content - Redesigned */}
           {isPreMatch && (
-            <Accordion type="single" collapsible className="space-y-0">{" "}
-              {/* Match Title - Now showing date */}
-              <div className="text-center mb-6">
-                <h1 className="text-3xl md:text-4xl font-bebas uppercase tracking-wider text-white">
-                  {analysis.match_date ? (
-                    new Date(analysis.match_date).toLocaleDateString('en-GB', {
-                      weekday: 'long',
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric'
-                    })
-                  ) : (
-                    analysis.title || "Pre-Match Analysis"
-                  )}
-                </h1>
-              </div>
-
+            <Accordion type="single" collapsible className="space-y-0">
               {/* Teams Header with Gold Border */}
               <div className="relative bg-gradient-to-r from-primary/10 via-primary/20 to-primary/10 border-t-4 border-b-4 border-primary rounded-lg p-6 mb-8">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between mb-4">
                   {/* Home Team */}
                   <div className="flex-1 flex items-center justify-center gap-4">
                     {analysis.home_team_logo && (
@@ -200,11 +184,22 @@ const AnalysisViewer = () => {
                     )}
                   </div>
                 </div>
+                {/* Match Date underneath teams */}
+                {analysis.match_date && (
+                  <div className="text-center text-white/80 text-lg font-bebas tracking-wide">
+                    {new Date(analysis.match_date).toLocaleDateString('en-GB', {
+                      weekday: 'long',
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
+                    })}
+                  </div>
+                )}
               </div>
 
               {/* Overview Section with Gold Header */}
               {analysis.key_details && (
-                <AccordionItem value="overview" className="mb-8 border-0">
+                <AccordionItem value="overview" className="mb-8 border-0 data-[state=open]:border-4 data-[state=open]:border-primary data-[state=open]:rounded-lg">
                   <AccordionTrigger className="w-full bg-primary/90 text-center py-3 rounded-t-lg hover:bg-primary flex items-center justify-center gap-2 transition-colors [&[data-state=open]>svg]:rotate-180">
                     <h2 className="text-2xl font-bebas uppercase tracking-widest text-black">
                       Overview
@@ -212,8 +207,8 @@ const AnalysisViewer = () => {
                     <ChevronDown className="w-5 h-5 text-black transition-transform duration-200" />
                   </AccordionTrigger>
                   <AccordionContent>
-                    <Card className="bg-white/95 rounded-t-none border-t-0 animate-accordion-down">
-                      <CardContent className="p-6">
+                    <Card className="rounded-t-none border-t-0 border-0 animate-accordion-down" style={{ backgroundColor: 'rgba(245, 245, 245, 0.95)' }}>
+                      <CardContent className="p-3">
                         <p className="text-gray-800 leading-relaxed whitespace-pre-wrap">
                           {analysis.key_details}
                         </p>
@@ -225,7 +220,7 @@ const AnalysisViewer = () => {
 
               {/* Opposition Strengths */}
               {analysis.opposition_strengths && (
-                <AccordionItem value="strengths" className="mb-8 border-0">
+                <AccordionItem value="strengths" className="mb-8 border-0 data-[state=open]:border-4 data-[state=open]:border-primary data-[state=open]:rounded-lg">
                   <AccordionTrigger className="w-full bg-primary/90 text-center py-3 rounded-t-lg hover:bg-primary flex items-center justify-center gap-2 transition-colors [&[data-state=open]>svg]:rotate-180">
                     <h2 className="text-2xl font-bebas uppercase tracking-widest text-black">
                       Opposition Strengths
@@ -233,15 +228,15 @@ const AnalysisViewer = () => {
                     <ChevronDown className="w-5 h-5 text-black transition-transform duration-200" />
                   </AccordionTrigger>
                   <AccordionContent>
-                    <Card className="bg-gradient-to-br from-green-800 to-green-900 rounded-t-none border-t-0 animate-accordion-down">
-                      <CardContent className="p-8">
-                        <div className="space-y-4 max-w-4xl mx-auto">
+                    <Card className="bg-gradient-to-br from-gray-900 to-black rounded-t-none border-t-0 border-0 animate-accordion-down">
+                      <CardContent className="p-4">
+                        <div className="space-y-3 max-w-4xl mx-auto">
                           {analysis.opposition_strengths.split('\n').filter(line => line.trim()).map((line, idx) => {
                             const cleanLine = line.trim().replace(/^[-•]\s*/, '');
                             return (
-                              <div key={idx} className="flex items-center justify-center gap-3 bg-white/10 backdrop-blur-sm p-5 rounded-lg shadow-lg hover:bg-white/15 transition-all">
-                                <div className="bg-green-500 rounded-full w-10 h-10 flex items-center justify-center flex-shrink-0">
-                                  <span className="text-white font-bold text-lg">✓</span>
+                              <div key={idx} className="flex items-center justify-center gap-3 bg-white/10 backdrop-blur-sm p-4 rounded-lg shadow-lg hover:bg-white/15 transition-all">
+                                <div className="bg-primary rounded-full w-10 h-10 flex items-center justify-center flex-shrink-0">
+                                  <span className="text-black font-bold text-lg">✓</span>
                                 </div>
                                 <p className="text-white text-lg leading-relaxed flex-1 text-center font-medium">{cleanLine}</p>
                               </div>
@@ -256,7 +251,7 @@ const AnalysisViewer = () => {
 
               {/* Opposition Weaknesses */}
               {analysis.opposition_weaknesses && (
-                <AccordionItem value="weaknesses" className="mb-8 border-0">
+                <AccordionItem value="weaknesses" className="mb-8 border-0 data-[state=open]:border-4 data-[state=open]:border-primary data-[state=open]:rounded-lg">
                   <AccordionTrigger className="w-full bg-primary/90 text-center py-3 rounded-t-lg hover:bg-primary flex items-center justify-center gap-2 transition-colors [&[data-state=open]>svg]:rotate-180">
                     <h2 className="text-2xl font-bebas uppercase tracking-widest text-black">
                       Opposition Weaknesses
@@ -264,15 +259,15 @@ const AnalysisViewer = () => {
                     <ChevronDown className="w-5 h-5 text-black transition-transform duration-200" />
                   </AccordionTrigger>
                   <AccordionContent>
-                    <Card className="bg-gradient-to-br from-red-900 to-orange-900 rounded-t-none border-t-0 animate-accordion-down">
-                      <CardContent className="p-8">
-                        <div className="space-y-4 max-w-4xl mx-auto">
+                    <Card className="bg-gradient-to-br from-gray-900 to-black rounded-t-none border-t-0 border-0 animate-accordion-down">
+                      <CardContent className="p-4">
+                        <div className="space-y-3 max-w-4xl mx-auto">
                           {analysis.opposition_weaknesses.split('\n').filter(line => line.trim()).map((line, idx) => {
                             const cleanLine = line.trim().replace(/^[-•]\s*/, '');
                             return (
-                              <div key={idx} className="flex items-center justify-center gap-3 bg-white/10 backdrop-blur-sm p-5 rounded-lg shadow-lg hover:bg-white/15 transition-all">
-                                <div className="bg-red-500 rounded-full w-10 h-10 flex items-center justify-center flex-shrink-0">
-                                  <span className="text-white font-bold text-lg">!</span>
+                              <div key={idx} className="flex items-center justify-center gap-3 bg-white/10 backdrop-blur-sm p-4 rounded-lg shadow-lg hover:bg-white/15 transition-all">
+                                <div className="bg-primary rounded-full w-10 h-10 flex items-center justify-center flex-shrink-0">
+                                  <span className="text-black font-bold text-lg">!</span>
                                 </div>
                                 <p className="text-white text-lg leading-relaxed flex-1 text-center font-medium">{cleanLine}</p>
                               </div>
@@ -287,7 +282,7 @@ const AnalysisViewer = () => {
 
               {/* Key Matchups */}
               {analysis.matchups && analysis.matchups.length > 0 && (
-                <AccordionItem value="matchups" className="mb-8 border-0">
+                <AccordionItem value="matchups" className="mb-8 border-0 data-[state=open]:border-4 data-[state=open]:border-primary data-[state=open]:rounded-lg">
                   <AccordionTrigger className="w-full bg-primary/90 text-center py-3 rounded-t-lg hover:bg-primary flex items-center justify-center gap-2 transition-colors [&[data-state=open]>svg]:rotate-180">
                     <h2 className="text-2xl font-bebas uppercase tracking-widest text-black">
                       Potential Matchup(s)
@@ -295,8 +290,8 @@ const AnalysisViewer = () => {
                     <ChevronDown className="w-5 h-5 text-black transition-transform duration-200" />
                   </AccordionTrigger>
                   <AccordionContent>
-                    <Card className="bg-white/95 rounded-t-none border-t-0 animate-accordion-down">
-                      <CardContent className="p-8">
+                    <Card className="rounded-t-none border-t-0 border-0 animate-accordion-down" style={{ backgroundColor: 'rgba(245, 245, 245, 0.95)' }}>
+                      <CardContent className="p-4">
                         <div className={`flex justify-center items-center gap-8 flex-wrap max-w-5xl mx-auto`}>
                           {analysis.matchups.map((matchup: any, index: number) => (
                             <div key={index} className="text-center flex-shrink-0" style={{ 
@@ -333,7 +328,7 @@ const AnalysisViewer = () => {
 
               {/* Scheme Section */}
               {(analysis.scheme_title || analysis.selected_scheme) && (
-                <AccordionItem value="scheme" className="mb-8 border-0 print:page-break-after-always">
+                <AccordionItem value="scheme" className="mb-8 border-0 data-[state=open]:border-4 data-[state=open]:border-primary data-[state=open]:rounded-lg print:page-break-after-always">
                   <AccordionTrigger className="w-full bg-primary/90 text-center py-3 rounded-t-lg hover:bg-primary flex items-center justify-center gap-2 transition-colors [&[data-state=open]>svg]:rotate-180">
                     <h2 className="text-2xl font-bebas uppercase tracking-widest text-black">
                       {analysis.scheme_title || "Tactical Scheme"}
@@ -341,8 +336,8 @@ const AnalysisViewer = () => {
                     <ChevronDown className="w-5 h-5 text-black transition-transform duration-200" />
                   </AccordionTrigger>
                   <AccordionContent>
-                    <Card className="bg-white/95 rounded-t-none border-t-0 animate-accordion-down">
-                      <CardContent className="p-6 space-y-6">
+                    <Card className="rounded-t-none border-t-0 border-0 animate-accordion-down" style={{ backgroundColor: 'rgba(245, 245, 245, 0.95)' }}>
+                      <CardContent className="p-3 space-y-3">
                         {analysis.scheme_paragraph_1 && (
                           <p className="text-gray-800 leading-relaxed whitespace-pre-wrap">
                             {analysis.scheme_paragraph_1}
@@ -350,14 +345,28 @@ const AnalysisViewer = () => {
                         )}
                         
                         {analysis.selected_scheme && (
-                          <div className="relative bg-gradient-to-b from-green-700 to-green-800 rounded-lg p-8 min-h-[600px] border-4 border-white shadow-xl">
+                          <div className="relative bg-gradient-to-b from-green-700 to-green-800 rounded-lg p-8 min-h-[700px] border-4 border-white shadow-xl">
                             <div className="text-white text-center mb-4 text-2xl font-bebas tracking-wider">
                               {analysis.selected_scheme}
                             </div>
-                            {/* Field markings */}
+                            {/* Field markings - Outer border */}
                             <div className="absolute inset-8 border-2 border-white/30 rounded-lg"></div>
+                            {/* Halfway line */}
                             <div className="absolute inset-x-8 top-1/2 h-0.5 bg-white/30"></div>
+                            {/* Center circle */}
                             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-20 border-2 border-white/30 rounded-full"></div>
+                            {/* 18-yard box - top */}
+                            <div className="absolute left-1/2 -translate-x-1/2 top-8 w-48 h-24 border-2 border-white/30 border-t-0"></div>
+                            {/* 6-yard box - top */}
+                            <div className="absolute left-1/2 -translate-x-1/2 top-8 w-24 h-12 border-2 border-white/30 border-t-0"></div>
+                            {/* Penalty spot - top */}
+                            <div className="absolute left-1/2 -translate-x-1/2 top-24 w-2 h-2 bg-white/50 rounded-full"></div>
+                            {/* 18-yard box - bottom */}
+                            <div className="absolute left-1/2 -translate-x-1/2 bottom-8 w-48 h-24 border-2 border-white/30 border-b-0"></div>
+                            {/* 6-yard box - bottom */}
+                            <div className="absolute left-1/2 -translate-x-1/2 bottom-8 w-24 h-12 border-2 border-white/30 border-b-0"></div>
+                            {/* Penalty spot - bottom */}
+                            <div className="absolute left-1/2 -translate-x-1/2 bottom-24 w-2 h-2 bg-white/50 rounded-full"></div>
                             
                             {analysis.starting_xi && analysis.starting_xi.length > 0 && (
                               <div className="absolute inset-0 p-8">
@@ -399,12 +408,12 @@ const AnalysisViewer = () => {
 
               {/* Additional Sections from Points with Gap and Silver Colors */}
               {analysis.points && analysis.points.length > 0 && (
-                <div className="mt-12 space-y-0">
+                <div className="mt-6 space-y-0">
                   {analysis.points.map((point: any, index: number) => {
                     const isEven = index % 2 === 0;
                     const silverColor = isEven ? 'bg-gray-300/90' : 'bg-gray-400/90';
                     return (
-                      <AccordionItem key={index} value={`point-${index}`} className="mb-8 border-0">
+                      <AccordionItem key={index} value={`point-${index}`} className="mb-8 border-0 data-[state=open]:border-4 data-[state=open]:border-primary data-[state=open]:rounded-lg">
                         <AccordionTrigger className={`w-full ${silverColor} text-center py-3 rounded-t-lg hover:opacity-90 flex items-center justify-center gap-2 transition-all [&[data-state=open]>svg]:rotate-180`}>
                           <h2 className="text-2xl font-bebas uppercase tracking-widest text-black">
                             {point.title}
@@ -412,15 +421,15 @@ const AnalysisViewer = () => {
                           <ChevronDown className="w-5 h-5 text-black transition-transform duration-200" />
                         </AccordionTrigger>
                         <AccordionContent>
-                          <Card className="bg-white/95 rounded-t-none border-t-0 animate-accordion-down">
-                            <CardContent className="p-6 space-y-6">
+                          <Card className="rounded-t-none border-t-0 border-0 animate-accordion-down" style={{ backgroundColor: 'rgba(245, 245, 245, 0.95)' }}>
+                            <CardContent className="p-3 space-y-3">
                               {point.paragraph_1 && (
                                 <p className="text-gray-800 leading-relaxed whitespace-pre-wrap">
                                   {point.paragraph_1}
                                 </p>
                               )}
                               {point.images && point.images.length > 0 && (
-                                <div className="flex flex-col items-center gap-6">
+                                <div className="flex flex-col items-center gap-3">
                                   {point.images.map((img: string, imgIndex: number) => (
                                     <img
                                       key={imgIndex}
