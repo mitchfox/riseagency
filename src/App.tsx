@@ -28,6 +28,7 @@ import ReplaceProgram from "./pages/ReplaceProgram";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import AnalysisViewer from "./pages/AnalysisViewer";
+import Intro from "./pages/Intro";
 
 const queryClient = new QueryClient();
 
@@ -44,6 +45,7 @@ const App = () => {
           <ScrollToTop />
         <Routes>
           <Route path="/" element={<Index />} />
+          <Route path="/intro" element={<Intro />} />
           <Route path="/stars" element={<Stars />} />
           <Route path="/stars/:playername" element={<PlayerDetail />} />
           <Route path="/players" element={<Players />} />
