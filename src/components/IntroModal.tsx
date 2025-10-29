@@ -141,11 +141,12 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
                 className="absolute right-3 bottom-3 w-[180px] bg-black/70 backdrop-blur-sm border border-white rounded-lg overflow-hidden cursor-pointer hover:bg-black/80 transition-all sm:right-6 sm:bottom-6 sm:w-[220px] sm:border-2"
               >
                 <img 
+                  key={newsItems[newsIndex]?.id}
                   src={newsItems[newsIndex]?.image_url} 
                   alt="Latest News" 
-                  className="w-full h-24 object-cover transition-opacity duration-500 sm:h-32" 
+                  className="w-full h-24 object-cover animate-fade-in sm:h-32" 
                 />
-                <div className="p-1.5 sm:p-3">
+                <div key={`news-text-${newsItems[newsIndex]?.id}`} className="p-1.5 sm:p-3 animate-fade-in">
                   <h3 className="text-white font-bebas text-[10px] uppercase tracking-wider mb-0.5 sm:text-base sm:mb-1">Latest News</h3>
                   <p className="text-white/80 text-[8px] line-clamp-2 sm:text-xs">{newsItems[newsIndex]?.title}</p>
                 </div>
@@ -164,20 +165,21 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
                 <div className="relative w-full aspect-[3/4] rounded-lg overflow-hidden group border border-[#B8A574] sm:border-2">
                   {/* Player Image with Dark Overlay */}
                   <img 
+                    key={starPlayers[starIndex]?.id}
                     src={starPlayers[starIndex]?.image_url} 
                     alt={starPlayers[starIndex]?.name}
-                    className="w-full h-full object-cover transition-opacity duration-500" 
+                    className="w-full h-full object-cover animate-fade-in" 
                   />
                   <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/80" />
                 
                   {/* Age - Top Left */}
-                  <div className="absolute top-2 left-2 flex flex-col items-center min-w-[30px] sm:top-4 sm:left-4 sm:min-w-[60px]">
+                  <div key={`age-${starPlayers[starIndex]?.id}`} className="absolute top-2 left-2 flex flex-col items-center min-w-[30px] sm:top-4 sm:left-4 sm:min-w-[60px] animate-fade-in">
                     <div className="text-xl font-bold text-white font-bebas leading-none text-center sm:text-4xl">{starPlayers[starIndex]?.age}</div>
                     <div className="text-[6px] text-white/80 uppercase tracking-wider mt-0.5 text-center sm:text-[9px]">Age</div>
                   </div>
                   
                   {/* Nationality Flag - Top Right */}
-                  <div className="absolute top-2 right-2 flex flex-col items-center min-w-[30px] sm:top-4 sm:right-4 sm:min-w-[60px]">
+                  <div key={`nat-${starPlayers[starIndex]?.id}`} className="absolute top-2 right-2 flex flex-col items-center min-w-[30px] sm:top-4 sm:right-4 sm:min-w-[60px] animate-fade-in">
                     {(() => {
                       const nat = starPlayers[starIndex]?.nationality;
                       if (!nat) return null;
@@ -196,7 +198,7 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
                   </div>
                   
                   {/* Position - Bottom Left */}
-                  <div className="absolute bottom-8 left-2 flex flex-col items-center min-w-[30px] sm:bottom-16 sm:left-4 sm:min-w-[60px]">
+                  <div key={`pos-${starPlayers[starIndex]?.id}`} className="absolute bottom-8 left-2 flex flex-col items-center min-w-[30px] sm:bottom-16 sm:left-4 sm:min-w-[60px] animate-fade-in">
                     <div className="text-lg font-bold text-white font-bebas leading-none text-center sm:text-3xl">{starPlayers[starIndex]?.position}</div>
                     <div className="text-[6px] text-white/80 uppercase tracking-wider mt-0.5 text-center sm:text-[9px]">Position</div>
                   </div>
@@ -207,7 +209,7 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
                       const bio = JSON.parse(starPlayers[starIndex]?.bio || '{}');
                       const clubLogo = bio.tacticalFormations?.[0]?.clubLogo;
                       return clubLogo ? (
-                        <div className="absolute bottom-8 right-2 flex flex-col items-center min-w-[30px] sm:bottom-16 sm:right-4 sm:min-w-[60px]">
+                        <div key={`club-${starPlayers[starIndex]?.id}`} className="absolute bottom-8 right-2 flex flex-col items-center min-w-[30px] sm:bottom-16 sm:right-4 sm:min-w-[60px] animate-fade-in">
                           <img src={clubLogo} alt="Club" className="w-6 h-6 object-contain mb-0.5 sm:w-12 sm:h-12" />
                           <div className="text-[6px] text-white/80 uppercase tracking-wider text-center sm:text-[9px]">Club</div>
                         </div>
