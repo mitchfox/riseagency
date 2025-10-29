@@ -17,13 +17,8 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
   const [newsIndex, setNewsIndex] = useState(0);
   const [starIndex, setStarIndex] = useState(0);
   const [starPlayers, setStarPlayers] = useState<any[]>([]);
+  const [newsItems, setNewsItems] = useState<any[]>([]);
   const navigate = useNavigate();
-
-  const newsItems = [
-    { image: "/news/mikie-mulligan-assist.png", title: "Michael Mulligan Assist" },
-    { image: "/news/salah-de-bruyne-fit.png", title: "Salah & De Bruyne Fit" },
-    { image: "/news/sandra-cape-verde-callup.png", title: "Sandra Cape Verde Callup" },
-  ];
 
   useEffect(() => {
     const fetchStarPlayers = async () => {
@@ -38,7 +33,22 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
       }
     };
 
+    const fetchNews = async () => {
+      const { data, error } = await supabase
+        .from('blog_posts')
+        .select('*')
+        .eq('published', true)
+        .neq('category', 'Between the Lines')
+        .order('created_at', { ascending: false })
+        .limit(3);
+      
+      if (data && !error && data.length > 0) {
+        setNewsItems(data);
+      }
+    };
+
     fetchStarPlayers();
+    fetchNews();
   }, []);
 
   useEffect(() => {
@@ -54,7 +64,7 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
       clearInterval(newsInterval);
       clearInterval(starInterval);
     };
-  }, [starPlayers.length]);
+  }, [starPlayers.length, newsItems.length]);
 
   const handleDialogChange = (newOpen: boolean) => {
     if (!newOpen) {
@@ -113,23 +123,25 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
             </div>
 
             {/* News Slider - Bottom Right */}
-            <div 
-              onClick={() => {
-                handleDialogChange(false);
-                navigate("/news");
-              }}
-              className="absolute right-6 bottom-6 w-[220px] bg-black/70 backdrop-blur-sm border border-white/10 rounded-lg overflow-hidden cursor-pointer hover:bg-black/80 transition-all"
-            >
-              <img 
-                src={newsItems[newsIndex].image} 
-                alt="Latest News" 
-                className="w-full h-32 object-cover transition-opacity duration-500" 
-              />
-              <div className="p-3">
-                <h3 className="text-white font-bebas text-base uppercase tracking-wider mb-1">Latest News</h3>
-                <p className="text-white/80 text-xs">{newsItems[newsIndex].title}</p>
+            {newsItems.length > 0 && (
+              <div 
+                onClick={() => {
+                  handleDialogChange(false);
+                  navigate("/news");
+                }}
+                className="absolute right-6 bottom-6 w-[220px] bg-black/70 backdrop-blur-sm border-2 border-white rounded-lg overflow-hidden cursor-pointer hover:bg-black/80 transition-all"
+              >
+                <img 
+                  src={newsItems[newsIndex]?.image_url} 
+                  alt="Latest News" 
+                  className="w-full h-32 object-cover transition-opacity duration-500" 
+                />
+                <div className="p-3">
+                  <h3 className="text-white font-bebas text-base uppercase tracking-wider mb-1">Latest News</h3>
+                  <p className="text-white/80 text-xs">{newsItems[newsIndex]?.title}</p>
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Our Stars Slider - Bottom Left */}
             {starPlayers.length > 0 && (
