@@ -35,6 +35,7 @@ interface Analysis {
   home_team_logo?: string | null;
   away_team_logo?: string | null;
   match_image_url?: string | null;
+  title_bg_color?: string | null;
   home_score?: number | null;
   away_score?: number | null;
   key_details?: string | null;
@@ -534,6 +535,20 @@ export const AnalysisManagement = () => {
                       </div>
                     </div>
                     
+                    <div>
+                      <Label>Title Background Color</Label>
+                      <p className="text-xs text-muted-foreground mb-2">
+                        Background color for section titles (Overview, Strengths, etc.)
+                      </p>
+                      <Input
+                        type="color"
+                        value={formData.title_bg_color || '#1a1a1a'}
+                        onChange={(e) =>
+                          setFormData({ ...formData, title_bg_color: e.target.value })
+                        }
+                      />
+                    </div>
+
                     <div>
                       <Label>Match Image (Optional)</Label>
                       <p className="text-xs text-muted-foreground mb-2">

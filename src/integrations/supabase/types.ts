@@ -46,6 +46,7 @@ export type Database = {
           starting_xi: Json | null
           strengths_improvements: string | null
           title: string | null
+          title_bg_color: string | null
           updated_at: string
         }
         Insert: {
@@ -79,6 +80,7 @@ export type Database = {
           starting_xi?: Json | null
           strengths_improvements?: string | null
           title?: string | null
+          title_bg_color?: string | null
           updated_at?: string
         }
         Update: {
@@ -112,6 +114,7 @@ export type Database = {
           starting_xi?: Json | null
           strengths_improvements?: string | null
           title?: string | null
+          title_bg_color?: string | null
           updated_at?: string
         }
         Relationships: [
