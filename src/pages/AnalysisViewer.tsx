@@ -9,6 +9,7 @@ import { ArrowLeft, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import smudgedMarbleDate from "@/assets/smudged-marble-date.png";
 
 interface Analysis {
   id: string;
@@ -160,7 +161,7 @@ const AnalysisViewer = () => {
                       style={{ backgroundColor: analysis.home_team_bg_color || '#1a1a1a' }}
                     >
                       {analysis.home_team_logo && (
-                        <div className="w-16 h-16 rounded-lg flex items-center justify-center overflow-hidden p-1 bg-white/10">
+                        <div className="w-16 h-16 rounded-lg flex items-center justify-center overflow-hidden p-1">
                           <img
                             src={analysis.home_team_logo}
                             alt={analysis.home_team || "Home team"}
@@ -187,7 +188,7 @@ const AnalysisViewer = () => {
                         {analysis.away_team}
                       </span>
                       {analysis.away_team_logo && (
-                        <div className="w-16 h-16 rounded-lg flex items-center justify-center overflow-hidden p-1 bg-white/10">
+                        <div className="w-16 h-16 rounded-lg flex items-center justify-center overflow-hidden p-1">
                           <img
                             src={analysis.away_team_logo}
                             alt={analysis.away_team || "Away team"}
@@ -199,7 +200,10 @@ const AnalysisViewer = () => {
                   </div>
                   {/* Match Date underneath teams in italics */}
                   {analysis.match_date && (
-                    <div className="text-center bg-black/50 text-white/80 text-base font-bebas tracking-wide italic py-2">
+                    <div 
+                      className="text-center text-white/90 text-base font-bebas tracking-wide italic py-2 bg-cover bg-center"
+                      style={{ backgroundImage: `url(${smudgedMarbleDate})` }}
+                    >
                       {new Date(analysis.match_date).toLocaleDateString('en-GB', {
                         weekday: 'long',
                         year: 'numeric',
