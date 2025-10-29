@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Plus, Trash2, Check, Edit, ChevronUp, ChevronDown, ArrowUp, ArrowDown, Database } from "lucide-react";
+import { Plus, Trash2, Check, Edit, ChevronUp, ChevronDown, ArrowUp, ArrowDown, Database, Sparkles } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
@@ -177,6 +177,7 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
   const [showTemplateDialog, setShowTemplateDialog] = useState(false);
   const [coachingPrograms, setCoachingPrograms] = useState<any[]>([]);
   const [loadingTemplates, setLoadingTemplates] = useState(false);
+  const [aiGenerating, setAiGenerating] = useState(false);
 
   useEffect(() => {
     if (isOpen && playerId) {
@@ -502,12 +503,33 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
 
       // Save to coaching database if requested
       if (saveToCoachingDB.programme) {
-        await supabase.from('coaching_programmes').insert({
+        await supabase.from('coaching_programmes').insert([{
           title: selectedProgram.program_name,
           description: `${programmingData.phaseName} - ${programmingData.phaseDates}`,
           content: programmingData.overviewText,
-          category: 'Player Programming'
-        });
+          category: 'Player Programming',
+          attachments: {
+            sessions: {
+              A: programmingData.sessionA,
+              B: programmingData.sessionB,
+              C: programmingData.sessionC,
+              D: programmingData.sessionD,
+              E: programmingData.sessionE,
+              F: programmingData.sessionF,
+              G: programmingData.sessionG,
+              H: programmingData.sessionH,
+              'PRE-A': programmingData.preSessionA,
+              'PRE-B': programmingData.preSessionB,
+              'PRE-C': programmingData.preSessionC,
+              'PRE-D': programmingData.preSessionD,
+              'PRE-E': programmingData.preSessionE,
+              'PRE-F': programmingData.preSessionF,
+              'PRE-G': programmingData.preSessionG,
+              'PRE-H': programmingData.preSessionH,
+            },
+            weekly_schedules: programmingData.weeklySchedules
+          } as any
+        }]);
       }
 
       if (saveToCoachingDB.sessions) {
@@ -832,6 +854,46 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
     setPasteScheduleWeekIndex(null);
   };
 
+  const generateWithAI = async () => {
+    setAiGenerating(true);
+    try {
+      const context = `Player: ${playerName}
+Phase Name: ${programmingData.phaseName || 'Not specified'}
+Phase Dates: ${programmingData.phaseDates || 'Not specified'}`;
+
+      const prompt = `Write a comprehensive training program overview for this athlete's strength and conditioning program.`;
+
+      const { data, error } = await supabase.functions.invoke('ai-write', {
+        body: { 
+          prompt,
+          context,
+          type: 'program-overview'
+        }
+      });
+
+      if (error) throw error;
+      
+      if (data.error) {
+        if (data.error.includes('Rate limit')) {
+          toast.error('AI rate limit reached. Please wait a moment and try again.');
+        } else if (data.error.includes('credits')) {
+          toast.error('AI credits exhausted. Please add credits in Settings > Workspace > Usage.');
+        } else {
+          throw new Error(data.error);
+        }
+        return;
+      }
+
+      updateField('overviewText', data.text);
+      toast.success('AI content generated successfully!');
+    } catch (error: any) {
+      console.error('AI generation error:', error);
+      toast.error('Failed to generate content with AI');
+    } finally {
+      setAiGenerating(false);
+    }
+  };
+
   const createProgramFromTemplate = async (template: any) => {
     if (!template) return;
 
@@ -849,7 +911,10 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
         ? (existingPrograms[0].display_order || 0) + 1 
         : 1;
 
-      // Create program from template
+      // Create program from template - include sessions if they exist
+      const templateSessions = template.attachments?.sessions || {};
+      const templateSchedules = template.attachments?.weekly_schedules || [];
+      
       const programData: any = {
         player_id: playerId,
         program_name: template.title,
@@ -859,24 +924,24 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
         is_current: programs.length === 0,
         display_order: nextOrder,
         sessions: {
-          A: { exercises: [] },
-          B: { exercises: [] },
-          C: { exercises: [] },
-          D: { exercises: [] },
-          E: { exercises: [] },
-          F: { exercises: [] },
-          G: { exercises: [] },
-          H: { exercises: [] },
-          'PRE-A': { exercises: [] },
-          'PRE-B': { exercises: [] },
-          'PRE-C': { exercises: [] },
-          'PRE-D': { exercises: [] },
-          'PRE-E': { exercises: [] },
-          'PRE-F': { exercises: [] },
-          'PRE-G': { exercises: [] },
-          'PRE-H': { exercises: [] },
+          A: templateSessions.A || { exercises: [] },
+          B: templateSessions.B || { exercises: [] },
+          C: templateSessions.C || { exercises: [] },
+          D: templateSessions.D || { exercises: [] },
+          E: templateSessions.E || { exercises: [] },
+          F: templateSessions.F || { exercises: [] },
+          G: templateSessions.G || { exercises: [] },
+          H: templateSessions.H || { exercises: [] },
+          'PRE-A': templateSessions['PRE-A'] || { exercises: [] },
+          'PRE-B': templateSessions['PRE-B'] || { exercises: [] },
+          'PRE-C': templateSessions['PRE-C'] || { exercises: [] },
+          'PRE-D': templateSessions['PRE-D'] || { exercises: [] },
+          'PRE-E': templateSessions['PRE-E'] || { exercises: [] },
+          'PRE-F': templateSessions['PRE-F'] || { exercises: [] },
+          'PRE-G': templateSessions['PRE-G'] || { exercises: [] },
+          'PRE-H': templateSessions['PRE-H'] || { exercises: [] },
         },
-        weekly_schedules: []
+        weekly_schedules: templateSchedules
       };
 
       const { error, data: newProgram } = await supabase
@@ -1204,7 +1269,19 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="overviewText">Overview Text</Label>
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="overviewText">Overview Text</Label>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={generateWithAI}
+                          disabled={aiGenerating}
+                        >
+                          <Sparkles className="w-4 h-4 mr-2" />
+                          {aiGenerating ? 'Generating...' : 'Use AI to Write'}
+                        </Button>
+                      </div>
                       <Textarea
                         id="overviewText"
                         placeholder="Enter overall programming notes, goals, and structure..."

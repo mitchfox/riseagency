@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Pencil, Trash2, Plus, X, Upload } from "lucide-react";
+import { Pencil, Trash2, Plus, X, Upload, Sparkles } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -78,6 +78,7 @@ export const AnalysisManagement = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingAnalysis, setEditingAnalysis] = useState<Analysis | null>(null);
   const [analysisType, setAnalysisType] = useState<AnalysisType>("pre-match");
+  const [aiGenerating, setAiGenerating] = useState(false);
 
   // Form states
   const [formData, setFormData] = useState<Partial<Analysis>>({
@@ -434,6 +435,68 @@ export const AnalysisManagement = () => {
     const updatedPoints = [...(formData.points || [])];
     updatedPoints[pointIndex].images.splice(imageIndex, 1);
     setFormData({ ...formData, points: updatedPoints });
+  };
+
+  const generateWithAI = async (field: string, pointIndex?: number) => {
+    setAiGenerating(true);
+    try {
+      let prompt = '';
+      let context = '';
+      let type = '';
+
+      if (field === 'scheme_paragraph_1' || field === 'scheme_paragraph_2') {
+        context = `Analysis Type: ${analysisType}
+Teams: ${formData.home_team} vs ${formData.away_team}
+Title: ${formData.scheme_title || 'Not specified'}`;
+        prompt = `Write a detailed tactical analysis paragraph for this match.`;
+        type = 'analysis-paragraph';
+      } else if (field === 'point_title') {
+        prompt = `Create a concise, professional title for a match analysis section.`;
+        type = 'analysis-point-title';
+      } else if (field === 'point_paragraph') {
+        const point = formData.points?.[pointIndex!];
+        context = `Section Title: ${point?.title || 'Not specified'}`;
+        prompt = `Write a detailed analysis paragraph for this section.`;
+        type = 'analysis-paragraph';
+      }
+
+      const { data, error } = await supabase.functions.invoke('ai-write', {
+        body: { prompt, context, type }
+      });
+
+      if (error) throw error;
+      
+      if (data.error) {
+        if (data.error.includes('Rate limit')) {
+          toast.error('AI rate limit reached. Please wait a moment and try again.');
+        } else if (data.error.includes('credits')) {
+          toast.error('AI credits exhausted. Please add credits in Settings > Workspace > Usage.');
+        } else {
+          throw new Error(data.error);
+        }
+        return;
+      }
+
+      // Update the appropriate field
+      if (field === 'scheme_paragraph_1') {
+        setFormData({ ...formData, scheme_paragraph_1: data.text });
+      } else if (field === 'scheme_paragraph_2') {
+        setFormData({ ...formData, scheme_paragraph_2: data.text });
+      } else if (field === 'point_title' && pointIndex !== undefined) {
+        updatePoint(pointIndex, 'title', data.text);
+      } else if (field === 'point_paragraph_1' && pointIndex !== undefined) {
+        updatePoint(pointIndex, 'paragraph_1', data.text);
+      } else if (field === 'point_paragraph_2' && pointIndex !== undefined) {
+        updatePoint(pointIndex, 'paragraph_2', data.text);
+      }
+
+      toast.success('AI content generated!');
+    } catch (error: any) {
+      console.error('AI generation error:', error);
+      toast.error('Failed to generate content with AI');
+    } finally {
+      setAiGenerating(false);
+    }
   };
 
   if (loading) {
@@ -801,7 +864,19 @@ export const AnalysisManagement = () => {
                       />
                     </div>
                     <div>
-                      <Label>Paragraph 1</Label>
+                      <div className="flex items-center justify-between">
+                        <Label>Paragraph 1</Label>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => generateWithAI('scheme_paragraph_1')}
+                          disabled={aiGenerating}
+                        >
+                          <Sparkles className="w-3 h-3 mr-1" />
+                          {aiGenerating ? 'Generating...' : 'Use AI'}
+                        </Button>
+                      </div>
                       <Textarea
                         value={formData.scheme_paragraph_1 || ""}
                         onChange={(e) =>
@@ -813,7 +888,19 @@ export const AnalysisManagement = () => {
                       />
                     </div>
                     <div>
-                      <Label>Paragraph 2</Label>
+                      <div className="flex items-center justify-between">
+                        <Label>Paragraph 2</Label>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => generateWithAI('scheme_paragraph_2')}
+                          disabled={aiGenerating}
+                        >
+                          <Sparkles className="w-3 h-3 mr-1" />
+                          {aiGenerating ? 'Generating...' : 'Use AI'}
+                        </Button>
+                      </div>
                       <Textarea
                         value={formData.scheme_paragraph_2 || ""}
                         onChange={(e) =>
@@ -1028,7 +1115,19 @@ export const AnalysisManagement = () => {
                         {analysisType !== "concept" && (
                           <>
                             <div>
-                              <Label>Title</Label>
+                              <div className="flex items-center justify-between">
+                                <Label>Title</Label>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => generateWithAI('point_title', index)}
+                                  disabled={aiGenerating}
+                                >
+                                  <Sparkles className="w-3 h-3 mr-1" />
+                                  {aiGenerating ? 'Generating...' : 'Use AI'}
+                                </Button>
+                              </div>
                               <Input
                                 value={point.title}
                                 onChange={(e) =>
@@ -1037,7 +1136,19 @@ export const AnalysisManagement = () => {
                               />
                             </div>
                             <div>
-                              <Label>Paragraph 1</Label>
+                              <div className="flex items-center justify-between">
+                                <Label>Paragraph 1</Label>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => generateWithAI('point_paragraph_1', index)}
+                                  disabled={aiGenerating}
+                                >
+                                  <Sparkles className="w-3 h-3 mr-1" />
+                                  {aiGenerating ? 'Generating...' : 'Use AI'}
+                                </Button>
+                              </div>
                               <Textarea
                                 value={point.paragraph_1}
                                 onChange={(e) =>
@@ -1046,7 +1157,19 @@ export const AnalysisManagement = () => {
                               />
                             </div>
                             <div>
-                              <Label>Paragraph 2</Label>
+                              <div className="flex items-center justify-between">
+                                <Label>Paragraph 2</Label>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => generateWithAI('point_paragraph_2', index)}
+                                  disabled={aiGenerating}
+                                >
+                                  <Sparkles className="w-3 h-3 mr-1" />
+                                  {aiGenerating ? 'Generating...' : 'Use AI'}
+                                </Button>
+                              </div>
                               <Textarea
                                 value={point.paragraph_2}
                                 onChange={(e) =>
