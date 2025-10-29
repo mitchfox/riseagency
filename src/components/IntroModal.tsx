@@ -105,13 +105,13 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
             <img 
               src={riseLogo} 
               alt="RISE Football" 
-              className="absolute top-2 right-2 w-32 h-auto object-contain sm:top-4 sm:right-4"
+              className="absolute top-2 right-2 w-32 h-auto object-contain sm:top-4 sm:right-[26px]"
             />
             
             {/* Overlay Content - Top Left, using all black space */}
             <div className="absolute top-[8px] left-3 right-[35%] pr-3 space-y-1.5 sm:top-[9px] sm:left-6 sm:right-[35%] sm:pr-6 sm:space-y-1.5">
               <p id="intro-modal-description" className="text-[11px] text-white leading-tight sm:text-sm sm:leading-relaxed">
-                We scout across the entirety of professional football in Europe and have guided many Premier League players to success through their development journey to RISE through the game and realise potential.
+                At <strong>RISE</strong>, we scout across the entirety of professional football in Europe and have guided many Premier League players to success through their development journey to <strong>RISE</strong> through the game and <strong>Realise Potential</strong>.
               </p>
               
               {/* Buttons */}
