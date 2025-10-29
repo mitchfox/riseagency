@@ -163,13 +163,13 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
                   <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/80" />
                 
                   {/* Age - Top Left */}
-                  <div className="absolute top-4 left-4 flex flex-col items-center">
-                    <div className="text-4xl font-bold text-white font-bebas leading-none">{starPlayers[starIndex]?.age}</div>
-                    <div className="text-[9px] text-white/80 uppercase tracking-wider mt-0.5">Age</div>
+                  <div className="absolute top-4 left-4 flex flex-col items-center min-w-[60px]">
+                    <div className="text-4xl font-bold text-white font-bebas leading-none text-center">{starPlayers[starIndex]?.age}</div>
+                    <div className="text-[9px] text-white/80 uppercase tracking-wider mt-0.5 text-center">Age</div>
                   </div>
                   
                   {/* Nationality Flag - Top Right */}
-                  <div className="absolute top-4 right-4 flex flex-col items-center">
+                  <div className="absolute top-4 right-4 flex flex-col items-center min-w-[60px]">
                     {(() => {
                       const nat = starPlayers[starIndex]?.nationality;
                       if (!nat) return null;
@@ -184,13 +184,13 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
                         />
                       );
                     })()}
-                    <div className="text-[9px] text-white/80 uppercase tracking-wider">Nationality</div>
+                    <div className="text-[9px] text-white/80 uppercase tracking-wider text-center">Nationality</div>
                   </div>
                   
                   {/* Position - Bottom Left */}
-                  <div className="absolute bottom-16 left-4 flex flex-col items-center">
-                    <div className="text-3xl font-bold text-white font-bebas leading-none">{starPlayers[starIndex]?.position}</div>
-                    <div className="text-[9px] text-white/80 uppercase tracking-wider mt-0.5">Position</div>
+                  <div className="absolute bottom-16 left-4 flex flex-col items-center min-w-[60px]">
+                    <div className="text-3xl font-bold text-white font-bebas leading-none text-center">{starPlayers[starIndex]?.position}</div>
+                    <div className="text-[9px] text-white/80 uppercase tracking-wider mt-0.5 text-center">Position</div>
                   </div>
                   
                   {/* Club Logo - Bottom Right */}
@@ -199,9 +199,9 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
                       const bio = JSON.parse(starPlayers[starIndex]?.bio || '{}');
                       const clubLogo = bio.tacticalFormations?.[0]?.clubLogo;
                       return clubLogo ? (
-                        <div className="absolute bottom-16 right-4 flex flex-col items-center">
+                        <div className="absolute bottom-16 right-4 flex flex-col items-center min-w-[60px]">
                           <img src={clubLogo} alt="Club" className="w-12 h-12 object-contain mb-0.5" />
-                          <div className="text-[9px] text-white/80 uppercase tracking-wider">Club</div>
+                          <div className="text-[9px] text-white/80 uppercase tracking-wider text-center">Club</div>
                         </div>
                       ) : null;
                     } catch {
