@@ -46,6 +46,7 @@ export const SiteVisitorsManagement = () => {
   const [visits, setVisits] = useState<SiteVisit[]>([]);
   const [loading, setLoading] = useState(false);
   const [pageFilter, setPageFilter] = useState<string>("all");
+  const [referrerFilter, setReferrerFilter] = useState<string>("instagram");
   const [searchTerm, setSearchTerm] = useState("");
   const [uniquePaths, setUniquePaths] = useState<string[]>([]);
   const [selectedVisitor, setSelectedVisitor] = useState<string | null>(null);
@@ -245,6 +246,15 @@ export const SiteVisitorsManagement = () => {
     
     const location = formatLocation(visit.location);
     if (location.includes("Bedford") && location.includes("England")) return false;
+    
+    // Filter by referrer (Instagram, LinkedIn, Google, etc.)
+    if (referrerFilter !== "all") {
+      const referrer = (visit.referrer || "").toLowerCase();
+      if (referrerFilter === "instagram" && !referrer.includes("instagram")) return false;
+      if (referrerFilter === "linkedin" && !referrer.includes("linkedin")) return false;
+      if (referrerFilter === "google" && !referrer.includes("google")) return false;
+      if (referrerFilter === "direct" && visit.referrer) return false;
+    }
     
     // Filter by search term
     const searchMatch = 
@@ -446,8 +456,21 @@ export const SiteVisitorsManagement = () => {
               placeholder="Search by path, visitor ID, or location..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="md:w-1/3"
+              className="md:w-1/4"
             />
+            
+            <Select value={referrerFilter} onValueChange={setReferrerFilter}>
+              <SelectTrigger className="md:w-1/4">
+                <SelectValue placeholder="Filter by source" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Sources</SelectItem>
+                <SelectItem value="instagram">Instagram</SelectItem>
+                <SelectItem value="linkedin">LinkedIn</SelectItem>
+                <SelectItem value="google">Google</SelectItem>
+                <SelectItem value="direct">Direct (No Referrer)</SelectItem>
+              </SelectContent>
+            </Select>
             
             <Select value={pageFilter} onValueChange={setPageFilter}>
               <SelectTrigger className="md:w-1/4">
