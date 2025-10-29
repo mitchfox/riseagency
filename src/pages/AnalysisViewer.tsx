@@ -152,15 +152,15 @@ const AnalysisViewer = () => {
             <div className="border-4 border-primary rounded-lg">
               <Accordion type="single" collapsible className="space-y-0">
                 {/* Teams Header with Gold Background */}
-                <div className="relative border-t-4 border-b-4 border-primary rounded-lg overflow-hidden mb-8 bg-primary">
-                  <div className="flex items-center justify-between p-1">
+                <div className="relative border-t-4 border-b-4 border-primary rounded-lg overflow-hidden bg-primary">
+                  <div className="flex items-center justify-between">
                     {/* Home Team */}
-                    <div className="flex-1 flex items-center justify-center gap-3 py-1 px-2">
+                    <div 
+                      className="flex-1 flex items-center justify-center gap-3 py-2 px-4"
+                      style={{ backgroundColor: analysis.home_team_bg_color || '#1a1a1a' }}
+                    >
                       {analysis.home_team_logo && (
-                        <div 
-                          className="w-16 h-16 rounded-lg flex items-center justify-center overflow-hidden p-1"
-                          style={{ backgroundColor: analysis.home_team_bg_color || '#1a1a1a' }}
-                        >
+                        <div className="w-16 h-16 rounded-lg flex items-center justify-center overflow-hidden p-1 bg-white/10">
                           <img
                             src={analysis.home_team_logo}
                             alt={analysis.home_team || "Home team"}
@@ -168,26 +168,26 @@ const AnalysisViewer = () => {
                           />
                         </div>
                       )}
-                      <span className="text-2xl md:text-3xl font-bebas text-black tracking-wide">
+                      <span className="text-2xl md:text-3xl font-bebas text-white tracking-wide uppercase">
                         {analysis.home_team}
                       </span>
                     </div>
 
                     {/* VS Divider */}
-                    <div className="px-4">
-                      <span className="text-black text-xl font-bebas">VS</span>
+                    <div className="px-4 bg-black">
+                      <span className="text-white text-xl font-bebas">VS</span>
                     </div>
 
                     {/* Away Team */}
-                    <div className="flex-1 flex items-center justify-center gap-3 py-1 px-2">
-                      <span className="text-2xl md:text-3xl font-bebas text-black tracking-wide">
+                    <div 
+                      className="flex-1 flex items-center justify-center gap-3 py-2 px-4"
+                      style={{ backgroundColor: analysis.away_team_bg_color || '#8B0000' }}
+                    >
+                      <span className="text-2xl md:text-3xl font-bebas text-white tracking-wide uppercase">
                         {analysis.away_team}
                       </span>
                       {analysis.away_team_logo && (
-                        <div 
-                          className="w-16 h-16 rounded-lg flex items-center justify-center overflow-hidden p-1"
-                          style={{ backgroundColor: analysis.away_team_bg_color || '#8B0000' }}
-                        >
+                        <div className="w-16 h-16 rounded-lg flex items-center justify-center overflow-hidden p-1 bg-white/10">
                           <img
                             src={analysis.away_team_logo}
                             alt={analysis.away_team || "Away team"}
