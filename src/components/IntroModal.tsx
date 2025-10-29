@@ -105,7 +105,7 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
             <img 
               src={riseLogo} 
               alt="RISE Football" 
-              className="absolute top-2 right-2 w-32 h-auto object-contain sm:top-[26px] sm:right-[28px]"
+              className="absolute top-2 right-2 w-32 h-auto object-contain sm:top-[30px] sm:right-[32px]"
             />
             
             {/* Overlay Content - Top Left, using all black space */}
