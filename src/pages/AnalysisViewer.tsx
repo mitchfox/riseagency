@@ -248,7 +248,7 @@ const AnalysisViewer = () => {
               {analysis.opposition_strengths && (
                 <AccordionItem value="strengths" className="mb-8 border-0 data-[state=open]:border-4 data-[state=open]:border-primary data-[state=open]:rounded-lg">
                   <AccordionTrigger 
-                    className="w-full text-center bg-gray-300 py-4 rounded-t-lg hover:opacity-90 flex items-center justify-center gap-2 transition-all [&[data-state=open]>svg]:rotate-180"
+                    className="w-full text-center bg-primary py-4 rounded-t-lg hover:opacity-90 flex items-center justify-center gap-2 transition-all [&[data-state=open]>svg]:rotate-180"
                   >
                     <h2 className="text-3xl font-bebas uppercase tracking-widest text-black">
                       Opposition Strengths
@@ -281,7 +281,7 @@ const AnalysisViewer = () => {
               {analysis.opposition_weaknesses && (
                 <AccordionItem value="weaknesses" className="mb-8 border-0 data-[state=open]:border-4 data-[state=open]:border-primary data-[state=open]:rounded-lg">
                   <AccordionTrigger 
-                    className="w-full text-center bg-gray-400 py-4 rounded-t-lg hover:opacity-90 flex items-center justify-center gap-2 transition-all [&[data-state=open]>svg]:rotate-180"
+                    className="w-full text-center bg-primary py-4 rounded-t-lg hover:opacity-90 flex items-center justify-center gap-2 transition-all [&[data-state=open]>svg]:rotate-180"
                   >
                     <h2 className="text-3xl font-bebas uppercase tracking-widest text-black">
                       Opposition Weaknesses
@@ -362,7 +362,7 @@ const AnalysisViewer = () => {
               {(analysis.scheme_title || analysis.selected_scheme) && (
                 <AccordionItem value="scheme" className="mb-8 border-0 data-[state=open]:border-4 data-[state=open]:border-primary data-[state=open]:rounded-lg print:page-break-after-always">
                   <AccordionTrigger 
-                    className="w-full text-center bg-gray-300 py-4 rounded-t-lg hover:opacity-90 flex items-center justify-center gap-2 transition-all [&[data-state=open]>svg]:rotate-180"
+                    className="w-full text-center bg-primary py-4 rounded-t-lg hover:opacity-90 flex items-center justify-center gap-2 transition-all [&[data-state=open]>svg]:rotate-180"
                   >
                     <h2 className="text-3xl font-bebas uppercase tracking-widest text-black">
                       {analysis.scheme_title || "Tactical Scheme"}
@@ -444,7 +444,7 @@ const AnalysisViewer = () => {
               {analysis.points && analysis.points.length > 0 && (
                 <div className="mt-12 space-y-0">
                   {analysis.points.map((point: any, index: number) => {
-                    const bgColor = index % 2 === 0 ? 'bg-gray-400' : 'bg-primary';
+                    const bgColor = index % 2 === 0 ? 'bg-gray-300' : 'bg-gray-400';
                     return (
                       <AccordionItem key={index} value={`point-${index}`} className={`border-0 data-[state=open]:border-4 data-[state=open]:border-primary data-[state=open]:rounded-lg ${index > 0 ? 'mt-0' : ''}`}>
                         <AccordionTrigger 
@@ -464,7 +464,7 @@ const AnalysisViewer = () => {
                                 </p>
                               )}
                               {point.images && point.images.length > 0 && (
-                                <div className="flex flex-col items-center gap-3">
+                                <div className="bg-primary -mx-3 px-3 py-3 flex flex-col items-center gap-3">
                                   {point.images.map((img: string, imgIndex: number) => (
                                     <img
                                       key={imgIndex}
