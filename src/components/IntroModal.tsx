@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { RepresentationDialog } from "@/components/RepresentationDialog";
 import { useState } from "react";
 import blackMarbleSmudged from "@/assets/black-marble-smudged.png";
-import introImage from "@/assets/intro-reference.png";
+import introImage from "@/assets/intro-modal-new.png";
 
 interface IntroModalProps {
   open: boolean;
@@ -62,7 +62,7 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
                   </div>
                 </div>
                 <p className="text-sm md:text-base text-white/90 leading-relaxed max-w-2xl mx-auto">
-                  We take pride in scouting across the entirety of professional football in Europe and have guided many Premier League players to success through their development journey.
+                  We scout across the entirety of professional football in Europe and have guided many Premier League players to success through their development journey to RISE through the game and realise potential.
                 </p>
                 
                 {/* Gold Line Separator */}
