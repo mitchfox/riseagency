@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft } from "lucide-react";
@@ -96,140 +96,208 @@ const AnalysisViewer = () => {
   const isConcept = analysis.analysis_type === "concept";
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-br from-[#0A1628] via-[#1a472a] to-[#0A1628]">
       <Header />
       <main className="pt-24 pb-12 px-4">
-        <div className="container mx-auto max-w-6xl">
+        <div className="container mx-auto max-w-5xl">
           <Button
             variant="ghost"
             onClick={() => navigate(-1)}
-            className="mb-6"
+            className="mb-6 text-white hover:text-primary"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back
           </Button>
 
-          {/* Header */}
-          <div className="mb-8">
-            <div className="flex items-center gap-3 mb-4">
-              <span className="text-sm font-bebas uppercase tracking-widest text-primary border border-primary/30 px-4 py-1 rounded-full">
-                {analysis.analysis_type.replace("-", " ")}
-              </span>
-            </div>
-            <h1 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider text-foreground mb-4">
-              {analysis.title || `${analysis.analysis_type} Analysis`}
-            </h1>
-            {(isPreMatch || isPostMatch) && (
-              <div className="flex items-center gap-4 text-xl text-muted-foreground">
-                <span>{analysis.home_team}</span>
-                {analysis.home_score !== null && analysis.away_score !== null && (
-                  <>
-                    <span className="font-bold text-foreground">
-                      {analysis.home_score} - {analysis.away_score}
-                    </span>
-                  </>
-                )}
-                <span>{analysis.away_team}</span>
-              </div>
-            )}
-          </div>
-
-          {/* Pre-Match Content */}
+          {/* Pre-Match Content - Redesigned */}
           {isPreMatch && (
-            <div className="space-y-8">
-              {analysis.key_details && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="font-bebas uppercase tracking-wider">
-                      Key Details
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="whitespace-pre-wrap">{analysis.key_details}</p>
-                  </CardContent>
-                </Card>
-              )}
+            <div className="space-y-0">
+              {/* Header with Logo */}
+              <div className="flex flex-col items-center mb-8">
+                <div className="w-32 h-32 mb-4">
+                  <img 
+                    src="/logo.png" 
+                    alt="Logo" 
+                    className="w-full h-full object-contain"
+                  />
+                </div>
+                <p className="text-white/80 text-sm uppercase tracking-widest">
+                  Fuel for Football
+                </p>
+                <p className="text-primary text-xs italic">Change The Game</p>
+              </div>
 
-              {analysis.opposition_strengths && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="font-bebas uppercase tracking-wider">
-                      Opposition Strengths
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="whitespace-pre-wrap">{analysis.opposition_strengths}</p>
-                  </CardContent>
-                </Card>
-              )}
-
-              {analysis.opposition_weaknesses && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="font-bebas uppercase tracking-wider">
-                      Opposition Weaknesses
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="whitespace-pre-wrap">{analysis.opposition_weaknesses}</p>
-                  </CardContent>
-                </Card>
-              )}
-
-              {analysis.matchups && analysis.matchups.length > 0 && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="font-bebas uppercase tracking-wider">
-                      Key Matchups
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {analysis.matchups.map((matchup: any, index: number) => (
-                        <div key={index} className="border rounded-lg p-4">
-                          {matchup.image_url && (
-                            <img
-                              src={matchup.image_url}
-                              alt={matchup.name}
-                              className="w-full h-32 object-cover rounded mb-2"
-                            />
-                          )}
-                          <p className="font-semibold">{matchup.name}</p>
-                          {matchup.shirt_number && (
-                            <p className="text-sm text-muted-foreground">
-                              #{matchup.shirt_number}
-                            </p>
-                          )}
-                        </div>
-                      ))}
+              {/* Teams Header with Gold Border */}
+              <div className="relative bg-gradient-to-r from-primary/10 via-primary/20 to-primary/10 border-t-4 border-b-4 border-primary rounded-lg p-6 mb-8">
+                <div className="flex items-center justify-between">
+                  {/* Home Team */}
+                  <div className="flex-1 flex items-center justify-center gap-4">
+                    <div className="w-20 h-20 bg-red-600 rounded-lg flex items-center justify-center overflow-hidden">
+                      <span className="text-2xl font-bold text-white">
+                        {analysis.home_team?.substring(0, 3).toUpperCase()}
+                      </span>
                     </div>
-                  </CardContent>
-                </Card>
+                    <span className="text-xl md:text-2xl font-bebas text-white tracking-wide">
+                      {analysis.home_team}
+                    </span>
+                  </div>
+
+                  {/* VS Divider */}
+                  <div className="px-8">
+                    <span className="text-white/60 text-sm">VS</span>
+                  </div>
+
+                  {/* Away Team */}
+                  <div className="flex-1 flex items-center justify-center gap-4">
+                    <span className="text-xl md:text-2xl font-bebas text-white tracking-wide">
+                      {analysis.away_team}
+                    </span>
+                    <div className="w-20 h-20 bg-green-600 rounded-lg flex items-center justify-center overflow-hidden">
+                      <span className="text-2xl font-bold text-white">
+                        {analysis.away_team?.substring(0, 3).toUpperCase()}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Match Title Below */}
+                <div className="text-center mt-4">
+                  <p className="text-white/80 text-sm italic">
+                    {analysis.title || "Pre-Match Analysis"}
+                  </p>
+                </div>
+              </div>
+
+              {/* Overview Section with Gold Header */}
+              {analysis.key_details && (
+                <div className="mb-8">
+                  <div className="bg-primary/90 text-center py-3 rounded-t-lg">
+                    <h2 className="text-2xl font-bebas uppercase tracking-widest text-black">
+                      Overview
+                    </h2>
+                  </div>
+                  <Card className="bg-white/95 rounded-t-none border-t-0">
+                    <CardContent className="p-6">
+                      <p className="text-gray-800 leading-relaxed whitespace-pre-wrap">
+                        {analysis.key_details}
+                      </p>
+                    </CardContent>
+                  </Card>
+                </div>
               )}
 
+              {/* Opposition Strengths */}
+              {analysis.opposition_strengths && (
+                <div className="mb-8">
+                  <div className="bg-primary/90 text-center py-3 rounded-t-lg">
+                    <h2 className="text-2xl font-bebas uppercase tracking-widest text-black">
+                      Opposition Strengths
+                    </h2>
+                  </div>
+                  <Card className="bg-white/95 rounded-t-none border-t-0">
+                    <CardContent className="p-6">
+                      <ul className="space-y-2">
+                        {analysis.opposition_strengths.split('\n').filter(line => line.trim()).map((line, idx) => (
+                          <li key={idx} className="text-gray-800 flex items-start">
+                            <span className="text-green-600 mr-2">●</span>
+                            <span className="italic">{line.trim()}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+
+              {/* Opposition Weaknesses */}
+              {analysis.opposition_weaknesses && (
+                <div className="mb-8">
+                  <div className="bg-primary/90 text-center py-3 rounded-t-lg">
+                    <h2 className="text-2xl font-bebas uppercase tracking-widest text-black">
+                      Opposition Weaknesses
+                    </h2>
+                  </div>
+                  <Card className="bg-white/95 rounded-t-none border-t-0">
+                    <CardContent className="p-6">
+                      <ul className="space-y-2">
+                        {analysis.opposition_weaknesses.split('\n').filter(line => line.trim()).map((line, idx) => (
+                          <li key={idx} className="text-gray-800 flex items-start">
+                            <span className="text-red-600 mr-2">●</span>
+                            <span className="italic">{line.trim()}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+
+              {/* Key Matchups */}
+              {analysis.matchups && analysis.matchups.length > 0 && (
+                <div className="mb-8">
+                  <div className="bg-primary/90 text-center py-3 rounded-t-lg">
+                    <h2 className="text-2xl font-bebas uppercase tracking-widest text-black">
+                      Potential Matchup(s)
+                    </h2>
+                  </div>
+                  <Card className="bg-white/95 rounded-t-none border-t-0">
+                    <CardContent className="p-6">
+                      <div className="grid grid-cols-3 gap-6">
+                        {analysis.matchups.map((matchup: any, index: number) => (
+                          <div key={index} className="text-center">
+                            {matchup.image_url && (
+                              <div className="mb-3 rounded-lg overflow-hidden">
+                                <img
+                                  src={matchup.image_url}
+                                  alt={matchup.name}
+                                  className="w-full h-40 object-cover"
+                                />
+                              </div>
+                            )}
+                            <p className="font-semibold text-gray-800">{matchup.name}</p>
+                            {matchup.shirt_number && (
+                              <p className="text-sm text-gray-600">
+                                (#{matchup.shirt_number})
+                              </p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+
+              {/* Scheme Section */}
               {analysis.scheme_title && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="font-bebas uppercase tracking-wider">
+                <div className="mb-8">
+                  <div className="bg-primary/90 text-center py-3 rounded-t-lg">
+                    <h2 className="text-2xl font-bebas uppercase tracking-widest text-black">
                       {analysis.scheme_title}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {analysis.scheme_image_url && (
-                      <img
-                        src={analysis.scheme_image_url}
-                        alt="Scheme"
-                        className="w-full rounded-lg"
-                      />
-                    )}
-                    {analysis.scheme_paragraph_1 && (
-                      <p className="whitespace-pre-wrap">{analysis.scheme_paragraph_1}</p>
-                    )}
-                    {analysis.scheme_paragraph_2 && (
-                      <p className="whitespace-pre-wrap">{analysis.scheme_paragraph_2}</p>
-                    )}
-                  </CardContent>
-                </Card>
+                    </h2>
+                  </div>
+                  <Card className="bg-white/95 rounded-t-none border-t-0">
+                    <CardContent className="p-6 space-y-4">
+                      {analysis.scheme_image_url && (
+                        <img
+                          src={analysis.scheme_image_url}
+                          alt="Scheme"
+                          className="w-full rounded-lg"
+                        />
+                      )}
+                      {analysis.scheme_paragraph_1 && (
+                        <p className="text-gray-800 leading-relaxed whitespace-pre-wrap">
+                          {analysis.scheme_paragraph_1}
+                        </p>
+                      )}
+                      {analysis.scheme_paragraph_2 && (
+                        <p className="text-gray-800 leading-relaxed whitespace-pre-wrap">
+                          {analysis.scheme_paragraph_2}
+                        </p>
+                      )}
+                    </CardContent>
+                  </Card>
+                </div>
               )}
             </div>
           )}
@@ -237,6 +305,25 @@ const AnalysisViewer = () => {
           {/* Post-Match Content */}
           {isPostMatch && (
             <div className="space-y-8">
+              {/* Header */}
+              <div className="text-center mb-8">
+                <span className="text-sm font-bebas uppercase tracking-widest text-primary border border-primary/30 px-4 py-1 rounded-full inline-block">
+                  Post-Match Analysis
+                </span>
+                <h1 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider text-white mt-4 mb-4">
+                  {analysis.title || "Post-Match Analysis"}
+                </h1>
+                <div className="flex items-center justify-center gap-4 text-xl text-white/80">
+                  <span>{analysis.home_team}</span>
+                  {analysis.home_score !== null && analysis.away_score !== null && (
+                    <span className="font-bold text-primary">
+                      {analysis.home_score} - {analysis.away_score}
+                    </span>
+                  )}
+                  <span>{analysis.away_team}</span>
+                </div>
+              </div>
+
               {analysis.player_image_url && (
                 <div className="w-full">
                   <img
@@ -248,14 +335,14 @@ const AnalysisViewer = () => {
               )}
 
               {analysis.strengths_improvements && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="font-bebas uppercase tracking-wider">
+                <Card className="bg-card/50 border-primary/20">
+                  <CardContent className="p-6">
+                    <h3 className="text-2xl font-bebas uppercase tracking-wider text-primary mb-4">
                       Strengths & Areas for Improvement
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="whitespace-pre-wrap">{analysis.strengths_improvements}</p>
+                    </h3>
+                    <p className="text-white/90 leading-relaxed whitespace-pre-wrap">
+                      {analysis.strengths_improvements}
+                    </p>
                   </CardContent>
                 </Card>
               )}
@@ -263,15 +350,15 @@ const AnalysisViewer = () => {
               {analysis.points && analysis.points.length > 0 && (
                 <div className="space-y-6">
                   {analysis.points.map((point: any, index: number) => (
-                    <Card key={index}>
-                      <CardHeader>
-                        <CardTitle className="font-bebas uppercase tracking-wider">
+                    <Card key={index} className="bg-card/50 border-primary/20">
+                      <CardContent className="p-6 space-y-4">
+                        <h3 className="text-2xl font-bebas uppercase tracking-wider text-primary">
                           {point.title}
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-4">
+                        </h3>
                         {point.paragraph_1 && (
-                          <p className="whitespace-pre-wrap">{point.paragraph_1}</p>
+                          <p className="text-white/90 leading-relaxed whitespace-pre-wrap">
+                            {point.paragraph_1}
+                          </p>
                         )}
                         {point.images && point.images.length > 0 && (
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -286,7 +373,9 @@ const AnalysisViewer = () => {
                           </div>
                         )}
                         {point.paragraph_2 && (
-                          <p className="whitespace-pre-wrap">{point.paragraph_2}</p>
+                          <p className="text-white/90 leading-relaxed whitespace-pre-wrap">
+                            {point.paragraph_2}
+                          </p>
                         )}
                       </CardContent>
                     </Card>
@@ -299,28 +388,38 @@ const AnalysisViewer = () => {
           {/* Concept Content */}
           {isConcept && (
             <div className="space-y-8">
+              {/* Header */}
+              <div className="text-center mb-8">
+                <span className="text-sm font-bebas uppercase tracking-widest text-primary border border-primary/30 px-4 py-1 rounded-full inline-block">
+                  Concept
+                </span>
+                <h1 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider text-white mt-4">
+                  {analysis.title || "Concept Analysis"}
+                </h1>
+              </div>
+
               {analysis.concept && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="font-bebas uppercase tracking-wider">
+                <Card className="bg-card/50 border-primary/20">
+                  <CardContent className="p-6">
+                    <h3 className="text-2xl font-bebas uppercase tracking-wider text-primary mb-4">
                       Concept
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="whitespace-pre-wrap">{analysis.concept}</p>
+                    </h3>
+                    <p className="text-white/90 leading-relaxed whitespace-pre-wrap">
+                      {analysis.concept}
+                    </p>
                   </CardContent>
                 </Card>
               )}
 
               {analysis.explanation && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="font-bebas uppercase tracking-wider">
+                <Card className="bg-card/50 border-primary/20">
+                  <CardContent className="p-6">
+                    <h3 className="text-2xl font-bebas uppercase tracking-wider text-primary mb-4">
                       Explanation
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="whitespace-pre-wrap">{analysis.explanation}</p>
+                    </h3>
+                    <p className="text-white/90 leading-relaxed whitespace-pre-wrap">
+                      {analysis.explanation}
+                    </p>
                   </CardContent>
                 </Card>
               )}
@@ -328,15 +427,15 @@ const AnalysisViewer = () => {
               {analysis.points && analysis.points.length > 0 && (
                 <div className="space-y-6">
                   {analysis.points.map((point: any, index: number) => (
-                    <Card key={index}>
-                      <CardHeader>
-                        <CardTitle className="font-bebas uppercase tracking-wider">
+                    <Card key={index} className="bg-card/50 border-primary/20">
+                      <CardContent className="p-6 space-y-4">
+                        <h3 className="text-2xl font-bebas uppercase tracking-wider text-primary">
                           {point.title}
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-4">
+                        </h3>
                         {point.paragraph_1 && (
-                          <p className="whitespace-pre-wrap">{point.paragraph_1}</p>
+                          <p className="text-white/90 leading-relaxed whitespace-pre-wrap">
+                            {point.paragraph_1}
+                          </p>
                         )}
                         {point.images && point.images.length > 0 && (
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -351,7 +450,9 @@ const AnalysisViewer = () => {
                           </div>
                         )}
                         {point.paragraph_2 && (
-                          <p className="whitespace-pre-wrap">{point.paragraph_2}</p>
+                          <p className="text-white/90 leading-relaxed whitespace-pre-wrap">
+                            {point.paragraph_2}
+                          </p>
                         )}
                       </CardContent>
                     </Card>

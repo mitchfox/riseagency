@@ -225,10 +225,26 @@ export const CoachingDatabase = () => {
     setLoading(true);
 
     try {
+      // Create a clean copy of formData with only the fields we need
+      const dataToSubmit: any = { ...formData };
+      
+      // Remove fields that don't exist in the table
+      if (activeTab === 'coaching_aphorisms') {
+        // For aphorisms, only keep featured_text and body_text
+        delete dataToSubmit.title;
+        delete dataToSubmit.description;
+        delete dataToSubmit.content;
+        delete dataToSubmit.category;
+        delete dataToSubmit.author;
+        delete dataToSubmit.load;
+        delete dataToSubmit.video_url;
+        delete dataToSubmit.is_own_video;
+      }
+      
       if (editingItem) {
         const { error } = await supabase
           .from(activeTab)
-          .update(formData)
+          .update(dataToSubmit)
           .eq('id', editingItem.id);
 
         if (error) throw error;
@@ -236,7 +252,7 @@ export const CoachingDatabase = () => {
       } else {
         const { error } = await supabase
           .from(activeTab)
-          .insert(formData);
+          .insert(dataToSubmit);
 
         if (error) throw error;
         toast.success('Item created successfully');
@@ -250,6 +266,8 @@ export const CoachingDatabase = () => {
         load: '',
         video_url: '',
         is_own_video: false,
+        featured_text: '',
+        body_text: '',
       });
       setEditingItem(null);
       setIsDialogOpen(false);

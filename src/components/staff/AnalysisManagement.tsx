@@ -848,6 +848,13 @@ export const AnalysisManagement = () => {
                 </div>
                 <div className="flex gap-2">
                   <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => window.open(`/analysis/${analysis.id}`, '_blank')}
+                  >
+                    View Analysis
+                  </Button>
+                  <Button
                     variant="ghost"
                     size="sm"
                     onClick={() =>
