@@ -5,8 +5,9 @@ import { Footer } from "@/components/Footer";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 interface Analysis {
   id: string;
@@ -16,6 +17,9 @@ interface Analysis {
   away_team: string | null;
   home_score: number | null;
   away_score: number | null;
+  match_date: string | null;
+  home_team_logo: string | null;
+  away_team_logo: string | null;
   key_details: string | null;
   opposition_strengths: string | null;
   opposition_weaknesses: string | null;
@@ -54,8 +58,11 @@ const AnalysisViewer = () => {
       if (error) throw error;
       
       // Parse matchups and points from JSON
-      const parsedAnalysis = {
+      const parsedAnalysis: Analysis = {
         ...data,
+        match_date: data.match_date || null,
+        home_team_logo: data.home_team_logo || null,
+        away_team_logo: data.away_team_logo || null,
         matchups: Array.isArray(data.matchups) ? data.matchups : [],
         points: Array.isArray(data.points) ? data.points : []
       };
@@ -96,7 +103,7 @@ const AnalysisViewer = () => {
   const isConcept = analysis.analysis_type === "concept";
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0A1628] via-[#1a472a] to-[#0A1628]">
+    <div className="min-h-screen bg-background">
       <Header />
       <main className="pt-24 pb-12 px-4">
         <div className="container mx-auto max-w-5xl">
@@ -112,31 +119,20 @@ const AnalysisViewer = () => {
           {/* Pre-Match Content - Redesigned */}
           {isPreMatch && (
             <div className="space-y-0">
-              {/* Header with Logo */}
-              <div className="flex flex-col items-center mb-8">
-                <div className="w-32 h-32 mb-4">
-                  <img 
-                    src="/logo.png" 
-                    alt="Logo" 
-                    className="w-full h-full object-contain"
-                  />
-                </div>
-                <p className="text-white/80 text-sm uppercase tracking-widest">
-                  Fuel for Football
-                </p>
-                <p className="text-primary text-xs italic">Change The Game</p>
-              </div>
-
               {/* Teams Header with Gold Border */}
               <div className="relative bg-gradient-to-r from-primary/10 via-primary/20 to-primary/10 border-t-4 border-b-4 border-primary rounded-lg p-6 mb-8">
                 <div className="flex items-center justify-between">
                   {/* Home Team */}
                   <div className="flex-1 flex items-center justify-center gap-4">
-                    <div className="w-20 h-20 bg-red-600 rounded-lg flex items-center justify-center overflow-hidden">
-                      <span className="text-2xl font-bold text-white">
-                        {analysis.home_team?.substring(0, 3).toUpperCase()}
-                      </span>
-                    </div>
+                    {analysis.home_team_logo && (
+                      <div className="w-20 h-20 rounded-lg flex items-center justify-center overflow-hidden">
+                        <img
+                          src={analysis.home_team_logo}
+                          alt={analysis.home_team || "Home team"}
+                          className="w-full h-full object-contain"
+                        />
+                      </div>
+                    )}
                     <span className="text-xl md:text-2xl font-bebas text-white tracking-wide">
                       {analysis.home_team}
                     </span>
@@ -152,152 +148,181 @@ const AnalysisViewer = () => {
                     <span className="text-xl md:text-2xl font-bebas text-white tracking-wide">
                       {analysis.away_team}
                     </span>
-                    <div className="w-20 h-20 bg-green-600 rounded-lg flex items-center justify-center overflow-hidden">
-                      <span className="text-2xl font-bold text-white">
-                        {analysis.away_team?.substring(0, 3).toUpperCase()}
-                      </span>
-                    </div>
+                    {analysis.away_team_logo && (
+                      <div className="w-20 h-20 rounded-lg flex items-center justify-center overflow-hidden">
+                        <img
+                          src={analysis.away_team_logo}
+                          alt={analysis.away_team || "Away team"}
+                          className="w-full h-full object-contain"
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
                 
-                {/* Match Title Below */}
-                <div className="text-center mt-4">
+                {/* Match Title and Date */}
+                <div className="text-center mt-4 space-y-1">
                   <p className="text-white/80 text-sm italic">
                     {analysis.title || "Pre-Match Analysis"}
                   </p>
+                  {analysis.match_date && (
+                    <p className="text-white/60 text-xs">
+                      {new Date(analysis.match_date).toLocaleDateString('en-GB', {
+                        weekday: 'long',
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                      })}
+                    </p>
+                  )}
                 </div>
               </div>
 
               {/* Overview Section with Gold Header */}
               {analysis.key_details && (
-                <div className="mb-8">
-                  <div className="bg-primary/90 text-center py-3 rounded-t-lg">
+                <Collapsible className="mb-8">
+                  <CollapsibleTrigger className="w-full bg-primary/90 text-center py-3 rounded-t-lg hover:bg-primary flex items-center justify-center gap-2 transition-colors">
                     <h2 className="text-2xl font-bebas uppercase tracking-widest text-black">
                       Overview
                     </h2>
-                  </div>
-                  <Card className="bg-white/95 rounded-t-none border-t-0">
-                    <CardContent className="p-6">
-                      <p className="text-gray-800 leading-relaxed whitespace-pre-wrap">
-                        {analysis.key_details}
-                      </p>
-                    </CardContent>
-                  </Card>
-                </div>
+                    <ChevronDown className="w-5 h-5 text-black" />
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <Card className="bg-white/95 rounded-t-none border-t-0">
+                      <CardContent className="p-6">
+                        <p className="text-gray-800 leading-relaxed whitespace-pre-wrap">
+                          {analysis.key_details}
+                        </p>
+                      </CardContent>
+                    </Card>
+                  </CollapsibleContent>
+                </Collapsible>
               )}
 
               {/* Opposition Strengths */}
               {analysis.opposition_strengths && (
-                <div className="mb-8">
-                  <div className="bg-primary/90 text-center py-3 rounded-t-lg">
+                <Collapsible className="mb-8">
+                  <CollapsibleTrigger className="w-full bg-primary/90 text-center py-3 rounded-t-lg hover:bg-primary flex items-center justify-center gap-2 transition-colors">
                     <h2 className="text-2xl font-bebas uppercase tracking-widest text-black">
                       Opposition Strengths
                     </h2>
-                  </div>
-                  <Card className="bg-white/95 rounded-t-none border-t-0">
-                    <CardContent className="p-6">
-                      <ul className="space-y-2">
-                        {analysis.opposition_strengths.split('\n').filter(line => line.trim()).map((line, idx) => (
-                          <li key={idx} className="text-gray-800 flex items-start">
-                            <span className="text-green-600 mr-2">●</span>
-                            <span className="italic">{line.trim()}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </CardContent>
-                  </Card>
-                </div>
+                    <ChevronDown className="w-5 h-5 text-black" />
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <Card className="bg-white/95 rounded-t-none border-t-0">
+                      <CardContent className="p-6">
+                        <ul className="space-y-2">
+                          {analysis.opposition_strengths.split('\n').filter(line => line.trim()).map((line, idx) => (
+                            <li key={idx} className="text-gray-800 flex items-start">
+                              <span className="text-green-600 mr-2">●</span>
+                              <span className="italic">{line.trim()}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </CardContent>
+                    </Card>
+                  </CollapsibleContent>
+                </Collapsible>
               )}
 
               {/* Opposition Weaknesses */}
               {analysis.opposition_weaknesses && (
-                <div className="mb-8">
-                  <div className="bg-primary/90 text-center py-3 rounded-t-lg">
+                <Collapsible className="mb-8">
+                  <CollapsibleTrigger className="w-full bg-primary/90 text-center py-3 rounded-t-lg hover:bg-primary flex items-center justify-center gap-2 transition-colors">
                     <h2 className="text-2xl font-bebas uppercase tracking-widest text-black">
                       Opposition Weaknesses
                     </h2>
-                  </div>
-                  <Card className="bg-white/95 rounded-t-none border-t-0">
-                    <CardContent className="p-6">
-                      <ul className="space-y-2">
-                        {analysis.opposition_weaknesses.split('\n').filter(line => line.trim()).map((line, idx) => (
-                          <li key={idx} className="text-gray-800 flex items-start">
-                            <span className="text-red-600 mr-2">●</span>
-                            <span className="italic">{line.trim()}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </CardContent>
-                  </Card>
-                </div>
+                    <ChevronDown className="w-5 h-5 text-black" />
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <Card className="bg-white/95 rounded-t-none border-t-0">
+                      <CardContent className="p-6">
+                        <ul className="space-y-2">
+                          {analysis.opposition_weaknesses.split('\n').filter(line => line.trim()).map((line, idx) => (
+                            <li key={idx} className="text-gray-800 flex items-start">
+                              <span className="text-red-600 mr-2">●</span>
+                              <span className="italic">{line.trim()}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </CardContent>
+                    </Card>
+                  </CollapsibleContent>
+                </Collapsible>
               )}
 
               {/* Key Matchups */}
               {analysis.matchups && analysis.matchups.length > 0 && (
-                <div className="mb-8">
-                  <div className="bg-primary/90 text-center py-3 rounded-t-lg">
+                <Collapsible className="mb-8">
+                  <CollapsibleTrigger className="w-full bg-primary/90 text-center py-3 rounded-t-lg hover:bg-primary flex items-center justify-center gap-2 transition-colors">
                     <h2 className="text-2xl font-bebas uppercase tracking-widest text-black">
                       Potential Matchup(s)
                     </h2>
-                  </div>
-                  <Card className="bg-white/95 rounded-t-none border-t-0">
-                    <CardContent className="p-6">
-                      <div className="grid grid-cols-3 gap-6">
-                        {analysis.matchups.map((matchup: any, index: number) => (
-                          <div key={index} className="text-center">
-                            {matchup.image_url && (
-                              <div className="mb-3 rounded-lg overflow-hidden">
-                                <img
-                                  src={matchup.image_url}
-                                  alt={matchup.name}
-                                  className="w-full h-40 object-cover"
-                                />
-                              </div>
-                            )}
-                            <p className="font-semibold text-gray-800">{matchup.name}</p>
-                            {matchup.shirt_number && (
-                              <p className="text-sm text-gray-600">
-                                (#{matchup.shirt_number})
-                              </p>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
+                    <ChevronDown className="w-5 h-5 text-black" />
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <Card className="bg-white/95 rounded-t-none border-t-0">
+                      <CardContent className="p-6">
+                        <div className="grid grid-cols-3 gap-6">
+                          {analysis.matchups.map((matchup: any, index: number) => (
+                            <div key={index} className="text-center">
+                              {matchup.image_url && (
+                                <div className="mb-3 rounded-lg overflow-hidden">
+                                  <img
+                                    src={matchup.image_url}
+                                    alt={matchup.name}
+                                    className="w-full h-40 object-cover"
+                                  />
+                                </div>
+                              )}
+                              <p className="font-semibold text-gray-800">{matchup.name}</p>
+                              {matchup.shirt_number && (
+                                <p className="text-sm text-gray-600">
+                                  (#{matchup.shirt_number})
+                                </p>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </CollapsibleContent>
+                </Collapsible>
               )}
 
               {/* Scheme Section */}
               {analysis.scheme_title && (
-                <div className="mb-8">
-                  <div className="bg-primary/90 text-center py-3 rounded-t-lg">
+                <Collapsible className="mb-8">
+                  <CollapsibleTrigger className="w-full bg-primary/90 text-center py-3 rounded-t-lg hover:bg-primary flex items-center justify-center gap-2 transition-colors">
                     <h2 className="text-2xl font-bebas uppercase tracking-widest text-black">
                       {analysis.scheme_title}
                     </h2>
-                  </div>
-                  <Card className="bg-white/95 rounded-t-none border-t-0">
-                    <CardContent className="p-6 space-y-4">
-                      {analysis.scheme_image_url && (
-                        <img
-                          src={analysis.scheme_image_url}
-                          alt="Scheme"
-                          className="w-full rounded-lg"
-                        />
-                      )}
-                      {analysis.scheme_paragraph_1 && (
-                        <p className="text-gray-800 leading-relaxed whitespace-pre-wrap">
-                          {analysis.scheme_paragraph_1}
-                        </p>
-                      )}
-                      {analysis.scheme_paragraph_2 && (
-                        <p className="text-gray-800 leading-relaxed whitespace-pre-wrap">
-                          {analysis.scheme_paragraph_2}
-                        </p>
-                      )}
-                    </CardContent>
-                  </Card>
-                </div>
+                    <ChevronDown className="w-5 h-5 text-black" />
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <Card className="bg-white/95 rounded-t-none border-t-0">
+                      <CardContent className="p-6 space-y-4">
+                        {analysis.scheme_image_url && (
+                          <img
+                            src={analysis.scheme_image_url}
+                            alt="Scheme"
+                            className="w-full rounded-lg"
+                          />
+                        )}
+                        {analysis.scheme_paragraph_1 && (
+                          <p className="text-gray-800 leading-relaxed whitespace-pre-wrap">
+                            {analysis.scheme_paragraph_1}
+                          </p>
+                        )}
+                        {analysis.scheme_paragraph_2 && (
+                          <p className="text-gray-800 leading-relaxed whitespace-pre-wrap">
+                            {analysis.scheme_paragraph_2}
+                          </p>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </CollapsibleContent>
+                </Collapsible>
               )}
             </div>
           )}

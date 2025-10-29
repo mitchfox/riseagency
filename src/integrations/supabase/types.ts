@@ -19,14 +19,17 @@ export type Database = {
           analysis_type: string
           away_score: number | null
           away_team: string | null
+          away_team_logo: string | null
           concept: string | null
           created_at: string
           explanation: string | null
           fixture_id: string | null
           home_score: number | null
           home_team: string | null
+          home_team_logo: string | null
           id: string
           key_details: string | null
+          match_date: string | null
           matchups: Json | null
           opposition_strengths: string | null
           opposition_weaknesses: string | null
@@ -44,14 +47,17 @@ export type Database = {
           analysis_type: string
           away_score?: number | null
           away_team?: string | null
+          away_team_logo?: string | null
           concept?: string | null
           created_at?: string
           explanation?: string | null
           fixture_id?: string | null
           home_score?: number | null
           home_team?: string | null
+          home_team_logo?: string | null
           id?: string
           key_details?: string | null
+          match_date?: string | null
           matchups?: Json | null
           opposition_strengths?: string | null
           opposition_weaknesses?: string | null
@@ -69,14 +75,17 @@ export type Database = {
           analysis_type?: string
           away_score?: number | null
           away_team?: string | null
+          away_team_logo?: string | null
           concept?: string | null
           created_at?: string
           explanation?: string | null
           fixture_id?: string | null
           home_score?: number | null
           home_team?: string | null
+          home_team_logo?: string | null
           id?: string
           key_details?: string | null
+          match_date?: string | null
           matchups?: Json | null
           opposition_strengths?: string | null
           opposition_weaknesses?: string | null
