@@ -34,7 +34,7 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
     <>
       <Dialog open={open} onOpenChange={handleDialogChange}>
         <DialogContent 
-          className="max-w-2xl w-full p-0 border-primary/20 bg-transparent [&>button]:hidden overflow-hidden"
+          className="max-w-lg w-full p-0 border-primary/20 bg-transparent [&>button]:hidden overflow-hidden"
           aria-describedby="intro-modal-description"
         >
           <div className="relative w-full">
@@ -46,7 +46,7 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
             />
             
             {/* Overlay Content - Top Left, using all black space */}
-            <div className="absolute top-6 left-6 right-1/2 pr-6 space-y-6">
+            <div className="absolute top-6 left-6 right-[42%] pr-6 space-y-3">
               <p id="intro-modal-description" className="text-base md:text-lg text-white leading-relaxed">
                 We scout across the entirety of professional football in Europe and have guided many Premier League players to success through their development journey to RISE through the game and realise potential.
               </p>
