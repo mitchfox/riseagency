@@ -18,12 +18,14 @@ import { Button } from "@/components/ui/button";
 import { WorkWithUsDialog } from "@/components/WorkWithUsDialog";
 import { RepresentationDialog } from "@/components/RepresentationDialog";
 import { DeclareInterestDialog } from "@/components/DeclareInterestDialog";
+import { IntroModal } from "@/components/IntroModal";
 
 export const Header = () => {
   const location = useLocation();
   const [representationOpen, setRepresentationOpen] = useState(false);
   const [workWithUsOpen, setWorkWithUsOpen] = useState(false);
   const [declareInterestOpen, setDeclareInterestOpen] = useState(false);
+  const [introModalOpen, setIntroModalOpen] = useState(false);
   const [showTopBar, setShowTopBar] = useState(false);
 
   useEffect(() => {
@@ -76,6 +78,14 @@ export const Header = () => {
                 <span className="hidden md:inline">Player Portal</span>
                 <span className="md:hidden">Portal</span>
               </Link>
+              <div className="w-px h-4 bg-white/20 md:hidden" />
+              <button
+                onClick={() => setIntroModalOpen(true)}
+                className="text-xs md:text-sm font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-colors"
+              >
+                <span className="hidden md:inline">Intro</span>
+                <span className="md:hidden">Info</span>
+              </button>
             </div>
           </div>
         </div>
@@ -278,6 +288,10 @@ export const Header = () => {
       <DeclareInterestDialog 
         open={declareInterestOpen} 
         onOpenChange={setDeclareInterestOpen} 
+      />
+      <IntroModal 
+        open={introModalOpen} 
+        onOpenChange={setIntroModalOpen} 
       />
     </header>
     </>
