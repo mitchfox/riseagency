@@ -79,8 +79,7 @@ export const SiteVisitorsManagement = () => {
         .select("*")
         .gte("visited_at", startOfDay.toISOString())
         .lte("visited_at", endOfDay.toISOString())
-        .order("visited_at", { ascending: false })
-        .limit(100);
+        .order("visited_at", { ascending: false });
 
       if (pageFilter !== "all") {
         query = query.eq("page_path", pageFilter);
