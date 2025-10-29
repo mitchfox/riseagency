@@ -369,14 +369,12 @@ const Dashboard = () => {
             <div className="mb-8 px-4 md:px-0">
               <Card className="bg-card/50 border-primary/20">
                 <CardContent className="py-6 px-6 text-center">
-                  <p className="text-lg md:text-xl font-medium text-foreground italic">
-                    "{dailyAphorism.content}"
+                  <p className="text-lg md:text-xl font-semibold text-[#D4AF37] mb-3">
+                    {dailyAphorism.featured_text}
                   </p>
-                  {dailyAphorism.author && (
-                    <p className="text-sm text-muted-foreground mt-2">
-                      — {dailyAphorism.author}
-                    </p>
-                  )}
+                  <p className="text-base text-white">
+                    {dailyAphorism.body_text}
+                  </p>
                 </CardContent>
               </Card>
             </div>

@@ -16,13 +16,16 @@ type TableType = 'coaching_sessions' | 'coaching_programmes' | 'coaching_drills'
 
 interface CoachingItem {
   id: string;
-  title: string;
+  title?: string;
   description?: string | null;
-  content: string | null;
-  category: string | null;
-  tags: string[] | null;
+  content?: string | null;
+  category?: string | null;
+  tags?: string[] | null;
   created_at: string;
   updated_at: string;
+  // Aphorism fields
+  featured_text?: string;
+  body_text?: string;
   // Table-specific fields
   duration?: number | null;
   weeks?: number | null;
@@ -72,7 +75,7 @@ const tableConfigs = {
   coaching_aphorisms: {
     label: 'Aphorisms',
     singular: 'Aphorism',
-    fields: ['title', 'content', 'author', 'category'],
+    fields: ['featured_text', 'body_text'],
   },
 };
 
@@ -90,6 +93,8 @@ export const CoachingDatabase = () => {
     load: '',
     video_url: '',
     is_own_video: false,
+    featured_text: '',
+    body_text: '',
   });
   
   // Pagination and filtering
@@ -126,6 +131,11 @@ export const CoachingDatabase = () => {
   }, [currentPage]);
 
   const fetchCategories = async () => {
+    // Skip for aphorisms as they don't have category/tags
+    if (activeTab === 'coaching_aphorisms') {
+      return;
+    }
+    
     try {
       const { data, error } = await supabase
         .from(activeTab)
@@ -164,7 +174,7 @@ export const CoachingDatabase = () => {
   const fetchItems = async () => {
     setLoading(true);
     try {
-      let query = supabase
+      let query: any = supabase
         .from(activeTab)
         .select('*', { count: 'exact' })
         .order('created_at', { ascending: false });
@@ -198,7 +208,7 @@ export const CoachingDatabase = () => {
       const { data, error, count } = await query;
 
       if (error) throw error;
-      setItems(data || []);
+      setItems((data || []) as any);
       setTotalItems(count || 0);
     } catch (error) {
       console.error('Error fetching items:', error);
@@ -291,6 +301,8 @@ export const CoachingDatabase = () => {
       analysis_type: item.analysis_type || '',
       video_url: item.video_url || '',
       is_own_video: item.is_own_video || false,
+      featured_text: item.featured_text || '',
+      body_text: item.body_text || '',
     });
     setIsDialogOpen(true);
   };
@@ -304,6 +316,8 @@ export const CoachingDatabase = () => {
       load: '',
       video_url: '',
       is_own_video: false,
+      featured_text: '',
+      body_text: '',
     });
     setEditingItem(null);
   };
@@ -372,46 +386,76 @@ export const CoachingDatabase = () => {
                     </DialogTitle>
                   </DialogHeader>
                   <form onSubmit={handleSubmit} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="title">Title *</Label>
-                      <Input
-                        id="title"
-                        value={formData.title}
-                        onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                        required
-                      />
-                    </div>
+                    {key === 'coaching_aphorisms' ? (
+                      <>
+                        <div className="space-y-2">
+                          <Label htmlFor="featured_text">Featured Text *</Label>
+                          <Textarea
+                            id="featured_text"
+                            value={formData.featured_text || ''}
+                            onChange={(e) => setFormData({ ...formData, featured_text: e.target.value })}
+                            required
+                            rows={2}
+                            placeholder="Short, impactful text (will be displayed in gold)"
+                          />
+                        </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="description">Description</Label>
-                      <Textarea
-                        id="description"
-                        value={formData.description}
-                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                        rows={3}
-                      />
-                    </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="body_text">Body Text *</Label>
+                          <Textarea
+                            id="body_text"
+                            value={formData.body_text || ''}
+                            onChange={(e) => setFormData({ ...formData, body_text: e.target.value })}
+                            required
+                            rows={4}
+                            placeholder="Main text content (will be displayed in white)"
+                          />
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="space-y-2">
+                          <Label htmlFor="title">Title *</Label>
+                          <Input
+                            id="title"
+                            value={formData.title}
+                            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                            required
+                          />
+                        </div>
 
-                    {key !== 'coaching_exercises' && key !== 'coaching_aphorisms' && (
-                      <div className="space-y-2">
-                        <Label htmlFor="content">Content</Label>
-                        <Textarea
-                          id="content"
-                          value={formData.content}
-                          onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                          rows={8}
-                        />
-                      </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="description">Description</Label>
+                          <Textarea
+                            id="description"
+                            value={formData.description}
+                            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                            rows={3}
+                          />
+                        </div>
+
+                        {key !== 'coaching_exercises' && (
+                          <div className="space-y-2">
+                            <Label htmlFor="content">Content</Label>
+                            <Textarea
+                              id="content"
+                              value={formData.content}
+                              onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                              rows={8}
+                            />
+                          </div>
+                        )}
+
+                        <div className="space-y-2">
+                          <Label htmlFor="category">Category</Label>
+                          <Input
+                            id="category"
+                            value={formData.category}
+                            onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                          />
+                        </div>
+                      </>
                     )}
-
-                    <div className="space-y-2">
-                      <Label htmlFor="category">Category</Label>
-                      <Input
-                        id="category"
-                        value={formData.category}
-                        onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                      />
-                    </div>
 
                     {/* Table-specific fields */}
                     {(key === 'coaching_sessions' || key === 'psychological_sessions') && (

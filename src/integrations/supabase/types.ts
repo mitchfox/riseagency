@@ -188,33 +188,24 @@ export type Database = {
       }
       coaching_aphorisms: {
         Row: {
-          author: string | null
-          category: string | null
-          content: string
+          body_text: string
           created_at: string
+          featured_text: string
           id: string
-          tags: string[] | null
-          title: string
           updated_at: string
         }
         Insert: {
-          author?: string | null
-          category?: string | null
-          content: string
+          body_text?: string
           created_at?: string
+          featured_text?: string
           id?: string
-          tags?: string[] | null
-          title: string
           updated_at?: string
         }
         Update: {
-          author?: string | null
-          category?: string | null
-          content?: string
+          body_text?: string
           created_at?: string
+          featured_text?: string
           id?: string
-          tags?: string[] | null
-          title?: string
           updated_at?: string
         }
         Relationships: []
