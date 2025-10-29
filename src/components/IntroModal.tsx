@@ -121,13 +121,13 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
               </div>
             </div>
 
-            {/* News Slider - Middle Left */}
+            {/* News Slider - Bottom Right */}
             <div 
               onClick={() => {
                 handleDialogChange(false);
                 navigate("/news");
               }}
-              className="absolute left-6 top-[250px] w-[220px] bg-black/70 backdrop-blur-sm border border-white/10 rounded-lg overflow-hidden cursor-pointer hover:bg-black/80 transition-all"
+              className="absolute right-6 bottom-6 w-[220px] bg-black/70 backdrop-blur-sm border border-white/10 rounded-lg overflow-hidden cursor-pointer hover:bg-black/80 transition-all"
             >
               <img 
                 src={newsItems[newsIndex].image} 
