@@ -39,21 +39,12 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
         .from('blog_posts')
         .select('*')
         .eq('published', true)
-        .order('created_at', { ascending: false });
+        .eq('category', 'PLAYER NEWS')
+        .order('created_at', { ascending: false })
+        .limit(3);
       
       if (data && !error && data.length > 0) {
-        // Filter out any "Between the Lines" posts (case insensitive, check both category and title)
-        const filteredNews = data.filter(post => {
-          const category = (post.category || '').toLowerCase();
-          const title = (post.title || '').toLowerCase();
-          return !category.includes('between') && 
-                 !category.includes('lines') && 
-                 !title.includes('between the lines');
-        }).slice(0, 3);
-        
-        if (filteredNews.length > 0) {
-          setNewsItems(filteredNews);
-        }
+        setNewsItems(data);
       }
     };
 
