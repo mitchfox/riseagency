@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import blackMarbleSmudged from "@/assets/black-marble-smudged.png";
 import introImage from "@/assets/intro-modal-background.png";
 import { supabase } from "@/integrations/supabase/client";
+import { getCountryFlagUrl } from "@/lib/countryFlags";
 
 interface IntroModalProps {
   open: boolean;
@@ -178,31 +179,20 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
                   
                   {/* Nationality Flag - Top Right */}
                   <div className="absolute top-4 right-4 text-right">
-                    <div className="text-4xl leading-none mb-0.5">
-                      {(() => {
-                        const nat = starPlayers[starIndex]?.nationality;
-                        if (!nat) return '';
-                        const countryFlags: Record<string, string> = {
-                          'Czech Republic': '🇨🇿',
-                          'Belgium': '🇧🇪',
-                          'Cape Verdean': '🇨🇻',
-                          'Cape Verde': '🇨🇻',
-                          'England': '🏴󠁧󠁢󠁥󠁮󠁧󠁿',
-                          'Scotland': '🏴󠁧󠁢󠁳󠁣󠁴󠁿',
-                          'Wales': '🏴󠁧󠁢󠁷󠁬󠁳󠁿',
-                          'Ireland': '🇮🇪',
-                          'France': '🇫🇷',
-                          'Germany': '🇩🇪',
-                          'Spain': '🇪🇸',
-                          'Italy': '🇮🇹',
-                          'Portugal': '🇵🇹',
-                          'Netherlands': '🇳🇱',
-                          'Brazil': '🇧🇷',
-                          'Argentina': '🇦🇷'
-                        };
-                        return countryFlags[nat] || nat;
-                      })()}
-                    </div>
+                    {(() => {
+                      const nat = starPlayers[starIndex]?.nationality;
+                      if (!nat) return null;
+                      // Handle "Cape Verdean" -> "Cape Verde" mapping
+                      const normalizedNat = nat === 'Cape Verdean' ? 'Cape Verde' : nat;
+                      const flagUrl = getCountryFlagUrl(normalizedNat);
+                      return (
+                        <img 
+                          src={flagUrl} 
+                          alt={`${normalizedNat} flag`}
+                          className="w-16 h-12 object-contain mb-0.5"
+                        />
+                      );
+                    })()}
                     <div className="text-[9px] text-white/80 uppercase tracking-wider">Nationality</div>
                   </div>
                   
