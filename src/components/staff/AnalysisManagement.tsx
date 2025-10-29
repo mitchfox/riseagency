@@ -539,11 +539,17 @@ Title: ${formData.scheme_title || 'Not specified'}`;
   return (
     <div className="space-y-4">
       <div className="flex gap-2">
-        <Button onClick={() => handleOpenDialog("pre-match")}>
+        <Button 
+          onClick={() => handleOpenDialog("pre-match")}
+          className="bg-gradient-to-r from-slate-300 to-slate-400 text-slate-900 hover:from-slate-400 hover:to-slate-500"
+        >
           <Plus className="w-4 h-4 mr-2" />
           New Pre-Match Analysis
         </Button>
-        <Button onClick={() => handleOpenDialog("post-match")}>
+        <Button 
+          onClick={() => handleOpenDialog("post-match")}
+          className="bg-gradient-to-r from-amber-400 to-yellow-500 text-slate-900 hover:from-amber-500 hover:to-yellow-600"
+        >
           <Plus className="w-4 h-4 mr-2" />
           New Post-Match Analysis
         </Button>
