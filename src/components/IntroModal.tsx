@@ -13,15 +13,35 @@ interface IntroModalProps {
 
 export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
   const [showRepresentation, setShowRepresentation] = useState(false);
-  const [currentSlide, setCurrentSlide] = useState<"news" | "stars">("news");
+  const [newsIndex, setNewsIndex] = useState(0);
+  const [starIndex, setStarIndex] = useState(0);
   const navigate = useNavigate();
 
+  const newsItems = [
+    { image: "/news/mikie-mulligan-assist.png", title: "Michael Mulligan Assist" },
+    { image: "/news/salah-de-bruyne-fit.png", title: "Salah & De Bruyne Fit" },
+    { image: "/news/sandra-cape-verde-callup.png", title: "Sandra Cape Verde Callup" },
+  ];
+
+  const starPlayers = [
+    { image: "/players/michael-mulligan.png", name: "Michael Mulligan" },
+    { image: "/players/tyrese-omotoye.png", name: "Tyrese Omotoye" },
+    { image: "/players/jaroslav-svoboda.jpg", name: "Jaroslav Svoboda" },
+  ];
+
   useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentSlide(prev => prev === "news" ? "stars" : "news");
+    const newsInterval = setInterval(() => {
+      setNewsIndex(prev => (prev + 1) % newsItems.length);
     }, 5000);
 
-    return () => clearInterval(interval);
+    const starInterval = setInterval(() => {
+      setStarIndex(prev => (prev + 1) % starPlayers.length);
+    }, 5000);
+
+    return () => {
+      clearInterval(newsInterval);
+      clearInterval(starInterval);
+    };
   }, []);
 
   const handleDialogChange = (newOpen: boolean) => {
@@ -64,49 +84,57 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
               </p>
               
               {/* Buttons */}
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-1.5">
                 <Button 
                   onClick={handleRequestRepresentation}
-                  className="bg-gray-300 text-black hover:bg-gray-400 font-bebas uppercase tracking-wider px-5 py-2 text-xs w-full"
+                  className="bg-gray-300 text-black hover:bg-gray-400 font-bebas uppercase tracking-wider px-4 py-1.5 text-[10px] w-full"
                 >
                   Request Representation
                 </Button>
                 <Button 
                   onClick={handleEnterSite}
-                  className="btn-shine font-bebas uppercase tracking-wider px-5 py-2 text-xs w-full"
+                  className="btn-shine font-bebas uppercase tracking-wider px-4 py-1.5 text-[10px] w-full"
                 >
                   Enter Site
                 </Button>
               </div>
             </div>
 
-            {/* News Section - Bottom Left */}
+            {/* News Slider - Middle Left */}
             <div 
               onClick={() => {
                 handleDialogChange(false);
                 navigate("/news");
               }}
-              className={`absolute left-6 bottom-6 w-[220px] bg-black/70 backdrop-blur-sm border border-white/10 rounded-lg overflow-hidden cursor-pointer hover:bg-black/80 transition-all ${currentSlide === "news" ? "animate-fade-in opacity-100" : "opacity-0 pointer-events-none"}`}
+              className="absolute left-6 top-[250px] w-[220px] bg-black/70 backdrop-blur-sm border border-white/10 rounded-lg overflow-hidden cursor-pointer hover:bg-black/80 transition-all"
             >
-              <img src="/news/mikie-mulligan-assist.png" alt="Latest News" className="w-full h-32 object-cover" />
+              <img 
+                src={newsItems[newsIndex].image} 
+                alt="Latest News" 
+                className="w-full h-32 object-cover transition-opacity duration-500" 
+              />
               <div className="p-3">
                 <h3 className="text-white font-bebas text-base uppercase tracking-wider mb-1">Latest News</h3>
-                <p className="text-white/80 text-xs">Michael Mulligan Assist</p>
+                <p className="text-white/80 text-xs">{newsItems[newsIndex].title}</p>
               </div>
             </div>
 
-            {/* Our Stars Section - Bottom Left */}
+            {/* Our Stars Slider - Bottom Left */}
             <div 
               onClick={() => {
                 handleDialogChange(false);
                 navigate("/stars");
               }}
-              className={`absolute left-6 bottom-6 w-[220px] bg-black/70 backdrop-blur-sm border border-white/10 rounded-lg overflow-hidden cursor-pointer hover:bg-black/80 transition-all ${currentSlide === "stars" ? "animate-fade-in opacity-100" : "opacity-0 pointer-events-none"}`}
+              className="absolute left-6 bottom-6 w-[220px] bg-black/70 backdrop-blur-sm border border-white/10 rounded-lg overflow-hidden cursor-pointer hover:bg-black/80 transition-all"
             >
-              <img src="/players/michael-mulligan.png" alt="Our Stars" className="w-full h-32 object-cover" />
+              <img 
+                src={starPlayers[starIndex].image} 
+                alt="Our Stars" 
+                className="w-full h-32 object-cover transition-opacity duration-500" 
+              />
               <div className="p-3">
                 <h3 className="text-white font-bebas text-base uppercase tracking-wider mb-1">Our Stars</h3>
-                <p className="text-white/80 text-xs">Michael Mulligan</p>
+                <p className="text-white/80 text-xs">{starPlayers[starIndex].name}</p>
               </div>
             </div>
           </div>
