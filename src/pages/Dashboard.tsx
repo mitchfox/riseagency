@@ -463,7 +463,11 @@ const Dashboard = () => {
                                     onClick={() => {
                                       navigate(`/analysis/${analysis.analysis_writer_id}`);
                                     }}
-                                    className="text-xs"
+                                    className={`text-xs ${
+                                      analysis.analysis_writer_data.analysis_type === "pre-match" 
+                                        ? "bg-gradient-to-r from-slate-300 to-slate-400 text-slate-900 hover:from-slate-400 hover:to-slate-500 border-slate-400" 
+                                        : "bg-gradient-to-r from-amber-400 to-yellow-500 text-slate-900 hover:from-amber-500 hover:to-yellow-600 border-amber-500"
+                                    }`}
                                   >
                                     <FileText className="w-3 h-3 md:w-4 md:h-4 mr-1" />
                                     {analysis.analysis_writer_data.analysis_type === "pre-match" ? "Pre-Match" : "Post-Match"} Analysis
