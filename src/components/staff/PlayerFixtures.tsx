@@ -1467,19 +1467,6 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, onViewR
                 )}
                 
                 <div className="flex gap-2">
-                  {onCreateAnalysis && !r90Score && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onCreateAnalysis(pf.fixture_id);
-                      }}
-                    >
-                      <FileText className="w-4 h-4 mr-1" />
-                      Create Analysis
-                    </Button>
-                  )}
                   {r90Score !== undefined && analysisData.has(pf.fixture_id) && onViewReport && (
                     <Button
                       size="sm"
