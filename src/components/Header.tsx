@@ -78,14 +78,6 @@ export const Header = () => {
                 <span className="hidden md:inline">Player Portal</span>
                 <span className="md:hidden">Portal</span>
               </Link>
-              <div className="w-px h-4 bg-white/20 md:hidden" />
-              <button
-                onClick={() => setIntroModalOpen(true)}
-                className="text-xs md:text-sm font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-colors"
-              >
-                <span className="hidden md:inline">Intro</span>
-                <span className="md:hidden">Info</span>
-              </button>
             </div>
           </div>
         </div>
@@ -268,15 +260,25 @@ export const Header = () => {
             <img src={logo} alt="RISE Football Agency" className="h-7 md:h-10" />
           </Link>
 
-          {/* RISE WITH US Button - Right */}
-          <Button
-            onClick={() => setWorkWithUsOpen(true)}
-            size="sm"
-            className="btn-shine font-bebas uppercase tracking-wider text-xs md:text-base px-3 md:px-6 h-8 md:h-10"
-          >
-            <span className="hidden sm:inline">RISE WITH US</span>
-            <span className="sm:hidden">RISE</span>
-          </Button>
+          {/* Action Buttons - Right */}
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={() => setIntroModalOpen(true)}
+              size="sm"
+              variant="outline"
+              className="font-bebas uppercase tracking-wider text-xs px-2 md:px-4 h-8 md:h-10"
+            >
+              Info
+            </Button>
+            <Button
+              onClick={() => setWorkWithUsOpen(true)}
+              size="sm"
+              className="btn-shine font-bebas uppercase tracking-wider text-xs md:text-base px-3 md:px-6 h-8 md:h-10"
+            >
+              <span className="hidden sm:inline">RISE WITH US</span>
+              <span className="sm:hidden">RISE</span>
+            </Button>
+          </div>
         </div>
       </div>
       
