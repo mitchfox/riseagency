@@ -174,12 +174,34 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
   const [showPasteScheduleDialog, setShowPasteScheduleDialog] = useState(false);
   const [pasteScheduleText, setPasteScheduleText] = useState("");
   const [pasteScheduleWeekIndex, setPasteScheduleWeekIndex] = useState<number | null>(null);
+  const [showTemplateDialog, setShowTemplateDialog] = useState(false);
+  const [coachingPrograms, setCoachingPrograms] = useState<any[]>([]);
+  const [loadingTemplates, setLoadingTemplates] = useState(false);
 
   useEffect(() => {
     if (isOpen && playerId) {
       loadPrograms();
+      loadCoachingPrograms();
     }
   }, [isOpen, playerId]);
+
+  const loadCoachingPrograms = async () => {
+    setLoadingTemplates(true);
+    try {
+      const { data, error } = await supabase
+        .from('coaching_programmes')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setCoachingPrograms(data || []);
+    } catch (error) {
+      console.error('Error loading coaching programs:', error);
+      toast.error('Failed to load templates');
+    } finally {
+      setLoadingTemplates(false);
+    }
+  };
 
   const loadPrograms = async () => {
     try {
@@ -810,8 +832,129 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
     setPasteScheduleWeekIndex(null);
   };
 
+  const createProgramFromTemplate = async (template: any) => {
+    if (!template) return;
+
+    setLoading(true);
+    try {
+      // Get max display_order for this player
+      const { data: existingPrograms } = await supabase
+        .from('player_programs')
+        .select('display_order')
+        .eq('player_id', playerId)
+        .order('display_order', { ascending: false })
+        .limit(1);
+
+      const nextOrder = existingPrograms && existingPrograms.length > 0 
+        ? (existingPrograms[0].display_order || 0) + 1 
+        : 1;
+
+      // Create program from template
+      const programData: any = {
+        player_id: playerId,
+        program_name: template.title,
+        phase_name: template.title,
+        phase_dates: '',
+        overview_text: template.content || template.description || '',
+        is_current: programs.length === 0,
+        display_order: nextOrder,
+        sessions: {
+          A: { exercises: [] },
+          B: { exercises: [] },
+          C: { exercises: [] },
+          D: { exercises: [] },
+          E: { exercises: [] },
+          F: { exercises: [] },
+          G: { exercises: [] },
+          H: { exercises: [] },
+          'PRE-A': { exercises: [] },
+          'PRE-B': { exercises: [] },
+          'PRE-C': { exercises: [] },
+          'PRE-D': { exercises: [] },
+          'PRE-E': { exercises: [] },
+          'PRE-F': { exercises: [] },
+          'PRE-G': { exercises: [] },
+          'PRE-H': { exercises: [] },
+        },
+        weekly_schedules: []
+      };
+
+      const { error, data: newProgram } = await supabase
+        .from('player_programs')
+        .insert(programData)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      toast.success('✅ Program created from template! Opening for editing...');
+      setShowTemplateDialog(false);
+      
+      // Open the program for editing
+      if (newProgram) {
+        setTimeout(async () => {
+          await loadProgramDetails(newProgram.id);
+          setSelectedSession('preSessionA');
+          toast.success('Program ready! Add exercises to any session tab.');
+        }, 100);
+      } else {
+        loadPrograms();
+      }
+    } catch (error) {
+      console.error('Error creating program from template:', error);
+      toast.error('Failed to create program from template');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <>
+      {/* Template Selection Dialog */}
+      <Dialog open={showTemplateDialog} onOpenChange={setShowTemplateDialog}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Select Program Template</DialogTitle>
+          </DialogHeader>
+          
+          {loadingTemplates ? (
+            <div className="text-center py-8">
+              <p className="text-muted-foreground">Loading templates...</p>
+            </div>
+          ) : coachingPrograms.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-muted-foreground">No templates available in coaching database yet.</p>
+              <p className="text-sm text-muted-foreground mt-2">Create programs in the Coaching Database first to use them as templates.</p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {coachingPrograms.map((program) => (
+                <Card key={program.id} className="hover:bg-accent/50 transition-colors cursor-pointer" onClick={() => createProgramFromTemplate(program)}>
+                  <CardContent className="pt-4">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <h4 className="font-semibold">{program.title}</h4>
+                        {program.description && (
+                          <p className="text-sm text-muted-foreground mt-1">{program.description}</p>
+                        )}
+                        {program.weeks && (
+                          <Badge variant="secondary" className="mt-2">
+                            {program.weeks} weeks
+                          </Badge>
+                        )}
+                      </div>
+                      <Button size="sm" variant="outline" disabled={loading}>
+                        Use Template
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto bg-background">
         <DialogHeader>
@@ -831,6 +974,12 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
                 }} variant="default">
                   <Plus className="w-4 h-4 mr-2" />
                   Create Blank Program
+                </Button>
+                <Button onClick={() => {
+                  setShowTemplateDialog(true);
+                }} variant="outline">
+                  <Database className="w-4 h-4 mr-2" />
+                  Use Template
                 </Button>
               </div>
             </div>
