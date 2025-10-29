@@ -14,6 +14,8 @@ serve(async (req) => {
   try {
     const { visitorId, pagePath, duration, referrer, isInitial, visitId } = await req.json();
     
+    console.log("Track visit request:", { visitorId, pagePath, duration, isInitial, visitId });
+    
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
