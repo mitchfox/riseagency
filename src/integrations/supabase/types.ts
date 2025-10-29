@@ -39,6 +39,8 @@ export type Database = {
           scheme_paragraph_1: string | null
           scheme_paragraph_2: string | null
           scheme_title: string | null
+          selected_scheme: string | null
+          starting_xi: Json | null
           strengths_improvements: string | null
           title: string | null
           updated_at: string
@@ -67,6 +69,8 @@ export type Database = {
           scheme_paragraph_1?: string | null
           scheme_paragraph_2?: string | null
           scheme_title?: string | null
+          selected_scheme?: string | null
+          starting_xi?: Json | null
           strengths_improvements?: string | null
           title?: string | null
           updated_at?: string
@@ -95,6 +99,8 @@ export type Database = {
           scheme_paragraph_1?: string | null
           scheme_paragraph_2?: string | null
           scheme_title?: string | null
+          selected_scheme?: string | null
+          starting_xi?: Json | null
           strengths_improvements?: string | null
           title?: string | null
           updated_at?: string

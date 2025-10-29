@@ -20,6 +20,8 @@ interface Analysis {
   match_date: string | null;
   home_team_logo: string | null;
   away_team_logo: string | null;
+  selected_scheme: string | null;
+  starting_xi: any;
   key_details: string | null;
   opposition_strengths: string | null;
   opposition_weaknesses: string | null;
@@ -63,6 +65,8 @@ const AnalysisViewer = () => {
         match_date: data.match_date || null,
         home_team_logo: data.home_team_logo || null,
         away_team_logo: data.away_team_logo || null,
+        selected_scheme: data.selected_scheme || null,
+        starting_xi: Array.isArray(data.starting_xi) ? data.starting_xi : [],
         matchups: Array.isArray(data.matchups) ? data.matchups : [],
         points: Array.isArray(data.points) ? data.points : []
       };
@@ -119,13 +123,29 @@ const AnalysisViewer = () => {
           {/* Pre-Match Content - Redesigned */}
           {isPreMatch && (
             <div className="space-y-0">
+              {/* Match Title - Now showing date */}
+              <div className="text-center mb-6">
+                <h1 className="text-3xl md:text-4xl font-bebas uppercase tracking-wider text-white">
+                  {analysis.match_date ? (
+                    new Date(analysis.match_date).toLocaleDateString('en-GB', {
+                      weekday: 'long',
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
+                    })
+                  ) : (
+                    analysis.title || "Pre-Match Analysis"
+                  )}
+                </h1>
+              </div>
+
               {/* Teams Header with Gold Border */}
               <div className="relative bg-gradient-to-r from-primary/10 via-primary/20 to-primary/10 border-t-4 border-b-4 border-primary rounded-lg p-6 mb-8">
                 <div className="flex items-center justify-between">
                   {/* Home Team */}
                   <div className="flex-1 flex items-center justify-center gap-4">
                     {analysis.home_team_logo && (
-                      <div className="w-20 h-20 rounded-lg flex items-center justify-center overflow-hidden">
+                      <div className="w-24 h-24 rounded-lg flex items-center justify-center overflow-hidden bg-white/5 p-2">
                         <img
                           src={analysis.home_team_logo}
                           alt={analysis.home_team || "Home team"}
@@ -133,23 +153,23 @@ const AnalysisViewer = () => {
                         />
                       </div>
                     )}
-                    <span className="text-xl md:text-2xl font-bebas text-white tracking-wide">
+                    <span className="text-2xl md:text-3xl font-bebas text-white tracking-wide">
                       {analysis.home_team}
                     </span>
                   </div>
 
                   {/* VS Divider */}
                   <div className="px-8">
-                    <span className="text-white/60 text-sm">VS</span>
+                    <span className="text-white/60 text-xl font-bebas">VS</span>
                   </div>
 
                   {/* Away Team */}
                   <div className="flex-1 flex items-center justify-center gap-4">
-                    <span className="text-xl md:text-2xl font-bebas text-white tracking-wide">
+                    <span className="text-2xl md:text-3xl font-bebas text-white tracking-wide">
                       {analysis.away_team}
                     </span>
                     {analysis.away_team_logo && (
-                      <div className="w-20 h-20 rounded-lg flex items-center justify-center overflow-hidden">
+                      <div className="w-24 h-24 rounded-lg flex items-center justify-center overflow-hidden bg-white/5 p-2">
                         <img
                           src={analysis.away_team_logo}
                           alt={analysis.away_team || "Away team"}
@@ -158,23 +178,6 @@ const AnalysisViewer = () => {
                       </div>
                     )}
                   </div>
-                </div>
-                
-                {/* Match Title and Date */}
-                <div className="text-center mt-4 space-y-1">
-                  <p className="text-white/80 text-sm italic">
-                    {analysis.title || "Pre-Match Analysis"}
-                  </p>
-                  {analysis.match_date && (
-                    <p className="text-white/60 text-xs">
-                      {new Date(analysis.match_date).toLocaleDateString('en-GB', {
-                        weekday: 'long',
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric'
-                      })}
-                    </p>
-                  )}
                 </div>
               </div>
 
@@ -211,13 +214,16 @@ const AnalysisViewer = () => {
                   <CollapsibleContent>
                     <Card className="bg-white/95 rounded-t-none border-t-0">
                       <CardContent className="p-6">
-                        <ul className="space-y-2">
-                          {analysis.opposition_strengths.split('\n').filter(line => line.trim()).map((line, idx) => (
-                            <li key={idx} className="text-gray-800 flex items-start">
-                              <span className="text-green-600 mr-2">●</span>
-                              <span className="italic">{line.trim()}</span>
-                            </li>
-                          ))}
+                        <ul className="space-y-2 text-center">
+                          {analysis.opposition_strengths.split('\n').filter(line => line.trim()).map((line, idx) => {
+                            const cleanLine = line.trim().replace(/^[-•]\s*/, '');
+                            return (
+                              <li key={idx} className="text-gray-800 flex items-center justify-center">
+                                <span className="text-green-600 mr-2">●</span>
+                                <span className="italic">{cleanLine}</span>
+                              </li>
+                            );
+                          })}
                         </ul>
                       </CardContent>
                     </Card>
@@ -237,13 +243,16 @@ const AnalysisViewer = () => {
                   <CollapsibleContent>
                     <Card className="bg-white/95 rounded-t-none border-t-0">
                       <CardContent className="p-6">
-                        <ul className="space-y-2">
-                          {analysis.opposition_weaknesses.split('\n').filter(line => line.trim()).map((line, idx) => (
-                            <li key={idx} className="text-gray-800 flex items-start">
-                              <span className="text-red-600 mr-2">●</span>
-                              <span className="italic">{line.trim()}</span>
-                            </li>
-                          ))}
+                        <ul className="space-y-2 text-center">
+                          {analysis.opposition_weaknesses.split('\n').filter(line => line.trim()).map((line, idx) => {
+                            const cleanLine = line.trim().replace(/^[-•]\s*/, '');
+                            return (
+                              <li key={idx} className="text-gray-800 flex items-center justify-center">
+                                <span className="text-red-600 mr-2">●</span>
+                                <span className="italic">{cleanLine}</span>
+                              </li>
+                            );
+                          })}
                         </ul>
                       </CardContent>
                     </Card>
@@ -266,19 +275,21 @@ const AnalysisViewer = () => {
                         <div className="grid grid-cols-3 gap-6">
                           {analysis.matchups.map((matchup: any, index: number) => (
                             <div key={index} className="text-center">
-                              {matchup.image_url && (
-                                <div className="mb-3 rounded-lg overflow-hidden">
+                              <div className="mb-3 rounded-lg overflow-hidden border-4 border-primary/20 bg-gray-100 aspect-square flex items-center justify-center">
+                                {matchup.image_url ? (
                                   <img
                                     src={matchup.image_url}
                                     alt={matchup.name}
-                                    className="w-full h-40 object-cover"
+                                    className="w-full h-full object-cover"
                                   />
-                                </div>
-                              )}
+                                ) : (
+                                  <div className="text-gray-400 text-sm">No image</div>
+                                )}
+                              </div>
                               <p className="font-semibold text-gray-800">{matchup.name}</p>
                               {matchup.shirt_number && (
                                 <p className="text-sm text-gray-600">
-                                  (#{matchup.shirt_number})
+                                  #{matchup.shirt_number}
                                 </p>
                               )}
                             </div>
@@ -291,23 +302,41 @@ const AnalysisViewer = () => {
               )}
 
               {/* Scheme Section */}
-              {analysis.scheme_title && (
+              {(analysis.scheme_title || analysis.selected_scheme) && (
                 <Collapsible className="mb-8">
                   <CollapsibleTrigger className="w-full bg-primary/90 text-center py-3 rounded-t-lg hover:bg-primary flex items-center justify-center gap-2 transition-colors">
                     <h2 className="text-2xl font-bebas uppercase tracking-widest text-black">
-                      {analysis.scheme_title}
+                      {analysis.scheme_title || "Tactical Scheme"}
                     </h2>
                     <ChevronDown className="w-5 h-5 text-black" />
                   </CollapsibleTrigger>
                   <CollapsibleContent>
                     <Card className="bg-white/95 rounded-t-none border-t-0">
                       <CardContent className="p-6 space-y-4">
-                        {analysis.scheme_image_url && (
-                          <img
-                            src={analysis.scheme_image_url}
-                            alt="Scheme"
-                            className="w-full rounded-lg"
-                          />
+                        {analysis.selected_scheme && (
+                          <div className="relative bg-green-700 rounded-lg p-8 min-h-[500px]">
+                            <div className="text-white text-center mb-4 text-xl font-bebas">
+                              {analysis.selected_scheme}
+                            </div>
+                            {analysis.starting_xi && analysis.starting_xi.length > 0 && (
+                              <div className="absolute inset-0 p-8">
+                                {analysis.starting_xi.map((player: any, index: number) => (
+                                  <div
+                                    key={index}
+                                    className="absolute bg-white rounded-full w-16 h-16 flex flex-col items-center justify-center text-xs shadow-lg"
+                                    style={{
+                                      left: `${player.x}%`,
+                                      top: `${player.y}%`,
+                                      transform: 'translate(-50%, -50%)'
+                                    }}
+                                  >
+                                    <div className="font-bold text-gray-800">{player.surname}</div>
+                                    <div className="text-xs text-gray-600">#{player.number}</div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
                         )}
                         {analysis.scheme_paragraph_1 && (
                           <p className="text-gray-800 leading-relaxed whitespace-pre-wrap">

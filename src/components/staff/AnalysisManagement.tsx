@@ -31,12 +31,17 @@ interface Analysis {
   title: string | null;
   home_team?: string | null;
   away_team?: string | null;
+  match_date?: string | null;
+  home_team_logo?: string | null;
+  away_team_logo?: string | null;
   home_score?: number | null;
   away_score?: number | null;
   key_details?: string | null;
   opposition_strengths?: string | null;
   opposition_weaknesses?: string | null;
   matchups?: any[];
+  selected_scheme?: string | null;
+  starting_xi?: any[];
   scheme_title?: string | null;
   scheme_paragraph_1?: string | null;
   scheme_paragraph_2?: string | null;
@@ -73,7 +78,77 @@ export const AnalysisManagement = () => {
   const [formData, setFormData] = useState<Partial<Analysis>>({
     points: [],
     matchups: [],
+    starting_xi: [],
   });
+
+  // Formation templates with position coordinates (x, y as percentages)
+  const formationTemplates: Record<string, Array<{x: number, y: number, position: string}>> = {
+    "4-4-2": [
+      {x: 50, y: 90, position: "GK"}, // GK
+      {x: 15, y: 70, position: "LB"}, {x: 35, y: 70, position: "CB"}, {x: 65, y: 70, position: "CB"}, {x: 85, y: 70, position: "RB"}, // Defense
+      {x: 15, y: 45, position: "LM"}, {x: 35, y: 45, position: "CM"}, {x: 65, y: 45, position: "CM"}, {x: 85, y: 45, position: "RM"}, // Midfield
+      {x: 35, y: 20, position: "ST"}, {x: 65, y: 20, position: "ST"} // Attack
+    ],
+    "4-3-3": [
+      {x: 50, y: 90, position: "GK"},
+      {x: 15, y: 70, position: "LB"}, {x: 35, y: 70, position: "CB"}, {x: 65, y: 70, position: "CB"}, {x: 85, y: 70, position: "RB"},
+      {x: 30, y: 50, position: "CM"}, {x: 50, y: 50, position: "CM"}, {x: 70, y: 50, position: "CM"},
+      {x: 15, y: 20, position: "LW"}, {x: 50, y: 20, position: "ST"}, {x: 85, y: 20, position: "RW"}
+    ],
+    "4-2-3-1": [
+      {x: 50, y: 90, position: "GK"},
+      {x: 15, y: 70, position: "LB"}, {x: 35, y: 70, position: "CB"}, {x: 65, y: 70, position: "CB"}, {x: 85, y: 70, position: "RB"},
+      {x: 35, y: 55, position: "CDM"}, {x: 65, y: 55, position: "CDM"},
+      {x: 20, y: 35, position: "LM"}, {x: 50, y: 35, position: "CAM"}, {x: 80, y: 35, position: "RM"},
+      {x: 50, y: 15, position: "ST"}
+    ],
+    "3-5-2": [
+      {x: 50, y: 90, position: "GK"},
+      {x: 25, y: 70, position: "CB"}, {x: 50, y: 70, position: "CB"}, {x: 75, y: 70, position: "CB"},
+      {x: 10, y: 50, position: "LM"}, {x: 30, y: 50, position: "CM"}, {x: 50, y: 50, position: "CM"}, {x: 70, y: 50, position: "CM"}, {x: 90, y: 50, position: "RM"},
+      {x: 35, y: 20, position: "ST"}, {x: 65, y: 20, position: "ST"}
+    ],
+    "5-3-2": [
+      {x: 50, y: 90, position: "GK"},
+      {x: 10, y: 70, position: "LWB"}, {x: 30, y: 75, position: "CB"}, {x: 50, y: 75, position: "CB"}, {x: 70, y: 75, position: "CB"}, {x: 90, y: 70, position: "RWB"},
+      {x: 30, y: 45, position: "CM"}, {x: 50, y: 45, position: "CM"}, {x: 70, y: 45, position: "CM"},
+      {x: 35, y: 20, position: "ST"}, {x: 65, y: 20, position: "ST"}
+    ],
+    "4-1-4-1": [
+      {x: 50, y: 90, position: "GK"},
+      {x: 15, y: 70, position: "LB"}, {x: 35, y: 70, position: "CB"}, {x: 65, y: 70, position: "CB"}, {x: 85, y: 70, position: "RB"},
+      {x: 50, y: 55, position: "CDM"},
+      {x: 15, y: 40, position: "LM"}, {x: 35, y: 40, position: "CM"}, {x: 65, y: 40, position: "CM"}, {x: 85, y: 40, position: "RM"},
+      {x: 50, y: 15, position: "ST"}
+    ],
+    "3-4-3": [
+      {x: 50, y: 90, position: "GK"},
+      {x: 25, y: 70, position: "CB"}, {x: 50, y: 70, position: "CB"}, {x: 75, y: 70, position: "CB"},
+      {x: 15, y: 50, position: "LM"}, {x: 40, y: 50, position: "CM"}, {x: 60, y: 50, position: "CM"}, {x: 85, y: 50, position: "RM"},
+      {x: 20, y: 20, position: "LW"}, {x: 50, y: 20, position: "ST"}, {x: 80, y: 20, position: "RW"}
+    ],
+    "4-5-1": [
+      {x: 50, y: 90, position: "GK"},
+      {x: 15, y: 70, position: "LB"}, {x: 35, y: 70, position: "CB"}, {x: 65, y: 70, position: "CB"}, {x: 85, y: 70, position: "RB"},
+      {x: 15, y: 45, position: "LM"}, {x: 35, y: 50, position: "CM"}, {x: 50, y: 50, position: "CM"}, {x: 65, y: 50, position: "CM"}, {x: 85, y: 45, position: "RM"},
+      {x: 50, y: 15, position: "ST"}
+    ],
+    "4-1-2-1-2": [
+      {x: 50, y: 90, position: "GK"},
+      {x: 15, y: 70, position: "LB"}, {x: 35, y: 70, position: "CB"}, {x: 65, y: 70, position: "CB"}, {x: 85, y: 70, position: "RB"},
+      {x: 50, y: 58, position: "CDM"},
+      {x: 35, y: 45, position: "CM"}, {x: 65, y: 45, position: "CM"},
+      {x: 50, y: 30, position: "CAM"},
+      {x: 35, y: 15, position: "ST"}, {x: 65, y: 15, position: "ST"}
+    ],
+    "3-4-2-1": [
+      {x: 50, y: 90, position: "GK"},
+      {x: 25, y: 70, position: "CB"}, {x: 50, y: 70, position: "CB"}, {x: 75, y: 70, position: "CB"},
+      {x: 15, y: 50, position: "LM"}, {x: 40, y: 50, position: "CM"}, {x: 60, y: 50, position: "CM"}, {x: 85, y: 50, position: "RM"},
+      {x: 35, y: 30, position: "CAM"}, {x: 65, y: 30, position: "CAM"},
+      {x: 50, y: 12, position: "ST"}
+    ]
+  };
   const [uploadingImage, setUploadingImage] = useState(false);
   const [players, setPlayers] = useState<any[]>([]);
   const [selectedPlayerId, setSelectedPlayerId] = useState<string>("none");
@@ -159,7 +234,7 @@ export const AnalysisManagement = () => {
       }
     } else {
       setEditingAnalysis(null);
-      setFormData({ analysis_type: type, points: [], matchups: [] });
+      setFormData({ analysis_type: type, points: [], matchups: [], starting_xi: [] });
       setSelectedPlayerId("none");
       setSelectedPerformanceReportId("none");
     }
@@ -169,9 +244,26 @@ export const AnalysisManagement = () => {
   const handleCloseDialog = () => {
     setDialogOpen(false);
     setEditingAnalysis(null);
-    setFormData({ points: [], matchups: [] });
+    setFormData({ points: [], matchups: [], starting_xi: [] });
     setSelectedPlayerId("none");
     setSelectedPerformanceReportId("none");
+  };
+
+  const handleSchemeChange = (scheme: string) => {
+    const template = formationTemplates[scheme];
+    const startingXI = template.map((pos, idx) => ({
+      ...pos,
+      surname: "",
+      number: "",
+      id: idx
+    }));
+    setFormData({ ...formData, selected_scheme: scheme, starting_xi: startingXI });
+  };
+
+  const updateStartingXIPlayer = (index: number, field: 'surname' | 'number', value: string) => {
+    const updatedXI = [...(formData.starting_xi || [])];
+    updatedXI[index] = { ...updatedXI[index], [field]: value };
+    setFormData({ ...formData, starting_xi: updatedXI });
   };
 
   const handleImageUpload = async (
@@ -380,6 +472,16 @@ export const AnalysisManagement = () => {
                 <>
                   <div className="space-y-4">
                     <h3 className="font-semibold">Overview</h3>
+                    <div>
+                      <Label>Match Date</Label>
+                      <Input
+                        type="date"
+                        value={formData.match_date || ""}
+                        onChange={(e) =>
+                          setFormData({ ...formData, match_date: e.target.value })
+                        }
+                      />
+                    </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <Label>Home Team</Label>
@@ -389,6 +491,20 @@ export const AnalysisManagement = () => {
                             setFormData({ ...formData, home_team: e.target.value })
                           }
                         />
+                        <Label className="mt-2">Home Team Logo</Label>
+                        <Input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => handleImageUpload(e, "home_team_logo")}
+                          disabled={uploadingImage}
+                        />
+                        {formData.home_team_logo && (
+                          <img
+                            src={formData.home_team_logo}
+                            alt="Home team logo"
+                            className="mt-2 w-16 h-16 object-contain"
+                          />
+                        )}
                       </div>
                       <div>
                         <Label>Away Team</Label>
@@ -398,6 +514,20 @@ export const AnalysisManagement = () => {
                             setFormData({ ...formData, away_team: e.target.value })
                           }
                         />
+                        <Label className="mt-2">Away Team Logo</Label>
+                        <Input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => handleImageUpload(e, "away_team_logo")}
+                          disabled={uploadingImage}
+                        />
+                        {formData.away_team_logo && (
+                          <img
+                            src={formData.away_team_logo}
+                            alt="Away team logo"
+                            className="mt-2 w-16 h-16 object-contain"
+                          />
+                        )}
                       </div>
                     </div>
                     <div>
@@ -499,6 +629,77 @@ export const AnalysisManagement = () => {
                   <div className="space-y-4">
                     <h3 className="font-semibold">Scheme</h3>
                     <div>
+                      <Label>Select Formation</Label>
+                      <Select 
+                        value={formData.selected_scheme || ""} 
+                        onValueChange={handleSchemeChange}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Choose a formation" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Object.keys(formationTemplates).map((formation) => (
+                            <SelectItem key={formation} value={formation}>
+                              {formation}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {formData.selected_scheme && formData.starting_xi && formData.starting_xi.length > 0 && (
+                      <div>
+                        <Label className="mb-2 block">Starting XI Preview</Label>
+                        <div className="relative bg-green-700 rounded-lg p-8 min-h-[400px]">
+                          <div className="text-white text-center mb-2 text-lg font-bold">
+                            {formData.selected_scheme}
+                          </div>
+                          {formData.starting_xi.map((player: any, index: number) => (
+                            <div
+                              key={index}
+                              className="absolute"
+                              style={{
+                                left: `${player.x}%`,
+                                top: `${player.y}%`,
+                                transform: 'translate(-50%, -50%)'
+                              }}
+                            >
+                              <div className="bg-white rounded-full w-12 h-12 flex flex-col items-center justify-center text-xs shadow-lg mb-1">
+                                <div className="font-bold text-gray-800 text-[10px]">
+                                  {player.surname || player.position}
+                                </div>
+                                {player.number && (
+                                  <div className="text-[8px] text-gray-600">#{player.number}</div>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                        
+                        <div className="mt-4 space-y-2 max-h-60 overflow-y-auto">
+                          <Label>Enter Player Details</Label>
+                          {formData.starting_xi.map((player: any, index: number) => (
+                            <div key={index} className="grid grid-cols-3 gap-2 items-center bg-muted p-2 rounded">
+                              <span className="text-xs font-medium">{player.position}</span>
+                              <Input
+                                placeholder="Surname"
+                                value={player.surname}
+                                onChange={(e) => updateStartingXIPlayer(index, 'surname', e.target.value)}
+                                className="h-8 text-xs"
+                              />
+                              <Input
+                                placeholder="No."
+                                value={player.number}
+                                onChange={(e) => updateStartingXIPlayer(index, 'number', e.target.value)}
+                                className="h-8 text-xs"
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    <div>
                       <Label>Title</Label>
                       <Input
                         value={formData.scheme_title || ""}
@@ -530,22 +731,6 @@ export const AnalysisManagement = () => {
                           })
                         }
                       />
-                    </div>
-                    <div>
-                      <Label>Scheme Image</Label>
-                      <Input
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => handleImageUpload(e, "scheme_image_url")}
-                        disabled={uploadingImage}
-                      />
-                      {formData.scheme_image_url && (
-                        <img
-                          src={formData.scheme_image_url}
-                          alt="Scheme"
-                          className="mt-2 max-w-xs"
-                        />
-                      )}
                     </div>
                   </div>
                 </>
