@@ -33,15 +33,8 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
         .eq('visible_on_stars_page', true)
         .limit(3);
       
-      if (data && !error) {
-        setStarPlayers(data.map(player => ({
-          image: player.image_url,
-          name: player.name,
-          age: player.age,
-          nationality: player.nationality,
-          position: player.position,
-          club: player.image_url // Using player image as fallback for club logo
-        })));
+      if (data && !error && data.length > 0) {
+        setStarPlayers(data);
       }
     };
 
@@ -150,7 +143,7 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
                 <div className="relative w-full aspect-[3/4] rounded-lg overflow-hidden group border-2 border-[#B8A574]">
                   {/* Player Image with Dark Overlay */}
                   <img 
-                    src={starPlayers[starIndex]?.image} 
+                    src={starPlayers[starIndex]?.image_url} 
                     alt={starPlayers[starIndex]?.name}
                     className="w-full h-full object-cover transition-opacity duration-500" 
                   />
