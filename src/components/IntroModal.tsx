@@ -24,9 +24,30 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
   ];
 
   const starPlayers = [
-    { image: "/players/michael-mulligan.png", name: "Michael Mulligan" },
-    { image: "/players/tyrese-omotoye.png", name: "Tyrese Omotoye" },
-    { image: "/players/jaroslav-svoboda.jpg", name: "Jaroslav Svoboda" },
+    { 
+      image: "/players/michael-mulligan.png", 
+      name: "Michael Mulligan",
+      age: 21,
+      nationality: "🇮🇪",
+      position: "CM",
+      club: "/clubs/bohemians-1905-official.png"
+    },
+    { 
+      image: "/players/tyrese-omotoye.png", 
+      name: "Tyrese Omotoye",
+      age: 23,
+      nationality: "🇧🇪",
+      position: "CF",
+      club: "/clubs/fc-vysocina-jihlava-official.png"
+    },
+    { 
+      image: "/players/jaroslav-svoboda.jpg", 
+      name: "Jaroslav Svoboda",
+      age: 19,
+      nationality: "🇨🇿",
+      position: "LW",
+      club: "/clubs/tj-jiskra-domazlice-official.png"
+    },
   ];
 
   useEffect(() => {
@@ -87,7 +108,7 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
               <div className="flex flex-col gap-1.5">
                 <Button 
                   onClick={handleRequestRepresentation}
-                  className="bg-gray-300 text-black hover:bg-gray-400 font-bebas uppercase tracking-wider px-4 py-1.5 text-[10px] w-full"
+                  className="bg-gray-300 text-black hover:bg-gray-400 font-bebas uppercase tracking-wider px-4 py-1.5 text-[10px] w-full border-0"
                 >
                   Request Representation
                 </Button>
@@ -125,16 +146,57 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
                 handleDialogChange(false);
                 navigate("/stars");
               }}
-              className="absolute left-6 bottom-6 w-[220px] bg-black/70 backdrop-blur-sm border border-white/10 rounded-lg overflow-hidden cursor-pointer hover:bg-black/80 transition-all"
+              className="absolute left-6 bottom-6 w-[220px] cursor-pointer hover:scale-[1.02] transition-transform"
             >
-              <img 
-                src={starPlayers[starIndex].image} 
-                alt="Our Stars" 
-                className="w-full h-32 object-cover transition-opacity duration-500" 
-              />
-              <div className="p-3">
-                <h3 className="text-white font-bebas text-base uppercase tracking-wider mb-1">Our Stars</h3>
-                <p className="text-white/80 text-xs">{starPlayers[starIndex].name}</p>
+              <div className="relative w-full aspect-[3/4] rounded-lg overflow-hidden group">
+                {/* Player Image with Dark Overlay */}
+                <img 
+                  src={starPlayers[starIndex].image} 
+                  alt={starPlayers[starIndex].name}
+                  className="w-full h-full object-cover transition-opacity duration-500" 
+                />
+                <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/80" />
+                
+                {/* Age - Top Left */}
+                <div className="absolute top-3 left-3">
+                  <div className="text-3xl font-bold text-white/90 font-bebas leading-none">{starPlayers[starIndex].age}</div>
+                  <div className="text-[8px] text-white/70 uppercase tracking-wider">Age</div>
+                </div>
+                
+                {/* Nationality - Top Right */}
+                <div className="absolute top-3 right-3">
+                  <div className="text-3xl leading-none">{starPlayers[starIndex].nationality}</div>
+                  <div className="text-[8px] text-white/70 uppercase tracking-wider text-right">Nationality</div>
+                </div>
+                
+                {/* Position - Bottom Left */}
+                <div className="absolute bottom-20 left-3">
+                  <div className="text-2xl font-bold text-white/90 font-bebas leading-none">{starPlayers[starIndex].position}</div>
+                  <div className="text-[8px] text-white/70 uppercase tracking-wider">Position</div>
+                </div>
+                
+                {/* Club - Bottom Right */}
+                <div className="absolute bottom-20 right-3">
+                  <img 
+                    src={starPlayers[starIndex].club} 
+                    alt="Club" 
+                    className="w-10 h-10 object-contain mb-1"
+                  />
+                  <div className="text-[8px] text-white/70 uppercase tracking-wider text-right">Club</div>
+                </div>
+                
+                {/* Player Profile Button */}
+                <div className="absolute bottom-0 left-0 right-0 p-3">
+                  <div className="bg-[#B8A574] text-black font-bebas uppercase tracking-wider text-xs py-2 px-4 text-center rounded">
+                    Player Profile →
+                  </div>
+                </div>
+              </div>
+              
+              {/* Player Name & Info Below Card */}
+              <div className="mt-2 bg-black/70 backdrop-blur-sm border border-white/10 rounded p-2">
+                <h3 className="text-white font-bebas text-sm uppercase tracking-wider">{starPlayers[starIndex].name}</h3>
+                <p className="text-white/70 text-[10px]">AGE {starPlayers[starIndex].age} • {starPlayers[starIndex].position}</p>
               </div>
             </div>
           </div>
