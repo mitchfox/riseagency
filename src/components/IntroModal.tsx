@@ -60,7 +60,7 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
 
     const starInterval = setInterval(() => {
       setStarIndex(prev => (prev + 1) % starPlayers.length);
-    }, 5000);
+    }, 6000);
 
     return () => {
       clearInterval(newsInterval);
@@ -118,13 +118,13 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
               <div className="flex flex-col gap-1.5 sm:gap-1.5">
                 <Button 
                   onClick={handleRequestRepresentation}
-                  className="bg-gray-300 text-black hover:bg-gray-400 font-bebas uppercase tracking-wider px-3 py-1.5 text-xs w-[180px] border-0 h-7 sm:px-4 sm:py-2 sm:text-base sm:w-full sm:h-auto"
+                  className="bg-gray-300 text-black hover:bg-gray-400 font-bebas uppercase tracking-wider px-3 py-1.5 text-xs w-[180px] border-0 h-7 sm:px-4 sm:py-2 sm:text-base sm:w-full sm:h-auto focus-visible:ring-0 focus-visible:ring-offset-0"
                 >
                   Request Representation
                 </Button>
                 <Button 
                   onClick={handleEnterSite}
-                  className="btn-shine font-bebas uppercase tracking-wider px-3 py-1.5 text-xs w-[180px] h-7 sm:px-4 sm:py-2 sm:text-base sm:w-full sm:h-auto"
+                  className="btn-shine font-bebas uppercase tracking-wider px-3 py-1.5 text-xs w-[180px] h-7 sm:px-4 sm:py-2 sm:text-base sm:w-full sm:h-auto focus-visible:ring-0 focus-visible:ring-offset-0"
                 >
                   Enter Site
                 </Button>
