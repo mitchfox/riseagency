@@ -1281,13 +1281,16 @@ const Dashboard = () => {
                                       />
                                     </div>
                                   )}
-                                  <div className="p-4 space-y-3">
-                                    <div>
-                                      <h3 className="font-bebas text-xl uppercase tracking-wider">
-                                        {highlight.name || `Match Highlight ${index + 1}`}
-                                      </h3>
-                                    </div>
-                                    <div className="flex gap-2">
+                                   <div className="p-4 space-y-3">
+                                     <div className="flex items-start gap-3">
+                                       <span className="text-2xl font-bold text-primary">{index + 1}</span>
+                                       <div className="flex-1">
+                                         <h3 className="font-bebas text-xl uppercase tracking-wider">
+                                           {highlight.name || `Match Highlight ${index + 1}`}
+                                         </h3>
+                                       </div>
+                                     </div>
+                                     <div className="flex gap-2">
                                       {highlight.videoUrl && (
                                         <>
                                           <Button 
@@ -1479,20 +1482,84 @@ const Dashboard = () => {
                                   key={index}
                                   className="border rounded-lg overflow-hidden hover:border-primary transition-colors bg-card"
                                 >
-                                  {highlight.clubLogo && (
-                                    <div className="relative aspect-video bg-black">
-                                      <img 
-                                        src={highlight.clubLogo} 
-                                        alt={highlight.name || `Clip ${index + 1}`}
-                                        className="w-full h-full object-contain p-8"
-                                      />
-                                    </div>
-                                  )}
                                   <div className="p-4 space-y-3">
-                                    <div>
-                                      <h3 className="font-bebas text-xl uppercase tracking-wider">
-                                        {highlight.name || `Best Clip ${index + 1}`}
-                                      </h3>
+                                    <div className="flex items-start justify-between gap-3">
+                                      <div className="flex items-start gap-3 flex-1">
+                                        <span className="text-2xl font-bold text-primary">{index + 1}</span>
+                                        <div className="flex-1">
+                                          <h3 className="font-bebas text-xl uppercase tracking-wider">
+                                            {highlight.name || `Best Clip ${index + 1}`}
+                                          </h3>
+                                        </div>
+                                      </div>
+                                      <div className="flex gap-1">
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={async () => {
+                                            if (index > 0) {
+                                              const newBestClips = [...highlightsData.bestClips];
+                                              [newBestClips[index - 1], newBestClips[index]] = [newBestClips[index], newBestClips[index - 1]];
+                                              
+                                              try {
+                                                const updatedHighlights = {
+                                                  matchHighlights: highlightsData.matchHighlights,
+                                                  bestClips: newBestClips
+                                                };
+                                                
+                                                const { error } = await supabase
+                                                  .from('players')
+                                                  .update({ highlights: JSON.stringify(updatedHighlights) })
+                                                  .eq('id', playerData.id);
+                                                
+                                                if (error) throw error;
+                                                toast.success("Clip moved up");
+                                                window.location.reload();
+                                              } catch (error) {
+                                                console.error('Reorder error:', error);
+                                                toast.error("Failed to reorder");
+                                              }
+                                            }
+                                          }}
+                                          disabled={index === 0}
+                                          title="Move up"
+                                        >
+                                          ↑
+                                        </Button>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={async () => {
+                                            if (index < highlightsData.bestClips.length - 1) {
+                                              const newBestClips = [...highlightsData.bestClips];
+                                              [newBestClips[index], newBestClips[index + 1]] = [newBestClips[index + 1], newBestClips[index]];
+                                              
+                                              try {
+                                                const updatedHighlights = {
+                                                  matchHighlights: highlightsData.matchHighlights,
+                                                  bestClips: newBestClips
+                                                };
+                                                
+                                                const { error } = await supabase
+                                                  .from('players')
+                                                  .update({ highlights: JSON.stringify(updatedHighlights) })
+                                                  .eq('id', playerData.id);
+                                                
+                                                if (error) throw error;
+                                                toast.success("Clip moved down");
+                                                window.location.reload();
+                                              } catch (error) {
+                                                console.error('Reorder error:', error);
+                                                toast.error("Failed to reorder");
+                                              }
+                                            }
+                                          }}
+                                          disabled={index === highlightsData.bestClips.length - 1}
+                                          title="Move down"
+                                        >
+                                          ↓
+                                        </Button>
+                                      </div>
                                     </div>
                                     <div className="flex gap-2">
                                       {highlight.videoUrl && (
@@ -1540,12 +1607,12 @@ const Dashboard = () => {
                                             <Download className="w-4 h-4 mr-2" />
                                             Download
                                           </Button>
-                                         </>
-                                       )}
-                                     </div>
-                                   </div>
-                                 </div>
-                               ))}
+                                        </>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
                               </div>
                             </div>
                           )}
