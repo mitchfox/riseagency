@@ -856,6 +856,8 @@ export type Database = {
           age: number
           bio: string | null
           category: string | null
+          club: string | null
+          club_logo: string | null
           created_at: string | null
           email: string | null
           highlights: Json | null
@@ -872,6 +874,8 @@ export type Database = {
           age: number
           bio?: string | null
           category?: string | null
+          club?: string | null
+          club_logo?: string | null
           created_at?: string | null
           email?: string | null
           highlights?: Json | null
@@ -888,6 +892,8 @@ export type Database = {
           age?: number
           bio?: string | null
           category?: string | null
+          club?: string | null
+          club_logo?: string | null
           created_at?: string | null
           email?: string | null
           highlights?: Json | null

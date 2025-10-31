@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import PlayerManagement from "@/components/staff/PlayerManagement";
+import { PlayerList } from "@/components/staff/PlayerList";
 import BlogManagement from "@/components/staff/BlogManagement";
 import BetweenTheLinesManagement from "@/components/staff/BetweenTheLinesManagement";
 import { CoachingDatabase } from "@/components/staff/CoachingDatabase";
@@ -28,7 +29,7 @@ const Staff = () => {
   const [loading, setLoading] = useState(true);
   const [isStaff, setIsStaff] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-  const [expandedSection, setExpandedSection] = useState<'players' | 'blog' | 'betweenthelines' | 'coaching' | 'analysis' | 'submissions' | 'visitors' | 'invoices' | null>('players');
+  const [expandedSection, setExpandedSection] = useState<'players' | 'playerlist' | 'blog' | 'betweenthelines' | 'coaching' | 'analysis' | 'submissions' | 'visitors' | 'invoices' | null>('players');
   const navigate = useNavigate();
 
   // Load saved email and remember me preference on mount
@@ -247,6 +248,26 @@ const Staff = () => {
 
 
         <div className="space-y-4">
+          {/* Player List Section */}
+          <Card className="cursor-pointer">
+            <CardHeader 
+              onClick={() => setExpandedSection(expandedSection === 'playerlist' ? null : 'playerlist')}
+              className="hover:bg-accent/50 transition-colors"
+            >
+              <div className="flex justify-between items-center">
+                <CardTitle className="text-2xl">PLAYER LIST</CardTitle>
+                <div className="text-muted-foreground">
+                  {expandedSection === 'playerlist' ? <ChevronDown size={24} /> : <ChevronRight size={24} />}
+                </div>
+              </div>
+            </CardHeader>
+            {expandedSection === 'playerlist' && (
+              <CardContent className="pt-6">
+                <PlayerList />
+              </CardContent>
+            )}
+          </Card>
+
           {/* Players Section */}
           <Card className="cursor-pointer">
             <CardHeader 
