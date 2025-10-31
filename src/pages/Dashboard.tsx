@@ -728,10 +728,10 @@ const Dashboard = () => {
                                             <div>
                                             {/* Table Header */}
                                             <div className="grid grid-cols-8 gap-1 md:gap-2 mb-2">
-                                                <div 
+                                                 <div 
                                                   className="p-1 md:p-4 font-bebas uppercase text-[10px] md:text-lg flex items-center justify-center rounded-lg leading-tight"
                                                   style={{ 
-                                                    backgroundColor: 'hsl(45, 70%, 55%)',
+                                                    backgroundColor: 'hsl(43, 49%, 61%)',
                                                     color: 'hsl(0, 0%, 0%)'
                                                   }}
                                                 >
@@ -739,11 +739,11 @@ const Dashboard = () => {
                                                   <span className="md:hidden text-center w-full">Week Start</span>
                                                 </div>
                                               {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, idx) => (
-                                                <div 
+                                                 <div 
                                                   key={day}
                                                   className="p-1 md:p-4 font-bebas uppercase text-xs md:text-lg flex items-center justify-center rounded-lg"
                                                      style={{ 
-                                                       backgroundColor: 'hsl(45, 70%, 55%)',
+                                                       backgroundColor: 'hsl(43, 49%, 61%)',
                                                        color: 'hsl(0, 0%, 0%)'
                                                      }}
                                                    >
@@ -969,17 +969,15 @@ const Dashboard = () => {
                                              <div key={mainKey} className="mt-4">
                                                  <Tabs defaultValue={hasPreSession ? "pre" : "main"} className="w-full">
                                                     {/* Sub-tabs for Pre and Main Session */}
-                                                    <TabsList className="grid w-full gap-2 grid-cols-2 mb-4 bg-transparent p-0">
+                                                     <TabsList className="grid w-full gap-2 grid-cols-2 mb-4 bg-transparent p-0">
                                                        {hasPreSession && (
                                                          <TabsTrigger
                                                            value="pre"
-                                                           className="font-bebas uppercase text-sm transition-all data-[state=active]:bg-[hsl(43,70%,55%)] data-[state=active]:text-black"
+                                                           className="font-bebas uppercase text-sm transition-all data-[state=active]:!bg-[hsl(43,70%,55%)] data-[state=active]:!text-black"
                                                            style={{
-                                                             backgroundColor: 'var(--tab-bg, ' + getSessionColor(preKey).bg + ')',
-                                                             color: 'var(--tab-text, ' + getSessionColor(preKey).text + ')',
+                                                             backgroundColor: getSessionColor(preKey).bg,
+                                                             color: getSessionColor(preKey).text,
                                                            }}
-                                                           data-state-bg={getSessionColor(preKey).bg}
-                                                           data-state-text={getSessionColor(preKey).text}
                                                          >
                                                            Pre-{mainKey}
                                                          </TabsTrigger>
@@ -987,13 +985,11 @@ const Dashboard = () => {
                                                        {hasMainSession && (
                                                          <TabsTrigger
                                                            value="main"
-                                                           className="font-bebas uppercase text-sm transition-all data-[state=active]:bg-[hsl(43,70%,55%)] data-[state=active]:text-black"
+                                                           className="font-bebas uppercase text-sm transition-all data-[state=active]:!bg-[hsl(43,70%,55%)] data-[state=active]:!text-black"
                                                            style={{
-                                                             backgroundColor: 'var(--tab-bg, ' + getSessionColor(mainKey).bg + ')',
-                                                             color: 'var(--tab-text, ' + getSessionColor(mainKey).text + ')',
+                                                             backgroundColor: getSessionColor(mainKey).bg,
+                                                             color: getSessionColor(mainKey).text,
                                                            }}
-                                                           data-state-bg={getSessionColor(mainKey).bg}
-                                                           data-state-text={getSessionColor(mainKey).text}
                                                          >
                                                            Session {mainKey}
                                                          </TabsTrigger>
@@ -1013,7 +1009,7 @@ const Dashboard = () => {
                                                               <div 
                                                                 className="p-2 md:p-4 font-bebas uppercase border-r-2 border-white text-center"
                                                                 style={{ 
-                                                                  backgroundColor: 'hsl(45, 70%, 55%)',
+                                                                  backgroundColor: 'hsl(43, 49%, 61%)',
                                                                   color: 'hsl(0, 0%, 0%)'
                                                                 }}
                                                               >
@@ -1022,7 +1018,7 @@ const Dashboard = () => {
                                                               <div 
                                                                 className="p-2 md:p-4 font-bebas uppercase border-r-2 border-white text-center"
                                                                 style={{ 
-                                                                  backgroundColor: 'hsl(45, 70%, 55%)',
+                                                                  backgroundColor: 'hsl(43, 49%, 61%)',
                                                                   color: 'hsl(0, 0%, 0%)'
                                                                 }}
                                                               >
@@ -1031,7 +1027,7 @@ const Dashboard = () => {
                                                               <div 
                                                                 className="p-2 md:p-4 font-bebas uppercase border-r-2 border-white text-center"
                                                                 style={{ 
-                                                                  backgroundColor: 'hsl(45, 70%, 55%)',
+                                                                  backgroundColor: 'hsl(43, 49%, 61%)',
                                                                   color: 'hsl(0, 0%, 0%)'
                                                                 }}
                                                               >
@@ -1040,7 +1036,7 @@ const Dashboard = () => {
                                                               <div 
                                                                 className="p-2 md:p-4 font-bebas uppercase border-r-2 border-white text-center"
                                                                 style={{ 
-                                                                  backgroundColor: 'hsl(45, 70%, 55%)',
+                                                                  backgroundColor: 'hsl(43, 49%, 61%)',
                                                                   color: 'hsl(0, 0%, 0%)'
                                                                 }}
                                                               >
@@ -1049,7 +1045,7 @@ const Dashboard = () => {
                                                               <div 
                                                                 className="p-2 md:p-4 font-bebas uppercase text-center"
                                                                 style={{ 
-                                                                  backgroundColor: 'hsl(45, 70%, 55%)',
+                                                                  backgroundColor: 'hsl(43, 49%, 61%)',
                                                                   color: 'hsl(0, 0%, 0%)'
                                                                 }}
                                                               >
@@ -1132,7 +1128,7 @@ const Dashboard = () => {
                                                               <div 
                                                                 className="p-2 md:p-4 font-bebas uppercase border-r-2 border-white text-center"
                                                                 style={{ 
-                                                                  backgroundColor: 'hsl(45, 70%, 55%)',
+                                                                  backgroundColor: 'hsl(43, 49%, 61%)',
                                                                   color: 'hsl(0, 0%, 0%)'
                                                                 }}
                                                               >
@@ -1141,7 +1137,7 @@ const Dashboard = () => {
                                                               <div 
                                                                 className="p-2 md:p-4 font-bebas uppercase border-r-2 border-white text-center"
                                                                 style={{ 
-                                                                  backgroundColor: 'hsl(45, 70%, 55%)',
+                                                                  backgroundColor: 'hsl(43, 49%, 61%)',
                                                                   color: 'hsl(0, 0%, 0%)'
                                                                 }}
                                                               >
@@ -1150,7 +1146,7 @@ const Dashboard = () => {
                                                               <div 
                                                                 className="p-2 md:p-4 font-bebas uppercase border-r-2 border-white text-center"
                                                                 style={{ 
-                                                                  backgroundColor: 'hsl(45, 70%, 55%)',
+                                                                  backgroundColor: 'hsl(43, 49%, 61%)',
                                                                   color: 'hsl(0, 0%, 0%)'
                                                                 }}
                                                               >
@@ -1159,7 +1155,7 @@ const Dashboard = () => {
                                                               <div 
                                                                 className="p-2 md:p-4 font-bebas uppercase border-r-2 border-white text-center"
                                                                 style={{ 
-                                                                  backgroundColor: 'hsl(45, 70%, 55%)',
+                                                                  backgroundColor: 'hsl(43, 49%, 61%)',
                                                                   color: 'hsl(0, 0%, 0%)'
                                                                 }}
                                                               >
@@ -1168,7 +1164,7 @@ const Dashboard = () => {
                                                               <div 
                                                                 className="p-2 md:p-4 font-bebas uppercase text-center"
                                                                 style={{ 
-                                                                  backgroundColor: 'hsl(45, 70%, 55%)',
+                                                                  backgroundColor: 'hsl(43, 49%, 61%)',
                                                                   color: 'hsl(0, 0%, 0%)'
                                                                 }}
                                                               >
