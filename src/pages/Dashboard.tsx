@@ -970,30 +970,30 @@ const Dashboard = () => {
                                                  <Tabs defaultValue={hasPreSession ? "pre" : "main"} className="w-full">
                                                     {/* Sub-tabs for Pre and Main Session */}
                                                      <TabsList className="grid w-full gap-2 grid-cols-2 mb-4 bg-transparent p-0">
-                                                       {hasPreSession && (
-                                                         <TabsTrigger
-                                                           value="pre"
-                                                           className="font-bebas uppercase text-sm transition-all data-[state=active]:!bg-[hsl(43,70%,55%)] data-[state=active]:!text-black"
-                                                           style={{
-                                                             backgroundColor: getSessionColor(preKey).bg,
-                                                             color: getSessionColor(preKey).text,
-                                                           }}
-                                                         >
-                                                           Pre-{mainKey}
-                                                         </TabsTrigger>
-                                                       )}
-                                                       {hasMainSession && (
-                                                         <TabsTrigger
-                                                           value="main"
-                                                           className="font-bebas uppercase text-sm transition-all data-[state=active]:!bg-[hsl(43,70%,55%)] data-[state=active]:!text-black"
-                                                           style={{
-                                                             backgroundColor: getSessionColor(mainKey).bg,
-                                                             color: getSessionColor(mainKey).text,
-                                                           }}
-                                                         >
-                                                           Session {mainKey}
-                                                         </TabsTrigger>
-                                                       )}
+                                                        {hasPreSession && (
+                                                          <TabsTrigger
+                                                            value="pre"
+                                                            className="font-bebas uppercase text-sm transition-all data-[state=active]:!bg-[hsl(43,49%,61%)] data-[state=active]:!text-black"
+                                                            style={{
+                                                              backgroundColor: getSessionColor(preKey).bg,
+                                                              color: getSessionColor(preKey).text,
+                                                            }}
+                                                          >
+                                                            Pre-{mainKey}
+                                                          </TabsTrigger>
+                                                        )}
+                                                        {hasMainSession && (
+                                                          <TabsTrigger
+                                                            value="main"
+                                                            className="font-bebas uppercase text-sm transition-all data-[state=active]:!bg-[hsl(43,49%,61%)] data-[state=active]:!text-black"
+                                                            style={{
+                                                              backgroundColor: getSessionColor(mainKey).bg,
+                                                              color: getSessionColor(mainKey).text,
+                                                            }}
+                                                          >
+                                                            Session {mainKey}
+                                                          </TabsTrigger>
+                                                        )}
                                                     </TabsList>
                                                   
                                                    {/* Pre Session Content */}
