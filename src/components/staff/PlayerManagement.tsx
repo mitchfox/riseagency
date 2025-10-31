@@ -1512,6 +1512,108 @@ const PlayerManagement = () => {
                 </Label>
               </div>
 
+              {/* Invoices Section - Only show when editing existing player */}
+              {editingPlayer && (
+                <div className="border-t pt-4 space-y-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <h4 className="text-lg font-semibold">Invoices</h4>
+                    <Button 
+                      type="button"
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => {
+                        setCurrentInvoicePlayerId(editingPlayer.id);
+                        setEditingInvoiceId(null);
+                        setInvoiceFormData({
+                          invoice_number: "",
+                          invoice_date: "",
+                          due_date: "",
+                          amount: "",
+                          description: "",
+                          status: "pending",
+                          currency: "EUR",
+                        });
+                        setIsInvoiceDialogOpen(true);
+                      }}
+                    >
+                      <DollarSign className="w-4 h-4 mr-2" />
+                      Add Invoice
+                    </Button>
+                  </div>
+                  
+                  {playerInvoices[editingPlayer.id]?.length > 0 ? (
+                    <div className="space-y-2 max-h-60 overflow-y-auto">
+                      {playerInvoices[editingPlayer.id].map((invoice) => (
+                        <div key={invoice.id} className="flex items-center gap-3 p-3 border rounded-lg bg-secondary/5">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <p className="text-sm font-medium">Invoice #{invoice.invoice_number}</p>
+                              <span className={`text-xs px-2 py-1 rounded ${
+                                invoice.status === 'paid' 
+                                  ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' 
+                                  : invoice.status === 'overdue'
+                                  ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                                  : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
+                              }`}>
+                                {invoice.status}
+                              </span>
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                              Date: {new Date(invoice.invoice_date).toLocaleDateString()} | 
+                              Due: {new Date(invoice.due_date).toLocaleDateString()}
+                            </p>
+                            <p className="text-sm font-semibold mt-1">
+                              {invoice.currency} {invoice.amount.toFixed(2)}
+                            </p>
+                            {invoice.description && (
+                              <p className="text-xs text-muted-foreground mt-1">{invoice.description}</p>
+                            )}
+                          </div>
+                          
+                          <div className="flex gap-1">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setCurrentInvoicePlayerId(editingPlayer.id);
+                                setEditingInvoiceId(invoice.id);
+                                setInvoiceFormData({
+                                  invoice_number: invoice.invoice_number,
+                                  invoice_date: new Date(invoice.invoice_date).toISOString().split('T')[0],
+                                  due_date: new Date(invoice.due_date).toISOString().split('T')[0],
+                                  amount: invoice.amount.toString(),
+                                  description: invoice.description || "",
+                                  status: invoice.status,
+                                  currency: invoice.currency,
+                                });
+                                setIsInvoiceDialogOpen(true);
+                              }}
+                              title="Edit"
+                            >
+                              <Edit className="w-3 h-3" />
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => handleDeleteInvoice(invoice.id)}
+                              title="Delete"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground text-center py-4">
+                      No invoices yet. Click "Add Invoice" to create one.
+                    </p>
+                  )}
+                </div>
+              )}
+
               <Button type="submit" disabled={loading}>
                 {loading ? "Saving..." : editingPlayer ? "Update Player" : "Create Player"}
               </Button>
