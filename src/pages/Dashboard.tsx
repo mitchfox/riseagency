@@ -43,6 +43,18 @@ interface PlayerProgram {
   created_at: string;
 }
 
+interface Invoice {
+  id: string;
+  invoice_number: string;
+  invoice_date: string;
+  due_date: string;
+  amount: number;
+  currency: string;
+  status: string;
+  description: string | null;
+  pdf_url: string | null;
+}
+
 const Dashboard = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
@@ -56,6 +68,7 @@ const Dashboard = () => {
   const [selectedExercise, setSelectedExercise] = useState<any>(null);
   const [exerciseDialogOpen, setExerciseDialogOpen] = useState(false);
   const [dailyAphorism, setDailyAphorism] = useState<any>(null);
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
 
   // Session color mapping with hover states
   const getSessionColor = (sessionKey: string) => {
@@ -134,6 +147,7 @@ const Dashboard = () => {
 
       await fetchAnalyses(playerEmail);
       await fetchPrograms(playerEmail);
+      await fetchInvoices(playerEmail);
     } catch (error) {
       console.error("Error loading data:", error);
       navigate("/login");
@@ -287,6 +301,35 @@ const Dashboard = () => {
     }
   };
 
+  const fetchInvoices = async (email: string | undefined) => {
+    if (!email) return;
+    
+    try {
+      // First get the player ID from email
+      const { data: playerData, error: playerError } = await supabase
+        .from("players")
+        .select("id")
+        .eq("email", email)
+        .maybeSingle();
+
+      if (playerError) throw playerError;
+      if (!playerData) return;
+
+      // Fetch their invoices
+      const { data: invoicesData, error: invoicesError } = await supabase
+        .from("invoices")
+        .select("*")
+        .eq("player_id", playerData.id)
+        .order("invoice_date", { ascending: false });
+
+      if (invoicesError) throw invoicesError;
+      
+      setInvoices(invoicesData || []);
+    } catch (error: any) {
+      console.error("Error fetching invoices:", error);
+    }
+  };
+
   const getR90Color = (score: number) => {
     if (score < 0) return "bg-red-950"; // Dark red for negative
     if (score >= 0 && score < 0.2) return "bg-red-600"; // Red
@@ -385,12 +428,15 @@ const Dashboard = () => {
           </div>
 
           <Tabs defaultValue="analysis" className="w-full">
-            <TabsList className="grid w-full grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 mb-8 bg-muted h-auto p-2">
+            <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 gap-2 mb-8 bg-muted h-auto p-2">
               <TabsTrigger value="analysis" className="font-bebas uppercase text-sm sm:text-base">
                 Analysis
               </TabsTrigger>
               <TabsTrigger value="physical" className="font-bebas uppercase text-sm sm:text-base">
                 Physical Programming
+              </TabsTrigger>
+              <TabsTrigger value="invoices" className="font-bebas uppercase text-sm sm:text-base">
+                Invoices
               </TabsTrigger>
               <TabsTrigger value="highlights" className="font-bebas uppercase text-sm sm:text-base">
                 Highlights
@@ -1213,6 +1259,91 @@ const Dashboard = () => {
                         );
                       })}
                     </>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="invoices" className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-3xl font-bebas uppercase tracking-wider">
+                    Invoices
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {invoices.length === 0 ? (
+                    <div className="py-8 text-center text-muted-foreground">
+                      No invoices available yet.
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {invoices.map((invoice) => {
+                        const getStatusColor = (status: string) => {
+                          switch (status) {
+                            case 'paid':
+                              return 'bg-green-500/10 text-green-500 border-green-500/20';
+                            case 'pending':
+                              return 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20';
+                            case 'overdue':
+                              return 'bg-red-500/10 text-red-500 border-red-500/20';
+                            case 'cancelled':
+                              return 'bg-gray-500/10 text-gray-500 border-gray-500/20';
+                            default:
+                              return 'bg-muted text-muted-foreground';
+                          }
+                        };
+
+                        return (
+                          <div 
+                            key={invoice.id}
+                            className="flex flex-col md:flex-row md:items-center md:justify-between border rounded-lg p-4 hover:border-primary transition-colors bg-card gap-4"
+                          >
+                            <div className="flex flex-col md:flex-row md:items-center gap-4 flex-1">
+                              <div className="flex flex-col">
+                                <span className="font-mono text-sm font-medium">
+                                  {invoice.invoice_number}
+                                </span>
+                                {invoice.description && (
+                                  <span className="text-xs text-muted-foreground">
+                                    {invoice.description}
+                                  </span>
+                                )}
+                              </div>
+
+                              <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4">
+                                <span className="text-sm text-muted-foreground">
+                                  Issued: {format(new Date(invoice.invoice_date), 'dd/MM/yyyy')}
+                                </span>
+                                <span className="text-sm text-muted-foreground">
+                                  Due: {format(new Date(invoice.due_date), 'dd/MM/yyyy')}
+                                </span>
+                              </div>
+
+                              <div className="flex items-center gap-4">
+                                <span className="text-lg font-bold">
+                                  {invoice.amount.toFixed(2)} {invoice.currency}
+                                </span>
+                                <span className={`px-3 py-1 rounded-full text-xs font-medium uppercase border ${getStatusColor(invoice.status)}`}>
+                                  {invoice.status}
+                                </span>
+                              </div>
+                            </div>
+
+                            {invoice.pdf_url && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => window.open(invoice.pdf_url!, '_blank')}
+                              >
+                                <FileText className="w-4 h-4 mr-2" />
+                                View PDF
+                              </Button>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
                   )}
                 </CardContent>
               </Card>

@@ -14,6 +14,7 @@ import { CoachingDatabase } from "@/components/staff/CoachingDatabase";
 import { AnalysisManagement } from "@/components/staff/AnalysisManagement";
 import { FormSubmissionsManagement } from "@/components/staff/FormSubmissionsManagement";
 import { SiteVisitorsManagement } from "@/components/staff/SiteVisitorsManagement";
+import { InvoiceManagement } from "@/components/staff/InvoiceManagement";
 
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
@@ -27,7 +28,7 @@ const Staff = () => {
   const [loading, setLoading] = useState(true);
   const [isStaff, setIsStaff] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-  const [expandedSection, setExpandedSection] = useState<'players' | 'blog' | 'betweenthelines' | 'coaching' | 'analysis' | 'submissions' | 'visitors' | null>('players');
+  const [expandedSection, setExpandedSection] = useState<'players' | 'blog' | 'betweenthelines' | 'coaching' | 'analysis' | 'submissions' | 'visitors' | 'invoices' | null>('players');
   const navigate = useNavigate();
 
   // Load saved email and remember me preference on mount
@@ -383,6 +384,26 @@ const Staff = () => {
             {expandedSection === 'visitors' && (
               <CardContent className="pt-6">
                 <SiteVisitorsManagement />
+              </CardContent>
+            )}
+          </Card>
+
+          {/* Invoices Section */}
+          <Card className="cursor-pointer">
+            <CardHeader 
+              onClick={() => setExpandedSection(expandedSection === 'invoices' ? null : 'invoices')}
+              className="hover:bg-accent/50 transition-colors"
+            >
+              <div className="flex justify-between items-center">
+                <CardTitle className="text-2xl">INVOICES</CardTitle>
+                <div className="text-muted-foreground">
+                  {expandedSection === 'invoices' ? <ChevronDown size={24} /> : <ChevronRight size={24} />}
+                </div>
+              </div>
+            </CardHeader>
+            {expandedSection === 'invoices' && (
+              <CardContent className="pt-6">
+                <InvoiceManagement />
               </CardContent>
             )}
           </Card>
