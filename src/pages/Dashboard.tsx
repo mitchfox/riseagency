@@ -55,6 +55,16 @@ interface Invoice {
   pdf_url: string | null;
 }
 
+interface Update {
+  id: string;
+  title: string;
+  content: string;
+  date: string;
+  visible: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 const Dashboard = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
@@ -69,6 +79,7 @@ const Dashboard = () => {
   const [exerciseDialogOpen, setExerciseDialogOpen] = useState(false);
   const [dailyAphorism, setDailyAphorism] = useState<any>(null);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [updates, setUpdates] = useState<Update[]>([]);
 
   // Session color mapping with hover states
   const getSessionColor = (sessionKey: string) => {
@@ -148,6 +159,7 @@ const Dashboard = () => {
       await fetchAnalyses(playerEmail);
       await fetchPrograms(playerEmail);
       await fetchInvoices(playerEmail);
+      await fetchUpdates();
     } catch (error) {
       console.error("Error loading data:", error);
       navigate("/login");
@@ -330,6 +342,21 @@ const Dashboard = () => {
     }
   };
 
+  const fetchUpdates = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("updates")
+        .select("*")
+        .eq("visible", true)
+        .order("date", { ascending: false });
+
+      if (error) throw error;
+      setUpdates(data || []);
+    } catch (error: any) {
+      console.error("Error fetching updates:", error);
+    }
+  };
+
   const getR90Color = (score: number) => {
     if (score < 0) return "bg-red-950"; // Dark red for negative
     if (score >= 0 && score < 0.2) return "bg-red-600"; // Red
@@ -428,7 +455,7 @@ const Dashboard = () => {
           </div>
 
           <Tabs defaultValue="analysis" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 gap-2 mb-8 bg-muted h-auto p-2">
+            <TabsList className="grid w-full grid-cols-2 md:grid-cols-5 gap-2 mb-8 bg-muted h-auto p-2">
               <TabsTrigger value="analysis" className="font-bebas uppercase text-sm sm:text-base">
                 Analysis
               </TabsTrigger>
@@ -437,6 +464,9 @@ const Dashboard = () => {
               </TabsTrigger>
               <TabsTrigger value="invoices" className="font-bebas uppercase text-sm sm:text-base">
                 Key Documents
+              </TabsTrigger>
+              <TabsTrigger value="updates" className="font-bebas uppercase text-sm sm:text-base">
+                Updates
               </TabsTrigger>
               <TabsTrigger value="highlights" className="font-bebas uppercase text-sm sm:text-base">
                 Highlights
@@ -1783,6 +1813,44 @@ const Dashboard = () => {
                       </Tabs>
                     );
                   })()}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="updates" className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-3xl font-bebas uppercase tracking-wider">
+                    Updates
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {updates.length === 0 ? (
+                    <div className="py-8 text-center text-muted-foreground">
+                      No updates available yet.
+                    </div>
+                  ) : (
+                    <div className="space-y-6">
+                      {updates.map((update) => (
+                        <div 
+                          key={update.id}
+                          className="border rounded-lg p-6 space-y-3 bg-card hover:border-primary transition-colors"
+                        >
+                          <div className="flex items-start justify-between gap-4">
+                            <h3 className="text-xl font-bebas uppercase tracking-wider">
+                              {update.title}
+                            </h3>
+                            <span className="text-sm text-muted-foreground whitespace-nowrap">
+                              {format(new Date(update.date), 'MMMM d, yyyy')}
+                            </span>
+                          </div>
+                          <p className="text-muted-foreground whitespace-pre-wrap">
+                            {update.content}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>

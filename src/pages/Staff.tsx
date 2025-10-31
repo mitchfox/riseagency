@@ -16,6 +16,7 @@ import { AnalysisManagement } from "@/components/staff/AnalysisManagement";
 import { FormSubmissionsManagement } from "@/components/staff/FormSubmissionsManagement";
 import { SiteVisitorsManagement } from "@/components/staff/SiteVisitorsManagement";
 import { InvoiceManagement } from "@/components/staff/InvoiceManagement";
+import { UpdatesManagement } from "@/components/staff/UpdatesManagement";
 
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
@@ -29,7 +30,7 @@ const Staff = () => {
   const [loading, setLoading] = useState(true);
   const [isStaff, setIsStaff] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-  const [expandedSection, setExpandedSection] = useState<'players' | 'playerlist' | 'blog' | 'betweenthelines' | 'coaching' | 'analysis' | 'submissions' | 'visitors' | 'invoices' | null>('players');
+  const [expandedSection, setExpandedSection] = useState<'players' | 'playerlist' | 'blog' | 'betweenthelines' | 'coaching' | 'analysis' | 'submissions' | 'visitors' | 'invoices' | 'updates' | null>('players');
   const navigate = useNavigate();
 
   // Load saved email and remember me preference on mount
@@ -425,6 +426,26 @@ const Staff = () => {
             {expandedSection === 'invoices' && (
               <CardContent className="pt-6">
                 <InvoiceManagement />
+              </CardContent>
+            )}
+          </Card>
+
+          {/* Updates Section */}
+          <Card className="cursor-pointer">
+            <CardHeader 
+              onClick={() => setExpandedSection(expandedSection === 'updates' ? null : 'updates')}
+              className="hover:bg-accent/50 transition-colors"
+            >
+              <div className="flex justify-between items-center">
+                <CardTitle className="text-2xl">UPDATES</CardTitle>
+                <div className="text-muted-foreground">
+                  {expandedSection === 'updates' ? <ChevronDown size={24} /> : <ChevronRight size={24} />}
+                </div>
+              </div>
+            </CardHeader>
+            {expandedSection === 'updates' && (
+              <CardContent className="pt-6">
+                <UpdatesManagement />
               </CardContent>
             )}
           </Card>
