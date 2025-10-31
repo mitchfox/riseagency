@@ -436,7 +436,7 @@ const Dashboard = () => {
                 Physical Programming
               </TabsTrigger>
               <TabsTrigger value="invoices" className="font-bebas uppercase text-sm sm:text-base">
-                Invoices
+                Key Documents
               </TabsTrigger>
               <TabsTrigger value="highlights" className="font-bebas uppercase text-sm sm:text-base">
                 Highlights
@@ -1265,88 +1265,116 @@ const Dashboard = () => {
             </TabsContent>
 
             <TabsContent value="invoices" className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-3xl font-bebas uppercase tracking-wider">
+              <Tabs defaultValue="invoices" className="w-full">
+                <TabsList className="grid w-full grid-cols-1 sm:grid-cols-2 gap-2 mb-4 bg-muted h-auto p-2">
+                  <TabsTrigger value="invoices" className="font-bebas uppercase text-sm sm:text-base">
                     Invoices
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {invoices.length === 0 ? (
-                    <div className="py-8 text-center text-muted-foreground">
-                      No invoices available yet.
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {invoices.map((invoice) => {
-                        const getStatusColor = (status: string) => {
-                          switch (status) {
-                            case 'paid':
-                              return 'bg-green-500/10 text-green-500 border-green-500/20';
-                            case 'pending':
-                              return 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20';
-                            case 'overdue':
-                              return 'bg-red-500/10 text-red-500 border-red-500/20';
-                            case 'cancelled':
-                              return 'bg-gray-500/10 text-gray-500 border-gray-500/20';
-                            default:
-                              return 'bg-muted text-muted-foreground';
-                          }
-                        };
+                  </TabsTrigger>
+                  <TabsTrigger value="other" className="font-bebas uppercase text-sm sm:text-base">
+                    Other
+                  </TabsTrigger>
+                </TabsList>
 
-                        return (
-                          <div 
-                            key={invoice.id}
-                            className="flex flex-col md:flex-row md:items-center md:justify-between border rounded-lg p-4 hover:border-primary transition-colors bg-card gap-4"
-                          >
-                            <div className="flex flex-col md:flex-row md:items-center gap-4 flex-1">
-                              <div className="flex flex-col">
-                                <span className="font-mono text-sm font-medium">
-                                  {invoice.invoice_number}
-                                </span>
-                                {invoice.description && (
-                                  <span className="text-xs text-muted-foreground">
-                                    {invoice.description}
-                                  </span>
+                <TabsContent value="invoices">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-3xl font-bebas uppercase tracking-wider">
+                        Invoices
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      {invoices.length === 0 ? (
+                        <div className="py-8 text-center text-muted-foreground">
+                          No invoices available yet.
+                        </div>
+                      ) : (
+                        <div className="space-y-4">
+                          {invoices.map((invoice) => {
+                            const getStatusColor = (status: string) => {
+                              switch (status) {
+                                case 'paid':
+                                  return 'bg-green-500/10 text-green-500 border-green-500/20';
+                                case 'pending':
+                                  return 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20';
+                                case 'overdue':
+                                  return 'bg-red-500/10 text-red-500 border-red-500/20';
+                                case 'cancelled':
+                                  return 'bg-gray-500/10 text-gray-500 border-gray-500/20';
+                                default:
+                                  return 'bg-muted text-muted-foreground';
+                              }
+                            };
+
+                            return (
+                              <div 
+                                key={invoice.id}
+                                className="flex flex-col md:flex-row md:items-center md:justify-between border rounded-lg p-4 hover:border-primary transition-colors bg-card gap-4"
+                              >
+                                <div className="flex flex-col md:flex-row md:items-center gap-4 flex-1">
+                                  <div className="flex flex-col">
+                                    <span className="font-mono text-sm font-medium">
+                                      {invoice.invoice_number}
+                                    </span>
+                                    {invoice.description && (
+                                      <span className="text-xs text-muted-foreground">
+                                        {invoice.description}
+                                      </span>
+                                    )}
+                                  </div>
+
+                                  <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4">
+                                    <span className="text-sm text-muted-foreground">
+                                      Issued: {format(new Date(invoice.invoice_date), 'dd/MM/yyyy')}
+                                    </span>
+                                    <span className="text-sm text-muted-foreground">
+                                      Due: {format(new Date(invoice.due_date), 'dd/MM/yyyy')}
+                                    </span>
+                                  </div>
+
+                                  <div className="flex items-center gap-4">
+                                    <span className="text-lg font-bold">
+                                      {invoice.amount.toFixed(2)} {invoice.currency}
+                                    </span>
+                                    <span className={`px-3 py-1 rounded-full text-xs font-medium uppercase border ${getStatusColor(invoice.status)}`}>
+                                      {invoice.status}
+                                    </span>
+                                  </div>
+                                </div>
+
+                                {invoice.pdf_url && (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => window.open(invoice.pdf_url!, '_blank')}
+                                  >
+                                    <FileText className="w-4 h-4 mr-2" />
+                                    View PDF
+                                  </Button>
                                 )}
                               </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </TabsContent>
 
-                              <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4">
-                                <span className="text-sm text-muted-foreground">
-                                  Issued: {format(new Date(invoice.invoice_date), 'dd/MM/yyyy')}
-                                </span>
-                                <span className="text-sm text-muted-foreground">
-                                  Due: {format(new Date(invoice.due_date), 'dd/MM/yyyy')}
-                                </span>
-                              </div>
-
-                              <div className="flex items-center gap-4">
-                                <span className="text-lg font-bold">
-                                  {invoice.amount.toFixed(2)} {invoice.currency}
-                                </span>
-                                <span className={`px-3 py-1 rounded-full text-xs font-medium uppercase border ${getStatusColor(invoice.status)}`}>
-                                  {invoice.status}
-                                </span>
-                              </div>
-                            </div>
-
-                            {invoice.pdf_url && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => window.open(invoice.pdf_url!, '_blank')}
-                              >
-                                <FileText className="w-4 h-4 mr-2" />
-                                View PDF
-                              </Button>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+                <TabsContent value="other">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-3xl font-bebas uppercase tracking-wider">
+                        Other Documents
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="py-8 text-center text-muted-foreground">
+                        No other documents available yet.
+                      </div>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+              </Tabs>
             </TabsContent>
 
             <TabsContent value="highlights" className="space-y-6">
