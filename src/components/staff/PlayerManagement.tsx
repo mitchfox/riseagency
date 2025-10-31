@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Edit, FileText, LineChart, BookOpen, Video, Calendar, Plus, DollarSign, Trash2 } from "lucide-react";
+import { Edit, FileText, LineChart, BookOpen, Video, Calendar, Plus, DollarSign, Trash2, Copy } from "lucide-react";
 import { PerformanceActionsDialog } from "./PerformanceActionsDialog";
 import { ProgrammingManagement } from "./ProgrammingManagement";
 import { PlayerFixtures } from "./PlayerFixtures";
@@ -320,6 +320,23 @@ const PlayerManagement = () => {
     } catch (error: any) {
       toast.error("Failed to save invoice: " + error.message);
     }
+  };
+
+  const handleDuplicateInvoice = (invoice: any) => {
+    const newInvoiceNumber = `${invoice.invoice_number}-COPY`;
+    setCurrentInvoicePlayerId(invoice.player_id);
+    setEditingInvoiceId(null);
+    setInvoiceFormData({
+      invoice_number: newInvoiceNumber,
+      invoice_date: new Date().toISOString().split('T')[0],
+      due_date: invoice.due_date,
+      amount: invoice.amount.toString(),
+      description: invoice.description || "",
+      status: "pending",
+      currency: invoice.currency,
+    });
+    setIsInvoiceDialogOpen(true);
+    toast.info("Invoice duplicated - modify and save");
   };
 
   const handleDeleteInvoice = async (invoiceId: string) => {
@@ -1596,6 +1613,15 @@ const PlayerManagement = () => {
                             </Button>
                             <Button
                               type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleDuplicateInvoice(invoice)}
+                              title="Duplicate"
+                            >
+                              <Copy className="w-3 h-3" />
+                            </Button>
+                            <Button
+                              type="button"
                               variant="destructive"
                               size="sm"
                               onClick={() => handleDeleteInvoice(invoice.id)}
@@ -2260,39 +2286,48 @@ const PlayerManagement = () => {
                                  )}
                                </div>
                                
-                               <div className="flex gap-1">
-                                 <Button
-                                   type="button"
-                                   variant="outline"
-                                   size="sm"
-                                   onClick={() => {
-                                     setCurrentInvoicePlayerId(player.id);
-                                     setEditingInvoiceId(invoice.id);
-                                     setInvoiceFormData({
-                                       invoice_number: invoice.invoice_number,
-                                       invoice_date: invoice.invoice_date,
-                                       due_date: invoice.due_date,
-                                       amount: invoice.amount.toString(),
-                                       description: invoice.description || "",
-                                       status: invoice.status,
-                                       currency: invoice.currency,
-                                     });
-                                     setIsInvoiceDialogOpen(true);
-                                   }}
-                                   title="Edit"
-                                 >
-                                   <Edit className="w-3 h-3" />
-                                 </Button>
-                                 <Button
-                                   type="button"
-                                   variant="destructive"
-                                   size="sm"
-                                   onClick={() => handleDeleteInvoice(invoice.id)}
-                                   title="Delete"
-                                 >
-                                   <Trash2 className="w-3 h-3" />
-                                 </Button>
-                               </div>
+                                <div className="flex gap-1">
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => {
+                                      setCurrentInvoicePlayerId(player.id);
+                                      setEditingInvoiceId(invoice.id);
+                                      setInvoiceFormData({
+                                        invoice_number: invoice.invoice_number,
+                                        invoice_date: invoice.invoice_date,
+                                        due_date: invoice.due_date,
+                                        amount: invoice.amount.toString(),
+                                        description: invoice.description || "",
+                                        status: invoice.status,
+                                        currency: invoice.currency,
+                                      });
+                                      setIsInvoiceDialogOpen(true);
+                                    }}
+                                    title="Edit"
+                                  >
+                                    <Edit className="w-3 h-3" />
+                                  </Button>
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleDuplicateInvoice(invoice)}
+                                    title="Duplicate"
+                                  >
+                                    <Copy className="w-3 h-3" />
+                                  </Button>
+                                  <Button
+                                    type="button"
+                                    variant="destructive"
+                                    size="sm"
+                                    onClick={() => handleDeleteInvoice(invoice.id)}
+                                    title="Delete"
+                                  >
+                                    <Trash2 className="w-3 h-3" />
+                                  </Button>
+                                </div>
                              </div>
                            ))}
                          </div>
