@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Edit, FileText, LineChart, BookOpen, Video, Calendar, Plus } from "lucide-react";
+import { Edit, FileText, LineChart, BookOpen, Video, Calendar, Plus, DollarSign, Trash2 } from "lucide-react";
 import { PerformanceActionsDialog } from "./PerformanceActionsDialog";
 import { ProgrammingManagement } from "./ProgrammingManagement";
 import { PlayerFixtures } from "./PlayerFixtures";
@@ -99,6 +99,19 @@ const PlayerManagement = () => {
   const [uploadingSchemePlayerImage, setUploadingSchemePlayerImage] = useState(false);
   const [availableAnalyses, setAvailableAnalyses] = useState<any[]>([]);
   const [selectedAnalysisWriterId, setSelectedAnalysisWriterId] = useState<string>("none");
+  const [playerInvoices, setPlayerInvoices] = useState<Record<string, any[]>>({});
+  const [isInvoiceDialogOpen, setIsInvoiceDialogOpen] = useState(false);
+  const [currentInvoicePlayerId, setCurrentInvoicePlayerId] = useState<string | null>(null);
+  const [invoiceFormData, setInvoiceFormData] = useState({
+    invoice_number: "",
+    invoice_date: "",
+    due_date: "",
+    amount: "",
+    description: "",
+    status: "pending",
+    currency: "EUR",
+  });
+  const [editingInvoiceId, setEditingInvoiceId] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -166,6 +179,7 @@ const PlayerManagement = () => {
     fetchPlayers();
     fetchAllAnalyses();
     fetchAvailableAnalyses();
+    fetchAllInvoices();
   }, []);
 
   const fetchPlayers = async () => {
@@ -231,6 +245,96 @@ const PlayerManagement = () => {
       setAvailableAnalyses(data || []);
     } catch (error: any) {
       console.error("Failed to fetch available analyses:", error);
+    }
+  };
+
+  const fetchAllInvoices = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("invoices")
+        .select("*")
+        .order("invoice_date", { ascending: false });
+
+      if (error) throw error;
+
+      // Group invoices by player_id
+      const invoicesMap: Record<string, any[]> = {};
+      data?.forEach(invoice => {
+        if (!invoicesMap[invoice.player_id]) {
+          invoicesMap[invoice.player_id] = [];
+        }
+        invoicesMap[invoice.player_id].push(invoice);
+      });
+      setPlayerInvoices(invoicesMap);
+    } catch (error: any) {
+      toast.error("Failed to fetch invoices: " + error.message);
+    }
+  };
+
+  const handleInvoiceSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!currentInvoicePlayerId) return;
+
+    try {
+      const invoiceData = {
+        player_id: currentInvoicePlayerId,
+        invoice_number: invoiceFormData.invoice_number,
+        invoice_date: invoiceFormData.invoice_date,
+        due_date: invoiceFormData.due_date,
+        amount: parseFloat(invoiceFormData.amount),
+        description: invoiceFormData.description || null,
+        status: invoiceFormData.status,
+        currency: invoiceFormData.currency,
+      };
+
+      if (editingInvoiceId) {
+        const { error } = await supabase
+          .from("invoices")
+          .update(invoiceData)
+          .eq("id", editingInvoiceId);
+
+        if (error) throw error;
+        toast.success("Invoice updated successfully");
+      } else {
+        const { error } = await supabase
+          .from("invoices")
+          .insert(invoiceData);
+
+        if (error) throw error;
+        toast.success("Invoice created successfully");
+      }
+
+      setInvoiceFormData({
+        invoice_number: "",
+        invoice_date: "",
+        due_date: "",
+        amount: "",
+        description: "",
+        status: "pending",
+        currency: "EUR",
+      });
+      setEditingInvoiceId(null);
+      setIsInvoiceDialogOpen(false);
+      fetchAllInvoices();
+    } catch (error: any) {
+      toast.error("Failed to save invoice: " + error.message);
+    }
+  };
+
+  const handleDeleteInvoice = async (invoiceId: string) => {
+    if (!confirm("Are you sure you want to delete this invoice?")) return;
+
+    try {
+      const { error } = await supabase
+        .from("invoices")
+        .delete()
+        .eq("id", invoiceId);
+
+      if (error) throw error;
+      toast.success("Invoice deleted successfully");
+      fetchAllInvoices();
+    } catch (error: any) {
+      toast.error("Failed to delete invoice: " + error.message);
     }
   };
 
@@ -1975,12 +2079,111 @@ const PlayerManagement = () => {
                                );
                              })()}
                            </TabsContent>
-                         </Tabs>
-                       </div>
-                    </>
-                  )}
+                          </Tabs>
+                        </div>
 
-                  {showingAnalysisFor === player.id && (
+                        {/* Invoices Section */}
+                        <div className="border-t pt-4 space-y-4 mt-4">
+                          <div className="flex items-center justify-between mb-4">
+                            <h4 className="text-lg font-semibold">Invoices</h4>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => {
+                                setCurrentInvoicePlayerId(player.id);
+                                setEditingInvoiceId(null);
+                                setInvoiceFormData({
+                                  invoice_number: "",
+                                  invoice_date: "",
+                                  due_date: "",
+                                  amount: "",
+                                  description: "",
+                                  status: "pending",
+                                  currency: "EUR",
+                                });
+                                setIsInvoiceDialogOpen(true);
+                              }}
+                            >
+                              <DollarSign className="w-4 h-4 mr-2" />
+                              Add Invoice
+                            </Button>
+                          </div>
+                          
+                          {playerInvoices[player.id]?.length > 0 ? (
+                            <div className="space-y-2">
+                              {playerInvoices[player.id].map((invoice) => (
+                                <div key={invoice.id} className="flex items-center gap-3 p-3 border rounded-lg bg-secondary/5">
+                                  <div className="flex-1">
+                                    <div className="flex items-center gap-2">
+                                      <p className="text-sm font-medium">Invoice #{invoice.invoice_number}</p>
+                                      <span className={`text-xs px-2 py-1 rounded ${
+                                        invoice.status === 'paid' 
+                                          ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' 
+                                          : invoice.status === 'overdue'
+                                          ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                                          : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
+                                      }`}>
+                                        {invoice.status}
+                                      </span>
+                                    </div>
+                                    <p className="text-xs text-muted-foreground">
+                                      Date: {new Date(invoice.invoice_date).toLocaleDateString()} | 
+                                      Due: {new Date(invoice.due_date).toLocaleDateString()}
+                                    </p>
+                                    <p className="text-sm font-semibold mt-1">
+                                      {invoice.currency} {invoice.amount.toFixed(2)}
+                                    </p>
+                                    {invoice.description && (
+                                      <p className="text-xs text-muted-foreground mt-1">{invoice.description}</p>
+                                    )}
+                                  </div>
+                                  
+                                  <div className="flex gap-1">
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => {
+                                        setCurrentInvoicePlayerId(player.id);
+                                        setEditingInvoiceId(invoice.id);
+                                        setInvoiceFormData({
+                                          invoice_number: invoice.invoice_number,
+                                          invoice_date: invoice.invoice_date,
+                                          due_date: invoice.due_date,
+                                          amount: invoice.amount.toString(),
+                                          description: invoice.description || "",
+                                          status: invoice.status,
+                                          currency: invoice.currency,
+                                        });
+                                        setIsInvoiceDialogOpen(true);
+                                      }}
+                                      title="Edit"
+                                    >
+                                      <Edit className="w-3 h-3" />
+                                    </Button>
+                                    <Button
+                                      type="button"
+                                      variant="destructive"
+                                      size="sm"
+                                      onClick={() => handleDeleteInvoice(invoice.id)}
+                                      title="Delete"
+                                    >
+                                      <Trash2 className="w-3 h-3" />
+                                    </Button>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <p className="text-sm text-muted-foreground text-center py-4">
+                              No invoices yet. Click "Add Invoice" to create one.
+                            </p>
+                          )}
+                        </div>
+                     </>
+                   )}
+
+                   {showingAnalysisFor === player.id && (
                     <div className="border-t pt-4 space-y-4">
                       <h4 className="text-xl font-semibold mb-4">Analysis</h4>
                       
@@ -2592,6 +2795,117 @@ const PlayerManagement = () => {
             
             <Button type="submit" disabled={uploadingFiles || !highlightName || (editingHighlightIndex === null && (!highlightVideoFile || (highlightType === 'match' && !highlightClubLogoFile)))}>
               {uploadingFiles ? "Uploading..." : (editingHighlightIndex !== null ? "Update" : `Add ${highlightType === 'best' ? 'Clip' : 'Highlight'}`)}
+            </Button>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add/Edit Invoice Dialog */}
+      <Dialog open={isInvoiceDialogOpen} onOpenChange={(open) => {
+        setIsInvoiceDialogOpen(open);
+        if (!open) {
+          setInvoiceFormData({
+            invoice_number: "",
+            invoice_date: "",
+            due_date: "",
+            amount: "",
+            description: "",
+            status: "pending",
+            currency: "EUR",
+          });
+          setEditingInvoiceId(null);
+        }
+      }}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{editingInvoiceId ? "Edit Invoice" : "Add New Invoice"}</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleInvoiceSubmit} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="invoice_number">Invoice Number *</Label>
+                <Input
+                  id="invoice_number"
+                  value={invoiceFormData.invoice_number}
+                  onChange={(e) => setInvoiceFormData({ ...invoiceFormData, invoice_number: e.target.value })}
+                  placeholder="INV-001"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="amount">Amount *</Label>
+                <Input
+                  id="amount"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={invoiceFormData.amount}
+                  onChange={(e) => setInvoiceFormData({ ...invoiceFormData, amount: e.target.value })}
+                  placeholder="1000.00"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="invoice_date">Invoice Date *</Label>
+                <Input
+                  id="invoice_date"
+                  type="date"
+                  value={invoiceFormData.invoice_date}
+                  onChange={(e) => setInvoiceFormData({ ...invoiceFormData, invoice_date: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="due_date">Due Date *</Label>
+                <Input
+                  id="due_date"
+                  type="date"
+                  value={invoiceFormData.due_date}
+                  onChange={(e) => setInvoiceFormData({ ...invoiceFormData, due_date: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="currency">Currency *</Label>
+                <Select value={invoiceFormData.currency} onValueChange={(value) => setInvoiceFormData({ ...invoiceFormData, currency: value })}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="EUR">EUR</SelectItem>
+                    <SelectItem value="USD">USD</SelectItem>
+                    <SelectItem value="GBP">GBP</SelectItem>
+                    <SelectItem value="CZK">CZK</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="status">Status *</Label>
+                <Select value={invoiceFormData.status} onValueChange={(value) => setInvoiceFormData({ ...invoiceFormData, status: value })}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="paid">Paid</SelectItem>
+                    <SelectItem value="overdue">Overdue</SelectItem>
+                    <SelectItem value="cancelled">Cancelled</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="description">Description</Label>
+              <Textarea
+                id="description"
+                value={invoiceFormData.description}
+                onChange={(e) => setInvoiceFormData({ ...invoiceFormData, description: e.target.value })}
+                placeholder="Invoice description or notes..."
+                rows={3}
+              />
+            </div>
+            <Button type="submit">
+              {editingInvoiceId ? "Update Invoice" : "Create Invoice"}
             </Button>
           </form>
         </DialogContent>
