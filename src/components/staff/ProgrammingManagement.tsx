@@ -1267,7 +1267,7 @@ Phase Dates: ${programmingData.phaseDates || 'Not specified'}`;
                 &larr; Back to Programs
               </Button>
               <div className="flex items-center gap-2">
-                <span className="font-semibold">{selectedProgram.program_name}</span>
+                <span className="font-semibold">{programmingData.phaseName || selectedProgram.program_name}</span>
                 {selectedProgram.is_current && (
                   <Badge variant="default">Current</Badge>
                 )}
