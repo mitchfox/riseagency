@@ -648,31 +648,31 @@ const Dashboard = () => {
                 <DropdownMenuContent align="start" className="w-[280px] bg-card border-2 border-gold/60">
                   <DropdownMenuItem 
                     onClick={() => setActiveTab("analysis")}
-                    className="font-bebas uppercase text-base py-3 cursor-pointer"
+                    className="font-bebas uppercase text-base py-3 cursor-pointer text-gold hover:text-gold/80"
                   >
                     Analysis
                   </DropdownMenuItem>
                   <DropdownMenuItem 
                     onClick={() => setActiveTab("physical")}
-                    className="font-bebas uppercase text-base py-3 cursor-pointer"
+                    className="font-bebas uppercase text-base py-3 cursor-pointer text-gold hover:text-gold/80"
                   >
                     Physical Programming
                   </DropdownMenuItem>
                   <DropdownMenuItem 
                     onClick={() => setActiveTab("invoices")}
-                    className="font-bebas uppercase text-base py-3 cursor-pointer"
+                    className="font-bebas uppercase text-base py-3 cursor-pointer text-gold hover:text-gold/80"
                   >
                     Key Documents
                   </DropdownMenuItem>
                   <DropdownMenuItem 
                     onClick={() => setActiveTab("updates")}
-                    className="font-bebas uppercase text-base py-3 cursor-pointer"
+                    className="font-bebas uppercase text-base py-3 cursor-pointer text-gold hover:text-gold/80"
                   >
                     Updates
                   </DropdownMenuItem>
                   <DropdownMenuItem 
                     onClick={() => setActiveTab("highlights")}
-                    className="font-bebas uppercase text-base py-3 cursor-pointer"
+                    className="font-bebas uppercase text-base py-3 cursor-pointer text-gold hover:text-gold/80"
                   >
                     Highlights
                   </DropdownMenuItem>
