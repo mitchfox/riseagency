@@ -1591,46 +1591,33 @@ const Dashboard = () => {
                                     const clipName = prompt('Enter a name for this clip:');
                                     if (!clipName) return;
                                     
-                                    try {
-                                      toast.info("Uploading clip...");
-                                      
-                                      const fileName = `${playerData.id}_${Date.now()}_${file.name}`;
-                                      const { error: uploadError } = await supabase.storage
-                                        .from('analysis-files')
-                                        .upload(`highlights/${fileName}`, file);
-                                      
-                                      if (uploadError) throw uploadError;
-                                      
-                                      const { data: { publicUrl } } = supabase.storage
-                                        .from('analysis-files')
-                                        .getPublicUrl(`highlights/${fileName}`);
-                                      
-                                      const parsed = playerData?.highlights ? JSON.parse(playerData.highlights) : {};
-                                      const updatedHighlights = {
-                                        matchHighlights: parsed.matchHighlights || [],
-                                        bestClips: [
-                                          ...(parsed.bestClips || []),
-                                          {
-                                            name: clipName,
-                                            videoUrl: publicUrl,
-                                            addedAt: new Date().toISOString()
-                                          }
-                                        ]
-                                      };
-                                      
-                                      const { error: updateError } = await supabase
-                                        .from('players')
-                                        .update({ highlights: JSON.stringify(updatedHighlights) })
-                                        .eq('id', playerData.id);
-                                      
-                                      if (updateError) throw updateError;
-                                      
-                                      toast.success("Clip uploaded successfully!");
-                                      window.location.reload();
-                                    } catch (error) {
-                                      console.error('Upload error:', error);
-                                      toast.error("Failed to upload clip");
-                                    }
+                                      try {
+                                        toast.info("Uploading clip...");
+                                        
+                                        const playerEmail = localStorage.getItem("player_email") || sessionStorage.getItem("player_email");
+                                        if (!playerEmail) {
+                                          toast.error("Please log in again");
+                                          return;
+                                        }
+
+                                        const formData = new FormData();
+                                        formData.append('file', file);
+                                        formData.append('playerEmail', playerEmail);
+                                        formData.append('clipName', clipName);
+
+                                        const { data, error } = await supabase.functions.invoke('upload-player-highlight', {
+                                          body: formData,
+                                        });
+
+                                        if (error) throw error;
+                                        if (!data?.success) throw new Error(data?.error || 'Upload failed');
+                                        
+                                        toast.success("Clip uploaded successfully!");
+                                        window.location.reload();
+                                      } catch (error: any) {
+                                        console.error('Upload error:', error);
+                                        toast.error(error.message || "Failed to upload clip");
+                                      }
                                   };
                                   input.click();
                                 }}
@@ -1655,46 +1642,33 @@ const Dashboard = () => {
                                       const clipName = prompt('Enter a name for this clip:');
                                       if (!clipName) return;
                                       
-                                      try {
-                                        toast.info("Uploading clip...");
-                                        
-                                        const fileName = `${playerData.id}_${Date.now()}_${file.name}`;
-                                        const { error: uploadError } = await supabase.storage
-                                          .from('analysis-files')
-                                          .upload(`highlights/${fileName}`, file);
-                                        
-                                        if (uploadError) throw uploadError;
-                                        
-                                        const { data: { publicUrl } } = supabase.storage
-                                          .from('analysis-files')
-                                          .getPublicUrl(`highlights/${fileName}`);
-                                        
-                                        const parsed = playerData?.highlights ? JSON.parse(playerData.highlights) : {};
-                                        const updatedHighlights = {
-                                          matchHighlights: parsed.matchHighlights || [],
-                                          bestClips: [
-                                            ...(parsed.bestClips || []),
-                                            {
-                                              name: clipName,
-                                              videoUrl: publicUrl,
-                                              addedAt: new Date().toISOString()
-                                            }
-                                          ]
-                                        };
-                                        
-                                        const { error: updateError } = await supabase
-                                          .from('players')
-                                          .update({ highlights: JSON.stringify(updatedHighlights) })
-                                          .eq('id', playerData.id);
-                                        
-                                        if (updateError) throw updateError;
-                                        
-                                        toast.success("Clip uploaded successfully!");
-                                        window.location.reload();
-                                      } catch (error) {
-                                        console.error('Upload error:', error);
-                                        toast.error("Failed to upload clip");
-                                      }
+                                       try {
+                                         toast.info("Uploading clip...");
+                                         
+                                         const playerEmail = localStorage.getItem("player_email") || sessionStorage.getItem("player_email");
+                                         if (!playerEmail) {
+                                           toast.error("Please log in again");
+                                           return;
+                                         }
+
+                                         const formData = new FormData();
+                                         formData.append('file', file);
+                                         formData.append('playerEmail', playerEmail);
+                                         formData.append('clipName', clipName);
+
+                                         const { data, error } = await supabase.functions.invoke('upload-player-highlight', {
+                                           body: formData,
+                                         });
+
+                                         if (error) throw error;
+                                         if (!data?.success) throw new Error(data?.error || 'Upload failed');
+                                         
+                                         toast.success("Clip uploaded successfully!");
+                                         window.location.reload();
+                                       } catch (error: any) {
+                                         console.error('Upload error:', error);
+                                         toast.error(error.message || "Failed to upload clip");
+                                       }
                                     };
                                     input.click();
                                   }}
