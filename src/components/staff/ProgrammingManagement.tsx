@@ -204,6 +204,11 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
     }
   };
 
+  // Helper function to create a deep copy of data to ensure complete independence
+  const deepClone = <T,>(obj: T): T => {
+    return JSON.parse(JSON.stringify(obj));
+  };
+
   const loadPrograms = async () => {
     try {
       const { data, error } = await supabase
@@ -502,33 +507,38 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
 
       if (error) throw error;
 
-      // Save to coaching database if requested
+      // Save to coaching database if requested - create a completely independent copy
       if (saveToCoachingDB.programme) {
+        // Deep clone all data to ensure complete independence
+        const sessionsClone = deepClone({
+          A: programmingData.sessionA,
+          B: programmingData.sessionB,
+          C: programmingData.sessionC,
+          D: programmingData.sessionD,
+          E: programmingData.sessionE,
+          F: programmingData.sessionF,
+          G: programmingData.sessionG,
+          H: programmingData.sessionH,
+          'PRE-A': programmingData.preSessionA,
+          'PRE-B': programmingData.preSessionB,
+          'PRE-C': programmingData.preSessionC,
+          'PRE-D': programmingData.preSessionD,
+          'PRE-E': programmingData.preSessionE,
+          'PRE-F': programmingData.preSessionF,
+          'PRE-G': programmingData.preSessionG,
+          'PRE-H': programmingData.preSessionH,
+        });
+        
+        const schedulesClone = deepClone(programmingData.weeklySchedules);
+        
         await supabase.from('coaching_programmes').insert([{
-          title: selectedProgram.program_name,
+          title: programmingData.phaseName,
           description: `${programmingData.phaseName} - ${programmingData.phaseDates}`,
           content: programmingData.overviewText,
           category: 'Player Programming',
           attachments: {
-            sessions: {
-              A: programmingData.sessionA,
-              B: programmingData.sessionB,
-              C: programmingData.sessionC,
-              D: programmingData.sessionD,
-              E: programmingData.sessionE,
-              F: programmingData.sessionF,
-              G: programmingData.sessionG,
-              H: programmingData.sessionH,
-              'PRE-A': programmingData.preSessionA,
-              'PRE-B': programmingData.preSessionB,
-              'PRE-C': programmingData.preSessionC,
-              'PRE-D': programmingData.preSessionD,
-              'PRE-E': programmingData.preSessionE,
-              'PRE-F': programmingData.preSessionF,
-              'PRE-G': programmingData.preSessionG,
-              'PRE-H': programmingData.preSessionH,
-            },
-            weekly_schedules: programmingData.weeklySchedules
+            sessions: sessionsClone,
+            weekly_schedules: schedulesClone
           } as any
         }]);
       }
@@ -921,9 +931,9 @@ Phase Dates: ${programmingData.phaseDates || 'Not specified'}`;
         ? (existingPrograms[0].display_order || 0) + 1 
         : 1;
 
-      // Create program from template - include sessions if they exist
-      const templateSessions = template.attachments?.sessions || {};
-      const templateSchedules = template.attachments?.weekly_schedules || [];
+      // Create completely independent copy from template using deep cloning
+      const templateSessions = deepClone(template.attachments?.sessions || {});
+      const templateSchedules = deepClone(template.attachments?.weekly_schedules || []);
       
       const programData: any = {
         player_id: playerId,
