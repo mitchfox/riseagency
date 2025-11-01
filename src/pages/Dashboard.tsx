@@ -9,9 +9,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { NotificationPermission } from "@/components/NotificationPermission";
 import { toast } from "sonner";
-import { FileText, Play, Download, Upload } from "lucide-react";
+import { FileText, Play, Download, Upload, ChevronDown } from "lucide-react";
 import { addDays, format, parseISO } from "date-fns";
 
 interface Analysis {
@@ -80,6 +81,7 @@ const Dashboard = () => {
   const [dailyAphorism, setDailyAphorism] = useState<any>(null);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [updates, setUpdates] = useState<Update[]>([]);
+  const [activeTab, setActiveTab] = useState("analysis");
 
   // Session color mapping with hover states
   const getSessionColor = (sessionKey: string) => {
@@ -454,24 +456,58 @@ const Dashboard = () => {
             <NotificationPermission />
           </div>
 
-          <Tabs defaultValue="analysis" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 md:grid-cols-5 gap-2 mb-8 bg-muted h-auto p-2">
-              <TabsTrigger value="analysis" className="font-bebas uppercase text-sm sm:text-base">
-                Analysis
-              </TabsTrigger>
-              <TabsTrigger value="physical" className="font-bebas uppercase text-sm sm:text-base">
-                Physical Programming
-              </TabsTrigger>
-              <TabsTrigger value="invoices" className="font-bebas uppercase text-sm sm:text-base">
-                Key Documents
-              </TabsTrigger>
-              <TabsTrigger value="updates" className="font-bebas uppercase text-sm sm:text-base">
-                Updates
-              </TabsTrigger>
-              <TabsTrigger value="highlights" className="font-bebas uppercase text-sm sm:text-base">
-                Highlights
-              </TabsTrigger>
-            </TabsList>
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <div className="mb-8">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    className="w-full md:w-auto min-w-[280px] justify-between font-bebas uppercase text-base px-6 py-6 bg-muted hover:bg-muted/80"
+                  >
+                    <span>
+                      {activeTab === "analysis" && "Analysis"}
+                      {activeTab === "physical" && "Physical Programming"}
+                      {activeTab === "invoices" && "Key Documents"}
+                      {activeTab === "updates" && "Updates"}
+                      {activeTab === "highlights" && "Highlights"}
+                    </span>
+                    <ChevronDown className="ml-2 h-5 w-5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-[280px] bg-card border-primary/20">
+                  <DropdownMenuItem 
+                    onClick={() => setActiveTab("analysis")}
+                    className="font-bebas uppercase text-base py-3 cursor-pointer"
+                  >
+                    Analysis
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onClick={() => setActiveTab("physical")}
+                    className="font-bebas uppercase text-base py-3 cursor-pointer"
+                  >
+                    Physical Programming
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onClick={() => setActiveTab("invoices")}
+                    className="font-bebas uppercase text-base py-3 cursor-pointer"
+                  >
+                    Key Documents
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onClick={() => setActiveTab("updates")}
+                    className="font-bebas uppercase text-base py-3 cursor-pointer"
+                  >
+                    Updates
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onClick={() => setActiveTab("highlights")}
+                    className="font-bebas uppercase text-base py-3 cursor-pointer"
+                  >
+                    Highlights
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
 
             <TabsContent value="analysis" className="space-y-6">
               <Tabs defaultValue="performance" className="w-full">
