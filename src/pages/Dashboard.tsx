@@ -633,7 +633,7 @@ const Dashboard = () => {
                 <DropdownMenuTrigger asChild>
                   <Button 
                     variant="outline" 
-                    className="w-full justify-center font-bebas uppercase text-base px-6 py-6 bg-muted hover:bg-muted/80"
+                    className="w-full justify-center font-bebas uppercase text-base px-6 py-6 bg-muted hover:bg-muted/80 border-2 border-gold text-gold"
                   >
                     <span>
                       {activeTab === "analysis" && "Analysis"}
@@ -645,7 +645,7 @@ const Dashboard = () => {
                     <ChevronDown className="ml-2 h-5 w-5" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="w-[280px] bg-card border-primary/20">
+                <DropdownMenuContent align="start" className="w-[280px] bg-card border-2 border-gold/60">
                   <DropdownMenuItem 
                     onClick={() => setActiveTab("analysis")}
                     className="font-bebas uppercase text-base py-3 cursor-pointer"
