@@ -874,7 +874,7 @@ const Dashboard = () => {
                     </CardTitle>
                     {programs.length > 1 && (
                       <Select value={selectedProgramId || undefined} onValueChange={setSelectedProgramId}>
-                        <SelectTrigger className="w-[250px]">
+                        <SelectTrigger className="w-full text-center" style={{ color: '#D4AF37' }}>
                           <SelectValue placeholder="Select program" />
                         </SelectTrigger>
                         <SelectContent>
