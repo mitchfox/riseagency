@@ -645,7 +645,7 @@ const Dashboard = () => {
                     <ChevronDown className="ml-2 h-5 w-5" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="w-[280px] bg-card border-2 border-gold/60">
+                <DropdownMenuContent align="start" className="w-[280px] bg-card/95 backdrop-blur-sm border-2 border-gold shadow-lg shadow-gold/20">
                   <DropdownMenuItem 
                     onClick={() => setActiveTab("analysis")}
                     className="font-bebas uppercase text-base py-3 cursor-pointer text-gold hover:text-gold/80"
