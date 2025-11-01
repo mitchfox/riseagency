@@ -1230,7 +1230,7 @@ const Dashboard = () => {
                                                              style={{
                                                                backgroundColor: getSessionColor(preKey).bg,
                                                                color: getSessionColor(preKey).text,
-                                                             } as React.CSSProperties}
+                                                             }}
                                                            >
                                                              Pre-{mainKey}
                                                            </TabsTrigger>
@@ -1242,7 +1242,7 @@ const Dashboard = () => {
                                                              style={{
                                                                backgroundColor: getSessionColor(mainKey).bg,
                                                                color: getSessionColor(mainKey).text,
-                                                             } as React.CSSProperties}
+                                                             }}
                                                            >
                                                              Session {mainKey}
                                                            </TabsTrigger>
