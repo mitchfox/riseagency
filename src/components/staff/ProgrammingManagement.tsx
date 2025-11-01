@@ -731,9 +731,9 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
         description: fields[1] || '',
         repetitions: fields[2] || '',
         sets: fields[3] || '',
-        load: '',
-        recoveryTime: '',
-        videoUrl: fields[4] || '',
+        load: fields[4] || '',
+        recoveryTime: fields[5] || '',
+        videoUrl: fields[6] || '',
       };
 
       newExercises.push(exercise);
@@ -1778,13 +1778,13 @@ Phase Dates: ${programmingData.phaseDates || 'Not specified'}`;
         <div className="space-y-4">
           <div className="bg-muted p-4 rounded-lg text-sm space-y-2">
             <p className="font-semibold">Format: Tab-separated values (one exercise per line)</p>
-            <p className="text-muted-foreground">Order: Name → Description → Reps → Sets → Video URL (optional)</p>
+            <p className="text-muted-foreground">Order: Name → Description → Reps → Sets → Load → Recovery Time → Video URL (optional)</p>
             <p className="text-xs text-muted-foreground mt-2">
-              Example: Copy from Excel/Sheets where columns are: Exercise Name | Description | Reps | Sets | Video URL
+              Example: Copy from Excel/Sheets where columns are: Exercise Name | Description | Reps | Sets | Load | Recovery Time | Video URL
             </p>
           </div>
           <Textarea
-            placeholder="Paste your exercises here (tab-separated)...&#10;&#10;Example:&#10;Wall Volleys - Single-Leg Standing	Stand 1–2 metres from a wall...	90s (45s each side)	2&#10;Reverse Nordic Curl	Kneel on a padded surface...	8	2	https://video-url.com"
+            placeholder="Paste your exercises here (tab-separated)...&#10;&#10;Example:&#10;Wall Volleys - Single-Leg Standing	Stand 1–2 metres from a wall...	90s (45s each side)	2	Bodyweight	60s&#10;Reverse Nordic Curl	Kneel on a padded surface...	8	2	Bodyweight	90s	https://video-url.com"
             value={pasteText}
             onChange={(e) => setPasteText(e.target.value)}
             rows={12}
