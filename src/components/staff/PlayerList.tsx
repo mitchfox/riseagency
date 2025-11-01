@@ -16,6 +16,7 @@ interface Player {
   position: string;
   age: number;
   nationality: string;
+  bio: string | null;
 }
 
 export const PlayerList = () => {
@@ -39,7 +40,7 @@ export const PlayerList = () => {
     try {
       const { data, error } = await supabase
         .from("players")
-        .select("id, name, club, club_logo, position, age, nationality")
+        .select("id, name, club, club_logo, position, age, nationality, bio")
         .order("name");
 
       if (error) throw error;
@@ -91,6 +92,31 @@ export const PlayerList = () => {
     }
   };
 
+  // Helper function to get club info from either column or bio JSON
+  const getClubInfo = (player: Player) => {
+    // First try the direct columns
+    if (player.club) {
+      return { club: player.club, clubLogo: player.club_logo };
+    }
+    
+    // Fall back to bio JSON
+    try {
+      if (player.bio && player.bio.startsWith('{')) {
+        const bioData = JSON.parse(player.bio);
+        if (bioData.currentClub) {
+          return { 
+            club: bioData.currentClub, 
+            clubLogo: bioData.tacticalFormations?.[0]?.clubLogo || null 
+          };
+        }
+      }
+    } catch (e) {
+      // Ignore parse errors
+    }
+    
+    return { club: null, clubLogo: null };
+  };
+
   if (loading) {
     return <div>Loading players...</div>;
   }
@@ -109,33 +135,36 @@ export const PlayerList = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {players.map((player) => (
-              <TableRow key={player.id}>
-                <TableCell className="font-medium">{player.name}</TableCell>
-                <TableCell>{player.club || "—"}</TableCell>
-                <TableCell>
-                  {player.club_logo ? (
-                    <img
-                      src={player.club_logo}
-                      alt={player.club || "Club"}
-                      className="h-8 w-8 object-contain"
-                    />
-                  ) : (
-                    "—"
-                  )}
-                </TableCell>
-                <TableCell>{player.position}</TableCell>
-                <TableCell>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleEdit(player)}
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
+            {players.map((player) => {
+              const { club, clubLogo } = getClubInfo(player);
+              return (
+                <TableRow key={player.id}>
+                  <TableCell className="font-medium">{player.name}</TableCell>
+                  <TableCell>{club || "—"}</TableCell>
+                  <TableCell>
+                    {clubLogo ? (
+                      <img
+                        src={clubLogo}
+                        alt={club || "Club"}
+                        className="h-8 w-8 object-contain"
+                      />
+                    ) : (
+                      "—"
+                    )}
+                  </TableCell>
+                  <TableCell>{player.position}</TableCell>
+                  <TableCell>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleEdit(player)}
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </div>
