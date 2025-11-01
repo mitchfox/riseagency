@@ -812,6 +812,26 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
     updateField('weeklySchedules', [...programmingData.weeklySchedules, emptyWeeklySchedule()]);
   };
 
+  const addNextWeekFromPrevious = () => {
+    if (programmingData.weeklySchedules.length === 0) {
+      toast.error('Add a week first before duplicating');
+      return;
+    }
+
+    const lastWeek = programmingData.weeklySchedules[programmingData.weeklySchedules.length - 1];
+    const duplicatedWeek = deepClone(lastWeek);
+
+    // Advance the date by 7 days
+    if (duplicatedWeek.week_start_date) {
+      const currentDate = new Date(duplicatedWeek.week_start_date);
+      currentDate.setDate(currentDate.getDate() + 7);
+      duplicatedWeek.week_start_date = currentDate.toISOString().split('T')[0];
+    }
+
+    updateField('weeklySchedules', [...programmingData.weeklySchedules, duplicatedWeek]);
+    toast.success('Next week added with +7 days');
+  };
+
   const removeWeeklySchedule = (index: number) => {
     updateField('weeklySchedules', programmingData.weeklySchedules.filter((_, i) => i !== index));
   };
@@ -1507,10 +1527,16 @@ Phase Dates: ${programmingData.phaseDates || 'Not specified'}`;
                   <CardHeader>
                     <div className="flex items-center justify-between">
                       <CardTitle>Weekly Schedule</CardTitle>
-                      <Button onClick={addWeeklySchedule} size="sm">
-                        <Plus className="w-4 h-4 mr-2" />
-                        Add Week
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button onClick={addWeeklySchedule} size="sm" variant="outline">
+                          <Plus className="w-4 h-4 mr-2" />
+                          Add Week
+                        </Button>
+                        <Button onClick={addNextWeekFromPrevious} size="sm">
+                          <Plus className="w-4 h-4 mr-2" />
+                          Add Next Week
+                        </Button>
+                      </div>
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-6">
