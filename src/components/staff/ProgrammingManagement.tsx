@@ -240,8 +240,9 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
       console.log('Program data loaded:', data);
       console.log('Sessions:', data.sessions);
 
-      const sessions = (data.sessions || {}) as any;
-      const weeklySchedules = (data.weekly_schedules || []) as any[];
+      // Deep clone all data to ensure complete independence between programs
+      const sessions = deepClone((data.sessions || {}) as any);
+      const weeklySchedules = deepClone((data.weekly_schedules || []) as any[]);
 
       setSelectedProgram(data);
       setProgrammingData({
