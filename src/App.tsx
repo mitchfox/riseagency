@@ -29,6 +29,7 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import AnalysisViewer from "./pages/AnalysisViewer";
 import Intro from "./pages/Intro";
+import PlayersList from "./pages/PlayersList";
 
 const queryClient = new QueryClient();
 
@@ -49,6 +50,7 @@ const App = () => {
           <Route path="/stars" element={<Stars />} />
           <Route path="/stars/:playername" element={<PlayerDetail />} />
           <Route path="/players" element={<Players />} />
+          <Route path="/players-list" element={<PlayersList />} />
           <Route path="/clubs" element={<Clubs />} />
           <Route path="/coaches" element={<Coaches />} />
           <Route path="/scouts" element={<Scouts />} />
