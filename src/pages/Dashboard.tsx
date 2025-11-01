@@ -1226,11 +1226,11 @@ const Dashboard = () => {
                                                          {hasPreSession && (
                                                            <TabsTrigger
                                                              value="pre"
-                                                             className="font-bebas uppercase text-sm transition-all data-[state=active]:!bg-[hsl(43,49%,61%)] data-[state=active]:!text-black !bg-opacity-100"
+                                                             className="font-bebas uppercase text-sm transition-all data-[state=active]:!bg-[hsl(43,49%,61%)] data-[state=active]:!text-black"
                                                              style={{
                                                                backgroundColor: getSessionColor(preKey).bg,
                                                                color: getSessionColor(preKey).text,
-                                                             }}
+                                                             } as React.CSSProperties}
                                                            >
                                                              Pre-{mainKey}
                                                            </TabsTrigger>
@@ -1238,11 +1238,11 @@ const Dashboard = () => {
                                                          {hasMainSession && (
                                                            <TabsTrigger
                                                              value="main"
-                                                             className="font-bebas uppercase text-sm transition-all data-[state=active]:!bg-[hsl(43,49%,61%)] data-[state=active]:!text-black !bg-opacity-100"
+                                                             className="font-bebas uppercase text-sm transition-all data-[state=active]:!bg-[hsl(43,49%,61%)] data-[state=active]:!text-black"
                                                              style={{
                                                                backgroundColor: getSessionColor(mainKey).bg,
                                                                color: getSessionColor(mainKey).text,
-                                                             }}
+                                                             } as React.CSSProperties}
                                                            >
                                                              Session {mainKey}
                                                            </TabsTrigger>
