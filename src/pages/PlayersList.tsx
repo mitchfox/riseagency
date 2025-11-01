@@ -2,6 +2,7 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { PlayerCard } from "@/components/PlayerCard";
 import { useState, useEffect } from "react";
+import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/client";
 import {
   DropdownMenu,
@@ -158,6 +159,11 @@ const PlayersList = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <Helmet>
+        <title>Player List | RISE Football Agency</title>
+        <meta name="robots" content="noindex, nofollow" />
+      </Helmet>
+      
       <Header />
       
       <main className="pt-24 md:pt-16">
@@ -166,7 +172,7 @@ const PlayersList = () => {
           <div className="container mx-auto">
             <div className="text-center mb-12">
               <h1 className="text-6xl md:text-8xl font-bebas uppercase tracking-wider text-foreground mb-4">
-                Players List
+                Player List
               </h1>
               <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
                 Complete roster of all players

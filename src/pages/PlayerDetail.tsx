@@ -1,5 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
+import { Helmet } from "react-helmet-async";
 import { players } from "@/data/players";
 import { supabase } from "@/integrations/supabase/client";
 import { Header } from "@/components/Header";
@@ -205,6 +206,13 @@ const PlayerDetail = () => {
 
   return (
     <>
+      <Helmet>
+        <title>{player.name} | RISE Football Agency</title>
+        {player.representation_status !== 'represented' && (
+          <meta name="robots" content="noindex, nofollow" />
+        )}
+      </Helmet>
+      
       <Header />
       <div className="min-h-screen bg-background pt-16 overflow-x-hidden">
         <main className="container mx-auto px-4 py-2 touch-pan-y">
