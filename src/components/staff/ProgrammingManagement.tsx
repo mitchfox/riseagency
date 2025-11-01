@@ -474,6 +474,7 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
       const { error } = await supabase
         .from('player_programs')
         .update({
+          program_name: programmingData.phaseName,
           phase_name: programmingData.phaseName,
           phase_dates: programmingData.phaseDates,
           overview_text: programmingData.overviewText,
@@ -619,6 +620,15 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
       }
 
       toast.success('Program saved successfully');
+      
+      // Update the selected program with the new name
+      if (selectedProgram) {
+        setSelectedProgram({
+          ...selectedProgram,
+          program_name: programmingData.phaseName
+        });
+      }
+      
       loadPrograms();
     } catch (error) {
       console.error('Error saving program:', error);
