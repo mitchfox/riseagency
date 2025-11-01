@@ -82,6 +82,7 @@ const Dashboard = () => {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [updates, setUpdates] = useState<Update[]>([]);
   const [activeTab, setActiveTab] = useState("analysis");
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
 
   // Session color mapping with hover states
   const getSessionColor = (sessionKey: string) => {
@@ -508,6 +509,26 @@ const Dashboard = () => {
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
+
+            {/* Upload Progress Indicator */}
+            {uploadProgress !== null && (
+              <Card className="mb-6 border-primary/30">
+                <CardContent className="py-6">
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-semibold text-foreground">Uploading clip...</span>
+                      <span className="text-2xl font-bebas text-primary">{uploadProgress}%</span>
+                    </div>
+                    <div className="w-full bg-muted rounded-full h-3 overflow-hidden">
+                      <div 
+                        className="h-full bg-gradient-to-r from-primary to-primary/70 transition-all duration-300 ease-out"
+                        style={{ width: `${uploadProgress}%` }}
+                      />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             <TabsContent value="analysis" className="space-y-6">
               <Tabs defaultValue="performance" className="w-full">
@@ -1591,33 +1612,64 @@ const Dashboard = () => {
                                     const clipName = prompt('Enter a name for this clip:');
                                     if (!clipName) return;
                                     
-                                      try {
-                                        toast.info("Uploading clip...");
-                                        
-                                        const playerEmail = localStorage.getItem("player_email") || sessionStorage.getItem("player_email");
-                                        if (!playerEmail) {
-                                          toast.error("Please log in again");
-                                          return;
-                                        }
+                                       try {
+                                         setUploadProgress(0);
+                                         
+                                         const playerEmail = localStorage.getItem("player_email") || sessionStorage.getItem("player_email");
+                                         if (!playerEmail) {
+                                           toast.error("Please log in again");
+                                           setUploadProgress(null);
+                                           return;
+                                         }
 
-                                        const formData = new FormData();
-                                        formData.append('file', file);
-                                        formData.append('playerEmail', playerEmail);
-                                        formData.append('clipName', clipName);
+                                         const formData = new FormData();
+                                         formData.append('file', file);
+                                         formData.append('playerEmail', playerEmail);
+                                         formData.append('clipName', clipName);
 
-                                        const { data, error } = await supabase.functions.invoke('upload-player-highlight', {
-                                          body: formData,
-                                        });
+                                         // Use XMLHttpRequest for progress tracking
+                                         const xhr = new XMLHttpRequest();
+                                         
+                                         xhr.upload.addEventListener('progress', (e) => {
+                                           if (e.lengthComputable) {
+                                             const percentComplete = Math.round((e.loaded / e.total) * 100);
+                                             setUploadProgress(percentComplete);
+                                           }
+                                         });
 
-                                        if (error) throw error;
-                                        if (!data?.success) throw new Error(data?.error || 'Upload failed');
-                                        
-                                        toast.success("Clip uploaded successfully!");
-                                        window.location.reload();
-                                      } catch (error: any) {
-                                        console.error('Upload error:', error);
-                                        toast.error(error.message || "Failed to upload clip");
-                                      }
+                                         xhr.addEventListener('load', () => {
+                                           if (xhr.status === 200) {
+                                             const data = JSON.parse(xhr.responseText);
+                                             if (data.success) {
+                                               toast.success("Clip uploaded successfully!");
+                                               setUploadProgress(null);
+                                               window.location.reload();
+                                             } else {
+                                               throw new Error(data.error || 'Upload failed');
+                                             }
+                                           } else {
+                                             throw new Error(`Upload failed with status ${xhr.status}`);
+                                           }
+                                         });
+
+                                         xhr.addEventListener('error', () => {
+                                           toast.error("Upload failed - network error");
+                                           setUploadProgress(null);
+                                         });
+
+                                         const { data: { session } } = await supabase.auth.getSession();
+                                         const anonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF3ZXRoaW1idGFhbWxoYmFqbWFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA3ODQzNDMsImV4cCI6MjA3NjM2MDM0M30.FNM354bgxhdtM4F_KGbQQnJwX7-WngaX58kPvPYnUEY';
+                                         
+                                         xhr.open('POST', 'https://qwethimbtaamlhbajmal.supabase.co/functions/v1/upload-player-highlight');
+                                         xhr.setRequestHeader('apikey', anonKey);
+                                         xhr.setRequestHeader('Authorization', `Bearer ${anonKey}`);
+                                         xhr.send(formData);
+
+                                       } catch (error: any) {
+                                         console.error('Upload error:', error);
+                                         toast.error(error.message || "Failed to upload clip");
+                                         setUploadProgress(null);
+                                       }
                                   };
                                   input.click();
                                 }}
@@ -1642,33 +1694,64 @@ const Dashboard = () => {
                                       const clipName = prompt('Enter a name for this clip:');
                                       if (!clipName) return;
                                       
-                                       try {
-                                         toast.info("Uploading clip...");
-                                         
-                                         const playerEmail = localStorage.getItem("player_email") || sessionStorage.getItem("player_email");
-                                         if (!playerEmail) {
-                                           toast.error("Please log in again");
-                                           return;
-                                         }
+                                        try {
+                                          setUploadProgress(0);
+                                          
+                                          const playerEmail = localStorage.getItem("player_email") || sessionStorage.getItem("player_email");
+                                          if (!playerEmail) {
+                                            toast.error("Please log in again");
+                                            setUploadProgress(null);
+                                            return;
+                                          }
 
-                                         const formData = new FormData();
-                                         formData.append('file', file);
-                                         formData.append('playerEmail', playerEmail);
-                                         formData.append('clipName', clipName);
+                                          const formData = new FormData();
+                                          formData.append('file', file);
+                                          formData.append('playerEmail', playerEmail);
+                                          formData.append('clipName', clipName);
 
-                                         const { data, error } = await supabase.functions.invoke('upload-player-highlight', {
-                                           body: formData,
-                                         });
+                                          // Use XMLHttpRequest for progress tracking
+                                          const xhr = new XMLHttpRequest();
+                                          
+                                          xhr.upload.addEventListener('progress', (e) => {
+                                            if (e.lengthComputable) {
+                                              const percentComplete = Math.round((e.loaded / e.total) * 100);
+                                              setUploadProgress(percentComplete);
+                                            }
+                                          });
 
-                                         if (error) throw error;
-                                         if (!data?.success) throw new Error(data?.error || 'Upload failed');
-                                         
-                                         toast.success("Clip uploaded successfully!");
-                                         window.location.reload();
-                                       } catch (error: any) {
-                                         console.error('Upload error:', error);
-                                         toast.error(error.message || "Failed to upload clip");
-                                       }
+                                          xhr.addEventListener('load', () => {
+                                            if (xhr.status === 200) {
+                                              const data = JSON.parse(xhr.responseText);
+                                              if (data.success) {
+                                                toast.success("Clip uploaded successfully!");
+                                                setUploadProgress(null);
+                                                window.location.reload();
+                                              } else {
+                                                throw new Error(data.error || 'Upload failed');
+                                              }
+                                            } else {
+                                              throw new Error(`Upload failed with status ${xhr.status}`);
+                                            }
+                                          });
+
+                                          xhr.addEventListener('error', () => {
+                                            toast.error("Upload failed - network error");
+                                            setUploadProgress(null);
+                                          });
+
+                                          const { data: { session } } = await supabase.auth.getSession();
+                                          const anonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF3ZXRoaW1idGFhbWxoYmFqbWFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA3ODQzNDMsImV4cCI6MjA3NjM2MDM0M30.FNM354bgxhdtM4F_KGbQQnJwX7-WngaX58kPvPYnUEY';
+                                          
+                                          xhr.open('POST', 'https://qwethimbtaamlhbajmal.supabase.co/functions/v1/upload-player-highlight');
+                                          xhr.setRequestHeader('apikey', anonKey);
+                                          xhr.setRequestHeader('Authorization', `Bearer ${anonKey}`);
+                                          xhr.send(formData);
+
+                                        } catch (error: any) {
+                                          console.error('Upload error:', error);
+                                          toast.error(error.message || "Failed to upload clip");
+                                          setUploadProgress(null);
+                                        }
                                     };
                                     input.click();
                                   }}
