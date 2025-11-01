@@ -23,17 +23,17 @@ const PlayersList = () => {
   const [selectedAgeRanges, setSelectedAgeRanges] = useState<string[]>([]);
 
   const positions = [
-    "#1 - Goalkeeper",
-    "#2 - Right Back",
-    "#3 - Left Back",
-    "#4 - Right Centre Back",
-    "#5 - Left Centre Back",
-    "#6 - Defensive Midfielder",
-    "#7 - Right Winger",
-    "#8 - Central Midfielder",
-    "#9 - Centre Forward",
-    "#10 - Attacking Midfielder",
-    "#11 - Left Winger"
+    "GK",
+    "RB",
+    "LB",
+    "RCB",
+    "LCB",
+    "CDM",
+    "RW",
+    "CM",
+    "CF",
+    "CAM",
+    "LW"
   ];
 
   const ageRanges = [
@@ -110,7 +110,7 @@ const PlayersList = () => {
     // Position filter
     if (selectedPositions.length > 0) {
       const matchesPosition = selectedPositions.some(pos => 
-        player.position.toLowerCase().includes(pos.toLowerCase().split(' - ')[1])
+        player.position.toLowerCase().includes(pos.toLowerCase())
       );
       if (!matchesPosition) return false;
     }
