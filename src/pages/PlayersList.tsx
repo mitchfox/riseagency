@@ -24,16 +24,16 @@ const PlayersList = () => {
 
   const positions = [
     "GK",
-    "RB",
     "LB",
-    "RCB",
     "LCB",
+    "RCB",
+    "RB",
     "CDM",
-    "RW",
     "CM",
-    "CF",
     "CAM",
-    "LW"
+    "LW",
+    "RW",
+    "CF"
   ];
 
   const ageRanges = [
