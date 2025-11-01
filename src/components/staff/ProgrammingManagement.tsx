@@ -181,6 +181,11 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
 
   useEffect(() => {
     if (isOpen && playerId) {
+      // Clear any selected program and data when switching players
+      setSelectedProgram(null);
+      setProgrammingData(initialProgrammingData());
+      setSelectedSession(null);
+      
       loadPrograms();
       loadCoachingPrograms();
     }
@@ -484,7 +489,7 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
           phase_name: programmingData.phaseName,
           phase_dates: programmingData.phaseDates,
           overview_text: programmingData.overviewText,
-          sessions: {
+          sessions: deepClone({
             A: programmingData.sessionA,
             B: programmingData.sessionB,
             C: programmingData.sessionC,
@@ -501,8 +506,8 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
             'PRE-F': programmingData.preSessionF,
             'PRE-G': programmingData.preSessionG,
             'PRE-H': programmingData.preSessionH,
-          } as any,
-          weekly_schedules: programmingData.weeklySchedules as any,
+          }) as any,
+          weekly_schedules: deepClone(programmingData.weeklySchedules) as any,
         })
         .eq('id', selectedProgram.id);
 
@@ -726,11 +731,12 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
       console.error('Session not found or invalid:', sessionKey);
       return;
     }
-    // Deep clone the exercise to prevent reference sharing between programs
+    // Deep clone BOTH the exercise and existing exercises to prevent reference sharing
     const exerciseClone = deepClone(exercise);
+    const exercisesClone = deepClone(session.exercises);
     updateField(sessionKey, {
       ...session,
-      exercises: [...session.exercises, exerciseClone]
+      exercises: [...exercisesClone, exerciseClone]
     });
   };
 
