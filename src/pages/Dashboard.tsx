@@ -637,7 +637,7 @@ const Dashboard = () => {
                   >
                     <span>
                       {activeTab === "analysis" && "Analysis"}
-                      {activeTab === "physical" && "Physical Programming"}
+                      {activeTab === "physical" && "Programming"}
                       {activeTab === "invoices" && "Key Documents"}
                       {activeTab === "updates" && "Updates"}
                       {activeTab === "highlights" && "Highlights"}
@@ -656,7 +656,7 @@ const Dashboard = () => {
                     onClick={() => setActiveTab("physical")}
                     className="font-bebas uppercase text-base py-3 cursor-pointer text-gold hover:text-gold/80"
                   >
-                    Physical Programming
+                    Programming
                   </DropdownMenuItem>
                   <DropdownMenuItem 
                     onClick={() => setActiveTab("invoices")}
@@ -946,7 +946,7 @@ const Dashboard = () => {
                                     </AccordionTrigger>
                                     <AccordionContent className="space-y-4">
                                       {program.overview_text && (
-                                        <p className="text-muted-foreground whitespace-pre-wrap">{program.overview_text}</p>
+                                        <p className="text-base text-muted-foreground whitespace-pre-wrap">{program.overview_text}</p>
                                       )}
                                       
                                       {(program.phase_image_url || program.player_image_url) && (
