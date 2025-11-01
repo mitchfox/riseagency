@@ -29,3 +29,6 @@ verify_jwt = false
 
 [functions.delete-player-highlight]
 verify_jwt = false
+
+[functions.rename-player-highlight]
+verify_jwt = false

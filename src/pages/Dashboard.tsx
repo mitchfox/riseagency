@@ -13,6 +13,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { NotificationPermission } from "@/components/NotificationPermission";
 import { toast } from "sonner";
 import { FileText, Play, Download, Upload, ChevronDown, Trash2 } from "lucide-react";
+import { ClipNameEditor } from "@/components/ClipNameEditor";
 import { addDays, format, parseISO } from "date-fns";
 
 interface Analysis {
@@ -152,16 +153,28 @@ const Dashboard = () => {
       return;
     }
 
+    setUploadProgress(0);
+
+    // Add files to UI immediately with uploading status
+    const newClips = Array.from(files).map(file => ({
+      name: file.name.replace(/\.[^/.]+$/, ''), // Remove extension
+      videoUrl: '', // Will be filled after upload
+      addedAt: new Date().toISOString(),
+      uploading: true
+    }));
+
+    setHighlightsData((prev: any) => ({
+      ...prev,
+      bestClips: [...(prev.bestClips || []), ...newClips]
+    }));
+
     const totalFiles = files.length;
     let completed = 0;
 
-    for (const file of Array.from(files)) {
-      const clipName = prompt(`Enter a name for "${file.name}":`);
-      if (!clipName) continue;
-
-      try {
-        setUploadProgress(0);
-
+    try {
+      for (const file of Array.from(files)) {
+        const clipName = file.name.replace(/\.[^/.]+$/, ''); // Remove extension
+        
         const formData = new FormData();
         formData.append('file', file);
         formData.append('playerEmail', playerEmail);
@@ -200,20 +213,24 @@ const Dashboard = () => {
           xhr.setRequestHeader('Authorization', `Bearer ${anonKey}`);
           xhr.send(formData);
         });
-      } catch (error: any) {
-        console.error('Upload error:', error);
-        toast.error(`Failed to upload ${file.name}: ${error.message}`);
       }
-    }
 
-    setUploadProgress(null);
-    toast.success(`${completed} clip(s) uploaded successfully!`);
-    // Refetch player data to update highlights
-    const email = localStorage.getItem("player_email") || sessionStorage.getItem("player_email");
-    if (email) await fetchAnalyses(email);
+      setUploadProgress(null);
+      toast.success(`${completed} clip(s) uploaded successfully!`);
+      
+      // Refetch player data to get actual URLs
+      await fetchAnalyses(playerEmail);
+    } catch (error: any) {
+      console.error('Upload error:', error);
+      toast.error(`Failed to upload: ${error.message}`);
+      setUploadProgress(null);
+      
+      // Refetch to remove failed uploads
+      await fetchAnalyses(playerEmail);
+    }
   };
 
-  const handleDeleteClip = async (clipIndex: number) => {
+  const handleDeleteClip = async (clipName: string, videoUrl: string) => {
     if (!confirm('Are you sure you want to delete this clip?')) return;
 
     try {
@@ -223,19 +240,65 @@ const Dashboard = () => {
         return;
       }
 
-      const { data, error } = await supabase.functions.invoke('delete-player-highlight', {
-        body: { playerEmail, clipIndex },
-      });
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/delete-player-highlight`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          },
+          body: JSON.stringify({
+            playerEmail,
+            clipName,
+            videoUrl,
+          }),
+        }
+      );
 
-      if (error) throw error;
-      if (!data?.success) throw new Error('Delete failed');
+      if (!response.ok) {
+        throw new Error('Delete failed');
+      }
 
       toast.success("Clip deleted successfully!");
-      // Refetch player data to update highlights
       await fetchAnalyses(playerEmail);
     } catch (error: any) {
       console.error('Delete error:', error);
       toast.error(error.message || "Failed to delete clip");
+    }
+  };
+
+  const handleRenameClip = async (oldName: string, newName: string, videoUrl: string) => {
+    const playerEmail = localStorage.getItem("player_email") || sessionStorage.getItem("player_email");
+    if (!playerEmail || !newName.trim()) return;
+
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/rename-player-highlight`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          },
+          body: JSON.stringify({
+            playerEmail,
+            oldName,
+            newName: newName.trim(),
+            videoUrl,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Rename failed');
+      }
+
+      toast.success("Clip renamed successfully!");
+      await fetchAnalyses(playerEmail);
+    } catch (error: any) {
+      console.error('Rename error:', error);
+      toast.error("Failed to rename clip");
     }
   };
 
@@ -1574,22 +1637,6 @@ const Dashboard = () => {
                 </CardHeader>
                 <CardContent>
                   {(() => {
-                    let highlightsData = { matchHighlights: [], bestClips: [] };
-                    try {
-                      const parsed = playerData?.highlights ? JSON.parse(playerData.highlights) : [];
-                      // Handle legacy array format or new object format
-                      if (Array.isArray(parsed)) {
-                        highlightsData = { matchHighlights: parsed, bestClips: [] };
-                      } else {
-                        highlightsData = {
-                          matchHighlights: parsed.matchHighlights || [],
-                          bestClips: parsed.bestClips || []
-                        };
-                      }
-                    } catch (e) {
-                      console.error('Error parsing highlights:', e);
-                    }
-                    
                     const hasContent = highlightsData.matchHighlights.length > 0 || highlightsData.bestClips.length > 0;
                     
                     if (!hasContent) {
@@ -1723,7 +1770,7 @@ const Dashboard = () => {
                             </div>
                           ) : (
                             <div className="space-y-4">
-                              <div className="flex justify-end">
+                              <div className="flex justify-between items-center">
                                 <Button 
                                   onClick={() => {
                                     const input = document.createElement('input');
@@ -1744,153 +1791,85 @@ const Dashboard = () => {
                                   <Upload className="w-4 h-4 mr-2" />
                                   Upload Clip{uploadProgress !== null ? 'ping...' : 's'}
                                 </Button>
+                                {uploadProgress !== null && (
+                                  <div className="text-sm text-muted-foreground">
+                                    Uploading: {uploadProgress}%
+                                  </div>
+                                )}
                               </div>
-                              <div className="grid gap-4 md:grid-cols-2">
+                              <div className="space-y-3">
                               {highlightsData.bestClips.map((highlight: any, index: number) => (
                                 <div 
                                   key={index}
-                                  className="border rounded-lg overflow-hidden hover:border-primary transition-colors bg-card"
+                                  className="border rounded-lg p-4 bg-card"
                                 >
-                                  <div className="p-4 space-y-3">
-                                    <div className="flex items-start justify-between gap-3">
-                                      <div className="flex items-start gap-3 flex-1">
-                                        <span className="text-2xl font-bold text-primary">{index + 1}</span>
-                                        <div className="flex-1">
-                                          <h3 className="font-bebas text-xl uppercase tracking-wider">
-                                            {highlight.name || `Best Clip ${index + 1}`}
-                                          </h3>
+                                  <div className="flex items-center justify-between gap-3">
+                                    <div className="flex-1">
+                                      {highlight.uploading ? (
+                                        <div className="space-y-1">
+                                          <p className="font-bebas text-lg uppercase tracking-wider">{highlight.name}</p>
+                                          <p className="text-xs text-muted-foreground">Uploading...</p>
                                         </div>
-                                      </div>
-                                      <div className="flex gap-1">
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          onClick={async () => {
-                                            if (index > 0) {
-                                              const newBestClips = [...highlightsData.bestClips];
-                                              [newBestClips[index - 1], newBestClips[index]] = [newBestClips[index], newBestClips[index - 1]];
-                                              
-                                              try {
-                                                const updatedHighlights = {
-                                                  matchHighlights: highlightsData.matchHighlights,
-                                                  bestClips: newBestClips
-                                                };
-                                                
-                                                const { error } = await supabase
-                                                  .from('players')
-                                                  .update({ highlights: JSON.stringify(updatedHighlights) })
-                                                  .eq('id', playerData.id);
-                                                
-                                                if (error) throw error;
-                                                toast.success("Clip moved up");
-                                                // Refetch highlights
-                                                const email = localStorage.getItem("player_email") || sessionStorage.getItem("player_email");
-                                                if (email) await fetchAnalyses(email);
-                                              } catch (error) {
-                                                console.error('Reorder error:', error);
-                                                toast.error("Failed to reorder");
-                                              }
-                                            }
-                                          }}
-                                          disabled={index === 0}
-                                          title="Move up"
-                                        >
-                                          ↑
-                                        </Button>
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          onClick={async () => {
-                                            if (index < highlightsData.bestClips.length - 1) {
-                                              const newBestClips = [...highlightsData.bestClips];
-                                              [newBestClips[index], newBestClips[index + 1]] = [newBestClips[index + 1], newBestClips[index]];
-                                              
-                                              try {
-                                                const updatedHighlights = {
-                                                  matchHighlights: highlightsData.matchHighlights,
-                                                  bestClips: newBestClips
-                                                };
-                                                
-                                                const { error } = await supabase
-                                                  .from('players')
-                                                  .update({ highlights: JSON.stringify(updatedHighlights) })
-                                                  .eq('id', playerData.id);
-                                                
-                                                if (error) throw error;
-                                                toast.success("Clip moved down");
-                                                // Refetch highlights
-                                                const email = localStorage.getItem("player_email") || sessionStorage.getItem("player_email");
-                                                if (email) await fetchAnalyses(email);
-                                              } catch (error) {
-                                                console.error('Reorder error:', error);
-                                                toast.error("Failed to reorder");
-                                              }
-                                            }
-                                          }}
-                                          disabled={index === highlightsData.bestClips.length - 1}
-                                          title="Move down"
-                                        >
-                                          ↓
-                                        </Button>
-                                      </div>
-                                    </div>
-                                    <div className="flex gap-2">
-                                      {highlight.videoUrl && (
-                                        <>
-                                          <Button 
-                                            variant="outline" 
-                                            size="sm"
-                                            onClick={() => window.open(highlight.videoUrl, '_blank')}
-                                            className="flex-1"
-                                          >
-                                            <Play className="w-4 h-4 mr-2" />
-                                            Watch
-                                          </Button>
-                                          <Button 
-                                            variant="default" 
-                                            size="sm"
-                                            onClick={async () => {
-                                              try {
-                                                const videoUrl = highlight.videoUrl || highlight.url;
-                                                const fileName = highlight.name || highlight.title || `clip-${index + 1}`;
-                                                
-                                                toast.info("Starting download...");
-                                                
-                                                const response = await fetch(videoUrl);
-                                                const blob = await response.blob();
-                                                
-                                                const blobUrl = window.URL.createObjectURL(blob);
-                                                const link = document.createElement('a');
-                                                link.href = blobUrl;
-                                                link.download = fileName;
-                                                document.body.appendChild(link);
-                                                link.click();
-                                                document.body.removeChild(link);
-                                                
-                                                window.URL.revokeObjectURL(blobUrl);
-                                                
-                                                toast.success("Download completed");
-                                              } catch (error) {
-                                                console.error('Download error:', error);
-                                                toast.error("Download failed");
-                                              }
-                                            }}
-                                            className="flex-1"
-                                          >
-                                            <Download className="w-4 h-4 mr-2" />
-                                            Download
-                                          </Button>
-                                          <Button 
-                                            variant="destructive" 
-                                            size="sm"
-                                            onClick={() => handleDeleteClip(index)}
-                                          >
-                                            <Trash2 className="w-4 h-4 mr-2" />
-                                            Delete
-                                          </Button>
-                                        </>
+                                      ) : (
+                                        <ClipNameEditor
+                                          initialName={highlight.name}
+                                          videoUrl={highlight.videoUrl}
+                                          onRename={(newName) => handleRenameClip(highlight.name, newName, highlight.videoUrl)}
+                                        />
                                       )}
                                     </div>
+                                    {!highlight.uploading && (
+                                      <div className="flex gap-2">
+                                        <Button 
+                                          variant="outline" 
+                                          size="sm"
+                                          onClick={() => window.open(highlight.videoUrl, '_blank')}
+                                        >
+                                          <Play className="w-4 h-4 mr-2" />
+                                          Watch
+                                        </Button>
+                                        <Button 
+                                          variant="ghost" 
+                                          size="sm"
+                                          onClick={async () => {
+                                            try {
+                                              const videoUrl = highlight.videoUrl || highlight.url;
+                                              const fileName = highlight.name || highlight.title || `clip-${index + 1}`;
+                                              
+                                              toast.info("Starting download...");
+                                              
+                                              const response = await fetch(videoUrl);
+                                              const blob = await response.blob();
+                                              
+                                              const blobUrl = window.URL.createObjectURL(blob);
+                                              const link = document.createElement('a');
+                                              link.href = blobUrl;
+                                              link.download = fileName;
+                                              document.body.appendChild(link);
+                                              link.click();
+                                              document.body.removeChild(link);
+                                              
+                                              window.URL.revokeObjectURL(blobUrl);
+                                              
+                                              toast.success("Download completed");
+                                            } catch (error) {
+                                              console.error('Download error:', error);
+                                              toast.error("Download failed");
+                                            }
+                                          }}
+                                        >
+                                          <Download className="w-4 h-4" />
+                                        </Button>
+                                        <Button 
+                                          variant="ghost" 
+                                          size="sm"
+                                          onClick={() => handleDeleteClip(highlight.name, highlight.videoUrl)}
+                                          className="text-destructive hover:text-destructive"
+                                        >
+                                          <Trash2 className="w-4 h-4" />
+                                        </Button>
+                                      </div>
+                                    )}
                                   </div>
                                 </div>
                               ))}
