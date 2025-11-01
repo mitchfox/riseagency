@@ -712,9 +712,11 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
       console.error('Session not found or invalid:', sessionKey);
       return;
     }
+    // Deep clone existing exercises to prevent reference sharing
+    const exercisesClone = deepClone(session.exercises);
     updateField(sessionKey, {
       ...session,
-      exercises: [...session.exercises, emptyExercise()]
+      exercises: [...exercisesClone, emptyExercise()]
     });
   };
 
@@ -764,9 +766,11 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
 
     if (newExercises.length > 0) {
       const session = programmingData[selectedSession as SessionKey] as SessionData;
+      // Deep clone existing exercises to prevent reference sharing
+      const exercisesClone = deepClone(session.exercises);
       updateField(selectedSession as SessionKey, {
         ...session,
-        exercises: [...session.exercises, ...newExercises]
+        exercises: [...exercisesClone, ...newExercises]
       });
 
       toast.success(`Added ${newExercises.length} exercise${newExercises.length > 1 ? 's' : ''}`);
@@ -779,15 +783,18 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
 
   const removeExercise = (sessionKey: SessionKey, index: number) => {
     const session = programmingData[sessionKey] as SessionData;
+    // Deep clone exercises to prevent reference sharing
+    const exercisesClone = deepClone(session.exercises);
     updateField(sessionKey, {
       ...session,
-      exercises: session.exercises.filter((_, i) => i !== index)
+      exercises: exercisesClone.filter((_, i) => i !== index)
     });
   };
 
   const updateExercise = (sessionKey: SessionKey, index: number, field: keyof Exercise, value: string) => {
     const session = programmingData[sessionKey] as SessionData;
-    const updatedExercises = [...session.exercises];
+    // Deep clone exercises to prevent reference sharing
+    const updatedExercises = deepClone(session.exercises);
     updatedExercises[index] = { ...updatedExercises[index], [field]: value };
     updateField(sessionKey, {
       ...session,
@@ -797,7 +804,8 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
 
   const moveExercise = (sessionKey: SessionKey, index: number, direction: 'up' | 'down') => {
     const session = programmingData[sessionKey] as SessionData;
-    const exercises = [...session.exercises];
+    // Deep clone exercises to prevent reference sharing
+    const exercises = deepClone(session.exercises);
     
     if (direction === 'up' && index > 0) {
       [exercises[index - 1], exercises[index]] = [exercises[index], exercises[index - 1]];
