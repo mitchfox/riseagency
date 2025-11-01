@@ -1650,7 +1650,7 @@ const Dashboard = () => {
                 </CardHeader>
                 <CardContent>
                   {(() => {
-                    const hasContent = highlightsData.matchHighlights.length > 0 || highlightsData.bestClips.length > 0;
+                    const hasContent = (highlightsData.matchHighlights?.length > 0) || (highlightsData.bestClips?.length > 0);
                     
                     if (!hasContent) {
                       return (
@@ -1672,13 +1672,13 @@ const Dashboard = () => {
                         </TabsList>
                         
                         <TabsContent value="match">
-                          {highlightsData.matchHighlights.length === 0 ? (
+                          {!highlightsData.matchHighlights || highlightsData.matchHighlights.length === 0 ? (
                             <div className="py-8 text-center text-muted-foreground">
                               No match highlights available yet.
                             </div>
                           ) : (
                             <div className="grid gap-4 md:grid-cols-2">
-                              {highlightsData.matchHighlights.map((highlight: any, index: number) => (
+                              {highlightsData.matchHighlights?.map((highlight: any, index: number) => (
                                 <div 
                                   key={index}
                                   className="border rounded-lg overflow-hidden hover:border-primary transition-colors bg-card"
@@ -1758,7 +1758,7 @@ const Dashboard = () => {
                         </TabsContent>
                         
                         <TabsContent value="best">
-                          {highlightsData.bestClips.length === 0 ? (
+                          {!highlightsData.bestClips || highlightsData.bestClips.length === 0 ? (
                             <div className="py-8 text-center space-y-4">
                               <p className="text-muted-foreground">No best clips available yet.</p>
                               <Button 
@@ -1811,7 +1811,7 @@ const Dashboard = () => {
                                 )}
                               </div>
                               <div className="space-y-3">
-                              {highlightsData.bestClips.map((highlight: any, index: number) => (
+                              {highlightsData.bestClips?.map((highlight: any, index: number) => (
                                 <div 
                                   key={index}
                                   className="border rounded-lg p-4 bg-card"
