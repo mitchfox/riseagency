@@ -14,7 +14,7 @@ import { NotificationPermission } from "@/components/NotificationPermission";
 import { toast } from "sonner";
 import { FileText, Play, Download, Upload, ChevronDown, Trash2 } from "lucide-react";
 import { ClipNameEditor } from "@/components/ClipNameEditor";
-import { addDays, format, parseISO } from "date-fns";
+import { addDays, format, parseISO, startOfWeek, endOfWeek, isWithinInterval } from "date-fns";
 
 interface Analysis {
   id: string;
@@ -1019,7 +1019,14 @@ const Dashboard = () => {
                                                     <div 
                                                       className="p-3 md:p-6 flex flex-col items-center justify-center rounded-lg"
                                                       style={{ 
-                                                        backgroundColor: 'hsl(0, 0%, 95%)',
+                                                        backgroundColor: week.week_start_date && (() => {
+                                                          const weekStart = parseISO(week.week_start_date);
+                                                          const today = new Date();
+                                                          const currentWeekStart = startOfWeek(today, { weekStartsOn: 1 });
+                                                          const currentWeekEnd = endOfWeek(today, { weekStartsOn: 1 });
+                                                          const isCurrentWeek = isWithinInterval(weekStart, { start: currentWeekStart, end: currentWeekEnd });
+                                                          return isCurrentWeek ? '#D4AF37' : 'hsl(0, 0%, 95%)';
+                                                        })() || 'hsl(0, 0%, 95%)',
                                                         color: 'hsl(0, 0%, 0%)'
                                                       }}
                                                     >
