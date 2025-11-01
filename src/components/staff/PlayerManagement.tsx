@@ -1675,9 +1675,42 @@ const PlayerManagement = () => {
                 </div>
               )}
 
-              <Button type="submit" disabled={loading}>
-                {loading ? "Saving..." : editingPlayer ? "Update Player" : "Create Player"}
-              </Button>
+              <div className="flex gap-2">
+                <Button type="submit" disabled={loading}>
+                  {loading ? "Saving..." : editingPlayer ? "Update Player" : "Create Player"}
+                </Button>
+                {editingPlayer && (
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    disabled={loading}
+                    onClick={async () => {
+                      if (!confirm(`Are you sure you want to delete this player? This action cannot be undone.`)) {
+                        return;
+                      }
+                      
+                      try {
+                        const { error } = await supabase
+                          .from("players")
+                          .delete()
+                          .eq("id", editingPlayer.id);
+                        
+                        if (error) throw error;
+                        
+                        toast.success("Player deleted successfully");
+                        setIsDialogOpen(false);
+                        fetchPlayers();
+                      } catch (error: any) {
+                        console.error("Error deleting player:", error);
+                        toast.error("Failed to delete player");
+                      }
+                    }}
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Delete Player
+                  </Button>
+                )}
+              </div>
             </form>
           </DialogContent>
         </Dialog>
@@ -2612,38 +2645,6 @@ const PlayerManagement = () => {
                           )}
                         </TabsContent>
                       </Tabs>
-                    </div>
-                  )}
-                  
-                  {isExpanded && (
-                    <div className="border-t pt-4 mt-4">
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={async () => {
-                          if (!confirm(`Are you sure you want to delete ${player.name}? This action cannot be undone.`)) {
-                            return;
-                          }
-                          
-                          try {
-                            const { error } = await supabase
-                              .from("players")
-                              .delete()
-                              .eq("id", player.id);
-                            
-                            if (error) throw error;
-                            
-                            toast.success("Player deleted successfully");
-                            fetchPlayers();
-                          } catch (error: any) {
-                            console.error("Error deleting player:", error);
-                            toast.error("Failed to delete player");
-                          }
-                        }}
-                      >
-                        <Trash2 className="w-4 h-4 mr-2" />
-                        Delete Player
-                      </Button>
                     </div>
                   )}
                 </CardContent>
