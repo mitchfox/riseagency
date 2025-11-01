@@ -14,8 +14,6 @@ const Login = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
 
   // Load saved email and remember me preference on mount
@@ -46,47 +44,19 @@ const Login = () => {
         return;
       }
 
-      // Try to authenticate with Supabase if password is provided
-      if (password) {
-        const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-          email,
-          password
-        });
-
-        if (authError) {
-          toast.error("Invalid password. Please try again.");
-          setLoading(false);
-          return;
-        }
-
-        // Save email after successful auth
-        if (rememberMe) {
-          localStorage.setItem("player_saved_email", email);
-          localStorage.setItem("player_remember_me", "true");
-          localStorage.setItem("player_email", email);
-        } else {
-          localStorage.removeItem("player_saved_email");
-          localStorage.removeItem("player_remember_me");
-          sessionStorage.setItem("player_email", email);
-        }
-        
-        toast.success("Welcome to your portal!");
-        navigate("/dashboard");
+      // Save email to localStorage if remember me is checked
+      if (rememberMe) {
+        localStorage.setItem("player_saved_email", email);
+        localStorage.setItem("player_remember_me", "true");
+        localStorage.setItem("player_email", email);
       } else {
-        // Email-only login for players without accounts (legacy)
-        if (rememberMe) {
-          localStorage.setItem("player_saved_email", email);
-          localStorage.setItem("player_remember_me", "true");
-          localStorage.setItem("player_email", email);
-        } else {
-          localStorage.removeItem("player_saved_email");
-          localStorage.removeItem("player_remember_me");
-          sessionStorage.setItem("player_email", email);
-        }
-        
-        toast.success("Welcome to your portal!");
-        navigate("/dashboard");
+        localStorage.removeItem("player_saved_email");
+        localStorage.removeItem("player_remember_me");
+        sessionStorage.setItem("player_email", email);
       }
+      
+      toast.success("Welcome to your portal!");
+      navigate("/dashboard");
     } catch (error: any) {
       console.error("Login error:", error);
       toast.error(error.message || "Failed to access portal");
@@ -115,7 +85,7 @@ const Login = () => {
           <CardContent>
             <form onSubmit={handleEmailLogin} className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-white">Email</Label>
+                <Label htmlFor="email" className="text-white">Login</Label>
                 <Input
                   id="email"
                   name="email"
@@ -128,31 +98,6 @@ const Login = () => {
                   autoComplete="email"
                   className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="password" className="text-white">Password (if applicable)</Label>
-                <div className="relative">
-                  <Input
-                    id="password"
-                    name="password"
-                    type={showPassword ? "text" : "password"}
-                    placeholder="Leave blank if you don't have a password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    disabled={loading}
-                    autoComplete="current-password"
-                    className="bg-white/10 border-white/20 text-white placeholder:text-white/50 pr-10"
-                  />
-                  {password && (
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-white/70 hover:text-white"
-                    >
-                      {showPassword ? "Hide" : "Show"}
-                    </button>
-                  )}
-                </div>
               </div>
               <div className="flex items-center space-x-2">
                 <input
