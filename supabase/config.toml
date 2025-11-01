@@ -32,3 +32,6 @@ verify_jwt = false
 
 [functions.rename-player-highlight]
 verify_jwt = false
+
+[functions.create-player-account]
+verify_jwt = true

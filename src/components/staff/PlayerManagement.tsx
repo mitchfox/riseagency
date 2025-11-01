@@ -518,6 +518,36 @@ const PlayerManagement = () => {
     }
   };
 
+  const handleCreateAccount = async (playerId: string, playerEmail: string, playerName: string) => {
+    if (!playerEmail) {
+      toast.error("Player must have an email address to create an account");
+      return;
+    }
+
+    const password = prompt(`Enter a temporary password for ${playerName}:`);
+    if (!password) return;
+
+    try {
+      const { data, error } = await supabase.functions.invoke('create-player-account', {
+        body: {
+          email: playerEmail,
+          password: password,
+          fullName: playerName
+        }
+      });
+
+      if (error) throw error;
+
+      if (data.success) {
+        toast.success(`Account created successfully for ${playerName}`);
+        toast.info(`Email: ${playerEmail} | Password: ${password}`);
+      }
+    } catch (error: any) {
+      console.error('Error creating account:', error);
+      toast.error(`Failed to create account: ${error.message}`);
+    }
+  };
+
   const handleDeleteAnalysis = async (analysisId: string, playerId: string) => {
     if (!confirm("Are you sure you want to delete this analysis/game? This action cannot be undone.")) {
       return;
@@ -1823,6 +1853,16 @@ const PlayerManagement = () => {
                       <Edit className="w-4 h-4 mr-2" />
                       Player Details
                     </Button>
+                    {player.email && (
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => handleCreateAccount(player.id, player.email!, player.name)}
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Create Account
+                      </Button>
+                    )}
                   </div>
 
                    {showingFixturesFor === player.id && (
