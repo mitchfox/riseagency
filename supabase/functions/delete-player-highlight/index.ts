@@ -17,9 +17,9 @@ Deno.serve(async (req) => {
     
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { playerEmail, clipIndex } = await req.json();
+    const { playerEmail, clipName, videoUrl } = await req.json();
 
-    if (!playerEmail || clipIndex === undefined) {
+    if (!playerEmail || !clipName || !videoUrl) {
       return new Response(
         JSON.stringify({ error: 'Missing required fields' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -44,10 +44,15 @@ Deno.serve(async (req) => {
     const parsed = player.highlights ? JSON.parse(player.highlights) : {};
     const bestClips = parsed.bestClips || [];
     
-    if (clipIndex < 0 || clipIndex >= bestClips.length) {
+    // Find clip by name and URL
+    const clipIndex = bestClips.findIndex((clip: any) => 
+      clip.name === clipName && clip.videoUrl === videoUrl
+    );
+    
+    if (clipIndex === -1) {
       return new Response(
-        JSON.stringify({ error: 'Invalid clip index' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: 'Clip not found' }),
+        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
