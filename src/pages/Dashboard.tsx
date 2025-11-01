@@ -1103,7 +1103,7 @@ const Dashboard = () => {
                                                            <span 
                                                              className="font-bebas text-base md:text-2xl uppercase font-bold relative z-20"
                                                              style={{ 
-                                                               color: colors.text,
+                                                               color: 'hsl(43, 49%, 61%)',
                                                                textShadow: '0 2px 8px rgba(0, 0, 0, 0.5)'
                                                              }}
                                                            >
