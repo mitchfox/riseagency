@@ -443,6 +443,8 @@ const PlayerManagement = () => {
             visible_on_stars_page: visibleOnStarsPage,
             category: playerCategory,
             representation_status: representationStatus,
+            club: formData.currentClub || null,
+            club_logo: clubLogoUrl || null,
           })
           .eq("id", editingPlayer.id);
 
@@ -462,6 +464,8 @@ const PlayerManagement = () => {
             visible_on_stars_page: visibleOnStarsPage,
             category: playerCategory,
             representation_status: representationStatus,
+            club: formData.currentClub || null,
+            club_logo: clubLogoUrl || null,
           })
           .select()
           .single();
@@ -1781,6 +1785,7 @@ const PlayerManagement = () => {
                         setSelectedProgrammingPlayerName(player.name);
                         setIsProgrammingDialogOpen(true);
                         setShowingFixturesFor(null);
+                        setShowingAnalysisFor(null);
                         setShowingHighlightsFor(null);
                         setShowingInvoicesFor(null);
                       }}
