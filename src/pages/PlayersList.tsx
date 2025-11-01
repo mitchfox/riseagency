@@ -231,6 +231,7 @@ const PlayersList = () => {
                       key={position}
                       checked={selectedPositions.includes(position)}
                       onCheckedChange={() => togglePosition(position)}
+                      onSelect={(e) => e.preventDefault()}
                       className="cursor-pointer"
                     >
                       {position}
@@ -265,6 +266,7 @@ const PlayersList = () => {
                       key={range.label}
                       checked={selectedAgeRanges.includes(range.label)}
                       onCheckedChange={() => toggleAgeRange(range.label)}
+                      onSelect={(e) => e.preventDefault()}
                       className="cursor-pointer"
                     >
                       {range.label}
