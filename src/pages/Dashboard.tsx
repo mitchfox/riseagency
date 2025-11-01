@@ -1030,10 +1030,10 @@ const Dashboard = () => {
                                                                       day.endsWith('2') && day !== '12' ? 'nd' :
                                                                       day.endsWith('3') && day !== '13' ? 'rd' : 'th';
                                                         return (
-                                                          <div className="text-center">
-                                                            <div className="text-2xl md:text-3xl font-bold mb-1">{day}<sup className="text-base">{suffix}</sup></div>
-                                                            <div className="text-sm md:text-base font-medium italic">{format(date, 'MMMM')}</div>
-                                                          </div>
+                                                           <div className="text-center">
+                                                             <div className="text-lg md:text-3xl font-bold mb-1">{day}<sup className="text-xs md:text-base">{suffix}</sup></div>
+                                                             <div className="text-xs md:text-base font-medium italic">{format(date, 'MMMM')}</div>
+                                                           </div>
                                                         );
                                                       })() : <span>{week.week}</span>}
                                                     </div>
