@@ -85,6 +85,7 @@ const Dashboard = () => {
   const [activeTab, setActiveTab] = useState("analysis");
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [highlightsData, setHighlightsData] = useState<any>({ matchHighlights: [], bestClips: [] });
+  const [fileUploadProgress, setFileUploadProgress] = useState<Record<string, number>>({});
 
   // Session color mapping with hover states
   const getSessionColor = (sessionKey: string) => {
@@ -153,14 +154,13 @@ const Dashboard = () => {
       return;
     }
 
-    setUploadProgress(0);
-
     // Add files to UI immediately with uploading status
     const newClips = Array.from(files).map(file => ({
       name: file.name.replace(/\.[^/.]+$/, ''), // Remove extension
       videoUrl: '', // Will be filled after upload
       addedAt: new Date().toISOString(),
-      uploading: true
+      uploading: true,
+      uploadId: `${Date.now()}_${file.name}` // Unique ID for tracking progress
     }));
 
     setHighlightsData((prev: any) => ({
@@ -168,12 +168,11 @@ const Dashboard = () => {
       bestClips: [...(prev.bestClips || []), ...newClips]
     }));
 
-    const totalFiles = files.length;
-    let completed = 0;
-
     try {
-      for (const file of Array.from(files)) {
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
         const clipName = file.name.replace(/\.[^/.]+$/, ''); // Remove extension
+        const uploadId = newClips[i].uploadId;
         
         const formData = new FormData();
         formData.append('file', file);
@@ -185,9 +184,8 @@ const Dashboard = () => {
 
           xhr.upload.addEventListener('progress', (e) => {
             if (e.lengthComputable) {
-              const fileProgress = (e.loaded / e.total) * 100;
-              const totalProgress = ((completed + (fileProgress / 100)) / totalFiles) * 100;
-              setUploadProgress(Math.round(totalProgress));
+              const progress = Math.round((e.loaded / e.total) * 100);
+              setFileUploadProgress(prev => ({ ...prev, [uploadId]: progress }));
             }
           });
 
@@ -195,7 +193,11 @@ const Dashboard = () => {
             if (xhr.status === 200) {
               const data = JSON.parse(xhr.responseText);
               if (data.success) {
-                completed++;
+                setFileUploadProgress(prev => {
+                  const newProgress = { ...prev };
+                  delete newProgress[uploadId];
+                  return newProgress;
+                });
                 resolve();
               } else {
                 reject(new Error(data.error || 'Upload failed'));
@@ -215,18 +217,18 @@ const Dashboard = () => {
         });
       }
 
-      setUploadProgress(null);
-      toast.success(`${completed} clip(s) uploaded successfully!`);
+      toast.success(`${files.length} clip(s) uploaded successfully!`);
       
       // Refetch player data to get actual URLs
       await fetchAnalyses(playerEmail);
     } catch (error: any) {
       console.error('Upload error:', error);
       toast.error(`Failed to upload: ${error.message}`);
-      setUploadProgress(null);
       
       // Refetch to remove failed uploads
       await fetchAnalyses(playerEmail);
+    } finally {
+      setFileUploadProgress({});
     }
   };
 
@@ -1806,9 +1808,23 @@ const Dashboard = () => {
                                   <div className="flex items-center justify-between gap-3">
                                     <div className="flex-1">
                                       {highlight.uploading ? (
-                                        <div className="space-y-1">
-                                          <p className="font-bebas text-lg uppercase tracking-wider">{highlight.name}</p>
-                                          <p className="text-xs text-muted-foreground">Uploading...</p>
+                                        <div className="space-y-2">
+                                          <div className="flex items-center justify-between">
+                                            <p className="font-bebas text-lg uppercase tracking-wider">{highlight.name}</p>
+                                            {fileUploadProgress[highlight.uploadId] !== undefined && (
+                                              <span className="text-sm text-muted-foreground">
+                                                {fileUploadProgress[highlight.uploadId]}%
+                                              </span>
+                                            )}
+                                          </div>
+                                          {fileUploadProgress[highlight.uploadId] !== undefined && (
+                                            <div className="w-full bg-secondary rounded-full h-2 overflow-hidden">
+                                              <div 
+                                                className="bg-primary h-full transition-all duration-300"
+                                                style={{ width: `${fileUploadProgress[highlight.uploadId]}%` }}
+                                              />
+                                            </div>
+                                          )}
                                         </div>
                                       ) : (
                                         <ClipNameEditor
