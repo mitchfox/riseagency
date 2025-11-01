@@ -874,7 +874,7 @@ const Dashboard = () => {
                     </CardTitle>
                     {programs.length > 1 && (
                       <Select value={selectedProgramId || undefined} onValueChange={setSelectedProgramId}>
-                        <SelectTrigger className="w-full text-center" style={{ color: '#D4AF37' }}>
+                        <SelectTrigger className="w-[250px]">
                           <SelectValue placeholder="Select program" />
                         </SelectTrigger>
                         <SelectContent>
@@ -1230,7 +1230,7 @@ const Dashboard = () => {
                                                              style={{
                                                                backgroundColor: getSessionColor(preKey).bg,
                                                                color: getSessionColor(preKey).text,
-                                                             }}
+                                                             } as React.CSSProperties}
                                                            >
                                                              Pre-{mainKey}
                                                            </TabsTrigger>
@@ -1242,7 +1242,7 @@ const Dashboard = () => {
                                                              style={{
                                                                backgroundColor: getSessionColor(mainKey).bg,
                                                                color: getSessionColor(mainKey).text,
-                                                             }}
+                                                             } as React.CSSProperties}
                                                            >
                                                              Session {mainKey}
                                                            </TabsTrigger>
