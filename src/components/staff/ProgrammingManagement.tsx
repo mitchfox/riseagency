@@ -724,9 +724,11 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
       console.error('Session not found or invalid:', sessionKey);
       return;
     }
+    // Deep clone the exercise to prevent reference sharing between programs
+    const exerciseClone = deepClone(exercise);
     updateField(sessionKey, {
       ...session,
-      exercises: [...session.exercises, exercise]
+      exercises: [...session.exercises, exerciseClone]
     });
   };
 
