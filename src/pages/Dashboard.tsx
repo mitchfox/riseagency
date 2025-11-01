@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { NotificationPermission } from "@/components/NotificationPermission";
 import { toast } from "sonner";
-import { FileText, Play, Download, Upload, ChevronDown } from "lucide-react";
+import { FileText, Play, Download, Upload, ChevronDown, Trash2 } from "lucide-react";
 import { addDays, format, parseISO } from "date-fns";
 
 interface Analysis {
@@ -83,6 +83,7 @@ const Dashboard = () => {
   const [updates, setUpdates] = useState<Update[]>([]);
   const [activeTab, setActiveTab] = useState("analysis");
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+  const [highlightsData, setHighlightsData] = useState<any>({ matchHighlights: [], bestClips: [] });
 
   // Session color mapping with hover states
   const getSessionColor = (sessionKey: string) => {
@@ -144,6 +145,100 @@ const Dashboard = () => {
     setExerciseDialogOpen(true);
   };
 
+  const handleFileUpload = async (files: FileList) => {
+    const playerEmail = localStorage.getItem("player_email") || sessionStorage.getItem("player_email");
+    if (!playerEmail) {
+      toast.error("Please log in again");
+      return;
+    }
+
+    const totalFiles = files.length;
+    let completed = 0;
+
+    for (const file of Array.from(files)) {
+      const clipName = prompt(`Enter a name for "${file.name}":`);
+      if (!clipName) continue;
+
+      try {
+        setUploadProgress(0);
+
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('playerEmail', playerEmail);
+        formData.append('clipName', clipName);
+
+        await new Promise<void>((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+
+          xhr.upload.addEventListener('progress', (e) => {
+            if (e.lengthComputable) {
+              const fileProgress = (e.loaded / e.total) * 100;
+              const totalProgress = ((completed + (fileProgress / 100)) / totalFiles) * 100;
+              setUploadProgress(Math.round(totalProgress));
+            }
+          });
+
+          xhr.addEventListener('load', () => {
+            if (xhr.status === 200) {
+              const data = JSON.parse(xhr.responseText);
+              if (data.success) {
+                completed++;
+                resolve();
+              } else {
+                reject(new Error(data.error || 'Upload failed'));
+              }
+            } else {
+              reject(new Error(`Upload failed with status ${xhr.status}`));
+            }
+          });
+
+          xhr.addEventListener('error', () => reject(new Error('Network error')));
+
+          const anonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF3ZXRoaW1idGFhbWxoYmFqbWFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA3ODQzNDMsImV4cCI6MjA3NjM2MDM0M30.FNM354bgxhdtM4F_KGbQQnJwX7-WngaX58kPvPYnUEY';
+          xhr.open('POST', 'https://qwethimbtaamlhbajmal.supabase.co/functions/v1/upload-player-highlight');
+          xhr.setRequestHeader('apikey', anonKey);
+          xhr.setRequestHeader('Authorization', `Bearer ${anonKey}`);
+          xhr.send(formData);
+        });
+      } catch (error: any) {
+        console.error('Upload error:', error);
+        toast.error(`Failed to upload ${file.name}: ${error.message}`);
+      }
+    }
+
+    setUploadProgress(null);
+    toast.success(`${completed} clip(s) uploaded successfully!`);
+    // Refetch player data to update highlights
+    const email = localStorage.getItem("player_email") || sessionStorage.getItem("player_email");
+    if (email) await fetchAnalyses(email);
+  };
+
+  const handleDeleteClip = async (clipIndex: number) => {
+    if (!confirm('Are you sure you want to delete this clip?')) return;
+
+    try {
+      const playerEmail = localStorage.getItem("player_email") || sessionStorage.getItem("player_email");
+      if (!playerEmail) {
+        toast.error("Please log in again");
+        return;
+      }
+
+      const { data, error } = await supabase.functions.invoke('delete-player-highlight', {
+        body: { playerEmail, clipIndex },
+      });
+
+      if (error) throw error;
+      if (!data?.success) throw new Error('Delete failed');
+
+      toast.success("Clip deleted successfully!");
+      // Refetch player data to update highlights
+      await fetchAnalyses(playerEmail);
+    } catch (error: any) {
+      console.error('Delete error:', error);
+      toast.error(error.message || "Failed to delete clip");
+    }
+  };
+
   useEffect(() => {
     checkAuth();
     fetchDailyAphorism();
@@ -200,6 +295,12 @@ const Dashboard = () => {
       }
 
       setPlayerData(parsedPlayerData);
+
+      // Extract highlights data
+      const highlights = playerData.highlights 
+        ? JSON.parse(typeof playerData.highlights === 'string' ? playerData.highlights : JSON.stringify(playerData.highlights))
+        : { matchHighlights: [], bestClips: [] };
+      setHighlightsData(highlights);
 
       // Then fetch their analyses
       const { data: analysisData, error: analysisError } = await supabase
@@ -1604,79 +1705,20 @@ const Dashboard = () => {
                                 onClick={() => {
                                   const input = document.createElement('input');
                                   input.type = 'file';
+                                  input.multiple = true;
                                   input.accept = 'video/mp4,video/quicktime,video/x-msvideo,video/*';
-                                  input.onchange = async (e: any) => {
-                                    const file = e.target.files?.[0];
-                                    if (!file) return;
-                                    
-                                    const clipName = prompt('Enter a name for this clip:');
-                                    if (!clipName) return;
-                                    
-                                       try {
-                                         setUploadProgress(0);
-                                         
-                                         const playerEmail = localStorage.getItem("player_email") || sessionStorage.getItem("player_email");
-                                         if (!playerEmail) {
-                                           toast.error("Please log in again");
-                                           setUploadProgress(null);
-                                           return;
-                                         }
-
-                                         const formData = new FormData();
-                                         formData.append('file', file);
-                                         formData.append('playerEmail', playerEmail);
-                                         formData.append('clipName', clipName);
-
-                                         // Use XMLHttpRequest for progress tracking
-                                         const xhr = new XMLHttpRequest();
-                                         
-                                         xhr.upload.addEventListener('progress', (e) => {
-                                           if (e.lengthComputable) {
-                                             const percentComplete = Math.round((e.loaded / e.total) * 100);
-                                             setUploadProgress(percentComplete);
-                                           }
-                                         });
-
-                                         xhr.addEventListener('load', () => {
-                                           if (xhr.status === 200) {
-                                             const data = JSON.parse(xhr.responseText);
-                                             if (data.success) {
-                                               toast.success("Clip uploaded successfully!");
-                                               setUploadProgress(null);
-                                               window.location.reload();
-                                             } else {
-                                               throw new Error(data.error || 'Upload failed');
-                                             }
-                                           } else {
-                                             throw new Error(`Upload failed with status ${xhr.status}`);
-                                           }
-                                         });
-
-                                         xhr.addEventListener('error', () => {
-                                           toast.error("Upload failed - network error");
-                                           setUploadProgress(null);
-                                         });
-
-                                         const { data: { session } } = await supabase.auth.getSession();
-                                         const anonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF3ZXRoaW1idGFhbWxoYmFqbWFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA3ODQzNDMsImV4cCI6MjA3NjM2MDM0M30.FNM354bgxhdtM4F_KGbQQnJwX7-WngaX58kPvPYnUEY';
-                                         
-                                         xhr.open('POST', 'https://qwethimbtaamlhbajmal.supabase.co/functions/v1/upload-player-highlight');
-                                         xhr.setRequestHeader('apikey', anonKey);
-                                         xhr.setRequestHeader('Authorization', `Bearer ${anonKey}`);
-                                         xhr.send(formData);
-
-                                       } catch (error: any) {
-                                         console.error('Upload error:', error);
-                                         toast.error(error.message || "Failed to upload clip");
-                                         setUploadProgress(null);
-                                       }
+                                  input.onchange = (e: any) => {
+                                    const files = e.target.files;
+                                    if (files && files.length > 0) {
+                                      handleFileUpload(files);
+                                    }
                                   };
                                   input.click();
                                 }}
                                 variant="outline"
                               >
                                 <Upload className="w-4 h-4 mr-2" />
-                                Upload Clip
+                                Upload Clip{uploadProgress !== null ? 'ping...' : 's'}
                               </Button>
                             </div>
                           ) : (
@@ -1686,72 +1728,13 @@ const Dashboard = () => {
                                   onClick={() => {
                                     const input = document.createElement('input');
                                     input.type = 'file';
+                                    input.multiple = true;
                                     input.accept = 'video/mp4,video/quicktime,video/x-msvideo,video/*';
-                                    input.onchange = async (e: any) => {
-                                      const file = e.target.files?.[0];
-                                      if (!file) return;
-                                      
-                                      const clipName = prompt('Enter a name for this clip:');
-                                      if (!clipName) return;
-                                      
-                                        try {
-                                          setUploadProgress(0);
-                                          
-                                          const playerEmail = localStorage.getItem("player_email") || sessionStorage.getItem("player_email");
-                                          if (!playerEmail) {
-                                            toast.error("Please log in again");
-                                            setUploadProgress(null);
-                                            return;
-                                          }
-
-                                          const formData = new FormData();
-                                          formData.append('file', file);
-                                          formData.append('playerEmail', playerEmail);
-                                          formData.append('clipName', clipName);
-
-                                          // Use XMLHttpRequest for progress tracking
-                                          const xhr = new XMLHttpRequest();
-                                          
-                                          xhr.upload.addEventListener('progress', (e) => {
-                                            if (e.lengthComputable) {
-                                              const percentComplete = Math.round((e.loaded / e.total) * 100);
-                                              setUploadProgress(percentComplete);
-                                            }
-                                          });
-
-                                          xhr.addEventListener('load', () => {
-                                            if (xhr.status === 200) {
-                                              const data = JSON.parse(xhr.responseText);
-                                              if (data.success) {
-                                                toast.success("Clip uploaded successfully!");
-                                                setUploadProgress(null);
-                                                window.location.reload();
-                                              } else {
-                                                throw new Error(data.error || 'Upload failed');
-                                              }
-                                            } else {
-                                              throw new Error(`Upload failed with status ${xhr.status}`);
-                                            }
-                                          });
-
-                                          xhr.addEventListener('error', () => {
-                                            toast.error("Upload failed - network error");
-                                            setUploadProgress(null);
-                                          });
-
-                                          const { data: { session } } = await supabase.auth.getSession();
-                                          const anonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF3ZXRoaW1idGFhbWxoYmFqbWFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA3ODQzNDMsImV4cCI6MjA3NjM2MDM0M30.FNM354bgxhdtM4F_KGbQQnJwX7-WngaX58kPvPYnUEY';
-                                          
-                                          xhr.open('POST', 'https://qwethimbtaamlhbajmal.supabase.co/functions/v1/upload-player-highlight');
-                                          xhr.setRequestHeader('apikey', anonKey);
-                                          xhr.setRequestHeader('Authorization', `Bearer ${anonKey}`);
-                                          xhr.send(formData);
-
-                                        } catch (error: any) {
-                                          console.error('Upload error:', error);
-                                          toast.error(error.message || "Failed to upload clip");
-                                          setUploadProgress(null);
-                                        }
+                                    input.onchange = (e: any) => {
+                                      const files = e.target.files;
+                                      if (files && files.length > 0) {
+                                        handleFileUpload(files);
+                                      }
                                     };
                                     input.click();
                                   }}
@@ -1759,7 +1742,7 @@ const Dashboard = () => {
                                   size="sm"
                                 >
                                   <Upload className="w-4 h-4 mr-2" />
-                                  Upload Clip
+                                  Upload Clip{uploadProgress !== null ? 'ping...' : 's'}
                                 </Button>
                               </div>
                               <div className="grid gap-4 md:grid-cols-2">
@@ -1800,7 +1783,9 @@ const Dashboard = () => {
                                                 
                                                 if (error) throw error;
                                                 toast.success("Clip moved up");
-                                                window.location.reload();
+                                                // Refetch highlights
+                                                const email = localStorage.getItem("player_email") || sessionStorage.getItem("player_email");
+                                                if (email) await fetchAnalyses(email);
                                               } catch (error) {
                                                 console.error('Reorder error:', error);
                                                 toast.error("Failed to reorder");
@@ -1833,7 +1818,9 @@ const Dashboard = () => {
                                                 
                                                 if (error) throw error;
                                                 toast.success("Clip moved down");
-                                                window.location.reload();
+                                                // Refetch highlights
+                                                const email = localStorage.getItem("player_email") || sessionStorage.getItem("player_email");
+                                                if (email) await fetchAnalyses(email);
                                               } catch (error) {
                                                 console.error('Reorder error:', error);
                                                 toast.error("Failed to reorder");
@@ -1892,6 +1879,14 @@ const Dashboard = () => {
                                           >
                                             <Download className="w-4 h-4 mr-2" />
                                             Download
+                                          </Button>
+                                          <Button 
+                                            variant="destructive" 
+                                            size="sm"
+                                            onClick={() => handleDeleteClip(index)}
+                                          >
+                                            <Trash2 className="w-4 h-4 mr-2" />
+                                            Delete
                                           </Button>
                                         </>
                                       )}

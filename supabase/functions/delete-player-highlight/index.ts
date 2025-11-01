@@ -17,12 +17,9 @@ Deno.serve(async (req) => {
     
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const formData = await req.formData();
-    const file = formData.get('file') as File;
-    const playerEmail = formData.get('playerEmail') as string;
-    const clipName = formData.get('clipName') as string;
+    const { playerEmail, clipIndex } = await req.json();
 
-    if (!file || !playerEmail || !clipName) {
+    if (!playerEmail || clipIndex === undefined) {
       return new Response(
         JSON.stringify({ error: 'Missing required fields' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -44,42 +41,39 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Upload file to storage using service role
-    const fileName = `${player.id}_${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
-    const fileBuffer = await file.arrayBuffer();
+    const parsed = player.highlights ? JSON.parse(player.highlights) : {};
+    const bestClips = parsed.bestClips || [];
     
-    const { error: uploadError } = await supabase.storage
-      .from('analysis-files')
-      .upload(`highlights/${fileName}`, fileBuffer, {
-        contentType: file.type,
-        upsert: false
-      });
-
-    if (uploadError) {
-      console.error('Upload error:', uploadError);
+    if (clipIndex < 0 || clipIndex >= bestClips.length) {
       return new Response(
-        JSON.stringify({ error: 'Upload failed', details: uploadError.message }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: 'Invalid clip index' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Get public URL
-    const { data: { publicUrl } } = supabase.storage
-      .from('analysis-files')
-      .getPublicUrl(`highlights/${fileName}`);
+    const clipToDelete = bestClips[clipIndex];
+    
+    // Extract file path from URL
+    const urlParts = clipToDelete.videoUrl.split('/highlights/');
+    if (urlParts.length === 2) {
+      const filePath = `highlights/${urlParts[1].split('?')[0]}`;
+      
+      // Delete from storage
+      const { error: deleteError } = await supabase.storage
+        .from('analysis-files')
+        .remove([filePath]);
+      
+      if (deleteError) {
+        console.error('Storage delete error:', deleteError);
+      }
+    }
 
-    // Update player highlights
-    const parsed = player.highlights ? JSON.parse(player.highlights) : {};
+    // Remove clip from array
+    bestClips.splice(clipIndex, 1);
+    
     const updatedHighlights = {
       matchHighlights: parsed.matchHighlights || [],
-      bestClips: [
-        ...(parsed.bestClips || []),
-        {
-          name: clipName,
-          videoUrl: publicUrl,
-          addedAt: new Date().toISOString()
-        }
-      ]
+      bestClips: bestClips
     };
 
     const { error: updateError } = await supabase
@@ -96,7 +90,7 @@ Deno.serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ success: true, videoUrl: publicUrl }),
+      JSON.stringify({ success: true }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
