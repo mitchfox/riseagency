@@ -633,7 +633,7 @@ const Dashboard = () => {
                 <DropdownMenuTrigger asChild>
                   <Button 
                     variant="outline" 
-                    className="w-full justify-center font-bebas uppercase text-base px-6 py-6 bg-muted hover:bg-muted/80 border-2 border-gold text-gold"
+                    className="w-full justify-center font-bebas uppercase text-base px-6 py-6 bg-muted hover:bg-muted/80 border-2 border-gold !text-gold hover:!text-gold"
                   >
                     <span>
                       {activeTab === "analysis" && "Analysis"}
