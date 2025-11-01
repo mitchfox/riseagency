@@ -1025,7 +1025,7 @@ const Dashboard = () => {
                                                           const currentWeekStart = startOfWeek(today, { weekStartsOn: 1 });
                                                           const currentWeekEnd = endOfWeek(today, { weekStartsOn: 1 });
                                                           const isCurrentWeek = isWithinInterval(weekStart, { start: currentWeekStart, end: currentWeekEnd });
-                                                          return isCurrentWeek ? '#D4AF37' : 'hsl(0, 0%, 95%)';
+                                                          return isCurrentWeek ? 'hsl(43, 49%, 61%)' : 'hsl(0, 0%, 95%)';
                                                         })() || 'hsl(0, 0%, 95%)',
                                                         color: 'hsl(0, 0%, 0%)'
                                                       }}
