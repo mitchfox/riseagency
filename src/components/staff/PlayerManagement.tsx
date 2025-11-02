@@ -2614,8 +2614,8 @@ const PlayerManagement = () => {
                                             </div>
                                           )}
                                           
-                                          <span className={`${getR90Color(analysis.minutes_played ? (analysis.raw_score / analysis.minutes_played) * 90 : 0)} text-white px-2 sm:px-3 py-1 rounded font-bold text-xs sm:text-sm whitespace-nowrap self-start`}>
-                                            R90: {analysis.minutes_played ? ((analysis.raw_score / analysis.minutes_played) * 90).toFixed(2) : "N/A"}
+                                          <span className={`${getR90Color(analysis.r90_score)} text-white px-2 sm:px-3 py-1 rounded font-bold text-xs sm:text-sm whitespace-nowrap self-start`}>
+                                            R90: {analysis.r90_score?.toFixed(2)}
                                           </span>
                                         </div>
                                         
