@@ -1912,17 +1912,6 @@ const PlayerManagement = () => {
                       <Edit className="w-4 h-4 sm:mr-2" />
                       <span className="hidden sm:inline">Player Details</span>
                     </Button>
-                    {player.email && (
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={() => handleCreateAccount(player.id, player.email!, player.name)}
-                        className="flex-shrink-0"
-                      >
-                        <Plus className="w-4 h-4 sm:mr-2" />
-                        <span className="hidden sm:inline">Create Account</span>
-                      </Button>
-                    )}
                   </div>
 
                    {showingFixturesFor === player.id && (
