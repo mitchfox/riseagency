@@ -387,7 +387,22 @@ export const CreatePerformanceReportDialog = ({
 
         if (deleteError) throw deleteError;
       } else {
-        // Create mode - insert new record
+        // Create mode - check for existing analysis first
+        const { data: existingAnalysis } = await supabase
+          .from("player_analysis")
+          .select("id")
+          .eq("player_id", playerId)
+          .eq("analysis_date", fixture?.match_date)
+          .eq("opponent", opponent)
+          .maybeSingle();
+
+        if (existingAnalysis) {
+          toast.error("A performance report already exists for this player, date, and opponent. Please edit the existing report instead.");
+          setLoading(false);
+          return;
+        }
+
+        // Insert new record
         const { data: analysisData, error: analysisError } = await supabase
           .from("player_analysis")
           .insert({
