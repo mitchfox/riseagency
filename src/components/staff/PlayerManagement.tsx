@@ -2449,11 +2449,23 @@ const PlayerManagement = () => {
                       <h4 className="text-xl font-semibold mb-4">Analysis</h4>
                       
                       <Tabs defaultValue="pre-match" className="w-full">
-                        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4">
-                          <TabsTrigger value="pre-match" className="text-xs sm:text-sm">⚽ <span className="hidden sm:inline">Pre-Match</span><span className="sm:hidden">Pre</span></TabsTrigger>
-                          <TabsTrigger value="post-match" className="text-xs sm:text-sm">📊 <span className="hidden sm:inline">Post-Match</span><span className="sm:hidden">Post</span></TabsTrigger>
-                          <TabsTrigger value="performance" className="text-xs sm:text-sm">📈 <span className="hidden sm:inline">Performance</span><span className="sm:hidden">Perf</span></TabsTrigger>
-                          <TabsTrigger value="concepts" className="text-xs sm:text-sm">💡 <span className="hidden sm:inline">Concepts</span><span className="sm:hidden">Conc</span></TabsTrigger>
+                        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 gap-1">
+                          <TabsTrigger value="pre-match" className="text-xs sm:text-sm px-2 sm:px-4">
+                            <span className="sm:hidden">⚽ Pre</span>
+                            <span className="hidden sm:inline">⚽ Pre-Match</span>
+                          </TabsTrigger>
+                          <TabsTrigger value="post-match" className="text-xs sm:text-sm px-2 sm:px-4">
+                            <span className="sm:hidden">📊 Post</span>
+                            <span className="hidden sm:inline">📊 Post-Match</span>
+                          </TabsTrigger>
+                          <TabsTrigger value="performance" className="text-xs sm:text-sm px-2 sm:px-4">
+                            <span className="sm:hidden">📈 Perf</span>
+                            <span className="hidden sm:inline">📈 Performance</span>
+                          </TabsTrigger>
+                          <TabsTrigger value="concepts" className="text-xs sm:text-sm px-2 sm:px-4">
+                            <span className="sm:hidden">💡 Conc</span>
+                            <span className="hidden sm:inline">💡 Concepts</span>
+                          </TabsTrigger>
                         </TabsList>
 
                         {/* Pre-Match Tab */}
