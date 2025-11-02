@@ -112,6 +112,7 @@ export const CoachingDatabase = () => {
     is_own_video: false,
     featured_text: '',
     body_text: '',
+    author: '',
   });
   
   // Pagination and filtering
@@ -478,9 +479,10 @@ export const CoachingDatabase = () => {
       const dataToSubmit: any = {};
       
       if (activeTab === 'coaching_aphorisms') {
-        // For aphorisms, only keep featured_text and body_text
+        // For aphorisms, only keep featured_text, body_text, and author
         dataToSubmit.featured_text = formData.featured_text;
-        dataToSubmit.body_text = formData.body_text;
+        if (formData.body_text) dataToSubmit.body_text = formData.body_text;
+        if (formData.author) dataToSubmit.author = formData.author;
       } else if (activeTab === 'coaching_sessions') {
         // For sessions, keep title, description, duration, category, exercises, tags, attachments
         dataToSubmit.title = formData.title;
@@ -537,6 +539,7 @@ export const CoachingDatabase = () => {
         is_own_video: false,
         featured_text: '',
         body_text: '',
+        author: '',
       });
       setEditingItem(null);
       setIsDialogOpen(false);
@@ -602,6 +605,7 @@ export const CoachingDatabase = () => {
       is_own_video: item.is_own_video || false,
       featured_text: item.featured_text || '',
       body_text: item.body_text || '',
+      author: item.author || '',
     });
     setIsDialogOpen(true);
   };
@@ -618,6 +622,7 @@ export const CoachingDatabase = () => {
       is_own_video: false,
       featured_text: '',
       body_text: '',
+      author: '',
     });
     setEditingItem(null);
   };
@@ -702,12 +707,21 @@ export const CoachingDatabase = () => {
                         </div>
 
                         <div className="space-y-2">
-                          <Label htmlFor="body_text">Body Text *</Label>
+                          <Label htmlFor="author">Author (Optional)</Label>
+                          <Input
+                            id="author"
+                            value={formData.author || ''}
+                            onChange={(e) => setFormData({ ...formData, author: e.target.value })}
+                            placeholder="e.g., Albert Einstein, Unknown, etc."
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="body_text">Body Text (Optional)</Label>
                           <Textarea
                             id="body_text"
                             value={formData.body_text || ''}
                             onChange={(e) => setFormData({ ...formData, body_text: e.target.value })}
-                            required
                             rows={4}
                             placeholder="Main text content (will be displayed in white)"
                           />
