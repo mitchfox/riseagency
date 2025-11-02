@@ -92,11 +92,14 @@ export const CreatePerformanceReportDialog = ({
   ]);
 
   useEffect(() => {
-    if (open && playerId) {
-      fetchFixtures();
+    if (open) {
+      if (playerId) {
+        fetchFixtures();
+      }
       if (analysisId) {
         fetchExistingData();
-      } else {
+      } else if (playerId) {
+        // Only reset when explicitly in create mode with a player
         resetForm();
       }
     }
@@ -698,12 +701,8 @@ export const CreatePerformanceReportDialog = ({
 
           {/* Performance Actions */}
           <div>
-            <div className="flex items-center justify-between mb-4">
+            <div className="mb-4">
               <Label className="text-lg font-semibold">Performance Actions *</Label>
-              <Button onClick={addAction} size="sm" variant="outline">
-                <Plus className="h-4 w-4 mr-2" />
-                Add Action
-              </Button>
             </div>
 
             <div className="overflow-x-auto border rounded-lg">
@@ -784,6 +783,13 @@ export const CreatePerformanceReportDialog = ({
                   ))}
                 </tbody>
               </table>
+            </div>
+            
+            <div className="mt-4">
+              <Button onClick={addAction} size="sm" variant="outline">
+                <Plus className="h-4 w-4 mr-2" />
+                Add Action
+              </Button>
             </div>
           </div>
 
