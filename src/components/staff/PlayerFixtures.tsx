@@ -1500,7 +1500,7 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, onViewR
               if (score >= 1.0 && score < 1.4) return "bg-lime-400"; // Light Green
               if (score >= 1.4 && score < 1.8) return "bg-green-500"; // Green
               if (score >= 1.8 && score < 2.5) return "bg-green-700"; // Dark green
-              return "bg-yellow-600"; // Gold for 2.5+
+              return "bg-gold"; // RISE gold for 2.5+
             };
             const r90Color = r90Score ? getR90Color(r90Score) : "bg-gray-500";
 
