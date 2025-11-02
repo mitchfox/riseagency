@@ -610,12 +610,13 @@ const Dashboard = () => {
 
           {dailyAphorism && (
             <div className="mb-8 px-4 md:px-0">
-              <Card className="bg-card/50 border-primary/20">
-                <CardContent className="py-6 px-6 text-center">
-                  <p className="text-lg md:text-xl font-semibold text-[#D4AF37] mb-3">
+              <Card className="relative overflow-hidden border-gold/30 bg-gradient-to-br from-black/60 via-black/40 to-black/60 backdrop-blur-sm">
+                <div className="absolute inset-0 bg-gradient-to-br from-gold/5 via-transparent to-gold/5"></div>
+                <CardContent className="relative py-8 px-6 text-center space-y-4">
+                  <p className="text-xl md:text-2xl font-bold text-gold leading-relaxed tracking-wide">
                     {dailyAphorism.featured_text}
                   </p>
-                  <p className="text-base text-white">
+                  <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
                     {dailyAphorism.body_text}
                   </p>
                 </CardContent>
