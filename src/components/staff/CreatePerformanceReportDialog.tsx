@@ -92,15 +92,12 @@ export const CreatePerformanceReportDialog = ({
   ]);
 
   useEffect(() => {
+    if (open && analysisId) {
+      // Only fetch data when opening in edit mode
+      fetchExistingData();
+    }
     if (open) {
-      if (analysisId) {
-        // Edit mode - fetch existing data
-        fetchExistingData();
-      }
-      fetchFixtures(); // Always fetch fixtures when dialog opens
-    } else {
-      // Dialog is closing - reset form for next time
-      resetForm();
+      fetchFixtures();
     }
   }, [open, analysisId]);
 
@@ -389,15 +386,12 @@ export const CreatePerformanceReportDialog = ({
 
       toast.success(`Performance report ${analysisId ? 'updated' : 'created'} successfully`);
       
-      if (analysisId) {
-        // Edit mode - keep dialog open
-        if (onSuccess) onSuccess();
-      } else {
-        // Create mode - close dialog
-        resetForm();
+      if (!analysisId) {
+        // Create mode - close dialog but keep data
         onOpenChange(false);
-        if (onSuccess) onSuccess();
       }
+      
+      if (onSuccess) onSuccess();
     } catch (error: any) {
       console.error("Error saving performance report:", error);
       toast.error("Failed to save performance report: " + error.message);
