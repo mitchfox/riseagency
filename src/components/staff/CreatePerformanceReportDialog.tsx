@@ -54,6 +54,7 @@ export const CreatePerformanceReportDialog = ({
   const [selectedFixtureId, setSelectedFixtureId] = useState<string>("");
   const [showStrikerStats, setShowStrikerStats] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [playerClub, setPlayerClub] = useState<string>("");
 
   // Key stats
   const [r90Score, setR90Score] = useState("");
@@ -106,8 +107,24 @@ export const CreatePerformanceReportDialog = ({
         resetForm();
       }
       fetchFixtures();
+      fetchPlayerClub();
     }
   }, [open, analysisId]);
+
+  const fetchPlayerClub = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("players")
+        .select("club")
+        .eq("id", playerId)
+        .single();
+
+      if (error) throw error;
+      setPlayerClub(data?.club || "");
+    } catch (error: any) {
+      console.error("Error fetching player club:", error);
+    }
+  };
 
   const fetchFixtures = async () => {
     try {
@@ -140,7 +157,19 @@ export const CreatePerformanceReportDialog = ({
     setSelectedFixtureId(fixtureId);
     const fixture = fixtures.find(f => f.id === fixtureId);
     if (fixture) {
-      setOpponent(`${fixture.home_team} vs ${fixture.away_team}`);
+      // Intelligently determine opponent based on player's club
+      let opponentTeam = fixture.away_team; // Default to away team
+      
+      if (playerClub) {
+        // Check if player's club matches home or away team
+        if (fixture.home_team === playerClub) {
+          opponentTeam = fixture.away_team;
+        } else if (fixture.away_team === playerClub) {
+          opponentTeam = fixture.home_team;
+        }
+      }
+      
+      setOpponent(opponentTeam);
       if (fixture.home_score !== null && fixture.away_score !== null) {
         setResult(`${fixture.home_score}-${fixture.away_score}`);
       }
