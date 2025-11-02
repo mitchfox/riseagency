@@ -756,8 +756,8 @@ export const CreatePerformanceReportDialog = ({
                           value={action.action_description}
                           onChange={(e) => updateAction(index, "action_description", e.target.value)}
                           placeholder="Describe the action"
-                          className="min-w-[200px]"
-                          rows={2}
+                          className="min-w-[200px] min-h-[40px]"
+                          rows={1}
                         />
                       </td>
                       <td className="p-2">
@@ -765,8 +765,8 @@ export const CreatePerformanceReportDialog = ({
                           value={action.notes}
                           onChange={(e) => updateAction(index, "notes", e.target.value)}
                           placeholder="Optional notes"
-                          className="min-w-[150px]"
-                          rows={2}
+                          className="min-w-[150px] min-h-[40px]"
+                          rows={1}
                         />
                       </td>
                       <td className="p-2">
