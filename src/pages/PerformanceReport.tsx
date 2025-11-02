@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
+import { extractAnalysisIdFromSlug } from "@/lib/urlHelpers";
+import { SEO } from "@/components/SEO";
 
 interface PerformanceAction {
   id: string;
@@ -60,11 +62,13 @@ interface AnalysisDetails {
 }
 
 const PerformanceReport = () => {
-  const { analysisId } = useParams();
+  const { slug } = useParams();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [analysis, setAnalysis] = useState<AnalysisDetails | null>(null);
   const [actions, setActions] = useState<PerformanceAction[]>([]);
+
+  const analysisId = slug ? extractAnalysisIdFromSlug(slug) : null;
 
   useEffect(() => {
     if (analysisId) {
@@ -173,6 +177,10 @@ const PerformanceReport = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO 
+        title={`${analysis.player_name} vs ${analysis.opponent} - Performance Report | RISE Sports`}
+        description={`Detailed performance analysis for ${analysis.player_name} in the match against ${analysis.opponent} on ${new Date(analysis.analysis_date).toLocaleDateString('en-GB')}. R90 Score: ${analysis.minutes_played ? ((calculateRScore() / analysis.minutes_played) * 90).toFixed(2) : 'N/A'}.`}
+      />
       <Header />
       <main className="container mx-auto px-4 py-8">
         <Card className="mb-6">

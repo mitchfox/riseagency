@@ -12,9 +12,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { NotificationPermission } from "@/components/NotificationPermission";
 import { toast } from "sonner";
-import { FileText, Play, Download, Upload, ChevronDown, Trash2 } from "lucide-react";
+import { FileText, Play, Download, Upload, ChevronDown, Trash2, Lock, Calendar, Trophy, TrendingUp, Eye, EyeOff } from "lucide-react";
 import { ClipNameEditor } from "@/components/ClipNameEditor";
 import { addDays, format, parseISO, startOfWeek, endOfWeek, isWithinInterval } from "date-fns";
+import { SEO } from "@/components/SEO";
+import { createPerformanceReportSlug } from "@/lib/urlHelpers";
 
 interface Analysis {
   id: string;
@@ -763,7 +765,14 @@ const Dashboard = () => {
                               <div className="flex items-center gap-2 flex-wrap">
                                 {analysis.r90_score !== null && analysis.r90_score !== undefined && (
                                   <button
-                                    onClick={() => navigate(`/performance-report/${analysis.id}`)}
+                                    onClick={() => {
+                                      const url = createPerformanceReportSlug(
+                                        playerData?.name || 'player',
+                                        analysis.opponent || 'opponent',
+                                        analysis.id
+                                      );
+                                      navigate(url);
+                                    }}
                                     className={`${getR90Color(analysis.r90_score)} text-white px-3 md:px-4 py-1.5 md:py-2 rounded text-sm md:text-base font-bold hover:opacity-80 transition-opacity cursor-pointer`}
                                   >
                                     R90: {analysis.r90_score.toFixed(2)}
