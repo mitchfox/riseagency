@@ -136,7 +136,7 @@ const PerformanceReport = () => {
   };
 
   const calculateRScore = (): number => {
-    const totalScore = actions.reduce((sum, action) => sum + action.action_score, 0);
+    const totalScore = actions.reduce((sum, action) => sum + (action.action_score ?? 0), 0);
     return totalScore;
   };
 
@@ -343,9 +343,9 @@ const PerformanceReport = () => {
                     {actions.map((action) => (
                       <tr key={action.id} className="border-b hover:bg-accent/50">
                         <td className="p-2 text-xs md:text-sm whitespace-nowrap">{action.action_number}</td>
-                        <td className="p-2 text-xs md:text-sm whitespace-nowrap">{action.minute.toFixed(2)}</td>
-                        <td className={`p-2 text-xs md:text-sm whitespace-nowrap ${getActionScoreColor(action.action_score)}`}>
-                          {action.action_score.toFixed(5)}
+                        <td className="p-2 text-xs md:text-sm whitespace-nowrap">{(action.minute ?? 0).toFixed(2)}</td>
+                        <td className={`p-2 text-xs md:text-sm whitespace-nowrap ${getActionScoreColor(action.action_score ?? 0)}`}>
+                          {(action.action_score ?? 0).toFixed(5)}
                         </td>
                         <td className="p-2 font-medium text-xs md:text-sm whitespace-nowrap">{action.action_type}</td>
                         <td className="p-2 text-xs md:text-sm">{action.action_description}</td>
