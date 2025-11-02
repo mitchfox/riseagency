@@ -100,11 +100,12 @@ export const CoachingDatabase = () => {
   const [isExerciseSelectorOpen, setIsExerciseSelectorOpen] = useState(false);
   const [showPasteDialog, setShowPasteDialog] = useState(false);
   const [pasteText, setPasteText] = useState("");
+  const [selectedExerciseTab, setSelectedExerciseTab] = useState<'pre' | 'session'>('pre');
   const [formData, setFormData] = useState<any>({
     title: '',
     description: '',
     content: '',
-    exercises: [] as Exercise[],
+    exercises: { preSession: [] as Exercise[], session: [] as Exercise[] },
     category: '',
     load: '',
     video_url: '',
@@ -236,8 +237,169 @@ export const CoachingDatabase = () => {
 
   const totalPages = Math.ceil(totalItems / itemsPerPage);
 
+  const renderExerciseTable = (key: 'preSession' | 'session') => {
+    const exercises = formData.exercises[key] || [];
+    
+    if (exercises.length === 0) {
+      return (
+        <div className="text-center py-8 border rounded-lg bg-muted/20">
+          <p className="text-sm text-muted-foreground">No exercises added yet.</p>
+          <p className="text-xs text-muted-foreground mt-1">Use the buttons above to add exercises.</p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="border rounded-lg overflow-hidden">
+        <table className="w-full">
+          <thead className="bg-muted">
+            <tr>
+              <th className="p-2 text-left text-xs font-semibold w-20">Order</th>
+              <th className="p-2 text-left text-xs font-semibold">Exercise Name</th>
+              <th className="p-2 text-left text-xs font-semibold">Description</th>
+              <th className="p-2 text-left text-xs font-semibold w-20">Reps</th>
+              <th className="p-2 text-left text-xs font-semibold w-16">Sets</th>
+              <th className="p-2 text-left text-xs font-semibold w-20">Load</th>
+              <th className="p-2 text-left text-xs font-semibold w-24">Recovery</th>
+              <th className="p-2 text-left text-xs font-semibold w-32">Video URL</th>
+              <th className="p-2 w-12"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {exercises.map((exercise: Exercise, idx: number) => (
+              <tr key={idx} className="border-t hover:bg-muted/50">
+                <td className="p-2">
+                  <div className="flex gap-1">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => moveExercise(idx, 'up')}
+                      disabled={idx === 0}
+                    >
+                      <ChevronUp className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => moveExercise(idx, 'down')}
+                      disabled={idx === exercises.length - 1}
+                    >
+                      <ChevronDown className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </td>
+                <td className="p-2">
+                  <Input
+                    placeholder="Exercise name"
+                    value={exercise.name}
+                    onChange={(e) => {
+                      const newExercises = [...exercises];
+                      newExercises[idx].name = e.target.value;
+                      setFormData({ ...formData, exercises: { ...formData.exercises, [key]: newExercises } });
+                    }}
+                    className="text-sm"
+                  />
+                </td>
+                <td className="p-2">
+                  <Input
+                    placeholder="Description"
+                    value={exercise.description}
+                    onChange={(e) => {
+                      const newExercises = [...exercises];
+                      newExercises[idx].description = e.target.value;
+                      setFormData({ ...formData, exercises: { ...formData.exercises, [key]: newExercises } });
+                    }}
+                    className="text-sm"
+                  />
+                </td>
+                <td className="p-2">
+                  <Input
+                    placeholder="Reps"
+                    value={exercise.repetitions}
+                    onChange={(e) => {
+                      const newExercises = [...exercises];
+                      newExercises[idx].repetitions = e.target.value;
+                      setFormData({ ...formData, exercises: { ...formData.exercises, [key]: newExercises } });
+                    }}
+                    className="text-sm"
+                  />
+                </td>
+                <td className="p-2">
+                  <Input
+                    placeholder="Sets"
+                    value={exercise.sets}
+                    onChange={(e) => {
+                      const newExercises = [...exercises];
+                      newExercises[idx].sets = e.target.value;
+                      setFormData({ ...formData, exercises: { ...formData.exercises, [key]: newExercises } });
+                    }}
+                    className="text-sm"
+                  />
+                </td>
+                <td className="p-2">
+                  <Input
+                    placeholder="Load"
+                    value={exercise.load}
+                    onChange={(e) => {
+                      const newExercises = [...exercises];
+                      newExercises[idx].load = e.target.value;
+                      setFormData({ ...formData, exercises: { ...formData.exercises, [key]: newExercises } });
+                    }}
+                    className="text-sm"
+                  />
+                </td>
+                <td className="p-2">
+                  <Input
+                    placeholder="Recovery"
+                    value={exercise.recoveryTime}
+                    onChange={(e) => {
+                      const newExercises = [...exercises];
+                      newExercises[idx].recoveryTime = e.target.value;
+                      setFormData({ ...formData, exercises: { ...formData.exercises, [key]: newExercises } });
+                    }}
+                    className="text-sm"
+                  />
+                </td>
+                <td className="p-2">
+                  <Input
+                    placeholder="Video URL"
+                    value={exercise.videoUrl}
+                    onChange={(e) => {
+                      const newExercises = [...exercises];
+                      newExercises[idx].videoUrl = e.target.value;
+                      setFormData({ ...formData, exercises: { ...formData.exercises, [key]: newExercises } });
+                    }}
+                    className="text-sm"
+                  />
+                </td>
+                <td className="p-2">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => {
+                      const newExercises = exercises.filter((_: any, i: number) => i !== idx);
+                      setFormData({ ...formData, exercises: { ...formData.exercises, [key]: newExercises } });
+                    }}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  };
+
   const moveExercise = (index: number, direction: 'up' | 'down') => {
-    const exercises = [...(formData.exercises || [])];
+    const key = selectedExerciseTab === 'pre' ? 'preSession' : 'session';
+    const exercises = [...(formData.exercises[key] || [])];
     
     if (direction === 'up' && index > 0) {
       [exercises[index - 1], exercises[index]] = [exercises[index], exercises[index - 1]];
@@ -245,7 +407,7 @@ export const CoachingDatabase = () => {
       [exercises[index], exercises[index + 1]] = [exercises[index + 1], exercises[index]];
     }
     
-    setFormData({ ...formData, exercises });
+    setFormData({ ...formData, exercises: { ...formData.exercises, [key]: exercises } });
   };
 
   const parsePastedExercises = () => {
@@ -279,9 +441,13 @@ export const CoachingDatabase = () => {
     }
 
     if (newExercises.length > 0) {
+      const key = selectedExerciseTab === 'pre' ? 'preSession' : 'session';
       setFormData({
         ...formData,
-        exercises: [...(formData.exercises || []), ...newExercises]
+        exercises: {
+          ...formData.exercises,
+          [key]: [...(formData.exercises[key] || []), ...newExercises]
+        }
       });
 
       toast.success(`Added ${newExercises.length} exercise${newExercises.length > 1 ? 's' : ''}`);
@@ -293,9 +459,13 @@ export const CoachingDatabase = () => {
   };
 
   const addExerciseFromDatabase = (exercise: Exercise) => {
+    const key = selectedExerciseTab === 'pre' ? 'preSession' : 'session';
     setFormData({
       ...formData,
-      exercises: [...(formData.exercises || []), exercise]
+      exercises: {
+        ...formData.exercises,
+        [key]: [...(formData.exercises[key] || []), exercise]
+      }
     });
   };
 
@@ -341,7 +511,7 @@ export const CoachingDatabase = () => {
         title: '',
         description: '',
         content: '',
-        exercises: [],
+        exercises: { preSession: [], session: [] },
         category: '',
         load: '',
         video_url: '',
@@ -382,11 +552,22 @@ export const CoachingDatabase = () => {
 
   const handleEdit = (item: CoachingItem) => {
     setEditingItem(item);
+    // Convert old format to new format if needed
+    let exercisesData: any = item.exercises;
+    if (Array.isArray(exercisesData)) {
+      exercisesData = { preSession: [], session: exercisesData };
+    } else if (!exercisesData) {
+      exercisesData = { preSession: [], session: [] };
+    } else if (!exercisesData.preSession) {
+      // Ensure both keys exist
+      exercisesData = { preSession: exercisesData.preSession || [], session: exercisesData.session || exercisesData || [] };
+    }
+    
     setFormData({
       title: item.title,
       description: item.description || '',
       content: item.content || '',
-      exercises: item.exercises || [],
+      exercises: exercisesData,
       category: item.category || '',
       duration: item.duration || '',
       weeks: item.weeks || '',
@@ -411,7 +592,7 @@ export const CoachingDatabase = () => {
       title: '',
       description: '',
       content: '',
-      exercises: [],
+      exercises: { preSession: [], session: [] },
       category: '',
       load: '',
       video_url: '',
@@ -547,196 +728,64 @@ export const CoachingDatabase = () => {
                               />
                             </div>
                             
-                            <div className="flex items-center justify-between border-t pt-4">
-                              <Label className="text-lg font-semibold">Session Exercises</Label>
-                              <div className="flex gap-2">
-                                <Button
-                                  type="button"
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => setIsExerciseSelectorOpen(true)}
-                                >
-                                  <Database className="w-4 h-4 mr-2" />
-                                  From Database
-                                </Button>
-                                <Button
-                                  type="button"
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => setShowPasteDialog(true)}
-                                >
-                                  📋 Paste Exercises
-                                </Button>
-                                <Button
-                                  type="button"
-                                  size="sm"
-                                  onClick={() => {
-                                    setFormData({
-                                      ...formData,
-                                      exercises: [
-                                        ...(formData.exercises || []),
-                                        { name: '', description: '', repetitions: '', sets: '', load: '', recoveryTime: '', videoUrl: '' }
-                                      ]
-                                    });
-                                  }}
-                                >
-                                  <Plus className="w-4 h-4 mr-2" />
-                                  Add Manual
-                                </Button>
+                            <Tabs value={selectedExerciseTab} onValueChange={(v) => setSelectedExerciseTab(v as 'pre' | 'session')}>
+                              <div className="flex items-center justify-between border-t pt-4">
+                                <div className="flex items-center gap-4">
+                                  <Label className="text-lg font-semibold">Session Exercises</Label>
+                                  <TabsList>
+                                    <TabsTrigger value="pre">Pre-Session</TabsTrigger>
+                                    <TabsTrigger value="session">Session</TabsTrigger>
+                                  </TabsList>
+                                </div>
+                                <div className="flex gap-2">
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => setIsExerciseSelectorOpen(true)}
+                                  >
+                                    <Database className="w-4 h-4 mr-2" />
+                                    From Database
+                                  </Button>
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => setShowPasteDialog(true)}
+                                  >
+                                    📋 Paste Exercises
+                                  </Button>
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    onClick={() => {
+                                      const key = selectedExerciseTab === 'pre' ? 'preSession' : 'session';
+                                      setFormData({
+                                        ...formData,
+                                        exercises: {
+                                          ...formData.exercises,
+                                          [key]: [
+                                            ...(formData.exercises[key] || []),
+                                            { name: '', description: '', repetitions: '', sets: '', load: '', recoveryTime: '', videoUrl: '' }
+                                          ]
+                                        }
+                                      });
+                                    }}
+                                  >
+                                    <Plus className="w-4 h-4 mr-2" />
+                                    Add Manual
+                                  </Button>
+                                </div>
                               </div>
-                            </div>
 
-                            {formData.exercises && formData.exercises.length > 0 ? (
-                              <div className="border rounded-lg overflow-hidden">
-                                <table className="w-full">
-                                  <thead className="bg-muted">
-                                    <tr>
-                                      <th className="p-2 text-left text-xs font-semibold w-20">Order</th>
-                                      <th className="p-2 text-left text-xs font-semibold">Exercise Name</th>
-                                      <th className="p-2 text-left text-xs font-semibold">Description</th>
-                                      <th className="p-2 text-left text-xs font-semibold w-20">Reps</th>
-                                      <th className="p-2 text-left text-xs font-semibold w-16">Sets</th>
-                                      <th className="p-2 text-left text-xs font-semibold w-20">Load</th>
-                                      <th className="p-2 text-left text-xs font-semibold w-24">Recovery</th>
-                                      <th className="p-2 text-left text-xs font-semibold w-32">Video URL</th>
-                                      <th className="p-2 w-12"></th>
-                                    </tr>
-                                  </thead>
-                                  <tbody>
-                                    {formData.exercises.map((exercise: Exercise, idx: number) => (
-                                      <tr key={idx} className="border-t hover:bg-muted/50">
-                                        <td className="p-2">
-                                          <div className="flex gap-1">
-                                            <Button
-                                              type="button"
-                                              variant="ghost"
-                                              size="icon"
-                                              className="h-8 w-8"
-                                              onClick={() => moveExercise(idx, 'up')}
-                                              disabled={idx === 0}
-                                            >
-                                              <ChevronUp className="w-4 h-4" />
-                                            </Button>
-                                            <Button
-                                              type="button"
-                                              variant="ghost"
-                                              size="icon"
-                                              className="h-8 w-8"
-                                              onClick={() => moveExercise(idx, 'down')}
-                                              disabled={idx === formData.exercises.length - 1}
-                                            >
-                                              <ChevronDown className="w-4 h-4" />
-                                            </Button>
-                                          </div>
-                                        </td>
-                                        <td className="p-2">
-                                          <Input
-                                            placeholder="Exercise name"
-                                            value={exercise.name}
-                                            onChange={(e) => {
-                                              const newExercises = [...formData.exercises];
-                                              newExercises[idx].name = e.target.value;
-                                              setFormData({ ...formData, exercises: newExercises });
-                                            }}
-                                            className="text-sm"
-                                          />
-                                        </td>
-                                        <td className="p-2">
-                                          <Input
-                                            placeholder="Description"
-                                            value={exercise.description}
-                                            onChange={(e) => {
-                                              const newExercises = [...formData.exercises];
-                                              newExercises[idx].description = e.target.value;
-                                              setFormData({ ...formData, exercises: newExercises });
-                                            }}
-                                            className="text-sm"
-                                          />
-                                        </td>
-                                        <td className="p-2">
-                                          <Input
-                                            placeholder="Reps"
-                                            value={exercise.repetitions}
-                                            onChange={(e) => {
-                                              const newExercises = [...formData.exercises];
-                                              newExercises[idx].repetitions = e.target.value;
-                                              setFormData({ ...formData, exercises: newExercises });
-                                            }}
-                                            className="text-sm"
-                                          />
-                                        </td>
-                                        <td className="p-2">
-                                          <Input
-                                            placeholder="Sets"
-                                            value={exercise.sets}
-                                            onChange={(e) => {
-                                              const newExercises = [...formData.exercises];
-                                              newExercises[idx].sets = e.target.value;
-                                              setFormData({ ...formData, exercises: newExercises });
-                                            }}
-                                            className="text-sm"
-                                          />
-                                        </td>
-                                        <td className="p-2">
-                                          <Input
-                                            placeholder="Load"
-                                            value={exercise.load}
-                                            onChange={(e) => {
-                                              const newExercises = [...formData.exercises];
-                                              newExercises[idx].load = e.target.value;
-                                              setFormData({ ...formData, exercises: newExercises });
-                                            }}
-                                            className="text-sm"
-                                          />
-                                        </td>
-                                        <td className="p-2">
-                                          <Input
-                                            placeholder="Recovery"
-                                            value={exercise.recoveryTime}
-                                            onChange={(e) => {
-                                              const newExercises = [...formData.exercises];
-                                              newExercises[idx].recoveryTime = e.target.value;
-                                              setFormData({ ...formData, exercises: newExercises });
-                                            }}
-                                            className="text-sm"
-                                          />
-                                        </td>
-                                        <td className="p-2">
-                                          <Input
-                                            placeholder="Video URL"
-                                            value={exercise.videoUrl}
-                                            onChange={(e) => {
-                                              const newExercises = [...formData.exercises];
-                                              newExercises[idx].videoUrl = e.target.value;
-                                              setFormData({ ...formData, exercises: newExercises });
-                                            }}
-                                            className="text-sm"
-                                          />
-                                        </td>
-                                        <td className="p-2">
-                                          <Button
-                                            type="button"
-                                            variant="ghost"
-                                            size="icon"
-                                            onClick={() => {
-                                              const newExercises = formData.exercises.filter((_: any, i: number) => i !== idx);
-                                              setFormData({ ...formData, exercises: newExercises });
-                                            }}
-                                          >
-                                            <Trash2 className="w-4 h-4" />
-                                          </Button>
-                                        </td>
-                                      </tr>
-                                    ))}
-                                  </tbody>
-                                </table>
-                              </div>
-                            ) : (
-                              <div className="text-center py-8 border rounded-lg bg-muted/20">
-                                <p className="text-sm text-muted-foreground">No exercises added yet.</p>
-                                <p className="text-xs text-muted-foreground mt-1">Use the buttons above to add exercises.</p>
-                              </div>
-                            )}
+                              <TabsContent value="pre" className="mt-4">
+                                {renderExerciseTable('preSession')}
+                              </TabsContent>
+
+                              <TabsContent value="session" className="mt-4">
+                                {renderExerciseTable('session')}
+                              </TabsContent>
+                            </Tabs>
                           </div>
                         ) : key !== 'coaching_exercises' && (
                           <div className="space-y-2">
