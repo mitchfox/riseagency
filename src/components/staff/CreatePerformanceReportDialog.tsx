@@ -93,15 +93,14 @@ export const CreatePerformanceReportDialog = ({
 
   useEffect(() => {
     if (open) {
-      fetchFixtures(); // Always fetch fixtures when dialog opens
-      
       if (analysisId) {
         // Edit mode - fetch existing data
         fetchExistingData();
-      } else {
-        // Create mode - reset form
-        resetForm();
       }
+      fetchFixtures(); // Always fetch fixtures when dialog opens
+    } else {
+      // Dialog is closing - reset form for next time
+      resetForm();
     }
   }, [open, analysisId]);
 
