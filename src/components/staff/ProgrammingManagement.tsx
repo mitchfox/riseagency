@@ -1034,9 +1034,9 @@ Phase Dates: ${programmingData.phaseDates || 'Not specified'}`;
     <>
       {/* Template Selection Dialog */}
       <Dialog open={showTemplateDialog} onOpenChange={setShowTemplateDialog}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Select Program Template</DialogTitle>
+            <DialogTitle className="text-lg sm:text-xl">Select Program Template</DialogTitle>
           </DialogHeader>
           
           {loadingTemplates ? (
@@ -1078,30 +1078,32 @@ Phase Dates: ${programmingData.phaseDates || 'Not specified'}`;
       </Dialog>
 
       <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto bg-background">
+      <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-2xl lg:max-w-6xl max-h-[90vh] overflow-y-auto bg-background">
         <DialogHeader>
-          <DialogTitle>Programming Management - {playerName}</DialogTitle>
+          <DialogTitle className="text-lg sm:text-xl">Programming Management - {playerName}</DialogTitle>
         </DialogHeader>
 
         {!selectedProgram ? (
           
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               <h3 className="text-lg font-semibold">Programs</h3>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2 w-full sm:w-auto">
                 <Button onClick={() => {
                   setIsCreatingNew(true);
                   setExcelFile(null);
                   setShowUploadProgram(false);
-                }} variant="default">
+                }} variant="default" className="flex-1 sm:flex-none" size="sm">
                   <Plus className="w-4 h-4 mr-2" />
-                  Create Blank Program
+                  <span className="hidden sm:inline">Create Blank Program</span>
+                  <span className="sm:hidden">Blank Program</span>
                 </Button>
                 <Button onClick={() => {
                   setShowTemplateDialog(true);
-                }} variant="outline">
+                }} variant="outline" className="flex-1 sm:flex-none" size="sm">
                   <Database className="w-4 h-4 mr-2" />
-                  Use Template
+                  <span className="hidden sm:inline">Use Template</span>
+                  <span className="sm:hidden">Template</span>
                 </Button>
               </div>
             </div>
@@ -1168,13 +1170,13 @@ Phase Dates: ${programmingData.phaseDates || 'Not specified'}`;
                       )}
                     </div>
 
-                    <div className="flex gap-2">
+                    <div className="flex flex-col sm:flex-row gap-2">
                       <Button 
                         onClick={createNewProgram} 
                         disabled={loading || uploadingExcel || !newProgramName.trim()}
                         className="flex-1"
                       >
-                        {uploadingExcel ? '⏳ Processing File...' : loading ? '⏳ Creating...' : excelFile ? '📤 Import & Create Program' : '✨ Create Blank Program'}
+                        {uploadingExcel ? '⏳ Processing...' : loading ? '⏳ Creating...' : excelFile ? '📤 Import' : '✨ Create'}
                       </Button>
                       <Button variant="outline" onClick={() => {
                         setIsCreatingNew(false);
@@ -1199,45 +1201,45 @@ Phase Dates: ${programmingData.phaseDates || 'Not specified'}`;
               ) : (
                 programs.map((program, idx) => (
                   <Card key={program.id} className="hover:bg-accent/50 transition-colors">
-                    <CardContent className="pt-6">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="flex flex-col gap-1">
+                    <CardContent className="pt-4 sm:pt-6">
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                        <div className="flex items-start sm:items-center gap-3 w-full sm:w-auto">
+                          <div className="flex flex-col gap-1 flex-shrink-0">
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-8 w-8"
+                              className="h-7 w-7 sm:h-8 sm:w-8"
                               onClick={() => moveProgram(program.id, 'up')}
                               disabled={idx === 0 || loading}
                             >
-                              <ArrowUp className="w-4 h-4" />
+                              <ArrowUp className="w-3 h-3 sm:w-4 sm:h-4" />
                             </Button>
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-8 w-8"
+                              className="h-7 w-7 sm:h-8 sm:w-8"
                               onClick={() => moveProgram(program.id, 'down')}
                               disabled={idx === programs.length - 1 || loading}
                             >
-                              <ArrowDown className="w-4 h-4" />
+                              <ArrowDown className="w-3 h-3 sm:w-4 sm:h-4" />
                             </Button>
                           </div>
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <h4 className="font-semibold">{program.program_name}</h4>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <h4 className="font-semibold text-sm sm:text-base truncate">{program.program_name}</h4>
                               {program.is_current && (
-                                <Badge variant="default" className="gap-1">
+                                <Badge variant="default" className="gap-1 text-xs">
                                   <Check className="w-3 h-3" />
                                   Current
                                 </Badge>
                               )}
                             </div>
-                            <p className="text-sm text-muted-foreground">
+                            <p className="text-xs sm:text-sm text-muted-foreground">
                               Created: {new Date(program.created_at).toLocaleDateString()}
                             </p>
                           </div>
                         </div>
-                        <div className="flex gap-2">
+                        <div className="flex flex-wrap gap-2 w-full sm:w-auto">
                           {!program.is_current && (
                             <Button
                               variant="outline"
@@ -1766,10 +1768,10 @@ Phase Dates: ${programmingData.phaseDates || 'Not specified'}`;
               </TabsContent>
             </Tabs>
 
-            <div className="flex justify-end gap-2 mt-6">
-              <div className="flex-1 space-y-2">
-                <Label className="text-sm font-semibold">Save to Coaching Database:</Label>
-                <div className="flex gap-4">
+            <div className="flex flex-col sm:flex-row sm:flex-wrap justify-end gap-2 mt-6">
+              <div className="flex-1 space-y-2 order-2 sm:order-1">
+                <Label className="text-xs sm:text-sm font-semibold">Save to Coaching Database:</Label>
+                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
                   <div className="flex items-center space-x-2">
                     <Checkbox
                       id="save-programme"
@@ -1778,7 +1780,7 @@ Phase Dates: ${programmingData.phaseDates || 'Not specified'}`;
                         setSaveToCoachingDB(prev => ({ ...prev, programme: checked as boolean }))
                       }
                     />
-                    <label htmlFor="save-programme" className="text-sm cursor-pointer">
+                    <label htmlFor="save-programme" className="text-xs sm:text-sm cursor-pointer">
                       Save as Programme
                     </label>
                   </div>
@@ -1790,7 +1792,7 @@ Phase Dates: ${programmingData.phaseDates || 'Not specified'}`;
                         setSaveToCoachingDB(prev => ({ ...prev, sessions: checked as boolean }))
                       }
                     />
-                    <label htmlFor="save-sessions" className="text-sm cursor-pointer">
+                    <label htmlFor="save-sessions" className="text-xs sm:text-sm cursor-pointer">
                       Save Sessions
                     </label>
                   </div>
@@ -1802,21 +1804,23 @@ Phase Dates: ${programmingData.phaseDates || 'Not specified'}`;
                         setSaveToCoachingDB(prev => ({ ...prev, exercises: checked as boolean }))
                       }
                     />
-                    <label htmlFor="save-exercises" className="text-sm cursor-pointer">
+                    <label htmlFor="save-exercises" className="text-xs sm:text-sm cursor-pointer">
                       Save Exercises (new only)
                     </label>
                   </div>
                 </div>
               </div>
-              <Button variant="outline" onClick={() => {
-                setSelectedProgram(null);
-                setProgrammingData(initialProgrammingData());
-              }}>
-                Cancel
-              </Button>
-              <Button onClick={saveProgrammingData} disabled={loading}>
-                {loading ? 'Saving...' : 'Save Changes'}
-              </Button>
+              <div className="flex gap-2 order-1 sm:order-2">
+                <Button variant="outline" onClick={() => {
+                  setSelectedProgram(null);
+                  setProgrammingData(initialProgrammingData());
+                }} className="flex-1 sm:flex-none">
+                  Cancel
+                </Button>
+                <Button onClick={saveProgrammingData} disabled={loading} className="flex-1 sm:flex-none">
+                  {loading ? 'Saving...' : 'Save Changes'}
+                </Button>
+              </div>
             </div>
           </div>
         )}
@@ -1834,12 +1838,12 @@ Phase Dates: ${programmingData.phaseDates || 'Not specified'}`;
     />
 
     <Dialog open={showPasteDialog} onOpenChange={setShowPasteDialog}>
-      <DialogContent className="max-w-3xl">
+      <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-3xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Paste Exercises</DialogTitle>
+          <DialogTitle className="text-lg sm:text-xl">Paste Exercises</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
-          <div className="bg-muted p-4 rounded-lg text-sm space-y-2">
+          <div className="bg-muted p-3 sm:p-4 rounded-lg text-xs sm:text-sm space-y-2">
             <p className="font-semibold">Format: Tab-separated values (one exercise per line)</p>
             <p className="text-muted-foreground">Order: Name → Description → Reps → Sets → Load → Recovery Time → Video URL (optional)</p>
             <p className="text-xs text-muted-foreground mt-2">
@@ -1850,17 +1854,17 @@ Phase Dates: ${programmingData.phaseDates || 'Not specified'}`;
             placeholder="Paste your exercises here (tab-separated)...&#10;&#10;Example:&#10;Wall Volleys - Single-Leg Standing	Stand 1–2 metres from a wall...	90s (45s each side)	2	Bodyweight	60s&#10;Reverse Nordic Curl	Kneel on a padded surface...	8	2	Bodyweight	90s	https://video-url.com"
             value={pasteText}
             onChange={(e) => setPasteText(e.target.value)}
-            rows={12}
-            className="font-mono text-sm"
+            rows={10}
+            className="font-mono text-xs sm:text-sm"
           />
-          <div className="flex justify-end gap-2">
+          <div className="flex flex-col sm:flex-row justify-end gap-2">
             <Button variant="outline" onClick={() => {
               setShowPasteDialog(false);
               setPasteText("");
-            }}>
+            }} className="w-full sm:w-auto">
               Cancel
             </Button>
-            <Button onClick={parsePastedExercises}>
+            <Button onClick={parsePastedExercises} className="w-full sm:w-auto">
               Import Exercises
             </Button>
           </div>
@@ -1869,12 +1873,12 @@ Phase Dates: ${programmingData.phaseDates || 'Not specified'}`;
     </Dialog>
 
     <Dialog open={showPasteScheduleDialog} onOpenChange={setShowPasteScheduleDialog}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-2xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Paste Weekly Schedule</DialogTitle>
+          <DialogTitle className="text-lg sm:text-xl">Paste Weekly Schedule</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
-          <div className="bg-muted p-4 rounded-lg text-sm space-y-2">
+          <div className="bg-muted p-3 sm:p-4 rounded-lg text-xs sm:text-sm space-y-2">
             <p className="font-semibold">Format: One day per line (Monday to Sunday)</p>
             <p className="text-muted-foreground">Just paste the activity/session for each day</p>
             <p className="text-xs text-muted-foreground mt-2">
@@ -1886,17 +1890,17 @@ Phase Dates: ${programmingData.phaseDates || 'Not specified'}`;
             value={pasteScheduleText}
             onChange={(e) => setPasteScheduleText(e.target.value)}
             rows={10}
-            className="font-mono text-sm"
+            className="font-mono text-xs sm:text-sm"
           />
-          <div className="flex justify-end gap-2">
+          <div className="flex flex-col sm:flex-row justify-end gap-2">
             <Button variant="outline" onClick={() => {
               setShowPasteScheduleDialog(false);
               setPasteScheduleText("");
               setPasteScheduleWeekIndex(null);
-            }}>
+            }} className="w-full sm:w-auto">
               Cancel
             </Button>
-            <Button onClick={parsePastedSchedule}>
+            <Button onClick={parsePastedSchedule} className="w-full sm:w-auto">
               Import Schedule
             </Button>
           </div>
