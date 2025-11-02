@@ -574,7 +574,7 @@ export type Database = {
         Row: {
           action_description: string
           action_number: number
-          action_score: number
+          action_score: number | null
           action_type: string
           analysis_id: string
           created_at: string | null
@@ -586,7 +586,7 @@ export type Database = {
         Insert: {
           action_description: string
           action_number: number
-          action_score: number
+          action_score?: number | null
           action_type: string
           analysis_id: string
           created_at?: string | null
@@ -598,7 +598,7 @@ export type Database = {
         Update: {
           action_description?: string
           action_number?: number
-          action_score?: number
+          action_score?: number | null
           action_type?: string
           analysis_id?: string
           created_at?: string | null
