@@ -21,33 +21,7 @@ interface PerformanceAction {
 }
 
 interface StrikerStats {
-  // Common stats (both positions)
-  xGChain?: number;
-  xGChain_per90?: number;
-  xG_adj?: number;
-  xG_adj_per90?: number;
-  xA_adj?: number;
-  xA_adj_per90?: number;
-  // Striker-specific stats
-  movement_in_behind_xC?: number;
-  movement_in_behind_xC_per90?: number;
-  movement_down_side_xC?: number;
-  movement_down_side_xC_per90?: number;
-  triple_threat_xC?: number;
-  triple_threat_xC_per90?: number;
-  movement_to_feet_xC?: number;
-  movement_to_feet_xC_per90?: number;
-  crossing_movement_xC?: number;
-  crossing_movement_xC_per90?: number;
-  // Defensive midfielder stats
-  interceptions?: number;
-  interceptions_per90?: number;
-  regains_adj?: number;
-  regains_adj_per90?: number;
-  turnovers_adj?: number;
-  turnovers_adj_per90?: number;
-  progressive_passes_adj?: number;
-  progressive_passes_adj_per90?: number;
+  [key: string]: number | undefined;
 }
 
 interface AnalysisDetails {
@@ -233,118 +207,37 @@ const PerformanceReport = () => {
               </div>
             </div>
 
-            {analysis.striker_stats && Object.keys(analysis.striker_stats).some(key => analysis.striker_stats![key as keyof StrikerStats] !== null && analysis.striker_stats![key as keyof StrikerStats] !== undefined) && (
+            {analysis.striker_stats && Object.keys(analysis.striker_stats).some(key => analysis.striker_stats![key] !== null && analysis.striker_stats![key] !== undefined) && (
               <div className="mt-6 p-4 bg-accent/10 rounded-lg border-2 border-primary/20">
                 <h3 className="font-bold text-lg mb-4 text-primary">Additional Statistics</h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {analysis.striker_stats.xGChain !== undefined && analysis.striker_stats.xGChain !== null && (
-                    <div className="text-center p-3 bg-background rounded-md">
-                      <p className="text-xs text-muted-foreground mb-1">xGChain</p>
-                      <p className="font-bold text-lg">{analysis.striker_stats.xGChain.toFixed(3)}</p>
-                      {analysis.striker_stats.xGChain_per90 !== undefined && analysis.striker_stats.xGChain_per90 !== null && (
-                        <p className="text-xs text-muted-foreground mt-1">per 90: {analysis.striker_stats.xGChain_per90.toFixed(3)}</p>
-                      )}
-                    </div>
-                  )}
-                  {analysis.striker_stats.xG_adj !== undefined && analysis.striker_stats.xG_adj !== null && (
-                    <div className="text-center p-3 bg-background rounded-md">
-                      <p className="text-xs text-muted-foreground mb-1">xG (adj.)</p>
-                      <p className="font-bold text-lg">{analysis.striker_stats.xG_adj.toFixed(3)}</p>
-                      {analysis.striker_stats.xG_adj_per90 !== undefined && analysis.striker_stats.xG_adj_per90 !== null && (
-                        <p className="text-xs text-muted-foreground mt-1">per 90: {analysis.striker_stats.xG_adj_per90.toFixed(3)}</p>
-                      )}
-                    </div>
-                  )}
-                  {analysis.striker_stats.xA_adj !== undefined && analysis.striker_stats.xA_adj !== null && (
-                    <div className="text-center p-3 bg-background rounded-md">
-                      <p className="text-xs text-muted-foreground mb-1">xA (adj.)</p>
-                      <p className="font-bold text-lg">{analysis.striker_stats.xA_adj.toFixed(3)}</p>
-                      {analysis.striker_stats.xA_adj_per90 !== undefined && analysis.striker_stats.xA_adj_per90 !== null && (
-                        <p className="text-xs text-muted-foreground mt-1">per 90: {analysis.striker_stats.xA_adj_per90.toFixed(3)}</p>
-                      )}
-                    </div>
-                  )}
-                  {analysis.striker_stats.movement_in_behind_xC !== undefined && analysis.striker_stats.movement_in_behind_xC !== null && (
-                    <div className="text-center p-3 bg-background rounded-md">
-                      <p className="text-xs text-muted-foreground mb-1">Movement In Behind xC</p>
-                      <p className="font-bold text-lg">{analysis.striker_stats.movement_in_behind_xC.toFixed(3)}</p>
-                      {analysis.striker_stats.movement_in_behind_xC_per90 !== undefined && analysis.striker_stats.movement_in_behind_xC_per90 !== null && (
-                        <p className="text-xs text-muted-foreground mt-1">per 90: {analysis.striker_stats.movement_in_behind_xC_per90.toFixed(3)}</p>
-                      )}
-                    </div>
-                  )}
-                  {analysis.striker_stats.movement_down_side_xC !== undefined && analysis.striker_stats.movement_down_side_xC !== null && (
-                    <div className="text-center p-3 bg-background rounded-md">
-                      <p className="text-xs text-muted-foreground mb-1">Movement Down Side xC</p>
-                      <p className="font-bold text-lg">{analysis.striker_stats.movement_down_side_xC.toFixed(3)}</p>
-                      {analysis.striker_stats.movement_down_side_xC_per90 !== undefined && analysis.striker_stats.movement_down_side_xC_per90 !== null && (
-                        <p className="text-xs text-muted-foreground mt-1">per 90: {analysis.striker_stats.movement_down_side_xC_per90.toFixed(3)}</p>
-                      )}
-                    </div>
-                  )}
-                  {analysis.striker_stats.triple_threat_xC !== undefined && analysis.striker_stats.triple_threat_xC !== null && (
-                    <div className="text-center p-3 bg-background rounded-md">
-                      <p className="text-xs text-muted-foreground mb-1">Triple Threat xC</p>
-                      <p className="font-bold text-lg">{analysis.striker_stats.triple_threat_xC.toFixed(3)}</p>
-                      {analysis.striker_stats.triple_threat_xC_per90 !== undefined && analysis.striker_stats.triple_threat_xC_per90 !== null && (
-                        <p className="text-xs text-muted-foreground mt-1">per 90: {analysis.striker_stats.triple_threat_xC_per90.toFixed(3)}</p>
-                      )}
-                    </div>
-                  )}
-                  {analysis.striker_stats.movement_to_feet_xC !== undefined && analysis.striker_stats.movement_to_feet_xC !== null && (
-                    <div className="text-center p-3 bg-background rounded-md">
-                      <p className="text-xs text-muted-foreground mb-1">Movement To Feet xC</p>
-                      <p className="font-bold text-lg">{analysis.striker_stats.movement_to_feet_xC.toFixed(3)}</p>
-                      {analysis.striker_stats.movement_to_feet_xC_per90 !== undefined && analysis.striker_stats.movement_to_feet_xC_per90 !== null && (
-                        <p className="text-xs text-muted-foreground mt-1">per 90: {analysis.striker_stats.movement_to_feet_xC_per90.toFixed(3)}</p>
-                      )}
-                    </div>
-                  )}
-                  {analysis.striker_stats.crossing_movement_xC !== undefined && analysis.striker_stats.crossing_movement_xC !== null && (
-                    <div className="text-center p-3 bg-background rounded-md">
-                      <p className="text-xs text-muted-foreground mb-1">Crossing Movement xC</p>
-                      <p className="font-bold text-lg">{analysis.striker_stats.crossing_movement_xC.toFixed(3)}</p>
-                      {analysis.striker_stats.crossing_movement_xC_per90 !== undefined && analysis.striker_stats.crossing_movement_xC_per90 !== null && (
-                        <p className="text-xs text-muted-foreground mt-1">per 90: {analysis.striker_stats.crossing_movement_xC_per90.toFixed(3)}</p>
-                      )}
-                    </div>
-                  )}
-                  {analysis.striker_stats.interceptions !== undefined && analysis.striker_stats.interceptions !== null && (
-                    <div className="text-center p-3 bg-background rounded-md">
-                      <p className="text-xs text-muted-foreground mb-1">Interceptions</p>
-                      <p className="font-bold text-lg">{analysis.striker_stats.interceptions}</p>
-                      {analysis.striker_stats.interceptions_per90 !== undefined && analysis.striker_stats.interceptions_per90 !== null && (
-                        <p className="text-xs text-muted-foreground mt-1">per 90: {analysis.striker_stats.interceptions_per90.toFixed(2)}</p>
-                      )}
-                    </div>
-                  )}
-                  {analysis.striker_stats.regains_adj !== undefined && analysis.striker_stats.regains_adj !== null && (
-                    <div className="text-center p-3 bg-background rounded-md">
-                      <p className="text-xs text-muted-foreground mb-1">Regains (adj.)</p>
-                      <p className="font-bold text-lg">{analysis.striker_stats.regains_adj}</p>
-                      {analysis.striker_stats.regains_adj_per90 !== undefined && analysis.striker_stats.regains_adj_per90 !== null && (
-                        <p className="text-xs text-muted-foreground mt-1">per 90: {analysis.striker_stats.regains_adj_per90.toFixed(2)}</p>
-                      )}
-                    </div>
-                  )}
-                  {analysis.striker_stats.turnovers_adj !== undefined && analysis.striker_stats.turnovers_adj !== null && (
-                    <div className="text-center p-3 bg-background rounded-md">
-                      <p className="text-xs text-muted-foreground mb-1">Turnovers (adj.)</p>
-                      <p className="font-bold text-lg">{analysis.striker_stats.turnovers_adj}</p>
-                      {analysis.striker_stats.turnovers_adj_per90 !== undefined && analysis.striker_stats.turnovers_adj_per90 !== null && (
-                        <p className="text-xs text-muted-foreground mt-1">per 90: {analysis.striker_stats.turnovers_adj_per90.toFixed(2)}</p>
-                      )}
-                    </div>
-                  )}
-                  {analysis.striker_stats.progressive_passes_adj !== undefined && analysis.striker_stats.progressive_passes_adj !== null && (
-                    <div className="text-center p-3 bg-background rounded-md">
-                      <p className="text-xs text-muted-foreground mb-1">Progressive Passes (adj.)</p>
-                      <p className="font-bold text-lg">{analysis.striker_stats.progressive_passes_adj}</p>
-                      {analysis.striker_stats.progressive_passes_adj_per90 !== undefined && analysis.striker_stats.progressive_passes_adj_per90 !== null && (
-                        <p className="text-xs text-muted-foreground mt-1">per 90: {analysis.striker_stats.progressive_passes_adj_per90.toFixed(2)}</p>
-                      )}
-                    </div>
-                  )}
+                  {Object.entries(analysis.striker_stats)
+                    .filter(([key, value]) => value !== null && value !== undefined && !key.includes('_per90'))
+                    .map(([key, value]) => {
+                      const per90Key = `${key}_per90`;
+                      const per90Value = analysis.striker_stats![per90Key];
+                      const displayName = key
+                        .replace(/_/g, ' ')
+                        .replace(/\b\w/g, l => l.toUpperCase())
+                        .replace(/Xg/g, 'xG')
+                        .replace(/Xa/g, 'xA')
+                        .replace(/Xc/g, 'xC')
+                        .replace(/Adj/g, '(adj.)');
+                      
+                      return (
+                        <div key={key} className="text-center p-3 bg-background rounded-md">
+                          <p className="text-xs text-muted-foreground mb-1">{displayName}</p>
+                          <p className="font-bold text-lg">
+                            {typeof value === 'number' && value < 10 ? value.toFixed(3) : value}
+                          </p>
+                          {per90Value !== undefined && per90Value !== null && (
+                            <p className="text-xs text-muted-foreground mt-1">
+                              per 90: {typeof per90Value === 'number' && per90Value < 10 ? per90Value.toFixed(3) : per90Value}
+                            </p>
+                          )}
+                        </div>
+                      );
+                    })}
                 </div>
               </div>
             )}
