@@ -213,7 +213,7 @@ export const CreatePerformanceReportDialog = ({
         setActions(
           actionsData.map((action) => ({
             action_number: action.action_number,
-            minute: action.minute.toString(),
+            minute: Number(action.minute).toFixed(2), // Format as M.SS with trailing zeros
             action_score: action.action_score.toString(),
             action_type: action.action_type,
             action_description: action.action_description,
