@@ -402,9 +402,9 @@ export const CreatePerformanceReportDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-2xl lg:max-w-6xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{analysisId ? 'Edit' : 'Create'} Performance Report - {playerName}</DialogTitle>
+          <DialogTitle className="text-lg sm:text-xl">{analysisId ? 'Edit' : 'Create'} Performance Report - {playerName}</DialogTitle>
         </DialogHeader>
 
         {loadingData ? (
@@ -412,7 +412,7 @@ export const CreatePerformanceReportDialog = ({
             <div className="text-center">Loading...</div>
           </div>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
           {/* Fixture Selection */}
           <div>
             <Label htmlFor="fixture">Select Fixture *</Label>
@@ -432,7 +432,7 @@ export const CreatePerformanceReportDialog = ({
           </div>
 
           {/* Key Stats */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="r90">R90 Score *</Label>
               <Input
@@ -477,12 +477,12 @@ export const CreatePerformanceReportDialog = ({
           {/* Optional Striker Stats */}
           <Collapsible open={showStrikerStats} onOpenChange={setShowStrikerStats}>
             <CollapsibleTrigger asChild>
-              <Button variant="outline" className="w-full">
+              <Button variant="outline" className="w-full text-sm sm:text-base">
                 {showStrikerStats ? "Hide" : "Show"} Additional Statistics (Optional)
               </Button>
             </CollapsibleTrigger>
             <CollapsibleContent className="mt-4 space-y-4">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div>
                   <Label>xGChain</Label>
                   <Input
@@ -702,87 +702,89 @@ export const CreatePerformanceReportDialog = ({
           {/* Performance Actions */}
           <div>
             <div className="mb-4">
-              <Label className="text-lg font-semibold">Performance Actions *</Label>
+              <Label className="text-base sm:text-lg font-semibold">Performance Actions *</Label>
             </div>
 
-            <div className="overflow-x-auto border rounded-lg">
-              <table className="w-full min-w-full">
-                <thead className="bg-accent">
-                  <tr>
-                    <th className="text-left p-2 text-sm font-semibold">#</th>
-                    <th className="text-left p-2 text-sm font-semibold">Minute</th>
-                    <th className="text-left p-2 text-sm font-semibold">Score</th>
-                    <th className="text-left p-2 text-sm font-semibold">Action Type</th>
-                    <th className="text-left p-2 text-sm font-semibold">Description</th>
-                    <th className="text-left p-2 text-sm font-semibold">Notes</th>
-                    <th className="w-12"></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {actions.map((action, index) => (
-                    <tr key={index} className="border-t">
-                      <td className="p-2">{action.action_number}</td>
-                      <td className="p-2">
-                        <Input
-                          type="number"
-                          step="0.01"
-                          value={action.minute}
-                          onChange={(e) => updateAction(index, "minute", e.target.value)}
-                          placeholder="e.g., 23.5"
-                          className="w-24"
-                        />
-                      </td>
-                      <td className="p-2">
-                        <Input
-                          type="number"
-                          step="0.00001"
-                          value={action.action_score}
-                          onChange={(e) => updateAction(index, "action_score", e.target.value)}
-                          placeholder="e.g., 0.15"
-                          className="w-28"
-                        />
-                      </td>
-                      <td className="p-2">
-                        <Input
-                          value={action.action_type}
-                          onChange={(e) => updateAction(index, "action_type", e.target.value)}
-                          placeholder="e.g., Shot"
-                          className="w-32"
-                        />
-                      </td>
-                      <td className="p-2">
-                        <Textarea
-                          value={action.action_description}
-                          onChange={(e) => updateAction(index, "action_description", e.target.value)}
-                          placeholder="Describe the action"
-                          className="min-w-[200px] min-h-[40px]"
-                          rows={1}
-                        />
-                      </td>
-                      <td className="p-2">
-                        <Textarea
-                          value={action.notes}
-                          onChange={(e) => updateAction(index, "notes", e.target.value)}
-                          placeholder="Optional notes"
-                          className="min-w-[150px] min-h-[40px]"
-                          rows={1}
-                        />
-                      </td>
-                      <td className="p-2">
-                        <Button
-                          onClick={() => removeAction(index)}
-                          size="icon"
-                          variant="ghost"
-                          className="text-destructive"
-                          disabled={actions.length === 1}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </td>
+            <div className="overflow-x-auto border rounded-lg -mx-2 sm:mx-0">
+              <div className="min-w-[800px] sm:min-w-full">
+                <table className="w-full">
+                  <thead className="bg-accent">
+                    <tr>
+                      <th className="text-left p-2 text-xs sm:text-sm font-semibold">#</th>
+                      <th className="text-left p-2 text-xs sm:text-sm font-semibold">Minute</th>
+                      <th className="text-left p-2 text-xs sm:text-sm font-semibold">Score</th>
+                      <th className="text-left p-2 text-xs sm:text-sm font-semibold">Type</th>
+                      <th className="text-left p-2 text-xs sm:text-sm font-semibold">Description</th>
+                      <th className="text-left p-2 text-xs sm:text-sm font-semibold">Notes</th>
+                      <th className="w-12"></th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {actions.map((action, index) => (
+                      <tr key={index} className="border-t">
+                        <td className="p-2 text-sm">{action.action_number}</td>
+                        <td className="p-2">
+                          <Input
+                            type="number"
+                            step="0.01"
+                            value={action.minute}
+                            onChange={(e) => updateAction(index, "minute", e.target.value)}
+                            placeholder="23.5"
+                            className="w-20 text-sm"
+                          />
+                        </td>
+                        <td className="p-2">
+                          <Input
+                            type="number"
+                            step="0.00001"
+                            value={action.action_score}
+                            onChange={(e) => updateAction(index, "action_score", e.target.value)}
+                            placeholder="0.15"
+                            className="w-24 text-sm"
+                          />
+                        </td>
+                        <td className="p-2">
+                          <Input
+                            value={action.action_type}
+                            onChange={(e) => updateAction(index, "action_type", e.target.value)}
+                            placeholder="Shot"
+                            className="w-28 text-sm"
+                          />
+                        </td>
+                        <td className="p-2">
+                          <Textarea
+                            value={action.action_description}
+                            onChange={(e) => updateAction(index, "action_description", e.target.value)}
+                            placeholder="Describe"
+                            className="min-w-[180px] min-h-[40px] text-sm"
+                            rows={1}
+                          />
+                        </td>
+                        <td className="p-2">
+                          <Textarea
+                            value={action.notes}
+                            onChange={(e) => updateAction(index, "notes", e.target.value)}
+                            placeholder="Notes"
+                            className="min-w-[140px] min-h-[40px] text-sm"
+                            rows={1}
+                          />
+                        </td>
+                        <td className="p-2">
+                          <Button
+                            onClick={() => removeAction(index)}
+                            size="icon"
+                            variant="ghost"
+                            className="text-destructive h-8 w-8"
+                            disabled={actions.length === 1}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
             
             <div className="mt-4">
@@ -794,11 +796,11 @@ export const CreatePerformanceReportDialog = ({
           </div>
 
           {/* Save Button */}
-          <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
+          <div className="flex flex-col sm:flex-row justify-end gap-2">
+            <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading} className="w-full sm:w-auto">
               Cancel
             </Button>
-            <Button onClick={handleSave} disabled={loading}>
+            <Button onClick={handleSave} disabled={loading} className="w-full sm:w-auto">
               {loading ? (analysisId ? "Updating..." : "Creating...") : (analysisId ? "Update Report" : "Create Report")}
             </Button>
           </div>
