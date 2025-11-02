@@ -2565,7 +2565,6 @@ const PlayerManagement = () => {
                             >
                               <Plus className="w-4 h-4 sm:mr-2" />
                               <span className="hidden sm:inline">Add Performance Report</span>
-                              <span className="sm:hidden">Add Perf</span>
                             </Button>
                           </div>
                           
