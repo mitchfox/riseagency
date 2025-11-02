@@ -9,7 +9,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Plus, Edit, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, Edit, Trash2, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Database } from "lucide-react";
+import { ExerciseDatabaseSelector } from "./ExerciseDatabaseSelector";
 
 
 type TableType = 'coaching_sessions' | 'coaching_programmes' | 'coaching_drills' | 'coaching_exercises' | 'coaching_analysis' | 'psychological_sessions' | 'coaching_aphorisms';
@@ -96,6 +97,9 @@ export const CoachingDatabase = () => {
   const [loading, setLoading] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<CoachingItem | null>(null);
+  const [isExerciseSelectorOpen, setIsExerciseSelectorOpen] = useState(false);
+  const [showPasteDialog, setShowPasteDialog] = useState(false);
+  const [pasteText, setPasteText] = useState("");
   const [formData, setFormData] = useState<any>({
     title: '',
     description: '',
@@ -231,6 +235,69 @@ export const CoachingDatabase = () => {
   };
 
   const totalPages = Math.ceil(totalItems / itemsPerPage);
+
+  const moveExercise = (index: number, direction: 'up' | 'down') => {
+    const exercises = [...(formData.exercises || [])];
+    
+    if (direction === 'up' && index > 0) {
+      [exercises[index - 1], exercises[index]] = [exercises[index], exercises[index - 1]];
+    } else if (direction === 'down' && index < exercises.length - 1) {
+      [exercises[index], exercises[index + 1]] = [exercises[index + 1], exercises[index]];
+    }
+    
+    setFormData({ ...formData, exercises });
+  };
+
+  const parsePastedExercises = () => {
+    if (!pasteText.trim()) {
+      toast.error("Please paste exercise data");
+      return;
+    }
+
+    const lines = pasteText.trim().split('\n').filter(line => line.trim());
+    const newExercises: Exercise[] = [];
+
+    for (const line of lines) {
+      const fields = line.split('\t').map(f => f.trim());
+      
+      if (fields.length < 4) {
+        console.warn(`Skipping invalid line (needs at least 4 fields): ${line.substring(0, 50)}...`);
+        continue;
+      }
+
+      const exercise: Exercise = {
+        name: fields[0] || '',
+        description: fields[1] || '',
+        repetitions: fields[2] || '',
+        sets: fields[3] || '',
+        load: fields[4] || '',
+        recoveryTime: fields[5] || '',
+        videoUrl: fields[6] || '',
+      };
+
+      newExercises.push(exercise);
+    }
+
+    if (newExercises.length > 0) {
+      setFormData({
+        ...formData,
+        exercises: [...(formData.exercises || []), ...newExercises]
+      });
+
+      toast.success(`Added ${newExercises.length} exercise${newExercises.length > 1 ? 's' : ''}`);
+      setShowPasteDialog(false);
+      setPasteText("");
+    } else {
+      toast.error("No valid exercises found in pasted data");
+    }
+  };
+
+  const addExerciseFromDatabase = (exercise: Exercise) => {
+    setFormData({
+      ...formData,
+      exercises: [...(formData.exercises || []), exercise]
+    });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -482,22 +549,41 @@ export const CoachingDatabase = () => {
                             
                             <div className="flex items-center justify-between border-t pt-4">
                               <Label className="text-lg font-semibold">Session Exercises</Label>
-                              <Button
-                                type="button"
-                                size="sm"
-                                onClick={() => {
-                                  setFormData({
-                                    ...formData,
-                                    exercises: [
-                                      ...(formData.exercises || []),
-                                      { name: '', description: '', repetitions: '', sets: '', load: '', recoveryTime: '', videoUrl: '' }
-                                    ]
-                                  });
-                                }}
-                              >
-                                <Plus className="w-4 h-4 mr-2" />
-                                Add Exercise
-                              </Button>
+                              <div className="flex gap-2">
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => setIsExerciseSelectorOpen(true)}
+                                >
+                                  <Database className="w-4 h-4 mr-2" />
+                                  From Database
+                                </Button>
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => setShowPasteDialog(true)}
+                                >
+                                  📋 Paste Exercises
+                                </Button>
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  onClick={() => {
+                                    setFormData({
+                                      ...formData,
+                                      exercises: [
+                                        ...(formData.exercises || []),
+                                        { name: '', description: '', repetitions: '', sets: '', load: '', recoveryTime: '', videoUrl: '' }
+                                      ]
+                                    });
+                                  }}
+                                >
+                                  <Plus className="w-4 h-4 mr-2" />
+                                  Add Manual
+                                </Button>
+                              </div>
                             </div>
 
                             {formData.exercises && formData.exercises.length > 0 ? (
@@ -505,6 +591,7 @@ export const CoachingDatabase = () => {
                                 <table className="w-full">
                                   <thead className="bg-muted">
                                     <tr>
+                                      <th className="p-2 text-left text-xs font-semibold w-20">Order</th>
                                       <th className="p-2 text-left text-xs font-semibold">Exercise Name</th>
                                       <th className="p-2 text-left text-xs font-semibold">Description</th>
                                       <th className="p-2 text-left text-xs font-semibold w-20">Reps</th>
@@ -518,6 +605,30 @@ export const CoachingDatabase = () => {
                                   <tbody>
                                     {formData.exercises.map((exercise: Exercise, idx: number) => (
                                       <tr key={idx} className="border-t hover:bg-muted/50">
+                                        <td className="p-2">
+                                          <div className="flex gap-1">
+                                            <Button
+                                              type="button"
+                                              variant="ghost"
+                                              size="icon"
+                                              className="h-8 w-8"
+                                              onClick={() => moveExercise(idx, 'up')}
+                                              disabled={idx === 0}
+                                            >
+                                              <ChevronUp className="w-4 h-4" />
+                                            </Button>
+                                            <Button
+                                              type="button"
+                                              variant="ghost"
+                                              size="icon"
+                                              className="h-8 w-8"
+                                              onClick={() => moveExercise(idx, 'down')}
+                                              disabled={idx === formData.exercises.length - 1}
+                                            >
+                                              <ChevronDown className="w-4 h-4" />
+                                            </Button>
+                                          </div>
+                                        </td>
                                         <td className="p-2">
                                           <Input
                                             placeholder="Exercise name"
@@ -623,7 +734,7 @@ export const CoachingDatabase = () => {
                             ) : (
                               <div className="text-center py-8 border rounded-lg bg-muted/20">
                                 <p className="text-sm text-muted-foreground">No exercises added yet.</p>
-                                <p className="text-xs text-muted-foreground mt-1">Click "Add Exercise" above to add exercises to this session.</p>
+                                <p className="text-xs text-muted-foreground mt-1">Use the buttons above to add exercises.</p>
                               </div>
                             )}
                           </div>
@@ -966,6 +1077,44 @@ export const CoachingDatabase = () => {
           </TabsContent>
         ))}
       </Tabs>
+
+      <ExerciseDatabaseSelector
+        isOpen={isExerciseSelectorOpen}
+        onClose={() => setIsExerciseSelectorOpen(false)}
+        onSelect={addExerciseFromDatabase}
+      />
+
+      <Dialog open={showPasteDialog} onOpenChange={setShowPasteDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Paste Exercises</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Paste tab-separated exercise data. Each line should have fields in this order:<br/>
+              <strong>Name → Description → Reps → Sets → Load → Recovery → Video URL</strong>
+            </p>
+            <Textarea
+              value={pasteText}
+              onChange={(e) => setPasteText(e.target.value)}
+              placeholder="Paste your exercise data here..."
+              rows={10}
+              className="font-mono text-sm"
+            />
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => {
+                setShowPasteDialog(false);
+                setPasteText("");
+              }}>
+                Cancel
+              </Button>
+              <Button onClick={parsePastedExercises}>
+                Import Exercises
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
