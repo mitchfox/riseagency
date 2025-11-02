@@ -610,7 +610,7 @@ const Dashboard = () => {
 
           {dailyAphorism && (
             <div className="mb-4 px-4 md:px-0">
-              <Card className="relative overflow-hidden border-gold bg-gold">
+              <Card className="relative overflow-hidden border-gold bg-gold/30">
                 <CardContent className="relative py-5 px-3 text-center space-y-3">
                   <div className="bg-black/90 backdrop-blur-sm p-3 rounded-lg inline-block">
                     <p className="text-base md:text-xl font-bold text-gold leading-relaxed tracking-wide">
