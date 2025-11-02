@@ -135,9 +135,9 @@ const PerformanceReport = () => {
     return "text-red-700 font-bold"; // Dark red for major errors
   };
 
-  const calculateRScore = () => {
+  const calculateRScore = (): number => {
     const totalScore = actions.reduce((sum, action) => sum + action.action_score, 0);
-    return totalScore.toFixed(5);
+    return totalScore;
   };
 
   if (loading) {
@@ -208,11 +208,16 @@ const PerformanceReport = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-accent/20 rounded-lg">
               <div className="text-center">
                 <p className="text-xs md:text-sm text-muted-foreground mb-1">Raw Score</p>
-                <p className="text-xl md:text-2xl font-bold">{calculateRScore()}</p>
+                <p className="text-xl md:text-2xl font-bold">{calculateRScore().toFixed(5)}</p>
               </div>
               <div className="text-center bg-primary text-primary-foreground rounded-lg p-4">
                 <p className="text-xs md:text-sm mb-1 opacity-90">R90 Score</p>
-                <p className="text-2xl md:text-3xl font-bold">{analysis.r90_score?.toFixed(2) || "N/A"}</p>
+                <p className="text-2xl md:text-3xl font-bold">
+                  {analysis.minutes_played 
+                    ? ((calculateRScore() / analysis.minutes_played) * 90).toFixed(2)
+                    : "N/A"
+                  }
+                </p>
               </div>
               <div className="text-center">
                 <p className="text-xs md:text-sm text-muted-foreground mb-1">Minutes Played</p>
