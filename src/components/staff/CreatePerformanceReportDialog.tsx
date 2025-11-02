@@ -7,7 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, AlertTriangle } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 interface CreatePerformanceReportDialogProps {
@@ -48,6 +49,7 @@ export const CreatePerformanceReportDialog = ({
 }: CreatePerformanceReportDialogProps) => {
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [fixtures, setFixtures] = useState<Fixture[]>([]);
   const [selectedFixtureId, setSelectedFixtureId] = useState<string>("");
   const [showStrikerStats, setShowStrikerStats] = useState(false);
@@ -292,6 +294,38 @@ export const CreatePerformanceReportDialog = ({
     const newActions = [...actions];
     newActions[index] = { ...newActions[index], [field]: value };
     setActions(newActions);
+  };
+
+  const handleDelete = async () => {
+    if (!analysisId) return;
+
+    setDeleting(true);
+    try {
+      // Delete performance actions first
+      const { error: actionsError } = await supabase
+        .from("performance_report_actions")
+        .delete()
+        .eq("analysis_id", analysisId);
+
+      if (actionsError) throw actionsError;
+
+      // Delete the analysis record
+      const { error: analysisError } = await supabase
+        .from("player_analysis")
+        .delete()
+        .eq("id", analysisId);
+
+      if (analysisError) throw analysisError;
+
+      toast.success("Performance report deleted successfully");
+      onOpenChange(false);
+      if (onSuccess) onSuccess();
+    } catch (error: any) {
+      console.error("Error deleting performance report:", error);
+      toast.error("Failed to delete performance report: " + error.message);
+    } finally {
+      setDeleting(false);
+    }
   };
 
   const handleSave = async () => {
@@ -875,14 +909,43 @@ export const CreatePerformanceReportDialog = ({
             </div>
           </div>
 
-          {/* Save Button */}
-          <div className="flex flex-col sm:flex-row justify-end gap-2">
-            <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading} className="w-full sm:w-auto">
-              Cancel
-            </Button>
-            <Button onClick={handleSave} disabled={loading} className="w-full sm:w-auto">
-              {loading ? (analysisId ? "Updating..." : "Creating...") : (analysisId ? "Update Report" : "Create Report")}
-            </Button>
+          {/* Save and Delete Buttons */}
+          <div className="flex flex-col sm:flex-row justify-between gap-2">
+            {analysisId && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" disabled={deleting || loading} className="w-full sm:w-auto">
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    {deleting ? "Deleting..." : "Delete Report"}
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle className="flex items-center gap-2">
+                      <AlertTriangle className="h-5 w-5 text-destructive" />
+                      Delete Performance Report
+                    </AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Are you sure you want to delete this performance report? This will permanently delete all associated data including performance actions. This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
+                      Delete
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
+            <div className="flex flex-col sm:flex-row gap-2 sm:ml-auto">
+              <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading || deleting} className="w-full sm:w-auto">
+                Cancel
+              </Button>
+              <Button onClick={handleSave} disabled={loading || deleting} className="w-full sm:w-auto">
+                {loading ? (analysisId ? "Updating..." : "Creating...") : (analysisId ? "Update Report" : "Create Report")}
+              </Button>
+            </div>
           </div>
         </div>
         )}
