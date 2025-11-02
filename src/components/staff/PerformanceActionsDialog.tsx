@@ -288,9 +288,9 @@ export const PerformanceActionsDialog = ({
                     <div className="min-w-[40px] font-bold text-muted-foreground">#{action.action_number}</div>
                     <div className="flex-1 space-y-1">
                       <div className="flex items-center gap-3">
-                        <span className="text-sm text-muted-foreground">{action.minute.toFixed(2)}'</span>
-                        <span className={`text-sm font-mono ${getActionScoreColor(action.action_score)}`}>
-                          {action.action_score.toFixed(5)}
+                        <span className="text-sm text-muted-foreground">{(action.minute ?? 0).toFixed(2)}'</span>
+                        <span className={`text-sm font-mono ${getActionScoreColor(action.action_score ?? 0)}`}>
+                          {(action.action_score ?? 0).toFixed(5)}
                         </span>
                         <span className="font-semibold">{action.action_type}</span>
                       </div>
