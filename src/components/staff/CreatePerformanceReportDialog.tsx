@@ -334,8 +334,8 @@ export const CreatePerformanceReportDialog = ({
       toast.error("Please select a fixture");
       return;
     }
-    if (!r90Score || !minutesPlayed) {
-      toast.error("Please fill in R90 Score and Minutes Played");
+    if (!minutesPlayed) {
+      toast.error("Please fill in Minutes Played");
       return;
     }
     if (actions.length === 0 || !actions[0].minute) {
@@ -347,6 +347,10 @@ export const CreatePerformanceReportDialog = ({
 
     try {
       const fixture = fixtures.find(f => f.id === selectedFixtureId);
+      
+      // Calculate R90 from actions
+      const rawScore = actions.reduce((sum, a) => sum + (parseFloat(a.action_score) || 0), 0);
+      const calculatedR90 = (rawScore / parseInt(minutesPlayed)) * 90;
       
       // Prepare striker stats JSONB
       const hasStrikerStats = Object.values(strikerStats).some(v => v !== "");
@@ -365,7 +369,7 @@ export const CreatePerformanceReportDialog = ({
           .update({
             fixture_id: selectedFixtureId,
             analysis_date: fixture?.match_date,
-            r90_score: parseFloat(r90Score),
+            r90_score: calculatedR90,
             minutes_played: parseInt(minutesPlayed),
             opponent: opponent,
             result: result || null,
@@ -390,7 +394,7 @@ export const CreatePerformanceReportDialog = ({
             player_id: playerId,
             fixture_id: selectedFixtureId,
             analysis_date: fixture?.match_date,
-            r90_score: parseFloat(r90Score),
+            r90_score: calculatedR90,
             minutes_played: parseInt(minutesPlayed),
             opponent: opponent,
             result: result || null,
