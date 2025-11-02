@@ -88,6 +88,11 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, onViewR
     match_date: "",
     minutes_played: "",
     notes: "",
+    r90_score: "",
+    striker_shots: "",
+    striker_touches: "",
+    striker_duels_won: "",
+    striker_successful_dribbles: "",
     pdf_file: null as File | null,
     video_file: null as File | null,
     performance_report_file: null as File | null,
@@ -292,6 +297,11 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, onViewR
           match_date: playerFixture.fixtures.match_date,
           minutes_played: playerFixture.minutes_played?.toString() || "",
           notes: analysisData?.notes || "",
+          r90_score: analysisData?.r90_score?.toString() || "",
+          striker_shots: (analysisData?.striker_stats as any)?.shots?.toString() || "",
+          striker_touches: (analysisData?.striker_stats as any)?.touches?.toString() || "",
+          striker_duels_won: (analysisData?.striker_stats as any)?.duels_won?.toString() || "",
+          striker_successful_dribbles: (analysisData?.striker_stats as any)?.successful_dribbles?.toString() || "",
           pdf_file: null,
           video_file: null,
           performance_report_file: null,
@@ -308,6 +318,11 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, onViewR
           match_date: "",
           minutes_played: "",
           notes: "",
+          r90_score: "",
+          striker_shots: "",
+          striker_touches: "",
+          striker_duels_won: "",
+          striker_successful_dribbles: "",
           pdf_file: null,
           video_file: null,
           performance_report_file: null,
@@ -638,6 +653,13 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, onViewR
       }
 
       // Create or update player_analysis
+      const strikerStats = {
+        shots: editGameData.striker_shots ? parseInt(editGameData.striker_shots) : null,
+        touches: editGameData.striker_touches ? parseInt(editGameData.striker_touches) : null,
+        duels_won: editGameData.striker_duels_won ? parseInt(editGameData.striker_duels_won) : null,
+        successful_dribbles: editGameData.striker_successful_dribbles ? parseInt(editGameData.striker_successful_dribbles) : null,
+      };
+
       const analysisPayload = {
         player_id: playerId,
         fixture_id: editingPlayerFixture.fixture_id,
@@ -646,6 +668,8 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, onViewR
         result: editGameData.result,
         minutes_played: minutesValue,
         notes: editGameData.notes,
+        r90_score: editGameData.r90_score ? parseFloat(editGameData.r90_score) : null,
+        striker_stats: strikerStats,
         pdf_url: pdfUrl,
         video_url: videoUrl,
         analysis_writer_id: editGameData.analysis_writer_id || null,
@@ -870,6 +894,66 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, onViewR
                   rows={3}
                   placeholder="e.g., Strong match performance with excellent positioning"
                 />
+              </div>
+
+              <div className="border-t pt-4">
+                <h4 className="font-semibold mb-3">Performance Report Data</h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="edit_r90">R90 Score</Label>
+                    <Input
+                      id="edit_r90"
+                      type="number"
+                      step="0.01"
+                      value={editGameData.r90_score}
+                      onChange={(e) => setEditGameData({ ...editGameData, r90_score: e.target.value })}
+                      placeholder="e.g., 1.45"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Leave blank or upload CSV to auto-calculate
+                    </p>
+                  </div>
+                  <div>
+                    <Label htmlFor="edit_striker_shots">Striker: Shots</Label>
+                    <Input
+                      id="edit_striker_shots"
+                      type="number"
+                      value={editGameData.striker_shots}
+                      onChange={(e) => setEditGameData({ ...editGameData, striker_shots: e.target.value })}
+                      placeholder="Optional"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="edit_striker_touches">Striker: Touches</Label>
+                    <Input
+                      id="edit_striker_touches"
+                      type="number"
+                      value={editGameData.striker_touches}
+                      onChange={(e) => setEditGameData({ ...editGameData, striker_touches: e.target.value })}
+                      placeholder="Optional"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="edit_striker_duels">Striker: Duels Won</Label>
+                    <Input
+                      id="edit_striker_duels"
+                      type="number"
+                      value={editGameData.striker_duels_won}
+                      onChange={(e) => setEditGameData({ ...editGameData, striker_duels_won: e.target.value })}
+                      placeholder="Optional"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="edit_striker_dribbles">Striker: Successful Dribbles</Label>
+                    <Input
+                      id="edit_striker_dribbles"
+                      type="number"
+                      value={editGameData.striker_successful_dribbles}
+                      onChange={(e) => setEditGameData({ ...editGameData, striker_successful_dribbles: e.target.value })}
+                      placeholder="Optional"
+                    />
+                  </div>
+                </div>
               </div>
 
               <div>
