@@ -1,6 +1,7 @@
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { PlayerCard } from "@/components/PlayerCard";
+import { SEO } from "@/components/SEO";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -159,6 +160,12 @@ const Stars = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO 
+        title="Our Stars - Professional Football Players | RISE Agency"
+        description="Meet our talented roster of professional footballers across Europe. View player profiles, positions, and clubs from our extensive network."
+        image="/og-preview-stars.png"
+        url="/stars"
+      />
       <Header />
       
       <main className="pt-24 md:pt-16">

@@ -2,6 +2,7 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { SEO } from "@/components/SEO";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ChevronDown } from "lucide-react";
 import bannerHero from "@/assets/banner-hero.jpg";
@@ -13,6 +14,12 @@ import coachesNetwork from "@/assets/coaches-network.jpg";
 const Coaches = () => {
   return (
     <div className="min-h-screen bg-background" key="coaches-page">
+      <SEO 
+        title="For Coaches - Professional Representation | RISE Agency"
+        description="Professional representation for coaching excellence. We showcase your achievements, foster connections, and secure the best opportunities that reflect your coaching expertise."
+        image="/og-preview-coaches.png"
+        url="/coaches"
+      />
       <Header />
       
       <main className="pt-24 md:pt-16">

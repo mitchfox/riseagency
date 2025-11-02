@@ -2,11 +2,18 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { SEO } from "@/components/SEO";
 import bannerHero from "@/assets/banner-hero.jpg";
 
 const About = () => {
   return (
     <div className="min-h-screen bg-background">
+      <SEO 
+        title="About RISE - Premier Football Agency | Player Representation"
+        description="RISE Football Agency is a premier sports management agency specializing in football player representation. Founded on integrity, dedication, and excellence."
+        image="/og-preview-about.png"
+        url="/about"
+      />
       <Header />
       
       <main className="pt-24 md:pt-16 touch-pan-y overflow-x-hidden">

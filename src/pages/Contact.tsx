@@ -1,4 +1,5 @@
 import { Header } from "@/components/Header";
+import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { MessageCircle, Mail } from "lucide-react";
 
@@ -57,6 +58,12 @@ const contactSections: ContactSection[] = [
 const Contact = () => {
   return (
     <>
+      <SEO 
+        title="Contact Us - Get in Touch | RISE Football Agency"
+        description="Get in touch with RISE Football Agency. Contact our team for player representation, club partnerships, media inquiries, and more."
+        image="/og-preview-contact.png"
+        url="/contact"
+      />
       <Header />
       <div className="min-h-screen bg-background pt-24 md:pt-16 touch-pan-y overflow-x-hidden">
         {/* Page Header */}

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Header } from "@/components/Header";
+import { SEO } from "@/components/SEO";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -83,6 +84,12 @@ const News = () => {
 
   return (
     <>
+      <SEO 
+        title={currentArticle ? currentArticle.title : "Latest News - RISE Football Agency"}
+        description={currentArticle ? currentArticle.excerpt : "Stay updated with the latest news from RISE Football Agency and our talented roster of players."}
+        image={currentArticle?.image_url || "/og-preview-news.png"}
+        url={articleId ? `/news/${articleId}` : "/news"}
+      />
       <Header />
       <div className="min-h-screen bg-background pt-24 md:pt-16 touch-pan-y overflow-x-hidden">
         <div className="container mx-auto px-4 py-24">

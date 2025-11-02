@@ -2,11 +2,18 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { SEO } from "@/components/SEO";
 import bannerHero from "@/assets/banner-hero.jpg";
 
 const NewPerformance = () => {
   return (
     <div className="min-h-screen bg-background">
+      <SEO 
+        title="Performance Analysis - Data-Driven Player Development | RISE"
+        description="Maximize player potential through data-driven insights. We provide comprehensive performance analysis, video breakdown, and individual development plans."
+        image="/og-preview-performance.png"
+        url="/performance"
+      />
       <Header />
       
       <main className="pt-16">

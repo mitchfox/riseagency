@@ -3,6 +3,7 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { SEO } from "@/components/SEO";
 import { RequestScoutDialog } from "@/components/RequestScoutDialog";
 import bannerHero from "@/assets/banner-hero.jpg";
 import blackMarble from "@/assets/black-marble-smudged.png";
@@ -15,6 +16,12 @@ const Scouts = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO 
+        title="For Scouts - Collaborate & Discover Talent | RISE Agency"
+        description="Collaborate with RISE to discover and evaluate emerging football talent. Access our extensive network of clubs, coaches, and industry professionals."
+        image="/og-preview-scouts.png"
+        url="/scouts"
+      />
       <Header />
       
       <main className="pt-24 md:pt-16">

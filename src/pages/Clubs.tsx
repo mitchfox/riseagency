@@ -2,6 +2,7 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { SEO } from "@/components/SEO";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ChevronDown } from "lucide-react";
 import bannerHero from "@/assets/banner-hero.jpg";
@@ -13,6 +14,12 @@ import clubsNetwork from "@/assets/clubs-network.jpg";
 const Clubs = () => {
   return (
     <div className="min-h-screen bg-background" key="clubs-page">
+      <SEO 
+        title="For Clubs - Strategic Football Partnerships | RISE Agency"
+        description="Work with RISE to strategise, recruit, and optimize your squad. Access our extensive network of talented players and expert player development programs."
+        image="/og-preview-clubs.png"
+        url="/clubs"
+      />
       <Header />
       
       <main className="pt-24 md:pt-16">

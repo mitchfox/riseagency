@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { WorkWithUsDialog } from "@/components/WorkWithUsDialog";
 import { IntroModal } from "@/components/IntroModal";
+import { SEO } from "@/components/SEO";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import bannerHero from "@/assets/banner-hero-team.jpg";
@@ -70,6 +71,12 @@ const Index = () => {
 
   return (
     <>
+      <SEO 
+        title="RISE Football Agency - Elite Football Representation & Performance"
+        description="RISE Football Agency scouts across professional football in Europe. We have guided many Premier League players to success through their development journey with expert representation and performance optimization."
+        image="/og-preview-home.png"
+        url="/"
+      />
       <IntroModal open={showIntroModal} onOpenChange={setShowIntroModal} />
       <Header />
       <div className="bg-background min-h-screen">
