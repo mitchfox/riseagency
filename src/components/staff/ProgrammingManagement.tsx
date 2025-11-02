@@ -1293,11 +1293,11 @@ Phase Dates: ${programmingData.phaseDates || 'Not specified'}`;
             </div>
 
             <Tabs defaultValue="overview" className="w-full">
-              <TabsList className="grid w-full grid-cols-4">
-                <TabsTrigger value="overview">Overview</TabsTrigger>
-                <TabsTrigger value="sessions">Sessions</TabsTrigger>
-                <TabsTrigger value="schedule">Weekly Schedule</TabsTrigger>
-                <TabsTrigger value="testing">Testing</TabsTrigger>
+              <TabsList className="flex flex-wrap h-auto w-full justify-start gap-1 p-1">
+                <TabsTrigger value="overview" className="flex-1 min-w-[100px]">Overview</TabsTrigger>
+                <TabsTrigger value="sessions" className="flex-1 min-w-[100px]">Sessions</TabsTrigger>
+                <TabsTrigger value="schedule" className="flex-1 min-w-[120px]">Weekly Schedule</TabsTrigger>
+                <TabsTrigger value="testing" className="flex-1 min-w-[100px]">Testing</TabsTrigger>
               </TabsList>
 
               <TabsContent value="overview" className="space-y-4">
@@ -1360,24 +1360,25 @@ Phase Dates: ${programmingData.phaseDates || 'Not specified'}`;
                     <CardTitle>Training Sessions</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-4">
-                      <div className="flex flex-wrap gap-2">
-                        {sessionLabels.map((session) => {
-                          const sessionData = programmingData[session.key as keyof ProgrammingData] as SessionData;
-                          const isEmpty = !sessionData?.exercises || sessionData.exercises.length === 0;
-                          
-                          return (
-                            <Button
-                              key={session.key}
-                              variant={selectedSession === session.key ? "default" : "outline"}
-                              onClick={() => setSelectedSession(session.key)}
-                              className={isEmpty ? "opacity-50" : ""}
-                            >
-                              {session.label}
-                            </Button>
-                          );
-                        })}
-                      </div>
+                     <div className="space-y-4">
+                       <div className="flex flex-wrap gap-2">
+                         {sessionLabels.map((session) => {
+                           const sessionData = programmingData[session.key as keyof ProgrammingData] as SessionData;
+                           const isEmpty = !sessionData?.exercises || sessionData.exercises.length === 0;
+                           
+                           return (
+                             <Button
+                               key={session.key}
+                               variant={selectedSession === session.key ? "default" : "outline"}
+                               onClick={() => setSelectedSession(session.key)}
+                               className={`text-xs sm:text-sm px-2 sm:px-4 py-1 sm:py-2 ${isEmpty ? "opacity-50" : ""}`}
+                               size="sm"
+                             >
+                               {session.label}
+                             </Button>
+                           );
+                         })}
+                       </div>
 
                       {selectedSession ? (
                         <div className="space-y-4 pt-4">
@@ -1415,8 +1416,8 @@ Phase Dates: ${programmingData.phaseDates || 'Not specified'}`;
                           </div>
 
                           {(programmingData[selectedSession as keyof ProgrammingData] as SessionData).exercises.length > 0 ? (
-                            <div className="border rounded-lg overflow-hidden">
-                              <table className="w-full">
+                            <div className="border rounded-lg overflow-x-auto">
+                              <table className="w-full min-w-[800px]">
                                 <thead className="bg-muted">
                                   <tr>
                                     <th className="p-2 text-left text-xs font-semibold w-20">Order</th>
