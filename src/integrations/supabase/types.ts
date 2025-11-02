@@ -385,10 +385,10 @@ export type Database = {
         Row: {
           attachments: Json | null
           category: string | null
-          content: string | null
           created_at: string
           description: string | null
           duration: number | null
+          exercises: Json | null
           id: string
           tags: string[] | null
           title: string
@@ -397,10 +397,10 @@ export type Database = {
         Insert: {
           attachments?: Json | null
           category?: string | null
-          content?: string | null
           created_at?: string
           description?: string | null
           duration?: number | null
+          exercises?: Json | null
           id?: string
           tags?: string[] | null
           title: string
@@ -409,10 +409,10 @@ export type Database = {
         Update: {
           attachments?: Json | null
           category?: string | null
-          content?: string | null
           created_at?: string
           description?: string | null
           duration?: number | null
+          exercises?: Json | null
           id?: string
           tags?: string[] | null
           title?: string

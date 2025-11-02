@@ -14,11 +14,22 @@ import { Plus, Edit, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
 
 type TableType = 'coaching_sessions' | 'coaching_programmes' | 'coaching_drills' | 'coaching_exercises' | 'coaching_analysis' | 'psychological_sessions' | 'coaching_aphorisms';
 
+interface Exercise {
+  name: string;
+  description: string;
+  repetitions: string;
+  sets: string;
+  load: string;
+  recoveryTime: string;
+  videoUrl: string;
+}
+
 interface CoachingItem {
   id: string;
   title?: string;
   description?: string | null;
   content?: string | null;
+  exercises?: Exercise[] | null;
   category?: string | null;
   tags?: string[] | null;
   created_at: string;
@@ -45,7 +56,7 @@ const tableConfigs = {
   coaching_sessions: {
     label: 'Sessions',
     singular: 'Session',
-    fields: ['title', 'description', 'content', 'duration', 'category'],
+    fields: ['title', 'description', 'exercises', 'duration', 'category'],
   },
   coaching_programmes: {
     label: 'Programmes',
@@ -89,6 +100,7 @@ export const CoachingDatabase = () => {
     title: '',
     description: '',
     content: '',
+    exercises: [] as Exercise[],
     category: '',
     load: '',
     video_url: '',
@@ -262,6 +274,7 @@ export const CoachingDatabase = () => {
         title: '',
         description: '',
         content: '',
+        exercises: [],
         category: '',
         load: '',
         video_url: '',
@@ -306,6 +319,7 @@ export const CoachingDatabase = () => {
       title: item.title,
       description: item.description || '',
       content: item.content || '',
+      exercises: item.exercises || [],
       category: item.category || '',
       duration: item.duration || '',
       weeks: item.weeks || '',
@@ -330,6 +344,7 @@ export const CoachingDatabase = () => {
       title: '',
       description: '',
       content: '',
+      exercises: [],
       category: '',
       load: '',
       video_url: '',
@@ -452,7 +467,156 @@ export const CoachingDatabase = () => {
                           />
                         </div>
 
-                        {key !== 'coaching_exercises' && (
+                        {key === 'coaching_sessions' ? (
+                          <div className="space-y-4">
+                            <div className="flex items-center justify-between">
+                              <Label>Exercises</Label>
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  setFormData({
+                                    ...formData,
+                                    exercises: [
+                                      ...(formData.exercises || []),
+                                      { name: '', description: '', repetitions: '', sets: '', load: '', recoveryTime: '', videoUrl: '' }
+                                    ]
+                                  });
+                                }}
+                              >
+                                <Plus className="w-4 h-4 mr-2" />
+                                Add Exercise
+                              </Button>
+                            </div>
+
+                            {formData.exercises && formData.exercises.length > 0 ? (
+                              <div className="border rounded-lg overflow-hidden">
+                                <table className="w-full">
+                                  <thead className="bg-muted">
+                                    <tr>
+                                      <th className="p-2 text-left text-xs font-semibold">Exercise Name</th>
+                                      <th className="p-2 text-left text-xs font-semibold">Description</th>
+                                      <th className="p-2 text-left text-xs font-semibold w-20">Reps</th>
+                                      <th className="p-2 text-left text-xs font-semibold w-16">Sets</th>
+                                      <th className="p-2 text-left text-xs font-semibold w-20">Load</th>
+                                      <th className="p-2 text-left text-xs font-semibold w-24">Recovery</th>
+                                      <th className="p-2 text-left text-xs font-semibold w-24">Video URL</th>
+                                      <th className="p-2 w-12"></th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {formData.exercises.map((exercise: Exercise, idx: number) => (
+                                      <tr key={idx} className="border-t">
+                                        <td className="p-2">
+                                          <Input
+                                            placeholder="Exercise name"
+                                            value={exercise.name}
+                                            onChange={(e) => {
+                                              const newExercises = [...formData.exercises];
+                                              newExercises[idx].name = e.target.value;
+                                              setFormData({ ...formData, exercises: newExercises });
+                                            }}
+                                            className="text-sm"
+                                          />
+                                        </td>
+                                        <td className="p-2">
+                                          <Input
+                                            placeholder="Description"
+                                            value={exercise.description}
+                                            onChange={(e) => {
+                                              const newExercises = [...formData.exercises];
+                                              newExercises[idx].description = e.target.value;
+                                              setFormData({ ...formData, exercises: newExercises });
+                                            }}
+                                            className="text-sm"
+                                          />
+                                        </td>
+                                        <td className="p-2">
+                                          <Input
+                                            placeholder="Reps"
+                                            value={exercise.repetitions}
+                                            onChange={(e) => {
+                                              const newExercises = [...formData.exercises];
+                                              newExercises[idx].repetitions = e.target.value;
+                                              setFormData({ ...formData, exercises: newExercises });
+                                            }}
+                                            className="text-sm"
+                                          />
+                                        </td>
+                                        <td className="p-2">
+                                          <Input
+                                            placeholder="Sets"
+                                            value={exercise.sets}
+                                            onChange={(e) => {
+                                              const newExercises = [...formData.exercises];
+                                              newExercises[idx].sets = e.target.value;
+                                              setFormData({ ...formData, exercises: newExercises });
+                                            }}
+                                            className="text-sm"
+                                          />
+                                        </td>
+                                        <td className="p-2">
+                                          <Input
+                                            placeholder="Load"
+                                            value={exercise.load}
+                                            onChange={(e) => {
+                                              const newExercises = [...formData.exercises];
+                                              newExercises[idx].load = e.target.value;
+                                              setFormData({ ...formData, exercises: newExercises });
+                                            }}
+                                            className="text-sm"
+                                          />
+                                        </td>
+                                        <td className="p-2">
+                                          <Input
+                                            placeholder="Recovery"
+                                            value={exercise.recoveryTime}
+                                            onChange={(e) => {
+                                              const newExercises = [...formData.exercises];
+                                              newExercises[idx].recoveryTime = e.target.value;
+                                              setFormData({ ...formData, exercises: newExercises });
+                                            }}
+                                            className="text-sm"
+                                          />
+                                        </td>
+                                        <td className="p-2">
+                                          <Input
+                                            placeholder="Video URL"
+                                            value={exercise.videoUrl}
+                                            onChange={(e) => {
+                                              const newExercises = [...formData.exercises];
+                                              newExercises[idx].videoUrl = e.target.value;
+                                              setFormData({ ...formData, exercises: newExercises });
+                                            }}
+                                            className="text-sm"
+                                          />
+                                        </td>
+                                        <td className="p-2">
+                                          <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="icon"
+                                            onClick={() => {
+                                              const newExercises = formData.exercises.filter((_: any, i: number) => i !== idx);
+                                              setFormData({ ...formData, exercises: newExercises });
+                                            }}
+                                          >
+                                            <Trash2 className="w-4 h-4" />
+                                          </Button>
+                                        </td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
+                            ) : (
+                              <p className="text-sm text-muted-foreground text-center py-4">
+                                No exercises yet. Click "Add Exercise" to add one.
+                              </p>
+                            )}
+                          </div>
+                        ) : key !== 'coaching_exercises' && (
                           <div className="space-y-2">
                             <Label htmlFor="content">Content</Label>
                             <Textarea
