@@ -93,17 +93,17 @@ export const CreatePerformanceReportDialog = ({
 
   useEffect(() => {
     if (open) {
-      if (playerId) {
-        fetchFixtures();
-      }
+      fetchFixtures(); // Always fetch fixtures when dialog opens
+      
       if (analysisId) {
+        // Edit mode - fetch existing data
         fetchExistingData();
-      } else if (playerId) {
-        // Only reset when explicitly in create mode with a player
+      } else {
+        // Create mode - reset form
         resetForm();
       }
     }
-  }, [open, playerId, analysisId]);
+  }, [open, analysisId]);
 
   const fetchFixtures = async () => {
     try {
