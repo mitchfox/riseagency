@@ -608,34 +608,6 @@ const Dashboard = () => {
             </div>
           </div>
 
-          {dailyAphorism && (
-            <div className="mb-4 px-4 md:px-0">
-              <Card className="relative overflow-hidden border-gold bg-gold/30">
-                <CardContent className="relative py-5 px-3 text-center space-y-3">
-                  <div className="bg-black/90 backdrop-blur-sm p-3 rounded-lg inline-block">
-                    <p className="text-base md:text-xl font-bold text-gold leading-relaxed tracking-wide">
-                      {dailyAphorism.featured_text}
-                    </p>
-                  </div>
-                  {dailyAphorism.author && (
-                    <div className="bg-black/90 backdrop-blur-sm px-4 py-2 rounded-lg inline-block">
-                      <p className="text-xs md:text-sm text-gold/80 italic font-medium">
-                        — {dailyAphorism.author}
-                      </p>
-                    </div>
-                  )}
-                  {dailyAphorism.body_text && (
-                    <div className="bg-black/90 backdrop-blur-sm p-3 rounded-lg max-w-2xl mx-auto">
-                      <p className="text-sm md:text-base text-white/90 leading-relaxed">
-                        {dailyAphorism.body_text}
-                      </p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-          )}
-
           <div className="mb-6">
             <NotificationPermission />
           </div>
@@ -1962,6 +1934,34 @@ const Dashboard = () => {
               </Card>
             </TabsContent>
           </Tabs>
+
+          {dailyAphorism && (
+            <div className="mt-8 mb-6 px-4 md:px-0">
+              <Card className="relative overflow-hidden border-gold bg-gold/30">
+                <CardContent className="relative py-5 px-3 text-center space-y-3">
+                  <div className="bg-black/90 backdrop-blur-sm p-3 rounded-lg inline-block">
+                    <p className="text-base md:text-xl font-bold text-gold leading-relaxed tracking-wide">
+                      {dailyAphorism.featured_text}
+                    </p>
+                  </div>
+                  {dailyAphorism.author && (
+                    <div className="bg-black/90 backdrop-blur-sm px-4 py-2 rounded-lg inline-block">
+                      <p className="text-xs md:text-sm text-gold/80 italic font-medium">
+                        — {dailyAphorism.author}
+                      </p>
+                    </div>
+                  )}
+                  {dailyAphorism.body_text && (
+                    <div className="bg-black/90 backdrop-blur-sm p-3 rounded-lg max-w-2xl mx-auto">
+                      <p className="text-sm md:text-base text-white/90 leading-relaxed">
+                        {dailyAphorism.body_text}
+                      </p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          )}
         </div>
       </main>
       <Footer />
