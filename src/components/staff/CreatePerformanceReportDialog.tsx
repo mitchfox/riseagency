@@ -881,7 +881,7 @@ export const CreatePerformanceReportDialog = ({
               Cancel
             </Button>
             <Button onClick={handleSave} disabled={loading} className="w-full sm:w-auto">
-              {loading ? (isEditMode ? "Updating..." : "Creating...") : (isEditMode ? "Update Report" : "Create Report")}
+              {loading ? (analysisId ? "Updating..." : "Creating...") : (analysisId ? "Update Report" : "Create Report")}
             </Button>
           </div>
         </div>
