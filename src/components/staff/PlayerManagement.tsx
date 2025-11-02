@@ -2561,9 +2561,11 @@ const PlayerManagement = () => {
                                 setEditReportAnalysisId(undefined);
                                 setIsCreateReportDialogOpen(true);
                               }}
+                              className="flex-shrink-0"
                             >
-                              <Plus className="w-4 h-4 mr-2" />
-                              Add Performance Report
+                              <Plus className="w-4 h-4 sm:mr-2" />
+                              <span className="hidden sm:inline">Add Performance Report</span>
+                              <span className="sm:hidden">Add Perf</span>
                             </Button>
                           </div>
                           
@@ -2573,28 +2575,28 @@ const PlayerManagement = () => {
                                 .filter(a => a.r90_score !== null && a.r90_score !== undefined)
                                 .map((analysis) => (
                                   <Card key={analysis.id}>
-                                    <CardContent className="p-4">
-                                      <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-3 flex-1">
-                                          <span className="text-sm text-muted-foreground min-w-[80px]">
+                                    <CardContent className="p-3 sm:p-4">
+                                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 flex-1 min-w-0">
+                                          <span className="text-xs sm:text-sm text-muted-foreground whitespace-nowrap">
                                             {new Date(analysis.analysis_date).toLocaleDateString('en-GB')}
                                           </span>
                                           
                                           {analysis.opponent && (
-                                            <div className="flex flex-col">
-                                              <span className="text-sm font-medium">vs {analysis.opponent}</span>
+                                            <div className="flex flex-col min-w-0">
+                                              <span className="text-sm font-medium truncate">vs {analysis.opponent}</span>
                                               {analysis.result && (
                                                 <span className="text-xs text-muted-foreground">{analysis.result}</span>
                                               )}
                                             </div>
                                           )}
                                           
-                                          <span className={`${getR90Color(analysis.r90_score)} text-white px-3 py-1 rounded font-bold text-sm`}>
+                                          <span className={`${getR90Color(analysis.r90_score)} text-white px-2 sm:px-3 py-1 rounded font-bold text-xs sm:text-sm whitespace-nowrap self-start`}>
                                             R90: {analysis.r90_score?.toFixed(2)}
                                           </span>
                                         </div>
                                         
-                                        <div className="flex gap-2">
+                                        <div className="flex gap-2 flex-shrink-0">
                                           <Button
                                             size="sm"
                                             variant="outline"
@@ -2603,9 +2605,10 @@ const PlayerManagement = () => {
                                               setSelectedPlayerName(player.name);
                                               setIsPerformanceActionsDialogOpen(true);
                                             }}
+                                            className="flex-shrink-0"
                                           >
-                                            <FileText className="w-4 h-4 mr-1" />
-                                            View
+                                            <FileText className="w-4 h-4 sm:mr-1" />
+                                            <span className="hidden sm:inline">View</span>
                                           </Button>
                                           <Button 
                                             variant="ghost" 
@@ -2616,6 +2619,7 @@ const PlayerManagement = () => {
                                               setEditReportAnalysisId(analysis.id);
                                               setIsCreateReportDialogOpen(true);
                                             }}
+                                            className="flex-shrink-0"
                                           >
                                             <Edit className="w-4 h-4" />
                                           </Button>
