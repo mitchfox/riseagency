@@ -705,86 +705,162 @@ export const CreatePerformanceReportDialog = ({
               <Label className="text-base sm:text-lg font-semibold">Performance Actions *</Label>
             </div>
 
-            <div className="overflow-x-auto border rounded-lg -mx-2 sm:mx-0">
-              <div className="min-w-[800px] sm:min-w-full">
-                <table className="w-full">
-                  <thead className="bg-accent">
-                    <tr>
-                      <th className="text-left p-2 text-xs sm:text-sm font-semibold">#</th>
-                      <th className="text-left p-2 text-xs sm:text-sm font-semibold">Minute</th>
-                      <th className="text-left p-2 text-xs sm:text-sm font-semibold">Score</th>
-                      <th className="text-left p-2 text-xs sm:text-sm font-semibold">Type</th>
-                      <th className="text-left p-2 text-xs sm:text-sm font-semibold">Description</th>
-                      <th className="text-left p-2 text-xs sm:text-sm font-semibold">Notes</th>
-                      <th className="w-12"></th>
+            {/* Mobile Card View */}
+            <div className="space-y-4 sm:hidden">
+              {actions.map((action, index) => (
+                <div key={index} className="border rounded-lg p-4 space-y-3 bg-card">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="font-semibold text-sm">Action #{action.action_number}</span>
+                    <Button
+                      onClick={() => removeAction(index)}
+                      size="icon"
+                      variant="ghost"
+                      className="text-destructive h-8 w-8"
+                      disabled={actions.length === 1}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label className="text-xs">Minute *</Label>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        value={action.minute}
+                        onChange={(e) => updateAction(index, "minute", e.target.value)}
+                        placeholder="23.5"
+                        className="text-sm"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Score *</Label>
+                      <Input
+                        type="number"
+                        step="0.00001"
+                        value={action.action_score}
+                        onChange={(e) => updateAction(index, "action_score", e.target.value)}
+                        placeholder="0.15"
+                        className="text-sm"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <Label className="text-xs">Action Type *</Label>
+                    <Input
+                      value={action.action_type}
+                      onChange={(e) => updateAction(index, "action_type", e.target.value)}
+                      placeholder="Shot"
+                      className="text-sm"
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label className="text-xs">Description *</Label>
+                    <Textarea
+                      value={action.action_description}
+                      onChange={(e) => updateAction(index, "action_description", e.target.value)}
+                      placeholder="Describe the action"
+                      className="text-sm min-h-[60px]"
+                      rows={2}
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label className="text-xs">Notes</Label>
+                    <Textarea
+                      value={action.notes}
+                      onChange={(e) => updateAction(index, "notes", e.target.value)}
+                      placeholder="Optional notes"
+                      className="text-sm min-h-[60px]"
+                      rows={2}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop Table View */}
+            <div className="hidden sm:block overflow-x-auto border rounded-lg">
+              <table className="w-full">
+                <thead className="bg-accent">
+                  <tr>
+                    <th className="text-left p-2 text-sm font-semibold">#</th>
+                    <th className="text-left p-2 text-sm font-semibold">Minute</th>
+                    <th className="text-left p-2 text-sm font-semibold">Score</th>
+                    <th className="text-left p-2 text-sm font-semibold">Type</th>
+                    <th className="text-left p-2 text-sm font-semibold">Description</th>
+                    <th className="text-left p-2 text-sm font-semibold">Notes</th>
+                    <th className="w-12"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {actions.map((action, index) => (
+                    <tr key={index} className="border-t">
+                      <td className="p-2 text-sm">{action.action_number}</td>
+                      <td className="p-2">
+                        <Input
+                          type="number"
+                          step="0.01"
+                          value={action.minute}
+                          onChange={(e) => updateAction(index, "minute", e.target.value)}
+                          placeholder="23.5"
+                          className="w-20 text-sm"
+                        />
+                      </td>
+                      <td className="p-2">
+                        <Input
+                          type="number"
+                          step="0.00001"
+                          value={action.action_score}
+                          onChange={(e) => updateAction(index, "action_score", e.target.value)}
+                          placeholder="0.15"
+                          className="w-24 text-sm"
+                        />
+                      </td>
+                      <td className="p-2">
+                        <Input
+                          value={action.action_type}
+                          onChange={(e) => updateAction(index, "action_type", e.target.value)}
+                          placeholder="Shot"
+                          className="w-28 text-sm"
+                        />
+                      </td>
+                      <td className="p-2">
+                        <Textarea
+                          value={action.action_description}
+                          onChange={(e) => updateAction(index, "action_description", e.target.value)}
+                          placeholder="Describe"
+                          className="min-w-[180px] min-h-[40px] text-sm"
+                          rows={1}
+                        />
+                      </td>
+                      <td className="p-2">
+                        <Textarea
+                          value={action.notes}
+                          onChange={(e) => updateAction(index, "notes", e.target.value)}
+                          placeholder="Notes"
+                          className="min-w-[140px] min-h-[40px] text-sm"
+                          rows={1}
+                        />
+                      </td>
+                      <td className="p-2">
+                        <Button
+                          onClick={() => removeAction(index)}
+                          size="icon"
+                          variant="ghost"
+                          className="text-destructive h-8 w-8"
+                          disabled={actions.length === 1}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {actions.map((action, index) => (
-                      <tr key={index} className="border-t">
-                        <td className="p-2 text-sm">{action.action_number}</td>
-                        <td className="p-2">
-                          <Input
-                            type="number"
-                            step="0.01"
-                            value={action.minute}
-                            onChange={(e) => updateAction(index, "minute", e.target.value)}
-                            placeholder="23.5"
-                            className="w-20 text-sm"
-                          />
-                        </td>
-                        <td className="p-2">
-                          <Input
-                            type="number"
-                            step="0.00001"
-                            value={action.action_score}
-                            onChange={(e) => updateAction(index, "action_score", e.target.value)}
-                            placeholder="0.15"
-                            className="w-24 text-sm"
-                          />
-                        </td>
-                        <td className="p-2">
-                          <Input
-                            value={action.action_type}
-                            onChange={(e) => updateAction(index, "action_type", e.target.value)}
-                            placeholder="Shot"
-                            className="w-28 text-sm"
-                          />
-                        </td>
-                        <td className="p-2">
-                          <Textarea
-                            value={action.action_description}
-                            onChange={(e) => updateAction(index, "action_description", e.target.value)}
-                            placeholder="Describe"
-                            className="min-w-[180px] min-h-[40px] text-sm"
-                            rows={1}
-                          />
-                        </td>
-                        <td className="p-2">
-                          <Textarea
-                            value={action.notes}
-                            onChange={(e) => updateAction(index, "notes", e.target.value)}
-                            placeholder="Notes"
-                            className="min-w-[140px] min-h-[40px] text-sm"
-                            rows={1}
-                          />
-                        </td>
-                        <td className="p-2">
-                          <Button
-                            onClick={() => removeAction(index)}
-                            size="icon"
-                            variant="ghost"
-                            className="text-destructive h-8 w-8"
-                            disabled={actions.length === 1}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                  ))}
+                </tbody>
+              </table>
             </div>
             
             <div className="mt-4">
