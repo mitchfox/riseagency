@@ -21,10 +21,33 @@ interface PerformanceAction {
 }
 
 interface StrikerStats {
-  shots?: number;
-  touches?: number;
-  duels_won?: number;
-  successful_dribbles?: number;
+  // Common stats (both positions)
+  xGChain?: number;
+  xGChain_per90?: number;
+  xG_adj?: number;
+  xG_adj_per90?: number;
+  xA_adj?: number;
+  xA_adj_per90?: number;
+  // Striker-specific stats
+  movement_in_behind_xC?: number;
+  movement_in_behind_xC_per90?: number;
+  movement_down_side_xC?: number;
+  movement_down_side_xC_per90?: number;
+  triple_threat_xC?: number;
+  triple_threat_xC_per90?: number;
+  movement_to_feet_xC?: number;
+  movement_to_feet_xC_per90?: number;
+  crossing_movement_xC?: number;
+  crossing_movement_xC_per90?: number;
+  // Defensive midfielder stats
+  interceptions?: number;
+  interceptions_per90?: number;
+  regains_adj?: number;
+  regains_adj_per90?: number;
+  turnovers_adj?: number;
+  turnovers_adj_per90?: number;
+  progressive_passes_adj?: number;
+  progressive_passes_adj_per90?: number;
 }
 
 interface AnalysisDetails {
@@ -214,28 +237,112 @@ const PerformanceReport = () => {
               <div className="mt-6 p-4 bg-accent/10 rounded-lg border-2 border-primary/20">
                 <h3 className="font-bold text-lg mb-4 text-primary">Additional Statistics</h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {analysis.striker_stats.shots !== undefined && analysis.striker_stats.shots !== null && (
+                  {analysis.striker_stats.xGChain !== undefined && analysis.striker_stats.xGChain !== null && (
                     <div className="text-center p-3 bg-background rounded-md">
-                      <p className="text-xs text-muted-foreground mb-1">Shots</p>
-                      <p className="font-bold text-lg">{analysis.striker_stats.shots}</p>
+                      <p className="text-xs text-muted-foreground mb-1">xGChain</p>
+                      <p className="font-bold text-lg">{analysis.striker_stats.xGChain.toFixed(3)}</p>
+                      {analysis.striker_stats.xGChain_per90 !== undefined && analysis.striker_stats.xGChain_per90 !== null && (
+                        <p className="text-xs text-muted-foreground mt-1">per 90: {analysis.striker_stats.xGChain_per90.toFixed(3)}</p>
+                      )}
                     </div>
                   )}
-                  {analysis.striker_stats.touches !== undefined && analysis.striker_stats.touches !== null && (
+                  {analysis.striker_stats.xG_adj !== undefined && analysis.striker_stats.xG_adj !== null && (
                     <div className="text-center p-3 bg-background rounded-md">
-                      <p className="text-xs text-muted-foreground mb-1">Touches</p>
-                      <p className="font-bold text-lg">{analysis.striker_stats.touches}</p>
+                      <p className="text-xs text-muted-foreground mb-1">xG (adj.)</p>
+                      <p className="font-bold text-lg">{analysis.striker_stats.xG_adj.toFixed(3)}</p>
+                      {analysis.striker_stats.xG_adj_per90 !== undefined && analysis.striker_stats.xG_adj_per90 !== null && (
+                        <p className="text-xs text-muted-foreground mt-1">per 90: {analysis.striker_stats.xG_adj_per90.toFixed(3)}</p>
+                      )}
                     </div>
                   )}
-                  {analysis.striker_stats.duels_won !== undefined && analysis.striker_stats.duels_won !== null && (
+                  {analysis.striker_stats.xA_adj !== undefined && analysis.striker_stats.xA_adj !== null && (
                     <div className="text-center p-3 bg-background rounded-md">
-                      <p className="text-xs text-muted-foreground mb-1">Duels Won</p>
-                      <p className="font-bold text-lg">{analysis.striker_stats.duels_won}</p>
+                      <p className="text-xs text-muted-foreground mb-1">xA (adj.)</p>
+                      <p className="font-bold text-lg">{analysis.striker_stats.xA_adj.toFixed(3)}</p>
+                      {analysis.striker_stats.xA_adj_per90 !== undefined && analysis.striker_stats.xA_adj_per90 !== null && (
+                        <p className="text-xs text-muted-foreground mt-1">per 90: {analysis.striker_stats.xA_adj_per90.toFixed(3)}</p>
+                      )}
                     </div>
                   )}
-                  {analysis.striker_stats.successful_dribbles !== undefined && analysis.striker_stats.successful_dribbles !== null && (
+                  {analysis.striker_stats.movement_in_behind_xC !== undefined && analysis.striker_stats.movement_in_behind_xC !== null && (
                     <div className="text-center p-3 bg-background rounded-md">
-                      <p className="text-xs text-muted-foreground mb-1">Successful Dribbles</p>
-                      <p className="font-bold text-lg">{analysis.striker_stats.successful_dribbles}</p>
+                      <p className="text-xs text-muted-foreground mb-1">Movement In Behind xC</p>
+                      <p className="font-bold text-lg">{analysis.striker_stats.movement_in_behind_xC.toFixed(3)}</p>
+                      {analysis.striker_stats.movement_in_behind_xC_per90 !== undefined && analysis.striker_stats.movement_in_behind_xC_per90 !== null && (
+                        <p className="text-xs text-muted-foreground mt-1">per 90: {analysis.striker_stats.movement_in_behind_xC_per90.toFixed(3)}</p>
+                      )}
+                    </div>
+                  )}
+                  {analysis.striker_stats.movement_down_side_xC !== undefined && analysis.striker_stats.movement_down_side_xC !== null && (
+                    <div className="text-center p-3 bg-background rounded-md">
+                      <p className="text-xs text-muted-foreground mb-1">Movement Down Side xC</p>
+                      <p className="font-bold text-lg">{analysis.striker_stats.movement_down_side_xC.toFixed(3)}</p>
+                      {analysis.striker_stats.movement_down_side_xC_per90 !== undefined && analysis.striker_stats.movement_down_side_xC_per90 !== null && (
+                        <p className="text-xs text-muted-foreground mt-1">per 90: {analysis.striker_stats.movement_down_side_xC_per90.toFixed(3)}</p>
+                      )}
+                    </div>
+                  )}
+                  {analysis.striker_stats.triple_threat_xC !== undefined && analysis.striker_stats.triple_threat_xC !== null && (
+                    <div className="text-center p-3 bg-background rounded-md">
+                      <p className="text-xs text-muted-foreground mb-1">Triple Threat xC</p>
+                      <p className="font-bold text-lg">{analysis.striker_stats.triple_threat_xC.toFixed(3)}</p>
+                      {analysis.striker_stats.triple_threat_xC_per90 !== undefined && analysis.striker_stats.triple_threat_xC_per90 !== null && (
+                        <p className="text-xs text-muted-foreground mt-1">per 90: {analysis.striker_stats.triple_threat_xC_per90.toFixed(3)}</p>
+                      )}
+                    </div>
+                  )}
+                  {analysis.striker_stats.movement_to_feet_xC !== undefined && analysis.striker_stats.movement_to_feet_xC !== null && (
+                    <div className="text-center p-3 bg-background rounded-md">
+                      <p className="text-xs text-muted-foreground mb-1">Movement To Feet xC</p>
+                      <p className="font-bold text-lg">{analysis.striker_stats.movement_to_feet_xC.toFixed(3)}</p>
+                      {analysis.striker_stats.movement_to_feet_xC_per90 !== undefined && analysis.striker_stats.movement_to_feet_xC_per90 !== null && (
+                        <p className="text-xs text-muted-foreground mt-1">per 90: {analysis.striker_stats.movement_to_feet_xC_per90.toFixed(3)}</p>
+                      )}
+                    </div>
+                  )}
+                  {analysis.striker_stats.crossing_movement_xC !== undefined && analysis.striker_stats.crossing_movement_xC !== null && (
+                    <div className="text-center p-3 bg-background rounded-md">
+                      <p className="text-xs text-muted-foreground mb-1">Crossing Movement xC</p>
+                      <p className="font-bold text-lg">{analysis.striker_stats.crossing_movement_xC.toFixed(3)}</p>
+                      {analysis.striker_stats.crossing_movement_xC_per90 !== undefined && analysis.striker_stats.crossing_movement_xC_per90 !== null && (
+                        <p className="text-xs text-muted-foreground mt-1">per 90: {analysis.striker_stats.crossing_movement_xC_per90.toFixed(3)}</p>
+                      )}
+                    </div>
+                  )}
+                  {analysis.striker_stats.interceptions !== undefined && analysis.striker_stats.interceptions !== null && (
+                    <div className="text-center p-3 bg-background rounded-md">
+                      <p className="text-xs text-muted-foreground mb-1">Interceptions</p>
+                      <p className="font-bold text-lg">{analysis.striker_stats.interceptions}</p>
+                      {analysis.striker_stats.interceptions_per90 !== undefined && analysis.striker_stats.interceptions_per90 !== null && (
+                        <p className="text-xs text-muted-foreground mt-1">per 90: {analysis.striker_stats.interceptions_per90.toFixed(2)}</p>
+                      )}
+                    </div>
+                  )}
+                  {analysis.striker_stats.regains_adj !== undefined && analysis.striker_stats.regains_adj !== null && (
+                    <div className="text-center p-3 bg-background rounded-md">
+                      <p className="text-xs text-muted-foreground mb-1">Regains (adj.)</p>
+                      <p className="font-bold text-lg">{analysis.striker_stats.regains_adj}</p>
+                      {analysis.striker_stats.regains_adj_per90 !== undefined && analysis.striker_stats.regains_adj_per90 !== null && (
+                        <p className="text-xs text-muted-foreground mt-1">per 90: {analysis.striker_stats.regains_adj_per90.toFixed(2)}</p>
+                      )}
+                    </div>
+                  )}
+                  {analysis.striker_stats.turnovers_adj !== undefined && analysis.striker_stats.turnovers_adj !== null && (
+                    <div className="text-center p-3 bg-background rounded-md">
+                      <p className="text-xs text-muted-foreground mb-1">Turnovers (adj.)</p>
+                      <p className="font-bold text-lg">{analysis.striker_stats.turnovers_adj}</p>
+                      {analysis.striker_stats.turnovers_adj_per90 !== undefined && analysis.striker_stats.turnovers_adj_per90 !== null && (
+                        <p className="text-xs text-muted-foreground mt-1">per 90: {analysis.striker_stats.turnovers_adj_per90.toFixed(2)}</p>
+                      )}
+                    </div>
+                  )}
+                  {analysis.striker_stats.progressive_passes_adj !== undefined && analysis.striker_stats.progressive_passes_adj !== null && (
+                    <div className="text-center p-3 bg-background rounded-md">
+                      <p className="text-xs text-muted-foreground mb-1">Progressive Passes (adj.)</p>
+                      <p className="font-bold text-lg">{analysis.striker_stats.progressive_passes_adj}</p>
+                      {analysis.striker_stats.progressive_passes_adj_per90 !== undefined && analysis.striker_stats.progressive_passes_adj_per90 !== null && (
+                        <p className="text-xs text-muted-foreground mt-1">per 90: {analysis.striker_stats.progressive_passes_adj_per90.toFixed(2)}</p>
+                      )}
                     </div>
                   )}
                 </div>
