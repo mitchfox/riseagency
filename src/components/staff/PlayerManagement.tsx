@@ -2528,7 +2528,14 @@ const PlayerManagement = () => {
                           <div className="flex justify-end">
                             <Button
                               size="sm"
-                              onClick={() => openAnalysisDialog(player.id)}
+                              onClick={() => {
+                                // Close analysis section and open fixtures to create performance report
+                                setShowingAnalysisFor(null);
+                                setShowingFixturesFor(player.id);
+                                setShowingHighlightsFor(null);
+                                setShowingInvoicesFor(null);
+                                toast.info("Create a fixture or select an existing one to add a performance report");
+                              }}
                             >
                               <Plus className="w-4 h-4 mr-2" />
                               Add Performance Report
