@@ -427,6 +427,32 @@ const Dashboard = () => {
     }
   };
 
+  // Set up real-time subscription for player_analysis updates
+  useEffect(() => {
+    const playerEmail = localStorage.getItem("player_email") || sessionStorage.getItem("player_email");
+    if (!playerEmail) return;
+
+    const channel = supabase
+      .channel('dashboard-analysis-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'player_analysis'
+        },
+        () => {
+          // Refetch analyses when any change occurs
+          fetchAnalyses(playerEmail);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
   const fetchPrograms = async (email: string | undefined) => {
     if (!email) return;
     
