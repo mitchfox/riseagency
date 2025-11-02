@@ -1,0 +1,679 @@
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { toast } from "sonner";
+import { Plus, Trash2 } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+
+interface CreatePerformanceReportDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  playerId: string;
+  playerName: string;
+  onSuccess?: () => void;
+}
+
+interface Fixture {
+  id: string;
+  match_date: string;
+  home_team: string;
+  away_team: string;
+  competition: string;
+  home_score: number | null;
+  away_score: number | null;
+}
+
+interface PerformanceAction {
+  action_number: number;
+  minute: string;
+  action_score: string;
+  action_type: string;
+  action_description: string;
+  notes: string;
+}
+
+export const CreatePerformanceReportDialog = ({
+  open,
+  onOpenChange,
+  playerId,
+  playerName,
+  onSuccess,
+}: CreatePerformanceReportDialogProps) => {
+  const [loading, setLoading] = useState(false);
+  const [fixtures, setFixtures] = useState<Fixture[]>([]);
+  const [selectedFixtureId, setSelectedFixtureId] = useState<string>("");
+  const [showStrikerStats, setShowStrikerStats] = useState(false);
+
+  // Key stats
+  const [r90Score, setR90Score] = useState("");
+  const [minutesPlayed, setMinutesPlayed] = useState("");
+  const [opponent, setOpponent] = useState("");
+  const [result, setResult] = useState("");
+
+  // Striker stats
+  const [strikerStats, setStrikerStats] = useState({
+    xGChain: "",
+    xGChain_per90: "",
+    xG_adj: "",
+    xG_adj_per90: "",
+    xA_adj: "",
+    xA_adj_per90: "",
+    movement_in_behind_xC: "",
+    movement_in_behind_xC_per90: "",
+    movement_down_side_xC: "",
+    movement_down_side_xC_per90: "",
+    triple_threat_xC: "",
+    triple_threat_xC_per90: "",
+    movement_to_feet_xC: "",
+    movement_to_feet_xC_per90: "",
+    crossing_movement_xC: "",
+    crossing_movement_xC_per90: "",
+    interceptions: "",
+    interceptions_per90: "",
+    regains_adj: "",
+    regains_adj_per90: "",
+    turnovers_adj: "",
+    turnovers_adj_per90: "",
+    progressive_passes_adj: "",
+    progressive_passes_adj_per90: "",
+  });
+
+  // Performance actions
+  const [actions, setActions] = useState<PerformanceAction[]>([
+    { action_number: 1, minute: "", action_score: "", action_type: "", action_description: "", notes: "" }
+  ]);
+
+  useEffect(() => {
+    if (open && playerId) {
+      fetchFixtures();
+    }
+  }, [open, playerId]);
+
+  const fetchFixtures = async () => {
+    try {
+      const { data: playerFixtures, error: pfError } = await supabase
+        .from("player_fixtures")
+        .select("fixture_id")
+        .eq("player_id", playerId);
+
+      if (pfError) throw pfError;
+
+      if (playerFixtures && playerFixtures.length > 0) {
+        const fixtureIds = playerFixtures.map(pf => pf.fixture_id);
+        
+        const { data: fixturesData, error: fError } = await supabase
+          .from("fixtures")
+          .select("*")
+          .in("id", fixtureIds)
+          .order("match_date", { ascending: false });
+
+        if (fError) throw fError;
+        setFixtures(fixturesData || []);
+      }
+    } catch (error: any) {
+      console.error("Error fetching fixtures:", error);
+      toast.error("Failed to load fixtures");
+    }
+  };
+
+  const handleFixtureChange = (fixtureId: string) => {
+    setSelectedFixtureId(fixtureId);
+    const fixture = fixtures.find(f => f.id === fixtureId);
+    if (fixture) {
+      setOpponent(`${fixture.home_team} vs ${fixture.away_team}`);
+      if (fixture.home_score !== null && fixture.away_score !== null) {
+        setResult(`${fixture.home_score}-${fixture.away_score}`);
+      }
+    }
+  };
+
+  const addAction = () => {
+    setActions([
+      ...actions,
+      {
+        action_number: actions.length + 1,
+        minute: "",
+        action_score: "",
+        action_type: "",
+        action_description: "",
+        notes: ""
+      }
+    ]);
+  };
+
+  const removeAction = (index: number) => {
+    const newActions = actions.filter((_, i) => i !== index);
+    // Renumber actions
+    newActions.forEach((action, i) => {
+      action.action_number = i + 1;
+    });
+    setActions(newActions);
+  };
+
+  const updateAction = (index: number, field: keyof PerformanceAction, value: string) => {
+    const newActions = [...actions];
+    newActions[index] = { ...newActions[index], [field]: value };
+    setActions(newActions);
+  };
+
+  const handleSave = async () => {
+    // Validation
+    if (!selectedFixtureId) {
+      toast.error("Please select a fixture");
+      return;
+    }
+    if (!r90Score || !minutesPlayed) {
+      toast.error("Please fill in R90 Score and Minutes Played");
+      return;
+    }
+    if (actions.length === 0 || !actions[0].minute) {
+      toast.error("Please add at least one performance action");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const fixture = fixtures.find(f => f.id === selectedFixtureId);
+      
+      // Prepare striker stats JSONB
+      const hasStrikerStats = Object.values(strikerStats).some(v => v !== "");
+      const strikerStatsJson = hasStrikerStats ? Object.fromEntries(
+        Object.entries(strikerStats)
+          .filter(([_, value]) => value !== "")
+          .map(([key, value]) => [key, parseFloat(value)])
+      ) : null;
+
+      // Insert into player_analysis
+      const { data: analysisData, error: analysisError } = await supabase
+        .from("player_analysis")
+        .insert({
+          player_id: playerId,
+          fixture_id: selectedFixtureId,
+          analysis_date: fixture?.match_date,
+          r90_score: parseFloat(r90Score),
+          minutes_played: parseInt(minutesPlayed),
+          opponent: opponent,
+          result: result || null,
+          striker_stats: strikerStatsJson,
+        })
+        .select()
+        .single();
+
+      if (analysisError) throw analysisError;
+
+      // Insert performance actions
+      const actionsToInsert = actions
+        .filter(a => a.minute && a.action_score && a.action_type && a.action_description)
+        .map(a => ({
+          analysis_id: analysisData.id,
+          action_number: a.action_number,
+          minute: parseFloat(a.minute),
+          action_score: parseFloat(a.action_score),
+          action_type: a.action_type,
+          action_description: a.action_description,
+          notes: a.notes || null,
+        }));
+
+      if (actionsToInsert.length > 0) {
+        const { error: actionsError } = await supabase
+          .from("performance_report_actions")
+          .insert(actionsToInsert);
+
+        if (actionsError) throw actionsError;
+      }
+
+      toast.success("Performance report created successfully");
+      resetForm();
+      onOpenChange(false);
+      if (onSuccess) onSuccess();
+    } catch (error: any) {
+      console.error("Error creating performance report:", error);
+      toast.error("Failed to create performance report: " + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const resetForm = () => {
+    setSelectedFixtureId("");
+    setR90Score("");
+    setMinutesPlayed("");
+    setOpponent("");
+    setResult("");
+    setStrikerStats({
+      xGChain: "",
+      xGChain_per90: "",
+      xG_adj: "",
+      xG_adj_per90: "",
+      xA_adj: "",
+      xA_adj_per90: "",
+      movement_in_behind_xC: "",
+      movement_in_behind_xC_per90: "",
+      movement_down_side_xC: "",
+      movement_down_side_xC_per90: "",
+      triple_threat_xC: "",
+      triple_threat_xC_per90: "",
+      movement_to_feet_xC: "",
+      movement_to_feet_xC_per90: "",
+      crossing_movement_xC: "",
+      crossing_movement_xC_per90: "",
+      interceptions: "",
+      interceptions_per90: "",
+      regains_adj: "",
+      regains_adj_per90: "",
+      turnovers_adj: "",
+      turnovers_adj_per90: "",
+      progressive_passes_adj: "",
+      progressive_passes_adj_per90: "",
+    });
+    setActions([
+      { action_number: 1, minute: "", action_score: "", action_type: "", action_description: "", notes: "" }
+    ]);
+    setShowStrikerStats(false);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Create Performance Report - {playerName}</DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-6">
+          {/* Fixture Selection */}
+          <div>
+            <Label htmlFor="fixture">Select Fixture *</Label>
+            <Select value={selectedFixtureId} onValueChange={handleFixtureChange}>
+              <SelectTrigger id="fixture">
+                <SelectValue placeholder="Choose a fixture" />
+              </SelectTrigger>
+              <SelectContent>
+                {fixtures.map((fixture) => (
+                  <SelectItem key={fixture.id} value={fixture.id}>
+                    {new Date(fixture.match_date).toLocaleDateString('en-GB')} - {fixture.home_team} vs {fixture.away_team}
+                    {fixture.competition && ` (${fixture.competition})`}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Key Stats */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="r90">R90 Score *</Label>
+              <Input
+                id="r90"
+                type="number"
+                step="0.01"
+                value={r90Score}
+                onChange={(e) => setR90Score(e.target.value)}
+                placeholder="e.g., 6.50"
+              />
+            </div>
+            <div>
+              <Label htmlFor="minutes">Minutes Played *</Label>
+              <Input
+                id="minutes"
+                type="number"
+                value={minutesPlayed}
+                onChange={(e) => setMinutesPlayed(e.target.value)}
+                placeholder="e.g., 90"
+              />
+            </div>
+            <div>
+              <Label htmlFor="opponent">Opponent</Label>
+              <Input
+                id="opponent"
+                value={opponent}
+                onChange={(e) => setOpponent(e.target.value)}
+                placeholder="Auto-filled from fixture"
+              />
+            </div>
+            <div>
+              <Label htmlFor="result">Result</Label>
+              <Input
+                id="result"
+                value={result}
+                onChange={(e) => setResult(e.target.value)}
+                placeholder="e.g., W 2-1"
+              />
+            </div>
+          </div>
+
+          {/* Optional Striker Stats */}
+          <Collapsible open={showStrikerStats} onOpenChange={setShowStrikerStats}>
+            <CollapsibleTrigger asChild>
+              <Button variant="outline" className="w-full">
+                {showStrikerStats ? "Hide" : "Show"} Additional Statistics (Optional)
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="mt-4 space-y-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div>
+                  <Label>xGChain</Label>
+                  <Input
+                    type="number"
+                    step="0.001"
+                    value={strikerStats.xGChain}
+                    onChange={(e) => setStrikerStats({...strikerStats, xGChain: e.target.value})}
+                  />
+                </div>
+                <div>
+                  <Label>xGChain per90</Label>
+                  <Input
+                    type="number"
+                    step="0.001"
+                    value={strikerStats.xGChain_per90}
+                    onChange={(e) => setStrikerStats({...strikerStats, xGChain_per90: e.target.value})}
+                  />
+                </div>
+                <div>
+                  <Label>xG (adj.)</Label>
+                  <Input
+                    type="number"
+                    step="0.001"
+                    value={strikerStats.xG_adj}
+                    onChange={(e) => setStrikerStats({...strikerStats, xG_adj: e.target.value})}
+                  />
+                </div>
+                <div>
+                  <Label>xG (adj.) per90</Label>
+                  <Input
+                    type="number"
+                    step="0.001"
+                    value={strikerStats.xG_adj_per90}
+                    onChange={(e) => setStrikerStats({...strikerStats, xG_adj_per90: e.target.value})}
+                  />
+                </div>
+                <div>
+                  <Label>xA (adj.)</Label>
+                  <Input
+                    type="number"
+                    step="0.001"
+                    value={strikerStats.xA_adj}
+                    onChange={(e) => setStrikerStats({...strikerStats, xA_adj: e.target.value})}
+                  />
+                </div>
+                <div>
+                  <Label>xA (adj.) per90</Label>
+                  <Input
+                    type="number"
+                    step="0.001"
+                    value={strikerStats.xA_adj_per90}
+                    onChange={(e) => setStrikerStats({...strikerStats, xA_adj_per90: e.target.value})}
+                  />
+                </div>
+                <div>
+                  <Label>Movement In Behind xC</Label>
+                  <Input
+                    type="number"
+                    step="0.001"
+                    value={strikerStats.movement_in_behind_xC}
+                    onChange={(e) => setStrikerStats({...strikerStats, movement_in_behind_xC: e.target.value})}
+                  />
+                </div>
+                <div>
+                  <Label>Movement In Behind xC per90</Label>
+                  <Input
+                    type="number"
+                    step="0.001"
+                    value={strikerStats.movement_in_behind_xC_per90}
+                    onChange={(e) => setStrikerStats({...strikerStats, movement_in_behind_xC_per90: e.target.value})}
+                  />
+                </div>
+                <div>
+                  <Label>Movement Down Side xC</Label>
+                  <Input
+                    type="number"
+                    step="0.001"
+                    value={strikerStats.movement_down_side_xC}
+                    onChange={(e) => setStrikerStats({...strikerStats, movement_down_side_xC: e.target.value})}
+                  />
+                </div>
+                <div>
+                  <Label>Movement Down Side xC per90</Label>
+                  <Input
+                    type="number"
+                    step="0.001"
+                    value={strikerStats.movement_down_side_xC_per90}
+                    onChange={(e) => setStrikerStats({...strikerStats, movement_down_side_xC_per90: e.target.value})}
+                  />
+                </div>
+                <div>
+                  <Label>Triple Threat xC</Label>
+                  <Input
+                    type="number"
+                    step="0.001"
+                    value={strikerStats.triple_threat_xC}
+                    onChange={(e) => setStrikerStats({...strikerStats, triple_threat_xC: e.target.value})}
+                  />
+                </div>
+                <div>
+                  <Label>Triple Threat xC per90</Label>
+                  <Input
+                    type="number"
+                    step="0.001"
+                    value={strikerStats.triple_threat_xC_per90}
+                    onChange={(e) => setStrikerStats({...strikerStats, triple_threat_xC_per90: e.target.value})}
+                  />
+                </div>
+                <div>
+                  <Label>Movement To Feet xC</Label>
+                  <Input
+                    type="number"
+                    step="0.001"
+                    value={strikerStats.movement_to_feet_xC}
+                    onChange={(e) => setStrikerStats({...strikerStats, movement_to_feet_xC: e.target.value})}
+                  />
+                </div>
+                <div>
+                  <Label>Movement To Feet xC per90</Label>
+                  <Input
+                    type="number"
+                    step="0.001"
+                    value={strikerStats.movement_to_feet_xC_per90}
+                    onChange={(e) => setStrikerStats({...strikerStats, movement_to_feet_xC_per90: e.target.value})}
+                  />
+                </div>
+                <div>
+                  <Label>Crossing Movement xC</Label>
+                  <Input
+                    type="number"
+                    step="0.001"
+                    value={strikerStats.crossing_movement_xC}
+                    onChange={(e) => setStrikerStats({...strikerStats, crossing_movement_xC: e.target.value})}
+                  />
+                </div>
+                <div>
+                  <Label>Crossing Movement xC per90</Label>
+                  <Input
+                    type="number"
+                    step="0.001"
+                    value={strikerStats.crossing_movement_xC_per90}
+                    onChange={(e) => setStrikerStats({...strikerStats, crossing_movement_xC_per90: e.target.value})}
+                  />
+                </div>
+                <div>
+                  <Label>Interceptions</Label>
+                  <Input
+                    type="number"
+                    value={strikerStats.interceptions}
+                    onChange={(e) => setStrikerStats({...strikerStats, interceptions: e.target.value})}
+                  />
+                </div>
+                <div>
+                  <Label>Interceptions per90</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={strikerStats.interceptions_per90}
+                    onChange={(e) => setStrikerStats({...strikerStats, interceptions_per90: e.target.value})}
+                  />
+                </div>
+                <div>
+                  <Label>Regains (Adj.)</Label>
+                  <Input
+                    type="number"
+                    value={strikerStats.regains_adj}
+                    onChange={(e) => setStrikerStats({...strikerStats, regains_adj: e.target.value})}
+                  />
+                </div>
+                <div>
+                  <Label>Regains (Adj.) per90</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={strikerStats.regains_adj_per90}
+                    onChange={(e) => setStrikerStats({...strikerStats, regains_adj_per90: e.target.value})}
+                  />
+                </div>
+                <div>
+                  <Label>Turnovers (Adj.)</Label>
+                  <Input
+                    type="number"
+                    value={strikerStats.turnovers_adj}
+                    onChange={(e) => setStrikerStats({...strikerStats, turnovers_adj: e.target.value})}
+                  />
+                </div>
+                <div>
+                  <Label>Turnovers (Adj.) per90</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={strikerStats.turnovers_adj_per90}
+                    onChange={(e) => setStrikerStats({...strikerStats, turnovers_adj_per90: e.target.value})}
+                  />
+                </div>
+                <div>
+                  <Label>Progressive Passes (Adj.)</Label>
+                  <Input
+                    type="number"
+                    value={strikerStats.progressive_passes_adj}
+                    onChange={(e) => setStrikerStats({...strikerStats, progressive_passes_adj: e.target.value})}
+                  />
+                </div>
+                <div>
+                  <Label>Progressive Passes (Adj.) per90</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={strikerStats.progressive_passes_adj_per90}
+                    onChange={(e) => setStrikerStats({...strikerStats, progressive_passes_adj_per90: e.target.value})}
+                  />
+                </div>
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
+
+          {/* Performance Actions */}
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <Label className="text-lg font-semibold">Performance Actions *</Label>
+              <Button onClick={addAction} size="sm" variant="outline">
+                <Plus className="h-4 w-4 mr-2" />
+                Add Action
+              </Button>
+            </div>
+
+            <div className="overflow-x-auto border rounded-lg">
+              <table className="w-full min-w-full">
+                <thead className="bg-accent">
+                  <tr>
+                    <th className="text-left p-2 text-sm font-semibold">#</th>
+                    <th className="text-left p-2 text-sm font-semibold">Minute</th>
+                    <th className="text-left p-2 text-sm font-semibold">Score</th>
+                    <th className="text-left p-2 text-sm font-semibold">Action Type</th>
+                    <th className="text-left p-2 text-sm font-semibold">Description</th>
+                    <th className="text-left p-2 text-sm font-semibold">Notes</th>
+                    <th className="w-12"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {actions.map((action, index) => (
+                    <tr key={index} className="border-t">
+                      <td className="p-2">{action.action_number}</td>
+                      <td className="p-2">
+                        <Input
+                          type="number"
+                          step="0.01"
+                          value={action.minute}
+                          onChange={(e) => updateAction(index, "minute", e.target.value)}
+                          placeholder="e.g., 23.5"
+                          className="w-24"
+                        />
+                      </td>
+                      <td className="p-2">
+                        <Input
+                          type="number"
+                          step="0.00001"
+                          value={action.action_score}
+                          onChange={(e) => updateAction(index, "action_score", e.target.value)}
+                          placeholder="e.g., 0.15"
+                          className="w-28"
+                        />
+                      </td>
+                      <td className="p-2">
+                        <Input
+                          value={action.action_type}
+                          onChange={(e) => updateAction(index, "action_type", e.target.value)}
+                          placeholder="e.g., Shot"
+                          className="w-32"
+                        />
+                      </td>
+                      <td className="p-2">
+                        <Textarea
+                          value={action.action_description}
+                          onChange={(e) => updateAction(index, "action_description", e.target.value)}
+                          placeholder="Describe the action"
+                          className="min-w-[200px]"
+                          rows={2}
+                        />
+                      </td>
+                      <td className="p-2">
+                        <Textarea
+                          value={action.notes}
+                          onChange={(e) => updateAction(index, "notes", e.target.value)}
+                          placeholder="Optional notes"
+                          className="min-w-[150px]"
+                          rows={2}
+                        />
+                      </td>
+                      <td className="p-2">
+                        <Button
+                          onClick={() => removeAction(index)}
+                          size="icon"
+                          variant="ghost"
+                          className="text-destructive"
+                          disabled={actions.length === 1}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Save Button */}
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
+              Cancel
+            </Button>
+            <Button onClick={handleSave} disabled={loading}>
+              {loading ? "Creating..." : "Create Report"}
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};

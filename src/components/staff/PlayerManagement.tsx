@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Edit, FileText, LineChart, BookOpen, Video, Calendar, Plus, DollarSign, Trash2, Copy } from "lucide-react";
 import { PerformanceActionsDialog } from "./PerformanceActionsDialog";
+import { CreatePerformanceReportDialog } from "./CreatePerformanceReportDialog";
 import { ProgrammingManagement } from "./ProgrammingManagement";
 import { PlayerFixtures } from "./PlayerFixtures";
 
@@ -70,6 +71,9 @@ const PlayerManagement = () => {
   const [isPerformanceActionsDialogOpen, setIsPerformanceActionsDialogOpen] = useState(false);
   const [selectedAnalysisId, setSelectedAnalysisId] = useState<string | null>(null);
   const [selectedPlayerName, setSelectedPlayerName] = useState<string>("");
+  const [isCreateReportDialogOpen, setIsCreateReportDialogOpen] = useState(false);
+  const [createReportPlayerId, setCreateReportPlayerId] = useState<string>("");
+  const [createReportPlayerName, setCreateReportPlayerName] = useState<string>("");
   const [isHighlightsDialogOpen, setIsHighlightsDialogOpen] = useState(false);
   const [highlightVideoFile, setHighlightVideoFile] = useState<File | null>(null);
   const [highlightClubLogoFile, setHighlightClubLogoFile] = useState<File | null>(null);
@@ -2529,12 +2533,9 @@ const PlayerManagement = () => {
                             <Button
                               size="sm"
                               onClick={() => {
-                                // Close analysis section and open fixtures to create performance report
-                                setShowingAnalysisFor(null);
-                                setShowingFixturesFor(player.id);
-                                setShowingHighlightsFor(null);
-                                setShowingInvoicesFor(null);
-                                toast.info("Create a fixture or select an existing one to add a performance report");
+                                setCreateReportPlayerId(player.id);
+                                setCreateReportPlayerName(player.name);
+                                setIsCreateReportDialogOpen(true);
                               }}
                             >
                               <Plus className="w-4 h-4 mr-2" />
@@ -2792,6 +2793,18 @@ const PlayerManagement = () => {
         onOpenChange={setIsPerformanceActionsDialogOpen}
         analysisId={selectedAnalysisId || ""}
         playerName={selectedPlayerName}
+      />
+
+      {/* Create Performance Report Dialog */}
+      <CreatePerformanceReportDialog
+        open={isCreateReportDialogOpen}
+        onOpenChange={setIsCreateReportDialogOpen}
+        playerId={createReportPlayerId}
+        playerName={createReportPlayerName}
+        onSuccess={() => {
+          fetchAllAnalyses();
+          toast.success("Performance report created successfully");
+        }}
       />
 
       {/* Programming Management Dialog */}
