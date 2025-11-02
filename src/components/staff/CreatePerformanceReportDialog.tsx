@@ -51,6 +51,7 @@ export const CreatePerformanceReportDialog = ({
   const [fixtures, setFixtures] = useState<Fixture[]>([]);
   const [selectedFixtureId, setSelectedFixtureId] = useState<string>("");
   const [showStrikerStats, setShowStrikerStats] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
 
   // Key stats
   const [r90Score, setR90Score] = useState("");
@@ -92,11 +93,16 @@ export const CreatePerformanceReportDialog = ({
   ]);
 
   useEffect(() => {
-    if (open && analysisId) {
-      // Only fetch data when opening in edit mode
-      fetchExistingData();
-    }
     if (open) {
+      if (analysisId) {
+        // Edit mode
+        setIsEditMode(true);
+        fetchExistingData();
+      } else {
+        // Create mode
+        setIsEditMode(false);
+        resetForm();
+      }
       fetchFixtures();
     }
   }, [open, analysisId]);
@@ -722,20 +728,19 @@ export const CreatePerformanceReportDialog = ({
                     </Button>
                   </div>
                   
-                  <div className="grid grid-cols-2 gap-3">
+                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <Label className="text-xs">Minute *</Label>
                       <Input
-                        type="number"
-                        step="0.01"
+                        type="text"
                         value={action.minute}
                         onChange={(e) => updateAction(index, "minute", e.target.value)}
-                        placeholder="23.5"
+                        placeholder="2.30"
                         className="text-sm"
                       />
                     </div>
                     <div>
-                      <Label className="text-xs">Score *</Label>
+                      <Label className="text-xs">Score</Label>
                       <Input
                         type="number"
                         step="0.00001"
@@ -802,11 +807,10 @@ export const CreatePerformanceReportDialog = ({
                       <td className="p-2 text-sm">{action.action_number}</td>
                       <td className="p-2">
                         <Input
-                          type="number"
-                          step="0.01"
+                          type="text"
                           value={action.minute}
                           onChange={(e) => updateAction(index, "minute", e.target.value)}
-                          placeholder="23.5"
+                          placeholder="2.30"
                           className="w-20 text-sm"
                         />
                       </td>
@@ -877,7 +881,7 @@ export const CreatePerformanceReportDialog = ({
               Cancel
             </Button>
             <Button onClick={handleSave} disabled={loading} className="w-full sm:w-auto">
-              {loading ? (analysisId ? "Updating..." : "Creating...") : (analysisId ? "Update Report" : "Create Report")}
+              {loading ? (isEditMode ? "Updating..." : "Creating...") : (isEditMode ? "Update Report" : "Create Report")}
             </Button>
           </div>
         </div>
