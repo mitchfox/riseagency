@@ -426,10 +426,12 @@ export const CreatePerformanceReportDialog = ({
 
       toast.success(`Performance report ${analysisId ? 'updated' : 'created'} successfully`);
       
-      // Close dialog for both create and edit mode after successful save
-      onOpenChange(false);
-      
-      if (onSuccess) onSuccess();
+      // Only close dialog and call onSuccess in create mode
+      // In edit mode, keep dialog open for continued editing
+      if (!analysisId) {
+        onOpenChange(false);
+        if (onSuccess) onSuccess();
+      }
     } catch (error: any) {
       console.error("Error saving performance report:", error);
       toast.error("Failed to save performance report: " + error.message);
