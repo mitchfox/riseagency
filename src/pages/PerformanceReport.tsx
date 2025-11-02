@@ -239,11 +239,9 @@ const PerformanceReport = () => {
                           {per90Value !== undefined && per90Value !== null && (
                             <p className="text-xs text-muted-foreground mt-1">
                               per 90: {typeof per90Value === 'number' 
-                                ? (per90Key.includes('turnovers') || per90Key.includes('interceptions') || per90Key.includes('progressive_passes') || per90Key.includes('regains'))
-                                  ? Math.round(per90Value)
-                                  : per90Value < 10 
-                                    ? per90Value.toFixed(3) 
-                                    : per90Value
+                                ? per90Value < 10 
+                                  ? per90Value.toFixed(3) 
+                                  : per90Value
                                 : per90Value}
                             </p>
                           )}
