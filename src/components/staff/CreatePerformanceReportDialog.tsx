@@ -405,14 +405,14 @@ export const CreatePerformanceReportDialog = ({
 
       // Insert performance actions
       const actionsToInsert = actions
-        .filter(a => a.minute && a.action_type && a.action_description)
+        .filter(a => a.action_number)
         .map(a => ({
           analysis_id: analysisIdToUse,
           action_number: a.action_number,
-          minute: parseFloat(a.minute),
+          minute: a.minute ? parseFloat(a.minute) : null,
           action_score: a.action_score ? parseFloat(a.action_score) : null,
-          action_type: a.action_type,
-          action_description: a.action_description,
+          action_type: a.action_type || null,
+          action_description: a.action_description || null,
           notes: a.notes || null,
         }));
 

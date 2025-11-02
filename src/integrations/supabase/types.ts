@@ -572,38 +572,38 @@ export type Database = {
       }
       performance_report_actions: {
         Row: {
-          action_description: string
+          action_description: string | null
           action_number: number
           action_score: number | null
-          action_type: string
+          action_type: string | null
           analysis_id: string
           created_at: string | null
           id: string
-          minute: number
+          minute: number | null
           notes: string | null
           updated_at: string | null
         }
         Insert: {
-          action_description: string
+          action_description?: string | null
           action_number: number
           action_score?: number | null
-          action_type: string
+          action_type?: string | null
           analysis_id: string
           created_at?: string | null
           id?: string
-          minute: number
+          minute?: number | null
           notes?: string | null
           updated_at?: string | null
         }
         Update: {
-          action_description?: string
+          action_description?: string | null
           action_number?: number
           action_score?: number | null
-          action_type?: string
+          action_type?: string | null
           analysis_id?: string
           created_at?: string | null
           id?: string
-          minute?: number
+          minute?: number | null
           notes?: string | null
           updated_at?: string | null
         }
