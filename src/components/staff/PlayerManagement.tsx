@@ -8,8 +8,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { toast } from "sonner";
-import { Edit, FileText, LineChart, BookOpen, Video, Calendar, Plus, DollarSign, Trash2, Copy } from "lucide-react";
+import { Edit, FileText, LineChart, BookOpen, Video, Calendar, Plus, DollarSign, Trash2, Copy, ChevronDown } from "lucide-react";
 import { PerformanceActionsDialog } from "./PerformanceActionsDialog";
 import { CreatePerformanceReportDialog } from "./CreatePerformanceReportDialog";
 import { ProgrammingManagement } from "./ProgrammingManagement";
@@ -92,6 +93,11 @@ const PlayerManagement = () => {
   const [uploadingClubLogo, setUploadingClubLogo] = useState(false);
   const [clubLogoUrl, setClubLogoUrl] = useState<string>("");
   const [representationFilter, setRepresentationFilter] = useState<string>("all");
+  const [collapsedCategories, setCollapsedCategories] = useState<Record<string, boolean>>({
+    'Signed': true,
+    'Mandate': true,
+    'Other': true
+  });
   const [schemeHistory, setSchemeHistory] = useState<Array<{
     formation: string;
     positions: string[];
@@ -1764,9 +1770,18 @@ const PlayerManagement = () => {
         if (categoryPlayers.length === 0) return null;
         
         return (
-          <div key={category} className="space-y-4">
-            <h3 className="text-xl font-semibold text-primary">{category}</h3>
-            <div className="grid gap-4">
+          <Collapsible 
+            key={category} 
+            open={!collapsedCategories[category]}
+            onOpenChange={(open) => setCollapsedCategories({...collapsedCategories, [category]: !open})}
+            className="space-y-4"
+          >
+            <CollapsibleTrigger className="flex items-center gap-2 w-full text-left">
+              <h3 className="text-xl font-semibold text-primary">{category}</h3>
+              <ChevronDown className={`w-5 h-5 transition-transform ${collapsedCategories[category] ? '' : 'rotate-180'}`} />
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <div className="grid gap-4">
               {categoryPlayers.map((player) => {
                 const isExpanded = expandedPlayerId === player.id;
                 const playerStats = stats[player.id];
@@ -2667,8 +2682,9 @@ const PlayerManagement = () => {
             </Card>
           );
         })}
-            </div>
-          </div>
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
         );
       })}
 
