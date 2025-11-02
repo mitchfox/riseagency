@@ -474,20 +474,39 @@ export const CoachingDatabase = () => {
     setLoading(true);
 
     try {
-      // Create a clean copy of formData with only the fields we need
-      const dataToSubmit: any = { ...formData };
+      // Create a clean copy of formData with only the fields we need for each table type
+      const dataToSubmit: any = {};
       
-      // Remove fields that don't exist in the table
       if (activeTab === 'coaching_aphorisms') {
         // For aphorisms, only keep featured_text and body_text
-        delete dataToSubmit.title;
-        delete dataToSubmit.description;
-        delete dataToSubmit.content;
-        delete dataToSubmit.category;
-        delete dataToSubmit.author;
-        delete dataToSubmit.load;
-        delete dataToSubmit.video_url;
-        delete dataToSubmit.is_own_video;
+        dataToSubmit.featured_text = formData.featured_text;
+        dataToSubmit.body_text = formData.body_text;
+      } else if (activeTab === 'coaching_sessions') {
+        // For sessions, keep title, description, duration, category, exercises, tags, attachments
+        dataToSubmit.title = formData.title;
+        if (formData.description) dataToSubmit.description = formData.description;
+        if (formData.duration) dataToSubmit.duration = formData.duration;
+        if (formData.category) dataToSubmit.category = formData.category;
+        if (formData.exercises) dataToSubmit.exercises = formData.exercises;
+        if (formData.tags) dataToSubmit.tags = formData.tags;
+        if (formData.attachments) dataToSubmit.attachments = formData.attachments;
+      } else if (activeTab === 'coaching_exercises') {
+        // For exercises, include all relevant fields
+        dataToSubmit.title = formData.title;
+        if (formData.description) dataToSubmit.description = formData.description;
+        if (formData.content) dataToSubmit.content = formData.content;
+        if (formData.category) dataToSubmit.category = formData.category;
+        if (formData.sets) dataToSubmit.sets = formData.sets;
+        if (formData.reps) dataToSubmit.reps = formData.reps;
+        if (formData.rest_time) dataToSubmit.rest_time = formData.rest_time;
+        if (formData.load) dataToSubmit.load = formData.load;
+        if (formData.video_url) dataToSubmit.video_url = formData.video_url;
+        if (formData.is_own_video !== undefined) dataToSubmit.is_own_video = formData.is_own_video;
+        if (formData.tags) dataToSubmit.tags = formData.tags;
+        if (formData.attachments) dataToSubmit.attachments = formData.attachments;
+      } else {
+        // For other tables, include all fields
+        Object.assign(dataToSubmit, formData);
       }
       
       if (editingItem) {
