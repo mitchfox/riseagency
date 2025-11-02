@@ -474,14 +474,22 @@ export const CreatePerformanceReportDialog = ({
           {/* Key Stats */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="r90">R90 Score *</Label>
+              <Label htmlFor="r90">R90 Score (Auto-calculated)</Label>
               <Input
                 id="r90"
                 type="number"
                 step="0.01"
-                value={r90Score}
+                value={
+                  minutesPlayed && actions.length > 0
+                    ? (
+                        (actions.reduce((sum, a) => sum + (parseFloat(a.action_score) || 0), 0) / parseInt(minutesPlayed)) * 90
+                      ).toFixed(2)
+                    : r90Score
+                }
                 onChange={(e) => setR90Score(e.target.value)}
-                placeholder="e.g., 6.50"
+                placeholder="Calculated from actions"
+                readOnly
+                className="bg-muted cursor-not-allowed"
               />
             </div>
             <div>
