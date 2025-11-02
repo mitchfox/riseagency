@@ -1462,13 +1462,14 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, onViewR
                   opponent = pf.fixtures.away_team;
                 } else if (isAwayTeam) {
                   opponent = pf.fixtures.home_team;
-                } else {
-                  // Can't determine, show both (with For replaced)
-                  opponent = `${displayHomeTeam} vs ${displayAwayTeam}`;
-                }
               } else {
-                opponent = `${displayHomeTeam} vs ${displayAwayTeam}`;
+                // Can't determine, default to away team as opponent
+                opponent = displayAwayTeam;
               }
+            } else {
+              // No player team set, default to away team as opponent
+              opponent = displayAwayTeam;
+            }
               
               // Determine result from score if available
               const hasScore = pf.fixtures.home_score !== null && pf.fixtures.away_score !== null;
