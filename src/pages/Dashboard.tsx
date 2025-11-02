@@ -609,26 +609,28 @@ const Dashboard = () => {
           </div>
 
           {dailyAphorism && (
-            <div className="mb-8 px-4 md:px-0">
+            <div className="mb-4 px-4 md:px-0">
               <Card className="relative overflow-hidden border-gold bg-gold">
-                <CardContent className="relative py-10 px-6 text-center space-y-6">
-                  <div className="bg-black/90 backdrop-blur-sm p-6 rounded-lg inline-block">
-                    <p className="text-xl md:text-2xl font-bold text-gold leading-relaxed tracking-wide">
+                <CardContent className="relative py-5 px-3 text-center space-y-3">
+                  <div className="bg-black/90 backdrop-blur-sm p-3 rounded-lg inline-block">
+                    <p className="text-base md:text-xl font-bold text-gold leading-relaxed tracking-wide">
                       {dailyAphorism.featured_text}
                     </p>
                   </div>
                   {dailyAphorism.author && (
-                    <div className="bg-black/90 backdrop-blur-sm px-6 py-3 rounded-lg inline-block">
-                      <p className="text-sm md:text-base text-gold/80 italic font-medium">
+                    <div className="bg-black/90 backdrop-blur-sm px-4 py-2 rounded-lg inline-block">
+                      <p className="text-xs md:text-sm text-gold/80 italic font-medium">
                         — {dailyAphorism.author}
                       </p>
                     </div>
                   )}
-                  <div className="bg-black/90 backdrop-blur-sm p-6 rounded-lg max-w-2xl mx-auto">
-                    <p className="text-base md:text-lg text-white/90 leading-relaxed">
-                      {dailyAphorism.body_text}
-                    </p>
-                  </div>
+                  {dailyAphorism.body_text && (
+                    <div className="bg-black/90 backdrop-blur-sm p-3 rounded-lg max-w-2xl mx-auto">
+                      <p className="text-sm md:text-base text-white/90 leading-relaxed">
+                        {dailyAphorism.body_text}
+                      </p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </div>
