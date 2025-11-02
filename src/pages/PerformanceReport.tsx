@@ -228,11 +228,23 @@ const PerformanceReport = () => {
                         <div key={key} className="text-center p-3 bg-background rounded-md">
                           <p className="text-xs text-muted-foreground mb-1">{displayName}</p>
                           <p className="font-bold text-lg">
-                            {typeof value === 'number' && value < 10 ? value.toFixed(3) : value}
+                            {typeof value === 'number' 
+                              ? (key.includes('turnovers') || key.includes('interceptions') || key.includes('progressive_passes') || key.includes('regains'))
+                                ? Math.round(value)
+                                : value < 10 
+                                  ? value.toFixed(3) 
+                                  : value
+                              : value}
                           </p>
                           {per90Value !== undefined && per90Value !== null && (
                             <p className="text-xs text-muted-foreground mt-1">
-                              per 90: {typeof per90Value === 'number' && per90Value < 10 ? per90Value.toFixed(3) : per90Value}
+                              per 90: {typeof per90Value === 'number' 
+                                ? (per90Key.includes('turnovers') || per90Key.includes('interceptions') || per90Key.includes('progressive_passes') || per90Key.includes('regains'))
+                                  ? Math.round(per90Value)
+                                  : per90Value < 10 
+                                    ? per90Value.toFixed(3) 
+                                    : per90Value
+                                : per90Value}
                             </p>
                           )}
                         </div>
