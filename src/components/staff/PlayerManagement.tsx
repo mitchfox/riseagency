@@ -246,6 +246,29 @@ const PlayerManagement = () => {
     }
   };
 
+  // Set up real-time subscription for player_analysis updates
+  useEffect(() => {
+    const channel = supabase
+      .channel('player-analysis-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'player_analysis'
+        },
+        () => {
+          // Refetch analyses when any change occurs
+          fetchAllAnalyses();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
   const fetchAvailableAnalyses = async () => {
     try {
       const { data, error } = await supabase
