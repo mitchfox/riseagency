@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,6 +32,22 @@ const Staff = () => {
   const [rememberMe, setRememberMe] = useState(false);
   const [expandedSection, setExpandedSection] = useState<'players' | 'playerlist' | 'blog' | 'betweenthelines' | 'coaching' | 'analysis' | 'submissions' | 'visitors' | 'invoices' | 'updates' | null>('players');
   const navigate = useNavigate();
+  const sectionRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
+
+  const handleSectionToggle = (section: 'players' | 'playerlist' | 'blog' | 'betweenthelines' | 'coaching' | 'analysis' | 'submissions' | 'visitors' | 'invoices' | 'updates') => {
+    const isExpanding = expandedSection !== section;
+    setExpandedSection(expandedSection === section ? null : section);
+    
+    // Keep the section header in view when expanding
+    if (isExpanding) {
+      setTimeout(() => {
+        sectionRefs.current[section]?.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'start' 
+        });
+      }, 50);
+    }
+  };
 
   // Load saved email and remember me preference on mount
   useEffect(() => {
@@ -252,7 +268,8 @@ const Staff = () => {
           {/* Player List Section */}
           <Card className="cursor-pointer">
             <CardHeader 
-              onClick={() => setExpandedSection(expandedSection === 'playerlist' ? null : 'playerlist')}
+              ref={(el) => sectionRefs.current['playerlist'] = el}
+              onClick={() => handleSectionToggle('playerlist')}
               className="hover:bg-accent/50 transition-colors"
             >
               <div className="flex justify-between items-center">
@@ -272,7 +289,8 @@ const Staff = () => {
           {/* Players Section */}
           <Card className="cursor-pointer">
             <CardHeader 
-              onClick={() => setExpandedSection(expandedSection === 'players' ? null : 'players')}
+              ref={(el) => sectionRefs.current['players'] = el}
+              onClick={() => handleSectionToggle('players')}
               className="hover:bg-accent/50 transition-colors"
             >
               <div className="flex justify-between items-center">
@@ -292,7 +310,8 @@ const Staff = () => {
           {/* Coaching Database Section */}
           <Card className="cursor-pointer">
             <CardHeader 
-              onClick={() => setExpandedSection(expandedSection === 'coaching' ? null : 'coaching')}
+              ref={(el) => sectionRefs.current['coaching'] = el}
+              onClick={() => handleSectionToggle('coaching')}
               className="hover:bg-accent/50 transition-colors"
             >
               <div className="flex justify-between items-center">
@@ -312,7 +331,8 @@ const Staff = () => {
           {/* Analysis Writer Section */}
           <Card className="cursor-pointer">
             <CardHeader 
-              onClick={() => setExpandedSection(expandedSection === 'analysis' ? null : 'analysis')}
+              ref={(el) => sectionRefs.current['analysis'] = el}
+              onClick={() => handleSectionToggle('analysis')}
               className="hover:bg-accent/50 transition-colors"
             >
               <div className="flex justify-between items-center">
@@ -333,7 +353,8 @@ const Staff = () => {
           {/* News Articles Section */}
           <Card className="cursor-pointer">
             <CardHeader 
-              onClick={() => setExpandedSection(expandedSection === 'blog' ? null : 'blog')}
+              ref={(el) => sectionRefs.current['blog'] = el}
+              onClick={() => handleSectionToggle('blog')}
               className="hover:bg-accent/50 transition-colors"
             >
               <div className="flex justify-between items-center">
@@ -353,7 +374,8 @@ const Staff = () => {
           {/* Between The Lines Section */}
           <Card className="cursor-pointer">
             <CardHeader 
-              onClick={() => setExpandedSection(expandedSection === 'betweenthelines' ? null : 'betweenthelines')}
+              ref={(el) => sectionRefs.current['betweenthelines'] = el}
+              onClick={() => handleSectionToggle('betweenthelines')}
               className="hover:bg-accent/50 transition-colors"
             >
               <div className="flex justify-between items-center">
@@ -373,7 +395,8 @@ const Staff = () => {
           {/* Form Submissions Section */}
           <Card className="cursor-pointer">
             <CardHeader 
-              onClick={() => setExpandedSection(expandedSection === 'submissions' ? null : 'submissions')}
+              ref={(el) => sectionRefs.current['submissions'] = el}
+              onClick={() => handleSectionToggle('submissions')}
               className="hover:bg-accent/50 transition-colors"
             >
               <div className="flex justify-between items-center">
@@ -393,7 +416,8 @@ const Staff = () => {
           {/* Site Visitors Section */}
           <Card className="cursor-pointer">
             <CardHeader 
-              onClick={() => setExpandedSection(expandedSection === 'visitors' ? null : 'visitors')}
+              ref={(el) => sectionRefs.current['visitors'] = el}
+              onClick={() => handleSectionToggle('visitors')}
               className="hover:bg-accent/50 transition-colors"
             >
               <div className="flex justify-between items-center">
@@ -413,7 +437,8 @@ const Staff = () => {
           {/* Invoices Section */}
           <Card className="cursor-pointer">
             <CardHeader 
-              onClick={() => setExpandedSection(expandedSection === 'invoices' ? null : 'invoices')}
+              ref={(el) => sectionRefs.current['invoices'] = el}
+              onClick={() => handleSectionToggle('invoices')}
               className="hover:bg-accent/50 transition-colors"
             >
               <div className="flex justify-between items-center">
@@ -433,7 +458,8 @@ const Staff = () => {
           {/* Updates Section */}
           <Card className="cursor-pointer">
             <CardHeader 
-              onClick={() => setExpandedSection(expandedSection === 'updates' ? null : 'updates')}
+              ref={(el) => sectionRefs.current['updates'] = el}
+              onClick={() => handleSectionToggle('updates')}
               className="hover:bg-accent/50 transition-colors"
             >
               <div className="flex justify-between items-center">
