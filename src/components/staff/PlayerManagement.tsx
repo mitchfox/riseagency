@@ -1805,27 +1805,28 @@ const PlayerManagement = () => {
                       }}
                       className="hover:bg-accent/50 transition-colors"
                     >
-                      <div className="flex justify-between items-center">
-                        <div className="flex items-center gap-2 text-foreground font-normal">
-                          <span>{player.name}</span>
-                          <span className="text-muted-foreground">•</span>
-                          <span className="text-muted-foreground">{player.position}</span>
-                          <span className="text-muted-foreground">•</span>
-                          <span className="text-muted-foreground">{player.age} years</span>
-                          <span className="text-muted-foreground">•</span>
-                          <span className="text-muted-foreground">{player.nationality}</span>
-                          {player.representation_status && (
-                            <>
-                              <span className="text-muted-foreground">•</span>
-                              <span className="text-sm font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary">
-                                {player.representation_status === 'represented' ? 'Represented' : 
-                                 player.representation_status === 'mandated' ? 'Mandated' : 
-                                 'Other'}
-                              </span>
-                            </>
-                          )}
+                      <div className="flex justify-between items-start gap-2">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2 text-foreground font-normal min-w-0 flex-1">
+                          <span className="font-semibold truncate">{player.name}</span>
+                          <div className="flex items-center gap-2 text-sm flex-wrap">
+                            <span className="text-muted-foreground">{player.position}</span>
+                            <span className="text-muted-foreground hidden sm:inline">•</span>
+                            <span className="text-muted-foreground">{player.age} years</span>
+                            <span className="text-muted-foreground hidden sm:inline">•</span>
+                            <span className="text-muted-foreground">{player.nationality}</span>
+                            {player.representation_status && (
+                              <>
+                                <span className="text-muted-foreground hidden sm:inline">•</span>
+                                <span className="text-xs sm:text-sm font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary whitespace-nowrap">
+                                  {player.representation_status === 'represented' ? 'Represented' : 
+                                   player.representation_status === 'mandated' ? 'Mandated' : 
+                                   'Other'}
+                                </span>
+                              </>
+                            )}
+                          </div>
                         </div>
-                        <div className="text-muted-foreground">
+                        <div className="text-muted-foreground flex-shrink-0 mt-1 sm:mt-0">
                           {isExpanded ? "▼" : "▶"}
                         </div>
                       </div>
@@ -1843,9 +1844,10 @@ const PlayerManagement = () => {
                         setShowingHighlightsFor(null);
                         setShowingInvoicesFor(null);
                       }}
+                      className="flex-shrink-0"
                     >
-                      <Calendar className="w-4 h-4 mr-2" />
-                      Fixtures
+                      <Calendar className="w-4 h-4 sm:mr-2" />
+                      <span className="hidden sm:inline">Fixtures</span>
                     </Button>
                     <Button 
                       variant={showingAnalysisFor === player.id ? "default" : "outline"}
@@ -1856,9 +1858,10 @@ const PlayerManagement = () => {
                         setShowingHighlightsFor(null);
                         setShowingInvoicesFor(null);
                       }}
+                      className="flex-shrink-0"
                     >
-                      <LineChart className="w-4 h-4 mr-2" />
-                      Analysis
+                      <LineChart className="w-4 h-4 sm:mr-2" />
+                      <span className="hidden sm:inline">Analysis</span>
                     </Button>
                     <Button 
                       variant={isProgrammingDialogOpen && selectedProgrammingPlayerId === player.id ? "default" : "outline"}
@@ -1872,9 +1875,10 @@ const PlayerManagement = () => {
                         setShowingHighlightsFor(null);
                         setShowingInvoicesFor(null);
                       }}
+                      className="flex-shrink-0"
                     >
-                      <BookOpen className="w-4 h-4 mr-2" />
-                      Programming
+                      <BookOpen className="w-4 h-4 sm:mr-2" />
+                      <span className="hidden sm:inline">Programming</span>
                     </Button>
                     <Button 
                       variant={showingHighlightsFor === player.id ? "default" : "outline"}
@@ -1885,9 +1889,10 @@ const PlayerManagement = () => {
                         setShowingAnalysisFor(null);
                         setShowingInvoicesFor(null);
                       }}
+                      className="flex-shrink-0"
                     >
-                      <Video className="w-4 h-4 mr-2" />
-                      Highlights
+                      <Video className="w-4 h-4 sm:mr-2" />
+                      <span className="hidden sm:inline">Highlights</span>
                     </Button>
                     <Button 
                       variant={showingInvoicesFor === player.id ? "default" : "outline"}
@@ -1898,22 +1903,24 @@ const PlayerManagement = () => {
                         setShowingAnalysisFor(null);
                         setShowingHighlightsFor(null);
                       }}
+                      className="flex-shrink-0"
                     >
-                      <DollarSign className="w-4 h-4 mr-2" />
-                      Invoices
+                      <DollarSign className="w-4 h-4 sm:mr-2" />
+                      <span className="hidden sm:inline">Invoices</span>
                     </Button>
-                    <Button variant="outline" size="sm" onClick={() => startEdit(player)}>
-                      <Edit className="w-4 h-4 mr-2" />
-                      Player Details
+                    <Button variant="outline" size="sm" onClick={() => startEdit(player)} className="flex-shrink-0">
+                      <Edit className="w-4 h-4 sm:mr-2" />
+                      <span className="hidden sm:inline">Player Details</span>
                     </Button>
                     {player.email && (
                       <Button 
                         variant="outline" 
                         size="sm" 
                         onClick={() => handleCreateAccount(player.id, player.email!, player.name)}
+                        className="flex-shrink-0"
                       >
-                        <Plus className="w-4 h-4 mr-2" />
-                        Create Account
+                        <Plus className="w-4 h-4 sm:mr-2" />
+                        <span className="hidden sm:inline">Create Account</span>
                       </Button>
                     )}
                   </div>
@@ -2442,11 +2449,11 @@ const PlayerManagement = () => {
                       <h4 className="text-xl font-semibold mb-4">Analysis</h4>
                       
                       <Tabs defaultValue="pre-match" className="w-full">
-                        <TabsList className="grid w-full grid-cols-4">
-                          <TabsTrigger value="pre-match">⚽ Pre-Match</TabsTrigger>
-                          <TabsTrigger value="post-match">📊 Post-Match</TabsTrigger>
-                          <TabsTrigger value="performance">📈 Performance</TabsTrigger>
-                          <TabsTrigger value="concepts">💡 Concepts</TabsTrigger>
+                        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4">
+                          <TabsTrigger value="pre-match" className="text-xs sm:text-sm">⚽ <span className="hidden sm:inline">Pre-Match</span><span className="sm:hidden">Pre</span></TabsTrigger>
+                          <TabsTrigger value="post-match" className="text-xs sm:text-sm">📊 <span className="hidden sm:inline">Post-Match</span><span className="sm:hidden">Post</span></TabsTrigger>
+                          <TabsTrigger value="performance" className="text-xs sm:text-sm">📈 <span className="hidden sm:inline">Performance</span><span className="sm:hidden">Perf</span></TabsTrigger>
+                          <TabsTrigger value="concepts" className="text-xs sm:text-sm">💡 <span className="hidden sm:inline">Concepts</span><span className="sm:hidden">Conc</span></TabsTrigger>
                         </TabsList>
 
                         {/* Pre-Match Tab */}

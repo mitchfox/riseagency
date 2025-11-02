@@ -256,8 +256,8 @@ const Staff = () => {
     <div className="min-h-screen bg-background">
       <Header />
       <main className="container mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-4xl font-bold">Staff Dashboard</h1>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+          <h1 className="text-3xl sm:text-4xl font-bold">Staff Dashboard</h1>
           <Button onClick={handleLogout} variant="outline">
             Logout
           </Button>
