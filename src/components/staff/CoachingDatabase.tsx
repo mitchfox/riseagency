@@ -992,18 +992,6 @@ export const CoachingDatabase = () => {
                       </div>
                     )}
 
-                    {key === 'coaching_aphorisms' && (
-                      <div className="space-y-2">
-                        <Label htmlFor="author">Author</Label>
-                        <Input
-                          id="author"
-                          value={formData.author}
-                          onChange={(e) => setFormData({ ...formData, author: e.target.value })}
-                          placeholder="Optional"
-                        />
-                      </div>
-                    )}
-
                     <div className="flex justify-end gap-2">
                       <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
                         Cancel
@@ -1102,7 +1090,7 @@ export const CoachingDatabase = () => {
                   <Card key={item.id} className="p-3">
                     <div className="flex items-center justify-between">
                       <h3 className="text-sm font-medium line-clamp-2 flex-1 pr-2">
-                        {item.title}
+                        {activeTab === 'coaching_aphorisms' ? item.featured_text : item.title}
                       </h3>
                       <Button
                         variant="outline"
