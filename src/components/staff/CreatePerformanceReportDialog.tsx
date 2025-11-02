@@ -16,6 +16,7 @@ interface CreatePerformanceReportDialogProps {
   playerId: string;
   playerName: string;
   onSuccess?: () => void;
+  analysisId?: string; // For edit mode
 }
 
 interface Fixture {
@@ -43,8 +44,10 @@ export const CreatePerformanceReportDialog = ({
   playerId,
   playerName,
   onSuccess,
+  analysisId,
 }: CreatePerformanceReportDialogProps) => {
   const [loading, setLoading] = useState(false);
+  const [loadingData, setLoadingData] = useState(false);
   const [fixtures, setFixtures] = useState<Fixture[]>([]);
   const [selectedFixtureId, setSelectedFixtureId] = useState<string>("");
   const [showStrikerStats, setShowStrikerStats] = useState(false);
@@ -91,8 +94,13 @@ export const CreatePerformanceReportDialog = ({
   useEffect(() => {
     if (open && playerId) {
       fetchFixtures();
+      if (analysisId) {
+        fetchExistingData();
+      } else {
+        resetForm();
+      }
     }
-  }, [open, playerId]);
+  }, [open, playerId, analysisId]);
 
   const fetchFixtures = async () => {
     try {
@@ -130,6 +138,126 @@ export const CreatePerformanceReportDialog = ({
         setResult(`${fixture.home_score}-${fixture.away_score}`);
       }
     }
+  };
+
+  const fetchExistingData = async () => {
+    if (!analysisId) return;
+    
+    setLoadingData(true);
+    try {
+      // Fetch analysis data
+      const { data: analysisData, error: analysisError } = await supabase
+        .from("player_analysis")
+        .select("*")
+        .eq("id", analysisId)
+        .single();
+
+      if (analysisError) throw analysisError;
+
+      // Populate form
+      setR90Score(analysisData.r90_score?.toString() || "");
+      setMinutesPlayed(analysisData.minutes_played?.toString() || "");
+      setOpponent(analysisData.opponent || "");
+      setResult(analysisData.result || "");
+      setSelectedFixtureId(analysisData.fixture_id || "");
+
+      // Populate striker stats if they exist
+      if (analysisData.striker_stats) {
+        const stats = analysisData.striker_stats as any;
+        setStrikerStats({
+          xGChain: stats.xGChain?.toString() || "",
+          xGChain_per90: stats.xGChain_per90?.toString() || "",
+          xG_adj: stats.xG_adj?.toString() || "",
+          xG_adj_per90: stats.xG_adj_per90?.toString() || "",
+          xA_adj: stats.xA_adj?.toString() || "",
+          xA_adj_per90: stats.xA_adj_per90?.toString() || "",
+          movement_in_behind_xC: stats.movement_in_behind_xC?.toString() || "",
+          movement_in_behind_xC_per90: stats.movement_in_behind_xC_per90?.toString() || "",
+          movement_down_side_xC: stats.movement_down_side_xC?.toString() || "",
+          movement_down_side_xC_per90: stats.movement_down_side_xC_per90?.toString() || "",
+          triple_threat_xC: stats.triple_threat_xC?.toString() || "",
+          triple_threat_xC_per90: stats.triple_threat_xC_per90?.toString() || "",
+          movement_to_feet_xC: stats.movement_to_feet_xC?.toString() || "",
+          movement_to_feet_xC_per90: stats.movement_to_feet_xC_per90?.toString() || "",
+          crossing_movement_xC: stats.crossing_movement_xC?.toString() || "",
+          crossing_movement_xC_per90: stats.crossing_movement_xC_per90?.toString() || "",
+          interceptions: stats.interceptions?.toString() || "",
+          interceptions_per90: stats.interceptions_per90?.toString() || "",
+          regains_adj: stats.regains_adj?.toString() || "",
+          regains_adj_per90: stats.regains_adj_per90?.toString() || "",
+          turnovers_adj: stats.turnovers_adj?.toString() || "",
+          turnovers_adj_per90: stats.turnovers_adj_per90?.toString() || "",
+          progressive_passes_adj: stats.progressive_passes_adj?.toString() || "",
+          progressive_passes_adj_per90: stats.progressive_passes_adj_per90?.toString() || "",
+        });
+        setShowStrikerStats(true);
+      }
+
+      // Fetch performance actions
+      const { data: actionsData, error: actionsError } = await supabase
+        .from("performance_report_actions")
+        .select("*")
+        .eq("analysis_id", analysisId)
+        .order("action_number", { ascending: true });
+
+      if (actionsError) throw actionsError;
+
+      if (actionsData && actionsData.length > 0) {
+        setActions(
+          actionsData.map((action) => ({
+            action_number: action.action_number,
+            minute: action.minute.toString(),
+            action_score: action.action_score.toString(),
+            action_type: action.action_type,
+            action_description: action.action_description,
+            notes: action.notes || "",
+          }))
+        );
+      }
+    } catch (error: any) {
+      console.error("Error fetching existing data:", error);
+      toast.error("Failed to load performance report data");
+    } finally {
+      setLoadingData(false);
+    }
+  };
+
+  const resetForm = () => {
+    setR90Score("");
+    setMinutesPlayed("");
+    setOpponent("");
+    setResult("");
+    setSelectedFixtureId("");
+    setShowStrikerStats(false);
+    setStrikerStats({
+      xGChain: "",
+      xGChain_per90: "",
+      xG_adj: "",
+      xG_adj_per90: "",
+      xA_adj: "",
+      xA_adj_per90: "",
+      movement_in_behind_xC: "",
+      movement_in_behind_xC_per90: "",
+      movement_down_side_xC: "",
+      movement_down_side_xC_per90: "",
+      triple_threat_xC: "",
+      triple_threat_xC_per90: "",
+      movement_to_feet_xC: "",
+      movement_to_feet_xC_per90: "",
+      crossing_movement_xC: "",
+      crossing_movement_xC_per90: "",
+      interceptions: "",
+      interceptions_per90: "",
+      regains_adj: "",
+      regains_adj_per90: "",
+      turnovers_adj: "",
+      turnovers_adj_per90: "",
+      progressive_passes_adj: "",
+      progressive_passes_adj_per90: "",
+    });
+    setActions([
+      { action_number: 1, minute: "", action_score: "", action_type: "", action_description: "", notes: "" }
+    ]);
   };
 
   const addAction = () => {
@@ -189,29 +317,58 @@ export const CreatePerformanceReportDialog = ({
           .map(([key, value]) => [key, parseFloat(value)])
       ) : null;
 
-      // Insert into player_analysis
-      const { data: analysisData, error: analysisError } = await supabase
-        .from("player_analysis")
-        .insert({
-          player_id: playerId,
-          fixture_id: selectedFixtureId,
-          analysis_date: fixture?.match_date,
-          r90_score: parseFloat(r90Score),
-          minutes_played: parseInt(minutesPlayed),
-          opponent: opponent,
-          result: result || null,
-          striker_stats: strikerStatsJson,
-        })
-        .select()
-        .single();
+      let analysisIdToUse = analysisId;
 
-      if (analysisError) throw analysisError;
+      if (analysisId) {
+        // Edit mode - update existing record
+        const { error: analysisError } = await supabase
+          .from("player_analysis")
+          .update({
+            fixture_id: selectedFixtureId,
+            analysis_date: fixture?.match_date,
+            r90_score: parseFloat(r90Score),
+            minutes_played: parseInt(minutesPlayed),
+            opponent: opponent,
+            result: result || null,
+            striker_stats: strikerStatsJson,
+          })
+          .eq("id", analysisId);
+
+        if (analysisError) throw analysisError;
+
+        // Delete existing actions
+        const { error: deleteError } = await supabase
+          .from("performance_report_actions")
+          .delete()
+          .eq("analysis_id", analysisId);
+
+        if (deleteError) throw deleteError;
+      } else {
+        // Create mode - insert new record
+        const { data: analysisData, error: analysisError } = await supabase
+          .from("player_analysis")
+          .insert({
+            player_id: playerId,
+            fixture_id: selectedFixtureId,
+            analysis_date: fixture?.match_date,
+            r90_score: parseFloat(r90Score),
+            minutes_played: parseInt(minutesPlayed),
+            opponent: opponent,
+            result: result || null,
+            striker_stats: strikerStatsJson,
+          })
+          .select()
+          .single();
+
+        if (analysisError) throw analysisError;
+        analysisIdToUse = analysisData.id;
+      }
 
       // Insert performance actions
       const actionsToInsert = actions
         .filter(a => a.minute && a.action_score && a.action_type && a.action_description)
         .map(a => ({
-          analysis_id: analysisData.id,
+          analysis_id: analysisIdToUse,
           action_number: a.action_number,
           minute: parseFloat(a.minute),
           action_score: parseFloat(a.action_score),
@@ -228,64 +385,31 @@ export const CreatePerformanceReportDialog = ({
         if (actionsError) throw actionsError;
       }
 
-      toast.success("Performance report created successfully");
+      toast.success(`Performance report ${analysisId ? 'updated' : 'created'} successfully`);
       resetForm();
       onOpenChange(false);
       if (onSuccess) onSuccess();
     } catch (error: any) {
-      console.error("Error creating performance report:", error);
-      toast.error("Failed to create performance report: " + error.message);
+      console.error("Error saving performance report:", error);
+      toast.error("Failed to save performance report: " + error.message);
     } finally {
       setLoading(false);
     }
-  };
-
-  const resetForm = () => {
-    setSelectedFixtureId("");
-    setR90Score("");
-    setMinutesPlayed("");
-    setOpponent("");
-    setResult("");
-    setStrikerStats({
-      xGChain: "",
-      xGChain_per90: "",
-      xG_adj: "",
-      xG_adj_per90: "",
-      xA_adj: "",
-      xA_adj_per90: "",
-      movement_in_behind_xC: "",
-      movement_in_behind_xC_per90: "",
-      movement_down_side_xC: "",
-      movement_down_side_xC_per90: "",
-      triple_threat_xC: "",
-      triple_threat_xC_per90: "",
-      movement_to_feet_xC: "",
-      movement_to_feet_xC_per90: "",
-      crossing_movement_xC: "",
-      crossing_movement_xC_per90: "",
-      interceptions: "",
-      interceptions_per90: "",
-      regains_adj: "",
-      regains_adj_per90: "",
-      turnovers_adj: "",
-      turnovers_adj_per90: "",
-      progressive_passes_adj: "",
-      progressive_passes_adj_per90: "",
-    });
-    setActions([
-      { action_number: 1, minute: "", action_score: "", action_type: "", action_description: "", notes: "" }
-    ]);
-    setShowStrikerStats(false);
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Create Performance Report - {playerName}</DialogTitle>
+          <DialogTitle>{analysisId ? 'Edit' : 'Create'} Performance Report - {playerName}</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6">
+        {loadingData ? (
+          <div className="flex items-center justify-center py-8">
+            <div className="text-center">Loading...</div>
+          </div>
+        ) : (
+          <div className="space-y-6">
           {/* Fixture Selection */}
           <div>
             <Label htmlFor="fixture">Select Fixture *</Label>
@@ -669,10 +793,11 @@ export const CreatePerformanceReportDialog = ({
               Cancel
             </Button>
             <Button onClick={handleSave} disabled={loading}>
-              {loading ? "Creating..." : "Create Report"}
+              {loading ? (analysisId ? "Updating..." : "Creating...") : (analysisId ? "Update Report" : "Create Report")}
             </Button>
           </div>
         </div>
+        )}
       </DialogContent>
     </Dialog>
   );

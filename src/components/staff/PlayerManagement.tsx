@@ -74,6 +74,7 @@ const PlayerManagement = () => {
   const [isCreateReportDialogOpen, setIsCreateReportDialogOpen] = useState(false);
   const [createReportPlayerId, setCreateReportPlayerId] = useState<string>("");
   const [createReportPlayerName, setCreateReportPlayerName] = useState<string>("");
+  const [editReportAnalysisId, setEditReportAnalysisId] = useState<string | undefined>(undefined);
   const [isHighlightsDialogOpen, setIsHighlightsDialogOpen] = useState(false);
   const [highlightVideoFile, setHighlightVideoFile] = useState<File | null>(null);
   const [highlightClubLogoFile, setHighlightClubLogoFile] = useState<File | null>(null);
@@ -2535,6 +2536,7 @@ const PlayerManagement = () => {
                               onClick={() => {
                                 setCreateReportPlayerId(player.id);
                                 setCreateReportPlayerName(player.name);
+                                setEditReportAnalysisId(undefined);
                                 setIsCreateReportDialogOpen(true);
                               }}
                             >
@@ -2586,7 +2588,12 @@ const PlayerManagement = () => {
                                           <Button 
                                             variant="ghost" 
                                             size="sm"
-                                            onClick={() => openEditAnalysisDialog(analysis)}
+                                            onClick={() => {
+                                              setCreateReportPlayerId(player.id);
+                                              setCreateReportPlayerName(player.name);
+                                              setEditReportAnalysisId(analysis.id);
+                                              setIsCreateReportDialogOpen(true);
+                                            }}
                                           >
                                             <Edit className="w-4 h-4" />
                                           </Button>
@@ -2798,12 +2805,19 @@ const PlayerManagement = () => {
       {/* Create Performance Report Dialog */}
       <CreatePerformanceReportDialog
         open={isCreateReportDialogOpen}
-        onOpenChange={setIsCreateReportDialogOpen}
+        onOpenChange={(open) => {
+          setIsCreateReportDialogOpen(open);
+          if (!open) {
+            setEditReportAnalysisId(undefined);
+          }
+        }}
         playerId={createReportPlayerId}
         playerName={createReportPlayerName}
+        analysisId={editReportAnalysisId}
         onSuccess={() => {
           fetchAllAnalyses();
-          toast.success("Performance report created successfully");
+          toast.success(`Performance report ${editReportAnalysisId ? 'updated' : 'created'} successfully`);
+          setEditReportAnalysisId(undefined);
         }}
       />
 

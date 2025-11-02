@@ -5,9 +5,8 @@ import { Footer } from "@/components/Footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Pencil } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
-import { EditPerformanceReportDialog } from "@/components/staff/EditPerformanceReportDialog";
 
 interface PerformanceAction {
   id: string;
@@ -66,7 +65,6 @@ const PerformanceReport = () => {
   const [loading, setLoading] = useState(true);
   const [analysis, setAnalysis] = useState<AnalysisDetails | null>(null);
   const [actions, setActions] = useState<PerformanceAction[]>([]);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   useEffect(() => {
     if (analysisId) {
@@ -181,16 +179,10 @@ const PerformanceReport = () => {
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="text-3xl">Performance Report</CardTitle>
-              <div className="flex gap-2">
-                <Button onClick={() => setIsEditDialogOpen(true)} variant="outline" size="sm">
-                  <Pencil className="mr-2 h-4 w-4" />
-                  Edit
-                </Button>
-                <Button onClick={() => navigate(-1)} variant="ghost" size="sm">
-                  <ArrowLeft className="mr-2 h-4 w-4" />
-                  Back
-                </Button>
-              </div>
+              <Button onClick={() => navigate(-1)} variant="ghost" size="sm">
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back
+              </Button>
             </div>
           </CardHeader>
           <CardContent>
@@ -363,15 +355,6 @@ const PerformanceReport = () => {
         </Card>
       </main>
       <Footer />
-
-      {analysisId && (
-        <EditPerformanceReportDialog
-          open={isEditDialogOpen}
-          onOpenChange={setIsEditDialogOpen}
-          analysisId={analysisId}
-          onSuccess={fetchPerformanceData}
-        />
-      )}
     </div>
   );
 };
