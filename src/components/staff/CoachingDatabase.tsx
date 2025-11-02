@@ -412,13 +412,14 @@ export const CoachingDatabase = () => {
                     Add {config.singular}
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-                  <DialogHeader>
+                <DialogContent className="max-w-6xl max-h-[90vh] overflow-hidden flex flex-col">
+                  <DialogHeader className="flex-shrink-0">
                     <DialogTitle>
                       {editingItem ? `Edit ${config.singular}` : `Add ${config.singular}`}
                     </DialogTitle>
                   </DialogHeader>
-                  <form onSubmit={handleSubmit} className="space-y-4">
+                  <div className="flex-1 overflow-y-auto">
+                    <form onSubmit={handleSubmit} className="space-y-4 p-1">
                     {key === 'coaching_aphorisms' ? (
                       <>
                         <div className="space-y-2">
@@ -469,12 +470,21 @@ export const CoachingDatabase = () => {
 
                         {key === 'coaching_sessions' ? (
                           <div className="space-y-4">
-                            <div className="flex items-center justify-between">
-                              <Label>Exercises</Label>
+                            <div className="space-y-2">
+                              <Label htmlFor="category">Category</Label>
+                              <Input
+                                id="category"
+                                value={formData.category}
+                                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                                placeholder="e.g., Strength, Speed, Technical"
+                              />
+                            </div>
+                            
+                            <div className="flex items-center justify-between border-t pt-4">
+                              <Label className="text-lg font-semibold">Session Exercises</Label>
                               <Button
                                 type="button"
                                 size="sm"
-                                variant="outline"
                                 onClick={() => {
                                   setFormData({
                                     ...formData,
@@ -501,13 +511,13 @@ export const CoachingDatabase = () => {
                                       <th className="p-2 text-left text-xs font-semibold w-16">Sets</th>
                                       <th className="p-2 text-left text-xs font-semibold w-20">Load</th>
                                       <th className="p-2 text-left text-xs font-semibold w-24">Recovery</th>
-                                      <th className="p-2 text-left text-xs font-semibold w-24">Video URL</th>
+                                      <th className="p-2 text-left text-xs font-semibold w-32">Video URL</th>
                                       <th className="p-2 w-12"></th>
                                     </tr>
                                   </thead>
                                   <tbody>
                                     {formData.exercises.map((exercise: Exercise, idx: number) => (
-                                      <tr key={idx} className="border-t">
+                                      <tr key={idx} className="border-t hover:bg-muted/50">
                                         <td className="p-2">
                                           <Input
                                             placeholder="Exercise name"
@@ -611,9 +621,10 @@ export const CoachingDatabase = () => {
                                 </table>
                               </div>
                             ) : (
-                              <p className="text-sm text-muted-foreground text-center py-4">
-                                No exercises yet. Click "Add Exercise" to add one.
-                              </p>
+                              <div className="text-center py-8 border rounded-lg bg-muted/20">
+                                <p className="text-sm text-muted-foreground">No exercises added yet.</p>
+                                <p className="text-xs text-muted-foreground mt-1">Click "Add Exercise" above to add exercises to this session.</p>
+                              </div>
                             )}
                           </div>
                         ) : key !== 'coaching_exercises' && (
@@ -628,14 +639,16 @@ export const CoachingDatabase = () => {
                           </div>
                         )}
 
-                        <div className="space-y-2">
-                          <Label htmlFor="category">Category</Label>
-                          <Input
-                            id="category"
-                            value={formData.category}
-                            onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                          />
-                        </div>
+                        {key !== 'coaching_sessions' && (
+                          <div className="space-y-2">
+                            <Label htmlFor="category">Category</Label>
+                            <Input
+                              id="category"
+                              value={formData.category}
+                              onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                            />
+                          </div>
+                        )}
                       </>
                     )}
 
@@ -821,6 +834,7 @@ export const CoachingDatabase = () => {
                       </Button>
                     </div>
                   </form>
+                  </div>
                 </DialogContent>
               </Dialog>
             </div>
