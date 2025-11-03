@@ -1,14 +1,16 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Download } from "lucide-react";
 import { toast } from "sonner";
 import { extractAnalysisIdFromSlug } from "@/lib/urlHelpers";
 import { SEO } from "@/components/SEO";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 
 interface PerformanceAction {
   id: string;
@@ -41,6 +43,8 @@ const PerformanceReport = () => {
   const [loading, setLoading] = useState(true);
   const [analysis, setAnalysis] = useState<AnalysisDetails | null>(null);
   const [actions, setActions] = useState<PerformanceAction[]>([]);
+  const [isSavingPdf, setIsSavingPdf] = useState(false);
+  const contentRef = useRef<HTMLDivElement>(null);
 
   const analysisId = slug ? extractAnalysisIdFromSlug(slug) : null;
 
@@ -118,6 +122,44 @@ const PerformanceReport = () => {
     return totalScore;
   };
 
+  const handleSaveAsPDF = async () => {
+    if (!contentRef.current || !analysis) return;
+    
+    setIsSavingPdf(true);
+    toast.info("Generating PDF...");
+
+    try {
+      const canvas = await html2canvas(contentRef.current, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        windowHeight: contentRef.current.scrollHeight,
+      });
+
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4",
+      });
+
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+      pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+      
+      const fileName = `${analysis.player_name}_vs_${analysis.opponent}_${new Date(analysis.analysis_date).toLocaleDateString('en-GB').replace(/\//g, '-')}.pdf`;
+      pdf.save(fileName);
+      
+      toast.success("PDF saved successfully!");
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      toast.error("Failed to generate PDF");
+    } finally {
+      setIsSavingPdf(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
@@ -157,14 +199,26 @@ const PerformanceReport = () => {
       />
       <Header />
       <main className="container mx-auto px-4 py-8">
+        <div ref={contentRef}>
         <Card className="mb-6">
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="text-3xl">Performance Report</CardTitle>
-              <Button onClick={() => navigate(-1)} variant="ghost" size="sm">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back
-              </Button>
+              <div className="flex gap-2">
+                <Button 
+                  onClick={handleSaveAsPDF} 
+                  variant="outline" 
+                  size="sm"
+                  disabled={isSavingPdf}
+                >
+                  <Download className="mr-2 h-4 w-4" />
+                  {isSavingPdf ? "Generating..." : "Save as PDF"}
+                </Button>
+                <Button onClick={() => navigate(-1)} variant="ghost" size="sm">
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Back
+                </Button>
+              </div>
             </div>
           </CardHeader>
           <CardContent>
@@ -293,6 +347,7 @@ const PerformanceReport = () => {
             )}
           </CardContent>
         </Card>
+        </div>
       </main>
       <Footer />
     </div>
