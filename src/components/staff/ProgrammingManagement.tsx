@@ -815,11 +815,41 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
     });
   };
 
-  const updateExercise = (sessionKey: SessionKey, index: number, field: keyof Exercise, value: string) => {
+  const updateExercise = async (sessionKey: SessionKey, index: number, field: keyof Exercise, value: string) => {
     const session = programmingData[sessionKey] as SessionData;
     // Deep clone exercises to prevent reference sharing
     const updatedExercises = deepClone(session.exercises);
     updatedExercises[index] = { ...updatedExercises[index], [field]: value };
+    
+    // If updating the name field, auto-fill from database if exercise exists
+    if (field === 'name' && value.trim()) {
+      try {
+        const { data, error } = await supabase
+          .from('coaching_exercises')
+          .select('*')
+          .ilike('title', value.trim())
+          .limit(1)
+          .single();
+
+        if (data && !error) {
+          // Auto-fill all fields from the database
+          updatedExercises[index] = {
+            ...updatedExercises[index],
+            name: data.title || value,
+            description: data.description || updatedExercises[index].description,
+            repetitions: data.reps || updatedExercises[index].repetitions,
+            sets: data.sets?.toString() || updatedExercises[index].sets,
+            load: data.load || updatedExercises[index].load,
+            recoveryTime: data.rest_time?.toString() || updatedExercises[index].recoveryTime,
+            videoUrl: data.video_url || updatedExercises[index].videoUrl
+          };
+        }
+      } catch (error) {
+        // Silently fail - just use the typed value
+        console.log('Exercise not found in database, using manual input');
+      }
+    }
+    
     updateField(sessionKey, {
       ...session,
       exercises: updatedExercises
@@ -1475,13 +1505,21 @@ Phase Dates: ${programmingData.phaseDates || 'Not specified'}`;
                                         </div>
                                       </td>
                                       <td className="p-2">
-                                        <Input
-                                          placeholder="Exercise name"
+                                        <Select
                                           value={exercise.name}
-                                          onChange={(e) => updateExercise(selectedSession as SessionKey, idx, 'name', e.target.value)}
-                                          className="text-sm"
-                                          list="exercise-titles-list"
-                                        />
+                                          onValueChange={(value) => updateExercise(selectedSession as SessionKey, idx, 'name', value)}
+                                        >
+                                          <SelectTrigger className="text-sm">
+                                            <SelectValue placeholder="Select or type exercise name" />
+                                          </SelectTrigger>
+                                          <SelectContent className="max-h-[200px] bg-background z-50">
+                                            {exerciseTitles.map((title) => (
+                                              <SelectItem key={title} value={title}>
+                                                {title}
+                                              </SelectItem>
+                                            ))}
+                                          </SelectContent>
+                                        </Select>
                                       </td>
                                       <td className="p-2">
                                         <Input
