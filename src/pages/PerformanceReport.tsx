@@ -45,12 +45,18 @@ const PerformanceReport = () => {
   const analysisId = slug ? extractAnalysisIdFromSlug(slug) : null;
 
   useEffect(() => {
+    console.log('PerformanceReport - analysisId:', analysisId);
+    console.log('PerformanceReport - slug:', slug);
     if (analysisId) {
       fetchPerformanceData();
+    } else {
+      console.log('PerformanceReport - No analysisId found, setting loading to false');
+      setLoading(false);
     }
   }, [analysisId]);
 
   const fetchPerformanceData = async () => {
+    console.log('PerformanceReport - Starting fetchPerformanceData');
     try {
       // Fetch analysis details with player name
       const { data: analysisData, error: analysisError } = await supabase
@@ -61,6 +67,9 @@ const PerformanceReport = () => {
         `)
         .eq("id", analysisId)
         .single();
+
+      console.log('PerformanceReport - Analysis data:', analysisData);
+      console.log('PerformanceReport - Analysis error:', analysisError);
 
       if (analysisError) throw analysisError;
 
@@ -82,13 +91,18 @@ const PerformanceReport = () => {
         .eq("analysis_id", analysisId)
         .order("action_number", { ascending: true });
 
+      console.log('PerformanceReport - Actions data length:', actionsData?.length);
+      console.log('PerformanceReport - Actions error:', actionsError);
+
       if (actionsError) throw actionsError;
 
       setActions(actionsData || []);
+      console.log('PerformanceReport - Data fetch complete');
     } catch (error: any) {
       console.error("Error fetching performance data:", error);
       toast.error("Failed to load performance report");
     } finally {
+      console.log('PerformanceReport - Setting loading to false');
       setLoading(false);
     }
   };
@@ -121,6 +135,10 @@ const PerformanceReport = () => {
   const handleSaveAsPDF = () => {
     window.print();
   };
+
+  console.log('PerformanceReport - Render - loading:', loading);
+  console.log('PerformanceReport - Render - analysis:', analysis);
+  console.log('PerformanceReport - Render - actions length:', actions.length);
 
   if (loading) {
     return (
