@@ -113,6 +113,38 @@ export const CreatePerformanceReportDialog = ({
     }
   }, [open, analysisId]);
 
+  // Auto-calculate per90 statistics
+  useEffect(() => {
+    const minutes = parseFloat(minutesPlayed);
+    if (!minutes || minutes <= 0) return;
+
+    const calculatePer90 = (baseValue: string) => {
+      const value = parseFloat(baseValue);
+      if (!value || isNaN(value)) return "";
+      return ((value / minutes) * 90).toFixed(3);
+    };
+
+    setStrikerStats(prev => ({
+      ...prev,
+      xGChain_per90: calculatePer90(prev.xGChain),
+      xG_adj_per90: calculatePer90(prev.xG_adj),
+      xA_adj_per90: calculatePer90(prev.xA_adj),
+      movement_in_behind_xC_per90: calculatePer90(prev.movement_in_behind_xC),
+      movement_down_side_xC_per90: calculatePer90(prev.movement_down_side_xC),
+      triple_threat_xC_per90: calculatePer90(prev.triple_threat_xC),
+      movement_to_feet_xC_per90: calculatePer90(prev.movement_to_feet_xC),
+      crossing_movement_xC_per90: calculatePer90(prev.crossing_movement_xC),
+      interceptions_per90: calculatePer90(prev.interceptions),
+      regains_adj_per90: calculatePer90(prev.regains_adj),
+      turnovers_adj_per90: calculatePer90(prev.turnovers_adj),
+      progressive_passes_adj_per90: calculatePer90(prev.progressive_passes_adj),
+    }));
+  }, [minutesPlayed, strikerStats.xGChain, strikerStats.xG_adj, strikerStats.xA_adj, 
+      strikerStats.movement_in_behind_xC, strikerStats.movement_down_side_xC, 
+      strikerStats.triple_threat_xC, strikerStats.movement_to_feet_xC, 
+      strikerStats.crossing_movement_xC, strikerStats.interceptions, 
+      strikerStats.regains_adj, strikerStats.turnovers_adj, strikerStats.progressive_passes_adj]);
+
   const fetchActionTypes = async () => {
     const { data, error } = await supabase
       .from("performance_report_actions")
@@ -604,12 +636,13 @@ export const CreatePerformanceReportDialog = ({
                   />
                 </div>
                 <div>
-                  <Label>xGChain per90</Label>
+                  <Label>xGChain per90 (Auto-calculated)</Label>
                   <Input
                     type="number"
                     step="0.001"
                     value={strikerStats.xGChain_per90}
-                    onChange={(e) => setStrikerStats({...strikerStats, xGChain_per90: e.target.value})}
+                    readOnly
+                    className="bg-muted cursor-not-allowed"
                   />
                 </div>
                 <div>
@@ -622,12 +655,13 @@ export const CreatePerformanceReportDialog = ({
                   />
                 </div>
                 <div>
-                  <Label>xG (adj.) per90</Label>
+                  <Label>xG (adj.) per90 (Auto-calculated)</Label>
                   <Input
                     type="number"
                     step="0.001"
                     value={strikerStats.xG_adj_per90}
-                    onChange={(e) => setStrikerStats({...strikerStats, xG_adj_per90: e.target.value})}
+                    readOnly
+                    className="bg-muted cursor-not-allowed"
                   />
                 </div>
                 <div>
@@ -640,12 +674,13 @@ export const CreatePerformanceReportDialog = ({
                   />
                 </div>
                 <div>
-                  <Label>xA (adj.) per90</Label>
+                  <Label>xA (adj.) per90 (Auto-calculated)</Label>
                   <Input
                     type="number"
                     step="0.001"
                     value={strikerStats.xA_adj_per90}
-                    onChange={(e) => setStrikerStats({...strikerStats, xA_adj_per90: e.target.value})}
+                    readOnly
+                    className="bg-muted cursor-not-allowed"
                   />
                 </div>
                 <div>
@@ -658,12 +693,13 @@ export const CreatePerformanceReportDialog = ({
                   />
                 </div>
                 <div>
-                  <Label>Movement In Behind xC per90</Label>
+                  <Label>Movement In Behind xC per90 (Auto-calculated)</Label>
                   <Input
                     type="number"
                     step="0.001"
                     value={strikerStats.movement_in_behind_xC_per90}
-                    onChange={(e) => setStrikerStats({...strikerStats, movement_in_behind_xC_per90: e.target.value})}
+                    readOnly
+                    className="bg-muted cursor-not-allowed"
                   />
                 </div>
                 <div>
@@ -676,12 +712,13 @@ export const CreatePerformanceReportDialog = ({
                   />
                 </div>
                 <div>
-                  <Label>Movement Down Side xC per90</Label>
+                  <Label>Movement Down Side xC per90 (Auto-calculated)</Label>
                   <Input
                     type="number"
                     step="0.001"
                     value={strikerStats.movement_down_side_xC_per90}
-                    onChange={(e) => setStrikerStats({...strikerStats, movement_down_side_xC_per90: e.target.value})}
+                    readOnly
+                    className="bg-muted cursor-not-allowed"
                   />
                 </div>
                 <div>
@@ -694,12 +731,13 @@ export const CreatePerformanceReportDialog = ({
                   />
                 </div>
                 <div>
-                  <Label>Triple Threat xC per90</Label>
+                  <Label>Triple Threat xC per90 (Auto-calculated)</Label>
                   <Input
                     type="number"
                     step="0.001"
                     value={strikerStats.triple_threat_xC_per90}
-                    onChange={(e) => setStrikerStats({...strikerStats, triple_threat_xC_per90: e.target.value})}
+                    readOnly
+                    className="bg-muted cursor-not-allowed"
                   />
                 </div>
                 <div>
@@ -712,12 +750,13 @@ export const CreatePerformanceReportDialog = ({
                   />
                 </div>
                 <div>
-                  <Label>Movement To Feet xC per90</Label>
+                  <Label>Movement To Feet xC per90 (Auto-calculated)</Label>
                   <Input
                     type="number"
                     step="0.001"
                     value={strikerStats.movement_to_feet_xC_per90}
-                    onChange={(e) => setStrikerStats({...strikerStats, movement_to_feet_xC_per90: e.target.value})}
+                    readOnly
+                    className="bg-muted cursor-not-allowed"
                   />
                 </div>
                 <div>
@@ -730,12 +769,13 @@ export const CreatePerformanceReportDialog = ({
                   />
                 </div>
                 <div>
-                  <Label>Crossing Movement xC per90</Label>
+                  <Label>Crossing Movement xC per90 (Auto-calculated)</Label>
                   <Input
                     type="number"
                     step="0.001"
                     value={strikerStats.crossing_movement_xC_per90}
-                    onChange={(e) => setStrikerStats({...strikerStats, crossing_movement_xC_per90: e.target.value})}
+                    readOnly
+                    className="bg-muted cursor-not-allowed"
                   />
                 </div>
                 <div>
@@ -747,12 +787,13 @@ export const CreatePerformanceReportDialog = ({
                   />
                 </div>
                 <div>
-                  <Label>Interceptions per90</Label>
+                  <Label>Interceptions per90 (Auto-calculated)</Label>
                   <Input
                     type="number"
                     step="0.01"
                     value={strikerStats.interceptions_per90}
-                    onChange={(e) => setStrikerStats({...strikerStats, interceptions_per90: e.target.value})}
+                    readOnly
+                    className="bg-muted cursor-not-allowed"
                   />
                 </div>
                 <div>
@@ -764,12 +805,13 @@ export const CreatePerformanceReportDialog = ({
                   />
                 </div>
                 <div>
-                  <Label>Regains (Adj.) per90</Label>
+                  <Label>Regains (Adj.) per90 (Auto-calculated)</Label>
                   <Input
                     type="number"
                     step="0.01"
                     value={strikerStats.regains_adj_per90}
-                    onChange={(e) => setStrikerStats({...strikerStats, regains_adj_per90: e.target.value})}
+                    readOnly
+                    className="bg-muted cursor-not-allowed"
                   />
                 </div>
                 <div>
@@ -781,12 +823,13 @@ export const CreatePerformanceReportDialog = ({
                   />
                 </div>
                 <div>
-                  <Label>Turnovers (Adj.) per90</Label>
+                  <Label>Turnovers (Adj.) per90 (Auto-calculated)</Label>
                   <Input
                     type="number"
                     step="0.01"
                     value={strikerStats.turnovers_adj_per90}
-                    onChange={(e) => setStrikerStats({...strikerStats, turnovers_adj_per90: e.target.value})}
+                    readOnly
+                    className="bg-muted cursor-not-allowed"
                   />
                 </div>
                 <div>
@@ -798,12 +841,13 @@ export const CreatePerformanceReportDialog = ({
                   />
                 </div>
                 <div>
-                  <Label>Progressive Passes (Adj.) per90</Label>
+                  <Label>Progressive Passes (Adj.) per90 (Auto-calculated)</Label>
                   <Input
                     type="number"
                     step="0.01"
                     value={strikerStats.progressive_passes_adj_per90}
-                    onChange={(e) => setStrikerStats({...strikerStats, progressive_passes_adj_per90: e.target.value})}
+                    readOnly
+                    className="bg-muted cursor-not-allowed"
                   />
                 </div>
               </div>
