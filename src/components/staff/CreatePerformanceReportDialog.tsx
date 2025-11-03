@@ -55,6 +55,7 @@ export const CreatePerformanceReportDialog = ({
   const [showStrikerStats, setShowStrikerStats] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [playerClub, setPlayerClub] = useState<string>("");
+  const [actionTypes, setActionTypes] = useState<string[]>([]);
 
   // Key stats
   const [r90Score, setR90Score] = useState("");
@@ -97,6 +98,7 @@ export const CreatePerformanceReportDialog = ({
 
   useEffect(() => {
     if (open) {
+      fetchActionTypes();
       if (analysisId) {
         // Edit mode
         setIsEditMode(true);
@@ -110,6 +112,19 @@ export const CreatePerformanceReportDialog = ({
       fetchPlayerClub();
     }
   }, [open, analysisId]);
+
+  const fetchActionTypes = async () => {
+    const { data, error } = await supabase
+      .from("performance_report_actions")
+      .select("action_type")
+      .not("action_type", "is", null)
+      .order("action_type");
+
+    if (!error && data) {
+      const uniqueTypes = Array.from(new Set(data.map(item => item.action_type)));
+      setActionTypes(uniqueTypes);
+    }
+  };
 
   const fetchPlayerClub = async () => {
     try {
@@ -845,9 +860,10 @@ export const CreatePerformanceReportDialog = ({
                   <div>
                     <Label className="text-xs">Action Type *</Label>
                     <Input
+                      list="action-types-list"
                       value={action.action_type}
                       onChange={(e) => updateAction(index, "action_type", e.target.value)}
-                      placeholder="Shot"
+                      placeholder="Select or type new"
                       className="text-sm"
                     />
                   </div>
@@ -916,10 +932,11 @@ export const CreatePerformanceReportDialog = ({
                       </td>
                       <td className="p-2">
                         <Input
+                          list="action-types-list"
                           value={action.action_type}
                           onChange={(e) => updateAction(index, "action_type", e.target.value)}
-                          placeholder="Shot"
-                          className="w-28 text-sm"
+                          placeholder="Select or type"
+                          className="w-40 text-sm"
                         />
                       </td>
                       <td className="p-2">
@@ -964,6 +981,13 @@ export const CreatePerformanceReportDialog = ({
               </Button>
             </div>
           </div>
+
+          {/* Datalist for action types */}
+          <datalist id="action-types-list">
+            {actionTypes.map((type) => (
+              <option key={type} value={type} />
+            ))}
+          </datalist>
 
           {/* Save and Delete Buttons */}
           <div className="flex flex-col sm:flex-row justify-between gap-2">

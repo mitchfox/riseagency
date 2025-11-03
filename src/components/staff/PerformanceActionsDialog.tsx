@@ -35,6 +35,7 @@ export const PerformanceActionsDialog = ({
   const [loading, setLoading] = useState(false);
   const [strikerStats, setStrikerStats] = useState<any>(null);
   const [r90Score, setR90Score] = useState<number | null>(null);
+  const [actionTypes, setActionTypes] = useState<string[]>([]);
   const [newAction, setNewAction] = useState<PerformanceAction>({
     action_number: 1,
     minute: 0,
@@ -46,10 +47,24 @@ export const PerformanceActionsDialog = ({
 
   useEffect(() => {
     if (open && analysisId) {
+      fetchActionTypes();
       fetchActions();
       fetchAnalysisDetails();
     }
   }, [open, analysisId]);
+
+  const fetchActionTypes = async () => {
+    const { data, error } = await supabase
+      .from("performance_report_actions")
+      .select("action_type")
+      .not("action_type", "is", null)
+      .order("action_type");
+
+    if (!error && data) {
+      const uniqueTypes = Array.from(new Set(data.map(item => item.action_type)));
+      setActionTypes(uniqueTypes);
+    }
+  };
 
   const fetchAnalysisDetails = async () => {
     try {
@@ -244,9 +259,10 @@ export const PerformanceActionsDialog = ({
                 <Label htmlFor="action_type">Action Type *</Label>
                 <Input
                   id="action_type"
+                  list="action-types-list"
                   value={newAction.action_type}
                   onChange={(e) => setNewAction({ ...newAction, action_type: e.target.value })}
-                  placeholder="e.g., Pressing, Shot, Dribble"
+                  placeholder="Select or type new action type"
                 />
               </div>
               <div className="space-y-2 col-span-2 md:col-span-3">
@@ -311,6 +327,13 @@ export const PerformanceActionsDialog = ({
               </div>
             )}
           </div>
+
+          {/* Datalist for action types */}
+          <datalist id="action-types-list">
+            {actionTypes.map((type) => (
+              <option key={type} value={type} />
+            ))}
+          </datalist>
         </div>
       </DialogContent>
     </Dialog>
