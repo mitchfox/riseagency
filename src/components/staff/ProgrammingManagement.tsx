@@ -178,6 +178,7 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
   const [coachingPrograms, setCoachingPrograms] = useState<any[]>([]);
   const [loadingTemplates, setLoadingTemplates] = useState(false);
   const [aiGenerating, setAiGenerating] = useState(false);
+  const [exerciseTitles, setExerciseTitles] = useState<string[]>([]);
 
   useEffect(() => {
     if (isOpen && playerId) {
@@ -188,8 +189,25 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }:
       
       loadPrograms();
       loadCoachingPrograms();
+      fetchExerciseTitles();
     }
   }, [isOpen, playerId]);
+
+  const fetchExerciseTitles = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('coaching_exercises')
+        .select('title')
+        .order('title');
+
+      if (error) throw error;
+
+      const titles = data?.map(item => item.title) || [];
+      setExerciseTitles(titles);
+    } catch (error) {
+      console.error('Error fetching exercise titles:', error);
+    }
+  };
 
   const loadCoachingPrograms = async () => {
     setLoadingTemplates(true);
@@ -1462,6 +1480,7 @@ Phase Dates: ${programmingData.phaseDates || 'Not specified'}`;
                                           value={exercise.name}
                                           onChange={(e) => updateExercise(selectedSession as SessionKey, idx, 'name', e.target.value)}
                                           className="text-sm"
+                                          list="exercise-titles-list"
                                         />
                                       </td>
                                       <td className="p-2">
@@ -1826,9 +1845,15 @@ Phase Dates: ${programmingData.phaseDates || 'Not specified'}`;
           </div>
         )}
       </DialogContent>
-    </Dialog>
+      </Dialog>
 
-    <ExerciseDatabaseSelector
+      <datalist id="exercise-titles-list">
+        {exerciseTitles.map((title, idx) => (
+          <option key={idx} value={title} />
+        ))}
+      </datalist>
+
+      <ExerciseDatabaseSelector
       isOpen={isExerciseSelectorOpen}
       onClose={() => setIsExerciseSelectorOpen(false)}
       onSelect={(exercise) => {
