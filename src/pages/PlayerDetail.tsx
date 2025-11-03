@@ -130,13 +130,11 @@ const PlayerDetail = () => {
                 
                 console.log('PARSED highlights:', typeof parsedHighlights, Array.isArray(parsedHighlights), parsedHighlights);
                 
-                // Check if it's the new object structure with matchHighlights and bestClips
+                // Check if it's the new object structure with matchHighlights
                 if (parsedHighlights && typeof parsedHighlights === 'object' && !Array.isArray(parsedHighlights)) {
-                  // Extract and combine both matchHighlights and bestClips arrays
-                  console.log('Using NEW format - extracting matchHighlights and bestClips');
-                  const matchHighlights = parsedHighlights.matchHighlights || [];
-                  const bestClips = parsedHighlights.bestClips || [];
-                  highlights = [...matchHighlights, ...bestClips];
+                  // Extract matchHighlights array from the object
+                  console.log('Using NEW format - extracting matchHighlights:', parsedHighlights.matchHighlights);
+                  highlights = parsedHighlights.matchHighlights || [];
                 } else if (Array.isArray(parsedHighlights)) {
                   // Backward compatibility: treat as direct array
                   console.log('Using OLD format - direct array, length:', parsedHighlights.length);
