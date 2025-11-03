@@ -17,6 +17,7 @@ import { FormSubmissionsManagement } from "@/components/staff/FormSubmissionsMan
 import { SiteVisitorsManagement } from "@/components/staff/SiteVisitorsManagement";
 import { InvoiceManagement } from "@/components/staff/InvoiceManagement";
 import { UpdatesManagement } from "@/components/staff/UpdatesManagement";
+import { StaffSchedule } from "@/components/staff/StaffSchedule";
 
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
@@ -30,11 +31,11 @@ const Staff = () => {
   const [loading, setLoading] = useState(true);
   const [isStaff, setIsStaff] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-  const [expandedSection, setExpandedSection] = useState<'players' | 'playerlist' | 'blog' | 'betweenthelines' | 'coaching' | 'analysis' | 'submissions' | 'visitors' | 'invoices' | 'updates' | null>('players');
+  const [expandedSection, setExpandedSection] = useState<'schedule' | 'players' | 'playerlist' | 'blog' | 'betweenthelines' | 'coaching' | 'analysis' | 'submissions' | 'visitors' | 'invoices' | 'updates' | null>('schedule');
   const navigate = useNavigate();
   const sectionRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
-  const handleSectionToggle = (section: 'players' | 'playerlist' | 'blog' | 'betweenthelines' | 'coaching' | 'analysis' | 'submissions' | 'visitors' | 'invoices' | 'updates') => {
+  const handleSectionToggle = (section: 'schedule' | 'players' | 'playerlist' | 'blog' | 'betweenthelines' | 'coaching' | 'analysis' | 'submissions' | 'visitors' | 'invoices' | 'updates') => {
     const isExpanding = expandedSection !== section;
     setExpandedSection(expandedSection === section ? null : section);
     
@@ -265,6 +266,27 @@ const Staff = () => {
 
 
         <div className="space-y-4">
+          {/* Schedule Section */}
+          <Card className="cursor-pointer">
+            <CardHeader 
+              ref={(el) => sectionRefs.current['schedule'] = el}
+              onClick={() => handleSectionToggle('schedule')}
+              className="hover:bg-accent/50 transition-colors"
+            >
+              <div className="flex justify-between items-center">
+                <CardTitle className="text-2xl">SCHEDULE</CardTitle>
+                <div className="text-muted-foreground">
+                  {expandedSection === 'schedule' ? <ChevronDown size={24} /> : <ChevronRight size={24} />}
+                </div>
+              </div>
+            </CardHeader>
+            {expandedSection === 'schedule' && (
+              <CardContent className="pt-6">
+                <StaffSchedule />
+              </CardContent>
+            )}
+          </Card>
+
           {/* Player List Section */}
           <Card className="cursor-pointer">
             <CardHeader 
