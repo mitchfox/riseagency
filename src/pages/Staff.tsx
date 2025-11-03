@@ -18,6 +18,8 @@ import { SiteVisitorsManagement } from "@/components/staff/SiteVisitorsManagemen
 import { InvoiceManagement } from "@/components/staff/InvoiceManagement";
 import { UpdatesManagement } from "@/components/staff/UpdatesManagement";
 import { StaffSchedule } from "@/components/staff/StaffSchedule";
+import { MarketingManagement } from "@/components/staff/MarketingManagement";
+import { RecruitmentManagement } from "@/components/staff/RecruitmentManagement";
 
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
@@ -31,11 +33,11 @@ const Staff = () => {
   const [loading, setLoading] = useState(true);
   const [isStaff, setIsStaff] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-  const [expandedSection, setExpandedSection] = useState<'schedule' | 'players' | 'playerlist' | 'blog' | 'betweenthelines' | 'coaching' | 'analysis' | 'submissions' | 'visitors' | 'invoices' | 'updates' | null>('schedule');
+  const [expandedSection, setExpandedSection] = useState<'schedule' | 'players' | 'playerlist' | 'recruitment' | 'blog' | 'betweenthelines' | 'coaching' | 'analysis' | 'marketing' | 'submissions' | 'visitors' | 'invoices' | 'updates' | null>('schedule');
   const navigate = useNavigate();
   const sectionRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
-  const handleSectionToggle = (section: 'schedule' | 'players' | 'playerlist' | 'blog' | 'betweenthelines' | 'coaching' | 'analysis' | 'submissions' | 'visitors' | 'invoices' | 'updates') => {
+  const handleSectionToggle = (section: 'schedule' | 'players' | 'playerlist' | 'recruitment' | 'blog' | 'betweenthelines' | 'coaching' | 'analysis' | 'marketing' | 'submissions' | 'visitors' | 'invoices' | 'updates') => {
     const isExpanding = expandedSection !== section;
     setExpandedSection(expandedSection === section ? null : section);
     
@@ -329,6 +331,27 @@ const Staff = () => {
             )}
           </Card>
 
+          {/* Recruitment Section */}
+          <Card className="cursor-pointer">
+            <CardHeader 
+              ref={(el) => sectionRefs.current['recruitment'] = el}
+              onClick={() => handleSectionToggle('recruitment')}
+              className="hover:bg-accent/50 transition-colors"
+            >
+              <div className="flex justify-between items-center">
+                <CardTitle className="text-2xl">RECRUITMENT</CardTitle>
+                <div className="text-muted-foreground">
+                  {expandedSection === 'recruitment' ? <ChevronDown size={24} /> : <ChevronRight size={24} />}
+                </div>
+              </div>
+            </CardHeader>
+            {expandedSection === 'recruitment' && (
+              <CardContent className="pt-6">
+                <RecruitmentManagement />
+              </CardContent>
+            )}
+          </Card>
+
           {/* Coaching Database Section */}
           <Card className="cursor-pointer">
             <CardHeader 
@@ -367,6 +390,27 @@ const Staff = () => {
             {expandedSection === 'analysis' && (
               <CardContent className="pt-6">
                 <AnalysisManagement />
+              </CardContent>
+            )}
+          </Card>
+
+          {/* Marketing Section */}
+          <Card className="cursor-pointer">
+            <CardHeader 
+              ref={(el) => sectionRefs.current['marketing'] = el}
+              onClick={() => handleSectionToggle('marketing')}
+              className="hover:bg-accent/50 transition-colors"
+            >
+              <div className="flex justify-between items-center">
+                <CardTitle className="text-2xl">MARKETING</CardTitle>
+                <div className="text-muted-foreground">
+                  {expandedSection === 'marketing' ? <ChevronDown size={24} /> : <ChevronRight size={24} />}
+                </div>
+              </div>
+            </CardHeader>
+            {expandedSection === 'marketing' && (
+              <CardContent className="pt-6">
+                <MarketingManagement />
               </CardContent>
             )}
           </Card>
