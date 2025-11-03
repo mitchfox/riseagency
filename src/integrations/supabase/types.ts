@@ -935,6 +935,63 @@ export type Database = {
         }
         Relationships: []
       }
+      prospects: {
+        Row: {
+          age: number | null
+          age_group: string
+          contact_email: string | null
+          contact_phone: string | null
+          created_at: string
+          current_club: string | null
+          id: string
+          last_contact_date: string | null
+          name: string
+          nationality: string | null
+          notes: string | null
+          position: string | null
+          priority: string | null
+          profile_image_url: string | null
+          stage: string
+          updated_at: string
+        }
+        Insert: {
+          age?: number | null
+          age_group: string
+          contact_email?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          current_club?: string | null
+          id?: string
+          last_contact_date?: string | null
+          name: string
+          nationality?: string | null
+          notes?: string | null
+          position?: string | null
+          priority?: string | null
+          profile_image_url?: string | null
+          stage?: string
+          updated_at?: string
+        }
+        Update: {
+          age?: number | null
+          age_group?: string
+          contact_email?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          current_club?: string | null
+          id?: string
+          last_contact_date?: string | null
+          name?: string
+          nationality?: string | null
+          notes?: string | null
+          position?: string | null
+          priority?: string | null
+          profile_image_url?: string | null
+          stage?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       psychological_sessions: {
         Row: {
           attachments: Json | null
