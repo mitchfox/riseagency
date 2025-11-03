@@ -90,6 +90,11 @@ All colors MUST be HSL.
       size: auto;
       margin: 10mm;
     }
+    
+    /* Hide default browser headers and footers */
+    header, footer {
+      display: none !important;
+    }
   }
 
   /* Custom animations */

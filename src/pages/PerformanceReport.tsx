@@ -159,7 +159,9 @@ const PerformanceReport = () => {
         title={`${analysis.player_name} vs ${analysis.opponent} - Performance Report | RISE Football`}
         description={`Detailed performance analysis for ${analysis.player_name} in the match against ${analysis.opponent} on ${new Date(analysis.analysis_date).toLocaleDateString('en-GB')}. R90 Score: ${analysis.minutes_played ? ((calculateRScore() / analysis.minutes_played) * 90).toFixed(2) : 'N/A'}.`}
       />
-      <Header />
+      <div className="print:hidden">
+        <Header />
+      </div>
       <main className="container mx-auto px-4 py-8">
         <Card className="mb-6">
           <CardHeader>
@@ -304,7 +306,9 @@ const PerformanceReport = () => {
           </CardContent>
         </Card>
       </main>
-      <Footer />
+      <div className="print:hidden">
+        <Footer />
+      </div>
     </div>
   );
 };
