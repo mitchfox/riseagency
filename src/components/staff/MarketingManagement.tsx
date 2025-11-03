@@ -45,17 +45,21 @@ export const MarketingManagement = () => {
 
   const fetchTemplates = async () => {
     try {
+      console.log('Fetching marketing templates...');
       const { data, error } = await supabase
         .from("marketing_templates")
         .select("*")
         .order("recipient_type", { ascending: true })
         .order("message_title", { ascending: true });
 
+      console.log('Marketing templates response:', { data, error });
+      
       if (error) throw error;
       setTemplates(data || []);
+      console.log('Templates loaded successfully:', data?.length || 0);
     } catch (error) {
       console.error("Error fetching templates:", error);
-      toast.error("Failed to load templates");
+      toast.error("Failed to load templates. Check console for details.");
     } finally {
       setLoading(false);
     }
