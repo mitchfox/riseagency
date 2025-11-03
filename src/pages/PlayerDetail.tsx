@@ -123,25 +123,33 @@ const PlayerDetail = () => {
             let highlights: any[] = [];
             if (data.highlights) {
               try {
+                console.log('RAW highlights from DB:', typeof data.highlights, data.highlights);
                 let parsedHighlights = typeof data.highlights === 'string' 
                   ? JSON.parse(data.highlights) 
                   : data.highlights;
                 
+                console.log('PARSED highlights:', typeof parsedHighlights, Array.isArray(parsedHighlights), parsedHighlights);
+                
                 // Check if it's the new object structure with matchHighlights
                 if (parsedHighlights && typeof parsedHighlights === 'object' && !Array.isArray(parsedHighlights)) {
                   // Extract matchHighlights array from the object
+                  console.log('Using NEW format - extracting matchHighlights:', parsedHighlights.matchHighlights);
                   highlights = parsedHighlights.matchHighlights || [];
                 } else if (Array.isArray(parsedHighlights)) {
                   // Backward compatibility: treat as direct array
+                  console.log('Using OLD format - direct array, length:', parsedHighlights.length);
                   highlights = parsedHighlights;
                 } else {
+                  console.log('Unknown format, setting empty array');
                   highlights = [];
                 }
-                console.log('Parsed matchHighlights from DB:', highlights);
+                console.log('FINAL highlights array length:', highlights.length, highlights);
               } catch (e) {
                 console.error('Error parsing highlights:', e);
                 highlights = [];
               }
+            } else {
+              console.log('NO highlights field in data');
             }
             
             console.log('Final player data:', {
