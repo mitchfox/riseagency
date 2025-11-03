@@ -9,6 +9,7 @@ interface PlayerProgram {
   phase_name: string | null;
   phase_dates: string | null;
   weekly_schedules: any;
+  end_date: string | null;
   player_id: string;
   player_name: string;
 }
@@ -39,6 +40,7 @@ export const StaffSchedule = () => {
           phase_name,
           phase_dates,
           weekly_schedules,
+          end_date,
           player_id,
           players!inner(name)
         `)
@@ -54,13 +56,12 @@ export const StaffSchedule = () => {
 
       setPrograms(programsWithPlayerNames);
 
-      // Calculate end dates
+      // Use stored end_date from database
       const endDates: ProgramEndDate[] = [];
       programsWithPlayerNames.forEach((program: PlayerProgram) => {
-        const endDate = calculateProgramEndDate(program.weekly_schedules);
-        if (endDate) {
+        if (program.end_date) {
           endDates.push({
-            date: endDate,
+            date: parseISO(program.end_date),
             playerName: program.player_name,
             programName: program.program_name,
             phaseName: program.phase_name,
@@ -75,28 +76,6 @@ export const StaffSchedule = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const calculateProgramEndDate = (weeklySchedules: any[]): Date | null => {
-    if (!weeklySchedules || !Array.isArray(weeklySchedules) || weeklySchedules.length === 0) {
-      return null;
-    }
-
-    // Find the last week by sorting by week_start_date
-    const sortedWeeks = [...weeklySchedules]
-      .filter(week => week.week_start_date)
-      .sort((a, b) => 
-        new Date(b.week_start_date).getTime() - new Date(a.week_start_date).getTime()
-      );
-
-    if (sortedWeeks.length === 0) return null;
-
-    const lastWeek = sortedWeeks[0];
-    const startDate = parseISO(lastWeek.week_start_date);
-    // End date is Sunday (6 days after Monday start)
-    const endDate = addDays(startDate, 6);
-    
-    return endDate;
   };
 
   const generateCalendarWeeks = () => {
