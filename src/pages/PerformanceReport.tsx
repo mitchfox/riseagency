@@ -129,24 +129,31 @@ const PerformanceReport = () => {
     toast.info("Generating PDF...");
 
     try {
+      // Scroll to top to ensure everything is rendered
+      window.scrollTo(0, 0);
+      
+      // Wait a bit for any rendering to complete
+      await new Promise(resolve => setTimeout(resolve, 100));
+
       const canvas = await html2canvas(contentRef.current, {
         scale: 2,
         useCORS: true,
+        allowTaint: true,
         logging: false,
-        windowHeight: contentRef.current.scrollHeight,
+        scrollY: -window.scrollY,
+        scrollX: -window.scrollX,
+        windowHeight: document.documentElement.scrollHeight,
+        height: contentRef.current.scrollHeight,
       });
 
       const imgData = canvas.toDataURL("image/png");
       const pdf = new jsPDF({
         orientation: "portrait",
-        unit: "mm",
-        format: "a4",
+        unit: "px",
+        format: [canvas.width, canvas.height],
       });
 
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-
-      pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+      pdf.addImage(imgData, "PNG", 0, 0, canvas.width, canvas.height);
       
       const fileName = `${analysis.player_name}_vs_${analysis.opponent}_${new Date(analysis.analysis_date).toLocaleDateString('en-GB').replace(/\//g, '-')}.pdf`;
       pdf.save(fileName);
