@@ -570,6 +570,33 @@ export type Database = {
           },
         ]
       }
+      marketing_templates: {
+        Row: {
+          created_at: string
+          id: string
+          message_content: string
+          message_title: string
+          recipient_type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message_content: string
+          message_title: string
+          recipient_type: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message_content?: string
+          message_title?: string
+          recipient_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       performance_report_actions: {
         Row: {
           action_description: string | null
