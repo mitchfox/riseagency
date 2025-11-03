@@ -119,14 +119,25 @@ const PlayerDetail = () => {
               }
             }
             
-            // Parse highlights from database column
+            // Parse highlights from database column and extract matchHighlights only
             let highlights: any[] = [];
             if (data.highlights) {
               try {
-                highlights = typeof data.highlights === 'string' 
+                let parsedHighlights = typeof data.highlights === 'string' 
                   ? JSON.parse(data.highlights) 
-                  : Array.isArray(data.highlights) ? data.highlights : [];
-                console.log('Parsed highlights from DB:', highlights);
+                  : data.highlights;
+                
+                // Check if it's the new object structure with matchHighlights
+                if (parsedHighlights && typeof parsedHighlights === 'object' && !Array.isArray(parsedHighlights)) {
+                  // Extract matchHighlights array from the object
+                  highlights = parsedHighlights.matchHighlights || [];
+                } else if (Array.isArray(parsedHighlights)) {
+                  // Backward compatibility: treat as direct array
+                  highlights = parsedHighlights;
+                } else {
+                  highlights = [];
+                }
+                console.log('Parsed matchHighlights from DB:', highlights);
               } catch (e) {
                 console.error('Error parsing highlights:', e);
                 highlights = [];
