@@ -5,7 +5,7 @@ import { Footer } from "@/components/Footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Download } from "lucide-react";
 import { toast } from "sonner";
 import { extractAnalysisIdFromSlug } from "@/lib/urlHelpers";
 import { SEO } from "@/components/SEO";
@@ -118,6 +118,10 @@ const PerformanceReport = () => {
     return totalScore;
   };
 
+  const handleSaveAsPDF = () => {
+    window.print();
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
@@ -161,10 +165,16 @@ const PerformanceReport = () => {
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="text-3xl">Performance Report</CardTitle>
-              <Button onClick={() => navigate(-1)} variant="ghost" size="sm">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back
-              </Button>
+              <div className="flex gap-2 print:hidden">
+                <Button onClick={handleSaveAsPDF} variant="default" size="sm">
+                  <Download className="mr-2 h-4 w-4" />
+                  Save as PDF
+                </Button>
+                <Button onClick={() => navigate(-1)} variant="ghost" size="sm">
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Back
+                </Button>
+              </div>
             </div>
           </CardHeader>
           <CardContent>

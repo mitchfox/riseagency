@@ -79,6 +79,19 @@ All colors MUST be HSL.
     letter-spacing: 0.05em;
   }
 
+  /* Print styles for PDF export */
+  @media print {
+    body {
+      print-color-adjust: exact;
+      -webkit-print-color-adjust: exact;
+    }
+    
+    @page {
+      size: auto;
+      margin: 10mm;
+    }
+  }
+
   /* Custom animations */
   @keyframes flash-glow {
     0%, 100% {
