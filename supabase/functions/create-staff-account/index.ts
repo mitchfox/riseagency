@@ -79,52 +79,119 @@ serve(async (req) => {
       );
     }
 
-    // Create the user account
-    const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
-      email,
-      password,
-      email_confirm: true,
-      user_metadata: {
-        full_name: full_name || email,
-      },
-    });
+    // Check if user already exists
+    const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
+    const existingUser = existingUsers?.users.find(u => u.email === email);
 
-    if (createError) {
-      return new Response(JSON.stringify({ error: createError.message }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    let userId: string;
+    let isNewAccount = false;
 
-    // Assign the role
-    const { error: roleInsertError } = await supabaseAdmin
-      .from("user_roles")
-      .insert({
-        user_id: newUser.user!.id,
-        role: role,
-      });
+    if (existingUser) {
+      // User exists, update their role
+      userId = existingUser.id;
+      
+      // Check if role already exists
+      const { data: existingRole } = await supabaseAdmin
+        .from("user_roles")
+        .select("*")
+        .eq("user_id", userId)
+        .single();
 
-    if (roleInsertError) {
-      return new Response(JSON.stringify({ error: roleInsertError.message }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+      if (existingRole) {
+        // Update existing role
+        const { error: updateError } = await supabaseAdmin
+          .from("user_roles")
+          .update({ role: role })
+          .eq("user_id", userId);
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        user: {
-          id: newUser.user!.id,
-          email: newUser.user!.email,
-          role: role,
-        },
-      }),
-      {
-        status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        if (updateError) {
+          return new Response(JSON.stringify({ error: updateError.message }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+      } else {
+        // Insert new role
+        const { error: roleInsertError } = await supabaseAdmin
+          .from("user_roles")
+          .insert({ user_id: userId, role: role });
+
+        if (roleInsertError) {
+          return new Response(JSON.stringify({ error: roleInsertError.message }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
       }
-    );
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          updated: true,
+          message: "User already exists. Role updated successfully.",
+          user: {
+            id: userId,
+            email: email,
+            role: role,
+          },
+        }),
+        {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    } else {
+      // Create new user account
+      const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true,
+        user_metadata: {
+          full_name: full_name || email,
+        },
+      });
+
+      if (createError) {
+        return new Response(JSON.stringify({ error: createError.message }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      userId = newUser.user!.id;
+      isNewAccount = true;
+
+      // Assign the role
+      const { error: roleInsertError } = await supabaseAdmin
+        .from("user_roles")
+        .insert({
+          user_id: userId,
+          role: role,
+        });
+
+      if (roleInsertError) {
+        return new Response(JSON.stringify({ error: roleInsertError.message }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          updated: false,
+          user: {
+            id: userId,
+            email: email,
+            role: role,
+          },
+        }),
+        {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
     return new Response(JSON.stringify({ error: errorMessage }), {

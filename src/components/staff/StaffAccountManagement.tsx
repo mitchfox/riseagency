@@ -117,10 +117,16 @@ export const StaffAccountManagement = () => {
         throw new Error(result.error || "Failed to create account");
       }
 
-      toast.success(`${newAccount.role === "admin" ? "Admin" : "Staff"} account created successfully`);
-      
-      // Store created account details to display
-      setCreatedAccount({ ...newAccount });
+      // Check if account was newly created or updated
+      if (result.updated) {
+        toast.success(`Account role updated to ${newAccount.role}`);
+        // Don't show credentials for existing accounts
+        setCreatedAccount(null);
+      } else {
+        toast.success(`${newAccount.role === "admin" ? "Admin" : "Staff"} account created successfully`);
+        // Store created account details to display (only for new accounts)
+        setCreatedAccount({ ...newAccount });
+      }
       
       // Refresh the accounts list
       fetchExistingAccounts();
