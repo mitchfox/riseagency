@@ -33,6 +33,7 @@ const Staff = () => {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(true);
   const [isStaff, setIsStaff] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [expandedSection, setExpandedSection] = useState<'schedule' | 'staffaccounts' | 'players' | 'playerlist' | 'recruitment' | 'blog' | 'betweenthelines' | 'coaching' | 'analysis' | 'marketing' | 'submissions' | 'visitors' | 'invoices' | 'updates' | null>('schedule');
   const navigate = useNavigate();
@@ -99,12 +100,15 @@ const Staff = () => {
       if (error) {
         console.error('Error checking staff role:', error);
         setIsStaff(false);
+        setIsAdmin(false);
       } else {
         setIsStaff(data && data.length > 0);
+        setIsAdmin(data?.some(row => row.role === 'admin') ?? false);
       }
     } catch (err) {
       console.error('Error:', err);
       setIsStaff(false);
+      setIsAdmin(false);
     } finally {
       setLoading(false);
     }
@@ -285,27 +289,6 @@ const Staff = () => {
             {expandedSection === 'schedule' && (
               <CardContent className="pt-6">
                 <StaffSchedule />
-              </CardContent>
-            )}
-          </Card>
-
-          {/* Staff Accounts Section */}
-          <Card className="cursor-pointer">
-            <CardHeader 
-              ref={(el) => sectionRefs.current['staffaccounts'] = el}
-              onClick={() => handleSectionToggle('staffaccounts')}
-              className="hover:bg-accent/50 transition-colors"
-            >
-              <div className="flex justify-between items-center">
-                <CardTitle className="text-2xl">STAFF ACCOUNTS</CardTitle>
-                <div className="text-muted-foreground">
-                  {expandedSection === 'staffaccounts' ? <ChevronDown size={24} /> : <ChevronRight size={24} />}
-                </div>
-              </div>
-            </CardHeader>
-            {expandedSection === 'staffaccounts' && (
-              <CardContent className="pt-6">
-                <StaffAccountManagement />
               </CardContent>
             )}
           </Card>
@@ -562,6 +545,29 @@ const Staff = () => {
               </CardContent>
             )}
           </Card>
+
+          {/* Staff Accounts Section - Admin Only */}
+          {isAdmin && (
+            <Card className="cursor-pointer">
+              <CardHeader 
+                ref={(el) => sectionRefs.current['staffaccounts'] = el}
+                onClick={() => handleSectionToggle('staffaccounts')}
+                className="hover:bg-accent/50 transition-colors"
+              >
+                <div className="flex justify-between items-center">
+                  <CardTitle className="text-2xl">STAFF ACCOUNTS</CardTitle>
+                  <div className="text-muted-foreground">
+                    {expandedSection === 'staffaccounts' ? <ChevronDown size={24} /> : <ChevronRight size={24} />}
+                  </div>
+                </div>
+              </CardHeader>
+              {expandedSection === 'staffaccounts' && (
+                <CardContent className="pt-6">
+                  <StaffAccountManagement />
+                </CardContent>
+              )}
+            </Card>
+          )}
         </div>
       </main>
       <Footer />
