@@ -165,7 +165,7 @@ const PlayerDetail = () => {
               bio: bioText,
               tacticalFormations: tacticalFormations,
               highlightsArray: highlights,
-              links: data.links || [],
+              links: (Array.isArray(data.links) && data.links.length > 0) ? data.links : (bioData.externalLinks || []),
               stats: statsData ? {
                 goals: statsData.goals || 0,
                 assists: statsData.assists || 0,
