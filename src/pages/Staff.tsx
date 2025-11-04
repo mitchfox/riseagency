@@ -20,6 +20,7 @@ import { UpdatesManagement } from "@/components/staff/UpdatesManagement";
 import { StaffSchedule } from "@/components/staff/StaffSchedule";
 import { MarketingManagement } from "@/components/staff/MarketingManagement";
 import { RecruitmentManagement } from "@/components/staff/RecruitmentManagement";
+import { StaffAccountManagement } from "@/components/staff/StaffAccountManagement";
 
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
@@ -33,11 +34,11 @@ const Staff = () => {
   const [loading, setLoading] = useState(true);
   const [isStaff, setIsStaff] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-  const [expandedSection, setExpandedSection] = useState<'schedule' | 'players' | 'playerlist' | 'recruitment' | 'blog' | 'betweenthelines' | 'coaching' | 'analysis' | 'marketing' | 'submissions' | 'visitors' | 'invoices' | 'updates' | null>('schedule');
+  const [expandedSection, setExpandedSection] = useState<'schedule' | 'staffaccounts' | 'players' | 'playerlist' | 'recruitment' | 'blog' | 'betweenthelines' | 'coaching' | 'analysis' | 'marketing' | 'submissions' | 'visitors' | 'invoices' | 'updates' | null>('schedule');
   const navigate = useNavigate();
   const sectionRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
-  const handleSectionToggle = (section: 'schedule' | 'players' | 'playerlist' | 'recruitment' | 'blog' | 'betweenthelines' | 'coaching' | 'analysis' | 'marketing' | 'submissions' | 'visitors' | 'invoices' | 'updates') => {
+  const handleSectionToggle = (section: 'schedule' | 'staffaccounts' | 'players' | 'playerlist' | 'recruitment' | 'blog' | 'betweenthelines' | 'coaching' | 'analysis' | 'marketing' | 'submissions' | 'visitors' | 'invoices' | 'updates') => {
     const isExpanding = expandedSection !== section;
     setExpandedSection(expandedSection === section ? null : section);
     
@@ -93,14 +94,13 @@ const Staff = () => {
         .from('user_roles')
         .select('role')
         .eq('user_id', userId)
-        .eq('role', 'staff')
-        .single();
+        .in('role', ['staff', 'admin']);
 
       if (error) {
         console.error('Error checking staff role:', error);
         setIsStaff(false);
       } else {
-        setIsStaff(!!data);
+        setIsStaff(data && data.length > 0);
       }
     } catch (err) {
       console.error('Error:', err);
@@ -285,6 +285,27 @@ const Staff = () => {
             {expandedSection === 'schedule' && (
               <CardContent className="pt-6">
                 <StaffSchedule />
+              </CardContent>
+            )}
+          </Card>
+
+          {/* Staff Accounts Section */}
+          <Card className="cursor-pointer">
+            <CardHeader 
+              ref={(el) => sectionRefs.current['staffaccounts'] = el}
+              onClick={() => handleSectionToggle('staffaccounts')}
+              className="hover:bg-accent/50 transition-colors"
+            >
+              <div className="flex justify-between items-center">
+                <CardTitle className="text-2xl">STAFF ACCOUNTS</CardTitle>
+                <div className="text-muted-foreground">
+                  {expandedSection === 'staffaccounts' ? <ChevronDown size={24} /> : <ChevronRight size={24} />}
+                </div>
+              </div>
+            </CardHeader>
+            {expandedSection === 'staffaccounts' && (
+              <CardContent className="pt-6">
+                <StaffAccountManagement />
               </CardContent>
             )}
           </Card>
