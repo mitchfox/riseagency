@@ -911,6 +911,7 @@ export type Database = {
           highlights: Json | null
           id: string
           image_url: string | null
+          links: Json | null
           name: string
           nationality: string
           position: string
@@ -929,6 +930,7 @@ export type Database = {
           highlights?: Json | null
           id?: string
           image_url?: string | null
+          links?: Json | null
           name: string
           nationality: string
           position: string
@@ -947,6 +949,7 @@ export type Database = {
           highlights?: Json | null
           id?: string
           image_url?: string | null
+          links?: Json | null
           name?: string
           nationality?: string
           position?: string

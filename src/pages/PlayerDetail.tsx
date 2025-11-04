@@ -165,6 +165,7 @@ const PlayerDetail = () => {
               bio: bioText,
               tacticalFormations: tacticalFormations,
               highlightsArray: highlights,
+              links: data.links || [],
               stats: statsData ? {
                 goals: statsData.goals || 0,
                 assists: statsData.assists || 0,
@@ -443,6 +444,35 @@ const PlayerDetail = () => {
               </div>
             </DialogContent>
           </Dialog>
+
+          {/* External Links Section */}
+          {player.links && player.links.length > 0 && (
+            <div className="mb-12">
+              <h2 className="text-sm font-bebas text-primary uppercase tracking-widest mb-4 text-lg">
+                External Links
+              </h2>
+              <div className="flex flex-wrap gap-3">
+                {player.links.map((link: any, index: number) => (
+                  <Button
+                    key={index}
+                    asChild
+                    variant="outline"
+                    className="font-bebas uppercase tracking-wider border-primary/30 hover:bg-primary hover:text-primary-foreground"
+                  >
+                    <a 
+                      href={link.url} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2"
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                      {link.label}
+                    </a>
+                  </Button>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Stats - Full Width */}
           {player.seasonStats && player.seasonStats.length > 0 && (
