@@ -822,7 +822,7 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName, i
     const updatedExercises = deepClone(session.exercises);
     updatedExercises[index] = { ...updatedExercises[index], [field]: value };
     
-    // If updating the name field, auto-fill from database if exercise exists
+    // If updating the name field, auto-fill from database if exercise exists and other fields are empty
     if (field === 'name' && value.trim()) {
       try {
         const { data, error } = await supabase
@@ -833,16 +833,17 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName, i
           .single();
 
         if (data && !error) {
-          // Auto-fill all fields from the database
+          const currentExercise = updatedExercises[index];
+          // Only auto-fill fields that are currently empty
           updatedExercises[index] = {
-            ...updatedExercises[index],
-            name: data.title || value,
-            description: data.description || updatedExercises[index].description,
-            repetitions: data.reps || updatedExercises[index].repetitions,
-            sets: data.sets?.toString() || updatedExercises[index].sets,
-            load: data.load || updatedExercises[index].load,
-            recoveryTime: data.rest_time?.toString() || updatedExercises[index].recoveryTime,
-            videoUrl: data.video_url || updatedExercises[index].videoUrl
+            ...currentExercise,
+            name: value, // Always keep the user's typed value
+            description: currentExercise.description || data.description || '',
+            repetitions: currentExercise.repetitions || data.reps || '',
+            sets: currentExercise.sets || data.sets?.toString() || '',
+            load: currentExercise.load || data.load || '',
+            recoveryTime: currentExercise.recoveryTime || data.rest_time?.toString() || '',
+            videoUrl: currentExercise.videoUrl || data.video_url || ''
           };
         }
       } catch (error) {
@@ -1508,21 +1509,18 @@ Phase Dates: ${programmingData.phaseDates || 'Not specified'}`;
                                         </div>
                                       </td>
                                       <td className="p-2">
-                                        <Select
+                                        <Input
+                                          placeholder="Exercise name"
                                           value={exercise.name}
-                                          onValueChange={(value) => updateExercise(selectedSession as SessionKey, idx, 'name', value)}
-                                        >
-                                          <SelectTrigger className="text-sm">
-                                            <SelectValue placeholder="Select or type exercise name" />
-                                          </SelectTrigger>
-                                          <SelectContent className="max-h-[200px] bg-background z-50">
-                                            {exerciseTitles.map((title) => (
-                                              <SelectItem key={title} value={title}>
-                                                {title}
-                                              </SelectItem>
-                                            ))}
-                                          </SelectContent>
-                                        </Select>
+                                          onChange={(e) => updateExercise(selectedSession as SessionKey, idx, 'name', e.target.value)}
+                                          className="text-sm"
+                                          list={`exercise-datalist-${idx}`}
+                                        />
+                                        <datalist id={`exercise-datalist-${idx}`}>
+                                          {exerciseTitles.map((title) => (
+                                            <option key={title} value={title} />
+                                          ))}
+                                        </datalist>
                                       </td>
                                       <td className="p-2">
                                         <Input
