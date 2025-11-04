@@ -43,7 +43,7 @@ export const StaffAccountManagement = () => {
         .select(`
           role,
           user_id,
-          profiles:user_id (
+          profiles!inner (
             email,
             full_name
           )
@@ -51,6 +51,7 @@ export const StaffAccountManagement = () => {
         .in('role', ['admin', 'staff']);
 
       if (error) throw error;
+      console.log('Fetched accounts:', data);
       setExistingAccounts(data || []);
     } catch (error) {
       console.error('Error fetching accounts:', error);
