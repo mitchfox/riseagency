@@ -96,6 +96,7 @@ const PlayerManagement = () => {
   const [collapsedCategories, setCollapsedCategories] = useState<Record<string, boolean>>({
     'Signed': true,
     'Mandate': true,
+    'Fuel For Football': true,
     'Other': true
   });
   const [schemeHistory, setSchemeHistory] = useState<Array<{
@@ -1060,6 +1061,7 @@ const PlayerManagement = () => {
                   >
                     <option value="Signed">Signed</option>
                     <option value="Mandate">Mandate</option>
+                    <option value="Fuel For Football">Fuel For Football</option>
                     <option value="Other">Other</option>
                   </select>
                 </div>
@@ -1784,7 +1786,7 @@ const PlayerManagement = () => {
       </div>
 
       {/* Group players by category */}
-      {['Signed', 'Mandate', 'Other'].map((category) => {
+      {['Signed', 'Mandate', 'Fuel For Football', 'Other'].map((category) => {
         const categoryPlayers = players.filter(p => {
           const matchesCategory = p.category === category;
           const matchesRepresentation = representationFilter === "all" || p.representation_status === representationFilter;
