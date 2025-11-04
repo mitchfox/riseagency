@@ -28,6 +28,22 @@ interface Prospect {
   priority: 'low' | 'medium' | 'high' | null;
 }
 
+interface MarketingTemplate {
+  id: string;
+  recipient_type: string;
+  message_title: string;
+  message_content: string;
+}
+
+const RECIPIENT_TYPES = [
+  "Technical Director",
+  "Scout",
+  "Player",
+  "Parent",
+  "Agent",
+  "Manager"
+];
+
 export const RecruitmentManagement = () => {
   const [activeTab, setActiveTab] = useState("prospects");
   const [prospects, setProspects] = useState<Prospect[]>([]);
@@ -48,6 +64,16 @@ export const RecruitmentManagement = () => {
     priority: "medium" as 'low' | 'medium' | 'high',
   });
 
+  // Template management state
+  const [templates, setTemplates] = useState<MarketingTemplate[]>([]);
+  const [templateDialogOpen, setTemplateDialogOpen] = useState(false);
+  const [editingTemplate, setEditingTemplate] = useState<MarketingTemplate | null>(null);
+  const [templateFormData, setTemplateFormData] = useState({
+    recipient_type: "",
+    message_title: "",
+    message_content: ""
+  });
+
   const ageGroups = [
     { value: 'A', label: 'A - FIRST TEAM' },
     { value: 'B', label: 'B - U21' },
@@ -65,6 +91,7 @@ export const RecruitmentManagement = () => {
 
   useEffect(() => {
     fetchProspects();
+    fetchTemplates();
   }, []);
 
   const fetchProspects = async () => {
@@ -208,6 +235,93 @@ export const RecruitmentManagement = () => {
       default: return 'hsl(0, 0%, 50%)';
     }
   };
+
+  // Template management functions
+  const fetchTemplates = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("marketing_templates")
+        .select("*")
+        .order("recipient_type", { ascending: true })
+        .order("message_title", { ascending: true });
+
+      if (error) throw error;
+      setTemplates(data || []);
+    } catch (error: any) {
+      console.error("Error fetching templates:", error);
+      toast.error("Failed to load templates");
+    }
+  };
+
+  const handleTemplateSubmit = async () => {
+    if (!templateFormData.recipient_type || !templateFormData.message_title || !templateFormData.message_content) {
+      toast.error("Please fill in all fields");
+      return;
+    }
+
+    try {
+      if (editingTemplate) {
+        const { error } = await supabase
+          .from("marketing_templates")
+          .update(templateFormData)
+          .eq("id", editingTemplate.id);
+
+        if (error) throw error;
+        toast.success("Template updated successfully");
+      } else {
+        const { error } = await supabase
+          .from("marketing_templates")
+          .insert([templateFormData]);
+
+        if (error) throw error;
+        toast.success("Template created successfully");
+      }
+
+      setTemplateDialogOpen(false);
+      setEditingTemplate(null);
+      setTemplateFormData({ recipient_type: "", message_title: "", message_content: "" });
+      fetchTemplates();
+    } catch (error: any) {
+      console.error("Error saving template:", error);
+      toast.error("Failed to save template");
+    }
+  };
+
+  const handleTemplateEdit = (template: MarketingTemplate) => {
+    setEditingTemplate(template);
+    setTemplateFormData({
+      recipient_type: template.recipient_type,
+      message_title: template.message_title,
+      message_content: template.message_content
+    });
+    setTemplateDialogOpen(true);
+  };
+
+  const handleTemplateDelete = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this template?")) return;
+
+    try {
+      const { error } = await supabase
+        .from("marketing_templates")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
+      toast.success("Template deleted successfully");
+      fetchTemplates();
+    } catch (error: any) {
+      console.error("Error deleting template:", error);
+      toast.error("Failed to delete template");
+    }
+  };
+
+  const groupedTemplates = templates.reduce((acc, template) => {
+    if (!acc[template.recipient_type]) {
+      acc[template.recipient_type] = [];
+    }
+    acc[template.recipient_type].push(template);
+    return acc;
+  }, {} as Record<string, MarketingTemplate[]>);
 
   return (
     <div className="space-y-6">
@@ -518,21 +632,128 @@ export const RecruitmentManagement = () => {
         </TabsContent>
 
         <TabsContent value="templates" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Message Templates</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-12 text-muted-foreground">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-semibold">Message Templates</h3>
+            <Button onClick={() => {
+              setEditingTemplate(null);
+              setTemplateFormData({ recipient_type: "", message_title: "", message_content: "" });
+              setTemplateDialogOpen(true);
+            }}>
+              <Plus className="w-4 h-4 mr-2" />
+              Create Template
+            </Button>
+          </div>
+
+          {loading ? (
+            <Card>
+              <CardContent className="py-12 text-center text-muted-foreground">
+                Loading templates...
+              </CardContent>
+            </Card>
+          ) : templates.length === 0 ? (
+            <Card>
+              <CardContent className="py-12 text-center text-muted-foreground">
                 <MessageSquare className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                <p className="text-lg mb-2">No message templates created yet</p>
-                <p className="text-sm mb-4">Create reusable templates for prospect outreach</p>
-                <Button>Create Template</Button>
-              </div>
-            </CardContent>
-          </Card>
+                <p className="text-lg mb-2">No templates created yet</p>
+                <p className="text-sm">Create reusable templates for prospect outreach</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-6">
+              {RECIPIENT_TYPES.map(recipientType => {
+                const templatesForType = groupedTemplates[recipientType] || [];
+                if (templatesForType.length === 0) return null;
+
+                return (
+                  <Card key={recipientType}>
+                    <CardHeader>
+                      <CardTitle className="text-lg">{recipientType}</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-3">
+                        {templatesForType.map(template => (
+                          <div key={template.id} className="flex items-start justify-between p-4 border rounded-lg hover:bg-accent/50 transition-colors">
+                            <div className="flex-1">
+                              <h4 className="font-medium mb-1">{template.message_title}</h4>
+                              <p className="text-sm text-muted-foreground line-clamp-2">{template.message_content}</p>
+                            </div>
+                            <div className="flex gap-2 ml-4">
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                onClick={() => handleTemplateEdit(template)}
+                              >
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                onClick={() => handleTemplateDelete(template.id)}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
         </TabsContent>
       </Tabs>
+
+      {/* Template Dialog */}
+      <Dialog open={templateDialogOpen} onOpenChange={setTemplateDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{editingTemplate ? "Edit Template" : "Create Template"}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Recipient Type</Label>
+              <Select
+                value={templateFormData.recipient_type}
+                onValueChange={(value) => setTemplateFormData({ ...templateFormData, recipient_type: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select recipient type" />
+                </SelectTrigger>
+                <SelectContent>
+                  {RECIPIENT_TYPES.map(type => (
+                    <SelectItem key={type} value={type}>{type}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Message Title</Label>
+              <Input
+                value={templateFormData.message_title}
+                onChange={(e) => setTemplateFormData({ ...templateFormData, message_title: e.target.value })}
+                placeholder="e.g., Spanish Club Introduction Message"
+              />
+            </div>
+            <div>
+              <Label>Message Content</Label>
+              <Textarea
+                value={templateFormData.message_content}
+                onChange={(e) => setTemplateFormData({ ...templateFormData, message_content: e.target.value })}
+                placeholder="Enter your message template here..."
+                rows={10}
+              />
+            </div>
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setTemplateDialogOpen(false)}>Cancel</Button>
+            <Button onClick={handleTemplateSubmit}>
+              {editingTemplate ? "Update Template" : "Create Template"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
