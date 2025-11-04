@@ -1664,48 +1664,50 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                             )}
                           </div>
                           
-                          <div className="flex gap-1">
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                setCurrentInvoicePlayerId(editingPlayer.id);
-                                setEditingInvoiceId(invoice.id);
-                                setInvoiceFormData({
-                                  invoice_number: invoice.invoice_number,
-                                  invoice_date: new Date(invoice.invoice_date).toISOString().split('T')[0],
-                                  due_date: new Date(invoice.due_date).toISOString().split('T')[0],
-                                  amount: invoice.amount.toString(),
-                                  description: invoice.description || "",
-                                  status: invoice.status,
-                                  currency: invoice.currency,
-                                });
-                                setIsInvoiceDialogOpen(true);
-                              }}
-                              title="Edit"
-                            >
-                              <Edit className="w-3 h-3" />
-                            </Button>
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleDuplicateInvoice(invoice)}
-                              title="Duplicate"
-                            >
-                              <Copy className="w-3 h-3" />
-                            </Button>
-                            <Button
-                              type="button"
-                              variant="destructive"
-                              size="sm"
-                              onClick={() => handleDeleteInvoice(invoice.id)}
-                              title="Delete"
-                            >
-                              <Trash2 className="w-3 h-3" />
-                            </Button>
-                          </div>
+                          {isAdmin && (
+                            <div className="flex gap-1">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  setCurrentInvoicePlayerId(editingPlayer.id);
+                                  setEditingInvoiceId(invoice.id);
+                                  setInvoiceFormData({
+                                    invoice_number: invoice.invoice_number,
+                                    invoice_date: new Date(invoice.invoice_date).toISOString().split('T')[0],
+                                    due_date: new Date(invoice.due_date).toISOString().split('T')[0],
+                                    amount: invoice.amount.toString(),
+                                    description: invoice.description || "",
+                                    status: invoice.status,
+                                    currency: invoice.currency,
+                                  });
+                                  setIsInvoiceDialogOpen(true);
+                                }}
+                                title="Edit"
+                              >
+                                <Edit className="w-3 h-3" />
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleDuplicateInvoice(invoice)}
+                                title="Duplicate"
+                              >
+                                <Copy className="w-3 h-3" />
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => handleDeleteInvoice(invoice.id)}
+                                title="Delete"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </Button>
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -2052,123 +2054,125 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                            </p>
                                          )}
                                        </div>
-                                       
-                                       <div className="flex gap-1">
-                                         <Button
-                                           type="button"
-                                           variant="ghost"
-                                           size="sm"
-                                           onClick={async () => {
-                                             if (index > 0) {
-                                               const newHighlights = [...matchHighlights];
-                                               [newHighlights[index - 1], newHighlights[index]] = [newHighlights[index], newHighlights[index - 1]];
-                                               
-                                               try {
-                                                 // Get current full highlights structure
-                                                 const parsed = typeof player.highlights === 'string' ? JSON.parse(player.highlights) : player.highlights;
-                                                 const fullHighlights = Array.isArray(parsed) 
-                                                   ? { matchHighlights: newHighlights, bestClips: [] }
-                                                   : { ...parsed, matchHighlights: newHighlights };
-                                                 
-                                                 const { error } = await supabase
-                                                   .from("players")
-                                                   .update({ highlights: JSON.stringify(fullHighlights) })
-                                                   .eq("id", player.id);
-                                                 
-                                                 if (error) throw error;
-                                                 toast.success("Highlight moved up");
-                                                 fetchPlayers();
-                                               } catch (error: any) {
-                                                 toast.error("Failed to reorder");
-                                               }
-                                             }
-                                           }}
-                                           disabled={index === 0}
-                                           title="Move up"
-                                         >
-                                           ↑
-                                         </Button>
-                                         <Button
-                                           type="button"
-                                           variant="ghost"
-                                           size="sm"
-                                           onClick={async () => {
-                                             if (index < matchHighlights.length - 1) {
-                                               const newHighlights = [...matchHighlights];
-                                               [newHighlights[index], newHighlights[index + 1]] = [newHighlights[index + 1], newHighlights[index]];
-                                               
-                                               try {
-                                                 // Get current full highlights structure
-                                                 const parsed = typeof player.highlights === 'string' ? JSON.parse(player.highlights) : player.highlights;
-                                                 const fullHighlights = Array.isArray(parsed) 
-                                                   ? { matchHighlights: newHighlights, bestClips: [] }
-                                                   : { ...parsed, matchHighlights: newHighlights };
-                                                 
-                                                 const { error } = await supabase
-                                                   .from("players")
-                                                   .update({ highlights: JSON.stringify(fullHighlights) })
-                                                   .eq("id", player.id);
-                                                 
-                                                 if (error) throw error;
-                                                 toast.success("Highlight moved down");
-                                                 fetchPlayers();
-                                               } catch (error: any) {
-                                                 toast.error("Failed to reorder");
-                                               }
-                                             }
-                                           }}
-                                           disabled={index === matchHighlights.length - 1}
-                                           title="Move down"
-                                         >
-                                           ↓
-                                         </Button>
-                                         <Button
-                                           type="button"
-                                           variant="outline"
-                                           size="sm"
-                                           onClick={() => {
-                                             setCurrentPlayerId(player.id);
-                                             setEditingHighlightIndex(index);
-                                             setHighlightName(highlight.name || "");
-                                             setHighlightType('match');
-                                             setExistingHighlights(matchHighlights);
-                                             setIsHighlightsDialogOpen(true);
-                                           }}
-                                           title="Edit"
-                                         >
-                                           <Edit className="w-3 h-3" />
-                                         </Button>
-                                         <Button
-                                           type="button"
-                                           variant="destructive"
-                                           size="sm"
-                                           onClick={async () => {
-                                             const newHighlights = matchHighlights.filter((_, i) => i !== index);
-                                             
-                                             try {
-                                               // Get current full highlights structure
-                                               const parsed = typeof player.highlights === 'string' ? JSON.parse(player.highlights) : player.highlights;
-                                               const fullHighlights = Array.isArray(parsed) 
-                                                 ? { matchHighlights: newHighlights, bestClips: [] }
-                                                 : { ...parsed, matchHighlights: newHighlights };
-                                               
-                                               const { error } = await supabase
-                                                 .from("players")
-                                                 .update({ highlights: JSON.stringify(fullHighlights) })
-                                                 .eq("id", player.id);
-                                               
-                                               if (error) throw error;
-                                               toast.success("Highlight deleted");
-                                               fetchPlayers();
-                                             } catch (error: any) {
-                                               toast.error("Failed to delete");
-                                             }
-                                           }}
-                                           title="Delete"
-                                         >
-                                           Delete
-                                         </Button>
-                                       </div>
+                                        
+                                        {isAdmin && (
+                                          <div className="flex gap-1">
+                                            <Button
+                                              type="button"
+                                              variant="ghost"
+                                              size="sm"
+                                              onClick={async () => {
+                                                if (index > 0) {
+                                                  const newHighlights = [...matchHighlights];
+                                                  [newHighlights[index - 1], newHighlights[index]] = [newHighlights[index], newHighlights[index - 1]];
+                                                  
+                                                  try {
+                                                    // Get current full highlights structure
+                                                    const parsed = typeof player.highlights === 'string' ? JSON.parse(player.highlights) : player.highlights;
+                                                    const fullHighlights = Array.isArray(parsed) 
+                                                      ? { matchHighlights: newHighlights, bestClips: [] }
+                                                      : { ...parsed, matchHighlights: newHighlights };
+                                                    
+                                                    const { error } = await supabase
+                                                      .from("players")
+                                                      .update({ highlights: JSON.stringify(fullHighlights) })
+                                                      .eq("id", player.id);
+                                                    
+                                                    if (error) throw error;
+                                                    toast.success("Highlight moved up");
+                                                    fetchPlayers();
+                                                  } catch (error: any) {
+                                                    toast.error("Failed to reorder");
+                                                  }
+                                                }
+                                              }}
+                                              disabled={index === 0}
+                                              title="Move up"
+                                            >
+                                              ↑
+                                            </Button>
+                                            <Button
+                                              type="button"
+                                              variant="ghost"
+                                              size="sm"
+                                              onClick={async () => {
+                                                if (index < matchHighlights.length - 1) {
+                                                  const newHighlights = [...matchHighlights];
+                                                  [newHighlights[index], newHighlights[index + 1]] = [newHighlights[index + 1], newHighlights[index]];
+                                                  
+                                                  try {
+                                                    // Get current full highlights structure
+                                                    const parsed = typeof player.highlights === 'string' ? JSON.parse(player.highlights) : player.highlights;
+                                                    const fullHighlights = Array.isArray(parsed) 
+                                                      ? { matchHighlights: newHighlights, bestClips: [] }
+                                                      : { ...parsed, matchHighlights: newHighlights };
+                                                    
+                                                    const { error } = await supabase
+                                                      .from("players")
+                                                      .update({ highlights: JSON.stringify(fullHighlights) })
+                                                      .eq("id", player.id);
+                                                    
+                                                    if (error) throw error;
+                                                    toast.success("Highlight moved down");
+                                                    fetchPlayers();
+                                                  } catch (error: any) {
+                                                    toast.error("Failed to reorder");
+                                                  }
+                                                }
+                                              }}
+                                              disabled={index === matchHighlights.length - 1}
+                                              title="Move down"
+                                            >
+                                              ↓
+                                            </Button>
+                                            <Button
+                                              type="button"
+                                              variant="outline"
+                                              size="sm"
+                                              onClick={() => {
+                                                setCurrentPlayerId(player.id);
+                                                setEditingHighlightIndex(index);
+                                                setHighlightName(highlight.name || "");
+                                                setHighlightType('match');
+                                                setExistingHighlights(matchHighlights);
+                                                setIsHighlightsDialogOpen(true);
+                                              }}
+                                              title="Edit"
+                                            >
+                                              <Edit className="w-3 h-3" />
+                                            </Button>
+                                            <Button
+                                              type="button"
+                                              variant="destructive"
+                                              size="sm"
+                                              onClick={async () => {
+                                                const newHighlights = matchHighlights.filter((_, i) => i !== index);
+                                                
+                                                try {
+                                                  // Get current full highlights structure
+                                                  const parsed = typeof player.highlights === 'string' ? JSON.parse(player.highlights) : player.highlights;
+                                                  const fullHighlights = Array.isArray(parsed) 
+                                                    ? { matchHighlights: newHighlights, bestClips: [] }
+                                                    : { ...parsed, matchHighlights: newHighlights };
+                                                  
+                                                  const { error } = await supabase
+                                                    .from("players")
+                                                    .update({ highlights: JSON.stringify(fullHighlights) })
+                                                    .eq("id", player.id);
+                                                  
+                                                  if (error) throw error;
+                                                  toast.success("Highlight deleted");
+                                                  fetchPlayers();
+                                                } catch (error: any) {
+                                                  toast.error("Failed to delete");
+                                                }
+                                              }}
+                                              title="Delete"
+                                            >
+                                              Delete
+                                            </Button>
+                                          </div>
+                                        )}
                                      </div>
                                    ))}
                                  </div>
@@ -2230,122 +2234,124 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                          )}
                                        </div>
                                        
-                                       <div className="flex gap-1">
-                                         <Button
-                                           type="button"
-                                           variant="ghost"
-                                           size="sm"
-                                           onClick={async () => {
-                                             if (index > 0) {
-                                               const newBestClips = [...bestClips];
-                                               [newBestClips[index - 1], newBestClips[index]] = [newBestClips[index], newBestClips[index - 1]];
-                                               
-                                               try {
-                                                 // Get current full highlights structure
-                                                 const parsed = typeof player.highlights === 'string' ? JSON.parse(player.highlights) : player.highlights;
-                                                 const fullHighlights = Array.isArray(parsed) 
-                                                   ? { matchHighlights: parsed, bestClips: newBestClips }
-                                                   : { ...parsed, bestClips: newBestClips };
-                                                 
-                                                 const { error } = await supabase
-                                                   .from("players")
-                                                   .update({ highlights: JSON.stringify(fullHighlights) })
-                                                   .eq("id", player.id);
-                                                 
-                                                 if (error) throw error;
-                                                 toast.success("Clip moved up");
-                                                 fetchPlayers();
-                                               } catch (error: any) {
-                                                 toast.error("Failed to reorder");
-                                               }
-                                             }
-                                           }}
-                                           disabled={index === 0}
-                                           title="Move up"
-                                         >
-                                           ↑
-                                         </Button>
-                                         <Button
-                                           type="button"
-                                           variant="ghost"
-                                           size="sm"
-                                           onClick={async () => {
-                                             if (index < bestClips.length - 1) {
-                                               const newBestClips = [...bestClips];
-                                               [newBestClips[index], newBestClips[index + 1]] = [newBestClips[index + 1], newBestClips[index]];
-                                               
-                                               try {
-                                                 // Get current full highlights structure
-                                                 const parsed = typeof player.highlights === 'string' ? JSON.parse(player.highlights) : player.highlights;
-                                                 const fullHighlights = Array.isArray(parsed) 
-                                                   ? { matchHighlights: parsed, bestClips: newBestClips }
-                                                   : { ...parsed, bestClips: newBestClips };
-                                                 
-                                                 const { error } = await supabase
-                                                   .from("players")
-                                                   .update({ highlights: JSON.stringify(fullHighlights) })
-                                                   .eq("id", player.id);
-                                                 
-                                                 if (error) throw error;
-                                                 toast.success("Clip moved down");
-                                                 fetchPlayers();
-                                               } catch (error: any) {
-                                                 toast.error("Failed to reorder");
-                                               }
-                                             }
-                                           }}
-                                           disabled={index === bestClips.length - 1}
-                                           title="Move down"
-                                         >
-                                           ↓
-                                         </Button>
-                                         <Button
-                                           type="button"
-                                           variant="outline"
-                                           size="sm"
-                                           onClick={() => {
-                                             setCurrentPlayerId(player.id);
-                                             setEditingHighlightIndex(index);
-                                             setHighlightName(highlight.name || "");
-                                             setHighlightType('best');
-                                             setExistingHighlights(bestClips);
-                                             setIsHighlightsDialogOpen(true);
-                                           }}
-                                           title="Edit"
-                                         >
-                                           <Edit className="w-3 h-3" />
-                                         </Button>
-                                         <Button
-                                           type="button"
-                                           variant="destructive"
-                                           size="sm"
-                                           onClick={async () => {
-                                             const newBestClips = bestClips.filter((_, i) => i !== index);
-                                             
-                                             try {
-                                               // Get current full highlights structure
-                                               const parsed = typeof player.highlights === 'string' ? JSON.parse(player.highlights) : player.highlights;
-                                               const fullHighlights = Array.isArray(parsed) 
-                                                 ? { matchHighlights: parsed, bestClips: newBestClips }
-                                                 : { ...parsed, bestClips: newBestClips };
-                                               
-                                               const { error } = await supabase
-                                                 .from("players")
-                                                 .update({ highlights: JSON.stringify(fullHighlights) })
-                                                 .eq("id", player.id);
-                                               
-                                               if (error) throw error;
-                                               toast.success("Clip deleted");
-                                               fetchPlayers();
-                                             } catch (error: any) {
-                                               toast.error("Failed to delete");
-                                             }
-                                           }}
-                                           title="Delete"
-                                         >
-                                           Delete
-                                         </Button>
-                                       </div>
+                                        {isAdmin && (
+                                          <div className="flex gap-1">
+                                            <Button
+                                              type="button"
+                                              variant="ghost"
+                                              size="sm"
+                                              onClick={async () => {
+                                                if (index > 0) {
+                                                  const newBestClips = [...bestClips];
+                                                  [newBestClips[index - 1], newBestClips[index]] = [newBestClips[index], newBestClips[index - 1]];
+                                                  
+                                                  try {
+                                                    // Get current full highlights structure
+                                                    const parsed = typeof player.highlights === 'string' ? JSON.parse(player.highlights) : player.highlights;
+                                                    const fullHighlights = Array.isArray(parsed) 
+                                                      ? { matchHighlights: parsed, bestClips: newBestClips }
+                                                      : { ...parsed, bestClips: newBestClips };
+                                                    
+                                                    const { error } = await supabase
+                                                      .from("players")
+                                                      .update({ highlights: JSON.stringify(fullHighlights) })
+                                                      .eq("id", player.id);
+                                                    
+                                                    if (error) throw error;
+                                                    toast.success("Clip moved up");
+                                                    fetchPlayers();
+                                                  } catch (error: any) {
+                                                    toast.error("Failed to reorder");
+                                                  }
+                                                }
+                                              }}
+                                              disabled={index === 0}
+                                              title="Move up"
+                                            >
+                                              ↑
+                                            </Button>
+                                            <Button
+                                              type="button"
+                                              variant="ghost"
+                                              size="sm"
+                                              onClick={async () => {
+                                                if (index < bestClips.length - 1) {
+                                                  const newBestClips = [...bestClips];
+                                                  [newBestClips[index], newBestClips[index + 1]] = [newBestClips[index + 1], newBestClips[index]];
+                                                  
+                                                  try {
+                                                    // Get current full highlights structure
+                                                    const parsed = typeof player.highlights === 'string' ? JSON.parse(player.highlights) : player.highlights;
+                                                    const fullHighlights = Array.isArray(parsed) 
+                                                      ? { matchHighlights: parsed, bestClips: newBestClips }
+                                                      : { ...parsed, bestClips: newBestClips };
+                                                    
+                                                    const { error } = await supabase
+                                                      .from("players")
+                                                      .update({ highlights: JSON.stringify(fullHighlights) })
+                                                      .eq("id", player.id);
+                                                    
+                                                    if (error) throw error;
+                                                    toast.success("Clip moved down");
+                                                    fetchPlayers();
+                                                  } catch (error: any) {
+                                                    toast.error("Failed to reorder");
+                                                  }
+                                                }
+                                              }}
+                                              disabled={index === bestClips.length - 1}
+                                              title="Move down"
+                                            >
+                                              ↓
+                                            </Button>
+                                            <Button
+                                              type="button"
+                                              variant="outline"
+                                              size="sm"
+                                              onClick={() => {
+                                                setCurrentPlayerId(player.id);
+                                                setEditingHighlightIndex(index);
+                                                setHighlightName(highlight.name || "");
+                                                setHighlightType('best');
+                                                setExistingHighlights(bestClips);
+                                                setIsHighlightsDialogOpen(true);
+                                              }}
+                                              title="Edit"
+                                            >
+                                              <Edit className="w-3 h-3" />
+                                            </Button>
+                                            <Button
+                                              type="button"
+                                              variant="destructive"
+                                              size="sm"
+                                              onClick={async () => {
+                                                const newBestClips = bestClips.filter((_, i) => i !== index);
+                                                
+                                                try {
+                                                  // Get current full highlights structure
+                                                  const parsed = typeof player.highlights === 'string' ? JSON.parse(player.highlights) : player.highlights;
+                                                  const fullHighlights = Array.isArray(parsed) 
+                                                    ? { matchHighlights: parsed, bestClips: newBestClips }
+                                                    : { ...parsed, bestClips: newBestClips };
+                                                  
+                                                  const { error } = await supabase
+                                                    .from("players")
+                                                    .update({ highlights: JSON.stringify(fullHighlights) })
+                                                    .eq("id", player.id);
+                                                  
+                                                  if (error) throw error;
+                                                  toast.success("Clip deleted");
+                                                  fetchPlayers();
+                                                } catch (error: any) {
+                                                  toast.error("Failed to delete");
+                                                }
+                                              }}
+                                              title="Delete"
+                                            >
+                                              Delete
+                                            </Button>
+                                          </div>
+                                        )}
                                      </div>
                                    ))}
                                  </div>
@@ -2418,49 +2424,51 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                    <p className="text-xs text-muted-foreground mt-1">{invoice.description}</p>
                                  )}
                                </div>
-                               
-                                <div className="flex gap-1">
-                                  <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => {
-                                      setCurrentInvoicePlayerId(player.id);
-                                      setEditingInvoiceId(invoice.id);
-                                      setInvoiceFormData({
-                                        invoice_number: invoice.invoice_number,
-                                        invoice_date: invoice.invoice_date,
-                                        due_date: invoice.due_date,
-                                        amount: invoice.amount.toString(),
-                                        description: invoice.description || "",
-                                        status: invoice.status,
-                                        currency: invoice.currency,
-                                      });
-                                      setIsInvoiceDialogOpen(true);
-                                    }}
-                                    title="Edit"
-                                  >
-                                    <Edit className="w-3 h-3" />
-                                  </Button>
-                                  <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => handleDuplicateInvoice(invoice)}
-                                    title="Duplicate"
-                                  >
-                                    <Copy className="w-3 h-3" />
-                                  </Button>
-                                  <Button
-                                    type="button"
-                                    variant="destructive"
-                                    size="sm"
-                                    onClick={() => handleDeleteInvoice(invoice.id)}
-                                    title="Delete"
-                                  >
-                                    <Trash2 className="w-3 h-3" />
-                                  </Button>
-                                </div>
+                                
+                                 {isAdmin && (
+                                   <div className="flex gap-1">
+                                     <Button
+                                       type="button"
+                                       variant="outline"
+                                       size="sm"
+                                       onClick={() => {
+                                         setCurrentInvoicePlayerId(player.id);
+                                         setEditingInvoiceId(invoice.id);
+                                         setInvoiceFormData({
+                                           invoice_number: invoice.invoice_number,
+                                           invoice_date: invoice.invoice_date,
+                                           due_date: invoice.due_date,
+                                           amount: invoice.amount.toString(),
+                                           description: invoice.description || "",
+                                           status: invoice.status,
+                                           currency: invoice.currency,
+                                         });
+                                         setIsInvoiceDialogOpen(true);
+                                       }}
+                                       title="Edit"
+                                     >
+                                       <Edit className="w-3 h-3" />
+                                     </Button>
+                                     <Button
+                                       type="button"
+                                       variant="outline"
+                                       size="sm"
+                                       onClick={() => handleDuplicateInvoice(invoice)}
+                                       title="Duplicate"
+                                     >
+                                       <Copy className="w-3 h-3" />
+                                     </Button>
+                                     <Button
+                                       type="button"
+                                       variant="destructive"
+                                       size="sm"
+                                       onClick={() => handleDeleteInvoice(invoice.id)}
+                                       title="Delete"
+                                     >
+                                       <Trash2 className="w-3 h-3" />
+                                     </Button>
+                                   </div>
+                                 )}
                              </div>
                            ))}
                          </div>
@@ -2592,21 +2600,23 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
 
                         {/* Performance Reports Tab */}
                         <TabsContent value="performance" className="space-y-4">
-                          <div className="flex justify-end">
-                            <Button
-                              size="sm"
-                              onClick={() => {
-                                setCreateReportPlayerId(player.id);
-                                setCreateReportPlayerName(player.name);
-                                setEditReportAnalysisId(undefined);
-                                setIsCreateReportDialogOpen(true);
-                              }}
-                              className="flex-shrink-0"
-                            >
-                              <Plus className="w-4 h-4 sm:mr-2" />
-                              <span className="hidden sm:inline">Add Performance Report</span>
-                            </Button>
-                          </div>
+                          {isAdmin && (
+                            <div className="flex justify-end">
+                              <Button
+                                size="sm"
+                                onClick={() => {
+                                  setCreateReportPlayerId(player.id);
+                                  setCreateReportPlayerName(player.name);
+                                  setEditReportAnalysisId(undefined);
+                                  setIsCreateReportDialogOpen(true);
+                                }}
+                                className="flex-shrink-0"
+                              >
+                                <Plus className="w-4 h-4 sm:mr-2" />
+                                <span className="hidden sm:inline">Add Performance Report</span>
+                              </Button>
+                            </div>
+                          )}
                           
                           {(playerAnalyses[player.id] || []).filter(a => a.r90_score !== null && a.r90_score !== undefined).length > 0 ? (
                             <div className="space-y-2">
@@ -2649,19 +2659,21 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                             <FileText className="w-4 h-4 sm:mr-1" />
                                             <span className="hidden sm:inline">View</span>
                                           </Button>
-                                          <Button 
-                                            variant="ghost" 
-                                            size="sm"
-                                            onClick={() => {
-                                              setCreateReportPlayerId(player.id);
-                                              setCreateReportPlayerName(player.name);
-                                              setEditReportAnalysisId(analysis.id);
-                                              setIsCreateReportDialogOpen(true);
-                                            }}
-                                            className="flex-shrink-0"
-                                          >
-                                            <Edit className="w-4 h-4" />
-                                          </Button>
+                                          {isAdmin && (
+                                            <Button 
+                                              variant="ghost" 
+                                              size="sm"
+                                              onClick={() => {
+                                                setCreateReportPlayerId(player.id);
+                                                setCreateReportPlayerName(player.name);
+                                                setEditReportAnalysisId(analysis.id);
+                                                setIsCreateReportDialogOpen(true);
+                                              }}
+                                              className="flex-shrink-0"
+                                            >
+                                              <Edit className="w-4 h-4" />
+                                            </Button>
+                                          )}
                                         </div>
                                       </div>
                                     </CardContent>
