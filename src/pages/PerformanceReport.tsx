@@ -41,8 +41,18 @@ const PerformanceReport = () => {
   const [loading, setLoading] = useState(true);
   const [analysis, setAnalysis] = useState<AnalysisDetails | null>(null);
   const [actions, setActions] = useState<PerformanceAction[]>([]);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   const analysisId = slug ? extractAnalysisIdFromSlug(slug) : null;
+
+  useEffect(() => {
+    // Check authentication status
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setIsAuthenticated(!!session);
+    };
+    checkAuth();
+  }, []);
 
   useEffect(() => {
     console.log('PerformanceReport - analysisId:', analysisId);
@@ -136,6 +146,25 @@ const PerformanceReport = () => {
     window.print();
   };
 
+  const handleBackClick = () => {
+    if (isAuthenticated) {
+      // Authenticated user - go back to previous page in portal
+      navigate(-1);
+    } else {
+      // Public viewer - go back to player profile on stars page
+      if (analysis?.player_name) {
+        const playerSlug = analysis.player_name
+          .toLowerCase()
+          .replace(/\s+/g, '-')
+          .replace(/[^a-z0-9-]/g, '');
+        navigate(`/stars/${playerSlug}`);
+      } else {
+        // Fallback to stars page
+        navigate('/stars');
+      }
+    }
+  };
+
   console.log('PerformanceReport - Render - loading:', loading);
   console.log('PerformanceReport - Render - analysis:', analysis);
   console.log('PerformanceReport - Render - actions length:', actions.length);
@@ -160,7 +189,7 @@ const PerformanceReport = () => {
           <Card>
             <CardContent className="pt-6">
               <p className="text-center text-muted-foreground">Performance report not found</p>
-              <Button onClick={() => navigate(-1)} className="mt-4 mx-auto block">
+              <Button onClick={handleBackClick} className="mt-4 mx-auto block">
                 Go Back
               </Button>
             </CardContent>
@@ -190,9 +219,9 @@ const PerformanceReport = () => {
                   <Download className="mr-2 h-4 w-4" />
                   Save as PDF
                 </Button>
-                <Button onClick={() => navigate(-1)} variant="ghost" size="sm">
+                <Button onClick={handleBackClick} variant="ghost" size="sm">
                   <ArrowLeft className="mr-2 h-4 w-4" />
-                  Back
+                  {isAuthenticated ? "Back" : "Back to Profile"}
                 </Button>
               </div>
             </div>
