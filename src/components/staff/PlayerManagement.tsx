@@ -969,11 +969,6 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
 
   return (
     <div className="space-y-6">
-      {!isAdmin && (
-        <div className="bg-yellow-500/10 border border-yellow-500/20 text-yellow-600 dark:text-yellow-400 px-4 py-3 rounded-lg">
-          <p className="font-medium">View Only Access - Contact admin for changes</p>
-        </div>
-      )}
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Players</h2>
         {isAdmin && (
@@ -2864,6 +2859,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
         onOpenChange={setIsPerformanceActionsDialogOpen}
         analysisId={selectedAnalysisId || ""}
         playerName={selectedPlayerName}
+        isAdmin={isAdmin}
       />
 
       {/* Create Performance Report Dialog */}

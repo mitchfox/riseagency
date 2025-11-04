@@ -30,7 +30,7 @@ interface Fixture {
   created_at: string;
 }
 
-export const FixturesManagement = () => {
+export const FixturesManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   const [fixtures, setFixtures] = useState<Fixture[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -165,10 +165,12 @@ export const FixturesManagement = () => {
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Fixtures</h2>
-        <Button onClick={() => handleOpenDialog()}>
-          <Plus className="w-4 h-4 mr-2" />
-          New Fixture
-        </Button>
+        {isAdmin && (
+          <Button onClick={() => handleOpenDialog()}>
+            <Plus className="w-4 h-4 mr-2" />
+            New Fixture
+          </Button>
+        )}
       </div>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -319,22 +321,24 @@ export const FixturesManagement = () => {
                     </span>
                   )}
                 </div>
-                <div className="flex gap-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleOpenDialog(fixture)}
-                  >
-                    <Pencil className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleDelete(fixture.id)}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
+                {isAdmin && (
+                  <div className="flex gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleOpenDialog(fixture)}
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDelete(fixture.id)}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                )}
               </CardTitle>
             </CardHeader>
             <CardContent>

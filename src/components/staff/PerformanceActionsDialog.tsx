@@ -23,6 +23,7 @@ interface PerformanceActionsDialogProps {
   onOpenChange: (open: boolean) => void;
   analysisId: string;
   playerName: string;
+  isAdmin: boolean;
 }
 
 export const PerformanceActionsDialog = ({
@@ -30,6 +31,7 @@ export const PerformanceActionsDialog = ({
   onOpenChange,
   analysisId,
   playerName,
+  isAdmin,
 }: PerformanceActionsDialogProps) => {
   const [actions, setActions] = useState<PerformanceAction[]>([]);
   const [loading, setLoading] = useState(false);
@@ -223,8 +225,9 @@ export const PerformanceActionsDialog = ({
           </div>
 
           {/* Add New Action Form */}
-          <div className="border rounded-lg p-4 bg-card">
-            <h3 className="font-semibold mb-4">Add New Action</h3>
+          {isAdmin && (
+            <div className="border rounded-lg p-4 bg-card">
+              <h3 className="font-semibold mb-4">Add New Action</h3>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="action_number">Action #</Label>
@@ -286,11 +289,12 @@ export const PerformanceActionsDialog = ({
                 />
               </div>
             </div>
-            <Button onClick={handleAddAction} disabled={loading} className="mt-4">
-              <Plus className="w-4 h-4 mr-2" />
-              {loading ? "Adding..." : "Add Action"}
-            </Button>
-          </div>
+              <Button onClick={handleAddAction} disabled={loading} className="mt-4">
+                <Plus className="w-4 h-4 mr-2" />
+                {loading ? "Adding..." : "Add Action"}
+              </Button>
+            </div>
+          )}
 
           {/* Actions List */}
           <div className="border rounded-lg p-4">
@@ -315,13 +319,15 @@ export const PerformanceActionsDialog = ({
                         <p className="text-xs text-muted-foreground italic">{action.notes}</p>
                       )}
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => action.id && handleDeleteAction(action.id)}
-                    >
-                      <Trash2 className="w-4 h-4 text-destructive" />
-                    </Button>
+                    {isAdmin && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => action.id && handleDeleteAction(action.id)}
+                      >
+                        <Trash2 className="w-4 h-4 text-destructive" />
+                      </Button>
+                    )}
                   </div>
                 ))}
               </div>
