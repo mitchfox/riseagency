@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Helmet } from "react-helmet-async";
 import { players } from "@/data/players";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,6 +20,7 @@ const PlayerDetail = () => {
   const [player, setPlayer] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [bioDialogOpen, setBioDialogOpen] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
   
   // Fetch player from database
   useEffect(() => {
@@ -315,6 +316,7 @@ const PlayerDetail = () => {
               {dbHighlights.length > 0 && typeof currentVideoType === 'number' && dbHighlights[currentVideoType]?.videoUrl ? (
                 <>
                   <video 
+                    ref={videoRef}
                     key={dbHighlights[currentVideoType].videoUrl}
                     className="w-full h-full object-contain bg-black"
                     controls
@@ -327,9 +329,20 @@ const PlayerDetail = () => {
                       console.log('Video URL:', dbHighlights[currentVideoType].videoUrl);
                     }}
                     onLoadStart={() => console.log('Video loading started')}
-                    onLoadedData={() => console.log('Video loaded successfully')}
+                    onLoadedData={() => {
+                      console.log('Video loaded successfully');
+                      // Re-enter fullscreen if it was in fullscreen before
+                      if (document.fullscreenElement && videoRef.current) {
+                        videoRef.current.requestFullscreen().catch(err => {
+                          console.log('Failed to re-enter fullscreen:', err);
+                        });
+                      }
+                    }}
                     onEnded={() => {
                       console.log('Video ended, current index:', currentVideoType, 'total videos:', dbHighlights.length);
+                      // Check if video is in fullscreen before switching
+                      const wasFullscreen = document.fullscreenElement === videoRef.current;
+                      
                       // Auto-play next video when current one ends
                       if (typeof currentVideoType === 'number') {
                         const nextIndex = currentVideoType + 1;
@@ -365,7 +378,7 @@ const PlayerDetail = () => {
               {dbHighlights.length > 0 && (
                 <div className="hidden lg:block absolute bottom-12 md:bottom-16 left-1/2 -translate-x-1/2 z-20 bg-[hsl(var(--gold))]/20 backdrop-blur-sm px-3 py-1.5 rounded-md border border-[hsl(var(--gold))]/40">
                   <p className="text-foreground font-bebas uppercase tracking-wider text-sm md:text-base whitespace-nowrap">
-                    Recent Match Highlights
+                    RECENT MATCHES
                   </p>
                 </div>
               )}
