@@ -630,8 +630,8 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName, i
           'PRE-G': programmingData.preSessionG,
           'PRE-H': programmingData.preSessionH,
         })) {
-          if (Array.isArray(session)) {
-            for (const ex of session as Exercise[]) {
+          if (session.exercises && Array.isArray(session.exercises)) {
+            for (const ex of session.exercises) {
               if (ex.name && !existingTitles.has(ex.name)) {
                 allExercises.push({
                   title: ex.name,
