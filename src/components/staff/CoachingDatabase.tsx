@@ -91,7 +91,7 @@ const tableConfigs = {
   },
 };
 
-export const CoachingDatabase = () => {
+export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
   const [activeTab, setActiveTab] = useState<TableType>('coaching_sessions');
   const [items, setItems] = useState<CoachingItem[]>([]);
   const [loading, setLoading] = useState(false);

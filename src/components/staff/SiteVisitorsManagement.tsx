@@ -42,7 +42,7 @@ interface SiteVisit {
   hidden: boolean;
 }
 
-export const SiteVisitorsManagement = () => {
+export const SiteVisitorsManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   const [visits, setVisits] = useState<SiteVisit[]>([]);
   const [loading, setLoading] = useState(false);
   const [pageFilter, setPageFilter] = useState<string>("all");

@@ -44,7 +44,7 @@ const RECIPIENT_TYPES = [
   "Manager"
 ];
 
-export const RecruitmentManagement = () => {
+export const RecruitmentManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   const [activeTab, setActiveTab] = useState("prospects");
   const [prospects, setProspects] = useState<Prospect[]>([]);
   const [loading, setLoading] = useState(true);

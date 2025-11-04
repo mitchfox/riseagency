@@ -33,7 +33,7 @@ const betweenTheLinesCategories = [
   "AGENTS",
 ];
 
-const BetweenTheLinesManagement = () => {
+const BetweenTheLinesManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingPost, setEditingPost] = useState<BlogPost | null>(null);

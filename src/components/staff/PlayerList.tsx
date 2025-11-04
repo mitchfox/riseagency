@@ -19,7 +19,7 @@ interface Player {
   bio: string | null;
 }
 
-export const PlayerList = () => {
+export const PlayerList = ({ isAdmin }: { isAdmin: boolean }) => {
   const [players, setPlayers] = useState<Player[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
@@ -154,13 +154,15 @@ export const PlayerList = () => {
                   </TableCell>
                   <TableCell>{player.position}</TableCell>
                   <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleEdit(player)}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
+                    {isAdmin && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleEdit(player)}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                    )}
                   </TableCell>
                 </TableRow>
               );

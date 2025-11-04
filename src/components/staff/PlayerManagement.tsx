@@ -54,7 +54,7 @@ interface ExpandedPlayerData {
   strengthsAndPlayStyle?: string[];
 }
 
-const PlayerManagement = () => {
+const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   const [players, setPlayers] = useState<Player[]>([]);
   const [stats, setStats] = useState<Record<string, PlayerStats>>({});
   const [loading, setLoading] = useState(true);
@@ -969,12 +969,18 @@ const PlayerManagement = () => {
 
   return (
     <div className="space-y-6">
+      {!isAdmin && (
+        <div className="bg-yellow-500/10 border border-yellow-500/20 text-yellow-600 dark:text-yellow-400 px-4 py-3 rounded-lg">
+          <p className="font-medium">View Only Access - Contact admin for changes</p>
+        </div>
+      )}
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Players</h2>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={() => {
-              setEditingPlayer(null);
+        {isAdmin && (
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button onClick={() => {
+                setEditingPlayer(null);
               setFormData({ 
                 name: "", 
                 position: "", 
@@ -1753,6 +1759,7 @@ const PlayerManagement = () => {
             </form>
           </DialogContent>
         </Dialog>
+        )}
       </div>
 
       {/* Filters */}
@@ -1936,10 +1943,12 @@ const PlayerManagement = () => {
                       <DollarSign className="w-4 h-4 sm:mr-2" />
                       <span className="hidden sm:inline">Invoices</span>
                     </Button>
-                    <Button variant="outline" size="sm" onClick={() => startEdit(player)} className="flex-shrink-0">
-                      <Edit className="w-4 h-4 sm:mr-2" />
-                      <span className="hidden sm:inline">Player Details</span>
-                    </Button>
+                    {isAdmin && (
+                      <Button variant="outline" size="sm" onClick={() => startEdit(player)} className="flex-shrink-0">
+                        <Edit className="w-4 h-4 sm:mr-2" />
+                        <span className="hidden sm:inline">Player Details</span>
+                      </Button>
+                    )}
                   </div>
 
                    {showingFixturesFor === player.id && (

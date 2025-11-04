@@ -16,7 +16,7 @@ interface FormSubmission {
   created_at: string;
 }
 
-export const FormSubmissionsManagement = () => {
+export const FormSubmissionsManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   const [submissions, setSubmissions] = useState<FormSubmission[]>([]);
   const [loading, setLoading] = useState(true);
   const [emailDialogOpen, setEmailDialogOpen] = useState(false);

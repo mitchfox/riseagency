@@ -21,7 +21,7 @@ interface Update {
   updated_at: string;
 }
 
-export function UpdatesManagement() {
+export function UpdatesManagement({ isAdmin }: { isAdmin: boolean }) {
   const [updates, setUpdates] = useState<Update[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -145,18 +145,24 @@ export function UpdatesManagement() {
 
   return (
     <div className="space-y-4">
+      {!isAdmin && (
+        <div className="bg-yellow-500/10 border border-yellow-500/20 text-yellow-600 dark:text-yellow-400 px-4 py-3 rounded-lg">
+          <p className="font-medium">View Only Access - Contact admin for changes</p>
+        </div>
+      )}
       <div className="flex justify-between items-center">
         <h3 className="text-xl font-bebas uppercase tracking-wider">Updates Management</h3>
-        <Dialog open={dialogOpen} onOpenChange={(open) => {
-          setDialogOpen(open);
-          if (!open) resetForm();
-        }}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="w-4 h-4 mr-2" />
-              New Update
-            </Button>
-          </DialogTrigger>
+        {isAdmin && (
+          <Dialog open={dialogOpen} onOpenChange={(open) => {
+            setDialogOpen(open);
+            if (!open) resetForm();
+          }}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="w-4 h-4 mr-2" />
+                New Update
+              </Button>
+            </DialogTrigger>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
               <DialogTitle>{editingUpdate ? "Edit Update" : "Create New Update"}</DialogTitle>
@@ -214,6 +220,7 @@ export function UpdatesManagement() {
             </form>
           </DialogContent>
         </Dialog>
+        )}
       </div>
 
       <div className="space-y-3">
@@ -243,33 +250,35 @@ export function UpdatesManagement() {
                     </p>
                   </div>
                   
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => toggleVisibility(update.id, update.visible)}
-                    >
-                      {update.visible ? (
-                        <Eye className="w-4 h-4" />
-                      ) : (
-                        <EyeOff className="w-4 h-4" />
-                      )}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleEdit(update)}
-                    >
-                      <Edit className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleDelete(update.id)}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
+                  {isAdmin && (
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => toggleVisibility(update.id, update.visible)}
+                      >
+                        {update.visible ? (
+                          <Eye className="w-4 h-4" />
+                        ) : (
+                          <EyeOff className="w-4 h-4" />
+                        )}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleEdit(update)}
+                      >
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDelete(update.id)}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>

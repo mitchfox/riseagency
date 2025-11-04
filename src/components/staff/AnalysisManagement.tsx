@@ -73,7 +73,7 @@ interface Matchup {
   image_url: string;
 }
 
-export const AnalysisManagement = () => {
+export const AnalysisManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   const [analyses, setAnalyses] = useState<Analysis[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);

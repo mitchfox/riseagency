@@ -21,7 +21,7 @@ interface ProgramEndDate {
   phaseName: string | null;
 }
 
-export const StaffSchedule = () => {
+export const StaffSchedule = ({ isAdmin }: { isAdmin: boolean }) => {
   const [programs, setPrograms] = useState<PlayerProgram[]>([]);
   const [loading, setLoading] = useState(true);
   const [programEndDates, setProgramEndDates] = useState<ProgramEndDate[]>([]);

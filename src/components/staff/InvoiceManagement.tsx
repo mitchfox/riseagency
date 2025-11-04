@@ -31,7 +31,7 @@ interface Player {
   name: string;
 }
 
-export const InvoiceManagement = () => {
+export const InvoiceManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [players, setPlayers] = useState<Player[]>([]);
   const [loading, setLoading] = useState(true);

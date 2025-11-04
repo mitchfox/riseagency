@@ -288,7 +288,7 @@ const Staff = () => {
             </CardHeader>
             {expandedSection === 'schedule' && (
               <CardContent className="pt-6">
-                <StaffSchedule />
+                <StaffSchedule isAdmin={isAdmin} />
               </CardContent>
             )}
           </Card>
@@ -309,7 +309,7 @@ const Staff = () => {
             </CardHeader>
             {expandedSection === 'playerlist' && (
               <CardContent className="pt-6">
-                <PlayerList />
+                <PlayerList isAdmin={isAdmin} />
               </CardContent>
             )}
           </Card>
@@ -330,7 +330,7 @@ const Staff = () => {
             </CardHeader>
             {expandedSection === 'players' && (
               <CardContent className="pt-6">
-                <PlayerManagement />
+                <PlayerManagement isAdmin={isAdmin} />
               </CardContent>
             )}
           </Card>
@@ -351,7 +351,7 @@ const Staff = () => {
             </CardHeader>
             {expandedSection === 'recruitment' && (
               <CardContent className="pt-6">
-                <RecruitmentManagement />
+                <RecruitmentManagement isAdmin={isAdmin} />
               </CardContent>
             )}
           </Card>
@@ -372,7 +372,7 @@ const Staff = () => {
             </CardHeader>
             {expandedSection === 'coaching' && (
               <CardContent className="pt-6">
-                <CoachingDatabase />
+                <CoachingDatabase isAdmin={isAdmin} />
               </CardContent>
             )}
           </Card>
@@ -393,7 +393,7 @@ const Staff = () => {
             </CardHeader>
             {expandedSection === 'analysis' && (
               <CardContent className="pt-6">
-                <AnalysisManagement />
+                <AnalysisManagement isAdmin={isAdmin} />
               </CardContent>
             )}
           </Card>
@@ -414,7 +414,7 @@ const Staff = () => {
             </CardHeader>
             {expandedSection === 'marketing' && (
               <CardContent className="pt-6">
-                <MarketingManagement />
+                <MarketingManagement isAdmin={isAdmin} />
               </CardContent>
             )}
           </Card>
@@ -436,7 +436,7 @@ const Staff = () => {
             </CardHeader>
             {expandedSection === 'blog' && (
               <CardContent className="pt-6">
-                <BlogManagement />
+                <BlogManagement isAdmin={isAdmin} />
               </CardContent>
             )}
           </Card>
@@ -457,7 +457,7 @@ const Staff = () => {
             </CardHeader>
             {expandedSection === 'betweenthelines' && (
               <CardContent className="pt-6">
-                <BetweenTheLinesManagement />
+                <BetweenTheLinesManagement isAdmin={isAdmin} />
               </CardContent>
             )}
           </Card>
@@ -478,7 +478,7 @@ const Staff = () => {
             </CardHeader>
             {expandedSection === 'submissions' && (
               <CardContent className="pt-6">
-                <FormSubmissionsManagement />
+                <FormSubmissionsManagement isAdmin={isAdmin} />
               </CardContent>
             )}
           </Card>
@@ -499,7 +499,7 @@ const Staff = () => {
             </CardHeader>
             {expandedSection === 'visitors' && (
               <CardContent className="pt-6">
-                <SiteVisitorsManagement />
+                <SiteVisitorsManagement isAdmin={isAdmin} />
               </CardContent>
             )}
           </Card>
@@ -520,7 +520,7 @@ const Staff = () => {
             </CardHeader>
             {expandedSection === 'invoices' && (
               <CardContent className="pt-6">
-                <InvoiceManagement />
+                <InvoiceManagement isAdmin={isAdmin} />
               </CardContent>
             )}
           </Card>
@@ -541,7 +541,7 @@ const Staff = () => {
             </CardHeader>
             {expandedSection === 'updates' && (
               <CardContent className="pt-6">
-                <UpdatesManagement />
+                <UpdatesManagement isAdmin={isAdmin} />
               </CardContent>
             )}
           </Card>
