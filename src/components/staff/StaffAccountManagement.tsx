@@ -12,23 +12,52 @@ interface StaffAccount {
   email: string;
   password: string;
   role: "admin" | "staff";
-  full_name: string;
+  fullName: string;
 }
 
 export const StaffAccountManagement = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
+  const [existingAccounts, setExistingAccounts] = useState<any[]>([]);
+  const [loadingAccounts, setLoadingAccounts] = useState(false);
+  const [createdAccount, setCreatedAccount] = useState<StaffAccount | null>(null);
   const [newAccount, setNewAccount] = useState<StaffAccount>({
     email: "",
     password: "",
     role: "staff",
-    full_name: "",
+    fullName: "",
   });
 
   useEffect(() => {
     checkAdminRole();
+    fetchExistingAccounts();
   }, []);
+
+  const fetchExistingAccounts = async () => {
+    setLoadingAccounts(true);
+    try {
+      const { data, error } = await supabase
+        .from('user_roles')
+        .select(`
+          role,
+          user_id,
+          profiles:user_id (
+            email,
+            full_name
+          )
+        `)
+        .in('role', ['admin', 'staff']);
+
+      if (error) throw error;
+      setExistingAccounts(data || []);
+    } catch (error) {
+      console.error('Error fetching accounts:', error);
+      toast.error("Failed to load existing accounts");
+    } finally {
+      setLoadingAccounts(false);
+    }
+  };
 
   const checkAdminRole = async () => {
     try {
@@ -73,7 +102,12 @@ export const StaffAccountManagement = () => {
             "Content-Type": "application/json",
             Authorization: `Bearer ${session.access_token}`,
           },
-          body: JSON.stringify(newAccount),
+          body: JSON.stringify({
+            email: newAccount.email,
+            password: newAccount.password,
+            role: newAccount.role,
+            full_name: newAccount.fullName,
+          }),
         }
       );
 
@@ -84,11 +118,19 @@ export const StaffAccountManagement = () => {
       }
 
       toast.success(`${newAccount.role === "admin" ? "Admin" : "Staff"} account created successfully`);
+      
+      // Store created account details to display
+      setCreatedAccount({ ...newAccount });
+      
+      // Refresh the accounts list
+      fetchExistingAccounts();
+      
+      // Reset form
       setNewAccount({
         email: "",
         password: "",
         role: "staff",
-        full_name: "",
+        fullName: "",
       });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "An error occurred";
@@ -115,7 +157,87 @@ export const StaffAccountManagement = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
+      {/* Existing Accounts */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Existing Staff Accounts</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {loadingAccounts ? (
+            <p className="text-muted-foreground">Loading accounts...</p>
+          ) : existingAccounts.length === 0 ? (
+            <p className="text-muted-foreground">No staff accounts found</p>
+          ) : (
+            <div className="space-y-2">
+              {existingAccounts.map((account) => (
+                <div 
+                  key={account.user_id} 
+                  className="p-4 border border-primary/20 rounded-lg bg-muted/30"
+                >
+                  <div className="grid grid-cols-3 gap-4">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Email</p>
+                      <p className="font-medium">{account.profiles?.email || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Full Name</p>
+                      <p className="font-medium">{account.profiles?.full_name || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Role</p>
+                      <p className="font-medium capitalize">{account.role}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Created Account Credentials Alert */}
+      {createdAccount && (
+        <Card className="border-2 border-primary">
+          <CardHeader>
+            <div className="flex justify-between items-start">
+              <CardTitle className="text-primary">Account Created Successfully</CardTitle>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setCreatedAccount(null)}
+              >
+                ✕
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-destructive mb-4 font-medium">
+              ⚠️ Save these credentials now - the password will not be shown again
+            </p>
+            <div className="space-y-3 bg-muted p-4 rounded-lg">
+              <div>
+                <p className="text-sm text-muted-foreground">Email</p>
+                <p className="font-mono font-medium">{createdAccount.email}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Password</p>
+                <p className="font-mono font-medium">{createdAccount.password}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Full Name</p>
+                <p className="font-medium">{createdAccount.fullName}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Role</p>
+                <p className="font-medium capitalize">{createdAccount.role}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Create New Account Form */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -145,9 +267,9 @@ export const StaffAccountManagement = () => {
                 <Input
                   id="staff-name"
                   type="text"
-                  value={newAccount.full_name}
+                  value={newAccount.fullName}
                   onChange={(e) =>
-                    setNewAccount({ ...newAccount, full_name: e.target.value })
+                    setNewAccount({ ...newAccount, fullName: e.target.value })
                   }
                   placeholder="John Doe"
                 />
