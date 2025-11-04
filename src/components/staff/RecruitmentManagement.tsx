@@ -342,16 +342,17 @@ export const RecruitmentManagement = ({ isAdmin }: { isAdmin: boolean }) => {
             <div className="text-sm text-muted-foreground">
               {prospects.length} prospect{prospects.length !== 1 ? 's' : ''} tracked
             </div>
-            <Dialog open={dialogOpen} onOpenChange={(open) => {
-              setDialogOpen(open);
-              if (!open) resetForm();
-            }}>
-              <DialogTrigger asChild>
-                <Button>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Prospect
-                </Button>
-              </DialogTrigger>
+            {isAdmin && (
+              <Dialog open={dialogOpen} onOpenChange={(open) => {
+                setDialogOpen(open);
+                if (!open) resetForm();
+              }}>
+                <DialogTrigger asChild>
+                  <Button>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Prospect
+                  </Button>
+                </DialogTrigger>
               <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>
@@ -505,6 +506,7 @@ export const RecruitmentManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                 </form>
               </DialogContent>
             </Dialog>
+            )}
           </div>
 
           {/* Prospect Board Grid */}

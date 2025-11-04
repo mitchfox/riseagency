@@ -214,16 +214,17 @@ export const InvoiceManagement = ({ isAdmin }: { isAdmin: boolean }) => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Invoice Management</h2>
-        <Dialog open={dialogOpen} onOpenChange={(open) => {
-          setDialogOpen(open);
-          if (!open) resetForm();
-        }}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="w-4 h-4 mr-2" />
-              New Invoice
-            </Button>
-          </DialogTrigger>
+        {isAdmin && (
+          <Dialog open={dialogOpen} onOpenChange={(open) => {
+            setDialogOpen(open);
+            if (!open) resetForm();
+          }}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="w-4 h-4 mr-2" />
+                New Invoice
+              </Button>
+            </DialogTrigger>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{editingInvoice ? "Edit Invoice" : "Create New Invoice"}</DialogTitle>
@@ -367,6 +368,7 @@ export const InvoiceManagement = ({ isAdmin }: { isAdmin: boolean }) => {
             </form>
           </DialogContent>
         </Dialog>
+        )}
       </div>
 
       <div className="flex gap-4">

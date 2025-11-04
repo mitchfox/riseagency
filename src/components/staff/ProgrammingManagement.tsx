@@ -19,6 +19,7 @@ interface ProgrammingManagementProps {
   onClose: () => void;
   playerId: string;
   playerName: string;
+  isAdmin: boolean;
 }
 
 interface Exercise {
@@ -152,7 +153,7 @@ const initialProgrammingData = (): ProgrammingData => ({
   testing: '',
 });
 
-export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName }: ProgrammingManagementProps) => {
+export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName, isAdmin }: ProgrammingManagementProps) => {
   const [programs, setPrograms] = useState<any[]>([]);
   const [selectedProgram, setSelectedProgram] = useState<any | null>(null);
   const [programmingData, setProgrammingData] = useState<ProgrammingData>(initialProgrammingData());
@@ -1136,24 +1137,26 @@ Phase Dates: ${programmingData.phaseDates || 'Not specified'}`;
           <div className="space-y-4">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               <h3 className="text-lg font-semibold">Programs</h3>
-              <div className="flex flex-wrap gap-2 w-full sm:w-auto">
-                <Button onClick={() => {
-                  setIsCreatingNew(true);
-                  setExcelFile(null);
-                  setShowUploadProgram(false);
-                }} variant="default" className="flex-1 sm:flex-none" size="sm">
-                  <Plus className="w-4 h-4 mr-2" />
-                  <span className="hidden sm:inline">Create Blank Program</span>
-                  <span className="sm:hidden">Blank Program</span>
-                </Button>
-                <Button onClick={() => {
-                  setShowTemplateDialog(true);
-                }} variant="outline" className="flex-1 sm:flex-none" size="sm">
-                  <Database className="w-4 h-4 mr-2" />
-                  <span className="hidden sm:inline">Use Template</span>
-                  <span className="sm:hidden">Template</span>
-                </Button>
-              </div>
+              {isAdmin && (
+                <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+                  <Button onClick={() => {
+                    setIsCreatingNew(true);
+                    setExcelFile(null);
+                    setShowUploadProgram(false);
+                  }} variant="default" className="flex-1 sm:flex-none" size="sm">
+                    <Plus className="w-4 h-4 mr-2" />
+                    <span className="hidden sm:inline">Create Blank Program</span>
+                    <span className="sm:hidden">Blank Program</span>
+                  </Button>
+                  <Button onClick={() => {
+                    setShowTemplateDialog(true);
+                  }} variant="outline" className="flex-1 sm:flex-none" size="sm">
+                    <Database className="w-4 h-4 mr-2" />
+                    <span className="hidden sm:inline">Use Template</span>
+                    <span className="sm:hidden">Template</span>
+                  </Button>
+                </div>
+              )}
             </div>
 
             {isCreatingNew && (

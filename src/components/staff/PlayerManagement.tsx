@@ -1609,28 +1609,30 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                 <div className="border-t pt-4 space-y-4">
                   <div className="flex items-center justify-between mb-4">
                     <h4 className="text-lg font-semibold">Invoices</h4>
-                    <Button 
-                      type="button"
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => {
-                        setCurrentInvoicePlayerId(editingPlayer.id);
-                        setEditingInvoiceId(null);
-                        setInvoiceFormData({
-                          invoice_number: "",
-                          invoice_date: "",
-                          due_date: "",
-                          amount: "",
-                          description: "",
-                          status: "pending",
-                          currency: "EUR",
-                        });
-                        setIsInvoiceDialogOpen(true);
-                      }}
-                    >
-                      <DollarSign className="w-4 h-4 mr-2" />
-                      Add Invoice
-                    </Button>
+                    {isAdmin && (
+                      <Button 
+                        type="button"
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => {
+                          setCurrentInvoicePlayerId(editingPlayer.id);
+                          setEditingInvoiceId(null);
+                          setInvoiceFormData({
+                            invoice_number: "",
+                            invoice_date: "",
+                            due_date: "",
+                            amount: "",
+                            description: "",
+                            status: "pending",
+                            currency: "EUR",
+                          });
+                          setIsInvoiceDialogOpen(true);
+                        }}
+                      >
+                        <DollarSign className="w-4 h-4 mr-2" />
+                        Add Invoice
+                      </Button>
+                    )}
                   </div>
                   
                   {playerInvoices[editingPlayer.id]?.length > 0 ? (
@@ -1976,20 +1978,22 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                        {/* Highlights Section */}
                        <div className="border-t pt-4 space-y-4 mt-4">
                          <Tabs defaultValue="match" className="w-full">
-                           <div className="flex items-center justify-between mb-4">
-                             <h4 className="text-lg font-semibold">Player Highlights</h4>
-                             <Button 
-                               variant="outline" 
-                               size="sm"
-                               onClick={() => {
-                                 setCurrentPlayerId(player.id);
-                                 setIsHighlightsDialogOpen(true);
-                               }}
-                             >
-                               <Video className="w-4 h-4 mr-2" />
-                               Add Highlight
-                             </Button>
-                           </div>
+                            <div className="flex items-center justify-between mb-4">
+                              <h4 className="text-lg font-semibold">Player Highlights</h4>
+                              {isAdmin && (
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  onClick={() => {
+                                    setCurrentPlayerId(player.id);
+                                    setIsHighlightsDialogOpen(true);
+                                  }}
+                                >
+                                  <Video className="w-4 h-4 mr-2" />
+                                  Add Highlight
+                                </Button>
+                              )}
+                            </div>
                            
                            <TabsList className="grid w-full grid-cols-2 mb-4">
                              <TabsTrigger value="match">Match Highlights</TabsTrigger>
@@ -2357,31 +2361,33 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                    )}
 
                    {showingInvoicesFor === player.id && (
-                     <div className="border-t pt-4 space-y-4">
-                       <div className="flex items-center justify-between mb-4">
-                         <h4 className="text-lg font-semibold">Invoices</h4>
-                         <Button 
-                           variant="outline" 
-                           size="sm"
-                           onClick={() => {
-                             setCurrentInvoicePlayerId(player.id);
-                             setEditingInvoiceId(null);
-                             setInvoiceFormData({
-                               invoice_number: "",
-                               invoice_date: "",
-                               due_date: "",
-                               amount: "",
-                               description: "",
-                               status: "pending",
-                               currency: "EUR",
-                             });
-                             setIsInvoiceDialogOpen(true);
-                           }}
-                         >
-                           <DollarSign className="w-4 h-4 mr-2" />
-                           Add Invoice
-                         </Button>
-                       </div>
+                      <div className="border-t pt-4 space-y-4">
+                        <div className="flex items-center justify-between mb-4">
+                          <h4 className="text-lg font-semibold">Invoices</h4>
+                          {isAdmin && (
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => {
+                                setCurrentInvoicePlayerId(player.id);
+                                setEditingInvoiceId(null);
+                                setInvoiceFormData({
+                                  invoice_number: "",
+                                  invoice_date: "",
+                                  due_date: "",
+                                  amount: "",
+                                  description: "",
+                                  status: "pending",
+                                  currency: "EUR",
+                                });
+                                setIsInvoiceDialogOpen(true);
+                              }}
+                            >
+                              <DollarSign className="w-4 h-4 mr-2" />
+                              Add Invoice
+                            </Button>
+                          )}
+                        </div>
                        
                        {playerInvoices[player.id]?.length > 0 ? (
                          <div className="space-y-2">
@@ -2887,6 +2893,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
         onClose={() => setIsProgrammingDialogOpen(false)}
         playerId={selectedProgrammingPlayerId}
         playerName={selectedProgrammingPlayerName}
+        isAdmin={isAdmin}
       />
 
       {/* Add/Edit Highlight Dialog */}
