@@ -22,6 +22,7 @@ export const StaffAccountManagement = () => {
   const [existingAccounts, setExistingAccounts] = useState<any[]>([]);
   const [loadingAccounts, setLoadingAccounts] = useState(false);
   const [createdAccount, setCreatedAccount] = useState<StaffAccount | null>(null);
+  const [resettingPassword, setResettingPassword] = useState<string | null>(null);
   const [newAccount, setNewAccount] = useState<StaffAccount>({
     email: "",
     password: "",
@@ -146,6 +147,59 @@ export const StaffAccountManagement = () => {
     }
   };
 
+  const handleResetPassword = async (email: string, role: string, fullName: string) => {
+    setResettingPassword(email);
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error("Not authenticated");
+        return;
+      }
+
+      // Generate a new random password
+      const newPassword = Math.random().toString(36).slice(-12) + Math.random().toString(36).slice(-12).toUpperCase() + "!@#";
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-staff-account`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            email: email,
+            password: newPassword,
+            role: role,
+            full_name: fullName,
+            reset_password: true,
+          }),
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || "Failed to reset password");
+      }
+
+      toast.success("Password reset successfully");
+      // Display the new credentials
+      setCreatedAccount({
+        email: email,
+        password: newPassword,
+        role: role as "admin" | "staff",
+        fullName: fullName,
+      });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "An error occurred";
+      toast.error(errorMessage);
+    } finally {
+      setResettingPassword(null);
+    }
+  };
+
   if (loading) {
     return <div className="text-center py-8">Loading...</div>;
   }
@@ -181,7 +235,7 @@ export const StaffAccountManagement = () => {
                   key={account.user_id} 
                   className="p-4 border border-primary/20 rounded-lg bg-muted/30"
                 >
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-3 gap-4 items-center">
                     <div>
                       <p className="text-sm text-muted-foreground">Email</p>
                       <p className="font-medium">{account.profiles?.email || 'N/A'}</p>
@@ -194,6 +248,20 @@ export const StaffAccountManagement = () => {
                       <p className="text-sm text-muted-foreground">Role</p>
                       <p className="font-medium capitalize">{account.role}</p>
                     </div>
+                  </div>
+                  <div className="mt-4 flex justify-end">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleResetPassword(
+                        account.profiles?.email || '',
+                        account.role,
+                        account.profiles?.full_name || ''
+                      )}
+                      disabled={resettingPassword === account.profiles?.email}
+                    >
+                      {resettingPassword === account.profiles?.email ? "Resetting..." : "Reset Password"}
+                    </Button>
                   </div>
                 </div>
               ))}

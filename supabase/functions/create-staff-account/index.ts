@@ -56,11 +56,21 @@ serve(async (req) => {
       });
     }
 
-    const { email, password, role, full_name } = await req.json();
+    const { email, password, role, full_name, reset_password } = await req.json();
 
-    if (!email || !password || !role) {
+    if (!email || !role) {
       return new Response(
-        JSON.stringify({ error: "Email, password, and role are required" }),
+        JSON.stringify({ error: "Email and role are required" }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    if (!reset_password && !password) {
+      return new Response(
+        JSON.stringify({ error: "Password is required for new accounts" }),
         {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -87,9 +97,41 @@ serve(async (req) => {
     let isNewAccount = false;
 
     if (existingUser) {
-      // User exists, update their role
+      // User exists
       userId = existingUser.id;
       
+      // If reset_password is true, update the password
+      if (reset_password) {
+        const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
+          userId,
+          { password: password }
+        );
+
+        if (updateError) {
+          return new Response(JSON.stringify({ error: updateError.message }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        return new Response(
+          JSON.stringify({
+            success: true,
+            password_reset: true,
+            user: {
+              id: userId,
+              email: email,
+              role: role,
+            },
+          }),
+          {
+            status: 200,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
+      }
+      
+      // Otherwise, update their role
       // Check if role already exists
       const { data: existingRole } = await supabaseAdmin
         .from("user_roles")
