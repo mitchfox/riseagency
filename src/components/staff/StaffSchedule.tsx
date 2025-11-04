@@ -183,6 +183,7 @@ export const StaffSchedule = () => {
                   const currentDate = addDays(weekStart, dayOffset);
                   const endDates = getEndDatesForDay(currentDate);
                   const hasEndDates = endDates.length > 0;
+                  const isToday = isSameDay(currentDate, new Date());
 
                   return (
                     <div 
@@ -190,7 +191,8 @@ export const StaffSchedule = () => {
                       className="p-3 rounded-lg min-h-[80px] relative border transition-all"
                       style={{ 
                         backgroundColor: hasEndDates ? 'hsl(0, 50%, 35%)' : 'hsl(0, 0%, 10%)',
-                        borderColor: hasEndDates ? 'hsl(0, 50%, 50%)' : 'rgba(255, 255, 255, 0.1)'
+                        borderColor: isToday ? 'hsl(43, 49%, 61%)' : hasEndDates ? 'hsl(0, 50%, 50%)' : 'rgba(255, 255, 255, 0.1)',
+                        borderWidth: isToday ? '2px' : '1px'
                       }}
                     >
                       {/* Day number in top right */}
