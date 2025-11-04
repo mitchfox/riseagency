@@ -568,6 +568,18 @@ const Staff = () => {
               )}
             </Card>
           )}
+
+          {/* Logout Button */}
+          <div className="mt-8 flex justify-center">
+            <Button
+              onClick={handleLogout}
+              variant="outline"
+              size="lg"
+              className="font-bebas uppercase tracking-wider text-lg"
+            >
+              Logout
+            </Button>
+          </div>
         </div>
       </main>
       <Footer />

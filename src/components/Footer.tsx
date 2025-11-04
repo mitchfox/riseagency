@@ -54,6 +54,9 @@ export const Footer = () => {
               <Link to="/between-the-lines" className="text-muted-foreground hover:text-primary transition-colors">
                 Between The Lines
               </Link>
+              <Link to="/staff" className="text-muted-foreground hover:text-primary transition-colors">
+                Staff
+              </Link>
               <Link to="/contact" className="text-muted-foreground hover:text-primary transition-colors">
                 Contact
               </Link>
