@@ -564,13 +564,13 @@ export const RecruitmentManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                             {cellProspects.map(prospect => (
                               <div
                                 key={prospect.id}
-                                className="group relative p-2 rounded border cursor-pointer hover:scale-105 transition-transform"
+                                className={`group relative p-2 rounded border hover:scale-105 transition-transform ${isAdmin ? 'cursor-pointer' : 'cursor-default'}`}
                                 style={{ 
                                   backgroundColor: 'hsl(0, 0%, 20%)',
                                   borderColor: getPriorityColor(prospect.priority),
                                   borderWidth: '2px'
                                 }}
-                                onClick={() => handleEdit(prospect)}
+                                onClick={isAdmin ? () => handleEdit(prospect) : undefined}
                               >
                                 <div className="text-xs font-bold truncate" style={{ color: 'hsl(43, 49%, 61%)' }}>
                                   {prospect.name}
@@ -587,19 +587,21 @@ export const RecruitmentManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                 )}
                                 
                                 {/* Quick Actions on Hover */}
-                                <div className="absolute top-0 right-0 hidden group-hover:flex gap-1 p-1">
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    className="h-5 w-5 p-0"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleDelete(prospect.id);
-                                    }}
-                                  >
-                                    <Trash2 className="h-3 w-3" />
-                                  </Button>
-                                </div>
+                                {isAdmin && (
+                                  <div className="absolute top-0 right-0 hidden group-hover:flex gap-1 p-1">
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      className="h-5 w-5 p-0"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleDelete(prospect.id);
+                                      }}
+                                    >
+                                      <Trash2 className="h-3 w-3" />
+                                    </Button>
+                                  </div>
+                                )}
                               </div>
                             ))}
                           </div>
@@ -636,14 +638,16 @@ export const RecruitmentManagement = ({ isAdmin }: { isAdmin: boolean }) => {
         <TabsContent value="templates" className="space-y-4">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-lg font-semibold">Message Templates</h3>
-            <Button onClick={() => {
-              setEditingTemplate(null);
-              setTemplateFormData({ recipient_type: "", message_title: "", message_content: "" });
-              setTemplateDialogOpen(true);
-            }}>
-              <Plus className="w-4 h-4 mr-2" />
-              Create Template
-            </Button>
+            {isAdmin && (
+              <Button onClick={() => {
+                setEditingTemplate(null);
+                setTemplateFormData({ recipient_type: "", message_title: "", message_content: "" });
+                setTemplateDialogOpen(true);
+              }}>
+                <Plus className="w-4 h-4 mr-2" />
+                Create Template
+              </Button>
+            )}
           </div>
 
           {loading ? (
@@ -679,22 +683,24 @@ export const RecruitmentManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                               <h4 className="font-medium mb-1">{template.message_title}</h4>
                               <p className="text-sm text-muted-foreground line-clamp-2">{template.message_content}</p>
                             </div>
-                            <div className="flex gap-2 ml-4">
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                onClick={() => handleTemplateEdit(template)}
-                              >
-                                <Edit className="w-4 h-4" />
-                              </Button>
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                onClick={() => handleTemplateDelete(template.id)}
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </div>
+                            {isAdmin && (
+                              <div className="flex gap-2 ml-4">
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  onClick={() => handleTemplateEdit(template)}
+                                >
+                                  <Edit className="w-4 h-4" />
+                                </Button>
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  onClick={() => handleTemplateDelete(template.id)}
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            )}
                           </div>
                         ))}
                       </div>

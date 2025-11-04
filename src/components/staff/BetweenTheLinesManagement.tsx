@@ -189,16 +189,20 @@ const BetweenTheLinesManagement = ({ isAdmin }: { isAdmin: boolean }) => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Between The Lines Management</h2>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={() => {
-              setEditingPost(null);
-              setFormData({ title: "", content: "", excerpt: "", published: false, image_url: "", category: "" });
-              setImageFile(null);
-            }}>
-              Add New Post
-            </Button>
-          </DialogTrigger>
+        {!isAdmin && (
+          <div className="text-sm text-muted-foreground">View Only</div>
+        )}
+        {isAdmin && (
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button onClick={() => {
+                setEditingPost(null);
+                setFormData({ title: "", content: "", excerpt: "", published: false, image_url: "", category: "" });
+                setImageFile(null);
+              }}>
+                Add New Post
+              </Button>
+            </DialogTrigger>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{editingPost ? "Edit Post" : "Add New Post"}</DialogTitle>
@@ -287,6 +291,7 @@ const BetweenTheLinesManagement = ({ isAdmin }: { isAdmin: boolean }) => {
             </form>
           </DialogContent>
         </Dialog>
+        )}
       </div>
 
       <div className="grid gap-4">
@@ -327,16 +332,18 @@ const BetweenTheLinesManagement = ({ isAdmin }: { isAdmin: boolean }) => {
               
               {isExpanded && (
                 <CardContent className="space-y-4">
-                  <div className="flex justify-end gap-2 pb-4 border-b">
-                    <Button variant="outline" size="sm" onClick={() => startEdit(post)}>
-                      <Edit className="w-4 h-4 mr-2" />
-                      Edit Article
-                    </Button>
-                    <Button variant="destructive" size="sm" onClick={() => handleDelete(post.id)}>
-                      <Trash2 className="w-4 h-4 mr-2" />
-                      Delete
-                    </Button>
-                  </div>
+                  {isAdmin && (
+                    <div className="flex justify-end gap-2 pb-4 border-b">
+                      <Button variant="outline" size="sm" onClick={() => startEdit(post)}>
+                        <Edit className="w-4 h-4 mr-2" />
+                        Edit Article
+                      </Button>
+                      <Button variant="destructive" size="sm" onClick={() => handleDelete(post.id)}>
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Delete
+                      </Button>
+                    </div>
+                  )}
                   
                   {post.image_url && (
                     <div className="flex justify-center">

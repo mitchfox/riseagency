@@ -677,13 +677,17 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
         {Object.entries(tableConfigs).map(([key, config]) => (
           <TabsContent key={key} value={key} className="space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-end gap-4">
-              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button onClick={resetForm} className="w-full sm:w-auto">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add {config.singular}
-                  </Button>
-                </DialogTrigger>
+              {!isAdmin && (
+                <div className="text-sm text-muted-foreground">View Only</div>
+              )}
+              {isAdmin && (
+                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button onClick={resetForm} className="w-full sm:w-auto">
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add {config.singular}
+                    </Button>
+                  </DialogTrigger>
                 <DialogContent className="max-w-6xl max-h-[90vh] overflow-hidden flex flex-col">
                   <DialogHeader className="flex-shrink-0">
                     <DialogTitle>
@@ -1018,6 +1022,7 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
                   </div>
                 </DialogContent>
               </Dialog>
+              )}
             </div>
 
             {/* Filters - Show based on table type */}
@@ -1106,14 +1111,16 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
                       <h3 className="text-sm font-medium line-clamp-2 flex-1 pr-2">
                         {activeTab === 'coaching_aphorisms' ? item.featured_text : item.title}
                       </h3>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="h-8 w-8 flex-shrink-0"
-                        onClick={() => handleEdit(item)}
-                      >
-                        <Edit className="w-3 h-3" />
-                      </Button>
+                      {isAdmin && (
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="h-8 w-8 flex-shrink-0"
+                          onClick={() => handleEdit(item)}
+                        >
+                          <Edit className="w-3 h-3" />
+                        </Button>
+                      )}
                     </div>
                   </Card>
                 ))

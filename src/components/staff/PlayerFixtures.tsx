@@ -30,6 +30,7 @@ interface PlayerFixturesProps {
   onViewReport?: (analysisId: string, playerName: string) => void;
   triggerOpen?: boolean;
   onDialogOpenChange?: (open: boolean) => void;
+  isAdmin?: boolean;
 }
 
 interface Fixture {
@@ -68,7 +69,7 @@ interface OpponentData {
   result: string;
 }
 
-export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, onViewReport, triggerOpen, onDialogOpenChange }: PlayerFixturesProps) => {
+export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, onViewReport, triggerOpen, onDialogOpenChange, isAdmin }: PlayerFixturesProps) => {
   const navigate = useNavigate();
   const [playerFixtures, setPlayerFixtures] = useState<PlayerFixture[]>([]);
   const [allFixtures, setAllFixtures] = useState<Fixture[]>([]);
@@ -821,7 +822,7 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, onViewR
               <DialogTitle>
                 {editingPlayerFixture ? "Edit" : "Add"} Fixture
               </DialogTitle>
-              {editingPlayerFixture && (
+              {editingPlayerFixture && isAdmin && (
                 <Button 
                   variant="destructive" 
                   size="sm"
@@ -1414,7 +1415,7 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, onViewR
             </span>
           </div>
           <div className="flex gap-2">
-            {selectedFixtures.size > 0 && (
+            {isAdmin && selectedFixtures.size > 0 && (
               <Button 
                 variant="destructive" 
                 size="sm"
@@ -1424,10 +1425,12 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, onViewR
                 Remove Fixtures ({selectedFixtures.size})
               </Button>
             )}
-            <Button size="sm" onClick={() => handleOpenDialog()}>
-              <Plus className="mr-2 h-4 w-4" />
-              Add Fixture
-            </Button>
+            {isAdmin && (
+              <Button size="sm" onClick={() => handleOpenDialog()}>
+                <Plus className="mr-2 h-4 w-4" />
+                Add Fixture
+              </Button>
+            )}
           </div>
         </div>
 

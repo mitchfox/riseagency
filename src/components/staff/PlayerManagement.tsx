@@ -1957,6 +1957,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                       <PlayerFixtures
                         playerId={player.id} 
                         playerName={player.name}
+                        isAdmin={isAdmin}
                         onCreateAnalysis={(fixtureId) => {
                           setCurrentPlayerId(player.id);
                           setSelectedAnalysisWriterId(fixtureId);
