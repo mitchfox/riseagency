@@ -29,6 +29,7 @@ interface Player {
   highlights: any;
   category: string;
   representation_status: string;
+  links?: any;
 }
 
 interface PlayerStats {
@@ -480,6 +481,7 @@ const PlayerManagement = () => {
             representation_status: representationStatus,
             club: formData.currentClub || null,
             club_logo: clubLogoUrl || null,
+            links: externalLinks.length > 0 ? externalLinks : [],
           })
           .eq("id", editingPlayer.id);
 
@@ -501,6 +503,7 @@ const PlayerManagement = () => {
             representation_status: representationStatus,
             club: formData.currentClub || null,
             club_logo: clubLogoUrl || null,
+            links: externalLinks.length > 0 ? externalLinks : [],
           })
           .select()
           .single();
@@ -696,7 +699,7 @@ const PlayerManagement = () => {
       whatsapp: additionalData.whatsapp || "",
     });
     
-    setExternalLinks(additionalData.externalLinks || []);
+    setExternalLinks(player.links || additionalData.externalLinks || []);
     setStrengthsAndPlayStyle(additionalData.strengthsAndPlayStyle || []);
     setIsDialogOpen(true);
   };
