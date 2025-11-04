@@ -398,33 +398,6 @@ export const StaffAccountManagement = () => {
           </form>
         </CardContent>
       </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Quick Setup</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <p className="text-sm text-muted-foreground">
-            Create the required accounts for Rise Football Agency:
-          </p>
-          
-          <div className="space-y-2">
-            <h4 className="font-medium text-sm">Master Accounts (Admin):</h4>
-            <ul className="text-sm text-muted-foreground space-y-1 ml-4">
-              <li>• jolonlevene98@gmail.com</li>
-              <li>• jolon.levene@risefootballagency.com</li>
-            </ul>
-          </div>
-
-          <div className="space-y-2">
-            <h4 className="font-medium text-sm">Staff Accounts (View Only):</h4>
-            <ul className="text-sm text-muted-foreground space-y-1 ml-4">
-              <li>• kuda.butawo@risefootballagency.com</li>
-              <li>• anthony.odum@risefootballagency.com</li>
-            </ul>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 };
