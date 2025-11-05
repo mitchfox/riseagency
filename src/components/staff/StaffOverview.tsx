@@ -207,12 +207,26 @@ export const StaffOverview = ({ isAdmin }: { isAdmin: boolean }) => {
         </div>
       </Widget>
 
-      {/* Represented Players - Wide */}
+      {/* Schedule Calendar - XLarge to show full 7 days */}
+      <Widget
+        id="schedule"
+        title="Schedule Calendar"
+        icon={Calendar}
+        size="xlarge"
+        expanded={expandedWidget === "schedule"}
+        onToggleExpand={() => toggleWidget("schedule")}
+      >
+        <div className="w-full h-full">
+          <StaffSchedule isAdmin={isAdmin} />
+        </div>
+      </Widget>
+
+      {/* Represented Players - Medium, next to schedule */}
       <Widget
         id="represented"
         title="Represented Players"
         icon={Users}
-        size="wide"
+        size="medium"
         expanded={expandedWidget === "represented"}
         onToggleExpand={() => toggleWidget("represented")}
       >
@@ -280,20 +294,6 @@ export const StaffOverview = ({ isAdmin }: { isAdmin: boolean }) => {
               </Button>
             </div>
           </div>
-        </div>
-      </Widget>
-
-      {/* Schedule Calendar - XLarge to show full 7 days */}
-      <Widget
-        id="schedule"
-        title="Schedule Calendar"
-        icon={Calendar}
-        size="xlarge"
-        expanded={expandedWidget === "schedule"}
-        onToggleExpand={() => toggleWidget("schedule")}
-      >
-        <div className="w-full h-full">
-          <StaffSchedule isAdmin={isAdmin} />
         </div>
       </Widget>
     </div>
