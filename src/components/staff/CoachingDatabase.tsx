@@ -1010,13 +1010,29 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
                       </div>
                     )}
 
-                    <div className="flex justify-end gap-2">
-                      <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
-                        Cancel
-                      </Button>
-                      <Button type="submit" disabled={loading}>
-                        {loading ? 'Saving...' : 'Save'}
-                      </Button>
+                    <div className="flex justify-between gap-2">
+                      {editingItem && (
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          onClick={() => {
+                            handleDelete(editingItem.id);
+                            setIsDialogOpen(false);
+                          }}
+                          disabled={loading}
+                        >
+                          <Trash2 className="w-4 h-4 mr-2" />
+                          Delete
+                        </Button>
+                      )}
+                      <div className="flex gap-2 ml-auto">
+                        <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                          Cancel
+                        </Button>
+                        <Button type="submit" disabled={loading}>
+                          {loading ? 'Saving...' : 'Save'}
+                        </Button>
+                      </div>
                     </div>
                   </form>
                   </div>
