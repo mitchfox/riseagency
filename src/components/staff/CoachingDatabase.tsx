@@ -4,12 +4,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
-import { Plus, Edit, Trash2, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Database } from "lucide-react";
+import { Plus, Edit, Trash2, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Database, Search, Calendar, Clock, Dumbbell, Brain, Target, BookOpen, Quote } from "lucide-react";
 import { ExerciseDatabaseSelector } from "./ExerciseDatabaseSelector";
 
 
@@ -58,36 +60,50 @@ const tableConfigs = {
     label: 'Sessions',
     singular: 'Session',
     fields: ['title', 'description', 'exercises', 'duration', 'category'],
+    icon: Calendar,
+    color: 'blue',
   },
   coaching_programmes: {
     label: 'Programmes',
     singular: 'Programme',
     fields: ['title', 'description', 'content', 'weeks', 'category'],
+    icon: BookOpen,
+    color: 'purple',
   },
   coaching_drills: {
     label: 'Drills',
     singular: 'Drill',
     fields: ['title', 'description', 'content', 'setup', 'equipment', 'players_required', 'category'],
+    icon: Target,
+    color: 'green',
   },
   coaching_exercises: {
     label: 'Exercises',
     singular: 'Exercise',
     fields: ['title', 'description', 'content', 'sets', 'reps', 'rest_time', 'category'],
+    icon: Dumbbell,
+    color: 'orange',
   },
   coaching_analysis: {
     label: 'Analysis',
     singular: 'Analysis',
     fields: ['title', 'description', 'content', 'analysis_type', 'category'],
+    icon: Database,
+    color: 'cyan',
   },
   psychological_sessions: {
     label: 'Psychological Sessions',
     singular: 'Psychological Session',
     fields: ['title', 'description', 'content', 'duration', 'category'],
+    icon: Brain,
+    color: 'pink',
   },
   coaching_aphorisms: {
     label: 'Aphorisms',
     singular: 'Aphorism',
     fields: ['featured_text', 'body_text'],
+    icon: Quote,
+    color: 'amber',
   },
 };
 
@@ -1042,104 +1058,218 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
             </div>
 
             {/* Filters - Show based on table type */}
-            {(activeTab === 'coaching_exercises' || activeTab === 'coaching_drills') && (
-              <div className="flex flex-wrap gap-2 md:gap-4 mb-4">
+            {activeTab !== 'coaching_aphorisms' && (
+              <div className="flex flex-col sm:flex-row gap-3 mb-6">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    placeholder={`Search ${config.label.toLowerCase()}...`}
+                    className="pl-9"
+                  />
+                </div>
+                
                 {activeTab === 'coaching_exercises' && (
                   <>
-                    <div className="w-full md:w-48">
-                      <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="All Categories" />
-                        </SelectTrigger>
-                        <SelectContent className="z-50">
-                          <SelectItem value="all">All Categories</SelectItem>
-                          {categories.map((cat) => (
-                            <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                    <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                      <SelectTrigger className="w-full sm:w-48">
+                        <SelectValue placeholder="All Categories" />
+                      </SelectTrigger>
+                      <SelectContent className="z-50">
+                        <SelectItem value="all">All Categories</SelectItem>
+                        {categories.map((cat) => (
+                          <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     
-                    <div className="w-full md:w-48">
-                      <Select value={selectedMuscleGroup} onValueChange={setSelectedMuscleGroup}>
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="All Muscle Groups" />
-                        </SelectTrigger>
-                        <SelectContent className="z-50">
-                          <SelectItem value="all">All Muscle Groups</SelectItem>
-                          {muscleGroups.map((mg) => (
-                            <SelectItem key={mg} value={mg}>{mg}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                    <Select value={selectedMuscleGroup} onValueChange={setSelectedMuscleGroup}>
+                      <SelectTrigger className="w-full sm:w-48">
+                        <SelectValue placeholder="All Muscle Groups" />
+                      </SelectTrigger>
+                      <SelectContent className="z-50">
+                        <SelectItem value="all">All Muscle Groups</SelectItem>
+                        {muscleGroups.map((mg) => (
+                          <SelectItem key={mg} value={mg}>{mg}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </>
                 )}
                 
                 {activeTab === 'coaching_drills' && (
                   <>
-                    <div className="w-full md:w-48">
-                      <Select value={selectedPosition} onValueChange={setSelectedPosition}>
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="All Positions" />
-                        </SelectTrigger>
-                        <SelectContent className="z-50">
-                          <SelectItem value="all">All Positions</SelectItem>
-                          {positions.map((pos) => (
-                            <SelectItem key={pos} value={pos}>{pos}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                    <Select value={selectedPosition} onValueChange={setSelectedPosition}>
+                      <SelectTrigger className="w-full sm:w-48">
+                        <SelectValue placeholder="All Positions" />
+                      </SelectTrigger>
+                      <SelectContent className="z-50">
+                        <SelectItem value="all">All Positions</SelectItem>
+                        {positions.map((pos) => (
+                          <SelectItem key={pos} value={pos}>{pos}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     
-                    <div className="w-full md:w-48">
-                      <Select value={selectedSkill} onValueChange={setSelectedSkill}>
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="All Skills" />
-                        </SelectTrigger>
-                        <SelectContent className="z-50">
-                          <SelectItem value="all">All Skills</SelectItem>
-                          {skills.map((skill) => (
-                            <SelectItem key={skill} value={skill}>{skill}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                    <Select value={selectedSkill} onValueChange={setSelectedSkill}>
+                      <SelectTrigger className="w-full sm:w-48">
+                        <SelectValue placeholder="All Skills" />
+                      </SelectTrigger>
+                      <SelectContent className="z-50">
+                        <SelectItem value="all">All Skills</SelectItem>
+                        {skills.map((skill) => (
+                          <SelectItem key={skill} value={skill}>{skill}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </>
                 )}
               </div>
             )}
 
             {/* Items Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {items.length === 0 ? (
                 <div className="col-span-full">
-                  <Card>
-                    <CardContent className="pt-6 text-center text-muted-foreground">
-                      No {config.label.toLowerCase()} found. Click "Add {config.singular}" to create one.
+                  <Card className="border-dashed">
+                    <CardContent className="pt-12 pb-12 text-center">
+                      <config.icon className="w-12 h-12 mx-auto mb-4 text-muted-foreground/40" />
+                      <p className="text-muted-foreground mb-4">
+                        No {config.label.toLowerCase()} found
+                      </p>
+                      <p className="text-sm text-muted-foreground/60">
+                        Click "Add {config.singular}" above to create your first one
+                      </p>
                     </CardContent>
                   </Card>
                 </div>
               ) : (
-                items.map((item) => (
-                  <Card key={item.id} className="p-3">
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-sm font-medium line-clamp-2 flex-1 pr-2">
-                        {activeTab === 'coaching_aphorisms' ? item.featured_text : item.title}
-                      </h3>
-                      {isAdmin && (
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          className="h-8 w-8 flex-shrink-0"
-                          onClick={() => handleEdit(item)}
-                        >
-                          <Edit className="w-3 h-3" />
-                        </Button>
-                      )}
-                    </div>
-                  </Card>
-                ))
+                items.map((item) => {
+                  const colorClass = {
+                    'blue': 'border-l-blue-500',
+                    'purple': 'border-l-purple-500',
+                    'green': 'border-l-green-500',
+                    'orange': 'border-l-orange-500',
+                    'cyan': 'border-l-cyan-500',
+                    'pink': 'border-l-pink-500',
+                    'amber': 'border-l-amber-500',
+                  }[config.color] || 'border-l-primary';
+                  
+                  const bgClass = {
+                    'blue': 'bg-blue-500/10',
+                    'purple': 'bg-purple-500/10',
+                    'green': 'bg-green-500/10',
+                    'orange': 'bg-orange-500/10',
+                    'cyan': 'bg-cyan-500/10',
+                    'pink': 'bg-pink-500/10',
+                    'amber': 'bg-amber-500/10',
+                  }[config.color] || 'bg-primary/10';
+                  
+                  const iconColorClass = {
+                    'blue': 'text-blue-600',
+                    'purple': 'text-purple-600',
+                    'green': 'text-green-600',
+                    'orange': 'text-orange-600',
+                    'cyan': 'text-cyan-600',
+                    'pink': 'text-pink-600',
+                    'amber': 'text-amber-600',
+                  }[config.color] || 'text-primary';
+
+                  return (
+                    <Card 
+                      key={item.id} 
+                      className={`group hover:shadow-lg transition-all duration-200 overflow-hidden border-l-4 ${colorClass}`}
+                    >
+                      <CardHeader className="pb-3">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex items-start gap-3 flex-1 min-w-0">
+                            <div className={`p-2 rounded-lg ${bgClass} flex-shrink-0`}>
+                              <config.icon className={`w-5 h-5 ${iconColorClass}`} />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <CardTitle className="text-base line-clamp-2 mb-1">
+                                {activeTab === 'coaching_aphorisms' ? item.featured_text : item.title}
+                              </CardTitle>
+                              {item.category && (
+                                <Badge variant="secondary" className="text-xs">
+                                  {item.category}
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                          {isAdmin && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
+                              onClick={() => handleEdit(item)}
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                          )}
+                        </div>
+                      </CardHeader>
+                      <CardContent className="pt-0">
+                        {activeTab === 'coaching_aphorisms' ? (
+                          <p className="text-sm text-muted-foreground line-clamp-3">
+                            {item.body_text}
+                          </p>
+                        ) : (
+                          <>
+                            {item.description && (
+                              <p className="text-sm text-muted-foreground line-clamp-3 mb-3">
+                                {item.description}
+                              </p>
+                            )}
+                            <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+                              {item.duration && (
+                                <div className="flex items-center gap-1">
+                                  <Clock className="w-3 h-3" />
+                                  {item.duration} min
+                                </div>
+                              )}
+                              {item.weeks && (
+                                <div className="flex items-center gap-1">
+                                  <Calendar className="w-3 h-3" />
+                                  {item.weeks} weeks
+                                </div>
+                              )}
+                              {item.sets && (
+                                <div className="flex items-center gap-1">
+                                  <Dumbbell className="w-3 h-3" />
+                                  {item.sets} sets
+                                </div>
+                              )}
+                              {item.players_required && (
+                                <Badge variant="outline" className="text-xs">
+                                  {item.players_required} players
+                                </Badge>
+                              )}
+                              {item.analysis_type && (
+                                <Badge variant="outline" className="text-xs">
+                                  {item.analysis_type}
+                                </Badge>
+                              )}
+                            </div>
+                            {item.tags && Array.isArray(item.tags) && item.tags.length > 0 && (
+                              <div className="flex flex-wrap gap-1 mt-3">
+                                {item.tags.slice(0, 3).map((tag, idx) => (
+                                  <Badge key={idx} variant="secondary" className="text-xs">
+                                    {tag}
+                                  </Badge>
+                                ))}
+                                {item.tags.length > 3 && (
+                                  <Badge variant="secondary" className="text-xs">
+                                    +{item.tags.length - 3}
+                                  </Badge>
+                                )}
+                              </div>
+                            )}
+                          </>
+                        )}
+                      </CardContent>
+                    </Card>
+                  );
+                })
               )}
             </div>
 
