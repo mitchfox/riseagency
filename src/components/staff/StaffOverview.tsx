@@ -21,7 +21,7 @@ const Widget = ({ id, title, icon: Icon, size, expanded, onToggleExpand, childre
     medium: "col-span-1 md:col-span-2 lg:col-span-2 row-span-2",
     large: "col-span-1 md:col-span-2 lg:col-span-3 row-span-2",
     wide: "col-span-1 md:col-span-2 lg:col-span-3 row-span-1",
-    xlarge: "col-span-1 md:col-span-3 lg:col-span-4 row-span-2",
+    xlarge: "col-span-1 md:col-span-3 lg:col-span-4 row-span-3",
   };
 
   const expandedClass = expanded ? "col-span-full" : sizeClasses[size];
@@ -72,7 +72,7 @@ export const StaffOverview = ({ isAdmin }: { isAdmin: boolean }) => {
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-2 auto-rows-[140px] w-full">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-2 auto-rows-[200px] w-full">
       {/* Quarter Goals - Small */}
       <Widget
         id="goals"
@@ -174,40 +174,40 @@ export const StaffOverview = ({ isAdmin }: { isAdmin: boolean }) => {
         </div>
       </Widget>
 
-      {/* Financial Projection - Small */}
+      {/* Financial Projection - Wide */}
       <Widget
         id="financial"
         title="Financial Projection"
         icon={TrendingUp}
-        size="small"
+        size="wide"
         expanded={expandedWidget === "financial"}
         onToggleExpand={() => toggleWidget("financial")}
       >
-        <div className="space-y-2 h-full flex flex-col justify-center">
-          <div className="text-center p-2 bg-gradient-to-br from-emerald-500/10 to-emerald-600/10 rounded border border-emerald-500/30">
-            <div className="text-sm font-bold text-emerald-600">€127k</div>
-            <div className="text-[9px] text-muted-foreground uppercase tracking-wider">Revenue</div>
+        <div className="grid grid-cols-5 gap-3 h-full">
+          <div className="flex flex-col justify-center p-3 bg-gradient-to-br from-emerald-500/10 to-emerald-600/10 rounded border border-emerald-500/30">
+            <div className="text-lg font-bold text-emerald-600">€127k</div>
+            <div className="text-xs text-muted-foreground uppercase tracking-wider">Revenue</div>
           </div>
-          <div className="text-center p-2 bg-gradient-to-br from-rose-500/10 to-rose-600/10 rounded border border-rose-500/30">
-            <div className="text-sm font-bold text-rose-600">€89k</div>
-            <div className="text-[9px] text-muted-foreground uppercase tracking-wider">Expenses</div>
+          <div className="flex flex-col justify-center p-3 bg-gradient-to-br from-rose-500/10 to-rose-600/10 rounded border border-rose-500/30">
+            <div className="text-lg font-bold text-rose-600">€89k</div>
+            <div className="text-xs text-muted-foreground uppercase tracking-wider">Expenses</div>
           </div>
-          <div className="text-center p-2 bg-gradient-to-br from-primary/20 to-primary/5 rounded border border-primary/40">
-            <div className="text-sm font-bold text-primary">€38k</div>
-            <div className="text-[9px] text-muted-foreground uppercase tracking-wider">Profit</div>
+          <div className="flex flex-col justify-center p-3 bg-gradient-to-br from-primary/20 to-primary/5 rounded border border-primary/40">
+            <div className="text-lg font-bold text-primary">€38k</div>
+            <div className="text-xs text-muted-foreground uppercase tracking-wider">Profit</div>
           </div>
-          <div className="text-center p-2 bg-gradient-to-br from-amber-500/10 to-amber-600/10 rounded border border-amber-500/30">
-            <div className="text-sm font-bold text-amber-600">€45k</div>
-            <div className="text-[9px] text-muted-foreground uppercase tracking-wider">Commissions</div>
+          <div className="flex flex-col justify-center p-3 bg-gradient-to-br from-amber-500/10 to-amber-600/10 rounded border border-amber-500/30">
+            <div className="text-lg font-bold text-amber-600">€45k</div>
+            <div className="text-xs text-muted-foreground uppercase tracking-wider">Commissions</div>
           </div>
-          <div className="text-center p-2 bg-gradient-to-br from-blue-500/10 to-blue-600/10 rounded border border-blue-500/30">
-            <div className="text-sm font-bold text-blue-600">€32k</div>
-            <div className="text-[9px] text-muted-foreground uppercase tracking-wider">Consulting</div>
+          <div className="flex flex-col justify-center p-3 bg-gradient-to-br from-blue-500/10 to-blue-600/10 rounded border border-blue-500/30">
+            <div className="text-lg font-bold text-blue-600">€32k</div>
+            <div className="text-xs text-muted-foreground uppercase tracking-wider">Consulting</div>
           </div>
         </div>
       </Widget>
 
-      {/* Schedule Calendar - XLarge to show full 7 days */}
+      {/* Schedule Calendar - XLarge, 3 rows for full week view */}
       <Widget
         id="schedule"
         title="Schedule Calendar"
