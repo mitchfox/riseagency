@@ -69,7 +69,6 @@ const createCustomIcon = (contact: Contact) => {
 
 // Separate component for markers to avoid context issues
 const ContactMarkers = ({ contacts, onEdit }: { contacts: Contact[], onEdit: (contact: Contact) => void }) => {
-  const map = useMap(); // Ensures Leaflet context is available before rendering markers
   const validContacts = contacts.filter((contact) => contact.latitude && contact.longitude);
   
   return (
@@ -122,6 +121,7 @@ const ClubNetworkManagement = () => {
   const [view, setView] = useState<'map' | 'list'>('map');
   const [showDialog, setShowDialog] = useState(false);
   const [editingContact, setEditingContact] = useState<Contact | null>(null);
+  const [mapReady, setMapReady] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     club_name: '',
@@ -138,6 +138,18 @@ const ClubNetworkManagement = () => {
 
   useEffect(() => {
     fetchContacts();
+  }, []);
+
+  useEffect(() => {
+    // Delay map rendering to ensure proper context initialization
+    const timer = setTimeout(() => {
+      setMapReady(true);
+    }, 100);
+    
+    return () => {
+      clearTimeout(timer);
+      setMapReady(false);
+    };
   }, []);
 
   const fetchContacts = async () => {
@@ -288,19 +300,25 @@ const ClubNetworkManagement = () => {
 
       {view === 'map' ? (
         <div className="relative w-full h-[600px] rounded-lg border overflow-hidden">
-          <MapContainer
-            key="club-network-map"
-            center={[20, 0]}
-            zoom={2}
-            style={{ height: '100%', width: '100%' }}
-            className="z-0"
-          >
-            <TileLayer
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            />
-            <ContactMarkers contacts={contacts} onEdit={openEditDialog} />
-          </MapContainer>
+          {mapReady ? (
+            <MapContainer
+              key="club-network-map"
+              center={[20, 0]}
+              zoom={2}
+              style={{ height: '100%', width: '100%' }}
+              className="z-0"
+            >
+              <TileLayer
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              />
+              <ContactMarkers contacts={contacts} onEdit={openEditDialog} />
+            </MapContainer>
+          ) : (
+            <div className="flex items-center justify-center h-full">
+              <p className="text-muted-foreground">Loading map...</p>
+            </div>
+          )}
         </div>
       ) : (
         <div className="space-y-4">
