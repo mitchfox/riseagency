@@ -18,6 +18,11 @@ interface Player {
   age: number;
   nationality: string;
   bio: string | null;
+  email: string | null;
+  image_url: string | null;
+  category: string | null;
+  representation_status: string | null;
+  visible_on_stars_page: boolean;
 }
 
 export const PlayerList = ({ isAdmin }: { isAdmin: boolean }) => {
@@ -31,6 +36,12 @@ export const PlayerList = ({ isAdmin }: { isAdmin: boolean }) => {
     position: "",
     age: 0,
     nationality: "",
+    bio: "",
+    email: "",
+    image_url: "",
+    category: "",
+    representation_status: "",
+    visible_on_stars_page: false,
   });
 
   useEffect(() => {
@@ -41,7 +52,7 @@ export const PlayerList = ({ isAdmin }: { isAdmin: boolean }) => {
     try {
       const { data, error } = await supabase
         .from("players")
-        .select("id, name, club, club_logo, position, age, nationality, bio")
+        .select("id, name, club, club_logo, position, age, nationality, bio, email, image_url, category, representation_status, visible_on_stars_page")
         .order("name");
 
       if (error) throw error;
@@ -63,6 +74,12 @@ export const PlayerList = ({ isAdmin }: { isAdmin: boolean }) => {
       position: player.position,
       age: player.age,
       nationality: player.nationality,
+      bio: player.bio || "",
+      email: player.email || "",
+      image_url: player.image_url || "",
+      category: player.category || "",
+      representation_status: player.representation_status || "",
+      visible_on_stars_page: player.visible_on_stars_page || false,
     });
   };
 
@@ -79,6 +96,12 @@ export const PlayerList = ({ isAdmin }: { isAdmin: boolean }) => {
           position: formData.position,
           age: formData.age,
           nationality: formData.nationality,
+          bio: formData.bio || null,
+          email: formData.email || null,
+          image_url: formData.image_url || null,
+          category: formData.category || null,
+          representation_status: formData.representation_status || null,
+          visible_on_stars_page: formData.visible_on_stars_page,
         })
         .eq("id", editingPlayer.id);
 
@@ -297,6 +320,80 @@ export const PlayerList = ({ isAdmin }: { isAdmin: boolean }) => {
                   setFormData({ ...formData, nationality: e.target.value })
                 }
               />
+            </div>
+
+            <div>
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                value={formData.email}
+                onChange={(e) =>
+                  setFormData({ ...formData, email: e.target.value })
+                }
+                placeholder="player@example.com"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="image_url">Player Image URL</Label>
+              <Input
+                id="image_url"
+                value={formData.image_url}
+                onChange={(e) =>
+                  setFormData({ ...formData, image_url: e.target.value })
+                }
+                placeholder="https://example.com/player.png"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="category">Category</Label>
+              <Input
+                id="category"
+                value={formData.category}
+                onChange={(e) =>
+                  setFormData({ ...formData, category: e.target.value })
+                }
+                placeholder="e.g., Professional, Youth"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="representation_status">Representation Status</Label>
+              <Input
+                id="representation_status"
+                value={formData.representation_status}
+                onChange={(e) =>
+                  setFormData({ ...formData, representation_status: e.target.value })
+                }
+                placeholder="e.g., represented, other"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="bio">Bio (JSON or text)</Label>
+              <Input
+                id="bio"
+                value={formData.bio}
+                onChange={(e) =>
+                  setFormData({ ...formData, bio: e.target.value })
+                }
+                placeholder="Bio text or JSON"
+              />
+            </div>
+
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="visible_on_stars_page"
+                checked={formData.visible_on_stars_page}
+                onChange={(e) =>
+                  setFormData({ ...formData, visible_on_stars_page: e.target.checked })
+                }
+                className="h-4 w-4"
+              />
+              <Label htmlFor="visible_on_stars_page">Visible on Stars Page</Label>
             </div>
 
             <Button onClick={handleSave} className="w-full">
