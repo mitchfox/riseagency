@@ -44,8 +44,8 @@ export const StaffSchedule = ({ isAdmin }: { isAdmin: boolean }) => {
   const [error, setError] = useState<string | null>(null);
   const [showFixturesDialog, setShowFixturesDialog] = useState(false);
   const [selectedFixturePlayer, setSelectedFixturePlayer] = useState("");
-  const [fetchingFixtures, setFetchingFixtures] = useState(false);
-  const [availableFixtures, setAvailableFixtures] = useState<any[]>([]);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [extractedFixtures, setExtractedFixtures] = useState<any[]>([]);
   const [selectedFixtures, setSelectedFixtures] = useState<Set<number>>(new Set());
   const [allPlayers, setAllPlayers] = useState<any[]>([]);
   const [weekOffset, setWeekOffset] = useState(0); // 0 = current week, -1 = previous 6 weeks, +1 = next 6 weeks
@@ -85,35 +85,46 @@ export const StaffSchedule = ({ isAdmin }: { isAdmin: boolean }) => {
     }
   };
 
-  const fetchTeamFixtures = async () => {
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
     if (!selectedFixturePlayer) {
-      toast.error('Please select a player');
+      toast.error("Please select a player first");
       return;
     }
 
-    setFetchingFixtures(true);
+    const player = allPlayers.find(p => p.id === selectedFixturePlayer);
+    if (!player) {
+      toast.error("Player not found");
+      return;
+    }
+
+    setUploadingImage(true);
     try {
-      const player = allPlayers.find(p => p.id === selectedFixturePlayer);
-      const teamName = player?.club || player?.name;
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        const base64Image = reader.result as string;
 
-      const { data, error } = await supabase.functions.invoke('fetch-team-fixtures', {
-        body: { teamName }
-      });
+        const { data, error } = await supabase.functions.invoke('extract-fixtures-from-image', {
+          body: {
+            image: base64Image,
+            teamName: player.club || player.name,
+            playerName: player.name
+          }
+        });
 
-      if (error) throw error;
+        if (error) throw error;
 
-      if (data.fixtures && data.fixtures.length > 0) {
-        setAvailableFixtures(data.fixtures);
-        toast.success(`Found ${data.fixtures.length} fixtures`);
-      } else {
-        toast.error('No fixtures found for this team');
-        setAvailableFixtures([]);
-      }
+        setExtractedFixtures(data.fixtures || []);
+        toast.success(`Extracted ${data.fixtures?.length || 0} fixtures from image`);
+        setUploadingImage(false);
+      };
+      reader.readAsDataURL(file);
     } catch (error: any) {
-      console.error('Error fetching fixtures:', error);
-      toast.error(`Failed to fetch fixtures: ${error.message}`);
-    } finally {
-      setFetchingFixtures(false);
+      console.error('Error extracting fixtures:', error);
+      toast.error(`Failed to extract fixtures: ${error.message}`);
+      setUploadingImage(false);
     }
   };
 
@@ -123,7 +134,7 @@ export const StaffSchedule = ({ isAdmin }: { isAdmin: boolean }) => {
       return;
     }
 
-    const fixturesToAdd = Array.from(selectedFixtures).map(idx => availableFixtures[idx]);
+    const fixturesToAdd = Array.from(selectedFixtures).map(idx => extractedFixtures[idx]);
 
     try {
       const { error } = await supabase
@@ -134,7 +145,9 @@ export const StaffSchedule = ({ isAdmin }: { isAdmin: boolean }) => {
             away_team: fixture.away_team,
             match_date: fixture.match_date,
             competition: fixture.competition || null,
-            venue: fixture.venue || null
+            venue: fixture.venue || null,
+            home_score: fixture.home_score,
+            away_score: fixture.away_score
           }))
         );
 
@@ -143,8 +156,7 @@ export const StaffSchedule = ({ isAdmin }: { isAdmin: boolean }) => {
       toast.success(`Added ${selectedFixtures.size} fixture(s) to database`);
       setShowFixturesDialog(false);
       setSelectedFixtures(new Set());
-      setAvailableFixtures([]);
-      // Refresh fixtures list
+      setExtractedFixtures([]);
       fetchFixtures();
     } catch (error: any) {
       console.error('Error adding fixtures:', error);
@@ -469,7 +481,7 @@ export const StaffSchedule = ({ isAdmin }: { isAdmin: boolean }) => {
     <Dialog open={showFixturesDialog} onOpenChange={setShowFixturesDialog}>
       <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Add Fixtures to Database</DialogTitle>
+          <DialogTitle>Add Fixtures from Image</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           <div className="space-y-2">
@@ -488,22 +500,26 @@ export const StaffSchedule = ({ isAdmin }: { isAdmin: boolean }) => {
             </Select>
           </div>
 
-          <Button 
-            onClick={fetchTeamFixtures} 
-            disabled={!selectedFixturePlayer || fetchingFixtures}
-            className="w-full"
-          >
-            {fetchingFixtures ? 'Fetching Fixtures...' : 'Fetch Fixtures'}
-          </Button>
+          <div className="space-y-2">
+            <Label>Upload Fixtures Image</Label>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleImageUpload}
+              disabled={!selectedFixturePlayer || uploadingImage}
+              className="block w-full text-sm text-muted-foreground file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90 disabled:opacity-50"
+            />
+            {uploadingImage && <p className="text-sm text-muted-foreground mt-2">Extracting fixtures from image...</p>}
+          </div>
 
-          {availableFixtures.length > 0 && (
+          {extractedFixtures.length > 0 && (
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <Label className="text-base font-semibold">Select Fixtures to Add</Label>
+                <Label className="text-base font-semibold">Extracted Fixtures (select to add)</Label>
                 <Badge variant="secondary">{selectedFixtures.size} selected</Badge>
               </div>
               <div className="space-y-2 max-h-96 overflow-y-auto border rounded-lg p-3">
-                {availableFixtures.map((fixture, idx) => (
+                {extractedFixtures.map((fixture, idx) => (
                   <div
                     key={idx}
                     className={`p-3 border rounded-lg cursor-pointer transition-colors ${
@@ -525,6 +541,11 @@ export const StaffSchedule = ({ isAdmin }: { isAdmin: boolean }) => {
                       <div>
                         <div className="font-semibold text-sm">
                           {fixture.home_team} vs {fixture.away_team}
+                          {(fixture.home_score !== null || fixture.away_score !== null) && (
+                            <span className="ml-2 text-muted-foreground">
+                              ({fixture.home_score ?? '-'} - {fixture.away_score ?? '-'})
+                            </span>
+                          )}
                         </div>
                         <div className="text-xs text-muted-foreground mt-1">
                           {new Date(fixture.match_date).toLocaleDateString('en-GB', {
@@ -553,7 +574,11 @@ export const StaffSchedule = ({ isAdmin }: { isAdmin: boolean }) => {
                 ))}
               </div>
               <div className="flex gap-2 justify-end">
-                <Button variant="outline" onClick={() => setShowFixturesDialog(false)}>
+                <Button variant="outline" onClick={() => {
+                  setShowFixturesDialog(false);
+                  setExtractedFixtures([]);
+                  setSelectedFixtures(new Set());
+                }}>
                   Cancel
                 </Button>
                 <Button 
@@ -563,12 +588,6 @@ export const StaffSchedule = ({ isAdmin }: { isAdmin: boolean }) => {
                   Add {selectedFixtures.size} Fixture{selectedFixtures.size !== 1 ? 's' : ''} to Database
                 </Button>
               </div>
-            </div>
-          )}
-
-          {availableFixtures.length === 0 && selectedFixturePlayer && !fetchingFixtures && (
-            <div className="text-center text-muted-foreground py-8">
-              Click "Fetch Fixtures" to load fixtures for the selected player's team
             </div>
           )}
         </div>
