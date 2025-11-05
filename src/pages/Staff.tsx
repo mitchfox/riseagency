@@ -19,6 +19,7 @@ import { SiteVisitorsManagement } from "@/components/staff/SiteVisitorsManagemen
 import { InvoiceManagement } from "@/components/staff/InvoiceManagement";
 import { UpdatesManagement } from "@/components/staff/UpdatesManagement";
 import { StaffSchedule } from "@/components/staff/StaffSchedule";
+import { StaffOverview } from "@/components/staff/StaffOverview";
 import { MarketingManagement } from "@/components/staff/MarketingManagement";
 import { RecruitmentManagement } from "@/components/staff/RecruitmentManagement";
 import { StaffAccountManagement } from "@/components/staff/StaffAccountManagement";
@@ -351,7 +352,7 @@ const Staff = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {expandedSection === 'overview' && <StaffSchedule isAdmin={isAdmin} />}
+                  {expandedSection === 'overview' && <StaffOverview isAdmin={isAdmin} />}
                   {expandedSection === 'playerlist' && <PlayerList isAdmin={isAdmin} />}
                   {expandedSection === 'players' && <PlayerManagement isAdmin={isAdmin} />}
                   {expandedSection === 'recruitment' && <RecruitmentManagement isAdmin={isAdmin} />}
