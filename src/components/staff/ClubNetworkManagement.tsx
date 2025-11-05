@@ -12,7 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
@@ -69,6 +69,7 @@ const createCustomIcon = (contact: Contact) => {
 
 // Separate component for markers to avoid context issues
 const ContactMarkers = ({ contacts, onEdit }: { contacts: Contact[], onEdit: (contact: Contact) => void }) => {
+  const map = useMap(); // Ensures Leaflet context is available before rendering markers
   const validContacts = contacts.filter((contact) => contact.latitude && contact.longitude);
   
   return (
@@ -288,6 +289,7 @@ const ClubNetworkManagement = () => {
       {view === 'map' ? (
         <div className="relative w-full h-[600px] rounded-lg border overflow-hidden">
           <MapContainer
+            key="club-network-map"
             center={[20, 0]}
             zoom={2}
             style={{ height: '100%', width: '100%' }}
