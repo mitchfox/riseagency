@@ -200,10 +200,45 @@ const ClubNetworkManagement = () => {
       {view === 'map' ? (
         <div className="relative w-full h-[600px] bg-secondary/10 rounded-lg border overflow-hidden">
           <svg viewBox="0 0 1000 500" className="w-full h-full">
-            <rect width="1000" height="500" fill="hsl(var(--secondary) / 0.1)" />
-            <text x="500" y="250" textAnchor="middle" fill="hsl(var(--muted-foreground))" fontSize="20">
-              World Map (Click contacts below to see locations)
-            </text>
+            {/* Ocean background */}
+            <rect width="1000" height="500" fill="hsl(var(--muted) / 0.3)" />
+            
+            {/* Grid lines */}
+            <g stroke="hsl(var(--border))" strokeWidth="0.5" opacity="0.3">
+              {/* Latitude lines */}
+              {[0, 100, 200, 300, 400, 500].map(y => (
+                <line key={`lat-${y}`} x1="0" y1={y} x2="1000" y2={y} />
+              ))}
+              {/* Longitude lines */}
+              {[0, 200, 400, 600, 800, 1000].map(x => (
+                <line key={`lon-${x}`} x1={x} y1="0" x2={x} y2="500" />
+              ))}
+            </g>
+            
+            {/* Simplified continents */}
+            <g fill="hsl(var(--secondary))" stroke="hsl(var(--border))" strokeWidth="1">
+              {/* North America */}
+              <path d="M 150,80 L 200,70 L 250,90 L 280,100 L 290,150 L 270,200 L 250,220 L 200,210 L 180,190 L 160,150 Z" />
+              <path d="M 200,210 L 220,240 L 210,280 L 190,290 L 170,270 L 180,230 Z" />
+              
+              {/* South America */}
+              <path d="M 250,290 L 270,310 L 280,350 L 290,390 L 280,420 L 260,430 L 240,420 L 230,380 L 240,340 L 245,310 Z" />
+              
+              {/* Europe */}
+              <path d="M 480,80 L 520,75 L 550,90 L 560,110 L 540,130 L 510,135 L 490,120 L 475,100 Z" />
+              
+              {/* Africa */}
+              <path d="M 480,150 L 520,145 L 560,160 L 580,200 L 590,250 L 580,300 L 560,340 L 530,360 L 500,350 L 480,320 L 470,280 L 475,240 L 480,200 Z" />
+              
+              {/* Asia */}
+              <path d="M 560,70 L 650,60 L 750,80 L 820,100 L 860,120 L 880,150 L 870,180 L 840,200 L 800,210 L 750,200 L 700,180 L 650,160 L 600,140 L 570,110 Z" />
+              <path d="M 650,160 L 700,180 L 720,220 L 710,260 L 690,280 L 650,270 L 620,250 L 610,210 L 620,180 Z" />
+              
+              {/* Australia */}
+              <path d="M 800,320 L 850,310 L 900,330 L 920,360 L 910,390 L 880,400 L 840,390 L 810,370 L 795,345 Z" />
+            </g>
+            
+            {/* Contact pins */}
             {contacts.map((contact) => {
               if (!contact.latitude || !contact.longitude) return null;
               const x = ((contact.longitude + 180) / 360) * 1000;
@@ -217,7 +252,7 @@ const ClubNetworkManagement = () => {
                     fill="hsl(var(--primary))"
                     stroke="hsl(var(--background))"
                     strokeWidth="2"
-                    className="cursor-pointer hover:r-12 transition-all"
+                    className="cursor-pointer hover:opacity-80 transition-all"
                     onClick={() => openEditDialog(contact)}
                   />
                   <text
@@ -226,6 +261,7 @@ const ClubNetworkManagement = () => {
                     textAnchor="middle"
                     fill="hsl(var(--foreground))"
                     fontSize="12"
+                    fontWeight="bold"
                     className="pointer-events-none"
                   >
                     {contact.club_name || contact.name}
