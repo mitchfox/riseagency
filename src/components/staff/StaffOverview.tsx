@@ -259,7 +259,7 @@ export const StaffOverview = ({ isAdmin }: { isAdmin: boolean }) => {
         expanded={expandedWidget === "schedule"}
         onToggleExpand={() => toggleWidget("schedule")}
       >
-        <div className="scale-[0.65] origin-top-left -ml-3 -mt-3">
+        <div className="w-full h-full">
           <StaffSchedule isAdmin={isAdmin} />
         </div>
       </Widget>
