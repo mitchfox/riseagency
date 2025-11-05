@@ -1536,8 +1536,8 @@ Phase Dates: ${programmingData.phaseDates || 'Not specified'}`;
                                           list={`exercise-datalist-${idx}`}
                                         />
                                         <datalist id={`exercise-datalist-${idx}`}>
-                                          {exerciseTitles.map((title) => (
-                                            <option key={title} value={title} />
+                                          {exerciseTitles.map((title, titleIdx) => (
+                                            <option key={`${idx}-${titleIdx}`} value={title} />
                                           ))}
                                         </datalist>
                                       </td>
