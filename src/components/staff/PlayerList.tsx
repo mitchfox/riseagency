@@ -130,50 +130,73 @@ export const PlayerList = ({ isAdmin }: { isAdmin: boolean }) => {
             <TableRow className="hover:bg-transparent border-b">
               <TableHead className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Name</TableHead>
               <TableHead className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Club</TableHead>
+              <TableHead className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Nat</TableHead>
               <TableHead className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Position</TableHead>
               {isAdmin && <TableHead className="text-xs uppercase tracking-wider text-muted-foreground font-semibold w-20"></TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
-            {players.map((player) => {
+            {players.map((player, index) => {
               const { club, clubLogo } = getClubInfo(player);
               return (
-                <TableRow key={player.id} className="border-b last:border-0 hover:bg-accent/50">
-                  <TableCell className="py-3">
+                <TableRow 
+                  key={player.id} 
+                  className={`border-0 hover:bg-transparent ${index % 2 === 0 ? 'bg-muted/30' : 'bg-background'}`}
+                >
+                  <TableCell className="py-2.5">
                     <div className="flex items-center gap-3">
-                      <img
-                        src={getCountryFlagUrl(player.nationality)}
-                        alt={player.nationality}
-                        className="w-6 h-4 object-cover rounded-sm border border-border/50"
-                        onError={(e) => {
-                          e.currentTarget.style.display = 'none';
-                        }}
-                      />
-                      <span className="font-medium text-foreground">{player.name}</span>
-                      <span className="text-xs text-muted-foreground">{player.nationality}</span>
+                      <div className="h-10 w-10 rounded-full bg-muted overflow-hidden flex-shrink-0">
+                        <img
+                          src={`/players/${player.name.toLowerCase().replace(/\s+/g, '-')}.png`}
+                          alt={player.name}
+                          className="h-full w-full object-cover"
+                          onError={(e) => {
+                            e.currentTarget.src = '/players/player1.jpg';
+                          }}
+                        />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="font-medium text-foreground leading-tight">{player.name}</span>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          <img
+                            src={getCountryFlagUrl(player.nationality)}
+                            alt={player.nationality}
+                            className="w-4 h-3 object-cover rounded-sm"
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none';
+                            }}
+                          />
+                          <span className="text-[10px] text-muted-foreground">{player.nationality}</span>
+                        </div>
+                      </div>
                     </div>
                   </TableCell>
-                  <TableCell className="py-3">
-                    <div className="flex items-center gap-3">
+                  <TableCell className="py-2.5">
+                    <div className="flex items-center gap-2.5">
                       {clubLogo ? (
                         <img
                           src={clubLogo}
                           alt={club || "Club"}
-                          className="h-6 w-6 object-contain"
+                          className="h-5 w-5 object-contain"
                         />
                       ) : (
-                        <div className="h-6 w-6 bg-muted rounded-full" />
+                        <div className="h-5 w-5 bg-muted/50 rounded-full" />
                       )}
                       <span className="text-sm text-foreground">{club || "—"}</span>
                     </div>
                   </TableCell>
-                  <TableCell className="py-3">
+                  <TableCell className="py-2.5">
+                    <span className="text-xs text-muted-foreground">
+                      {player.age ? `${player.age}` : "—"}
+                    </span>
+                  </TableCell>
+                  <TableCell className="py-2.5">
                     <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                       {player.position}
                     </span>
                   </TableCell>
                   {isAdmin && (
-                    <TableCell className="py-3">
+                    <TableCell className="py-2.5">
                       <Button
                         variant="ghost"
                         size="sm"
