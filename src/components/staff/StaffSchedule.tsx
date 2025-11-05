@@ -48,8 +48,9 @@ export const StaffSchedule = ({ isAdmin }: { isAdmin: boolean }) => {
   const [extractedFixtures, setExtractedFixtures] = useState<any[]>([]);
   const [selectedFixtures, setSelectedFixtures] = useState<Set<number>>(new Set());
   const [allPlayers, setAllPlayers] = useState<any[]>([]);
-  const [weekOffset, setWeekOffset] = useState(0); // 0 = current week, -1 = previous 6 weeks, +1 = next 6 weeks
+  const [weekOffset, setWeekOffset] = useState(0);
   const [fixtures, setFixtures] = useState<Fixture[]>([]);
+  const [expandedDays, setExpandedDays] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     fetchCurrentPrograms();
@@ -371,6 +372,16 @@ export const StaffSchedule = ({ isAdmin }: { isAdmin: boolean }) => {
                   const hasEndDates = endDates.length > 0;
                   const hasFixtures = dayFixtures.length > 0;
                   const isToday = isSameDay(currentDate, new Date());
+                  const dayKey = `${weekIndex}-${dayOffset}`;
+                  const isExpanded = expandedDays.has(dayKey);
+                  
+                  // Combine all items
+                  const allItems = [
+                    ...endDates.map(ed => ({ type: 'endDate' as const, data: ed })),
+                    ...dayFixtures.map(f => ({ type: 'fixture' as const, data: f }))
+                  ];
+                  const displayItems = isExpanded ? allItems : allItems.slice(0, 2);
+                  const remainingCount = allItems.length - 2;
 
                   return (
                     <div 
@@ -390,44 +401,54 @@ export const StaffSchedule = ({ isAdmin }: { isAdmin: boolean }) => {
                         {format(currentDate, 'd')}
                       </span>
 
-                      {/* Program end markers */}
-                      {hasEndDates && (
+                      {/* Display items */}
+                      {allItems.length > 0 && (
                         <div className="flex flex-col gap-1 mt-4">
-                          {endDates.map((endDate, idx) => (
-                            <div 
-                              key={idx}
-                              className="text-xs p-1 rounded"
+                          {displayItems.map((item, idx) => (
+                            item.type === 'endDate' ? (
+                              <div 
+                                key={`end-${idx}`}
+                                className="text-xs p-1 rounded"
+                                style={{ 
+                                  backgroundColor: 'hsl(43, 49%, 61%)',
+                                  color: 'hsl(0, 0%, 0%)'
+                                }}
+                                title={`${item.data.playerName} - ${item.data.programName}${item.data.phaseName ? ` (${item.data.phaseName})` : ''}`}
+                              >
+                                <div className="font-bold truncate">{item.data.playerName}</div>
+                                <div className="text-[10px] truncate opacity-75">{item.data.phaseName || item.data.programName}</div>
+                              </div>
+                            ) : (
+                              <div 
+                                key={`fixture-${idx}`}
+                                className="text-xs p-1 rounded border border-dashed opacity-70"
+                                style={{ 
+                                  backgroundColor: 'hsl(0, 0%, 20%)',
+                                  borderColor: 'hsl(0, 0%, 40%)',
+                                  color: 'hsl(0, 0%, 90%)'
+                                }}
+                                title={`${item.data.home_team} vs ${item.data.away_team}${item.data.competition ? ` - ${item.data.competition}` : ''}`}
+                              >
+                                <div className="truncate">⚽ {item.data.home_team}</div>
+                                <div className="truncate text-[10px]">vs {item.data.away_team}</div>
+                              </div>
+                            )
+                          ))}
+                          
+                          {/* Show more button */}
+                          {!isExpanded && remainingCount > 0 && (
+                            <button
+                              onClick={() => setExpandedDays(prev => new Set([...prev, dayKey]))}
+                              onMouseEnter={() => setExpandedDays(prev => new Set([...prev, dayKey]))}
+                              className="text-xs p-1 rounded font-bold transition-all hover:scale-105"
                               style={{ 
                                 backgroundColor: 'hsl(43, 49%, 61%)',
                                 color: 'hsl(0, 0%, 0%)'
                               }}
-                              title={`${endDate.playerName} - ${endDate.programName}${endDate.phaseName ? ` (${endDate.phaseName})` : ''}`}
                             >
-                              <div className="font-bold truncate">{endDate.playerName}</div>
-                              <div className="text-[10px] truncate opacity-75">{endDate.phaseName || endDate.programName}</div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-
-                      {/* Fixtures */}
-                      {hasFixtures && (
-                        <div className={`flex flex-col gap-1 ${hasEndDates ? 'mt-1' : 'mt-4'}`}>
-                          {dayFixtures.map((fixture, idx) => (
-                            <div 
-                              key={idx}
-                              className="text-xs p-1 rounded border border-dashed opacity-70"
-                              style={{ 
-                                backgroundColor: 'hsl(0, 0%, 20%)',
-                                borderColor: 'hsl(0, 0%, 40%)',
-                                color: 'hsl(0, 0%, 90%)'
-                              }}
-                              title={`${fixture.home_team} vs ${fixture.away_team}${fixture.competition ? ` - ${fixture.competition}` : ''}`}
-                            >
-                              <div className="truncate">⚽ {fixture.home_team}</div>
-                              <div className="truncate text-[10px]">vs {fixture.away_team}</div>
-                            </div>
-                          ))}
+                              +{remainingCount} more
+                            </button>
+                          )}
                         </div>
                       )}
                     </div>
