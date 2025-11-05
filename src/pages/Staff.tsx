@@ -55,11 +55,11 @@ const Staff = () => {
   const [isStaff, setIsStaff] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-  const [expandedSection, setExpandedSection] = useState<'schedule' | 'staffaccounts' | 'players' | 'playerlist' | 'recruitment' | 'blog' | 'betweenthelines' | 'coaching' | 'analysis' | 'marketing' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'legal' | null>('schedule');
+  const [expandedSection, setExpandedSection] = useState<'overview' | 'staffaccounts' | 'players' | 'playerlist' | 'recruitment' | 'blog' | 'betweenthelines' | 'coaching' | 'analysis' | 'marketing' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'legal' | null>('overview');
   const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
 
-  const handleSectionToggle = (section: 'schedule' | 'staffaccounts' | 'players' | 'playerlist' | 'recruitment' | 'blog' | 'betweenthelines' | 'coaching' | 'analysis' | 'marketing' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'legal') => {
+  const handleSectionToggle = (section: 'overview' | 'staffaccounts' | 'players' | 'playerlist' | 'recruitment' | 'blog' | 'betweenthelines' | 'coaching' | 'analysis' | 'marketing' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'legal') => {
     setExpandedSection(expandedSection === section ? null : section);
   };
 
@@ -269,7 +269,7 @@ const Staff = () => {
   }
 
   const sections = [
-    { id: 'schedule', title: 'Schedule', icon: Calendar },
+    { id: 'overview', title: 'Overview', icon: Calendar },
     { id: 'playerlist', title: 'Player List', icon: Users },
     { id: 'players', title: 'Player Management', icon: UserCog },
     { id: 'recruitment', title: 'Recruitment', icon: Target },
@@ -351,7 +351,7 @@ const Staff = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {expandedSection === 'schedule' && <StaffSchedule isAdmin={isAdmin} />}
+                  {expandedSection === 'overview' && <StaffSchedule isAdmin={isAdmin} />}
                   {expandedSection === 'playerlist' && <PlayerList isAdmin={isAdmin} />}
                   {expandedSection === 'players' && <PlayerManagement isAdmin={isAdmin} />}
                   {expandedSection === 'recruitment' && <RecruitmentManagement isAdmin={isAdmin} />}
