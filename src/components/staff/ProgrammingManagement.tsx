@@ -900,6 +900,72 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName, i
     });
   };
 
+  const generateDescription = async (sessionKey: SessionKey, index: number, exerciseName: string) => {
+    if (!exerciseName.trim()) {
+      toast.error('Please enter an exercise name first');
+      return;
+    }
+
+    setAiGenerating(true);
+    try {
+      // Fetch sample descriptions from all existing exercises
+      const { data: sampleData, error: sampleError } = await supabase
+        .from('coaching_exercises')
+        .select('description')
+        .not('description', 'is', null)
+        .not('description', 'eq', '')
+        .limit(15);
+
+      if (sampleError) throw sampleError;
+
+      const sampleDescriptions = sampleData?.map(e => e.description) || [];
+
+      if (sampleDescriptions.length === 0) {
+        toast.error('No sample descriptions found to learn from');
+        return;
+      }
+
+      const { data, error } = await supabase.functions.invoke('ai-write-description', {
+        body: { 
+          exerciseName,
+          sampleDescriptions
+        }
+      });
+
+      if (error) {
+        if (error.message?.includes('429')) {
+          toast.error('Rate limit exceeded. Please wait a moment and try again.');
+        } else if (error.message?.includes('402')) {
+          toast.error('AI credits depleted. Please add credits to continue.');
+        } else {
+          throw error;
+        }
+        return;
+      }
+
+      if (data?.description) {
+        const session = programmingData[sessionKey] as SessionData;
+        const updatedExercises = deepClone(session.exercises);
+        updatedExercises[index] = { 
+          ...updatedExercises[index], 
+          description: data.description 
+        };
+        
+        updateField(sessionKey, {
+          ...session,
+          exercises: updatedExercises
+        });
+
+        toast.success('Description generated successfully!');
+      }
+    } catch (error) {
+      console.error('Error generating description:', error);
+      toast.error('Failed to generate description');
+    } finally {
+      setAiGenerating(false);
+    }
+  };
+
   const moveExercise = (sessionKey: SessionKey, index: number, direction: 'up' | 'down') => {
     const session = programmingData[sessionKey] as SessionData;
     // Deep clone exercises to prevent reference sharing
@@ -1659,12 +1725,24 @@ Phase Dates: ${programmingData.phaseDates || 'Not specified'}`;
                                         </datalist>
                                       </td>
                                       <td className="p-2">
-                                        <Input
-                                          placeholder="Description"
-                                          value={exercise.description}
-                                          onChange={(e) => updateExercise(selectedSession as SessionKey, idx, 'description', e.target.value)}
-                                          className="text-sm"
-                                        />
+                                        <div className="flex gap-1">
+                                          <Input
+                                            placeholder="Description"
+                                            value={exercise.description}
+                                            onChange={(e) => updateExercise(selectedSession as SessionKey, idx, 'description', e.target.value)}
+                                            className="text-sm flex-1"
+                                          />
+                                          <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            onClick={() => generateDescription(selectedSession as SessionKey, idx, exercise.name)}
+                                            disabled={!exercise.name || aiGenerating}
+                                            title="AI generate description"
+                                            className="shrink-0"
+                                          >
+                                            <Sparkles className={`w-4 h-4 ${aiGenerating ? 'animate-pulse' : ''}`} />
+                                          </Button>
+                                        </div>
                                       </td>
                                       <td className="p-2">
                                         <Input
