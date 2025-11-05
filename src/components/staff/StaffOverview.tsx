@@ -8,7 +8,7 @@ interface WidgetProps {
   id: string;
   title: string;
   icon: React.ElementType;
-  size: "small" | "medium" | "large";
+  size: "small" | "medium" | "large" | "wide";
   expanded: boolean;
   onToggleExpand: () => void;
   children: React.ReactNode;
@@ -16,36 +16,37 @@ interface WidgetProps {
 
 const Widget = ({ id, title, icon: Icon, size, expanded, onToggleExpand, children }: WidgetProps) => {
   const sizeClasses = {
-    small: "col-span-1 row-span-1",
-    medium: "col-span-1 md:col-span-2 row-span-1",
+    small: "col-span-1 md:col-span-1 lg:col-span-1 row-span-1",
+    medium: "col-span-1 md:col-span-2 lg:col-span-2 row-span-1",
     large: "col-span-1 md:col-span-2 lg:col-span-3 row-span-2",
+    wide: "col-span-1 md:col-span-2 lg:col-span-3 row-span-1",
   };
 
   const expandedClass = expanded ? "col-span-full" : sizeClasses[size];
 
   return (
     <Card className={`${expandedClass} transition-all duration-300 flex flex-col border-border/50 bg-card/50 backdrop-blur-sm hover:border-primary/30 hover:shadow-lg`}>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 border-b border-border/30">
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-primary/10 border border-primary/20">
-            <Icon className="w-4 h-4 text-primary" />
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 border-b border-border/30 px-3 py-2">
+        <div className="flex items-center gap-2">
+          <div className="p-1.5 rounded bg-primary/10 border border-primary/20">
+            <Icon className="w-3.5 h-3.5 text-primary" />
           </div>
-          <CardTitle className="text-base font-semibold tracking-tight uppercase text-muted-foreground">{title}</CardTitle>
+          <CardTitle className="text-xs font-semibold tracking-tight uppercase text-muted-foreground">{title}</CardTitle>
         </div>
         <Button
           variant="ghost"
           size="sm"
           onClick={onToggleExpand}
-          className="h-8 w-8 p-0 hover:bg-primary/10"
+          className="h-6 w-6 p-0 hover:bg-primary/10"
         >
           {expanded ? (
-            <Minimize2 className="h-4 w-4" />
+            <Minimize2 className="h-3 w-3" />
           ) : (
-            <Maximize2 className="h-4 w-4" />
+            <Maximize2 className="h-3 w-3" />
           )}
         </Button>
       </CardHeader>
-      <CardContent className="flex-1 overflow-auto pt-4">
+      <CardContent className="flex-1 overflow-hidden hover:overflow-y-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent pt-3 px-3 pb-3">
         {children}
       </CardContent>
     </Card>
@@ -60,7 +61,7 @@ export const StaffOverview = ({ isAdmin }: { isAdmin: boolean }) => {
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-3 auto-rows-[180px] p-1">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-2 auto-rows-[160px] w-full">
       {/* Quarter Goals - Small */}
       <Widget
         id="goals"
@@ -162,56 +163,44 @@ export const StaffOverview = ({ isAdmin }: { isAdmin: boolean }) => {
         </div>
       </Widget>
 
-      {/* Represented Players - Medium */}
+      {/* Represented Players - Wide */}
       <Widget
         id="represented"
         title="Represented Players"
         icon={Users}
-        size="medium"
+        size="wide"
         expanded={expandedWidget === "represented"}
         onToggleExpand={() => toggleWidget("represented")}
       >
-        <div className="space-y-2">
-          <div className="flex items-center justify-between p-2 border border-border/50 rounded hover:bg-accent/50 hover:border-primary/30 transition-all cursor-pointer group">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 border border-primary/30 flex items-center justify-center">
-                <span className="text-xs font-bold text-primary">TY</span>
-              </div>
-              <div>
-                <span className="text-xs font-semibold block">Tyrese Omotoye</span>
-                <span className="text-[10px] text-muted-foreground">Forward</span>
-              </div>
+        <div className="grid grid-cols-3 gap-2">
+          <div className="flex flex-col items-center p-1.5 border border-border/50 rounded hover:bg-accent/50 hover:border-primary/30 transition-all cursor-pointer">
+            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 border border-primary/30 flex items-center justify-center mb-1">
+              <span className="text-[10px] font-bold text-primary">TY</span>
             </div>
-            <div className="px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30">
-              <span className="text-[10px] text-emerald-600 font-medium">Active</span>
+            <span className="text-[10px] font-semibold text-center">Tyrese Omotoye</span>
+            <span className="text-[9px] text-muted-foreground">Forward</span>
+            <div className="px-1.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 mt-1">
+              <span className="text-[9px] text-emerald-600 font-medium">Active</span>
             </div>
           </div>
-          <div className="flex items-center justify-between p-2 border border-border/50 rounded hover:bg-accent/50 hover:border-primary/30 transition-all cursor-pointer group">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 border border-primary/30 flex items-center justify-center">
-                <span className="text-xs font-bold text-primary">MM</span>
-              </div>
-              <div>
-                <span className="text-xs font-semibold block">Michael Mulligan</span>
-                <span className="text-[10px] text-muted-foreground">Midfielder</span>
-              </div>
+          <div className="flex flex-col items-center p-1.5 border border-border/50 rounded hover:bg-accent/50 hover:border-primary/30 transition-all cursor-pointer">
+            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 border border-primary/30 flex items-center justify-center mb-1">
+              <span className="text-[10px] font-bold text-primary">MM</span>
             </div>
-            <div className="px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30">
-              <span className="text-[10px] text-emerald-600 font-medium">Active</span>
+            <span className="text-[10px] font-semibold text-center">Michael Mulligan</span>
+            <span className="text-[9px] text-muted-foreground">Midfielder</span>
+            <div className="px-1.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 mt-1">
+              <span className="text-[9px] text-emerald-600 font-medium">Active</span>
             </div>
           </div>
-          <div className="flex items-center justify-between p-2 border border-border/50 rounded hover:bg-accent/50 hover:border-primary/30 transition-all cursor-pointer group">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 border border-primary/30 flex items-center justify-center">
-                <span className="text-xs font-bold text-primary">JS</span>
-              </div>
-              <div>
-                <span className="text-xs font-semibold block">Jaroslav Svoboda</span>
-                <span className="text-[10px] text-muted-foreground">Defender</span>
-              </div>
+          <div className="flex flex-col items-center p-1.5 border border-border/50 rounded hover:bg-accent/50 hover:border-primary/30 transition-all cursor-pointer">
+            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 border border-primary/30 flex items-center justify-center mb-1">
+              <span className="text-[10px] font-bold text-primary">JS</span>
             </div>
-            <div className="px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30">
-              <span className="text-[10px] text-emerald-600 font-medium">Active</span>
+            <span className="text-[10px] font-semibold text-center">Jaroslav Svoboda</span>
+            <span className="text-[9px] text-muted-foreground">Defender</span>
+            <div className="px-1.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 mt-1">
+              <span className="text-[9px] text-emerald-600 font-medium">Active</span>
             </div>
           </div>
         </div>
@@ -229,43 +218,35 @@ export const StaffOverview = ({ isAdmin }: { isAdmin: boolean }) => {
         <StaffSchedule isAdmin={isAdmin} />
       </Widget>
 
-      {/* Financial Projection - Medium */}
+      {/* Financial Projection - Wide */}
       <Widget
         id="financial"
         title="Financial Projection"
         icon={TrendingUp}
-        size="medium"
+        size="wide"
         expanded={expandedWidget === "financial"}
         onToggleExpand={() => toggleWidget("financial")}
       >
-        <div className="space-y-2">
-          <div className="grid grid-cols-2 gap-2">
-            <div className="text-center p-2 bg-gradient-to-br from-emerald-500/10 to-emerald-600/10 rounded border border-emerald-500/30">
-              <div className="text-lg font-bold text-emerald-600">€127k</div>
-              <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Revenue</div>
-            </div>
-            <div className="text-center p-2 bg-gradient-to-br from-rose-500/10 to-rose-600/10 rounded border border-rose-500/30">
-              <div className="text-lg font-bold text-rose-600">€89k</div>
-              <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Expenses</div>
-            </div>
+        <div className="grid grid-cols-5 gap-2 h-full">
+          <div className="text-center p-2 bg-gradient-to-br from-emerald-500/10 to-emerald-600/10 rounded border border-emerald-500/30 flex flex-col justify-center">
+            <div className="text-base font-bold text-emerald-600">€127k</div>
+            <div className="text-[9px] text-muted-foreground uppercase tracking-wider">Revenue</div>
           </div>
-          <div className="text-center p-2 bg-gradient-to-br from-primary/20 to-primary/5 rounded border border-primary/40">
-            <div className="text-xl font-bold text-primary">€38,000</div>
-            <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Q4 Profit</div>
+          <div className="text-center p-2 bg-gradient-to-br from-rose-500/10 to-rose-600/10 rounded border border-rose-500/30 flex flex-col justify-center">
+            <div className="text-base font-bold text-rose-600">€89k</div>
+            <div className="text-[9px] text-muted-foreground uppercase tracking-wider">Expenses</div>
           </div>
-          <div className="space-y-1">
-            <div className="flex justify-between items-center p-1.5 rounded hover:bg-accent/30 transition-colors">
-              <span className="text-[10px] text-muted-foreground uppercase">Commissions</span>
-              <span className="font-semibold text-xs">€45k</span>
-            </div>
-            <div className="flex justify-between items-center p-1.5 rounded hover:bg-accent/30 transition-colors">
-              <span className="text-[10px] text-muted-foreground uppercase">Consulting</span>
-              <span className="font-semibold text-xs">€32k</span>
-            </div>
-            <div className="flex justify-between items-center p-1.5 rounded hover:bg-accent/30 transition-colors">
-              <span className="text-[10px] text-muted-foreground uppercase">Partnerships</span>
-              <span className="font-semibold text-xs">€50k</span>
-            </div>
+          <div className="text-center p-2 bg-gradient-to-br from-primary/20 to-primary/5 rounded border border-primary/40 flex flex-col justify-center">
+            <div className="text-base font-bold text-primary">€38k</div>
+            <div className="text-[9px] text-muted-foreground uppercase tracking-wider">Q4 Profit</div>
+          </div>
+          <div className="text-center p-2 bg-gradient-to-br from-amber-500/10 to-amber-600/10 rounded border border-amber-500/30 flex flex-col justify-center">
+            <div className="text-base font-bold text-amber-600">€45k</div>
+            <div className="text-[9px] text-muted-foreground uppercase tracking-wider">Commissions</div>
+          </div>
+          <div className="text-center p-2 bg-gradient-to-br from-blue-500/10 to-blue-600/10 rounded border border-blue-500/30 flex flex-col justify-center">
+            <div className="text-base font-bold text-blue-600">€32k</div>
+            <div className="text-[9px] text-muted-foreground uppercase tracking-wider">Consulting</div>
           </div>
         </div>
       </Widget>
