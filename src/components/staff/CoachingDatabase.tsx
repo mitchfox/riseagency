@@ -681,14 +681,24 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
         <h2 className="text-2xl font-bold">Coaching Database</h2>
       </div>
 
-      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TableType)}>
-        <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-1">
-          {Object.entries(tableConfigs).map(([key, config]) => (
-            <TabsTrigger key={key} value={key} className="text-xs md:text-sm">
-              {config.label}
-            </TabsTrigger>
-          ))}
-        </TabsList>
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TableType)} className="space-y-6">
+        <ScrollArea className="w-full">
+          <TabsList className="inline-flex h-auto w-full flex-wrap gap-2 bg-transparent p-0">
+            {Object.entries(tableConfigs).map(([key, config]) => {
+              const Icon = config.icon;
+              return (
+                <TabsTrigger 
+                  key={key} 
+                  value={key} 
+                  className="flex items-center gap-2 px-4 py-2.5 text-sm data-[state=active]:shadow-md rounded-lg"
+                >
+                  <Icon className="w-4 h-4" />
+                  <span className="whitespace-nowrap">{config.label}</span>
+                </TabsTrigger>
+              );
+            })}
+          </TabsList>
+        </ScrollArea>
 
         {Object.entries(tableConfigs).map(([key, config]) => (
           <TabsContent key={key} value={key} className="space-y-4">

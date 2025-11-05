@@ -68,6 +68,14 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
     email: "",
     position: "",
     club: "",
+    club_logo: "",
+    age: 0,
+    nationality: "",
+    bio: "",
+    image_url: "",
+    category: "",
+    representation_status: "",
+    visible_on_stars_page: false,
   });
   const [tacticalAnalyses, setTacticalAnalyses] = useState<Record<string, any[]>>({});
   const [playerPrograms, setPlayerPrograms] = useState<Record<string, any[]>>({});
@@ -215,6 +223,14 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       email: player.email || "",
       position: player.position,
       club: player.club || "",
+      club_logo: player.club_logo || "",
+      age: player.age,
+      nationality: player.nationality,
+      bio: player.bio || "",
+      image_url: player.image_url || "",
+      category: player.category || "",
+      representation_status: player.representation_status || "",
+      visible_on_stars_page: player.visible_on_stars_page || false,
     });
     setIsEditDialogOpen(true);
   };
@@ -231,6 +247,14 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
           email: formData.email || null,
           position: formData.position,
           club: formData.club || null,
+          club_logo: formData.club_logo || null,
+          age: formData.age,
+          nationality: formData.nationality,
+          bio: formData.bio || null,
+          image_url: formData.image_url || null,
+          category: formData.category || null,
+          representation_status: formData.representation_status || null,
+          visible_on_stars_page: formData.visible_on_stars_page,
         })
         .eq("id", editingPlayer.id);
 
@@ -1065,7 +1089,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       />
 
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit Player</DialogTitle>
           </DialogHeader>
@@ -1079,6 +1103,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                 required
               />
             </div>
+            
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -1086,17 +1111,43 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                 type="email"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                placeholder="player@example.com"
               />
             </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="position">Position</Label>
+                <Input
+                  id="position"
+                  value={formData.position}
+                  onChange={(e) => setFormData({ ...formData, position: e.target.value })}
+                  required
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="age">Age</Label>
+                <Input
+                  id="age"
+                  type="number"
+                  value={formData.age}
+                  onChange={(e) => setFormData({ ...formData, age: parseInt(e.target.value) || 0 })}
+                  required
+                />
+              </div>
+            </div>
+            
             <div className="space-y-2">
-              <Label htmlFor="position">Position</Label>
+              <Label htmlFor="nationality">Nationality</Label>
               <Input
-                id="position"
-                value={formData.position}
-                onChange={(e) => setFormData({ ...formData, position: e.target.value })}
+                id="nationality"
+                value={formData.nationality}
+                onChange={(e) => setFormData({ ...formData, nationality: e.target.value })}
                 required
               />
             </div>
+            
             <div className="space-y-2">
               <Label htmlFor="club">Club</Label>
               <Input
@@ -1105,7 +1156,70 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                 onChange={(e) => setFormData({ ...formData, club: e.target.value })}
               />
             </div>
-            <Button type="submit">Update Player</Button>
+            
+            <div className="space-y-2">
+              <Label htmlFor="club_logo">Club Logo URL</Label>
+              <Input
+                id="club_logo"
+                value={formData.club_logo}
+                onChange={(e) => setFormData({ ...formData, club_logo: e.target.value })}
+                placeholder="https://example.com/logo.png"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="image_url">Player Image URL</Label>
+              <Input
+                id="image_url"
+                value={formData.image_url}
+                onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
+                placeholder="https://example.com/player.png"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="category">Category</Label>
+              <Input
+                id="category"
+                value={formData.category}
+                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                placeholder="e.g., Professional, Youth"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="representation_status">Representation Status</Label>
+              <Input
+                id="representation_status"
+                value={formData.representation_status}
+                onChange={(e) => setFormData({ ...formData, representation_status: e.target.value })}
+                placeholder="e.g., represented, mandated, other"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="bio">Bio (JSON or text)</Label>
+              <Textarea
+                id="bio"
+                value={formData.bio}
+                onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
+                rows={3}
+                placeholder="Bio text or JSON"
+              />
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="visible_on_stars_page"
+                checked={formData.visible_on_stars_page}
+                onChange={(e) => setFormData({ ...formData, visible_on_stars_page: e.target.checked })}
+                className="h-4 w-4"
+              />
+              <Label htmlFor="visible_on_stars_page">Visible on Stars Page</Label>
+            </div>
+            
+            <Button type="submit" className="w-full">Update Player</Button>
           </form>
         </DialogContent>
       </Dialog>
