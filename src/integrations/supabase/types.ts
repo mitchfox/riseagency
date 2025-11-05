@@ -621,6 +621,42 @@ export type Database = {
           },
         ]
       }
+      legal_documents: {
+        Row: {
+          category: string
+          content: string | null
+          created_at: string
+          description: string | null
+          effective_date: string | null
+          file_url: string | null
+          id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          content?: string | null
+          created_at?: string
+          description?: string | null
+          effective_date?: string | null
+          file_url?: string | null
+          id?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          content?: string | null
+          created_at?: string
+          description?: string | null
+          effective_date?: string | null
+          file_url?: string | null
+          id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       marketing_templates: {
         Row: {
           created_at: string
