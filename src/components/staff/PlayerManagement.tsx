@@ -69,11 +69,15 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
     position: "",
     club: "",
   });
+  const [tacticalAnalyses, setTacticalAnalyses] = useState<Record<string, any[]>>({});
+  const [playerPrograms, setPlayerPrograms] = useState<Record<string, any[]>>({});
 
   useEffect(() => {
     fetchPlayers();
     fetchAllAnalyses();
     fetchAllInvoices();
+    fetchTacticalAnalyses();
+    fetchAllPrograms();
   }, []);
 
   const fetchPlayers = async () => {
@@ -146,6 +150,61 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       setPlayerInvoices(invoicesMap);
     } catch (error: any) {
       toast.error("Failed to fetch invoices: " + error.message);
+    }
+  };
+
+  const fetchTacticalAnalyses = async () => {
+    try {
+      const { data: playerAnalysisLinks, error: linksError } = await supabase
+        .from("player_analysis")
+        .select("player_id, analysis_writer_id");
+
+      if (linksError) throw linksError;
+
+      const { data: analyses, error: analysesError } = await supabase
+        .from("analyses")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (analysesError) throw analysesError;
+
+      const tacticalMap: Record<string, any[]> = {};
+      playerAnalysisLinks?.forEach(link => {
+        if (link.analysis_writer_id) {
+          const analysis = analyses?.find(a => a.id === link.analysis_writer_id);
+          if (analysis) {
+            if (!tacticalMap[link.player_id]) {
+              tacticalMap[link.player_id] = [];
+            }
+            tacticalMap[link.player_id].push(analysis);
+          }
+        }
+      });
+      setTacticalAnalyses(tacticalMap);
+    } catch (error: any) {
+      toast.error("Failed to fetch tactical analyses: " + error.message);
+    }
+  };
+
+  const fetchAllPrograms = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("player_programs")
+        .select("*")
+        .order("display_order", { ascending: true });
+
+      if (error) throw error;
+
+      const programsMap: Record<string, any[]> = {};
+      data?.forEach(program => {
+        if (!programsMap[program.player_id]) {
+          programsMap[program.player_id] = [];
+        }
+        programsMap[program.player_id].push(program);
+      });
+      setPlayerPrograms(programsMap);
+    } catch (error: any) {
+      toast.error("Failed to fetch programs: " + error.message);
     }
   };
 
@@ -579,6 +638,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
               </TabsList>
 
               <TabsContent value="analysis" className="space-y-4">
+                {/* Performance Analysis */}
                 <Card>
                   <CardHeader>
                     <div className="flex items-center justify-between">
@@ -643,6 +703,62 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                     )}
                   </CardContent>
                 </Card>
+
+                {/* Tactical Analysis (Pre-match, Post-match, Concepts) */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Tactical Analysis</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {tacticalAnalyses[selectedPlayerId]?.length > 0 ? (
+                      <div className="space-y-3">
+                        {tacticalAnalyses[selectedPlayerId].map((analysis) => (
+                          <div
+                            key={analysis.id}
+                            className="p-4 border rounded-lg hover:bg-secondary/30 transition-colors"
+                          >
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <span className="text-xs px-2 py-1 rounded bg-primary/20 text-primary font-medium">
+                                    {analysis.analysis_type}
+                                  </span>
+                                  {analysis.match_date && (
+                                    <span className="text-sm text-muted-foreground">
+                                      {new Date(analysis.match_date).toLocaleDateString()}
+                                    </span>
+                                  )}
+                                </div>
+                                <h4 className="font-medium mb-1">{analysis.title || 'Untitled'}</h4>
+                                {analysis.home_team && analysis.away_team && (
+                                  <p className="text-sm text-muted-foreground">
+                                    {analysis.home_team} vs {analysis.away_team}
+                                    {analysis.home_score !== null && analysis.away_score !== null && (
+                                      <span className="ml-2 font-medium">
+                                        ({analysis.home_score} - {analysis.away_score})
+                                      </span>
+                                    )}
+                                  </p>
+                                )}
+                              </div>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => window.open(`/analysis/${analysis.id}`, '_blank')}
+                              >
+                                View
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-center text-muted-foreground py-8">
+                        No tactical analysis available yet.
+                      </p>
+                    )}
+                  </CardContent>
+                </Card>
               </TabsContent>
 
               <TabsContent value="programming">
@@ -664,9 +780,48 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-center text-muted-foreground py-8">
-                      Click "Manage Programs" to view and edit training programs for this player.
-                    </p>
+                    {playerPrograms[selectedPlayerId]?.length > 0 ? (
+                      <div className="space-y-3">
+                        {playerPrograms[selectedPlayerId].map((program) => (
+                          <div
+                            key={program.id}
+                            className="p-4 border rounded-lg hover:bg-secondary/30 transition-colors cursor-pointer"
+                            onClick={() => {
+                              setSelectedProgrammingPlayerId(selectedPlayerId!);
+                              setSelectedProgrammingPlayerName(selectedPlayer!.name);
+                              setIsProgrammingDialogOpen(true);
+                            }}
+                          >
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <h4 className="font-medium">{program.program_name}</h4>
+                                  {program.is_current && (
+                                    <span className="text-xs px-2 py-1 rounded bg-primary/20 text-primary font-medium">
+                                      Current
+                                    </span>
+                                  )}
+                                </div>
+                                {program.phase_name && (
+                                  <p className="text-sm text-muted-foreground">
+                                    Phase: {program.phase_name}
+                                  </p>
+                                )}
+                                {program.phase_dates && (
+                                  <p className="text-xs text-muted-foreground mt-1">
+                                    {program.phase_dates}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-center text-muted-foreground py-8">
+                        No programs yet. Click "Manage Programs" to create one.
+                      </p>
+                    )}
                   </CardContent>
                 </Card>
               </TabsContent>
@@ -674,66 +829,83 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
               <TabsContent value="highlights">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Highlights</CardTitle>
+                    <CardTitle>Video Content</CardTitle>
                   </CardHeader>
                   <CardContent>
                     {selectedPlayer?.highlights ? (
-                      <div className="space-y-4">
-                        {(() => {
-                          try {
-                            const highlights = typeof selectedPlayer.highlights === 'string'
-                              ? JSON.parse(selectedPlayer.highlights)
-                              : selectedPlayer.highlights;
-                            
-                            const matchHighlights = highlights.matchHighlights || [];
-                            const bestClips = highlights.bestClips || [];
+                      <Tabs defaultValue="match-highlights" className="w-full">
+                        <TabsList className="grid w-full grid-cols-2">
+                          <TabsTrigger value="match-highlights">Match Highlights</TabsTrigger>
+                          <TabsTrigger value="best-clips">Best Clips</TabsTrigger>
+                        </TabsList>
+                        
+                        <TabsContent value="match-highlights" className="mt-4">
+                          {(() => {
+                            try {
+                              const highlights = typeof selectedPlayer.highlights === 'string'
+                                ? JSON.parse(selectedPlayer.highlights)
+                                : selectedPlayer.highlights;
+                              
+                              const matchHighlights = highlights.matchHighlights || [];
 
-                            return (
-                              <>
-                                {matchHighlights.length > 0 && (
-                                  <div>
-                                    <h4 className="font-medium mb-2">Match Highlights</h4>
-                                    <div className="grid grid-cols-2 gap-3">
-                                      {matchHighlights.map((highlight: any, idx: number) => (
-                                        <div key={idx} className="border rounded-lg p-3">
-                                          <video 
-                                            src={highlight.videoUrl}
-                                            controls
-                                            className="w-full h-32 object-cover rounded mb-2"
-                                          />
-                                          <p className="text-sm font-medium">{highlight.name}</p>
-                                        </div>
-                                      ))}
-                                    </div>
+                              if (matchHighlights.length > 0) {
+                                return (
+                                  <div className="grid grid-cols-2 gap-3">
+                                    {matchHighlights.map((highlight: any, idx: number) => (
+                                      <div key={idx} className="border rounded-lg p-3 hover:bg-secondary/30 transition-colors">
+                                        <video 
+                                          src={highlight.videoUrl}
+                                          controls
+                                          className="w-full h-40 object-cover rounded mb-2"
+                                        />
+                                        <p className="text-sm font-medium">{highlight.name}</p>
+                                      </div>
+                                    ))}
                                   </div>
-                                )}
-                                {bestClips.length > 0 && (
-                                  <div>
-                                    <h4 className="font-medium mb-2">Best Clips</h4>
-                                    <div className="grid grid-cols-2 gap-3">
-                                      {bestClips.map((clip: any, idx: number) => (
-                                        <div key={idx} className="border rounded-lg p-3">
-                                          <video 
-                                            src={clip.videoUrl}
-                                            controls
-                                            className="w-full h-32 object-cover rounded mb-2"
-                                          />
-                                          <p className="text-sm font-medium">{clip.name}</p>
-                                        </div>
-                                      ))}
-                                    </div>
+                                );
+                              }
+                              return <p className="text-center text-muted-foreground py-8">No match highlights available</p>;
+                            } catch (e) {
+                              return <p className="text-center text-muted-foreground py-8">No match highlights available</p>;
+                            }
+                          })()}
+                        </TabsContent>
+
+                        <TabsContent value="best-clips" className="mt-4">
+                          {(() => {
+                            try {
+                              const highlights = typeof selectedPlayer.highlights === 'string'
+                                ? JSON.parse(selectedPlayer.highlights)
+                                : selectedPlayer.highlights;
+                              
+                              const bestClips = highlights.bestClips || [];
+
+                              if (bestClips.length > 0) {
+                                return (
+                                  <div className="grid grid-cols-2 gap-3">
+                                    {bestClips.map((clip: any, idx: number) => (
+                                      <div key={idx} className="border rounded-lg p-3 hover:bg-secondary/30 transition-colors">
+                                        <video 
+                                          src={clip.videoUrl}
+                                          controls
+                                          className="w-full h-40 object-cover rounded mb-2"
+                                        />
+                                        <p className="text-sm font-medium">{clip.name}</p>
+                                      </div>
+                                    ))}
                                   </div>
-                                )}
-                              </>
-                            );
-                          } catch (e) {
-                            return <p className="text-center text-muted-foreground">No highlights available</p>;
-                          }
-                        })()}
-                      </div>
+                                );
+                              }
+                              return <p className="text-center text-muted-foreground py-8">No best clips available</p>;
+                            } catch (e) {
+                              return <p className="text-center text-muted-foreground py-8">No best clips available</p>;
+                            }
+                          })()}
+                        </TabsContent>
+                      </Tabs>
                     ) : (
                       <p className="text-center text-muted-foreground py-8">
-                        No highlights uploaded yet.
+                        No video content uploaded yet.
                       </p>
                     )}
                   </CardContent>
@@ -825,6 +997,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
         analysisId={editReportAnalysisId}
         onSuccess={() => {
           fetchAllAnalyses();
+          fetchTacticalAnalyses();
           toast.success(`Performance report ${editReportAnalysisId ? 'updated' : 'created'} successfully`);
           setEditReportAnalysisId(undefined);
         }}
