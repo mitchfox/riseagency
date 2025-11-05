@@ -180,6 +180,57 @@ export type Database = {
           },
         ]
       }
+      club_network_contacts: {
+        Row: {
+          city: string | null
+          club_name: string | null
+          country: string | null
+          created_at: string
+          email: string | null
+          id: string
+          image_url: string | null
+          latitude: number | null
+          longitude: number | null
+          name: string
+          notes: string | null
+          phone: string | null
+          position: string | null
+          updated_at: string
+        }
+        Insert: {
+          city?: string | null
+          club_name?: string | null
+          country?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          image_url?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          name: string
+          notes?: string | null
+          phone?: string | null
+          position?: string | null
+          updated_at?: string
+        }
+        Update: {
+          city?: string | null
+          club_name?: string | null
+          country?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          image_url?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          position?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       coaching_analysis: {
         Row: {
           analysis_type: string | null
