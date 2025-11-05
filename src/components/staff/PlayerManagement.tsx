@@ -666,20 +666,42 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                         {playerAnalyses[selectedPlayerId]?.length > 0 ? (
                           <div className="space-y-6">
                             {playerAnalyses[selectedPlayerId].map((analysis) => {
-                              const getR90Color = (score: number) => {
-                                if (score >= 8) return "text-green-500";
-                                if (score >= 7) return "text-lime-500";
-                                if (score >= 6) return "text-yellow-500";
-                                if (score >= 5) return "text-orange-500";
-                                return "text-red-500";
+                              const getR90ColorClass = (score: number) => {
+                                if (score < 0) return "bg-red-950";
+                                if (score >= 0 && score < 0.2) return "bg-red-600";
+                                if (score >= 0.2 && score < 0.4) return "bg-red-400";
+                                if (score >= 0.4 && score < 0.6) return "bg-orange-700";
+                                if (score >= 0.6 && score < 0.8) return "bg-orange-500";
+                                if (score >= 0.8 && score < 1.0) return "bg-yellow-400";
+                                if (score >= 1.0 && score < 1.4) return "bg-lime-400";
+                                if (score >= 1.4 && score < 1.8) return "bg-green-500";
+                                if (score >= 1.8 && score < 2.5) return "bg-green-700";
+                                return "bg-gold";
+                              };
+
+                              const getR90TextColor = (score: number) => {
+                                if (score < 0) return "text-red-950";
+                                if (score >= 0 && score < 0.2) return "text-red-600";
+                                if (score >= 0.2 && score < 0.4) return "text-red-400";
+                                if (score >= 0.4 && score < 0.6) return "text-orange-700";
+                                if (score >= 0.6 && score < 0.8) return "text-orange-500";
+                                if (score >= 0.8 && score < 1.0) return "text-yellow-600";
+                                if (score >= 1.0 && score < 1.4) return "text-lime-600";
+                                if (score >= 1.4 && score < 1.8) return "text-green-600";
+                                if (score >= 1.8 && score < 2.5) return "text-green-700";
+                                return "text-yellow-600";
                               };
 
                               const getR90Label = (score: number) => {
-                                if (score >= 8) return "Excellent";
-                                if (score >= 7) return "Very Good";
-                                if (score >= 6) return "Good";
-                                if (score >= 5) return "Average";
-                                return "Below Average";
+                                if (score >= 2.5) return "Outstanding";
+                                if (score >= 1.8) return "Excellent";
+                                if (score >= 1.4) return "Very Good";
+                                if (score >= 1.0) return "Good";
+                                if (score >= 0.8) return "Average";
+                                if (score >= 0.6) return "Below Average";
+                                if (score >= 0.4) return "Poor";
+                                if (score >= 0.2) return "Very Poor";
+                                return "Critical";
                               };
 
                               return (
@@ -688,12 +710,12 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                   className="p-6 border rounded-lg bg-gradient-to-br from-secondary/10 to-secondary/30"
                                 >
                                   {/* R90 Score - Main Feature */}
-                                  {analysis.r90_score && (
+                                  {analysis.r90_score !== null && analysis.r90_score !== undefined && (
                                     <div className="flex items-center justify-between mb-6 pb-6 border-b">
                                       <div className="flex items-center gap-6">
                                         <div className="text-center">
-                                          <div className={`text-6xl font-bold ${getR90Color(analysis.r90_score)}`}>
-                                            {analysis.r90_score}
+                                          <div className={`text-6xl font-bold ${getR90TextColor(analysis.r90_score)}`}>
+                                            {analysis.r90_score.toFixed(2)}
                                           </div>
                                           <div className="text-sm font-medium text-muted-foreground mt-1">
                                             R90 Score
@@ -701,11 +723,8 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                         </div>
                                         <div className="h-16 w-px bg-border" />
                                         <div>
-                                          <div className={`text-2xl font-semibold ${getR90Color(analysis.r90_score)}`}>
+                                          <div className={`${getR90ColorClass(analysis.r90_score)} text-white text-2xl font-bold px-4 py-2 rounded-lg`}>
                                             {getR90Label(analysis.r90_score)}
-                                          </div>
-                                          <div className="text-sm text-muted-foreground mt-1">
-                                            Performance Rating
                                           </div>
                                         </div>
                                       </div>
@@ -723,8 +742,8 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                     </div>
                                   )}
                                   
-                                  {/* Match Details */}
-                                  <div className="space-y-3">
+                                  {/* Match Details and Stats */}
+                                  <div className="space-y-4">
                                     <h4 className="text-xl font-semibold">{analysis.opponent}</h4>
                                     <div className="flex flex-wrap items-center gap-4 text-sm">
                                       <div className="flex items-center gap-2">
@@ -748,6 +767,21 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                         </div>
                                       )}
                                     </div>
+                                    
+                                    {/* Advanced Stats */}
+                                    {analysis.striker_stats && Object.keys(analysis.striker_stats).length > 0 && (
+                                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4 pt-4 border-t">
+                                        {Object.entries(analysis.striker_stats).map(([key, value]) => (
+                                          <div key={key} className="text-center p-3 bg-accent/10 rounded-lg">
+                                            <p className="text-xs text-muted-foreground uppercase mb-1">
+                                              {key.replace(/_/g, ' ')}
+                                            </p>
+                                            <p className="text-lg font-bold">{String(value)}</p>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    )}
+                                    
                                     {analysis.notes && (
                                       <p className="text-sm text-muted-foreground mt-3 leading-relaxed">
                                         {analysis.notes}
