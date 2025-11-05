@@ -248,47 +248,49 @@ const ClubNetworkManagement = () => {
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
-            {contacts
-              .filter((contact) => contact.latitude && contact.longitude)
-              .map((contact) => (
-                <Marker
-                  key={contact.id}
-                  position={[contact.latitude!, contact.longitude!]}
-                  icon={createCustomIcon(contact)}
-                  eventHandlers={{
-                    click: () => openEditDialog(contact),
-                  }}
-                >
-                  <Popup>
-                    <div className="min-w-[200px]">
-                      <h3 className="font-bold text-base mb-2">
-                        {contact.club_name || contact.name}
-                      </h3>
-                      <div className="space-y-1 text-sm">
-                        {contact.name && <p><strong>Contact:</strong> {contact.name}</p>}
-                        {contact.position && <p><strong>Position:</strong> {contact.position}</p>}
-                        {contact.email && (
-                          <p><strong>Email:</strong> <a href={`mailto:${contact.email}`} className="text-primary hover:underline">{contact.email}</a></p>
-                        )}
-                        {contact.phone && <p><strong>Phone:</strong> {contact.phone}</p>}
-                        {contact.city && contact.country && (
-                          <p><strong>Location:</strong> {contact.city}, {contact.country}</p>
-                        )}
-                        {contact.notes && (
-                          <p className="mt-2 text-muted-foreground">{contact.notes}</p>
-                        )}
+            <>
+              {contacts
+                .filter((contact) => contact.latitude && contact.longitude)
+                .map((contact) => (
+                  <Marker
+                    key={contact.id}
+                    position={[contact.latitude!, contact.longitude!]}
+                    icon={createCustomIcon(contact)}
+                    eventHandlers={{
+                      click: () => openEditDialog(contact),
+                    }}
+                  >
+                    <Popup>
+                      <div className="min-w-[200px]">
+                        <h3 className="font-bold text-base mb-2">
+                          {contact.club_name || contact.name}
+                        </h3>
+                        <div className="space-y-1 text-sm">
+                          {contact.name && <p><strong>Contact:</strong> {contact.name}</p>}
+                          {contact.position && <p><strong>Position:</strong> {contact.position}</p>}
+                          {contact.email && (
+                            <p><strong>Email:</strong> <a href={`mailto:${contact.email}`} className="text-primary hover:underline">{contact.email}</a></p>
+                          )}
+                          {contact.phone && <p><strong>Phone:</strong> {contact.phone}</p>}
+                          {contact.city && contact.country && (
+                            <p><strong>Location:</strong> {contact.city}, {contact.country}</p>
+                          )}
+                          {contact.notes && (
+                            <p className="mt-2 text-muted-foreground">{contact.notes}</p>
+                          )}
+                        </div>
+                        <Button
+                          size="sm"
+                          className="w-full mt-3"
+                          onClick={() => openEditDialog(contact)}
+                        >
+                          Edit Contact
+                        </Button>
                       </div>
-                      <Button
-                        size="sm"
-                        className="w-full mt-3"
-                        onClick={() => openEditDialog(contact)}
-                      >
-                        Edit Contact
-                      </Button>
-                    </div>
-                  </Popup>
-                </Marker>
-              ))}
+                    </Popup>
+                  </Marker>
+                ))}
+            </>
           </MapContainer>
         </div>
       ) : (
