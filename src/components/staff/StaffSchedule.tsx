@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { format, addDays, startOfWeek, parseISO, isSameDay } from "date-fns";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 
 interface PlayerProgram {
   id: string;
@@ -25,6 +26,7 @@ export const StaffSchedule = ({ isAdmin }: { isAdmin: boolean }) => {
   const [programs, setPrograms] = useState<PlayerProgram[]>([]);
   const [loading, setLoading] = useState(true);
   const [programEndDates, setProgramEndDates] = useState<ProgramEndDate[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchCurrentPrograms();
@@ -32,6 +34,7 @@ export const StaffSchedule = ({ isAdmin }: { isAdmin: boolean }) => {
 
   const fetchCurrentPrograms = async () => {
     try {
+      setError(null);
       const { data, error } = await supabase
         .from("player_programs")
         .select(`
@@ -60,18 +63,27 @@ export const StaffSchedule = ({ isAdmin }: { isAdmin: boolean }) => {
       const endDates: ProgramEndDate[] = [];
       programsWithPlayerNames.forEach((program: PlayerProgram) => {
         if (program.end_date) {
-          endDates.push({
-            date: parseISO(program.end_date),
-            playerName: program.player_name,
-            programName: program.program_name,
-            phaseName: program.phase_name,
-          });
+          try {
+            const parsedDate = parseISO(program.end_date);
+            // Validate the date is valid
+            if (!isNaN(parsedDate.getTime())) {
+              endDates.push({
+                date: parsedDate,
+                playerName: program.player_name,
+                programName: program.program_name,
+                phaseName: program.phase_name,
+              });
+            }
+          } catch (e) {
+            console.error("Invalid date format for program:", program.program_name, e);
+          }
         }
       });
 
       setProgramEndDates(endDates);
     } catch (error: any) {
       console.error("Error fetching programs:", error);
+      setError(error.message || "Failed to load program schedules");
       toast.error("Failed to load program schedules");
     } finally {
       setLoading(false);
@@ -113,8 +125,20 @@ export const StaffSchedule = ({ isAdmin }: { isAdmin: boolean }) => {
     );
   }
 
-  return (
-    <div className="space-y-4">
+  if (error) {
+    return (
+      <div className="py-8 text-center">
+        <p className="text-destructive mb-4">Error loading schedule: {error}</p>
+        <Button onClick={fetchCurrentPrograms} variant="outline">
+          Try Again
+        </Button>
+      </div>
+    );
+  }
+
+  try {
+    return (
+      <div className="space-y-4">
       <div className="flex items-center justify-between">
         <p className="text-muted-foreground">
           Showing next 6 weeks • {programs.length} active program{programs.length !== 1 ? 's' : ''}
@@ -259,4 +283,15 @@ export const StaffSchedule = ({ isAdmin }: { isAdmin: boolean }) => {
       )}
     </div>
   );
+  } catch (renderError: any) {
+    console.error("Error rendering schedule:", renderError);
+    return (
+      <div className="py-8 text-center">
+        <p className="text-destructive mb-4">Error displaying schedule</p>
+        <Button onClick={() => window.location.reload()} variant="outline">
+          Reload Page
+        </Button>
+      </div>
+    );
+  }
 };
