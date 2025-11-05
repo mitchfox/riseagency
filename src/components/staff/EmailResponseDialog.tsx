@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Send, Save, Trash2 } from "lucide-react";
+import { Send, Save, Copy } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 
 interface EmailTemplate {
   id: string;
@@ -92,20 +93,13 @@ export const EmailResponseDialog = ({
     }
   };
 
-  const handleDeleteTemplate = async (id: string, name: string) => {
+  const handleCopyMessage = async (message: string, name: string) => {
     try {
-      const { error } = await supabase
-        .from("email_templates")
-        .delete()
-        .eq("id", id);
-
-      if (error) throw error;
-
-      toast.success(`Template "${name}" deleted`);
-      fetchTemplates();
+      await navigator.clipboard.writeText(message);
+      toast.success(`Message from "${name}" copied to clipboard`);
     } catch (error: any) {
-      console.error("Error deleting template:", error);
-      toast.error("Failed to delete template");
+      console.error("Error copying message:", error);
+      toast.error("Failed to copy message");
     }
   };
 
@@ -153,27 +147,35 @@ export const EmailResponseDialog = ({
           {/* Templates Section */}
           {templates.length > 0 && (
             <div>
-              <Label>Quick Templates</Label>
-              <div className="flex flex-wrap gap-2 mt-2">
+              <Label className="text-base font-semibold">Email Templates</Label>
+              <div className="grid gap-3 mt-3 max-h-[300px] overflow-y-auto pr-2">
                 {templates.map((template) => (
-                  <div key={template.id} className="flex items-center gap-1">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleLoadTemplate(template)}
-                      className="text-xs"
-                    >
-                      {template.name}
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDeleteTemplate(template.id, template.name)}
-                      className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                    >
-                      <Trash2 className="w-3 h-3" />
-                    </Button>
-                  </div>
+                  <Card key={template.id} className="hover:bg-accent/50 transition-colors">
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <button
+                          onClick={() => handleLoadTemplate(template)}
+                          className="flex-1 text-left space-y-2 group"
+                        >
+                          <div className="font-semibold text-sm group-hover:text-primary transition-colors">
+                            {template.name}
+                          </div>
+                          <div className="text-xs text-muted-foreground line-clamp-2">
+                            {template.message}
+                          </div>
+                        </button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleCopyMessage(template.message, template.name)}
+                          className="h-8 w-8 p-0 flex-shrink-0"
+                          title="Copy message"
+                        >
+                          <Copy className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
                 ))}
               </div>
             </div>
