@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Edit, X } from "lucide-react";
+import { getCountryFlagUrl } from "@/lib/countryFlags";
 
 interface Player {
   id: string;
@@ -123,47 +124,66 @@ export const PlayerList = ({ isAdmin }: { isAdmin: boolean }) => {
 
   return (
     <div className="space-y-4">
-      <div className="rounded-md border">
+      <div className="rounded-lg border bg-card overflow-hidden">
         <Table>
           <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Club</TableHead>
-              <TableHead>Club Logo</TableHead>
-              <TableHead>Position</TableHead>
-              <TableHead>Actions</TableHead>
+            <TableRow className="hover:bg-transparent border-b">
+              <TableHead className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Name</TableHead>
+              <TableHead className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Club</TableHead>
+              <TableHead className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Position</TableHead>
+              {isAdmin && <TableHead className="text-xs uppercase tracking-wider text-muted-foreground font-semibold w-20"></TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
             {players.map((player) => {
               const { club, clubLogo } = getClubInfo(player);
               return (
-                <TableRow key={player.id}>
-                  <TableCell className="font-medium">{player.name}</TableCell>
-                  <TableCell>{club || "—"}</TableCell>
-                  <TableCell>
-                    {clubLogo ? (
+                <TableRow key={player.id} className="border-b last:border-0 hover:bg-accent/50">
+                  <TableCell className="py-3">
+                    <div className="flex items-center gap-3">
                       <img
-                        src={clubLogo}
-                        alt={club || "Club"}
-                        className="h-8 w-8 object-contain"
+                        src={getCountryFlagUrl(player.nationality)}
+                        alt={player.nationality}
+                        className="w-6 h-4 object-cover rounded-sm border border-border/50"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                        }}
                       />
-                    ) : (
-                      "—"
-                    )}
+                      <span className="font-medium text-foreground">{player.name}</span>
+                      <span className="text-xs text-muted-foreground">{player.nationality}</span>
+                    </div>
                   </TableCell>
-                  <TableCell>{player.position}</TableCell>
-                  <TableCell>
-                    {isAdmin && (
+                  <TableCell className="py-3">
+                    <div className="flex items-center gap-3">
+                      {clubLogo ? (
+                        <img
+                          src={clubLogo}
+                          alt={club || "Club"}
+                          className="h-6 w-6 object-contain"
+                        />
+                      ) : (
+                        <div className="h-6 w-6 bg-muted rounded-full" />
+                      )}
+                      <span className="text-sm text-foreground">{club || "—"}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell className="py-3">
+                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                      {player.position}
+                    </span>
+                  </TableCell>
+                  {isAdmin && (
+                    <TableCell className="py-3">
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => handleEdit(player)}
+                        className="h-8 w-8 p-0"
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
-                    )}
-                  </TableCell>
+                    </TableCell>
+                  )}
                 </TableRow>
               );
             })}
