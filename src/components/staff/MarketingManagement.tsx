@@ -1,8 +1,14 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Calendar, FileText, Image, Table, Folder, HardDrive, ExternalLink } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Calendar, FileText, Image, Table, Folder, HardDrive, ExternalLink, Upload, Trash2, Play } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const marketingLinks = [
   {
@@ -49,16 +55,145 @@ const marketingLinks = [
   }
 ];
 
+interface GalleryItem {
+  id: string;
+  title: string;
+  description: string | null;
+  file_url: string;
+  file_type: 'image' | 'video';
+  thumbnail_url: string | null;
+  created_at: string;
+}
+
 export const MarketingManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   const [activeTab, setActiveTab] = useState("resources");
+  const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([]);
+  const [showUploadDialog, setShowUploadDialog] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [uploadForm, setUploadForm] = useState({
+    title: '',
+    description: '',
+    file: null as File | null,
+  });
+
+  useEffect(() => {
+    if (activeTab === 'gallery') {
+      fetchGalleryItems();
+    }
+  }, [activeTab]);
+
+  const fetchGalleryItems = async () => {
+    const { data, error } = await supabase
+      .from('marketing_gallery')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Failed to fetch gallery items:', error);
+      return;
+    }
+
+    setGalleryItems((data || []) as GalleryItem[]);
+  };
+
+  const handleFileUpload = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!uploadForm.file || !isAdmin) {
+      toast.error('Please select a file');
+      return;
+    }
+
+    setUploading(true);
+
+    try {
+      // Upload file to storage
+      const fileExt = uploadForm.file.name.split('.').pop();
+      const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+      const filePath = `${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('marketing-gallery')
+        .upload(filePath, uploadForm.file);
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('marketing-gallery')
+        .getPublicUrl(filePath);
+
+      // Determine file type
+      const fileType = uploadForm.file.type.startsWith('video/') ? 'video' : 'image';
+
+      // Save metadata to database
+      const { error: dbError } = await supabase
+        .from('marketing_gallery')
+        .insert([{
+          title: uploadForm.title,
+          description: uploadForm.description || null,
+          file_url: publicUrl,
+          file_type: fileType,
+        }]);
+
+      if (dbError) throw dbError;
+
+      toast.success('File uploaded successfully');
+      setShowUploadDialog(false);
+      setUploadForm({ title: '', description: '', file: null });
+      fetchGalleryItems();
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast.error('Failed to upload file');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleDelete = async (item: GalleryItem) => {
+    if (!isAdmin || !confirm('Are you sure you want to delete this item?')) {
+      return;
+    }
+
+    try {
+      // Extract file path from URL
+      const urlParts = item.file_url.split('/');
+      const filePath = urlParts[urlParts.length - 1];
+
+      // Delete from storage
+      const { error: storageError } = await supabase.storage
+        .from('marketing-gallery')
+        .remove([filePath]);
+
+      if (storageError) console.error('Storage delete error:', storageError);
+
+      // Delete from database
+      const { error: dbError } = await supabase
+        .from('marketing_gallery')
+        .delete()
+        .eq('id', item.id);
+
+      if (dbError) throw dbError;
+
+      toast.success('Item deleted successfully');
+      fetchGalleryItems();
+    } catch (error) {
+      console.error('Delete error:', error);
+      toast.error('Failed to delete item');
+    }
+  };
 
   return (
     <div className="space-y-6">
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="resources">
             <Folder className="w-4 h-4 mr-2" />
             Resources
+          </TabsTrigger>
+          <TabsTrigger value="gallery">
+            <Image className="w-4 h-4 mr-2" />
+            Gallery
           </TabsTrigger>
           <TabsTrigger value="planner">
             <Calendar className="w-4 h-4 mr-2" />
@@ -112,6 +247,86 @@ export const MarketingManagement = ({ isAdmin }: { isAdmin: boolean }) => {
           </Card>
         </TabsContent>
 
+        <TabsContent value="gallery" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <div className="flex justify-between items-center">
+                <div>
+                  <CardTitle>Marketing Gallery</CardTitle>
+                  <CardDescription>Upload and manage images and videos for marketing</CardDescription>
+                </div>
+                {isAdmin && (
+                  <Button onClick={() => setShowUploadDialog(true)}>
+                    <Upload className="w-4 h-4 mr-2" />
+                    Upload Media
+                  </Button>
+                )}
+              </div>
+            </CardHeader>
+            <CardContent>
+              {galleryItems.length === 0 ? (
+                <div className="text-center py-12 text-muted-foreground">
+                  <Image className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                  <p className="text-lg mb-2">No media uploaded yet</p>
+                  <p className="text-sm">Upload images and videos to build your marketing gallery</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {galleryItems.map((item) => (
+                    <Card key={item.id} className="overflow-hidden">
+                      <div className="relative aspect-video bg-muted">
+                        {item.file_type === 'image' ? (
+                          <img
+                            src={item.file_url}
+                            alt={item.title}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="relative w-full h-full">
+                            <video
+                              src={item.file_url}
+                              className="w-full h-full object-cover"
+                              controls
+                            />
+                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                              <Play className="w-12 h-12 text-white opacity-80" />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                      <CardContent className="p-4">
+                        <h3 className="font-semibold mb-1">{item.title}</h3>
+                        {item.description && (
+                          <p className="text-sm text-muted-foreground mb-3">{item.description}</p>
+                        )}
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="flex-1"
+                            onClick={() => window.open(item.file_url, '_blank')}
+                          >
+                            View Full
+                          </Button>
+                          {isAdmin && (
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => handleDelete(item)}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         <TabsContent value="planner" className="space-y-4">
           <Card>
             <CardHeader>
@@ -128,6 +343,69 @@ export const MarketingManagement = ({ isAdmin }: { isAdmin: boolean }) => {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Upload Dialog */}
+      <Dialog open={showUploadDialog} onOpenChange={setShowUploadDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Upload Media</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleFileUpload} className="space-y-4">
+            <div>
+              <Label htmlFor="upload-title">Title *</Label>
+              <Input
+                id="upload-title"
+                value={uploadForm.title}
+                onChange={(e) => setUploadForm({ ...uploadForm, title: e.target.value })}
+                required
+                placeholder="Enter media title"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="upload-description">Description</Label>
+              <Textarea
+                id="upload-description"
+                value={uploadForm.description}
+                onChange={(e) => setUploadForm({ ...uploadForm, description: e.target.value })}
+                placeholder="Optional description"
+                rows={3}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="upload-file">File *</Label>
+              <Input
+                id="upload-file"
+                type="file"
+                accept="image/*,video/*"
+                onChange={(e) => setUploadForm({ ...uploadForm, file: e.target.files?.[0] || null })}
+                required
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Supported: Images (JPG, PNG, GIF, WebP) and Videos (MP4, WebM, MOV)
+              </p>
+            </div>
+
+            <div className="flex justify-end gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setShowUploadDialog(false);
+                  setUploadForm({ title: '', description: '', file: null });
+                }}
+                disabled={uploading}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={uploading}>
+                {uploading ? 'Uploading...' : 'Upload'}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

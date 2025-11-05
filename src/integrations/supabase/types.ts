@@ -657,6 +657,39 @@ export type Database = {
         }
         Relationships: []
       }
+      marketing_gallery: {
+        Row: {
+          created_at: string
+          description: string | null
+          file_type: string
+          file_url: string
+          id: string
+          thumbnail_url: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          file_type: string
+          file_url: string
+          id?: string
+          thumbnail_url?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          file_type?: string
+          file_url?: string
+          id?: string
+          thumbnail_url?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       marketing_templates: {
         Row: {
           created_at: string
