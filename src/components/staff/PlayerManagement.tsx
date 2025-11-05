@@ -188,6 +188,13 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   const selectedPlayer = players.find(p => p.id === selectedPlayerId);
   const selectedPlayerStats = selectedPlayerId ? stats[selectedPlayerId] : null;
 
+  // Group players by representation status in order: represented, mandated, other
+  const groupedPlayers = {
+    represented: players.filter(p => p.representation_status === 'represented'),
+    mandated: players.filter(p => p.representation_status === 'mandated'),
+    other: players.filter(p => p.representation_status === 'other' || !p.representation_status),
+  };
+
   if (loading) {
     return <div className="flex items-center justify-center py-8">Loading players...</div>;
   }
@@ -196,7 +203,56 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
     <div className="flex h-full gap-4">
       {/* Inner Player Sidebar */}
       <div className="w-20 flex flex-col gap-2 overflow-y-auto border-r pr-2">
-        {players.map((player) => (
+        {/* Represented Players */}
+        {groupedPlayers.represented.map((player) => (
+          <button
+            key={player.id}
+            onClick={() => setSelectedPlayerId(player.id)}
+            className={`relative group transition-all ${
+              selectedPlayerId === player.id 
+                ? 'opacity-100 ring-2 ring-primary' 
+                : 'opacity-40 hover:opacity-70'
+            }`}
+            title={player.name}
+          >
+            <Avatar className="w-14 h-14">
+              <AvatarImage src={player.image_url || undefined} alt={player.name} />
+              <AvatarFallback className="text-xs">{player.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+            </Avatar>
+          </button>
+        ))}
+        
+        {/* Gold border separator */}
+        {groupedPlayers.represented.length > 0 && groupedPlayers.mandated.length > 0 && (
+          <div className="h-0.5 bg-gradient-to-r from-transparent via-yellow-500 to-transparent my-2" />
+        )}
+        
+        {/* Mandated Players */}
+        {groupedPlayers.mandated.map((player) => (
+          <button
+            key={player.id}
+            onClick={() => setSelectedPlayerId(player.id)}
+            className={`relative group transition-all ${
+              selectedPlayerId === player.id 
+                ? 'opacity-100 ring-2 ring-primary' 
+                : 'opacity-40 hover:opacity-70'
+            }`}
+            title={player.name}
+          >
+            <Avatar className="w-14 h-14">
+              <AvatarImage src={player.image_url || undefined} alt={player.name} />
+              <AvatarFallback className="text-xs">{player.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+            </Avatar>
+          </button>
+        ))}
+        
+        {/* Gold border separator */}
+        {groupedPlayers.mandated.length > 0 && groupedPlayers.other.length > 0 && (
+          <div className="h-0.5 bg-gradient-to-r from-transparent via-yellow-500 to-transparent my-2" />
+        )}
+        
+        {/* Other Players */}
+        {groupedPlayers.other.map((player) => (
           <button
             key={player.id}
             onClick={() => setSelectedPlayerId(player.id)}
@@ -218,62 +274,206 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       {/* Main Content Area */}
       <div className="flex-1 overflow-y-auto">
         {!selectedPlayerId ? (
-          // Preview Cards Grid
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {players.map((player) => {
-              const playerStats = stats[player.id];
-              return (
-                <Card 
-                  key={player.id} 
-                  className="cursor-pointer hover:shadow-lg transition-all"
-                  onClick={() => setSelectedPlayerId(player.id)}
-                >
-                  <CardHeader className="pb-3">
-                    <div className="flex items-start gap-3">
-                      <Avatar className="w-16 h-16">
-                        <AvatarImage src={player.image_url || undefined} alt={player.name} />
-                        <AvatarFallback>{player.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold truncate">{player.name}</h3>
-                        <p className="text-sm text-muted-foreground">{player.position}</p>
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
-                          <span>{player.age}y</span>
-                          <span>•</span>
-                          <span>{player.nationality}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    {player.club && (
-                      <div className="flex items-center gap-2 text-sm mb-3">
-                        {player.club_logo && (
-                          <img src={player.club_logo} alt="" className="w-5 h-5 object-contain" />
-                        )}
-                        <span className="text-muted-foreground">{player.club}</span>
-                      </div>
-                    )}
-                    {playerStats && (
-                      <div className="grid grid-cols-3 gap-2 text-center text-xs">
-                        <div>
-                          <div className="font-semibold text-lg">{playerStats.goals}</div>
-                          <div className="text-muted-foreground">Goals</div>
-                        </div>
-                        <div>
-                          <div className="font-semibold text-lg">{playerStats.assists}</div>
-                          <div className="text-muted-foreground">Assists</div>
-                        </div>
-                        <div>
-                          <div className="font-semibold text-lg">{playerStats.matches}</div>
-                          <div className="text-muted-foreground">Matches</div>
-                        </div>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              );
-            })}
+          // Preview Cards Grid grouped by representation status
+          <div className="space-y-6">
+            {/* Represented Players */}
+            {groupedPlayers.represented.length > 0 && (
+              <div>
+                <h3 className="text-lg font-semibold mb-4 text-primary">Represented</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {groupedPlayers.represented.map((player) => {
+                    const playerStats = stats[player.id];
+                    return (
+                      <Card 
+                        key={player.id} 
+                        className="cursor-pointer hover:shadow-lg transition-all"
+                        onClick={() => setSelectedPlayerId(player.id)}
+                      >
+                        <CardHeader className="pb-3">
+                          <div className="flex items-start gap-3">
+                            <Avatar className="w-16 h-16">
+                              <AvatarImage src={player.image_url || undefined} alt={player.name} />
+                              <AvatarFallback>{player.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-semibold truncate">{player.name}</h3>
+                              <p className="text-sm text-muted-foreground">{player.position}</p>
+                              <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
+                                <span>{player.age}y</span>
+                                <span>•</span>
+                                <span>{player.nationality}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </CardHeader>
+                        <CardContent>
+                          {player.club && (
+                            <div className="flex items-center gap-2 text-sm mb-3">
+                              {player.club_logo && (
+                                <img src={player.club_logo} alt="" className="w-5 h-5 object-contain" />
+                              )}
+                              <span className="text-muted-foreground">{player.club}</span>
+                            </div>
+                          )}
+                          {playerStats && (
+                            <div className="grid grid-cols-3 gap-2 text-center text-xs">
+                              <div>
+                                <div className="font-semibold text-lg">{playerStats.goals}</div>
+                                <div className="text-muted-foreground">Goals</div>
+                              </div>
+                              <div>
+                                <div className="font-semibold text-lg">{playerStats.assists}</div>
+                                <div className="text-muted-foreground">Assists</div>
+                              </div>
+                              <div>
+                                <div className="font-semibold text-lg">{playerStats.matches}</div>
+                                <div className="text-muted-foreground">Matches</div>
+                              </div>
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Gold Border Separator */}
+            {groupedPlayers.represented.length > 0 && groupedPlayers.mandated.length > 0 && (
+              <div className="h-1 bg-gradient-to-r from-transparent via-yellow-500 to-transparent rounded-full" />
+            )}
+
+            {/* Mandated Players */}
+            {groupedPlayers.mandated.length > 0 && (
+              <div>
+                <h3 className="text-lg font-semibold mb-4 text-primary">Mandated</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {groupedPlayers.mandated.map((player) => {
+                    const playerStats = stats[player.id];
+                    return (
+                      <Card 
+                        key={player.id} 
+                        className="cursor-pointer hover:shadow-lg transition-all"
+                        onClick={() => setSelectedPlayerId(player.id)}
+                      >
+                        <CardHeader className="pb-3">
+                          <div className="flex items-start gap-3">
+                            <Avatar className="w-16 h-16">
+                              <AvatarImage src={player.image_url || undefined} alt={player.name} />
+                              <AvatarFallback>{player.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-semibold truncate">{player.name}</h3>
+                              <p className="text-sm text-muted-foreground">{player.position}</p>
+                              <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
+                                <span>{player.age}y</span>
+                                <span>•</span>
+                                <span>{player.nationality}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </CardHeader>
+                        <CardContent>
+                          {player.club && (
+                            <div className="flex items-center gap-2 text-sm mb-3">
+                              {player.club_logo && (
+                                <img src={player.club_logo} alt="" className="w-5 h-5 object-contain" />
+                              )}
+                              <span className="text-muted-foreground">{player.club}</span>
+                            </div>
+                          )}
+                          {playerStats && (
+                            <div className="grid grid-cols-3 gap-2 text-center text-xs">
+                              <div>
+                                <div className="font-semibold text-lg">{playerStats.goals}</div>
+                                <div className="text-muted-foreground">Goals</div>
+                              </div>
+                              <div>
+                                <div className="font-semibold text-lg">{playerStats.assists}</div>
+                                <div className="text-muted-foreground">Assists</div>
+                              </div>
+                              <div>
+                                <div className="font-semibold text-lg">{playerStats.matches}</div>
+                                <div className="text-muted-foreground">Matches</div>
+                              </div>
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Gold Border Separator */}
+            {groupedPlayers.mandated.length > 0 && groupedPlayers.other.length > 0 && (
+              <div className="h-1 bg-gradient-to-r from-transparent via-yellow-500 to-transparent rounded-full" />
+            )}
+
+            {/* Other Players */}
+            {groupedPlayers.other.length > 0 && (
+              <div>
+                <h3 className="text-lg font-semibold mb-4 text-primary">Other</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {groupedPlayers.other.map((player) => {
+                    const playerStats = stats[player.id];
+                    return (
+                      <Card 
+                        key={player.id} 
+                        className="cursor-pointer hover:shadow-lg transition-all"
+                        onClick={() => setSelectedPlayerId(player.id)}
+                      >
+                        <CardHeader className="pb-3">
+                          <div className="flex items-start gap-3">
+                            <Avatar className="w-16 h-16">
+                              <AvatarImage src={player.image_url || undefined} alt={player.name} />
+                              <AvatarFallback>{player.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-semibold truncate">{player.name}</h3>
+                              <p className="text-sm text-muted-foreground">{player.position}</p>
+                              <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
+                                <span>{player.age}y</span>
+                                <span>•</span>
+                                <span>{player.nationality}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </CardHeader>
+                        <CardContent>
+                          {player.club && (
+                            <div className="flex items-center gap-2 text-sm mb-3">
+                              {player.club_logo && (
+                                <img src={player.club_logo} alt="" className="w-5 h-5 object-contain" />
+                              )}
+                              <span className="text-muted-foreground">{player.club}</span>
+                            </div>
+                          )}
+                          {playerStats && (
+                            <div className="grid grid-cols-3 gap-2 text-center text-xs">
+                              <div>
+                                <div className="font-semibold text-lg">{playerStats.goals}</div>
+                                <div className="text-muted-foreground">Goals</div>
+                              </div>
+                              <div>
+                                <div className="font-semibold text-lg">{playerStats.assists}</div>
+                                <div className="text-muted-foreground">Assists</div>
+                              </div>
+                              <div>
+                                <div className="font-semibold text-lg">{playerStats.matches}</div>
+                                <div className="text-muted-foreground">Matches</div>
+                              </div>
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         ) : (
           // Player Detail View
