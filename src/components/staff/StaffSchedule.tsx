@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { format, addDays, startOfWeek, parseISO, isSameDay } from "date-fns";
+import { format, addDays, startOfWeek, parseISO, isSameDay, addWeeks } from "date-fns";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Calendar } from "lucide-react";
+import { Calendar, ChevronLeft, ChevronRight } from "lucide-react";
 
 interface PlayerProgram {
   id: string;
@@ -28,6 +28,15 @@ interface ProgramEndDate {
   phaseName: string | null;
 }
 
+interface Fixture {
+  id: string;
+  home_team: string;
+  away_team: string;
+  match_date: string;
+  competition: string | null;
+  venue: string | null;
+}
+
 export const StaffSchedule = ({ isAdmin }: { isAdmin: boolean }) => {
   const [programs, setPrograms] = useState<PlayerProgram[]>([]);
   const [loading, setLoading] = useState(true);
@@ -39,11 +48,28 @@ export const StaffSchedule = ({ isAdmin }: { isAdmin: boolean }) => {
   const [availableFixtures, setAvailableFixtures] = useState<any[]>([]);
   const [selectedFixtures, setSelectedFixtures] = useState<Set<number>>(new Set());
   const [allPlayers, setAllPlayers] = useState<any[]>([]);
+  const [weekOffset, setWeekOffset] = useState(0); // 0 = current week, -1 = previous 6 weeks, +1 = next 6 weeks
+  const [fixtures, setFixtures] = useState<Fixture[]>([]);
 
   useEffect(() => {
     fetchCurrentPrograms();
     loadAllPlayers();
+    fetchFixtures();
   }, []);
+
+  const fetchFixtures = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('fixtures')
+        .select('*')
+        .order('match_date');
+      
+      if (error) throw error;
+      setFixtures(data || []);
+    } catch (error) {
+      console.error('Error loading fixtures:', error);
+    }
+  };
 
   const loadAllPlayers = async () => {
     try {
@@ -59,7 +85,7 @@ export const StaffSchedule = ({ isAdmin }: { isAdmin: boolean }) => {
     }
   };
 
-  const fetchFixtures = async () => {
+  const fetchTeamFixtures = async () => {
     if (!selectedFixturePlayer) {
       toast.error('Please select a player');
       return;
@@ -118,6 +144,8 @@ export const StaffSchedule = ({ isAdmin }: { isAdmin: boolean }) => {
       setShowFixturesDialog(false);
       setSelectedFixtures(new Set());
       setAvailableFixtures([]);
+      // Refresh fixtures list
+      fetchFixtures();
     } catch (error: any) {
       console.error('Error adding fixtures:', error);
       toast.error(`Failed to add fixtures: ${error.message}`);
@@ -185,14 +213,21 @@ export const StaffSchedule = ({ isAdmin }: { isAdmin: boolean }) => {
   const generateCalendarWeeks = () => {
     const today = new Date();
     const currentWeekStart = startOfWeek(today, { weekStartsOn: 1 }); // Monday
+    const offsetWeekStart = addWeeks(currentWeekStart, weekOffset * 6); // Move by 6 weeks at a time
     const weeks = [];
 
     for (let i = 0; i < 6; i++) {
-      const weekStart = addDays(currentWeekStart, i * 7);
+      const weekStart = addDays(offsetWeekStart, i * 7);
       weeks.push(weekStart);
     }
 
     return weeks;
+  };
+
+  const getFixturesForDay = (date: Date): Fixture[] => {
+    return fixtures.filter(fixture => 
+      isSameDay(parseISO(fixture.match_date), date)
+    );
   };
 
   const getEndDatesForDay = (date: Date): ProgramEndDate[] => {
@@ -233,9 +268,26 @@ export const StaffSchedule = ({ isAdmin }: { isAdmin: boolean }) => {
       <>
       <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <p className="text-muted-foreground">
-          Showing next 6 weeks • {programs.length} active program{programs.length !== 1 ? 's' : ''}
-        </p>
+        <div className="flex items-center gap-2">
+          <Button 
+            onClick={() => setWeekOffset(weekOffset - 1)} 
+            size="sm" 
+            variant="outline"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </Button>
+          <p className="text-muted-foreground">
+            {weekOffset === 0 ? 'Next' : weekOffset > 0 ? `${weekOffset * 6} weeks ahead` : `${Math.abs(weekOffset * 6)} weeks ago`} 
+            {' '}• {programs.length} active program{programs.length !== 1 ? 's' : ''}
+          </p>
+          <Button 
+            onClick={() => setWeekOffset(weekOffset + 1)} 
+            size="sm" 
+            variant="outline"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </Button>
+        </div>
         <Button onClick={() => setShowFixturesDialog(true)} size="sm" variant="secondary">
           <Calendar className="w-4 h-4 mr-2" />
           Add Fixtures
@@ -303,7 +355,9 @@ export const StaffSchedule = ({ isAdmin }: { isAdmin: boolean }) => {
                 {[0, 1, 2, 3, 4, 5, 6].map((dayOffset) => {
                   const currentDate = addDays(weekStart, dayOffset);
                   const endDates = getEndDatesForDay(currentDate);
+                  const dayFixtures = getFixturesForDay(currentDate);
                   const hasEndDates = endDates.length > 0;
+                  const hasFixtures = dayFixtures.length > 0;
                   const isToday = isSameDay(currentDate, new Date());
 
                   return (
@@ -343,6 +397,27 @@ export const StaffSchedule = ({ isAdmin }: { isAdmin: boolean }) => {
                           ))}
                         </div>
                       )}
+
+                      {/* Fixtures */}
+                      {hasFixtures && (
+                        <div className={`flex flex-col gap-1 ${hasEndDates ? 'mt-1' : 'mt-4'}`}>
+                          {dayFixtures.map((fixture, idx) => (
+                            <div 
+                              key={idx}
+                              className="text-xs p-1 rounded border border-dashed opacity-70"
+                              style={{ 
+                                backgroundColor: 'hsl(0, 0%, 20%)',
+                                borderColor: 'hsl(0, 0%, 40%)',
+                                color: 'hsl(0, 0%, 90%)'
+                              }}
+                              title={`${fixture.home_team} vs ${fixture.away_team}${fixture.competition ? ` - ${fixture.competition}` : ''}`}
+                            >
+                              <div className="truncate">⚽ {fixture.home_team}</div>
+                              <div className="truncate text-[10px]">vs {fixture.away_team}</div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   );
                 })}
@@ -371,11 +446,21 @@ export const StaffSchedule = ({ isAdmin }: { isAdmin: boolean }) => {
           />
           <span>Program Ends</span>
         </div>
+        <div className="flex items-center gap-2">
+          <div 
+            className="w-4 h-4 rounded border border-dashed"
+            style={{ 
+              backgroundColor: 'hsl(0, 0%, 20%)',
+              borderColor: 'hsl(0, 0%, 40%)'
+            }}
+          />
+          <span>Fixtures</span>
+        </div>
       </div>
 
-      {programEndDates.length === 0 && !loading && (
+      {programEndDates.length === 0 && fixtures.length === 0 && !loading && (
         <div className="text-center py-8 text-muted-foreground">
-          No program end dates found in the next 6 weeks
+          No program end dates or fixtures found in the displayed period
         </div>
       )}
     </div>
@@ -404,7 +489,7 @@ export const StaffSchedule = ({ isAdmin }: { isAdmin: boolean }) => {
           </div>
 
           <Button 
-            onClick={fetchFixtures} 
+            onClick={fetchTeamFixtures} 
             disabled={!selectedFixturePlayer || fetchingFixtures}
             className="w-full"
           >
