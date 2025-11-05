@@ -294,6 +294,13 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName, i
       });
       
       console.log('Programming data set successfully');
+      
+      // Reset coaching database save checkboxes when loading a program
+      setSaveToCoachingDB({
+        programme: false,
+        sessions: false,
+        exercises: false
+      });
     } catch (error) {
       console.error('Error loading program details:', error);
       toast.error('Failed to load program details');
@@ -450,6 +457,12 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName, i
           await loadProgramDetails(newProgram.id);
           // Auto-select first session tab
           setSelectedSession('preSessionA');
+          // Reset coaching database save checkboxes for new program
+          setSaveToCoachingDB({
+            programme: false,
+            sessions: false,
+            exercises: false
+          });
           toast.success('Program ready! Add exercises to any session tab.');
         }, 100);
       } else {
@@ -1067,6 +1080,12 @@ Phase Dates: ${programmingData.phaseDates || 'Not specified'}`;
         setTimeout(async () => {
           await loadProgramDetails(newProgram.id);
           setSelectedSession('preSessionA');
+          // Reset coaching database save checkboxes for template-based program
+          setSaveToCoachingDB({
+            programme: false,
+            sessions: false,
+            exercises: false
+          });
           toast.success('Program ready! Add exercises to any session tab.');
         }, 100);
       } else {
@@ -1830,6 +1849,9 @@ Phase Dates: ${programmingData.phaseDates || 'Not specified'}`;
             <div className="flex flex-col sm:flex-row sm:flex-wrap justify-end gap-2 mt-6">
               <div className="flex-1 space-y-2 order-2 sm:order-1">
                 <Label className="text-xs sm:text-sm font-semibold">Save to Coaching Database:</Label>
+                <p className="text-xs text-muted-foreground">
+                  ⚠️ Only check these if you want to save this player's program back to the coaching template database
+                </p>
                 <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
                   <div className="flex items-center space-x-2">
                     <Checkbox
