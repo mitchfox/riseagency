@@ -3,6 +3,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { format, addDays, startOfWeek, parseISO, isSameDay } from "date-fns";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Calendar } from "lucide-react";
 
 interface PlayerProgram {
   id: string;
@@ -27,10 +33,96 @@ export const StaffSchedule = ({ isAdmin }: { isAdmin: boolean }) => {
   const [loading, setLoading] = useState(true);
   const [programEndDates, setProgramEndDates] = useState<ProgramEndDate[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [showFixturesDialog, setShowFixturesDialog] = useState(false);
+  const [selectedFixturePlayer, setSelectedFixturePlayer] = useState("");
+  const [fetchingFixtures, setFetchingFixtures] = useState(false);
+  const [availableFixtures, setAvailableFixtures] = useState<any[]>([]);
+  const [selectedFixtures, setSelectedFixtures] = useState<Set<number>>(new Set());
+  const [allPlayers, setAllPlayers] = useState<any[]>([]);
 
   useEffect(() => {
     fetchCurrentPrograms();
+    loadAllPlayers();
   }, []);
+
+  const loadAllPlayers = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('players')
+        .select('id, name, club')
+        .order('name');
+      
+      if (error) throw error;
+      setAllPlayers(data || []);
+    } catch (error) {
+      console.error('Error loading players:', error);
+    }
+  };
+
+  const fetchFixtures = async () => {
+    if (!selectedFixturePlayer) {
+      toast.error('Please select a player');
+      return;
+    }
+
+    setFetchingFixtures(true);
+    try {
+      const player = allPlayers.find(p => p.id === selectedFixturePlayer);
+      const teamName = player?.club || player?.name;
+
+      const { data, error } = await supabase.functions.invoke('fetch-team-fixtures', {
+        body: { teamName }
+      });
+
+      if (error) throw error;
+
+      if (data.fixtures && data.fixtures.length > 0) {
+        setAvailableFixtures(data.fixtures);
+        toast.success(`Found ${data.fixtures.length} fixtures`);
+      } else {
+        toast.error('No fixtures found for this team');
+        setAvailableFixtures([]);
+      }
+    } catch (error: any) {
+      console.error('Error fetching fixtures:', error);
+      toast.error(`Failed to fetch fixtures: ${error.message}`);
+    } finally {
+      setFetchingFixtures(false);
+    }
+  };
+
+  const addFixturesToDatabase = async () => {
+    if (selectedFixtures.size === 0) {
+      toast.error('Please select at least one fixture');
+      return;
+    }
+
+    const fixturesToAdd = Array.from(selectedFixtures).map(idx => availableFixtures[idx]);
+
+    try {
+      const { error } = await supabase
+        .from('fixtures')
+        .insert(
+          fixturesToAdd.map(fixture => ({
+            home_team: fixture.home_team,
+            away_team: fixture.away_team,
+            match_date: fixture.match_date,
+            competition: fixture.competition || null,
+            venue: fixture.venue || null
+          }))
+        );
+
+      if (error) throw error;
+
+      toast.success(`Added ${selectedFixtures.size} fixture(s) to database`);
+      setShowFixturesDialog(false);
+      setSelectedFixtures(new Set());
+      setAvailableFixtures([]);
+    } catch (error: any) {
+      console.error('Error adding fixtures:', error);
+      toast.error(`Failed to add fixtures: ${error.message}`);
+    }
+  };
 
   const fetchCurrentPrograms = async () => {
     try {
@@ -138,11 +230,16 @@ export const StaffSchedule = ({ isAdmin }: { isAdmin: boolean }) => {
 
   try {
     return (
+      <>
       <div className="space-y-4">
       <div className="flex items-center justify-between">
         <p className="text-muted-foreground">
           Showing next 6 weeks • {programs.length} active program{programs.length !== 1 ? 's' : ''}
         </p>
+        <Button onClick={() => setShowFixturesDialog(true)} size="sm" variant="secondary">
+          <Calendar className="w-4 h-4 mr-2" />
+          Add Fixtures
+        </Button>
       </div>
 
       {/* Calendar Grid */}
@@ -282,6 +379,117 @@ export const StaffSchedule = ({ isAdmin }: { isAdmin: boolean }) => {
         </div>
       )}
     </div>
+
+    {/* Fixtures Dialog */}
+    <Dialog open={showFixturesDialog} onOpenChange={setShowFixturesDialog}>
+      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Add Fixtures to Database</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label>Select Player</Label>
+            <Select value={selectedFixturePlayer} onValueChange={setSelectedFixturePlayer}>
+              <SelectTrigger>
+                <SelectValue placeholder="Choose a player..." />
+              </SelectTrigger>
+              <SelectContent>
+                {allPlayers.map((player) => (
+                  <SelectItem key={player.id} value={player.id}>
+                    {player.name} {player.club ? `(${player.club})` : ''}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <Button 
+            onClick={fetchFixtures} 
+            disabled={!selectedFixturePlayer || fetchingFixtures}
+            className="w-full"
+          >
+            {fetchingFixtures ? 'Fetching Fixtures...' : 'Fetch Fixtures'}
+          </Button>
+
+          {availableFixtures.length > 0 && (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label className="text-base font-semibold">Select Fixtures to Add</Label>
+                <Badge variant="secondary">{selectedFixtures.size} selected</Badge>
+              </div>
+              <div className="space-y-2 max-h-96 overflow-y-auto border rounded-lg p-3">
+                {availableFixtures.map((fixture, idx) => (
+                  <div
+                    key={idx}
+                    className={`p-3 border rounded-lg cursor-pointer transition-colors ${
+                      selectedFixtures.has(idx)
+                        ? 'bg-primary/10 border-primary'
+                        : 'hover:bg-muted'
+                    }`}
+                    onClick={() => {
+                      const newSelected = new Set(selectedFixtures);
+                      if (newSelected.has(idx)) {
+                        newSelected.delete(idx);
+                      } else {
+                        newSelected.add(idx);
+                      }
+                      setSelectedFixtures(newSelected);
+                    }}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="font-semibold text-sm">
+                          {fixture.home_team} vs {fixture.away_team}
+                        </div>
+                        <div className="text-xs text-muted-foreground mt-1">
+                          {new Date(fixture.match_date).toLocaleDateString('en-GB', {
+                            weekday: 'short',
+                            day: 'numeric',
+                            month: 'short',
+                            year: 'numeric'
+                          })}
+                          {fixture.competition && ` • ${fixture.competition}`}
+                        </div>
+                      </div>
+                      <Checkbox
+                        checked={selectedFixtures.has(idx)}
+                        onCheckedChange={() => {
+                          const newSelected = new Set(selectedFixtures);
+                          if (newSelected.has(idx)) {
+                            newSelected.delete(idx);
+                          } else {
+                            newSelected.add(idx);
+                          }
+                          setSelectedFixtures(newSelected);
+                        }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="flex gap-2 justify-end">
+                <Button variant="outline" onClick={() => setShowFixturesDialog(false)}>
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={addFixturesToDatabase}
+                  disabled={selectedFixtures.size === 0}
+                >
+                  Add {selectedFixtures.size} Fixture{selectedFixtures.size !== 1 ? 's' : ''} to Database
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {availableFixtures.length === 0 && selectedFixturePlayer && !fetchingFixtures && (
+            <div className="text-center text-muted-foreground py-8">
+              Click "Fetch Fixtures" to load fixtures for the selected player's team
+            </div>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+    </>
   );
   } catch (renderError: any) {
     console.error("Error rendering schedule:", renderError);
