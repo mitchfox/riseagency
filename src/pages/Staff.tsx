@@ -293,11 +293,21 @@ const Staff = () => {
   );
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col relative overflow-hidden">
+      {/* Smudged marble background overlay */}
+      <div 
+        className="fixed inset-0 opacity-5 pointer-events-none z-0"
+        style={{
+          backgroundImage: 'url(/src/assets/black-marble-smudged.png)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat'
+        }}
+      />
       <Header />
       
       {/* Search Bar */}
-      <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-10">
+      <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-10 relative">
         <div className="container mx-auto px-4 py-3">
           <div className="flex items-center justify-between gap-4">
             <div className="relative flex-1 max-w-md">
@@ -317,9 +327,9 @@ const Staff = () => {
       </div>
 
       {/* Main Layout with Sidebar */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden relative">
         {/* Left Sidebar */}
-        <div className="w-16 border-r bg-muted/30 flex flex-col items-center py-4 gap-2 overflow-y-auto">
+        <div className="w-16 border-r bg-muted/30 backdrop-blur-sm flex flex-col items-center py-4 gap-2 overflow-y-auto relative z-10">
           {filteredSections.map((section) => {
             const Icon = section.icon;
             const isActive = expandedSection === section.id;
@@ -342,7 +352,7 @@ const Staff = () => {
         </div>
 
         {/* Main Content Area */}
-        <main className="flex-1 overflow-y-auto">
+        <main className="flex-1 overflow-y-auto relative z-10">
           {expandedSection ? (
             <div className="container mx-auto px-6 py-6">
               <Card className="animate-in fade-in slide-in-from-top-4 duration-300">

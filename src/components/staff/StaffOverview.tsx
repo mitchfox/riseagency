@@ -17,7 +17,7 @@ interface WidgetProps {
 const Widget = ({ id, title, icon: Icon, size, expanded, onToggleExpand, children }: WidgetProps) => {
   const sizeClasses = {
     small: "col-span-1 md:col-span-1 lg:col-span-1 row-span-1",
-    medium: "col-span-1 md:col-span-2 lg:col-span-2 row-span-1",
+    medium: "col-span-1 md:col-span-2 lg:col-span-2 row-span-2",
     large: "col-span-1 md:col-span-2 lg:col-span-3 row-span-2",
     wide: "col-span-1 md:col-span-2 lg:col-span-3 row-span-1",
   };
@@ -145,19 +145,19 @@ export const StaffOverview = ({ isAdmin }: { isAdmin: boolean }) => {
         onToggleExpand={() => toggleWidget("quicklinks")}
       >
         <div className="space-y-1.5">
-          <Button variant="outline" className="w-full justify-start h-7 text-xs hover:bg-primary/10" size="sm">
+          <Button className="w-full justify-start h-7 text-xs bg-primary hover:bg-primary/90 text-primary-foreground" size="sm">
             Player Portal
           </Button>
-          <Button variant="outline" className="w-full justify-start h-7 text-xs hover:bg-primary/10" size="sm">
+          <Button className="w-full justify-start h-7 text-xs bg-primary hover:bg-primary/90 text-primary-foreground" size="sm">
             Club Network
           </Button>
-          <Button variant="outline" className="w-full justify-start h-7 text-xs hover:bg-primary/10" size="sm">
+          <Button className="w-full justify-start h-7 text-xs bg-primary hover:bg-primary/90 text-primary-foreground" size="sm">
             Analysis Tools
           </Button>
-          <Button variant="outline" className="w-full justify-start h-7 text-xs hover:bg-primary/10" size="sm">
+          <Button className="w-full justify-start h-7 text-xs bg-primary hover:bg-primary/90 text-primary-foreground" size="sm">
             Marketing Hub
           </Button>
-          <Button variant="outline" className="w-full justify-start h-7 text-xs hover:bg-primary/10" size="sm">
+          <Button className="w-full justify-start h-7 text-xs bg-primary hover:bg-primary/90 text-primary-foreground" size="sm">
             Legal Docs
           </Button>
         </div>
@@ -178,10 +178,18 @@ export const StaffOverview = ({ isAdmin }: { isAdmin: boolean }) => {
             <span className="text-[10px] font-semibold text-center">Tyrese Omotoye</span>
             <span className="text-[9px] text-muted-foreground mb-1">Forward</span>
             <div className="flex gap-1 w-full">
-              <Button variant="outline" size="sm" className="h-5 text-[9px] px-1.5 flex-1" onClick={() => window.location.href = '/performance?player=tyrese-omotoye'}>
+              <Button 
+                size="sm" 
+                className="h-5 text-[9px] px-1.5 flex-1 bg-primary hover:bg-primary/90 text-primary-foreground border-0" 
+                onClick={() => window.location.href = '/performance?player=tyrese-omotoye'}
+              >
                 Analysis
               </Button>
-              <Button variant="outline" size="sm" className="h-5 text-[9px] px-1.5 flex-1" onClick={() => window.location.href = '/performance?player=tyrese-omotoye'}>
+              <Button 
+                size="sm" 
+                className="h-5 text-[9px] px-1.5 flex-1 bg-primary hover:bg-primary/90 text-primary-foreground border-0" 
+                onClick={() => window.location.href = '/performance?player=tyrese-omotoye'}
+              >
                 Program
               </Button>
             </div>
@@ -191,10 +199,18 @@ export const StaffOverview = ({ isAdmin }: { isAdmin: boolean }) => {
             <span className="text-[10px] font-semibold text-center">Michael Mulligan</span>
             <span className="text-[9px] text-muted-foreground mb-1">Midfielder</span>
             <div className="flex gap-1 w-full">
-              <Button variant="outline" size="sm" className="h-5 text-[9px] px-1.5 flex-1" onClick={() => window.location.href = '/performance?player=michael-mulligan'}>
+              <Button 
+                size="sm" 
+                className="h-5 text-[9px] px-1.5 flex-1 bg-primary hover:bg-primary/90 text-primary-foreground border-0" 
+                onClick={() => window.location.href = '/performance?player=michael-mulligan'}
+              >
                 Analysis
               </Button>
-              <Button variant="outline" size="sm" className="h-5 text-[9px] px-1.5 flex-1" onClick={() => window.location.href = '/performance?player=michael-mulligan'}>
+              <Button 
+                size="sm" 
+                className="h-5 text-[9px] px-1.5 flex-1 bg-primary hover:bg-primary/90 text-primary-foreground border-0" 
+                onClick={() => window.location.href = '/performance?player=michael-mulligan'}
+              >
                 Program
               </Button>
             </div>
@@ -204,10 +220,18 @@ export const StaffOverview = ({ isAdmin }: { isAdmin: boolean }) => {
             <span className="text-[10px] font-semibold text-center">Jaroslav Svoboda</span>
             <span className="text-[9px] text-muted-foreground mb-1">Defender</span>
             <div className="flex gap-1 w-full">
-              <Button variant="outline" size="sm" className="h-5 text-[9px] px-1.5 flex-1" onClick={() => window.location.href = '/performance?player=jaroslav-svoboda'}>
+              <Button 
+                size="sm" 
+                className="h-5 text-[9px] px-1.5 flex-1 bg-primary hover:bg-primary/90 text-primary-foreground border-0" 
+                onClick={() => window.location.href = '/performance?player=jaroslav-svoboda'}
+              >
                 Analysis
               </Button>
-              <Button variant="outline" size="sm" className="h-5 text-[9px] px-1.5 flex-1" onClick={() => window.location.href = '/performance?player=jaroslav-svoboda'}>
+              <Button 
+                size="sm" 
+                className="h-5 text-[9px] px-1.5 flex-1 bg-primary hover:bg-primary/90 text-primary-foreground border-0" 
+                onClick={() => window.location.href = '/performance?player=jaroslav-svoboda'}
+              >
                 Program
               </Button>
             </div>
@@ -215,16 +239,18 @@ export const StaffOverview = ({ isAdmin }: { isAdmin: boolean }) => {
         </div>
       </Widget>
 
-      {/* Schedule Calendar - Large (spans 2 cols, 2 rows) */}
+      {/* Schedule Calendar - Medium width for better week visibility */}
       <Widget
         id="schedule"
         title="Schedule Calendar"
         icon={Calendar}
-        size="large"
+        size="medium"
         expanded={expandedWidget === "schedule"}
         onToggleExpand={() => toggleWidget("schedule")}
       >
-        <StaffSchedule isAdmin={isAdmin} />
+        <div className="scale-[0.85] origin-top-left -ml-2 -mt-2">
+          <StaffSchedule isAdmin={isAdmin} />
+        </div>
       </Widget>
 
       {/* Financial Projection - Wide */}
