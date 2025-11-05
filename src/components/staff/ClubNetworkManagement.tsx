@@ -248,12 +248,12 @@ const ClubNetworkManagement = () => {
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
-            {contacts.map((contact) => {
-              if (!contact.latitude || !contact.longitude) return null;
-              return (
+            {contacts
+              .filter((contact) => contact.latitude && contact.longitude)
+              .map((contact) => (
                 <Marker
                   key={contact.id}
-                  position={[contact.latitude, contact.longitude]}
+                  position={[contact.latitude!, contact.longitude!]}
                   icon={createCustomIcon(contact)}
                   eventHandlers={{
                     click: () => openEditDialog(contact),
@@ -288,8 +288,7 @@ const ClubNetworkManagement = () => {
                     </div>
                   </Popup>
                 </Marker>
-              );
-            })}
+              ))}
           </MapContainer>
         </div>
       ) : (
