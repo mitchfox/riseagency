@@ -664,43 +664,99 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                       </CardHeader>
                       <CardContent>
                         {playerAnalyses[selectedPlayerId]?.length > 0 ? (
-                          <div className="space-y-3">
-                            {playerAnalyses[selectedPlayerId].map((analysis) => (
-                              <div
-                                key={analysis.id}
-                                className="flex items-center justify-between p-4 border rounded-lg hover:bg-secondary/30 transition-colors"
-                              >
-                                <div>
-                                  <h4 className="font-medium">{analysis.opponent}</h4>
-                                  <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
-                                    <span>{new Date(analysis.analysis_date).toLocaleDateString()}</span>
-                                    {analysis.result && (
-                                      <>
-                                        <span>•</span>
-                                        <span>{analysis.result}</span>
-                                      </>
-                                    )}
-                                    {analysis.r90_score && (
-                                      <>
-                                        <span>•</span>
-                                        <span className="font-medium text-primary">R90: {analysis.r90_score}</span>
-                                      </>
+                          <div className="space-y-6">
+                            {playerAnalyses[selectedPlayerId].map((analysis) => {
+                              const getR90Color = (score: number) => {
+                                if (score >= 8) return "text-green-500";
+                                if (score >= 7) return "text-lime-500";
+                                if (score >= 6) return "text-yellow-500";
+                                if (score >= 5) return "text-orange-500";
+                                return "text-red-500";
+                              };
+
+                              const getR90Label = (score: number) => {
+                                if (score >= 8) return "Excellent";
+                                if (score >= 7) return "Very Good";
+                                if (score >= 6) return "Good";
+                                if (score >= 5) return "Average";
+                                return "Below Average";
+                              };
+
+                              return (
+                                <div
+                                  key={analysis.id}
+                                  className="p-6 border rounded-lg bg-gradient-to-br from-secondary/10 to-secondary/30"
+                                >
+                                  {/* R90 Score - Main Feature */}
+                                  {analysis.r90_score && (
+                                    <div className="flex items-center justify-between mb-6 pb-6 border-b">
+                                      <div className="flex items-center gap-6">
+                                        <div className="text-center">
+                                          <div className={`text-6xl font-bold ${getR90Color(analysis.r90_score)}`}>
+                                            {analysis.r90_score}
+                                          </div>
+                                          <div className="text-sm font-medium text-muted-foreground mt-1">
+                                            R90 Score
+                                          </div>
+                                        </div>
+                                        <div className="h-16 w-px bg-border" />
+                                        <div>
+                                          <div className={`text-2xl font-semibold ${getR90Color(analysis.r90_score)}`}>
+                                            {getR90Label(analysis.r90_score)}
+                                          </div>
+                                          <div className="text-sm text-muted-foreground mt-1">
+                                            Performance Rating
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <Button
+                                        variant="outline"
+                                        onClick={() => {
+                                          setSelectedAnalysisId(analysis.id);
+                                          setSelectedPlayerName(selectedPlayer!.name);
+                                          setIsPerformanceActionsDialogOpen(true);
+                                        }}
+                                      >
+                                        <LineChart className="w-4 h-4 mr-2" />
+                                        View Actions
+                                      </Button>
+                                    </div>
+                                  )}
+                                  
+                                  {/* Match Details */}
+                                  <div className="space-y-3">
+                                    <h4 className="text-xl font-semibold">{analysis.opponent}</h4>
+                                    <div className="flex flex-wrap items-center gap-4 text-sm">
+                                      <div className="flex items-center gap-2">
+                                        <Calendar className="w-4 h-4 text-muted-foreground" />
+                                        <span>{new Date(analysis.analysis_date).toLocaleDateString('en-US', { 
+                                          weekday: 'short', 
+                                          year: 'numeric', 
+                                          month: 'short', 
+                                          day: 'numeric' 
+                                        })}</span>
+                                      </div>
+                                      {analysis.result && (
+                                        <div className="px-3 py-1 bg-primary/10 text-primary rounded-full font-medium">
+                                          {analysis.result}
+                                        </div>
+                                      )}
+                                      {analysis.minutes_played && (
+                                        <div className="flex items-center gap-1 text-muted-foreground">
+                                          <span>{analysis.minutes_played}'</span>
+                                          <span className="text-xs">played</span>
+                                        </div>
+                                      )}
+                                    </div>
+                                    {analysis.notes && (
+                                      <p className="text-sm text-muted-foreground mt-3 leading-relaxed">
+                                        {analysis.notes}
+                                      </p>
                                     )}
                                   </div>
                                 </div>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => {
-                                    setSelectedAnalysisId(analysis.id);
-                                    setSelectedPlayerName(selectedPlayer!.name);
-                                    setIsPerformanceActionsDialogOpen(true);
-                                  }}
-                                >
-                                  View Actions
-                                </Button>
-                              </div>
-                            ))}
+                              );
+                            })}
                           </div>
                         ) : (
                           <p className="text-center text-muted-foreground py-8">
