@@ -664,7 +664,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                       </CardHeader>
                       <CardContent>
                         {playerAnalyses[selectedPlayerId]?.length > 0 ? (
-                          <div className="space-y-6">
+                          <div className="space-y-3">
                             {playerAnalyses[selectedPlayerId].map((analysis) => {
                               const getR90ColorClass = (score: number) => {
                                 if (score < 0) return "bg-red-950";
@@ -679,114 +679,68 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                 return "bg-gold";
                               };
 
-                              const getR90TextColor = (score: number) => {
-                                if (score < 0) return "text-red-950";
-                                if (score >= 0 && score < 0.2) return "text-red-600";
-                                if (score >= 0.2 && score < 0.4) return "text-red-400";
-                                if (score >= 0.4 && score < 0.6) return "text-orange-700";
-                                if (score >= 0.6 && score < 0.8) return "text-orange-500";
-                                if (score >= 0.8 && score < 1.0) return "text-yellow-600";
-                                if (score >= 1.0 && score < 1.4) return "text-lime-600";
-                                if (score >= 1.4 && score < 1.8) return "text-green-600";
-                                if (score >= 1.8 && score < 2.5) return "text-green-700";
-                                return "text-yellow-600";
-                              };
-
-                              const getR90Label = (score: number) => {
-                                if (score >= 2.5) return "Outstanding";
-                                if (score >= 1.8) return "Excellent";
-                                if (score >= 1.4) return "Very Good";
-                                if (score >= 1.0) return "Good";
-                                if (score >= 0.8) return "Average";
-                                if (score >= 0.6) return "Below Average";
-                                if (score >= 0.4) return "Poor";
-                                if (score >= 0.2) return "Very Poor";
-                                return "Critical";
-                              };
-
                               return (
                                 <div
                                   key={analysis.id}
-                                  className="p-6 border rounded-lg bg-gradient-to-br from-secondary/10 to-secondary/30"
+                                  className={`${analysis.r90_score !== null && analysis.r90_score !== undefined ? getR90ColorClass(analysis.r90_score) : 'bg-secondary'} rounded-lg p-4 text-white`}
                                 >
-                                  {/* R90 Score - Main Feature */}
-                                  {analysis.r90_score !== null && analysis.r90_score !== undefined && (
-                                    <div className="flex items-center justify-between mb-6 pb-6 border-b">
-                                      <div className="flex items-center gap-6">
-                                        <div className="text-center">
-                                          <div className={`text-6xl font-bold ${getR90TextColor(analysis.r90_score)}`}>
+                                  <div className="flex items-center justify-between gap-4">
+                                    {/* Left: R90 Score & Match Info */}
+                                    <div className="flex items-center gap-4 flex-1 min-w-0">
+                                      {analysis.r90_score !== null && analysis.r90_score !== undefined && (
+                                        <div className="text-center flex-shrink-0">
+                                          <div className="text-4xl font-bold">
                                             {analysis.r90_score.toFixed(2)}
                                           </div>
-                                          <div className="text-sm font-medium text-muted-foreground mt-1">
-                                            R90 Score
-                                          </div>
-                                        </div>
-                                        <div className="h-16 w-px bg-border" />
-                                        <div>
-                                          <div className={`${getR90ColorClass(analysis.r90_score)} text-white text-2xl font-bold px-4 py-2 rounded-lg`}>
-                                            {getR90Label(analysis.r90_score)}
-                                          </div>
-                                        </div>
-                                      </div>
-                                      <Button
-                                        variant="outline"
-                                        onClick={() => {
-                                          setSelectedAnalysisId(analysis.id);
-                                          setSelectedPlayerName(selectedPlayer!.name);
-                                          setIsPerformanceActionsDialogOpen(true);
-                                        }}
-                                      >
-                                        <LineChart className="w-4 h-4 mr-2" />
-                                        View Actions
-                                      </Button>
-                                    </div>
-                                  )}
-                                  
-                                  {/* Match Details and Stats */}
-                                  <div className="space-y-4">
-                                    <h4 className="text-xl font-semibold">{analysis.opponent}</h4>
-                                    <div className="flex flex-wrap items-center gap-4 text-sm">
-                                      <div className="flex items-center gap-2">
-                                        <Calendar className="w-4 h-4 text-muted-foreground" />
-                                        <span>{new Date(analysis.analysis_date).toLocaleDateString('en-US', { 
-                                          weekday: 'short', 
-                                          year: 'numeric', 
-                                          month: 'short', 
-                                          day: 'numeric' 
-                                        })}</span>
-                                      </div>
-                                      {analysis.result && (
-                                        <div className="px-3 py-1 bg-primary/10 text-primary rounded-full font-medium">
-                                          {analysis.result}
+                                          <div className="text-xs opacity-80">R90</div>
                                         </div>
                                       )}
-                                      {analysis.minutes_played && (
-                                        <div className="flex items-center gap-1 text-muted-foreground">
-                                          <span>{analysis.minutes_played}'</span>
-                                          <span className="text-xs">played</span>
+                                      
+                                      <div className="border-l border-white/20 pl-4 flex-1 min-w-0">
+                                        <h4 className="text-lg font-semibold truncate">{analysis.opponent}</h4>
+                                        <div className="flex flex-wrap items-center gap-3 text-sm opacity-90 mt-1">
+                                          <span>{new Date(analysis.analysis_date).toLocaleDateString('en-GB')}</span>
+                                          {analysis.result && (
+                                            <>
+                                              <span>•</span>
+                                              <span>{analysis.result}</span>
+                                            </>
+                                          )}
+                                          {analysis.minutes_played && (
+                                            <>
+                                              <span>•</span>
+                                              <span>{analysis.minutes_played} min</span>
+                                            </>
+                                          )}
                                         </div>
-                                      )}
+                                        
+                                        {/* Advanced Stats - Compact Single/Two Line */}
+                                        {analysis.striker_stats && Object.keys(analysis.striker_stats).length > 0 && (
+                                          <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs opacity-80 mt-2">
+                                            {Object.entries(analysis.striker_stats).map(([key, value]) => (
+                                              <span key={key}>
+                                                <span className="font-medium">{key.replace(/_/g, ' ')}</span>: {String(value)}
+                                              </span>
+                                            ))}
+                                          </div>
+                                        )}
+                                      </div>
                                     </div>
                                     
-                                    {/* Advanced Stats */}
-                                    {analysis.striker_stats && Object.keys(analysis.striker_stats).length > 0 && (
-                                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4 pt-4 border-t">
-                                        {Object.entries(analysis.striker_stats).map(([key, value]) => (
-                                          <div key={key} className="text-center p-3 bg-accent/10 rounded-lg">
-                                            <p className="text-xs text-muted-foreground uppercase mb-1">
-                                              {key.replace(/_/g, ' ')}
-                                            </p>
-                                            <p className="text-lg font-bold">{String(value)}</p>
-                                          </div>
-                                        ))}
-                                      </div>
-                                    )}
-                                    
-                                    {analysis.notes && (
-                                      <p className="text-sm text-muted-foreground mt-3 leading-relaxed">
-                                        {analysis.notes}
-                                      </p>
-                                    )}
+                                    {/* Right: Action Button */}
+                                    <Button
+                                      variant="secondary"
+                                      size="sm"
+                                      onClick={() => {
+                                        setSelectedAnalysisId(analysis.id);
+                                        setSelectedPlayerName(selectedPlayer!.name);
+                                        setIsPerformanceActionsDialogOpen(true);
+                                      }}
+                                      className="flex-shrink-0"
+                                    >
+                                      <LineChart className="w-4 h-4 mr-2" />
+                                      Actions
+                                    </Button>
                                   </div>
                                 </div>
                               );
