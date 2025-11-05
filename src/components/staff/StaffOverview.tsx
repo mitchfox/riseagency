@@ -174,96 +174,6 @@ export const StaffOverview = ({ isAdmin }: { isAdmin: boolean }) => {
         </div>
       </Widget>
 
-      {/* Represented Players - Wide */}
-      <Widget
-        id="represented"
-        title="Represented Players"
-        icon={Users}
-        size="wide"
-        expanded={expandedWidget === "represented"}
-        onToggleExpand={() => toggleWidget("represented")}
-      >
-        <div className="grid grid-cols-3 gap-2">
-          <div className="flex flex-col p-2 border border-border/50 rounded hover:bg-accent/50 hover:border-primary/30 transition-all group">
-            <img src="/players/tyrese-omotoye.png" alt="Tyrese Omotoye" className="w-full h-14 object-cover border border-primary/30 mb-1" />
-            <span className="text-[10px] font-semibold text-center">Tyrese Omotoye</span>
-            <span className="text-[9px] text-muted-foreground mb-1 text-center">Forward</span>
-            <div className="flex gap-1 w-full">
-              <Button 
-                size="sm" 
-                className="h-5 text-[9px] px-1.5 flex-1 bg-primary hover:bg-primary/90 text-primary-foreground border-0" 
-                onClick={() => window.location.href = '/performance?player=tyrese-omotoye'}
-              >
-                Analysis
-              </Button>
-              <Button 
-                size="sm" 
-                className="h-5 text-[9px] px-1.5 flex-1 bg-primary hover:bg-primary/90 text-primary-foreground border-0" 
-                onClick={() => window.location.href = '/performance?player=tyrese-omotoye'}
-              >
-                Program
-              </Button>
-            </div>
-          </div>
-          <div className="flex flex-col p-2 border border-border/50 rounded hover:bg-accent/50 hover:border-primary/30 transition-all group">
-            <img src="/players/michael-mulligan.png" alt="Michael Mulligan" className="w-full h-14 object-cover border border-primary/30 mb-1" />
-            <span className="text-[10px] font-semibold text-center">Michael Mulligan</span>
-            <span className="text-[9px] text-muted-foreground mb-1 text-center">Midfielder</span>
-            <div className="flex gap-1 w-full">
-              <Button 
-                size="sm" 
-                className="h-5 text-[9px] px-1.5 flex-1 bg-primary hover:bg-primary/90 text-primary-foreground border-0" 
-                onClick={() => window.location.href = '/performance?player=michael-mulligan'}
-              >
-                Analysis
-              </Button>
-              <Button 
-                size="sm" 
-                className="h-5 text-[9px] px-1.5 flex-1 bg-primary hover:bg-primary/90 text-primary-foreground border-0" 
-                onClick={() => window.location.href = '/performance?player=michael-mulligan'}
-              >
-                Program
-              </Button>
-            </div>
-          </div>
-          <div className="flex flex-col p-2 border border-border/50 rounded hover:bg-accent/50 hover:border-primary/30 transition-all group">
-            <img src="/players/jaroslav-svoboda.jpg" alt="Jaroslav Svoboda" className="w-full h-14 object-cover border border-primary/30 mb-1" />
-            <span className="text-[10px] font-semibold text-center">Jaroslav Svoboda</span>
-            <span className="text-[9px] text-muted-foreground mb-1 text-center">Defender</span>
-            <div className="flex gap-1 w-full">
-              <Button 
-                size="sm" 
-                className="h-5 text-[9px] px-1.5 flex-1 bg-primary hover:bg-primary/90 text-primary-foreground border-0" 
-                onClick={() => window.location.href = '/performance?player=jaroslav-svoboda'}
-              >
-                Analysis
-              </Button>
-              <Button 
-                size="sm" 
-                className="h-5 text-[9px] px-1.5 flex-1 bg-primary hover:bg-primary/90 text-primary-foreground border-0" 
-                onClick={() => window.location.href = '/performance?player=jaroslav-svoboda'}
-              >
-                Program
-              </Button>
-            </div>
-          </div>
-        </div>
-      </Widget>
-
-      {/* Schedule Calendar - XLarge to show full 7 days */}
-      <Widget
-        id="schedule"
-        title="Schedule Calendar"
-        icon={Calendar}
-        size="xlarge"
-        expanded={expandedWidget === "schedule"}
-        onToggleExpand={() => toggleWidget("schedule")}
-      >
-        <div className="w-full h-full">
-          <StaffSchedule isAdmin={isAdmin} />
-        </div>
-      </Widget>
-
       {/* Financial Projection - Small */}
       <Widget
         id="financial"
@@ -294,6 +204,96 @@ export const StaffOverview = ({ isAdmin }: { isAdmin: boolean }) => {
             <div className="text-sm font-bold text-blue-600">€32k</div>
             <div className="text-[9px] text-muted-foreground uppercase tracking-wider">Consulting</div>
           </div>
+        </div>
+      </Widget>
+
+      {/* Represented Players - Wide */}
+      <Widget
+        id="represented"
+        title="Represented Players"
+        icon={Users}
+        size="wide"
+        expanded={expandedWidget === "represented"}
+        onToggleExpand={() => toggleWidget("represented")}
+      >
+        <div className="grid grid-cols-3 gap-2">
+          <div className="flex flex-col p-2 border border-border/50 rounded hover:bg-accent/50 hover:border-primary/30 transition-all group">
+            <img src="/players/tyrese-omotoye.png" alt="Tyrese Omotoye" className="w-full h-14 object-cover border border-primary/30 mb-1" />
+            <span className="text-[10px] font-semibold text-center">Tyrese Omotoye</span>
+            <span className="text-[9px] text-muted-foreground mb-1 text-center">Forward</span>
+            <div className="flex gap-1 w-full">
+              <Button 
+                size="sm" 
+                className="h-5 text-[9px] px-1.5 flex-1 bg-primary hover:bg-primary/90 text-primary-foreground border-0" 
+                onClick={() => window.location.href = '/analysis?player=tyrese-omotoye'}
+              >
+                Analysis
+              </Button>
+              <Button 
+                size="sm" 
+                className="h-5 text-[9px] px-1.5 flex-1 bg-primary hover:bg-primary/90 text-primary-foreground border-0" 
+                onClick={() => window.location.href = '/performance?player=tyrese-omotoye'}
+              >
+                Programming
+              </Button>
+            </div>
+          </div>
+          <div className="flex flex-col p-2 border border-border/50 rounded hover:bg-accent/50 hover:border-primary/30 transition-all group">
+            <img src="/players/michael-mulligan.png" alt="Michael Mulligan" className="w-full h-14 object-cover border border-primary/30 mb-1" />
+            <span className="text-[10px] font-semibold text-center">Michael Mulligan</span>
+            <span className="text-[9px] text-muted-foreground mb-1 text-center">Midfielder</span>
+            <div className="flex gap-1 w-full">
+              <Button 
+                size="sm" 
+                className="h-5 text-[9px] px-1.5 flex-1 bg-primary hover:bg-primary/90 text-primary-foreground border-0" 
+                onClick={() => window.location.href = '/analysis?player=michael-mulligan'}
+              >
+                Analysis
+              </Button>
+              <Button 
+                size="sm" 
+                className="h-5 text-[9px] px-1.5 flex-1 bg-primary hover:bg-primary/90 text-primary-foreground border-0" 
+                onClick={() => window.location.href = '/performance?player=michael-mulligan'}
+              >
+                Programming
+              </Button>
+            </div>
+          </div>
+          <div className="flex flex-col p-2 border border-border/50 rounded hover:bg-accent/50 hover:border-primary/30 transition-all group">
+            <img src="/players/jaroslav-svoboda.jpg" alt="Jaroslav Svoboda" className="w-full h-14 object-cover border border-primary/30 mb-1" />
+            <span className="text-[10px] font-semibold text-center">Jaroslav Svoboda</span>
+            <span className="text-[9px] text-muted-foreground mb-1 text-center">Defender</span>
+            <div className="flex gap-1 w-full">
+              <Button 
+                size="sm" 
+                className="h-5 text-[9px] px-1.5 flex-1 bg-primary hover:bg-primary/90 text-primary-foreground border-0" 
+                onClick={() => window.location.href = '/analysis?player=jaroslav-svoboda'}
+              >
+                Analysis
+              </Button>
+              <Button 
+                size="sm" 
+                className="h-5 text-[9px] px-1.5 flex-1 bg-primary hover:bg-primary/90 text-primary-foreground border-0" 
+                onClick={() => window.location.href = '/performance?player=jaroslav-svoboda'}
+              >
+                Programming
+              </Button>
+            </div>
+          </div>
+        </div>
+      </Widget>
+
+      {/* Schedule Calendar - XLarge to show full 7 days */}
+      <Widget
+        id="schedule"
+        title="Schedule Calendar"
+        icon={Calendar}
+        size="xlarge"
+        expanded={expandedWidget === "schedule"}
+        onToggleExpand={() => toggleWidget("schedule")}
+      >
+        <div className="w-full h-full">
+          <StaffSchedule isAdmin={isAdmin} />
         </div>
       </Widget>
     </div>
