@@ -3,12 +3,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Maximize2, Minimize2, Target, CheckSquare, Users, Calendar, Link2, TrendingUp } from "lucide-react";
 import { StaffSchedule } from "./StaffSchedule";
+import marbleOverlay from "@/assets/smudged-marble-overlay.png";
 
 interface WidgetProps {
   id: string;
   title: string;
   icon: React.ElementType;
-  size: "small" | "medium" | "large" | "wide";
+  size: "small" | "medium" | "large" | "wide" | "xlarge";
   expanded: boolean;
   onToggleExpand: () => void;
   children: React.ReactNode;
@@ -20,13 +21,23 @@ const Widget = ({ id, title, icon: Icon, size, expanded, onToggleExpand, childre
     medium: "col-span-1 md:col-span-2 lg:col-span-2 row-span-2",
     large: "col-span-1 md:col-span-2 lg:col-span-3 row-span-2",
     wide: "col-span-1 md:col-span-2 lg:col-span-3 row-span-1",
+    xlarge: "col-span-1 md:col-span-3 lg:col-span-4 row-span-2",
   };
 
   const expandedClass = expanded ? "col-span-full" : sizeClasses[size];
 
   return (
-    <Card className={`${expandedClass} transition-all duration-300 flex flex-col border-border/50 bg-card/50 backdrop-blur-sm hover:border-primary/30 hover:shadow-lg`}>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 border-b border-border/30 px-3 py-2">
+    <Card className={`${expandedClass} transition-all duration-300 flex flex-col border-border/50 bg-card/50 backdrop-blur-sm hover:border-primary/30 hover:shadow-lg relative overflow-hidden`}>
+      <div 
+        className="absolute inset-0 opacity-20 pointer-events-none z-0"
+        style={{ 
+          backgroundImage: `url(${marbleOverlay})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          mixBlendMode: 'overlay'
+        }}
+      />
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 border-b border-border/30 px-3 py-2 relative z-10">
         <div className="flex items-center gap-2">
           <div className="p-1.5 rounded bg-primary/10 border border-primary/20">
             <Icon className="w-3.5 h-3.5 text-primary" />
@@ -46,7 +57,7 @@ const Widget = ({ id, title, icon: Icon, size, expanded, onToggleExpand, childre
           )}
         </Button>
       </CardHeader>
-      <CardContent className="flex-1 overflow-hidden hover:overflow-y-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent pt-3 px-3 pb-3">
+      <CardContent className="flex-1 overflow-hidden hover:overflow-y-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent pt-3 px-3 pb-3 relative z-10">
         {children}
       </CardContent>
     </Card>
@@ -239,16 +250,16 @@ export const StaffOverview = ({ isAdmin }: { isAdmin: boolean }) => {
         </div>
       </Widget>
 
-      {/* Schedule Calendar - Large width to show full week */}
+      {/* Schedule Calendar - XLarge to show full 7 days */}
       <Widget
         id="schedule"
         title="Schedule Calendar"
         icon={Calendar}
-        size="large"
+        size="xlarge"
         expanded={expandedWidget === "schedule"}
         onToggleExpand={() => toggleWidget("schedule")}
       >
-        <div className="scale-[0.75] origin-top-left -ml-3 -mt-3">
+        <div className="scale-[0.65] origin-top-left -ml-3 -mt-3">
           <StaffSchedule isAdmin={isAdmin} />
         </div>
       </Widget>

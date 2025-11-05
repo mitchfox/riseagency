@@ -29,7 +29,7 @@ import LegalManagement from "@/components/staff/LegalManagement";
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
 import { Checkbox } from "@/components/ui/checkbox";
-import marbleBackground from "@/assets/black-marble-smudged.png";
+import marbleBackground from "@/assets/smudged-marble-overlay.png";
 import { 
   Calendar, 
   Users, 
@@ -303,7 +303,7 @@ const Staff = () => {
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat',
-          opacity: 0.15,
+          opacity: 0.25,
         }}
       />
       <Header />
