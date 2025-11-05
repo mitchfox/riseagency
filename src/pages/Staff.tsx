@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import { Search } from "lucide-react";
 import PlayerManagement from "@/components/staff/PlayerManagement";
 import { PlayerList } from "@/components/staff/PlayerList";
 import BlogManagement from "@/components/staff/BlogManagement";
@@ -55,6 +56,7 @@ const Staff = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [expandedSection, setExpandedSection] = useState<'schedule' | 'staffaccounts' | 'players' | 'playerlist' | 'recruitment' | 'blog' | 'betweenthelines' | 'coaching' | 'analysis' | 'marketing' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'legal' | null>('schedule');
+  const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
 
   const handleSectionToggle = (section: 'schedule' | 'staffaccounts' | 'players' | 'playerlist' | 'recruitment' | 'blog' | 'betweenthelines' | 'coaching' | 'analysis' | 'marketing' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'legal') => {
@@ -285,71 +287,99 @@ const Staff = () => {
     ...(isAdmin ? [{ id: 'staffaccounts', title: 'Staff Accounts', icon: Shield }] : []),
   ] as const;
 
-  return (
-    <div className="min-h-screen bg-background">
-      <Header />
-      <main className="container mx-auto px-4 py-8">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
-          <h1 className="text-3xl sm:text-4xl font-bold">Staff Dashboard</h1>
-          <Button onClick={handleLogout} variant="outline">
-            Logout
-          </Button>
-        </div>
+  const filteredSections = sections.filter(section =>
+    section.title.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
-        {/* Grid of Section Cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 mb-8">
-          {sections.map((section) => {
+  return (
+    <div className="min-h-screen bg-background flex flex-col">
+      <Header />
+      
+      {/* Search Bar */}
+      <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-10">
+        <div className="container mx-auto px-4 py-3">
+          <div className="flex items-center justify-between gap-4">
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search sections..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            <Button onClick={handleLogout} variant="outline" size="sm">
+              Logout
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Layout with Sidebar */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Left Sidebar */}
+        <div className="w-16 border-r bg-muted/30 flex flex-col items-center py-4 gap-2 overflow-y-auto">
+          {filteredSections.map((section) => {
             const Icon = section.icon;
             const isActive = expandedSection === section.id;
             return (
-              <Card
+              <button
                 key={section.id}
-                className={`cursor-pointer transition-all hover:scale-105 ${
-                  isActive ? 'ring-2 ring-primary shadow-lg' : ''
-                }`}
                 onClick={() => handleSectionToggle(section.id as any)}
+                className={`group relative w-12 h-12 rounded-lg flex items-center justify-center transition-all hover:bg-primary/10 ${
+                  isActive ? 'bg-primary text-primary-foreground' : 'text-muted-foreground'
+                }`}
+                title={section.title}
               >
-                <CardContent className="p-6 flex flex-col items-center justify-center text-center space-y-3 h-32">
-                  <Icon className={`w-8 h-8 ${isActive ? 'text-primary' : 'text-muted-foreground'}`} />
-                  <div className={`text-sm font-semibold ${isActive ? 'text-primary' : ''}`}>
-                    {section.title}
-                  </div>
-                </CardContent>
-              </Card>
+                <Icon className="w-5 h-5" />
+                <span className="absolute left-full ml-2 px-2 py-1 bg-popover text-popover-foreground text-xs rounded opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity whitespace-nowrap z-50 shadow-md">
+                  {section.title}
+                </span>
+              </button>
             );
           })}
         </div>
 
-        {/* Expanded Section Content */}
-        {expandedSection && (
-          <Card className="animate-in fade-in slide-in-from-top-4 duration-300">
-            <CardHeader>
-              <CardTitle className="text-2xl">
-                {sections.find(s => s.id === expandedSection)?.title}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {expandedSection === 'schedule' && <StaffSchedule isAdmin={isAdmin} />}
-              {expandedSection === 'playerlist' && <PlayerList isAdmin={isAdmin} />}
-              {expandedSection === 'players' && <PlayerManagement isAdmin={isAdmin} />}
-              {expandedSection === 'recruitment' && <RecruitmentManagement isAdmin={isAdmin} />}
-              {expandedSection === 'coaching' && <CoachingDatabase isAdmin={isAdmin} />}
-              {expandedSection === 'analysis' && <AnalysisManagement isAdmin={isAdmin} />}
-              {expandedSection === 'marketing' && <MarketingManagement isAdmin={isAdmin} />}
-              {expandedSection === 'blog' && <BlogManagement isAdmin={isAdmin} />}
-              {expandedSection === 'betweenthelines' && <BetweenTheLinesManagement isAdmin={isAdmin} />}
-              {expandedSection === 'submissions' && <FormSubmissionsManagement isAdmin={isAdmin} />}
-              {expandedSection === 'visitors' && <SiteVisitorsManagement isAdmin={isAdmin} />}
-              {expandedSection === 'invoices' && <InvoiceManagement isAdmin={isAdmin} />}
-              {expandedSection === 'updates' && <UpdatesManagement isAdmin={isAdmin} />}
-              {expandedSection === 'clubnetwork' && <ClubNetworkManagement />}
-              {expandedSection === 'legal' && <LegalManagement isAdmin={isAdmin} />}
-              {expandedSection === 'staffaccounts' && isAdmin && <StaffAccountManagement />}
-            </CardContent>
-          </Card>
-        )}
-      </main>
-      <Footer />
+        {/* Main Content Area */}
+        <main className="flex-1 overflow-y-auto">
+          {expandedSection ? (
+            <div className="container mx-auto px-6 py-6">
+              <Card className="animate-in fade-in slide-in-from-top-4 duration-300">
+                <CardHeader>
+                  <CardTitle className="text-2xl">
+                    {sections.find(s => s.id === expandedSection)?.title}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {expandedSection === 'schedule' && <StaffSchedule isAdmin={isAdmin} />}
+                  {expandedSection === 'playerlist' && <PlayerList isAdmin={isAdmin} />}
+                  {expandedSection === 'players' && <PlayerManagement isAdmin={isAdmin} />}
+                  {expandedSection === 'recruitment' && <RecruitmentManagement isAdmin={isAdmin} />}
+                  {expandedSection === 'coaching' && <CoachingDatabase isAdmin={isAdmin} />}
+                  {expandedSection === 'analysis' && <AnalysisManagement isAdmin={isAdmin} />}
+                  {expandedSection === 'marketing' && <MarketingManagement isAdmin={isAdmin} />}
+                  {expandedSection === 'blog' && <BlogManagement isAdmin={isAdmin} />}
+                  {expandedSection === 'betweenthelines' && <BetweenTheLinesManagement isAdmin={isAdmin} />}
+                  {expandedSection === 'submissions' && <FormSubmissionsManagement isAdmin={isAdmin} />}
+                  {expandedSection === 'visitors' && <SiteVisitorsManagement isAdmin={isAdmin} />}
+                  {expandedSection === 'invoices' && <InvoiceManagement isAdmin={isAdmin} />}
+                  {expandedSection === 'updates' && <UpdatesManagement isAdmin={isAdmin} />}
+                  {expandedSection === 'clubnetwork' && <ClubNetworkManagement />}
+                  {expandedSection === 'legal' && <LegalManagement isAdmin={isAdmin} />}
+                  {expandedSection === 'staffaccounts' && isAdmin && <StaffAccountManagement />}
+                </CardContent>
+              </Card>
+            </div>
+          ) : (
+            <div className="flex items-center justify-center h-full text-muted-foreground">
+              <div className="text-center">
+                <p className="text-lg mb-2">Select a section from the sidebar</p>
+                <p className="text-sm">or use the search bar to find what you need</p>
+              </div>
+            </div>
+          )}
+        </main>
+      </div>
     </div>
   );
 };
