@@ -638,127 +638,136 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
               </TabsList>
 
               <TabsContent value="analysis" className="space-y-4">
-                {/* Performance Analysis */}
-                <Card>
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <CardTitle>Performance Analysis</CardTitle>
-                      <Button
-                        size="sm"
-                        onClick={() => {
-                          setCreateReportPlayerId(selectedPlayerId!);
-                          setCreateReportPlayerName(selectedPlayer!.name);
-                          setIsCreateReportDialogOpen(true);
-                        }}
-                      >
-                        <Plus className="w-4 h-4 mr-2" />
-                        New Report
-                      </Button>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    {playerAnalyses[selectedPlayerId]?.length > 0 ? (
-                      <div className="space-y-3">
-                        {playerAnalyses[selectedPlayerId].map((analysis) => (
-                          <div
-                            key={analysis.id}
-                            className="flex items-center justify-between p-4 border rounded-lg hover:bg-secondary/30 transition-colors"
-                          >
-                            <div>
-                              <h4 className="font-medium">{analysis.opponent}</h4>
-                              <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
-                                <span>{new Date(analysis.analysis_date).toLocaleDateString()}</span>
-                                {analysis.result && (
-                                  <>
-                                    <span>•</span>
-                                    <span>{analysis.result}</span>
-                                  </>
-                                )}
-                                {analysis.r90_score && (
-                                  <>
-                                    <span>•</span>
-                                    <span className="font-medium text-primary">R90: {analysis.r90_score}</span>
-                                  </>
-                                )}
-                              </div>
-                            </div>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                setSelectedAnalysisId(analysis.id);
-                                setSelectedPlayerName(selectedPlayer!.name);
-                                setIsPerformanceActionsDialogOpen(true);
-                              }}
-                            >
-                              View Actions
-                            </Button>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-center text-muted-foreground py-8">
-                        No performance reports yet. Create one to get started.
-                      </p>
-                    )}
-                  </CardContent>
-                </Card>
+                <Tabs defaultValue="performance" className="w-full">
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="performance">Performance Analysis</TabsTrigger>
+                    <TabsTrigger value="tactical">Tactical Analysis</TabsTrigger>
+                  </TabsList>
 
-                {/* Tactical Analysis (Pre-match, Post-match, Concepts) */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Tactical Analysis</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {tacticalAnalyses[selectedPlayerId]?.length > 0 ? (
-                      <div className="space-y-3">
-                        {tacticalAnalyses[selectedPlayerId].map((analysis) => (
-                          <div
-                            key={analysis.id}
-                            className="p-4 border rounded-lg hover:bg-secondary/30 transition-colors"
+                  <TabsContent value="performance" className="mt-4">
+                    <Card>
+                      <CardHeader>
+                        <div className="flex items-center justify-between">
+                          <CardTitle>Performance Analysis</CardTitle>
+                          <Button
+                            size="sm"
+                            onClick={() => {
+                              setCreateReportPlayerId(selectedPlayerId!);
+                              setCreateReportPlayerName(selectedPlayer!.name);
+                              setIsCreateReportDialogOpen(true);
+                            }}
                           >
-                            <div className="flex items-start justify-between">
-                              <div className="flex-1">
-                                <div className="flex items-center gap-2 mb-2">
-                                  <span className="text-xs px-2 py-1 rounded bg-primary/20 text-primary font-medium">
-                                    {analysis.analysis_type}
-                                  </span>
-                                  {analysis.match_date && (
-                                    <span className="text-sm text-muted-foreground">
-                                      {new Date(analysis.match_date).toLocaleDateString()}
-                                    </span>
-                                  )}
-                                </div>
-                                <h4 className="font-medium mb-1">{analysis.title || 'Untitled'}</h4>
-                                {analysis.home_team && analysis.away_team && (
-                                  <p className="text-sm text-muted-foreground">
-                                    {analysis.home_team} vs {analysis.away_team}
-                                    {analysis.home_score !== null && analysis.away_score !== null && (
-                                      <span className="ml-2 font-medium">
-                                        ({analysis.home_score} - {analysis.away_score})
-                                      </span>
-                                    )}
-                                  </p>
-                                )}
-                              </div>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => window.open(`/analysis/${analysis.id}`, '_blank')}
+                            <Plus className="w-4 h-4 mr-2" />
+                            New Report
+                          </Button>
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        {playerAnalyses[selectedPlayerId]?.length > 0 ? (
+                          <div className="space-y-3">
+                            {playerAnalyses[selectedPlayerId].map((analysis) => (
+                              <div
+                                key={analysis.id}
+                                className="flex items-center justify-between p-4 border rounded-lg hover:bg-secondary/30 transition-colors"
                               >
-                                View
-                              </Button>
-                            </div>
+                                <div>
+                                  <h4 className="font-medium">{analysis.opponent}</h4>
+                                  <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+                                    <span>{new Date(analysis.analysis_date).toLocaleDateString()}</span>
+                                    {analysis.result && (
+                                      <>
+                                        <span>•</span>
+                                        <span>{analysis.result}</span>
+                                      </>
+                                    )}
+                                    {analysis.r90_score && (
+                                      <>
+                                        <span>•</span>
+                                        <span className="font-medium text-primary">R90: {analysis.r90_score}</span>
+                                      </>
+                                    )}
+                                  </div>
+                                </div>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => {
+                                    setSelectedAnalysisId(analysis.id);
+                                    setSelectedPlayerName(selectedPlayer!.name);
+                                    setIsPerformanceActionsDialogOpen(true);
+                                  }}
+                                >
+                                  View Actions
+                                </Button>
+                              </div>
+                            ))}
                           </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-center text-muted-foreground py-8">
-                        No tactical analysis available yet.
-                      </p>
-                    )}
-                  </CardContent>
-                </Card>
+                        ) : (
+                          <p className="text-center text-muted-foreground py-8">
+                            No performance reports yet. Create one to get started.
+                          </p>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
+
+                  <TabsContent value="tactical" className="mt-4">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Tactical Analysis</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        {tacticalAnalyses[selectedPlayerId]?.length > 0 ? (
+                          <div className="space-y-3">
+                            {tacticalAnalyses[selectedPlayerId].map((analysis) => (
+                              <div
+                                key={analysis.id}
+                                className="p-4 border rounded-lg hover:bg-secondary/30 transition-colors"
+                              >
+                                <div className="flex items-start justify-between">
+                                  <div className="flex-1">
+                                    <div className="flex items-center gap-2 mb-2">
+                                      <span className="text-xs px-2 py-1 rounded bg-primary/20 text-primary font-medium">
+                                        {analysis.analysis_type}
+                                      </span>
+                                      {analysis.match_date && (
+                                        <span className="text-sm text-muted-foreground">
+                                          {new Date(analysis.match_date).toLocaleDateString()}
+                                        </span>
+                                      )}
+                                    </div>
+                                    <h4 className="font-medium mb-1">{analysis.title || 'Untitled'}</h4>
+                                    {analysis.home_team && analysis.away_team && (
+                                      <p className="text-sm text-muted-foreground">
+                                        {analysis.home_team} vs {analysis.away_team}
+                                        {analysis.home_score !== null && analysis.away_score !== null && (
+                                          <span className="ml-2 font-medium">
+                                            ({analysis.home_score} - {analysis.away_score})
+                                          </span>
+                                        )}
+                                      </p>
+                                    )}
+                                  </div>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => window.open(`/analysis/${analysis.id}`, '_blank')}
+                                  >
+                                    View
+                                  </Button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-center text-muted-foreground py-8">
+                            No tactical analysis available yet.
+                          </p>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
+                </Tabs>
               </TabsContent>
 
               <TabsContent value="programming">
