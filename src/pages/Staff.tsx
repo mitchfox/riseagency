@@ -29,6 +29,7 @@ import LegalManagement from "@/components/staff/LegalManagement";
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
 import { Checkbox } from "@/components/ui/checkbox";
+import marbleBackground from "@/assets/black-marble-smudged.png";
 import { 
   Calendar, 
   Users, 
@@ -294,14 +295,15 @@ const Staff = () => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col relative overflow-hidden">
-      {/* Smudged marble background overlay */}
+      {/* Marble background with more visible overlay */}
       <div 
-        className="fixed inset-0 opacity-5 pointer-events-none z-0"
+        className="fixed inset-0 pointer-events-none z-0"
         style={{
-          backgroundImage: 'url(/src/assets/black-marble-smudged.png)',
+          backgroundImage: `url(${marbleBackground})`,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat'
+          backgroundRepeat: 'no-repeat',
+          opacity: 0.15,
         }}
       />
       <Header />

@@ -173,10 +173,10 @@ export const StaffOverview = ({ isAdmin }: { isAdmin: boolean }) => {
         onToggleExpand={() => toggleWidget("represented")}
       >
         <div className="grid grid-cols-3 gap-2">
-          <div className="flex flex-col items-center p-2 border border-border/50 rounded hover:bg-accent/50 hover:border-primary/30 transition-all group">
-            <img src="/players/tyrese-omotoye.png" alt="Tyrese Omotoye" className="w-12 h-12 rounded-full object-cover border-2 border-primary/30 mb-1" />
+          <div className="flex flex-col p-2 border border-border/50 rounded hover:bg-accent/50 hover:border-primary/30 transition-all group">
+            <img src="/players/tyrese-omotoye.png" alt="Tyrese Omotoye" className="w-full h-14 object-cover border border-primary/30 mb-1" />
             <span className="text-[10px] font-semibold text-center">Tyrese Omotoye</span>
-            <span className="text-[9px] text-muted-foreground mb-1">Forward</span>
+            <span className="text-[9px] text-muted-foreground mb-1 text-center">Forward</span>
             <div className="flex gap-1 w-full">
               <Button 
                 size="sm" 
@@ -194,10 +194,10 @@ export const StaffOverview = ({ isAdmin }: { isAdmin: boolean }) => {
               </Button>
             </div>
           </div>
-          <div className="flex flex-col items-center p-2 border border-border/50 rounded hover:bg-accent/50 hover:border-primary/30 transition-all group">
-            <img src="/players/michael-mulligan.png" alt="Michael Mulligan" className="w-12 h-12 rounded-full object-cover border-2 border-primary/30 mb-1" />
+          <div className="flex flex-col p-2 border border-border/50 rounded hover:bg-accent/50 hover:border-primary/30 transition-all group">
+            <img src="/players/michael-mulligan.png" alt="Michael Mulligan" className="w-full h-14 object-cover border border-primary/30 mb-1" />
             <span className="text-[10px] font-semibold text-center">Michael Mulligan</span>
-            <span className="text-[9px] text-muted-foreground mb-1">Midfielder</span>
+            <span className="text-[9px] text-muted-foreground mb-1 text-center">Midfielder</span>
             <div className="flex gap-1 w-full">
               <Button 
                 size="sm" 
@@ -215,10 +215,10 @@ export const StaffOverview = ({ isAdmin }: { isAdmin: boolean }) => {
               </Button>
             </div>
           </div>
-          <div className="flex flex-col items-center p-2 border border-border/50 rounded hover:bg-accent/50 hover:border-primary/30 transition-all group">
-            <img src="/players/jaroslav-svoboda.jpg" alt="Jaroslav Svoboda" className="w-12 h-12 rounded-full object-cover border-2 border-primary/30 mb-1" />
+          <div className="flex flex-col p-2 border border-border/50 rounded hover:bg-accent/50 hover:border-primary/30 transition-all group">
+            <img src="/players/jaroslav-svoboda.jpg" alt="Jaroslav Svoboda" className="w-full h-14 object-cover border border-primary/30 mb-1" />
             <span className="text-[10px] font-semibold text-center">Jaroslav Svoboda</span>
-            <span className="text-[9px] text-muted-foreground mb-1">Defender</span>
+            <span className="text-[9px] text-muted-foreground mb-1 text-center">Defender</span>
             <div className="flex gap-1 w-full">
               <Button 
                 size="sm" 
@@ -239,48 +239,48 @@ export const StaffOverview = ({ isAdmin }: { isAdmin: boolean }) => {
         </div>
       </Widget>
 
-      {/* Schedule Calendar - Medium width for better week visibility */}
+      {/* Schedule Calendar - Large width to show full week */}
       <Widget
         id="schedule"
         title="Schedule Calendar"
         icon={Calendar}
-        size="medium"
+        size="large"
         expanded={expandedWidget === "schedule"}
         onToggleExpand={() => toggleWidget("schedule")}
       >
-        <div className="scale-[0.85] origin-top-left -ml-2 -mt-2">
+        <div className="scale-[0.75] origin-top-left -ml-3 -mt-3">
           <StaffSchedule isAdmin={isAdmin} />
         </div>
       </Widget>
 
-      {/* Financial Projection - Wide */}
+      {/* Financial Projection - Small */}
       <Widget
         id="financial"
         title="Financial Projection"
         icon={TrendingUp}
-        size="wide"
+        size="small"
         expanded={expandedWidget === "financial"}
         onToggleExpand={() => toggleWidget("financial")}
       >
-        <div className="grid grid-cols-5 gap-2 h-full">
-          <div className="text-center p-2 bg-gradient-to-br from-emerald-500/10 to-emerald-600/10 rounded border border-emerald-500/30 flex flex-col justify-center">
-            <div className="text-base font-bold text-emerald-600">€127k</div>
+        <div className="space-y-2 h-full flex flex-col justify-center">
+          <div className="text-center p-2 bg-gradient-to-br from-emerald-500/10 to-emerald-600/10 rounded border border-emerald-500/30">
+            <div className="text-sm font-bold text-emerald-600">€127k</div>
             <div className="text-[9px] text-muted-foreground uppercase tracking-wider">Revenue</div>
           </div>
-          <div className="text-center p-2 bg-gradient-to-br from-rose-500/10 to-rose-600/10 rounded border border-rose-500/30 flex flex-col justify-center">
-            <div className="text-base font-bold text-rose-600">€89k</div>
+          <div className="text-center p-2 bg-gradient-to-br from-rose-500/10 to-rose-600/10 rounded border border-rose-500/30">
+            <div className="text-sm font-bold text-rose-600">€89k</div>
             <div className="text-[9px] text-muted-foreground uppercase tracking-wider">Expenses</div>
           </div>
-          <div className="text-center p-2 bg-gradient-to-br from-primary/20 to-primary/5 rounded border border-primary/40 flex flex-col justify-center">
-            <div className="text-base font-bold text-primary">€38k</div>
-            <div className="text-[9px] text-muted-foreground uppercase tracking-wider">Q4 Profit</div>
+          <div className="text-center p-2 bg-gradient-to-br from-primary/20 to-primary/5 rounded border border-primary/40">
+            <div className="text-sm font-bold text-primary">€38k</div>
+            <div className="text-[9px] text-muted-foreground uppercase tracking-wider">Profit</div>
           </div>
-          <div className="text-center p-2 bg-gradient-to-br from-amber-500/10 to-amber-600/10 rounded border border-amber-500/30 flex flex-col justify-center">
-            <div className="text-base font-bold text-amber-600">€45k</div>
+          <div className="text-center p-2 bg-gradient-to-br from-amber-500/10 to-amber-600/10 rounded border border-amber-500/30">
+            <div className="text-sm font-bold text-amber-600">€45k</div>
             <div className="text-[9px] text-muted-foreground uppercase tracking-wider">Commissions</div>
           </div>
-          <div className="text-center p-2 bg-gradient-to-br from-blue-500/10 to-blue-600/10 rounded border border-blue-500/30 flex flex-col justify-center">
-            <div className="text-base font-bold text-blue-600">€32k</div>
+          <div className="text-center p-2 bg-gradient-to-br from-blue-500/10 to-blue-600/10 rounded border border-blue-500/30">
+            <div className="text-sm font-bold text-blue-600">€32k</div>
             <div className="text-[9px] text-muted-foreground uppercase tracking-wider">Consulting</div>
           </div>
         </div>
