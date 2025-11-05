@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,7 +27,24 @@ import LegalManagement from "@/components/staff/LegalManagement";
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { 
+  Calendar, 
+  Users, 
+  UserCog, 
+  Target, 
+  Dumbbell, 
+  LineChart, 
+  Megaphone, 
+  Newspaper, 
+  FileText, 
+  Mail, 
+  Eye, 
+  FileCheck, 
+  BellRing, 
+  Network, 
+  Scale,
+  Shield
+} from "lucide-react";
 
 const Staff = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -39,21 +56,9 @@ const Staff = () => {
   const [rememberMe, setRememberMe] = useState(false);
   const [expandedSection, setExpandedSection] = useState<'schedule' | 'staffaccounts' | 'players' | 'playerlist' | 'recruitment' | 'blog' | 'betweenthelines' | 'coaching' | 'analysis' | 'marketing' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'legal' | null>('schedule');
   const navigate = useNavigate();
-  const sectionRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
   const handleSectionToggle = (section: 'schedule' | 'staffaccounts' | 'players' | 'playerlist' | 'recruitment' | 'blog' | 'betweenthelines' | 'coaching' | 'analysis' | 'marketing' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'legal') => {
-    const isExpanding = expandedSection !== section;
     setExpandedSection(expandedSection === section ? null : section);
-    
-    // Keep the section header in view when expanding
-    if (isExpanding) {
-      setTimeout(() => {
-        sectionRefs.current[section]?.scrollIntoView({ 
-          behavior: 'smooth', 
-          block: 'start' 
-        });
-      }, 50);
-    }
   };
 
   // Load saved email and remember me preference on mount
@@ -261,6 +266,25 @@ const Staff = () => {
     );
   }
 
+  const sections = [
+    { id: 'schedule', title: 'Schedule', icon: Calendar },
+    { id: 'playerlist', title: 'Player List', icon: Users },
+    { id: 'players', title: 'Player Management', icon: UserCog },
+    { id: 'recruitment', title: 'Recruitment', icon: Target },
+    { id: 'coaching', title: 'Coaching Database', icon: Dumbbell },
+    { id: 'analysis', title: 'Analysis Writer', icon: LineChart },
+    { id: 'marketing', title: 'Marketing', icon: Megaphone },
+    { id: 'blog', title: 'News Articles', icon: Newspaper },
+    { id: 'betweenthelines', title: 'Between The Lines', icon: FileText },
+    { id: 'submissions', title: 'Form Submissions', icon: Mail },
+    { id: 'visitors', title: 'Site Visitors', icon: Eye },
+    { id: 'invoices', title: 'Invoices', icon: FileCheck },
+    { id: 'updates', title: 'Player Updates', icon: BellRing },
+    { id: 'clubnetwork', title: 'Club Network', icon: Network },
+    { id: 'legal', title: 'Legal', icon: Scale },
+    ...(isAdmin ? [{ id: 'staffaccounts', title: 'Staff Accounts', icon: Shield }] : []),
+  ] as const;
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -272,358 +296,58 @@ const Staff = () => {
           </Button>
         </div>
 
-
-        <div className="space-y-4">
-          {/* Schedule Section */}
-          <Card className="cursor-pointer">
-            <CardHeader 
-              ref={(el) => sectionRefs.current['schedule'] = el}
-              onClick={() => handleSectionToggle('schedule')}
-              className="hover:bg-accent/50 transition-colors"
-            >
-              <div className="flex justify-between items-center">
-                <CardTitle className="text-2xl">SCHEDULE</CardTitle>
-                <div className="text-muted-foreground">
-                  {expandedSection === 'schedule' ? <ChevronDown size={24} /> : <ChevronRight size={24} />}
-                </div>
-              </div>
-            </CardHeader>
-            {expandedSection === 'schedule' && (
-              <CardContent className="pt-6">
-                <StaffSchedule isAdmin={isAdmin} />
-              </CardContent>
-            )}
-          </Card>
-
-          {/* Player List Section */}
-          <Card className="cursor-pointer">
-            <CardHeader 
-              ref={(el) => sectionRefs.current['playerlist'] = el}
-              onClick={() => handleSectionToggle('playerlist')}
-              className="hover:bg-accent/50 transition-colors"
-            >
-              <div className="flex justify-between items-center">
-                <CardTitle className="text-2xl">PLAYER LIST</CardTitle>
-                <div className="text-muted-foreground">
-                  {expandedSection === 'playerlist' ? <ChevronDown size={24} /> : <ChevronRight size={24} />}
-                </div>
-              </div>
-            </CardHeader>
-            {expandedSection === 'playerlist' && (
-              <CardContent className="pt-6">
-                <PlayerList isAdmin={isAdmin} />
-              </CardContent>
-            )}
-          </Card>
-
-          {/* Players Section */}
-          <Card className="cursor-pointer">
-            <CardHeader 
-              ref={(el) => sectionRefs.current['players'] = el}
-              onClick={() => handleSectionToggle('players')}
-              className="hover:bg-accent/50 transition-colors"
-            >
-              <div className="flex justify-between items-center">
-                <CardTitle className="text-2xl">PLAYER MANAGEMENT</CardTitle>
-                <div className="text-muted-foreground">
-                  {expandedSection === 'players' ? <ChevronDown size={24} /> : <ChevronRight size={24} />}
-                </div>
-              </div>
-            </CardHeader>
-            {expandedSection === 'players' && (
-              <CardContent className="pt-6">
-                <PlayerManagement isAdmin={isAdmin} />
-              </CardContent>
-            )}
-          </Card>
-
-          {/* Recruitment Section */}
-          <Card className="cursor-pointer">
-            <CardHeader 
-              ref={(el) => sectionRefs.current['recruitment'] = el}
-              onClick={() => handleSectionToggle('recruitment')}
-              className="hover:bg-accent/50 transition-colors"
-            >
-              <div className="flex justify-between items-center">
-                <CardTitle className="text-2xl">RECRUITMENT</CardTitle>
-                <div className="text-muted-foreground">
-                  {expandedSection === 'recruitment' ? <ChevronDown size={24} /> : <ChevronRight size={24} />}
-                </div>
-              </div>
-            </CardHeader>
-            {expandedSection === 'recruitment' && (
-              <CardContent className="pt-6">
-                <RecruitmentManagement isAdmin={isAdmin} />
-              </CardContent>
-            )}
-          </Card>
-
-          {/* Coaching Database Section */}
-          <Card className="cursor-pointer">
-            <CardHeader 
-              ref={(el) => sectionRefs.current['coaching'] = el}
-              onClick={() => handleSectionToggle('coaching')}
-              className="hover:bg-accent/50 transition-colors"
-            >
-              <div className="flex justify-between items-center">
-                <CardTitle className="text-2xl">Coaching Database</CardTitle>
-                <div className="text-muted-foreground">
-                  {expandedSection === 'coaching' ? <ChevronDown size={24} /> : <ChevronRight size={24} />}
-                </div>
-              </div>
-            </CardHeader>
-            {expandedSection === 'coaching' && (
-              <CardContent className="pt-6">
-                <CoachingDatabase isAdmin={isAdmin} />
-              </CardContent>
-            )}
-          </Card>
-
-          {/* Analysis Writer Section */}
-          <Card className="cursor-pointer">
-            <CardHeader 
-              ref={(el) => sectionRefs.current['analysis'] = el}
-              onClick={() => handleSectionToggle('analysis')}
-              className="hover:bg-accent/50 transition-colors"
-            >
-              <div className="flex justify-between items-center">
-                <CardTitle className="text-2xl">Analysis Writer</CardTitle>
-                <div className="text-muted-foreground">
-                  {expandedSection === 'analysis' ? <ChevronDown size={24} /> : <ChevronRight size={24} />}
-                </div>
-              </div>
-            </CardHeader>
-            {expandedSection === 'analysis' && (
-              <CardContent className="pt-6">
-                <AnalysisManagement isAdmin={isAdmin} />
-              </CardContent>
-            )}
-          </Card>
-
-          {/* Marketing Section */}
-          <Card className="cursor-pointer">
-            <CardHeader 
-              ref={(el) => sectionRefs.current['marketing'] = el}
-              onClick={() => handleSectionToggle('marketing')}
-              className="hover:bg-accent/50 transition-colors"
-            >
-              <div className="flex justify-between items-center">
-                <CardTitle className="text-2xl">MARKETING</CardTitle>
-                <div className="text-muted-foreground">
-                  {expandedSection === 'marketing' ? <ChevronDown size={24} /> : <ChevronRight size={24} />}
-                </div>
-              </div>
-            </CardHeader>
-            {expandedSection === 'marketing' && (
-              <CardContent className="pt-6">
-                <MarketingManagement isAdmin={isAdmin} />
-              </CardContent>
-            )}
-          </Card>
-
-
-          {/* News Articles Section */}
-          <Card className="cursor-pointer">
-            <CardHeader 
-              ref={(el) => sectionRefs.current['blog'] = el}
-              onClick={() => handleSectionToggle('blog')}
-              className="hover:bg-accent/50 transition-colors"
-            >
-              <div className="flex justify-between items-center">
-                <CardTitle className="text-2xl">News Articles</CardTitle>
-                <div className="text-muted-foreground">
-                  {expandedSection === 'blog' ? <ChevronDown size={24} /> : <ChevronRight size={24} />}
-                </div>
-              </div>
-            </CardHeader>
-            {expandedSection === 'blog' && (
-              <CardContent className="pt-6">
-                <BlogManagement isAdmin={isAdmin} />
-              </CardContent>
-            )}
-          </Card>
-
-          {/* Between The Lines Section */}
-          <Card className="cursor-pointer">
-            <CardHeader 
-              ref={(el) => sectionRefs.current['betweenthelines'] = el}
-              onClick={() => handleSectionToggle('betweenthelines')}
-              className="hover:bg-accent/50 transition-colors"
-            >
-              <div className="flex justify-between items-center">
-                <CardTitle className="text-2xl">Between The Lines</CardTitle>
-                <div className="text-muted-foreground">
-                  {expandedSection === 'betweenthelines' ? <ChevronDown size={24} /> : <ChevronRight size={24} />}
-                </div>
-              </div>
-            </CardHeader>
-            {expandedSection === 'betweenthelines' && (
-              <CardContent className="pt-6">
-                <BetweenTheLinesManagement isAdmin={isAdmin} />
-              </CardContent>
-            )}
-          </Card>
-
-          {/* Form Submissions Section */}
-          <Card className="cursor-pointer">
-            <CardHeader 
-              ref={(el) => sectionRefs.current['submissions'] = el}
-              onClick={() => handleSectionToggle('submissions')}
-              className="hover:bg-accent/50 transition-colors"
-            >
-              <div className="flex justify-between items-center">
-                <CardTitle className="text-2xl">Form Submissions</CardTitle>
-                <div className="text-muted-foreground">
-                  {expandedSection === 'submissions' ? <ChevronDown size={24} /> : <ChevronRight size={24} />}
-                </div>
-              </div>
-            </CardHeader>
-            {expandedSection === 'submissions' && (
-              <CardContent className="pt-6">
-                <FormSubmissionsManagement isAdmin={isAdmin} />
-              </CardContent>
-            )}
-          </Card>
-
-          {/* Site Visitors Section */}
-          <Card className="cursor-pointer">
-            <CardHeader 
-              ref={(el) => sectionRefs.current['visitors'] = el}
-              onClick={() => handleSectionToggle('visitors')}
-              className="hover:bg-accent/50 transition-colors"
-            >
-              <div className="flex justify-between items-center">
-                <CardTitle className="text-2xl">SITE VISITORS</CardTitle>
-                <div className="text-muted-foreground">
-                  {expandedSection === 'visitors' ? <ChevronDown size={24} /> : <ChevronRight size={24} />}
-                </div>
-              </div>
-            </CardHeader>
-            {expandedSection === 'visitors' && (
-              <CardContent className="pt-6">
-                <SiteVisitorsManagement isAdmin={isAdmin} />
-              </CardContent>
-            )}
-          </Card>
-
-          {/* Invoices Section */}
-          <Card className="cursor-pointer">
-            <CardHeader 
-              ref={(el) => sectionRefs.current['invoices'] = el}
-              onClick={() => handleSectionToggle('invoices')}
-              className="hover:bg-accent/50 transition-colors"
-            >
-              <div className="flex justify-between items-center">
-                <CardTitle className="text-2xl">INVOICES</CardTitle>
-                <div className="text-muted-foreground">
-                  {expandedSection === 'invoices' ? <ChevronDown size={24} /> : <ChevronRight size={24} />}
-                </div>
-              </div>
-            </CardHeader>
-            {expandedSection === 'invoices' && (
-              <CardContent className="pt-6">
-                <InvoiceManagement isAdmin={isAdmin} />
-              </CardContent>
-            )}
-          </Card>
-
-          {/* Updates Section */}
-          <Card className="cursor-pointer">
-            <CardHeader 
-              ref={(el) => sectionRefs.current['updates'] = el}
-              onClick={() => handleSectionToggle('updates')}
-              className="hover:bg-accent/50 transition-colors"
-            >
-              <div className="flex justify-between items-center">
-                <CardTitle className="text-2xl">UPDATES</CardTitle>
-                <div className="text-muted-foreground">
-                  {expandedSection === 'updates' ? <ChevronDown size={24} /> : <ChevronRight size={24} />}
-                </div>
-              </div>
-            </CardHeader>
-            {expandedSection === 'updates' && (
-              <CardContent className="pt-6">
-                <UpdatesManagement isAdmin={isAdmin} />
-              </CardContent>
-            )}
-          </Card>
-
-          {/* Club Network Section */}
-          <Card className="cursor-pointer">
-            <CardHeader 
-              ref={(el) => sectionRefs.current['clubnetwork'] = el}
-              onClick={() => handleSectionToggle('clubnetwork')}
-              className="hover:bg-accent/50 transition-colors"
-            >
-              <div className="flex justify-between items-center">
-                <CardTitle className="text-2xl">CLUB NETWORK</CardTitle>
-                <div className="text-muted-foreground">
-                  {expandedSection === 'clubnetwork' ? <ChevronDown size={24} /> : <ChevronRight size={24} />}
-                </div>
-              </div>
-            </CardHeader>
-            {expandedSection === 'clubnetwork' && (
-              <CardContent className="pt-6">
-                <ClubNetworkManagement />
-              </CardContent>
-            )}
-          </Card>
-
-          {/* Legal Section */}
-          <Card className="cursor-pointer">
-            <CardHeader 
-              ref={(el) => sectionRefs.current['legal'] = el}
-              onClick={() => handleSectionToggle('legal')}
-              className="hover:bg-accent/50 transition-colors"
-            >
-              <div className="flex justify-between items-center">
-                <CardTitle className="text-2xl">LEGAL</CardTitle>
-                <div className="text-muted-foreground">
-                  {expandedSection === 'legal' ? <ChevronDown size={24} /> : <ChevronRight size={24} />}
-                </div>
-              </div>
-            </CardHeader>
-            {expandedSection === 'legal' && (
-              <CardContent className="pt-6">
-                <LegalManagement isAdmin={isAdmin} />
-              </CardContent>
-            )}
-          </Card>
-
-          {isAdmin && (
-            <Card className="cursor-pointer">
-              <CardHeader 
-                ref={(el) => sectionRefs.current['staffaccounts'] = el}
-                onClick={() => handleSectionToggle('staffaccounts')}
-                className="hover:bg-accent/50 transition-colors"
+        {/* Grid of Section Cards */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 mb-8">
+          {sections.map((section) => {
+            const Icon = section.icon;
+            const isActive = expandedSection === section.id;
+            return (
+              <Card
+                key={section.id}
+                className={`cursor-pointer transition-all hover:scale-105 ${
+                  isActive ? 'ring-2 ring-primary shadow-lg' : ''
+                }`}
+                onClick={() => handleSectionToggle(section.id as any)}
               >
-                <div className="flex justify-between items-center">
-                  <CardTitle className="text-2xl">STAFF ACCOUNTS</CardTitle>
-                  <div className="text-muted-foreground">
-                    {expandedSection === 'staffaccounts' ? <ChevronDown size={24} /> : <ChevronRight size={24} />}
+                <CardContent className="p-6 flex flex-col items-center justify-center text-center space-y-3 h-32">
+                  <Icon className={`w-8 h-8 ${isActive ? 'text-primary' : 'text-muted-foreground'}`} />
+                  <div className={`text-sm font-semibold ${isActive ? 'text-primary' : ''}`}>
+                    {section.title}
                   </div>
-                </div>
-              </CardHeader>
-              {expandedSection === 'staffaccounts' && (
-                <CardContent className="pt-6">
-                  <StaffAccountManagement />
                 </CardContent>
-              )}
-            </Card>
-          )}
-
-          {/* Logout Button */}
-          <div className="mt-8 flex justify-center">
-            <Button
-              onClick={handleLogout}
-              variant="outline"
-              size="lg"
-              className="font-bebas uppercase tracking-wider text-lg"
-            >
-              Logout
-            </Button>
-          </div>
+              </Card>
+            );
+          })}
         </div>
+
+        {/* Expanded Section Content */}
+        {expandedSection && (
+          <Card className="animate-in fade-in slide-in-from-top-4 duration-300">
+            <CardHeader>
+              <CardTitle className="text-2xl">
+                {sections.find(s => s.id === expandedSection)?.title}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {expandedSection === 'schedule' && <StaffSchedule isAdmin={isAdmin} />}
+              {expandedSection === 'playerlist' && <PlayerList isAdmin={isAdmin} />}
+              {expandedSection === 'players' && <PlayerManagement isAdmin={isAdmin} />}
+              {expandedSection === 'recruitment' && <RecruitmentManagement isAdmin={isAdmin} />}
+              {expandedSection === 'coaching' && <CoachingDatabase isAdmin={isAdmin} />}
+              {expandedSection === 'analysis' && <AnalysisManagement isAdmin={isAdmin} />}
+              {expandedSection === 'marketing' && <MarketingManagement isAdmin={isAdmin} />}
+              {expandedSection === 'blog' && <BlogManagement isAdmin={isAdmin} />}
+              {expandedSection === 'betweenthelines' && <BetweenTheLinesManagement isAdmin={isAdmin} />}
+              {expandedSection === 'submissions' && <FormSubmissionsManagement isAdmin={isAdmin} />}
+              {expandedSection === 'visitors' && <SiteVisitorsManagement isAdmin={isAdmin} />}
+              {expandedSection === 'invoices' && <InvoiceManagement isAdmin={isAdmin} />}
+              {expandedSection === 'updates' && <UpdatesManagement isAdmin={isAdmin} />}
+              {expandedSection === 'clubnetwork' && <ClubNetworkManagement />}
+              {expandedSection === 'legal' && <LegalManagement isAdmin={isAdmin} />}
+              {expandedSection === 'staffaccounts' && isAdmin && <StaffAccountManagement />}
+            </CardContent>
+          </Card>
+        )}
       </main>
       <Footer />
     </div>
