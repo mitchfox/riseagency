@@ -21,6 +21,7 @@ import { StaffSchedule } from "@/components/staff/StaffSchedule";
 import { MarketingManagement } from "@/components/staff/MarketingManagement";
 import { RecruitmentManagement } from "@/components/staff/RecruitmentManagement";
 import { StaffAccountManagement } from "@/components/staff/StaffAccountManagement";
+import ClubNetworkManagement from "@/components/staff/ClubNetworkManagement";
 
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
@@ -35,11 +36,11 @@ const Staff = () => {
   const [isStaff, setIsStaff] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-  const [expandedSection, setExpandedSection] = useState<'schedule' | 'staffaccounts' | 'players' | 'playerlist' | 'recruitment' | 'blog' | 'betweenthelines' | 'coaching' | 'analysis' | 'marketing' | 'submissions' | 'visitors' | 'invoices' | 'updates' | null>('schedule');
+  const [expandedSection, setExpandedSection] = useState<'schedule' | 'staffaccounts' | 'players' | 'playerlist' | 'recruitment' | 'blog' | 'betweenthelines' | 'coaching' | 'analysis' | 'marketing' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | null>('schedule');
   const navigate = useNavigate();
   const sectionRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
-  const handleSectionToggle = (section: 'schedule' | 'staffaccounts' | 'players' | 'playerlist' | 'recruitment' | 'blog' | 'betweenthelines' | 'coaching' | 'analysis' | 'marketing' | 'submissions' | 'visitors' | 'invoices' | 'updates') => {
+  const handleSectionToggle = (section: 'schedule' | 'staffaccounts' | 'players' | 'playerlist' | 'recruitment' | 'blog' | 'betweenthelines' | 'coaching' | 'analysis' | 'marketing' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork') => {
     const isExpanding = expandedSection !== section;
     setExpandedSection(expandedSection === section ? null : section);
     
@@ -542,6 +543,27 @@ const Staff = () => {
             {expandedSection === 'updates' && (
               <CardContent className="pt-6">
                 <UpdatesManagement isAdmin={isAdmin} />
+              </CardContent>
+            )}
+          </Card>
+
+          {/* Club Network Section */}
+          <Card className="cursor-pointer">
+            <CardHeader 
+              ref={(el) => sectionRefs.current['clubnetwork'] = el}
+              onClick={() => handleSectionToggle('clubnetwork')}
+              className="hover:bg-accent/50 transition-colors"
+            >
+              <div className="flex justify-between items-center">
+                <CardTitle className="text-2xl">CLUB NETWORK</CardTitle>
+                <div className="text-muted-foreground">
+                  {expandedSection === 'clubnetwork' ? <ChevronDown size={24} /> : <ChevronRight size={24} />}
+                </div>
+              </div>
+            </CardHeader>
+            {expandedSection === 'clubnetwork' && (
+              <CardContent className="pt-6">
+                <ClubNetworkManagement />
               </CardContent>
             )}
           </Card>
