@@ -117,6 +117,7 @@ export const StaffOverview = ({ isAdmin }: { isAdmin: boolean }) => {
       const { data, error } = await supabase
         .from('players')
         .select('*')
+        .eq('representation_status', 'represented')
         .order('name');
       
       if (data && !error) {
