@@ -239,16 +239,16 @@ export const StaffOverview = ({ isAdmin }: { isAdmin: boolean }) => {
               <Button 
                 size="sm" 
                 className="h-5 text-[9px] px-1.5 flex-1 bg-primary hover:bg-primary/90 text-primary-foreground border-0" 
-                onClick={() => window.location.href = '/stars/tyrese-omotoye'}
+                onClick={() => window.location.href = '/staff?section=analysis&player=tyrese-omotoye'}
               >
-                Profile
+                Analysis
               </Button>
               <Button 
                 size="sm" 
                 className="h-5 text-[9px] px-1.5 flex-1 bg-primary hover:bg-primary/90 text-primary-foreground border-0" 
-                onClick={() => window.location.href = '/stars/tyrese-omotoye'}
+                onClick={() => window.location.href = '/staff?section=playerlist&player=tyrese-omotoye'}
               >
-                View
+                Program
               </Button>
             </div>
           </div>
@@ -260,16 +260,16 @@ export const StaffOverview = ({ isAdmin }: { isAdmin: boolean }) => {
               <Button 
                 size="sm" 
                 className="h-5 text-[9px] px-1.5 flex-1 bg-primary hover:bg-primary/90 text-primary-foreground border-0" 
-                onClick={() => window.location.href = '/stars/michael-mulligan'}
+                onClick={() => window.location.href = '/staff?section=analysis&player=michael-mulligan'}
               >
-                Profile
+                Analysis
               </Button>
               <Button 
                 size="sm" 
                 className="h-5 text-[9px] px-1.5 flex-1 bg-primary hover:bg-primary/90 text-primary-foreground border-0" 
-                onClick={() => window.location.href = '/stars/michael-mulligan'}
+                onClick={() => window.location.href = '/staff?section=playerlist&player=michael-mulligan'}
               >
-                View
+                Program
               </Button>
             </div>
           </div>
@@ -281,16 +281,16 @@ export const StaffOverview = ({ isAdmin }: { isAdmin: boolean }) => {
               <Button 
                 size="sm" 
                 className="h-5 text-[9px] px-1.5 flex-1 bg-primary hover:bg-primary/90 text-primary-foreground border-0" 
-                onClick={() => window.location.href = '/stars/jaroslav-svoboda'}
+                onClick={() => window.location.href = '/staff?section=analysis&player=jaroslav-svoboda'}
               >
-                Profile
+                Analysis
               </Button>
               <Button 
                 size="sm" 
                 className="h-5 text-[9px] px-1.5 flex-1 bg-primary hover:bg-primary/90 text-primary-foreground border-0" 
-                onClick={() => window.location.href = '/stars/jaroslav-svoboda'}
+                onClick={() => window.location.href = '/staff?section=playerlist&player=jaroslav-svoboda'}
               >
-                View
+                Program
               </Button>
             </div>
           </div>

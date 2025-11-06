@@ -61,6 +61,15 @@ const Staff = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
 
+  // Check URL parameters for section and player
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const section = params.get('section');
+    if (section && isStaff) {
+      setExpandedSection(section as any);
+    }
+  }, [isStaff]);
+
   const handleSectionToggle = (section: 'overview' | 'staffaccounts' | 'players' | 'playerlist' | 'recruitment' | 'blog' | 'betweenthelines' | 'coaching' | 'analysis' | 'marketing' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'legal') => {
     setExpandedSection(expandedSection === section ? null : section);
   };
