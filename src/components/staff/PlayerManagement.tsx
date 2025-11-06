@@ -837,26 +837,31 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
 
             {/* Tabbed Sections */}
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="flex overflow-x-auto md:grid md:grid-cols-5 w-full">
-                <TabsTrigger value="analysis" className="flex-shrink-0 min-w-[120px]">
+              <TabsList className="flex flex-nowrap overflow-x-auto md:grid md:grid-cols-5 w-full gap-1">
+                <TabsTrigger value="analysis" className="flex-shrink-0 whitespace-nowrap px-3">
                   <LineChart className="w-4 h-4 mr-2" />
-                  Analysis
+                  <span className="hidden sm:inline">Analysis</span>
+                  <span className="sm:hidden">Analysis</span>
                 </TabsTrigger>
-                <TabsTrigger value="programming" className="flex-shrink-0 min-w-[120px]">
+                <TabsTrigger value="programming" className="flex-shrink-0 whitespace-nowrap px-3">
                   <FileText className="w-4 h-4 mr-2" />
-                  Programming
+                  <span className="hidden sm:inline">Programming</span>
+                  <span className="sm:hidden">Programs</span>
                 </TabsTrigger>
-                <TabsTrigger value="highlights" className="flex-shrink-0 min-w-[120px]">
+                <TabsTrigger value="highlights" className="flex-shrink-0 whitespace-nowrap px-3">
                   <Video className="w-4 h-4 mr-2" />
-                  Highlights
+                  <span className="hidden sm:inline">Highlights</span>
+                  <span className="sm:hidden">Videos</span>
                 </TabsTrigger>
-                <TabsTrigger value="fixtures" className="flex-shrink-0 min-w-[120px]">
+                <TabsTrigger value="fixtures" className="flex-shrink-0 whitespace-nowrap px-3">
                   <Calendar className="w-4 h-4 mr-2" />
-                  Fixtures
+                  <span className="hidden sm:inline">Fixtures</span>
+                  <span className="sm:hidden">Fixtures</span>
                 </TabsTrigger>
-                <TabsTrigger value="invoices" className="flex-shrink-0 min-w-[120px]">
+                <TabsTrigger value="invoices" className="flex-shrink-0 whitespace-nowrap px-3">
                   <DollarSign className="w-4 h-4 mr-2" />
-                  Invoices
+                  <span className="hidden sm:inline">Invoices</span>
+                  <span className="sm:hidden">Invoices</span>
                 </TabsTrigger>
               </TabsList>
 
@@ -870,7 +875,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                   <TabsContent value="performance" className="mt-4">
                     <Card>
                       <CardHeader>
-                        <div className="flex items-center justify-between">
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                           <CardTitle>Performance Analysis</CardTitle>
                           <Button
                             size="sm"
@@ -1192,14 +1197,14 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                     Upload Highlight
                                   </Button>
                                   
-                                  {matchHighlights.length > 0 ? (
-                                    <div className="grid grid-cols-2 gap-3">
+                                   {matchHighlights.length > 0 ? (
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                       {matchHighlights.map((highlight: any, idx: number) => (
                                         <div key={idx} className="border rounded-lg p-3 hover:bg-secondary/30 transition-colors space-y-2">
                                           <video 
                                             src={highlight.videoUrl}
                                             controls
-                                            className="w-full h-40 object-cover rounded"
+                                            className="w-full h-48 sm:h-40 object-cover rounded"
                                           />
                                           <p className="text-sm font-medium truncate">{highlight.name}</p>
                                           <Button
@@ -1307,13 +1312,13 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                   </Button>
                                   
                                   {bestClips.length > 0 ? (
-                                    <div className="grid grid-cols-2 gap-3">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                       {bestClips.map((clip: any, idx: number) => (
                                         <div key={idx} className="border rounded-lg p-3 hover:bg-secondary/30 transition-colors space-y-2">
                                           <video 
                                             src={clip.videoUrl}
                                             controls
-                                            className="w-full h-40 object-cover rounded"
+                                            className="w-full h-48 sm:h-40 object-cover rounded"
                                           />
                                           <p className="text-sm font-medium truncate">{clip.name}</p>
                                           <Button
@@ -1395,11 +1400,11 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                   <CardContent>
                     {playerInvoices[selectedPlayerId]?.length > 0 ? (
                       <div className="space-y-3">
-                        {playerInvoices[selectedPlayerId].map((invoice) => (
+                         {playerInvoices[selectedPlayerId].map((invoice) => (
                           <div key={invoice.id} className="p-4 border rounded-lg">
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <div className="flex items-center gap-2">
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                              <div className="w-full sm:w-auto">
+                                <div className="flex flex-wrap items-center gap-2">
                                   <h4 className="font-medium">Invoice #{invoice.invoice_number}</h4>
                                   <span className={`text-xs px-2 py-1 rounded ${
                                     invoice.status === 'paid' 
@@ -1472,25 +1477,25 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       />
 
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh]">
+        <DialogContent className="max-w-4xl max-h-[90vh] w-[95vw] sm:w-full">
           <DialogHeader>
             <DialogTitle>Edit Player - {editingPlayer?.name}</DialogTitle>
           </DialogHeader>
           <ScrollArea className="h-[calc(90vh-120px)] pr-4">
             <form onSubmit={handleUpdatePlayer} className="space-y-6">
               <Tabs defaultValue="basic" className="w-full">
-                <TabsList className="grid w-full grid-cols-6">
-                  <TabsTrigger value="basic">Basic</TabsTrigger>
-                  <TabsTrigger value="career">Career</TabsTrigger>
-                  <TabsTrigger value="bio">Bio</TabsTrigger>
-                  <TabsTrigger value="tactical">Schemes</TabsTrigger>
-                  <TabsTrigger value="stats">Stats</TabsTrigger>
-                  <TabsTrigger value="links">Links</TabsTrigger>
+                <TabsList className="flex flex-nowrap overflow-x-auto md:grid md:grid-cols-6 w-full gap-1">
+                  <TabsTrigger value="basic" className="flex-shrink-0 whitespace-nowrap">Basic</TabsTrigger>
+                  <TabsTrigger value="career" className="flex-shrink-0 whitespace-nowrap">Career</TabsTrigger>
+                  <TabsTrigger value="bio" className="flex-shrink-0 whitespace-nowrap">Bio</TabsTrigger>
+                  <TabsTrigger value="tactical" className="flex-shrink-0 whitespace-nowrap">Schemes</TabsTrigger>
+                  <TabsTrigger value="stats" className="flex-shrink-0 whitespace-nowrap">Stats</TabsTrigger>
+                  <TabsTrigger value="links" className="flex-shrink-0 whitespace-nowrap">Links</TabsTrigger>
                 </TabsList>
 
                 {/* Basic Info Tab */}
                 <TabsContent value="basic" className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="name">Name *</Label>
                       <Input
@@ -1512,7 +1517,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="position">Position *</Label>
                       <Input
@@ -1555,7 +1560,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="category">Category</Label>
                       <Select
@@ -1626,7 +1631,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="number">Jersey Number</Label>
                       <Input
