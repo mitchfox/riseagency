@@ -906,7 +906,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                         </div>
                                       )}
                                       
-                                      <div className="border-l border-white/20 pl-4 flex-1 min-w-0">
+                                      <div className="border-l border-white/20 pl-4 flex-1 min-w-0 bg-black/30 rounded-r-lg -mr-4 pr-4 -my-4 py-4">
                                         <h4 className="text-lg font-semibold truncate">{analysis.opponent}</h4>
                                         <div className="flex flex-wrap items-center gap-3 text-sm opacity-90 mt-1">
                                           <span>{new Date(analysis.analysis_date).toLocaleDateString('en-GB')}</span>
