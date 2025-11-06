@@ -463,17 +463,16 @@ export const CreatePerformanceReportDialog = ({
 
         if (deleteError) throw deleteError;
       } else {
-        // Create mode - check for existing analysis first
+        // Create mode - check for existing analysis by fixture_id
         const { data: existingAnalysis } = await supabase
           .from("player_analysis")
           .select("id")
           .eq("player_id", playerId)
-          .eq("analysis_date", fixture?.match_date)
-          .eq("opponent", opponent)
+          .eq("fixture_id", selectedFixtureId)
           .maybeSingle();
 
         if (existingAnalysis) {
-          toast.error("A performance report already exists for this player, date, and opponent. Please edit the existing report instead.");
+          toast.error("A performance report already exists for this fixture. Please edit the existing report instead.");
           setLoading(false);
           return;
         }

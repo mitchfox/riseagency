@@ -453,51 +453,6 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, onViewR
         throw linkError;
       }
 
-      // Determine opponent and result for the analysis record
-      let opponent = "";
-      let result = "";
-      
-      // Check if either team matches the player's team (case insensitive)
-      const homeTeamLower = manualFixture.home_team.toLowerCase();
-      const awayTeamLower = manualFixture.away_team.toLowerCase();
-      const playerTeamLower = playerTeam?.toLowerCase() || "";
-      
-      if (playerTeamLower && homeTeamLower.includes(playerTeamLower)) {
-        opponent = manualFixture.away_team;
-        if (manualFixture.home_score !== null && manualFixture.away_score !== null) {
-          if (manualFixture.home_score > manualFixture.away_score) result = "(W)";
-          else if (manualFixture.home_score < manualFixture.away_score) result = "(L)";
-          else result = "(D)";
-        }
-      } else if (playerTeamLower && awayTeamLower.includes(playerTeamLower)) {
-        opponent = manualFixture.home_team;
-        if (manualFixture.home_score !== null && manualFixture.away_score !== null) {
-          if (manualFixture.away_score > manualFixture.home_score) result = "(W)";
-          else if (manualFixture.away_score < manualFixture.home_score) result = "(L)";
-          else result = "(D)";
-        }
-      } else {
-        // Can't determine player's team, show both teams
-        opponent = `${manualFixture.home_team} vs ${manualFixture.away_team}`;
-      }
-
-      // Create player_analysis record for this fixture
-      const { error: analysisError } = await supabase.from("player_analysis").insert([
-        {
-          player_id: playerId,
-          fixture_id: newFixture.id,
-          analysis_date: manualFixture.match_date,
-          opponent: opponent,
-          result: result,
-          minutes_played: minutesPlayed,
-        },
-      ]);
-
-      if (analysisError) {
-        console.error("Failed to create analysis record:", analysisError);
-        // Don't throw - fixture is still created
-      }
-
       toast.success("Fixture created and added successfully");
       handleCloseDialog();
       fetchPlayerFixtures();
@@ -544,43 +499,6 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, onViewR
         ]);
 
         if (linkError) throw linkError;
-
-        // Determine opponent and result
-        let opponent = "";
-        let result = "";
-        
-        if (fixture.home_team === playerTeam || fixture.home_team === "For") {
-          opponent = fixture.away_team;
-          if (fixture.home_score !== null && fixture.away_score !== null) {
-            if (fixture.home_score > fixture.away_score) result = "(W)";
-            else if (fixture.home_score < fixture.away_score) result = "(L)";
-            else result = "(D)";
-          }
-        } else if (fixture.away_team === playerTeam || fixture.away_team === "For") {
-          opponent = fixture.home_team;
-          if (fixture.home_score !== null && fixture.away_score !== null) {
-            if (fixture.away_score > fixture.home_score) result = "(W)";
-            else if (fixture.away_score < fixture.home_score) result = "(L)";
-            else result = "(D)";
-          }
-        }
-
-        // Create player_analysis record for this fixture
-        const { error: analysisError } = await supabase.from("player_analysis").insert([
-          {
-            player_id: playerId,
-            fixture_id: newFixture.id,
-            analysis_date: fixture.match_date,
-            opponent: opponent || `${fixture.home_team} vs ${fixture.away_team}`,
-            result: result || "",
-            minutes_played: fixture.minutes_played ?? null,
-          },
-        ]);
-
-        if (analysisError) {
-          console.error("Failed to create analysis record:", analysisError);
-          // Don't throw - fixture is still created
-        }
       }
 
       toast.success(`Added ${fixturesToAdd.length} fixtures successfully`);
