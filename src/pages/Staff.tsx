@@ -414,7 +414,7 @@ const Staff = () => {
       {/* Main Layout with Sidebar */}
       <div className="flex flex-1 overflow-hidden relative">
         {/* Left Sidebar */}
-        <div className="hidden md:flex w-24 border-r bg-muted/30 backdrop-blur-sm flex-col items-start py-4 gap-2 overflow-y-auto relative z-10">
+        <div className="flex w-14 md:w-24 border-r bg-muted/30 backdrop-blur-sm flex-col items-start py-4 gap-2 overflow-y-auto relative z-10">
           {filteredCategories.map((category, index) => {
             const CategoryIcon = category.icon;
             const isExpanded = expandedCategory === category.id;
@@ -435,12 +435,12 @@ const Staff = () => {
                       setExpandedCategory(isExpanded ? null : category.id);
                     }
                   }}
-                  className={`group relative w-full rounded-lg flex flex-col items-center justify-center py-3 px-2 transition-all hover:bg-primary/20 ${
+                  className={`group relative w-full rounded-lg flex flex-col items-center justify-center py-2 md:py-3 px-1 md:px-2 transition-all hover:bg-primary/20 ${
                     hasActiveSection || isExpanded ? 'bg-gradient-to-br from-primary via-primary to-primary-glow shadow-lg' : ''
                   }`}
                 >
-                  <CategoryIcon className={`w-6 h-6 mb-1 ${hasActiveSection || isExpanded ? 'text-primary-foreground' : ''}`} />
-                  <span className={`text-[6px] leading-tight text-center px-0.5 font-medium uppercase tracking-tight ${hasActiveSection || isExpanded ? 'text-primary-foreground' : 'text-muted-foreground'}`}>
+                  <CategoryIcon className={`w-5 h-5 md:w-6 md:h-6 mb-0.5 md:mb-1 ${hasActiveSection || isExpanded ? 'text-primary-foreground' : ''}`} />
+                  <span className={`hidden md:block text-[6px] leading-tight text-center px-0.5 font-medium uppercase tracking-tight ${hasActiveSection || isExpanded ? 'text-primary-foreground' : 'text-muted-foreground'}`}>
                     {category.title.split(' ').map((word, i) => (
                       <span key={i} className="block">{word}</span>
                     ))}
@@ -457,12 +457,14 @@ const Staff = () => {
                         <button
                           key={section.id}
                           onClick={() => handleSectionToggle(section.id as any)}
-                          className={`group relative w-full rounded-lg flex flex-col items-center justify-center py-2 px-1 transition-all hover:bg-primary/20 ${
-                            isActive ? 'bg-gradient-to-br from-primary via-primary to-primary-glow text-primary-foreground shadow-md' : 'text-muted-foreground'
+                          className={`group relative w-full rounded-lg flex flex-col items-center justify-center py-1.5 md:py-2 px-1 transition-all ${
+                            isActive 
+                              ? 'bg-primary text-primary-foreground shadow-md' 
+                              : 'hover:bg-primary/10'
                           }`}
                         >
-                          <SectionIcon className="w-5 h-5 mb-1" />
-                          <span className="text-[6px] leading-tight text-center px-0.5 font-medium uppercase tracking-tight">
+                          <SectionIcon className={`w-4 h-4 md:w-5 md:h-5 mb-0.5 md:mb-1 ${isActive ? 'text-primary-foreground' : ''}`} />
+                          <span className={`hidden md:block text-[5px] leading-tight text-center px-0.5 font-medium uppercase tracking-tight ${isActive ? 'text-primary-foreground' : 'text-muted-foreground'}`}>
                             {section.title.split(' ').map((word, i) => (
                               <span key={i} className="block">{word}</span>
                             ))}
