@@ -892,49 +892,50 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                               return (
                                 <div
                                   key={analysis.id}
-                                  className={`${analysis.r90_score !== null && analysis.r90_score !== undefined ? getR90ColorClass(analysis.r90_score) : 'bg-secondary'} rounded-lg p-4 text-white`}
+                                  className="rounded-lg overflow-hidden text-white flex items-stretch"
                                 >
-                                  <div className="flex items-center justify-between gap-4">
-                                    {/* Left: R90 Score & Match Info */}
-                                    <div className="flex items-center gap-4 flex-1 min-w-0">
-                                      {analysis.r90_score !== null && analysis.r90_score !== undefined && (
-                                        <div className="text-center flex-shrink-0">
-                                          <div className="text-4xl font-bold">
-                                            {analysis.r90_score.toFixed(2)}
-                                          </div>
-                                          <div className="text-xs opacity-80">R90</div>
+                                  {/* Left: R90 Score with colored background */}
+                                  {analysis.r90_score !== null && analysis.r90_score !== undefined && (
+                                    <div className={`${getR90ColorClass(analysis.r90_score)} flex items-center justify-center p-4 flex-shrink-0`}>
+                                      <div className="text-center">
+                                        <div className="text-4xl font-bold">
+                                          {analysis.r90_score.toFixed(2)}
                                         </div>
-                                      )}
-                                      
-                                      <div className="border-l border-white/20 pl-4 flex-1 min-w-0 bg-black/30 rounded-r-lg -mr-4 pr-4 -my-4 py-4">
-                                        <h4 className="text-lg font-semibold truncate">{analysis.opponent}</h4>
-                                        <div className="flex flex-wrap items-center gap-3 text-sm opacity-90 mt-1">
-                                          <span>{new Date(analysis.analysis_date).toLocaleDateString('en-GB')}</span>
-                                          {analysis.result && (
-                                            <>
-                                              <span>•</span>
-                                              <span>{analysis.result}</span>
-                                            </>
-                                          )}
-                                          {analysis.minutes_played && (
-                                            <>
-                                              <span>•</span>
-                                              <span>{analysis.minutes_played} min</span>
-                                            </>
-                                          )}
-                                        </div>
-                                        
-                                        {/* Advanced Stats - Compact Single/Two Line */}
-                                        {analysis.striker_stats && Object.keys(analysis.striker_stats).length > 0 && (
-                                          <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs opacity-80 mt-2">
-                                            {Object.entries(analysis.striker_stats).map(([key, value]) => (
-                                              <span key={key}>
-                                                <span className="font-medium">{key.replace(/_/g, ' ')}</span>: {String(value)}
-                                              </span>
-                                            ))}
-                                          </div>
+                                        <div className="text-xs opacity-80">R90</div>
+                                      </div>
+                                    </div>
+                                  )}
+                                  
+                                  {/* Right: Match info and stats with black background */}
+                                  <div className="bg-black flex-1 p-4 flex items-center justify-between gap-4">
+                                    <div className="flex-1">
+                                      <h4 className="text-lg font-semibold truncate">{analysis.opponent}</h4>
+                                      <div className="flex flex-wrap items-center gap-3 text-sm opacity-90 mt-1">
+                                        <span>{new Date(analysis.analysis_date).toLocaleDateString('en-GB')}</span>
+                                        {analysis.result && (
+                                          <>
+                                            <span>•</span>
+                                            <span>{analysis.result}</span>
+                                          </>
+                                        )}
+                                        {analysis.minutes_played && (
+                                          <>
+                                            <span>•</span>
+                                            <span>{analysis.minutes_played} min</span>
+                                          </>
                                         )}
                                       </div>
+                                      
+                                      {/* Advanced Stats - Compact Single/Two Line */}
+                                      {analysis.striker_stats && Object.keys(analysis.striker_stats).length > 0 && (
+                                        <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs opacity-80 mt-2">
+                                          {Object.entries(analysis.striker_stats).map(([key, value]) => (
+                                            <span key={key}>
+                                              <span className="font-medium">{key.replace(/_/g, ' ')}</span>: {String(value)}
+                                            </span>
+                                          ))}
+                                        </div>
+                                      )}
                                     </div>
                                     
                                     {/* Right: Action Button */}
