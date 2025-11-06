@@ -137,17 +137,12 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, onViewR
     try {
       const { data: playerData } = await supabase
         .from("players")
-        .select("bio")
+        .select("club")
         .eq("id", playerId)
         .single();
 
-      if (playerData?.bio) {
-        try {
-          const bioData = JSON.parse(playerData.bio);
-          setPlayerTeam(bioData.currentClub || "");
-        } catch (e) {
-          console.error("Error parsing bio:", e);
-        }
+      if (playerData?.club) {
+        setPlayerTeam(playerData.club);
       }
     } catch (error) {
       console.error("Error fetching player team:", error);
