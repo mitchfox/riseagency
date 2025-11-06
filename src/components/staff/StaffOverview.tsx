@@ -26,10 +26,48 @@ const Widget = ({ id, title, icon: Icon, size, expanded, onToggleExpand, childre
     xlarge: "col-span-1 md:col-span-3 lg:col-span-4 row-span-3",
   };
 
-  const expandedClass = expanded ? "col-span-full" : sizeClasses[size];
+  if (expanded) {
+    return (
+      <div className="fixed inset-0 z-50 bg-background p-4 overflow-auto">
+        <Card className="h-full flex flex-col border-border/50 bg-card/50 backdrop-blur-sm relative overflow-hidden">
+          <div 
+            className="absolute inset-0 opacity-20 pointer-events-none z-0"
+            style={{ 
+              backgroundImage: `url(${marbleOverlay})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              mixBlendMode: 'overlay'
+            }}
+          />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 border-b border-border/30 px-3 py-2 relative z-10">
+            <div className="flex items-center gap-2">
+              <div className="p-1.5 rounded bg-primary/10 border border-primary/20">
+                <Icon className="w-3.5 h-3.5 text-primary" />
+              </div>
+              <CardTitle className="text-xs font-semibold tracking-tight uppercase text-muted-foreground">{title}</CardTitle>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleExpand();
+              }}
+              className="h-6 w-6 p-0 hover:bg-primary/10 relative z-20"
+            >
+              <Minimize2 className="h-3 w-3" />
+            </Button>
+          </CardHeader>
+          <CardContent className="flex-1 overflow-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent pt-3 px-3 pb-3 relative z-10">
+            {children}
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
-    <Card className={`${expandedClass} transition-all duration-300 flex flex-col border-border/50 bg-card/50 backdrop-blur-sm hover:border-primary/30 hover:shadow-lg relative overflow-hidden`}>
+    <Card className={`${sizeClasses[size]} transition-all duration-300 flex flex-col border-border/50 bg-card/50 backdrop-blur-sm hover:border-primary/30 hover:shadow-lg relative overflow-hidden`}>
       <div 
         className="absolute inset-0 opacity-20 pointer-events-none z-0"
         style={{ 
