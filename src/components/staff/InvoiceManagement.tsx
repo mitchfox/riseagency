@@ -221,9 +221,10 @@ export const InvoiceManagement = ({ isAdmin }: { isAdmin: boolean }) => {
             if (!open) resetForm();
           }}>
             <DialogTrigger asChild>
-              <Button>
+              <Button size="sm" className="md:size-default">
                 <Plus className="w-4 h-4 mr-2" />
-                New Invoice
+                <span className="hidden sm:inline">New Invoice</span>
+                <span className="sm:hidden">New</span>
               </Button>
             </DialogTrigger>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">

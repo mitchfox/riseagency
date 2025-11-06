@@ -550,7 +550,7 @@ export const SiteVisitorsManagement = ({ isAdmin }: { isAdmin: boolean }) => {
           </div>
 
           {/* Visits Table */}
-          <ScrollArea className="w-full">
+          <ScrollArea className="w-full h-[500px]">
             <div className="rounded-md border min-w-[800px]">
               <Table>
               <TableHeader>

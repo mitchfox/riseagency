@@ -182,11 +182,12 @@ const LegalManagement = ({ isAdmin }: LegalManagementProps) => {
 
         <TabsContent value="contract" className="space-y-4">
           <div className="flex justify-between items-center">
-            <h3 className="text-xl font-semibold">Contracts</h3>
+            <h3 className="text-lg sm:text-xl font-semibold">Contracts</h3>
             {isAdmin && (
-              <Button onClick={() => openAddDialog('contract')}>
+              <Button onClick={() => openAddDialog('contract')} size="sm" className="md:size-default">
                 <Plus className="h-4 w-4 mr-2" />
-                Add Contract
+                <span className="hidden sm:inline">Add Contract</span>
+                <span className="sm:hidden">Add</span>
               </Button>
             )}
           </div>
@@ -198,10 +199,10 @@ const LegalManagement = ({ isAdmin }: LegalManagementProps) => {
           ) : (
             <div className="grid gap-4">
               {contracts.map((doc) => (
-                <div key={doc.id} className="border rounded-lg p-4 hover:bg-accent/50 transition-colors">
-                  <div className="flex justify-between items-start">
+                <div key={doc.id} className="border rounded-lg p-3 sm:p-4 hover:bg-accent/50 transition-colors">
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
                     <div className="flex-1">
-                      <h4 className="font-semibold text-lg">{doc.title}</h4>
+                      <h4 className="font-semibold text-base sm:text-lg">{doc.title}</h4>
                       {doc.description && (
                         <p className="text-sm text-muted-foreground mt-1">{doc.description}</p>
                       )}
@@ -211,7 +212,7 @@ const LegalManagement = ({ isAdmin }: LegalManagementProps) => {
                         </p>
                       )}
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 flex-shrink-0">
                       {doc.file_url && (
                         <Button
                           size="sm"
@@ -254,11 +255,12 @@ const LegalManagement = ({ isAdmin }: LegalManagementProps) => {
 
         <TabsContent value="regulation" className="space-y-4">
           <div className="flex justify-between items-center">
-            <h3 className="text-xl font-semibold">Rules & Regulations</h3>
+            <h3 className="text-lg sm:text-xl font-semibold">Rules & Regulations</h3>
             {isAdmin && (
-              <Button onClick={() => openAddDialog('regulation')}>
+              <Button onClick={() => openAddDialog('regulation')} size="sm" className="md:size-default">
                 <Plus className="h-4 w-4 mr-2" />
-                Add Regulation
+                <span className="hidden sm:inline">Add Regulation</span>
+                <span className="sm:hidden">Add</span>
               </Button>
             )}
           </div>
@@ -270,10 +272,10 @@ const LegalManagement = ({ isAdmin }: LegalManagementProps) => {
           ) : (
             <div className="grid gap-4">
               {regulations.map((doc) => (
-                <div key={doc.id} className="border rounded-lg p-4 hover:bg-accent/50 transition-colors">
-                  <div className="flex justify-between items-start">
+                <div key={doc.id} className="border rounded-lg p-3 sm:p-4 hover:bg-accent/50 transition-colors">
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
                     <div className="flex-1">
-                      <h4 className="font-semibold text-lg">{doc.title}</h4>
+                      <h4 className="font-semibold text-base sm:text-lg">{doc.title}</h4>
                       {doc.description && (
                         <p className="text-sm text-muted-foreground mt-1">{doc.description}</p>
                       )}
@@ -283,7 +285,7 @@ const LegalManagement = ({ isAdmin }: LegalManagementProps) => {
                         </p>
                       )}
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 flex-shrink-0">
                       {doc.file_url && (
                         <Button
                           size="sm"
@@ -326,7 +328,7 @@ const LegalManagement = ({ isAdmin }: LegalManagementProps) => {
       </Tabs>
 
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto p-4 md:p-6">
+        <DialogContent className="w-[95vw] sm:max-w-2xl max-h-[85vh] overflow-y-auto p-4 md:p-6">
           <DialogHeader>
             <DialogTitle>
               {editingDocument ? 'Edit' : 'Add'} {formData.category === 'contract' ? 'Contract' : 'Regulation'}

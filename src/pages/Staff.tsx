@@ -428,9 +428,9 @@ const Staff = () => {
       </div>
 
       {/* Main Layout with Sidebar */}
-      <div className="flex flex-1 overflow-hidden relative">
-        {/* Left Sidebar */}
-        <div className="flex w-14 md:w-24 border-r bg-muted/30 backdrop-blur-sm flex-col items-start py-4 gap-2 overflow-y-auto relative z-10">
+      <div className="flex flex-1 relative">
+        {/* Left Sidebar - Sticky */}
+        <div className="sticky top-0 h-screen flex w-14 md:w-24 border-r bg-muted/30 backdrop-blur-sm flex-col items-start py-4 gap-2 overflow-y-auto relative z-10">
           {filteredCategories.map((category, index) => {
             const CategoryIcon = category.icon;
             const isExpanded = expandedCategory === category.id;
