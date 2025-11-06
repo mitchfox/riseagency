@@ -57,6 +57,7 @@ const Staff = () => {
   const [loading, setLoading] = useState(true);
   const [isStaff, setIsStaff] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isMarketeer, setIsMarketeer] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [expandedSection, setExpandedSection] = useState<'overview' | 'staffaccounts' | 'players' | 'playerlist' | 'recruitment' | 'blog' | 'betweenthelines' | 'coaching' | 'analysis' | 'marketing' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'legal' | null>('overview');
   const [searchQuery, setSearchQuery] = useState("");
@@ -93,6 +94,8 @@ const Staff = () => {
           checkStaffRole(session.user.id);
         } else {
           setIsStaff(false);
+          setIsAdmin(false);
+          setIsMarketeer(false);
           setLoading(false);
         }
       }
@@ -117,20 +120,25 @@ const Staff = () => {
         .from('user_roles')
         .select('role')
         .eq('user_id', userId)
-        .in('role', ['staff', 'admin']);
+        .in('role', ['staff', 'admin', 'marketeer']);
 
       if (error) {
         console.error('Error checking staff role:', error);
         setIsStaff(false);
         setIsAdmin(false);
+        setIsMarketeer(false);
       } else {
-        setIsStaff(data && data.length > 0);
+        const hasStaffOrAdmin = data?.some(row => row.role === 'staff' || row.role === 'admin') ?? false;
+        const hasMarketeer = data?.some(row => row.role === 'marketeer') ?? false;
+        setIsStaff(hasStaffOrAdmin || hasMarketeer);
         setIsAdmin(data?.some(row => row.role === 'admin') ?? false);
+        setIsMarketeer(hasMarketeer);
       }
     } catch (err) {
       console.error('Error:', err);
       setIsStaff(false);
       setIsAdmin(false);
+      setIsMarketeer(false);
     } finally {
       setLoading(false);
     }
@@ -175,6 +183,8 @@ const Staff = () => {
     await supabase.auth.signOut();
     setUser(null);
     setIsStaff(false);
+    setIsAdmin(false);
+    setIsMarketeer(false);
     setEmail("");
     setPassword("");
     toast.success("Logged out");
@@ -288,7 +298,7 @@ const Staff = () => {
       icon: Calendar,
       sections: [{ id: 'overview', title: 'Overview', icon: Calendar }]
     },
-    {
+    ...(!isMarketeer ? [{
       id: 'coaching',
       title: 'Coaching & Management',
       icon: Dumbbell,
@@ -298,7 +308,7 @@ const Staff = () => {
         { id: 'analysis', title: 'Analysis Writer', icon: LineChart },
         { id: 'updates', title: 'Player Updates', icon: BellRing },
       ]
-    },
+    }] : []),
     {
       id: 'network',
       title: 'Network & Recruitment',
@@ -321,7 +331,7 @@ const Staff = () => {
         { id: 'visitors', title: 'Site Visitors', icon: Eye },
       ]
     },
-    {
+    ...(!isMarketeer ? [{
       id: 'admin',
       title: 'Admin & Legal',
       icon: Scale,
@@ -330,7 +340,7 @@ const Staff = () => {
         { id: 'invoices', title: 'Invoices', icon: FileCheck },
         ...(isAdmin ? [{ id: 'staffaccounts', title: 'Staff Accounts', icon: Shield }] : []),
       ]
-    }
+    }] : [])
   ];
 
   const filteredCategories = categories.map(category => ({
