@@ -553,52 +553,58 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                     return (
                       <Card 
                         key={player.id} 
-                        className="cursor-pointer hover:shadow-lg transition-all"
+                        className="cursor-pointer hover:shadow-lg transition-all overflow-hidden"
                         onClick={() => setSelectedPlayerId(player.id)}
                       >
-                        <CardHeader className="pb-3">
-                          <div className="flex items-start gap-3">
-                            <Avatar className="w-16 h-16">
-                              <AvatarImage src={player.image_url || undefined} alt={player.name} />
-                              <AvatarFallback>{player.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
-                            </Avatar>
-                            <div className="flex-1 min-w-0">
-                              <h3 className="font-semibold truncate">{player.name}</h3>
-                              <p className="text-sm text-muted-foreground">{player.position}</p>
-                              <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
+                        <div className="flex h-full">
+                          {/* Image Section - Left Side */}
+                          <div className="w-32 flex-shrink-0 relative">
+                            <img 
+                              src={player.image_url || undefined} 
+                              alt={player.name}
+                              className="absolute inset-0 w-full h-full object-cover"
+                            />
+                          </div>
+                          
+                          {/* Content Section - Right Side */}
+                          <div className="flex-1 flex flex-col p-4">
+                            <div className="flex-1">
+                              <h3 className="font-semibold text-lg mb-1">{player.name}</h3>
+                              <p className="text-sm text-muted-foreground mb-2">{player.position}</p>
+                              <div className="flex items-center gap-2 text-xs text-muted-foreground mb-3">
                                 <span>{player.age}y</span>
                                 <span>•</span>
                                 <span>{player.nationality}</span>
                               </div>
-                            </div>
-                          </div>
-                        </CardHeader>
-                        <CardContent>
-                          {player.club && (
-                            <div className="flex items-center gap-2 text-sm mb-3">
-                              {player.club_logo && (
-                                <img src={player.club_logo} alt="" className="w-5 h-5 object-contain" />
+                              
+                              {player.club && (
+                                <div className="flex items-center gap-2 text-sm mb-3">
+                                  {player.club_logo && (
+                                    <img src={player.club_logo} alt="" className="w-5 h-5 object-contain" />
+                                  )}
+                                  <span className="text-muted-foreground">{player.club}</span>
+                                </div>
                               )}
-                              <span className="text-muted-foreground">{player.club}</span>
                             </div>
-                          )}
-                          {playerStats && (
-                            <div className="grid grid-cols-3 gap-2 text-center text-xs">
-                              <div>
-                                <div className="font-semibold text-lg">{playerStats.goals}</div>
-                                <div className="text-muted-foreground">Goals</div>
+                            
+                            {playerStats && (
+                              <div className="grid grid-cols-3 gap-2 text-center text-xs pt-2 border-t border-border/50">
+                                <div>
+                                  <div className="font-semibold text-lg">{playerStats.goals}</div>
+                                  <div className="text-muted-foreground">Goals</div>
+                                </div>
+                                <div>
+                                  <div className="font-semibold text-lg">{playerStats.assists}</div>
+                                  <div className="text-muted-foreground">Assists</div>
+                                </div>
+                                <div>
+                                  <div className="font-semibold text-lg">{playerStats.matches}</div>
+                                  <div className="text-muted-foreground">Matches</div>
+                                </div>
                               </div>
-                              <div>
-                                <div className="font-semibold text-lg">{playerStats.assists}</div>
-                                <div className="text-muted-foreground">Assists</div>
-                              </div>
-                              <div>
-                                <div className="font-semibold text-lg">{playerStats.matches}</div>
-                                <div className="text-muted-foreground">Matches</div>
-                              </div>
-                            </div>
-                          )}
-                        </CardContent>
+                            )}
+                          </div>
+                        </div>
                       </Card>
                     );
                   })}
