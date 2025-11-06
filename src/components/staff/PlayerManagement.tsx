@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Edit, FileText, LineChart, Video, Calendar, Plus, DollarSign, User } from "lucide-react";
+import { Edit, FileText, LineChart, Video, Calendar, Plus, DollarSign, User, Trash2 } from "lucide-react";
 import { PerformanceActionsDialog } from "./PerformanceActionsDialog";
 import { CreatePerformanceReportDialog } from "./CreatePerformanceReportDialog";
 import { ProgrammingManagement } from "./ProgrammingManagement";
@@ -14,6 +14,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface Player {
   id: string;
@@ -64,18 +66,43 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
   const [formData, setFormData] = useState({
+    // Basic Info
     name: "",
     email: "",
     position: "",
-    club: "",
-    club_logo: "",
     age: 0,
     nationality: "",
-    bio: "",
-    image_url: "",
     category: "",
     representation_status: "",
     visible_on_stars_page: false,
+    image_url: "",
+    
+    // Club Info
+    club: "",
+    club_logo: "",
+    
+    // Bio JSON fields
+    bioText: "",
+    dateOfBirth: "",
+    number: "",
+    whatsapp: "",
+    
+    // Arrays
+    externalLinks: [] as { label: string; url: string }[],
+    strengths: [] as string[],
+    tacticalFormations: [] as {
+      formation: string;
+      positions: string[];
+      teamName: string;
+      matches: number;
+      clubLogo: string;
+      playerImage: string;
+    }[],
+    seasonStats: [] as { header: string; value: string }[],
+    topStats: [] as { label: string; value: string; description?: string }[],
+    
+    // Separate links field
+    links: [] as { label: string; url: string }[],
   });
   const [tacticalAnalyses, setTacticalAnalyses] = useState<Record<string, any[]>>({});
   const [playerPrograms, setPlayerPrograms] = useState<Record<string, any[]>>({});
@@ -216,21 +243,98 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
     }
   };
 
+  const parseBioJSON = (bioString: string | null) => {
+    if (!bioString) return null;
+    try {
+      const parsed = JSON.parse(bioString);
+      return parsed;
+    } catch {
+      // If it's not JSON, return as plain text
+      return { text: bioString };
+    }
+  };
+
+  const reconstructBioJSON = () => {
+    const bio: any = {
+      text: formData.bioText,
+      dateOfBirth: formData.dateOfBirth || undefined,
+      number: formData.number || undefined,
+      whatsapp: formData.whatsapp || undefined,
+      currentClub: formData.club || undefined,
+      currentClubLogo: formData.club_logo || undefined,
+    };
+
+    if (formData.externalLinks.length > 0) {
+      bio.externalLinks = formData.externalLinks;
+    }
+
+    if (formData.strengths.length > 0) {
+      bio.strengthsAndPlayStyle = formData.strengths;
+    }
+
+    if (formData.tacticalFormations.length > 0) {
+      bio.tacticalFormations = formData.tacticalFormations;
+    }
+
+    if (formData.seasonStats.length > 0) {
+      bio.seasonStats = formData.seasonStats;
+    }
+
+    if (formData.topStats.length > 0) {
+      bio.topStats = formData.topStats;
+    }
+
+    // Remove undefined fields
+    Object.keys(bio).forEach(key => {
+      if (bio[key] === undefined) delete bio[key];
+    });
+
+    return JSON.stringify(bio);
+  };
+
   const handleEditPlayer = (player: Player) => {
     setEditingPlayer(player);
+    
+    // Parse bio JSON
+    const bioData = parseBioJSON(player.bio);
+    
+    // Parse links JSON
+    let linksArray: { label: string; url: string }[] = [];
+    if (player.links && Array.isArray(player.links)) {
+      linksArray = player.links;
+    }
+
     setFormData({
+      // Basic Info
       name: player.name,
       email: player.email || "",
       position: player.position,
-      club: player.club || "",
-      club_logo: player.club_logo || "",
       age: player.age,
       nationality: player.nationality,
-      bio: player.bio || "",
-      image_url: player.image_url || "",
       category: player.category || "",
       representation_status: player.representation_status || "",
       visible_on_stars_page: player.visible_on_stars_page || false,
+      image_url: player.image_url || "",
+      
+      // Club Info
+      club: player.club || "",
+      club_logo: player.club_logo || "",
+      
+      // Bio JSON fields
+      bioText: bioData?.text || "",
+      dateOfBirth: bioData?.dateOfBirth || "",
+      number: bioData?.number || "",
+      whatsapp: bioData?.whatsapp || "",
+      
+      // Arrays from bio
+      externalLinks: bioData?.externalLinks || [],
+      strengths: bioData?.strengthsAndPlayStyle || [],
+      tacticalFormations: bioData?.tacticalFormations || bioData?.schemeHistory || [],
+      seasonStats: bioData?.seasonStats || [],
+      topStats: bioData?.topStats || [],
+      
+      // Separate links field
+      links: linksArray,
     });
     setIsEditDialogOpen(true);
   };
@@ -240,6 +344,8 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
     if (!editingPlayer) return;
 
     try {
+      const bioJSON = reconstructBioJSON();
+      
       const { error } = await supabase
         .from("players")
         .update({
@@ -250,11 +356,12 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
           club_logo: formData.club_logo || null,
           age: formData.age,
           nationality: formData.nationality,
-          bio: formData.bio || null,
+          bio: bioJSON,
           image_url: formData.image_url || null,
           category: formData.category || null,
           representation_status: formData.representation_status || null,
           visible_on_stars_page: formData.visible_on_stars_page,
+          links: formData.links.length > 0 ? formData.links : null,
         })
         .eq("id", editingPlayer.id);
 
@@ -1089,138 +1196,599 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       />
 
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-4xl max-h-[90vh]">
           <DialogHeader>
-            <DialogTitle>Edit Player</DialogTitle>
+            <DialogTitle>Edit Player - {editingPlayer?.name}</DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleUpdatePlayer} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Name</Label>
-              <Input
-                id="name"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                required
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                placeholder="player@example.com"
-              />
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="position">Position</Label>
-                <Input
-                  id="position"
-                  value={formData.position}
-                  onChange={(e) => setFormData({ ...formData, position: e.target.value })}
-                  required
-                />
+          <ScrollArea className="h-[calc(90vh-120px)] pr-4">
+            <form onSubmit={handleUpdatePlayer} className="space-y-6">
+              <Tabs defaultValue="basic" className="w-full">
+                <TabsList className="grid w-full grid-cols-6">
+                  <TabsTrigger value="basic">Basic</TabsTrigger>
+                  <TabsTrigger value="career">Career</TabsTrigger>
+                  <TabsTrigger value="bio">Bio</TabsTrigger>
+                  <TabsTrigger value="tactical">Tactical</TabsTrigger>
+                  <TabsTrigger value="stats">Stats</TabsTrigger>
+                  <TabsTrigger value="links">Links</TabsTrigger>
+                </TabsList>
+
+                {/* Basic Info Tab */}
+                <TabsContent value="basic" className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="name">Name *</Label>
+                      <Input
+                        id="name"
+                        value={formData.name}
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        required
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="email">Email</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        value={formData.email}
+                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="position">Position *</Label>
+                      <Input
+                        id="position"
+                        value={formData.position}
+                        onChange={(e) => setFormData({ ...formData, position: e.target.value })}
+                        required
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="age">Age *</Label>
+                      <Input
+                        id="age"
+                        type="number"
+                        value={formData.age}
+                        onChange={(e) => setFormData({ ...formData, age: parseInt(e.target.value) || 0 })}
+                        required
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="nationality">Nationality *</Label>
+                      <Input
+                        id="nationality"
+                        value={formData.nationality}
+                        onChange={(e) => setFormData({ ...formData, nationality: e.target.value })}
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="image_url">Player Image URL</Label>
+                    <Input
+                      id="image_url"
+                      value={formData.image_url}
+                      onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
+                      placeholder="https://example.com/player.png"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="category">Category</Label>
+                      <Select
+                        value={formData.category}
+                        onValueChange={(value) => setFormData({ ...formData, category: value })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select category" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Professional">Professional</SelectItem>
+                          <SelectItem value="Youth">Youth</SelectItem>
+                          <SelectItem value="Academy">Academy</SelectItem>
+                          <SelectItem value="Other">Other</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="representation_status">Representation Status</Label>
+                      <Select
+                        value={formData.representation_status}
+                        onValueChange={(value) => setFormData({ ...formData, representation_status: value })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="represented">Represented</SelectItem>
+                          <SelectItem value="mandated">Mandated</SelectItem>
+                          <SelectItem value="other">Other</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 pt-2">
+                    <input
+                      type="checkbox"
+                      id="visible_on_stars_page"
+                      checked={formData.visible_on_stars_page}
+                      onChange={(e) => setFormData({ ...formData, visible_on_stars_page: e.target.checked })}
+                      className="h-4 w-4"
+                    />
+                    <Label htmlFor="visible_on_stars_page">Visible on Stars Page</Label>
+                  </div>
+                </TabsContent>
+
+                {/* Career Info Tab */}
+                <TabsContent value="career" className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="club">Current Club</Label>
+                    <Input
+                      id="club"
+                      value={formData.club}
+                      onChange={(e) => setFormData({ ...formData, club: e.target.value })}
+                      placeholder="e.g., FC Barcelona"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="club_logo">Club Logo URL</Label>
+                    <Input
+                      id="club_logo"
+                      value={formData.club_logo}
+                      onChange={(e) => setFormData({ ...formData, club_logo: e.target.value })}
+                      placeholder="https://example.com/logo.png"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="number">Jersey Number</Label>
+                      <Input
+                        id="number"
+                        value={formData.number}
+                        onChange={(e) => setFormData({ ...formData, number: e.target.value })}
+                        placeholder="e.g., 10"
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="dateOfBirth">Date of Birth</Label>
+                      <Input
+                        id="dateOfBirth"
+                        type="date"
+                        value={formData.dateOfBirth}
+                        onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="whatsapp">WhatsApp Number</Label>
+                    <Input
+                      id="whatsapp"
+                      value={formData.whatsapp}
+                      onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
+                      placeholder="+1234567890"
+                    />
+                  </div>
+                </TabsContent>
+
+                {/* Bio & Strengths Tab */}
+                <TabsContent value="bio" className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="bioText">Bio Text</Label>
+                    <Textarea
+                      id="bioText"
+                      value={formData.bioText}
+                      onChange={(e) => setFormData({ ...formData, bioText: e.target.value })}
+                      rows={4}
+                      placeholder="Player biography..."
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Strengths & Play Style</Label>
+                    {formData.strengths.map((strength, index) => (
+                      <div key={index} className="flex gap-2">
+                        <Input
+                          value={strength}
+                          onChange={(e) => {
+                            const newStrengths = [...formData.strengths];
+                            newStrengths[index] = e.target.value;
+                            setFormData({ ...formData, strengths: newStrengths });
+                          }}
+                          placeholder="e.g., Exceptional dribbling ability"
+                        />
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="icon"
+                          onClick={() => {
+                            const newStrengths = formData.strengths.filter((_, i) => i !== index);
+                            setFormData({ ...formData, strengths: newStrengths });
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setFormData({ ...formData, strengths: [...formData.strengths, ""] });
+                      }}
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Strength
+                    </Button>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>External Links (in Bio)</Label>
+                    {formData.externalLinks.map((link, index) => (
+                      <div key={index} className="flex gap-2">
+                        <Input
+                          value={link.label}
+                          onChange={(e) => {
+                            const newLinks = [...formData.externalLinks];
+                            newLinks[index].label = e.target.value;
+                            setFormData({ ...formData, externalLinks: newLinks });
+                          }}
+                          placeholder="Label (e.g., Transfermarkt)"
+                          className="flex-1"
+                        />
+                        <Input
+                          value={link.url}
+                          onChange={(e) => {
+                            const newLinks = [...formData.externalLinks];
+                            newLinks[index].url = e.target.value;
+                            setFormData({ ...formData, externalLinks: newLinks });
+                          }}
+                          placeholder="URL"
+                          className="flex-[2]"
+                        />
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="icon"
+                          onClick={() => {
+                            const newLinks = formData.externalLinks.filter((_, i) => i !== index);
+                            setFormData({ ...formData, externalLinks: newLinks });
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setFormData({ 
+                          ...formData, 
+                          externalLinks: [...formData.externalLinks, { label: "", url: "" }] 
+                        });
+                      }}
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add External Link
+                    </Button>
+                  </div>
+                </TabsContent>
+
+                {/* Tactical Formations Tab */}
+                <TabsContent value="tactical" className="space-y-4">
+                  <Label>Tactical Formations</Label>
+                  {formData.tacticalFormations.map((formation, index) => (
+                    <Card key={index} className="p-4 space-y-3">
+                      <div className="flex justify-between items-center">
+                        <h4 className="font-medium">Formation {index + 1}</h4>
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => {
+                            const newFormations = formData.tacticalFormations.filter((_, i) => i !== index);
+                            setFormData({ ...formData, tacticalFormations: newFormations });
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <Input
+                          value={formation.formation}
+                          onChange={(e) => {
+                            const newFormations = [...formData.tacticalFormations];
+                            newFormations[index].formation = e.target.value;
+                            setFormData({ ...formData, tacticalFormations: newFormations });
+                          }}
+                          placeholder="Formation (e.g., 4-3-3)"
+                        />
+                        <Input
+                          value={formation.positions.join(", ")}
+                          onChange={(e) => {
+                            const newFormations = [...formData.tacticalFormations];
+                            newFormations[index].positions = e.target.value.split(",").map(p => p.trim());
+                            setFormData({ ...formData, tacticalFormations: newFormations });
+                          }}
+                          placeholder="Positions (e.g., CM, RCM)"
+                        />
+                        <Input
+                          value={formation.teamName}
+                          onChange={(e) => {
+                            const newFormations = [...formData.tacticalFormations];
+                            newFormations[index].teamName = e.target.value;
+                            setFormData({ ...formData, tacticalFormations: newFormations });
+                          }}
+                          placeholder="Team Name"
+                        />
+                        <Input
+                          type="number"
+                          value={formation.matches}
+                          onChange={(e) => {
+                            const newFormations = [...formData.tacticalFormations];
+                            newFormations[index].matches = parseInt(e.target.value) || 0;
+                            setFormData({ ...formData, tacticalFormations: newFormations });
+                          }}
+                          placeholder="Matches"
+                        />
+                        <Input
+                          value={formation.clubLogo}
+                          onChange={(e) => {
+                            const newFormations = [...formData.tacticalFormations];
+                            newFormations[index].clubLogo = e.target.value;
+                            setFormData({ ...formData, tacticalFormations: newFormations });
+                          }}
+                          placeholder="Club Logo URL"
+                          className="col-span-2"
+                        />
+                        <Input
+                          value={formation.playerImage}
+                          onChange={(e) => {
+                            const newFormations = [...formData.tacticalFormations];
+                            newFormations[index].playerImage = e.target.value;
+                            setFormData({ ...formData, tacticalFormations: newFormations });
+                          }}
+                          placeholder="Player Image URL"
+                          className="col-span-2"
+                        />
+                      </div>
+                    </Card>
+                  ))}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setFormData({ 
+                        ...formData, 
+                        tacticalFormations: [
+                          ...formData.tacticalFormations, 
+                          {
+                            formation: "",
+                            positions: [],
+                            teamName: "",
+                            matches: 0,
+                            clubLogo: "",
+                            playerImage: "",
+                          }
+                        ] 
+                      });
+                    }}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Formation
+                  </Button>
+                </TabsContent>
+
+                {/* Stats Tab */}
+                <TabsContent value="stats" className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Season Stats</Label>
+                    {formData.seasonStats.map((stat, index) => (
+                      <div key={index} className="flex gap-2">
+                        <Input
+                          value={stat.header}
+                          onChange={(e) => {
+                            const newStats = [...formData.seasonStats];
+                            newStats[index].header = e.target.value;
+                            setFormData({ ...formData, seasonStats: newStats });
+                          }}
+                          placeholder="Header (e.g., Goals)"
+                          className="flex-1"
+                        />
+                        <Input
+                          value={stat.value}
+                          onChange={(e) => {
+                            const newStats = [...formData.seasonStats];
+                            newStats[index].value = e.target.value;
+                            setFormData({ ...formData, seasonStats: newStats });
+                          }}
+                          placeholder="Value (e.g., 15)"
+                          className="flex-1"
+                        />
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="icon"
+                          onClick={() => {
+                            const newStats = formData.seasonStats.filter((_, i) => i !== index);
+                            setFormData({ ...formData, seasonStats: newStats });
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setFormData({ 
+                          ...formData, 
+                          seasonStats: [...formData.seasonStats, { header: "", value: "" }] 
+                        });
+                      }}
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Season Stat
+                    </Button>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Top Stats</Label>
+                    {formData.topStats.map((stat, index) => (
+                      <div key={index} className="space-y-2 p-3 border rounded">
+                        <div className="flex gap-2">
+                          <Input
+                            value={stat.label}
+                            onChange={(e) => {
+                              const newStats = [...formData.topStats];
+                              newStats[index].label = e.target.value;
+                              setFormData({ ...formData, topStats: newStats });
+                            }}
+                            placeholder="Label (e.g., Pass Accuracy)"
+                          />
+                          <Input
+                            value={stat.value}
+                            onChange={(e) => {
+                              const newStats = [...formData.topStats];
+                              newStats[index].value = e.target.value;
+                              setFormData({ ...formData, topStats: newStats });
+                            }}
+                            placeholder="Value (e.g., 89%)"
+                          />
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="icon"
+                            onClick={() => {
+                              const newStats = formData.topStats.filter((_, i) => i !== index);
+                              setFormData({ ...formData, topStats: newStats });
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                        <Input
+                          value={stat.description || ""}
+                          onChange={(e) => {
+                            const newStats = [...formData.topStats];
+                            newStats[index].description = e.target.value;
+                            setFormData({ ...formData, topStats: newStats });
+                          }}
+                          placeholder="Description (optional)"
+                        />
+                      </div>
+                    ))}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setFormData({ 
+                          ...formData, 
+                          topStats: [...formData.topStats, { label: "", value: "", description: "" }] 
+                        });
+                      }}
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Top Stat
+                    </Button>
+                  </div>
+                </TabsContent>
+
+                {/* Links Tab */}
+                <TabsContent value="links" className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>External Profile Links</Label>
+                    <p className="text-sm text-muted-foreground">
+                      These appear as separate link buttons on the player profile
+                    </p>
+                    {formData.links.map((link, index) => (
+                      <div key={index} className="flex gap-2">
+                        <Input
+                          value={link.label}
+                          onChange={(e) => {
+                            const newLinks = [...formData.links];
+                            newLinks[index].label = e.target.value;
+                            setFormData({ ...formData, links: newLinks });
+                          }}
+                          placeholder="Label (e.g., Transfermarkt)"
+                          className="flex-1"
+                        />
+                        <Input
+                          value={link.url}
+                          onChange={(e) => {
+                            const newLinks = [...formData.links];
+                            newLinks[index].url = e.target.value;
+                            setFormData({ ...formData, links: newLinks });
+                          }}
+                          placeholder="URL"
+                          className="flex-[2]"
+                        />
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="icon"
+                          onClick={() => {
+                            const newLinks = formData.links.filter((_, i) => i !== index);
+                            setFormData({ ...formData, links: newLinks });
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setFormData({ 
+                          ...formData, 
+                          links: [...formData.links, { label: "", url: "" }] 
+                        });
+                      }}
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Link
+                    </Button>
+                  </div>
+
+                  <div className="p-3 bg-muted rounded-lg text-sm">
+                    <p className="font-medium mb-1">Note about Highlights:</p>
+                    <p className="text-muted-foreground">
+                      Video highlights are managed through the player's Highlights tab using the file upload system, not through this edit dialog.
+                    </p>
+                  </div>
+                </TabsContent>
+              </Tabs>
+
+              <div className="flex justify-end gap-2 pt-4 border-t">
+                <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit">
+                  Save Changes
+                </Button>
               </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="age">Age</Label>
-                <Input
-                  id="age"
-                  type="number"
-                  value={formData.age}
-                  onChange={(e) => setFormData({ ...formData, age: parseInt(e.target.value) || 0 })}
-                  required
-                />
-              </div>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="nationality">Nationality</Label>
-              <Input
-                id="nationality"
-                value={formData.nationality}
-                onChange={(e) => setFormData({ ...formData, nationality: e.target.value })}
-                required
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="club">Club</Label>
-              <Input
-                id="club"
-                value={formData.club}
-                onChange={(e) => setFormData({ ...formData, club: e.target.value })}
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="club_logo">Club Logo URL</Label>
-              <Input
-                id="club_logo"
-                value={formData.club_logo}
-                onChange={(e) => setFormData({ ...formData, club_logo: e.target.value })}
-                placeholder="https://example.com/logo.png"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="image_url">Player Image URL</Label>
-              <Input
-                id="image_url"
-                value={formData.image_url}
-                onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-                placeholder="https://example.com/player.png"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="category">Category</Label>
-              <Input
-                id="category"
-                value={formData.category}
-                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                placeholder="e.g., Professional, Youth"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="representation_status">Representation Status</Label>
-              <Input
-                id="representation_status"
-                value={formData.representation_status}
-                onChange={(e) => setFormData({ ...formData, representation_status: e.target.value })}
-                placeholder="e.g., represented, mandated, other"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="bio">Bio (JSON or text)</Label>
-              <Textarea
-                id="bio"
-                value={formData.bio}
-                onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
-                rows={3}
-                placeholder="Bio text or JSON"
-              />
-            </div>
-            
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                id="visible_on_stars_page"
-                checked={formData.visible_on_stars_page}
-                onChange={(e) => setFormData({ ...formData, visible_on_stars_page: e.target.checked })}
-                className="h-4 w-4"
-              />
-              <Label htmlFor="visible_on_stars_page">Visible on Stars Page</Label>
-            </div>
-            
-            <Button type="submit" className="w-full">Update Player</Button>
-          </form>
+            </form>
+          </ScrollArea>
         </DialogContent>
       </Dialog>
     </div>
