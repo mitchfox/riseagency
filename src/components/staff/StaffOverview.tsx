@@ -40,17 +40,6 @@ const Widget = ({ id, title, icon: Icon, size, expanded, onToggleExpand, childre
               mixBlendMode: 'overlay'
             }}
           />
-          <Button
-            variant="default"
-            size="lg"
-            onClick={(e) => {
-              e.stopPropagation();
-              onToggleExpand();
-            }}
-            className="absolute top-20 right-4 z-[100] h-10 w-10 p-0 bg-primary hover:bg-primary/90 shadow-lg"
-          >
-            <Minimize2 className="h-5 w-5" />
-          </Button>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 border-b border-border/30 px-3 py-2 relative z-10 overflow-hidden">
             <div 
               className="absolute inset-0 opacity-30 pointer-events-none z-0"
@@ -67,6 +56,17 @@ const Widget = ({ id, title, icon: Icon, size, expanded, onToggleExpand, childre
               </div>
               <CardTitle className="text-xs font-semibold tracking-tight uppercase text-muted-foreground">{title}</CardTitle>
             </div>
+            <Button
+              variant="default"
+              size="lg"
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleExpand();
+              }}
+              className="h-10 w-10 p-0 bg-primary hover:bg-primary/90 shadow-lg relative z-10"
+            >
+              <Minimize2 className="h-5 w-5" />
+            </Button>
           </CardHeader>
           <CardContent className="flex-1 overflow-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent pt-3 px-3 pb-3 relative z-10">
             {children}

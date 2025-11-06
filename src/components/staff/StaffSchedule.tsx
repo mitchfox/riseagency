@@ -282,16 +282,17 @@ export const StaffSchedule = ({ isAdmin }: { isAdmin: boolean }) => {
     return (
       <>
       <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <Button 
             onClick={() => setWeekOffset(weekOffset - 1)} 
             size="sm" 
             variant="outline"
+            className={isMobile ? "h-7 w-7 p-0" : ""}
           >
-            <ChevronLeft className="w-4 h-4" />
+            <ChevronLeft className={isMobile ? "w-3 h-3" : "w-4 h-4"} />
           </Button>
-          <p className="text-muted-foreground">
+          <p className={`text-muted-foreground ${isMobile ? "text-xs" : ""}`}>
             {weekOffset === 0 ? 'Next' : weekOffset > 0 ? `${weekOffset * 6} weeks ahead` : `${Math.abs(weekOffset * 6)} weeks ago`} 
             {' '}• {programs.length} active program{programs.length !== 1 ? 's' : ''}
           </p>
@@ -299,14 +300,17 @@ export const StaffSchedule = ({ isAdmin }: { isAdmin: boolean }) => {
             onClick={() => setWeekOffset(weekOffset + 1)} 
             size="sm" 
             variant="outline"
+            className={isMobile ? "h-7 w-7 p-0" : ""}
           >
-            <ChevronRight className="w-4 h-4" />
+            <ChevronRight className={isMobile ? "w-3 h-3" : "w-4 h-4"} />
           </Button>
         </div>
-        <Button onClick={() => setShowFixturesDialog(true)} size="sm" variant="secondary">
-          <Calendar className="w-4 h-4 mr-2" />
-          Add Fixtures
-        </Button>
+        {!isMobile && (
+          <Button onClick={() => setShowFixturesDialog(true)} size="sm" variant="secondary">
+            <Calendar className="w-4 h-4 mr-2" />
+            Add Fixtures
+          </Button>
+        )}
       </div>
 
       {/* Calendar Grid */}
@@ -315,7 +319,7 @@ export const StaffSchedule = ({ isAdmin }: { isAdmin: boolean }) => {
           {/* Header Row */}
           <div className={`grid ${isMobile ? 'grid-cols-2' : 'grid-cols-8'} gap-2 mb-2`}>
             <div 
-              className="p-3 text-center font-bebas uppercase text-sm rounded-lg"
+              className={`${isMobile ? 'p-1.5' : 'p-3'} text-center font-bebas uppercase ${isMobile ? 'text-[10px]' : 'text-sm'} rounded-lg`}
               style={{ 
                 backgroundColor: 'hsl(43, 49%, 61%)',
                 color: 'hsl(0, 0%, 0%)'
@@ -326,7 +330,7 @@ export const StaffSchedule = ({ isAdmin }: { isAdmin: boolean }) => {
             {(isMobile ? [format(new Date(), 'EEE')] : ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']).map((day) => (
               <div 
                 key={day}
-                className="p-3 text-center font-bebas uppercase text-sm rounded-lg"
+                className={`${isMobile ? 'p-1.5' : 'p-3'} text-center font-bebas uppercase ${isMobile ? 'text-[10px]' : 'text-sm'} rounded-lg`}
                 style={{ 
                   backgroundColor: 'hsl(43, 49%, 61%)',
                   color: 'hsl(0, 0%, 0%)'
@@ -347,16 +351,16 @@ export const StaffSchedule = ({ isAdmin }: { isAdmin: boolean }) => {
               <div key={weekIndex} className={`grid ${isMobile ? 'grid-cols-2' : 'grid-cols-8'} gap-2`}>
                 {/* Week Start Cell */}
                 <div 
-                  className="p-3 rounded-lg flex flex-col items-center justify-center border"
+                  className={`${isMobile ? 'p-1.5' : 'p-3'} rounded-lg flex flex-col items-center justify-center border`}
                   style={{ 
                     backgroundColor: isMobile ? 'hsl(43, 49%, 61%)' : isCurrentWeek(weekStart) ? 'hsl(43, 49%, 61%)' : 'hsl(0, 0%, 95%)',
                     color: 'hsl(0, 0%, 0%)',
                     borderColor: 'rgba(0, 0, 0, 0.1)'
                   }}
                 >
-                  <div className="text-2xl font-bold">
+                  <div className={`${isMobile ? 'text-base' : 'text-2xl'} font-bold`}>
                     {format(isMobile ? today : weekStart, 'd')}
-                    <sup className="text-xs">
+                    <sup className={isMobile ? "text-[8px]" : "text-xs"}>
                       {(() => {
                         const day = format(isMobile ? today : weekStart, 'd');
                         return day.endsWith('1') && day !== '11' ? 'st' :
@@ -365,8 +369,8 @@ export const StaffSchedule = ({ isAdmin }: { isAdmin: boolean }) => {
                       })()}
                     </sup>
                   </div>
-                  <div className="text-xs font-medium italic">
-                    {format(isMobile ? today : weekStart, 'MMMM')}
+                  <div className={`${isMobile ? 'text-[9px]' : 'text-xs'} font-medium italic`}>
+                    {format(isMobile ? today : weekStart, 'MMM')}
                   </div>
                 </div>
 
@@ -392,7 +396,7 @@ export const StaffSchedule = ({ isAdmin }: { isAdmin: boolean }) => {
                   return (
                     <div 
                       key={dayOffset}
-                      className="p-3 rounded-lg min-h-[80px] relative border transition-all"
+                      className={`${isMobile ? 'p-1' : 'p-3'} rounded-lg ${isMobile ? 'min-h-[60px]' : 'min-h-[80px]'} relative border transition-all`}
                       style={{ 
                         backgroundColor: hasEndDates ? 'hsl(0, 50%, 35%)' : 'hsl(0, 0%, 10%)',
                         borderColor: isToday ? 'hsl(43, 49%, 61%)' : hasEndDates ? 'hsl(0, 50%, 50%)' : 'rgba(255, 255, 255, 0.1)',
@@ -401,7 +405,7 @@ export const StaffSchedule = ({ isAdmin }: { isAdmin: boolean }) => {
                     >
                       {/* Day number in top right */}
                       <span 
-                        className="absolute top-1 right-1 text-xs opacity-50"
+                        className={`absolute top-0.5 right-0.5 ${isMobile ? 'text-[9px]' : 'text-xs'} opacity-50`}
                         style={{ color: 'hsl(0, 0%, 100%)' }}
                       >
                         {format(currentDate, 'd')}
@@ -409,25 +413,25 @@ export const StaffSchedule = ({ isAdmin }: { isAdmin: boolean }) => {
 
                       {/* Display items */}
                       {allItems.length > 0 && (
-                        <div className="flex flex-col gap-1 mt-4">
+                        <div className={`flex flex-col gap-0.5 ${isMobile ? 'mt-2' : 'mt-4'}`}>
                           {displayItems.map((item, idx) => (
                             item.type === 'endDate' ? (
                               <div 
                                 key={`end-${idx}`}
-                                className="text-xs p-1 rounded"
+                                className={`${isMobile ? 'text-[8px] p-0.5' : 'text-xs p-1'} rounded`}
                                 style={{ 
                                   backgroundColor: 'hsl(43, 49%, 61%)',
                                   color: 'hsl(0, 0%, 0%)'
                                 }}
                                 title={`${item.data.playerName} - ${item.data.programName}${item.data.phaseName ? ` (${item.data.phaseName})` : ''}`}
                               >
-                                <div className="font-bold truncate">{item.data.playerName}</div>
-                                <div className="text-[10px] truncate opacity-75">{item.data.phaseName || item.data.programName}</div>
+                                <div className="font-bold truncate">{isMobile ? item.data.playerName.split(' ')[0] : item.data.playerName}</div>
+                                {!isMobile && <div className="text-[10px] truncate opacity-75">{item.data.phaseName || item.data.programName}</div>}
                               </div>
                             ) : (
                               <div 
                                 key={`fixture-${idx}`}
-                                className="text-xs p-1 rounded border border-dashed opacity-70"
+                                className={`${isMobile ? 'text-[8px] p-0.5' : 'text-xs p-1'} rounded border border-dashed opacity-70`}
                                 style={{ 
                                   backgroundColor: 'hsl(0, 0%, 20%)',
                                   borderColor: 'hsl(0, 0%, 40%)',
@@ -435,8 +439,8 @@ export const StaffSchedule = ({ isAdmin }: { isAdmin: boolean }) => {
                                 }}
                                 title={`${item.data.home_team} vs ${item.data.away_team}${item.data.competition ? ` - ${item.data.competition}` : ''}`}
                               >
-                                <div className="truncate">⚽ {item.data.home_team}</div>
-                                <div className="truncate text-[10px]">vs {item.data.away_team}</div>
+                                <div className="truncate">⚽ {isMobile ? item.data.home_team.substring(0, 8) : item.data.home_team}</div>
+                                {!isMobile && <div className="truncate text-[10px]">vs {item.data.away_team}</div>}
                               </div>
                             )
                           ))}
@@ -446,13 +450,13 @@ export const StaffSchedule = ({ isAdmin }: { isAdmin: boolean }) => {
                             <button
                               onClick={() => setExpandedDays(prev => new Set([...prev, dayKey]))}
                               onMouseEnter={() => setExpandedDays(prev => new Set([...prev, dayKey]))}
-                              className="text-xs p-1 rounded font-bold transition-all hover:scale-105"
+                              className={`${isMobile ? 'text-[8px] p-0.5' : 'text-xs p-1'} rounded font-bold transition-all hover:scale-105`}
                               style={{ 
                                 backgroundColor: 'hsl(43, 49%, 61%)',
                                 color: 'hsl(0, 0%, 0%)'
                               }}
                             >
-                              +{remainingCount} more
+                              +{remainingCount}
                             </button>
                           )}
                         </div>
@@ -467,7 +471,7 @@ export const StaffSchedule = ({ isAdmin }: { isAdmin: boolean }) => {
       </div>
 
       {/* Legend */}
-      <div className="flex items-center gap-4 text-sm text-muted-foreground pt-4 border-t">
+      <div className={`flex ${isMobile ? 'flex-col gap-2' : 'items-center gap-4'} ${isMobile ? 'text-xs' : 'text-sm'} text-muted-foreground pt-4 border-t`}>
         <div className="flex items-center gap-2">
           <div 
             className="w-4 h-4 rounded"
