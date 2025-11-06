@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -47,10 +48,12 @@ interface PlayerStats {
 }
 
 const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [players, setPlayers] = useState<Player[]>([]);
   const [stats, setStats] = useState<Record<string, PlayerStats>>({});
   const [loading, setLoading] = useState(true);
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<string>("analysis");
   const [playerAnalyses, setPlayerAnalyses] = useState<Record<string, any[]>>({});
   const [playerInvoices, setPlayerInvoices] = useState<Record<string, any[]>>({});
   const [isPerformanceActionsDialogOpen, setIsPerformanceActionsDialogOpen] = useState(false);
@@ -114,6 +117,29 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
     fetchTacticalAnalyses();
     fetchAllPrograms();
   }, []);
+
+  // Read player and tab from URL params
+  useEffect(() => {
+    if (players.length === 0) return;
+    
+    const playerSlug = searchParams.get('player');
+    const tabParam = searchParams.get('tab');
+    
+    if (playerSlug) {
+      // Find player by slug (name converted to lowercase with dashes)
+      const player = players.find(p => 
+        p.name.toLowerCase().replace(/\s+/g, '-') === playerSlug
+      );
+      
+      if (player) {
+        setSelectedPlayerId(player.id);
+      }
+    }
+    
+    if (tabParam) {
+      setActiveTab(tabParam);
+    }
+  }, [players, searchParams]);
 
   const fetchPlayers = async () => {
     try {
@@ -392,7 +418,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   return (
     <div className="flex h-full gap-4">
       {/* Inner Player Sidebar */}
-      <div className="w-20 flex flex-col gap-2 overflow-y-auto border-r pr-2">
+      <div className="hidden md:flex w-20 flex-col gap-2 overflow-y-auto border-r pr-2">
         {/* Represented Players */}
         {groupedPlayers.represented.map((player) => (
           <button
@@ -671,18 +697,18 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
             {/* Player Header */}
             <Card>
               <CardHeader>
-                <div className="flex items-start justify-between">
+                <div className="flex flex-col md:flex-row items-start justify-between gap-4">
                   <div className="flex items-start gap-4">
-                    <Avatar className="w-20 h-20">
+                    <Avatar className="w-16 h-16 md:w-20 md:h-20">
                       <AvatarImage src={selectedPlayer?.image_url || undefined} alt={selectedPlayer?.name} />
-                      <AvatarFallback className="text-2xl">
+                      <AvatarFallback className="text-xl md:text-2xl">
                         {selectedPlayer?.name.split(' ').map(n => n[0]).join('')}
                       </AvatarFallback>
                     </Avatar>
                     <div>
-                      <h2 className="text-3xl font-bold">{selectedPlayer?.name}</h2>
-                      <p className="text-muted-foreground text-lg">{selectedPlayer?.position}</p>
-                      <div className="flex items-center gap-3 text-sm text-muted-foreground mt-2">
+                      <h2 className="text-2xl md:text-3xl font-bold">{selectedPlayer?.name}</h2>
+                      <p className="text-muted-foreground text-base md:text-lg">{selectedPlayer?.position}</p>
+                      <div className="flex items-center gap-3 text-xs md:text-sm text-muted-foreground mt-2">
                         <span>{selectedPlayer?.age} years</span>
                         <span>•</span>
                         <span>{selectedPlayer?.nationality}</span>
@@ -700,11 +726,12 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                       </div>
                     </div>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 w-full md:w-auto">
                     <Button 
                       variant="outline" 
                       size="sm"
                       onClick={() => handleEditPlayer(selectedPlayer!)}
+                      className="flex-1 md:flex-none"
                     >
                       <Edit className="w-4 h-4 mr-2" />
                       Edit
@@ -713,6 +740,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                       variant="outline" 
                       size="sm"
                       onClick={() => setSelectedPlayerId(null)}
+                      className="flex-1 md:flex-none"
                     >
                       Close
                     </Button>
@@ -721,22 +749,22 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
               </CardHeader>
               {selectedPlayerStats && (
                 <CardContent>
-                  <div className="grid grid-cols-4 gap-4 text-center">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
                     <div className="p-4 bg-secondary/30 rounded-lg">
-                      <div className="text-3xl font-bold text-primary">{selectedPlayerStats.goals}</div>
-                      <div className="text-sm text-muted-foreground mt-1">Goals</div>
+                      <div className="text-2xl md:text-3xl font-bold text-primary">{selectedPlayerStats.goals}</div>
+                      <div className="text-xs md:text-sm text-muted-foreground mt-1">Goals</div>
                     </div>
                     <div className="p-4 bg-secondary/30 rounded-lg">
-                      <div className="text-3xl font-bold text-primary">{selectedPlayerStats.assists}</div>
-                      <div className="text-sm text-muted-foreground mt-1">Assists</div>
+                      <div className="text-2xl md:text-3xl font-bold text-primary">{selectedPlayerStats.assists}</div>
+                      <div className="text-xs md:text-sm text-muted-foreground mt-1">Assists</div>
                     </div>
                     <div className="p-4 bg-secondary/30 rounded-lg">
-                      <div className="text-3xl font-bold text-primary">{selectedPlayerStats.matches}</div>
-                      <div className="text-sm text-muted-foreground mt-1">Matches</div>
+                      <div className="text-2xl md:text-3xl font-bold text-primary">{selectedPlayerStats.matches}</div>
+                      <div className="text-xs md:text-sm text-muted-foreground mt-1">Matches</div>
                     </div>
                     <div className="p-4 bg-secondary/30 rounded-lg">
-                      <div className="text-3xl font-bold text-primary">{selectedPlayerStats.minutes}</div>
-                      <div className="text-sm text-muted-foreground mt-1">Minutes</div>
+                      <div className="text-2xl md:text-3xl font-bold text-primary">{selectedPlayerStats.minutes}</div>
+                      <div className="text-xs md:text-sm text-muted-foreground mt-1">Minutes</div>
                     </div>
                   </div>
                 </CardContent>
@@ -744,25 +772,25 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
             </Card>
 
             {/* Tabbed Sections */}
-            <Tabs defaultValue="analysis" className="w-full">
-              <TabsList className="grid w-full grid-cols-5">
-                <TabsTrigger value="analysis">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <TabsList className="flex overflow-x-auto md:grid md:grid-cols-5 w-full">
+                <TabsTrigger value="analysis" className="flex-shrink-0 min-w-[120px]">
                   <LineChart className="w-4 h-4 mr-2" />
                   Analysis
                 </TabsTrigger>
-                <TabsTrigger value="programming">
+                <TabsTrigger value="programming" className="flex-shrink-0 min-w-[120px]">
                   <FileText className="w-4 h-4 mr-2" />
                   Programming
                 </TabsTrigger>
-                <TabsTrigger value="highlights">
+                <TabsTrigger value="highlights" className="flex-shrink-0 min-w-[120px]">
                   <Video className="w-4 h-4 mr-2" />
                   Highlights
                 </TabsTrigger>
-                <TabsTrigger value="fixtures">
+                <TabsTrigger value="fixtures" className="flex-shrink-0 min-w-[120px]">
                   <Calendar className="w-4 h-4 mr-2" />
                   Fixtures
                 </TabsTrigger>
-                <TabsTrigger value="invoices">
+                <TabsTrigger value="invoices" className="flex-shrink-0 min-w-[120px]">
                   <DollarSign className="w-4 h-4 mr-2" />
                   Invoices
                 </TabsTrigger>

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Maximize2, Minimize2, Target, CheckSquare, Users, Calendar, Link2, TrendingUp } from "lucide-react";
@@ -66,13 +67,18 @@ const Widget = ({ id, title, icon: Icon, size, expanded, onToggleExpand, childre
 
 export const StaffOverview = ({ isAdmin }: { isAdmin: boolean }) => {
   const [expandedWidget, setExpandedWidget] = useState<string | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const toggleWidget = (id: string) => {
     setExpandedWidget(expandedWidget === id ? null : id);
   };
 
+  const navigateToPlayer = (playerSlug: string, tab: string) => {
+    setSearchParams({ section: 'players', player: playerSlug, tab });
+  };
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-2 auto-rows-[200px] w-full">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-2 auto-rows-[200px] w-full">
       {/* Quarter Goals - Small */}
       <Widget
         id="goals"
@@ -183,26 +189,26 @@ export const StaffOverview = ({ isAdmin }: { isAdmin: boolean }) => {
         expanded={expandedWidget === "financial"}
         onToggleExpand={() => toggleWidget("financial")}
       >
-        <div className="grid grid-cols-5 gap-3 h-full">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 h-full">
           <div className="flex flex-col justify-center p-3 bg-gradient-to-br from-emerald-500/10 to-emerald-600/10 rounded border border-emerald-500/30">
-            <div className="text-lg font-bold text-emerald-600">€127k</div>
-            <div className="text-xs text-muted-foreground uppercase tracking-wider">Revenue</div>
+            <div className="text-sm md:text-lg font-bold text-emerald-600">€127k</div>
+            <div className="text-[10px] md:text-xs text-muted-foreground uppercase tracking-wider">Revenue</div>
           </div>
           <div className="flex flex-col justify-center p-3 bg-gradient-to-br from-rose-500/10 to-rose-600/10 rounded border border-rose-500/30">
-            <div className="text-lg font-bold text-rose-600">€89k</div>
-            <div className="text-xs text-muted-foreground uppercase tracking-wider">Expenses</div>
+            <div className="text-sm md:text-lg font-bold text-rose-600">€89k</div>
+            <div className="text-[10px] md:text-xs text-muted-foreground uppercase tracking-wider">Expenses</div>
           </div>
           <div className="flex flex-col justify-center p-3 bg-gradient-to-br from-primary/20 to-primary/5 rounded border border-primary/40">
-            <div className="text-lg font-bold text-primary">€38k</div>
-            <div className="text-xs text-muted-foreground uppercase tracking-wider">Profit</div>
+            <div className="text-sm md:text-lg font-bold text-primary">€38k</div>
+            <div className="text-[10px] md:text-xs text-muted-foreground uppercase tracking-wider">Profit</div>
           </div>
           <div className="flex flex-col justify-center p-3 bg-gradient-to-br from-amber-500/10 to-amber-600/10 rounded border border-amber-500/30">
-            <div className="text-lg font-bold text-amber-600">€45k</div>
-            <div className="text-xs text-muted-foreground uppercase tracking-wider">Commissions</div>
+            <div className="text-sm md:text-lg font-bold text-amber-600">€45k</div>
+            <div className="text-[10px] md:text-xs text-muted-foreground uppercase tracking-wider">Commissions</div>
           </div>
           <div className="flex flex-col justify-center p-3 bg-gradient-to-br from-blue-500/10 to-blue-600/10 rounded border border-blue-500/30">
-            <div className="text-lg font-bold text-blue-600">€32k</div>
-            <div className="text-xs text-muted-foreground uppercase tracking-wider">Consulting</div>
+            <div className="text-sm md:text-lg font-bold text-blue-600">€32k</div>
+            <div className="text-[10px] md:text-xs text-muted-foreground uppercase tracking-wider">Consulting</div>
           </div>
         </div>
       </Widget>
@@ -230,67 +236,67 @@ export const StaffOverview = ({ isAdmin }: { isAdmin: boolean }) => {
         expanded={expandedWidget === "represented"}
         onToggleExpand={() => toggleWidget("represented")}
       >
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
           <div className="flex flex-col p-2 border border-border/50 rounded hover:bg-accent/50 hover:border-primary/30 transition-all group">
             <img src="/players/tyrese-omotoye.png" alt="Tyrese Omotoye" className="w-full h-14 object-cover border border-primary/30 mb-1" />
-            <span className="text-[10px] font-semibold text-center">Tyrese Omotoye</span>
+            <span className="text-[10px] md:text-[10px] font-semibold text-center">Tyrese Omotoye</span>
             <span className="text-[9px] text-muted-foreground mb-1 text-center">Forward</span>
             <div className="flex gap-1 w-full">
               <Button 
                 size="sm" 
-                className="h-5 text-[9px] px-1.5 flex-1 bg-primary hover:bg-primary/90 text-primary-foreground border-0" 
-                onClick={() => window.location.href = '/staff?section=players&player=tyrese-omotoye&tab=analysis'}
+                className="h-5 text-[10px] md:text-[9px] px-1.5 flex-1 bg-primary hover:bg-primary/90 text-primary-foreground border-0" 
+                onClick={() => navigateToPlayer('tyrese-omotoye', 'analysis')}
               >
                 Analysis
               </Button>
               <Button 
                 size="sm" 
-                className="h-5 text-[9px] px-1.5 flex-1 bg-primary hover:bg-primary/90 text-primary-foreground border-0" 
-                onClick={() => window.location.href = '/staff?section=players&player=tyrese-omotoye&tab=programming'}
+                className="h-5 text-[10px] md:text-[9px] px-1.5 flex-1 bg-primary hover:bg-primary/90 text-primary-foreground border-0" 
+                onClick={() => navigateToPlayer('tyrese-omotoye', 'programming')}
               >
-                Program
+                Programming
               </Button>
             </div>
           </div>
           <div className="flex flex-col p-2 border border-border/50 rounded hover:bg-accent/50 hover:border-primary/30 transition-all group">
             <img src="/players/michael-mulligan.png" alt="Michael Mulligan" className="w-full h-14 object-cover border border-primary/30 mb-1" />
-            <span className="text-[10px] font-semibold text-center">Michael Mulligan</span>
+            <span className="text-[10px] md:text-[10px] font-semibold text-center">Michael Mulligan</span>
             <span className="text-[9px] text-muted-foreground mb-1 text-center">Midfielder</span>
             <div className="flex gap-1 w-full">
               <Button 
                 size="sm" 
-                className="h-5 text-[9px] px-1.5 flex-1 bg-primary hover:bg-primary/90 text-primary-foreground border-0" 
-                onClick={() => window.location.href = '/staff?section=players&player=michael-mulligan&tab=analysis'}
+                className="h-5 text-[10px] md:text-[9px] px-1.5 flex-1 bg-primary hover:bg-primary/90 text-primary-foreground border-0" 
+                onClick={() => navigateToPlayer('michael-mulligan', 'analysis')}
               >
                 Analysis
               </Button>
               <Button 
                 size="sm" 
-                className="h-5 text-[9px] px-1.5 flex-1 bg-primary hover:bg-primary/90 text-primary-foreground border-0" 
-                onClick={() => window.location.href = '/staff?section=players&player=michael-mulligan&tab=programming'}
+                className="h-5 text-[10px] md:text-[9px] px-1.5 flex-1 bg-primary hover:bg-primary/90 text-primary-foreground border-0" 
+                onClick={() => navigateToPlayer('michael-mulligan', 'programming')}
               >
-                Program
+                Programming
               </Button>
             </div>
           </div>
           <div className="flex flex-col p-2 border border-border/50 rounded hover:bg-accent/50 hover:border-primary/30 transition-all group">
             <img src="/players/jaroslav-svoboda.jpg" alt="Jaroslav Svoboda" className="w-full h-14 object-cover border border-primary/30 mb-1" />
-            <span className="text-[10px] font-semibold text-center">Jaroslav Svoboda</span>
+            <span className="text-[10px] md:text-[10px] font-semibold text-center">Jaroslav Svoboda</span>
             <span className="text-[9px] text-muted-foreground mb-1 text-center">Defender</span>
             <div className="flex gap-1 w-full">
               <Button 
                 size="sm" 
-                className="h-5 text-[9px] px-1.5 flex-1 bg-primary hover:bg-primary/90 text-primary-foreground border-0" 
-                onClick={() => window.location.href = '/staff?section=players&player=jaroslav-svoboda&tab=analysis'}
+                className="h-5 text-[10px] md:text-[9px] px-1.5 flex-1 bg-primary hover:bg-primary/90 text-primary-foreground border-0" 
+                onClick={() => navigateToPlayer('jaroslav-svoboda', 'analysis')}
               >
                 Analysis
               </Button>
               <Button 
                 size="sm" 
-                className="h-5 text-[9px] px-1.5 flex-1 bg-primary hover:bg-primary/90 text-primary-foreground border-0" 
-                onClick={() => window.location.href = '/staff?section=players&player=jaroslav-svoboda&tab=programming'}
+                className="h-5 text-[10px] md:text-[9px] px-1.5 flex-1 bg-primary hover:bg-primary/90 text-primary-foreground border-0" 
+                onClick={() => navigateToPlayer('jaroslav-svoboda', 'programming')}
               >
-                Program
+                Programming
               </Button>
             </div>
           </div>

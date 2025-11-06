@@ -356,7 +356,7 @@ const Staff = () => {
       
       {/* Search Bar */}
       <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-10 relative">
-        <div className="container mx-auto px-4 py-3">
+        <div className="container mx-auto px-3 md:px-4 py-3">
           <div className="flex items-center justify-between gap-4">
             <div className="relative flex-1 max-w-md">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -377,7 +377,7 @@ const Staff = () => {
       {/* Main Layout with Sidebar */}
       <div className="flex flex-1 overflow-hidden relative">
         {/* Left Sidebar */}
-        <div className="w-24 border-r bg-muted/30 backdrop-blur-sm flex flex-col items-start py-4 gap-2 overflow-y-auto relative z-10">
+        <div className="hidden md:flex w-24 border-r bg-muted/30 backdrop-blur-sm flex-col items-start py-4 gap-2 overflow-y-auto relative z-10">
           {filteredCategories.map((category, index) => {
             const CategoryIcon = category.icon;
             const isExpanded = expandedCategory === category.id;
@@ -450,7 +450,7 @@ const Staff = () => {
         {/* Main Content Area */}
         <main className="flex-1 overflow-y-auto relative z-10">
           {expandedSection ? (
-            <div className="container mx-auto px-6 py-6">
+            <div className="container mx-auto px-3 md:px-6 py-6">
               <Card className="animate-in fade-in slide-in-from-top-4 duration-300">
                 <CardHeader>
                   <CardTitle className="text-2xl">
