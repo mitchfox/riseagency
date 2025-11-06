@@ -929,11 +929,25 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                       {/* Advanced Stats - Compact Single/Two Line */}
                                       {analysis.striker_stats && Object.keys(analysis.striker_stats).length > 0 && (
                                         <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs opacity-80 mt-2">
-                                          {Object.entries(analysis.striker_stats).map(([key, value]) => (
-                                            <span key={key}>
-                                              <span className="font-medium">{key.replace(/_/g, ' ')}</span>: {String(value)}
-                                            </span>
-                                          ))}
+                                          {Object.entries(analysis.striker_stats).map(([key, value]) => {
+                                            // Safely convert value to string, handling arrays, objects, null, undefined
+                                            let displayValue = '';
+                                            if (value === null || value === undefined) {
+                                              displayValue = '-';
+                                            } else if (Array.isArray(value)) {
+                                              displayValue = value.filter(v => v != null).join(', ');
+                                            } else if (typeof value === 'object') {
+                                              displayValue = JSON.stringify(value);
+                                            } else {
+                                              displayValue = String(value);
+                                            }
+                                            
+                                            return (
+                                              <span key={key}>
+                                                <span className="font-medium">{key.replace(/_/g, ' ')}</span>: {displayValue}
+                                              </span>
+                                            );
+                                          })}
                                         </div>
                                       )}
                                     </div>
