@@ -1446,45 +1446,60 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, onViewR
             
             // If no analysis data, determine opponent from fixture
             if (!opponent) {
+              const homeTeam = pf.fixtures.home_team;
+              const awayTeam = pf.fixtures.away_team;
+              
               // "For" is a placeholder - the OTHER team is the opponent
-              if (pf.fixtures.home_team === "For" || pf.fixtures.home_team.toLowerCase() === "for") {
-                opponent = pf.fixtures.away_team;
-              } else if (pf.fixtures.away_team === "For" || pf.fixtures.away_team.toLowerCase() === "for") {
-                opponent = pf.fixtures.home_team;
-              } else if (playerTeam) {
-                // Match against player's actual team
-                const isHomeTeam = pf.fixtures.home_team.toLowerCase().includes(playerTeam.toLowerCase());
-                const isAwayTeam = pf.fixtures.away_team.toLowerCase().includes(playerTeam.toLowerCase());
+              if (homeTeam === "For" || homeTeam.toLowerCase() === "for") {
+                opponent = awayTeam;
+              } else if (awayTeam === "For" || awayTeam.toLowerCase() === "for") {
+                opponent = homeTeam;
+              } else if (playerTeam && playerTeam.trim()) {
+                // Match against player's actual team (case-insensitive, trimmed)
+                const normalizedPlayerTeam = playerTeam.toLowerCase().trim();
+                const normalizedHomeTeam = homeTeam.toLowerCase().trim();
+                const normalizedAwayTeam = awayTeam.toLowerCase().trim();
                 
-                if (isHomeTeam) {
-                  opponent = pf.fixtures.away_team;
-                } else if (isAwayTeam) {
-                  opponent = pf.fixtures.home_team;
+                // Check for exact match first
+                if (normalizedHomeTeam === normalizedPlayerTeam) {
+                  opponent = awayTeam;
+                } else if (normalizedAwayTeam === normalizedPlayerTeam) {
+                  opponent = homeTeam;
+                } else {
+                  // Check for partial match (team name contains player's club)
+                  const homeContainsPlayer = normalizedHomeTeam.includes(normalizedPlayerTeam);
+                  const awayContainsPlayer = normalizedAwayTeam.includes(normalizedPlayerTeam);
+                  
+                  if (homeContainsPlayer && !awayContainsPlayer) {
+                    opponent = awayTeam;
+                  } else if (awayContainsPlayer && !homeContainsPlayer) {
+                    opponent = homeTeam;
+                  } else {
+                    // Can't determine clearly, show both teams
+                    opponent = `${homeTeam} vs ${awayTeam}`;
+                  }
+                }
               } else {
-                // Can't determine, default to away team as opponent
-                opponent = displayAwayTeam;
+                // No player team set, show both teams
+                opponent = `${homeTeam} vs ${awayTeam}`;
               }
-            } else {
-              // No player team set, default to away team as opponent
-              opponent = displayAwayTeam;
             }
               
-              // Determine result from score if available
-              const hasScore = pf.fixtures.home_score !== null && pf.fixtures.away_score !== null;
-              if (hasScore) {
-                const isPlayerHome = pf.fixtures.home_team === "For" || 
-                                    pf.fixtures.home_team.toLowerCase() === "for" ||
-                                    (playerTeam && pf.fixtures.home_team.toLowerCase().includes(playerTeam.toLowerCase()));
-                
-                if (isPlayerHome) {
-                  if (pf.fixtures.home_score! > pf.fixtures.away_score!) result = "(W)";
-                  else if (pf.fixtures.home_score! < pf.fixtures.away_score!) result = "(L)";
-                  else result = "(D)";
-                } else {
-                  if (pf.fixtures.away_score! > pf.fixtures.home_score!) result = "(W)";
-                  else if (pf.fixtures.away_score! < pf.fixtures.home_score!) result = "(L)";
-                  else result = "(D)";
-                }
+            // Determine result from score if available
+            const hasScore = pf.fixtures.home_score !== null && pf.fixtures.away_score !== null;
+            if (hasScore && !result) {
+              const isPlayerHome = pf.fixtures.home_team === "For" || 
+                                  pf.fixtures.home_team.toLowerCase() === "for" ||
+                                  (playerTeam && playerTeam.trim() && pf.fixtures.home_team.toLowerCase().includes(playerTeam.toLowerCase()));
+              
+              if (isPlayerHome) {
+                if (pf.fixtures.home_score! > pf.fixtures.away_score!) result = "(W)";
+                else if (pf.fixtures.home_score! < pf.fixtures.away_score!) result = "(L)";
+                else result = "(D)";
+              } else {
+                if (pf.fixtures.away_score! > pf.fixtures.home_score!) result = "(W)";
+                else if (pf.fixtures.away_score! < pf.fixtures.home_score!) result = "(L)";
+                else result = "(D)";
               }
             }
 
