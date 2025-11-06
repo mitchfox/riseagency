@@ -12,6 +12,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Select,
   SelectContent,
@@ -326,8 +327,9 @@ export const SiteVisitorsManagement = ({ isAdmin }: { isAdmin: boolean }) => {
             <CardTitle>Visitor Details: {selectedVisitor}</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="rounded-md border">
-              <Table>
+            <ScrollArea className="w-full">
+              <div className="rounded-md border min-w-[600px]">
+                <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Page Path</TableHead>
@@ -358,7 +360,8 @@ export const SiteVisitorsManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                 </TableBody>
               </Table>
             </div>
-          </CardContent>
+          </ScrollArea>
+        </CardContent>
         </Card>
       </div>
     );
@@ -547,8 +550,9 @@ export const SiteVisitorsManagement = ({ isAdmin }: { isAdmin: boolean }) => {
           </div>
 
           {/* Visits Table */}
-          <div className="rounded-md border">
-            <Table>
+          <ScrollArea className="w-full">
+            <div className="rounded-md border min-w-[800px]">
+              <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Visitor ID</TableHead>
@@ -598,8 +602,9 @@ export const SiteVisitorsManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                   ))
                 )}
               </TableBody>
-            </Table>
-          </div>
+              </Table>
+            </div>
+          </ScrollArea>
         </CardContent>
       </Card>
     </div>

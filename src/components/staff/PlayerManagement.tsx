@@ -415,12 +415,63 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
     return <div className="flex items-center justify-center py-8">Loading players...</div>;
   }
 
+  const representedPlayers = groupedPlayers.represented;
+  const mandatedPlayers = groupedPlayers.mandated;
+  const otherPlayers = groupedPlayers.other;
+
   return (
-    <div className="flex h-full gap-4">
-      {/* Inner Player Sidebar */}
+    <div className="flex h-full gap-4 flex-col md:flex-row">
+      {/* Mobile Player Selector */}
+      <div className="md:hidden px-3 pb-3">
+        <Select value={selectedPlayerId || undefined} onValueChange={setSelectedPlayerId}>
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Select a player" />
+          </SelectTrigger>
+          <SelectContent>
+            {representedPlayers.length > 0 && (
+              <>
+                <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+                  Represented
+                </div>
+                {representedPlayers.map((player) => (
+                  <SelectItem key={player.id} value={player.id}>
+                    {player.name}
+                  </SelectItem>
+                ))}
+              </>
+            )}
+            {mandatedPlayers.length > 0 && (
+              <>
+                <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+                  Mandated
+                </div>
+                {mandatedPlayers.map((player) => (
+                  <SelectItem key={player.id} value={player.id}>
+                    {player.name}
+                  </SelectItem>
+                ))}
+              </>
+            )}
+            {otherPlayers.length > 0 && (
+              <>
+                <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+                  Other
+                </div>
+                {otherPlayers.map((player) => (
+                  <SelectItem key={player.id} value={player.id}>
+                    {player.name}
+                  </SelectItem>
+                ))}
+              </>
+            )}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Desktop Inner Player Sidebar */}
       <div className="hidden md:flex w-20 flex-col gap-2 overflow-y-auto border-r pr-2">
         {/* Represented Players */}
-        {groupedPlayers.represented.map((player) => (
+        {representedPlayers.map((player) => (
           <button
             key={player.id}
             onClick={() => setSelectedPlayerId(player.id)}
@@ -439,12 +490,12 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
         ))}
         
         {/* Gold border separator */}
-        {groupedPlayers.represented.length > 0 && groupedPlayers.mandated.length > 0 && (
+        {representedPlayers.length > 0 && mandatedPlayers.length > 0 && (
           <div className="h-0.5 bg-gradient-to-r from-transparent via-yellow-500 to-transparent my-2" />
         )}
         
         {/* Mandated Players */}
-        {groupedPlayers.mandated.map((player) => (
+        {mandatedPlayers.map((player) => (
           <button
             key={player.id}
             onClick={() => setSelectedPlayerId(player.id)}
@@ -463,12 +514,12 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
         ))}
         
         {/* Gold border separator */}
-        {groupedPlayers.mandated.length > 0 && groupedPlayers.other.length > 0 && (
+        {mandatedPlayers.length > 0 && otherPlayers.length > 0 && (
           <div className="h-0.5 bg-gradient-to-r from-transparent via-yellow-500 to-transparent my-2" />
         )}
         
         {/* Other Players */}
-        {groupedPlayers.other.map((player) => (
+        {otherPlayers.map((player) => (
           <button
             key={player.id}
             onClick={() => setSelectedPlayerId(player.id)}
@@ -491,13 +542,13 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       <div className="flex-1 overflow-y-auto">
         {!selectedPlayerId ? (
           // Preview Cards Grid grouped by representation status
-          <div className="space-y-6">
+          <div className="space-y-6 px-3 md:px-0">
             {/* Represented Players */}
-            {groupedPlayers.represented.length > 0 && (
+            {representedPlayers.length > 0 && (
               <div>
-                <h3 className="text-lg font-semibold mb-4 text-primary">Represented</h3>
+                <h3 className="text-base md:text-lg font-semibold mb-4 text-primary">Represented</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {groupedPlayers.represented.map((player) => {
+                  {representedPlayers.map((player) => {
                     const playerStats = stats[player.id];
                     return (
                       <Card 
@@ -561,11 +612,11 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
             )}
 
             {/* Mandated Players */}
-            {groupedPlayers.mandated.length > 0 && (
+            {mandatedPlayers.length > 0 && (
               <div>
-                <h3 className="text-lg font-semibold mb-4 text-primary">Mandated</h3>
+                <h3 className="text-base md:text-lg font-semibold mb-4 text-primary">Mandated</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {groupedPlayers.mandated.map((player) => {
+                  {mandatedPlayers.map((player) => {
                     const playerStats = stats[player.id];
                     return (
                       <Card 

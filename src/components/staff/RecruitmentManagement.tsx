@@ -326,12 +326,12 @@ export const RecruitmentManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   return (
     <div className="space-y-6">
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="prospects">
+        <TabsList className="flex w-full sm:grid sm:grid-cols-2">
+          <TabsTrigger value="prospects" className="flex-1">
             <Users className="w-4 h-4 mr-2" />
             Prospect Board
           </TabsTrigger>
-          <TabsTrigger value="templates">
+          <TabsTrigger value="templates" className="flex-1">
             <MessageSquare className="w-4 h-4 mr-2" />
             Message Templates
           </TabsTrigger>
@@ -510,7 +510,7 @@ export const RecruitmentManagement = ({ isAdmin }: { isAdmin: boolean }) => {
           </div>
 
           {/* Prospect Board Grid */}
-          <div className="overflow-x-auto">
+          <ScrollArea className="w-full">
             <div className="min-w-[1200px]">
               {/* Header Row */}
               <div className="grid grid-cols-6 gap-2 mb-2">
@@ -632,7 +632,7 @@ export const RecruitmentManagement = ({ isAdmin }: { isAdmin: boolean }) => {
               <div className="w-4 h-4 rounded border-2" style={{ borderColor: 'hsl(140, 50%, 50%)' }} />
               <span>Low Priority</span>
             </div>
-          </div>
+          </ScrollArea>
         </TabsContent>
 
         <TabsContent value="templates" className="space-y-4">

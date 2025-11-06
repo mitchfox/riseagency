@@ -371,8 +371,8 @@ export const InvoiceManagement = ({ isAdmin }: { isAdmin: boolean }) => {
         )}
       </div>
 
-      <div className="flex gap-4">
-        <div className="w-64">
+      <div className="flex flex-col sm:flex-row gap-4">
+        <div className="w-full sm:w-64">
           <Label>Filter by Player</Label>
           <Select value={filterPlayer} onValueChange={setFilterPlayer}>
             <SelectTrigger>
@@ -389,7 +389,7 @@ export const InvoiceManagement = ({ isAdmin }: { isAdmin: boolean }) => {
           </Select>
         </div>
 
-        <div className="w-48">
+        <div className="w-full sm:w-48">
           <Label>Filter by Status</Label>
           <Select value={filterStatus} onValueChange={setFilterStatus}>
             <SelectTrigger>
@@ -411,7 +411,9 @@ export const InvoiceManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       ) : (
         <Card>
           <CardContent className="p-0">
-            <Table>
+            <ScrollArea className="w-full">
+              <div className="min-w-[900px]">
+                <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Invoice #</TableHead>
@@ -470,7 +472,9 @@ export const InvoiceManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                   ))
                 )}
               </TableBody>
-            </Table>
+                </Table>
+              </div>
+            </ScrollArea>
           </CardContent>
         </Card>
       )}

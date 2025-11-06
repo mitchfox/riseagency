@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 import { UserPlus } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface StaffAccount {
   email: string;
@@ -234,23 +235,23 @@ export const StaffAccountManagement = () => {
               {existingAccounts.map((account) => (
                 <div 
                   key={account.user_id} 
-                  className="p-4 border border-primary/20 rounded-lg bg-muted/30"
+                  className="p-3 md:p-4 border border-primary/20 rounded-lg bg-muted/30"
                 >
-                  <div className="grid grid-cols-3 gap-4 items-center">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4 items-center">
                     <div>
-                      <p className="text-sm text-muted-foreground">Email</p>
-                      <p className="font-medium">{account.profiles?.email || 'N/A'}</p>
+                      <p className="text-xs md:text-sm text-muted-foreground">Email</p>
+                      <p className="font-medium text-sm md:text-base break-all">{account.profiles?.email || 'N/A'}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">Full Name</p>
-                      <p className="font-medium">{account.profiles?.full_name || 'N/A'}</p>
+                      <p className="text-xs md:text-sm text-muted-foreground">Full Name</p>
+                      <p className="font-medium text-sm md:text-base">{account.profiles?.full_name || 'N/A'}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">Role</p>
-                      <p className="font-medium capitalize">{account.role}</p>
+                      <p className="text-xs md:text-sm text-muted-foreground">Role</p>
+                      <p className="font-medium text-sm md:text-base capitalize">{account.role}</p>
                     </div>
                   </div>
-                  <div className="mt-4 flex justify-end">
+                  <div className="mt-3 md:mt-4 flex justify-end">
                     <Button
                       variant="outline"
                       size="sm"
@@ -260,6 +261,7 @@ export const StaffAccountManagement = () => {
                         account.profiles?.full_name || ''
                       )}
                       disabled={resettingPassword === account.profiles?.email}
+                      className="w-full sm:w-auto"
                     >
                       {resettingPassword === account.profiles?.email ? "Resetting..." : "Reset Password"}
                     </Button>
