@@ -128,7 +128,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
     if (playerSlug) {
       // First try to find by ID (UUID format), then by slug (name-based)
       const player = players.find(p => p.id === playerSlug) || 
-                     players.find(p => p.name.toLowerCase().replace(/\s+/g, '-') === playerSlug);
+                     players.find(p => p.name?.toLowerCase().replace(/\s+/g, '-') === playerSlug);
       
       if (player) {
         setSelectedPlayerId(player.id);
@@ -351,12 +351,20 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       number: bioData?.number || "",
       whatsapp: bioData?.whatsapp || "",
       
-      // Arrays from bio
-      externalLinks: bioData?.externalLinks || [],
-      strengths: bioData?.strengthsAndPlayStyle || [],
-      tacticalFormations: bioData?.tacticalFormations || bioData?.schemeHistory || [],
-      seasonStats: bioData?.seasonStats || [],
-      topStats: bioData?.topStats || [],
+      // Arrays from bio - ensure proper structure with defaults
+      externalLinks: Array.isArray(bioData?.externalLinks) ? bioData.externalLinks : [],
+      strengths: Array.isArray(bioData?.strengthsAndPlayStyle) ? bioData.strengthsAndPlayStyle : [],
+      tacticalFormations: (Array.isArray(bioData?.tacticalFormations) ? bioData.tacticalFormations : 
+                          Array.isArray(bioData?.schemeHistory) ? bioData.schemeHistory : []).map(f => ({
+        formation: f?.formation || "",
+        positions: Array.isArray(f?.positions) ? f.positions : [],
+        teamName: f?.teamName || "",
+        matches: typeof f?.matches === 'number' ? f.matches : 0,
+        clubLogo: f?.clubLogo || "",
+        playerImage: f?.playerImage || "",
+      })),
+      seasonStats: Array.isArray(bioData?.seasonStats) ? bioData.seasonStats : [],
+      topStats: Array.isArray(bioData?.topStats) ? bioData.topStats : [],
       
       // Separate links field
       links: linksArray,
@@ -1614,7 +1622,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                       </div>
                       <div className="grid grid-cols-2 gap-3">
                         <Input
-                          value={formation.formation}
+                          value={formation.formation || ""}
                           onChange={(e) => {
                             const newFormations = [...formData.tacticalFormations];
                             newFormations[index].formation = e.target.value;
@@ -1623,16 +1631,16 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                           placeholder="Formation (e.g., 4-3-3)"
                         />
                         <Input
-                          value={formation.positions.join(", ")}
+                          value={(Array.isArray(formation.positions) ? formation.positions : []).join(", ")}
                           onChange={(e) => {
                             const newFormations = [...formData.tacticalFormations];
-                            newFormations[index].positions = e.target.value.split(",").map(p => p.trim());
+                            newFormations[index].positions = e.target.value.split(",").map(p => p.trim()).filter(p => p);
                             setFormData({ ...formData, tacticalFormations: newFormations });
                           }}
                           placeholder="Positions (e.g., CM, RCM)"
                         />
                         <Input
-                          value={formation.teamName}
+                          value={formation.teamName || ""}
                           onChange={(e) => {
                             const newFormations = [...formData.tacticalFormations];
                             newFormations[index].teamName = e.target.value;
@@ -1642,7 +1650,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                         />
                         <Input
                           type="number"
-                          value={formation.matches}
+                          value={formation.matches || 0}
                           onChange={(e) => {
                             const newFormations = [...formData.tacticalFormations];
                             newFormations[index].matches = parseInt(e.target.value) || 0;
@@ -1651,7 +1659,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                           placeholder="Matches"
                         />
                         <Input
-                          value={formation.clubLogo}
+                          value={formation.clubLogo || ""}
                           onChange={(e) => {
                             const newFormations = [...formData.tacticalFormations];
                             newFormations[index].clubLogo = e.target.value;
@@ -1661,7 +1669,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                           className="col-span-2"
                         />
                         <Input
-                          value={formation.playerImage}
+                          value={formation.playerImage || ""}
                           onChange={(e) => {
                             const newFormations = [...formData.tacticalFormations];
                             newFormations[index].playerImage = e.target.value;
