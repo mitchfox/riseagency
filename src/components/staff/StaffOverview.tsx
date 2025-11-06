@@ -6,6 +6,7 @@ import { Maximize2, Minimize2, Target, CheckSquare, Users, Calendar, Link2, Tren
 import { StaffSchedule } from "./StaffSchedule";
 import marbleOverlay from "@/assets/smudged-marble-overlay.png";
 import { supabase } from "@/integrations/supabase/client";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface WidgetProps {
   id: string;
@@ -129,6 +130,7 @@ export const StaffOverview = ({ isAdmin }: { isAdmin: boolean }) => {
   const [expandedWidget, setExpandedWidget] = useState<string | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
   const [players, setPlayers] = useState<any[]>([]);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     const fetchPlayers = async () => {
@@ -314,7 +316,7 @@ export const StaffOverview = ({ isAdmin }: { isAdmin: boolean }) => {
         onToggleExpand={() => toggleWidget("represented")}
       >
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
-          {players.map((player) => (
+          {(expandedWidget === "represented" ? players : isMobile ? players.slice(0, 2) : players).map((player) => (
             <div key={player.id} className="flex flex-col p-2 border border-border/50 rounded hover:bg-accent/50 hover:border-primary/30 transition-all group">
               <img 
                 src={player.image_url || player.image || "/players/player1.jpg"} 

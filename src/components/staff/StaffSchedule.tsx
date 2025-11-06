@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Calendar, ChevronLeft, ChevronRight } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface PlayerProgram {
   id: string;
@@ -51,6 +52,7 @@ export const StaffSchedule = ({ isAdmin }: { isAdmin: boolean }) => {
   const [weekOffset, setWeekOffset] = useState(0);
   const [fixtures, setFixtures] = useState<Fixture[]>([]);
   const [expandedDays, setExpandedDays] = useState<Set<string>>(new Set());
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     fetchCurrentPrograms();
@@ -311,7 +313,7 @@ export const StaffSchedule = ({ isAdmin }: { isAdmin: boolean }) => {
       <div className="overflow-x-auto">
         <div className="min-w-[800px]">
           {/* Header Row */}
-          <div className="grid grid-cols-8 gap-2 mb-2">
+          <div className={`grid ${isMobile ? 'grid-cols-2' : 'grid-cols-8'} gap-2 mb-2`}>
             <div 
               className="p-3 text-center font-bebas uppercase text-sm rounded-lg"
               style={{ 
@@ -319,9 +321,9 @@ export const StaffSchedule = ({ isAdmin }: { isAdmin: boolean }) => {
                 color: 'hsl(0, 0%, 0%)'
               }}
             >
-              Week Start
+              {isMobile ? 'Today' : 'Week Start'}
             </div>
-            {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => (
+            {(isMobile ? [format(new Date(), 'EEE')] : ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']).map((day) => (
               <div 
                 key={day}
                 className="p-3 text-center font-bebas uppercase text-sm rounded-lg"
@@ -337,22 +339,26 @@ export const StaffSchedule = ({ isAdmin }: { isAdmin: boolean }) => {
 
           {/* Week Rows */}
           <div className="space-y-2">
-            {calendarWeeks.map((weekStart, weekIndex) => (
-              <div key={weekIndex} className="grid grid-cols-8 gap-2">
+            {(isMobile ? [calendarWeeks[0]] : calendarWeeks).map((weekStart, weekIndex) => {
+              const today = new Date();
+              const todayDayOffset = isMobile ? today.getDay() === 0 ? 6 : today.getDay() - 1 : null; // Convert Sunday=0 to 6, others -1
+              
+              return (
+              <div key={weekIndex} className={`grid ${isMobile ? 'grid-cols-2' : 'grid-cols-8'} gap-2`}>
                 {/* Week Start Cell */}
                 <div 
                   className="p-3 rounded-lg flex flex-col items-center justify-center border"
                   style={{ 
-                    backgroundColor: isCurrentWeek(weekStart) ? 'hsl(43, 49%, 61%)' : 'hsl(0, 0%, 95%)',
+                    backgroundColor: isMobile ? 'hsl(43, 49%, 61%)' : isCurrentWeek(weekStart) ? 'hsl(43, 49%, 61%)' : 'hsl(0, 0%, 95%)',
                     color: 'hsl(0, 0%, 0%)',
                     borderColor: 'rgba(0, 0, 0, 0.1)'
                   }}
                 >
                   <div className="text-2xl font-bold">
-                    {format(weekStart, 'd')}
+                    {format(isMobile ? today : weekStart, 'd')}
                     <sup className="text-xs">
                       {(() => {
-                        const day = format(weekStart, 'd');
+                        const day = format(isMobile ? today : weekStart, 'd');
                         return day.endsWith('1') && day !== '11' ? 'st' :
                                day.endsWith('2') && day !== '12' ? 'nd' :
                                day.endsWith('3') && day !== '13' ? 'rd' : 'th';
@@ -360,12 +366,12 @@ export const StaffSchedule = ({ isAdmin }: { isAdmin: boolean }) => {
                     </sup>
                   </div>
                   <div className="text-xs font-medium italic">
-                    {format(weekStart, 'MMMM')}
+                    {format(isMobile ? today : weekStart, 'MMMM')}
                   </div>
                 </div>
 
                 {/* Day Cells */}
-                {[0, 1, 2, 3, 4, 5, 6].map((dayOffset) => {
+                {(isMobile ? [todayDayOffset!] : [0, 1, 2, 3, 4, 5, 6]).map((dayOffset) => {
                   const currentDate = addDays(weekStart, dayOffset);
                   const endDates = getEndDatesForDay(currentDate);
                   const dayFixtures = getFixturesForDay(currentDate);
@@ -455,7 +461,7 @@ export const StaffSchedule = ({ isAdmin }: { isAdmin: boolean }) => {
                   );
                 })}
               </div>
-            ))}
+            )})}
           </div>
         </div>
       </div>
