@@ -483,7 +483,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
           >
             <Avatar className="w-14 h-14">
               <AvatarImage src={player.image_url || undefined} alt={player.name} />
-              <AvatarFallback className="text-xs">{player.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+              <AvatarFallback className="text-xs">{(player.name || '').split(' ').filter(n => n).map(n => n[0]).join('') || '??'}</AvatarFallback>
             </Avatar>
           </button>
         ))}
@@ -507,7 +507,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
           >
             <Avatar className="w-14 h-14">
               <AvatarImage src={player.image_url || undefined} alt={player.name} />
-              <AvatarFallback className="text-xs">{player.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+              <AvatarFallback className="text-xs">{(player.name || '').split(' ').filter(n => n).map(n => n[0]).join('') || '??'}</AvatarFallback>
             </Avatar>
           </button>
         ))}
@@ -531,7 +531,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
           >
             <Avatar className="w-14 h-14">
               <AvatarImage src={player.image_url || undefined} alt={player.name} />
-              <AvatarFallback className="text-xs">{player.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+              <AvatarFallback className="text-xs">{(player.name || '').split(' ').filter(n => n).map(n => n[0]).join('') || '??'}</AvatarFallback>
             </Avatar>
           </button>
         ))}
@@ -633,7 +633,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                           <div className="flex items-start gap-3">
                             <Avatar className="w-16 h-16">
                               <AvatarImage src={player.image_url || undefined} alt={player.name} />
-                              <AvatarFallback>{player.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+                              <AvatarFallback>{(player.name || '').split(' ').filter(n => n).map(n => n[0]).join('') || '??'}</AvatarFallback>
                             </Avatar>
                             <div className="flex-1 min-w-0">
                               <h3 className="font-semibold truncate">{player.name}</h3>
@@ -701,7 +701,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                           <div className="flex items-start gap-3">
                             <Avatar className="w-16 h-16">
                               <AvatarImage src={player.image_url || undefined} alt={player.name} />
-                              <AvatarFallback>{player.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+                              <AvatarFallback>{(player.name || '').split(' ').filter(n => n).map(n => n[0]).join('') || '??'}</AvatarFallback>
                             </Avatar>
                             <div className="flex-1 min-w-0">
                               <h3 className="font-semibold truncate">{player.name}</h3>
@@ -758,7 +758,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                     <Avatar className="w-16 h-16 md:w-20 md:h-20">
                       <AvatarImage src={selectedPlayer?.image_url || undefined} alt={selectedPlayer?.name} />
                       <AvatarFallback className="text-xl md:text-2xl">
-                        {selectedPlayer?.name.split(' ').map(n => n[0]).join('')}
+                        {(selectedPlayer?.name || '').split(' ').filter(n => n).map(n => n[0]).join('') || '??'}
                       </AvatarFallback>
                     </Avatar>
                     <div>
