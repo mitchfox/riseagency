@@ -340,7 +340,7 @@ const Staff = () => {
       {/* Main Layout with Sidebar */}
       <div className="flex flex-1 overflow-hidden relative">
         {/* Left Sidebar */}
-        <div className="w-16 border-r bg-muted/30 backdrop-blur-sm flex flex-col items-center py-4 gap-2 overflow-y-auto relative z-10">
+        <div className="w-20 border-r bg-muted/30 backdrop-blur-sm flex flex-col items-center py-4 gap-2 overflow-y-auto relative z-10">
           {filteredSections.map((section) => {
             const Icon = section.icon;
             const isActive = expandedSection === section.id;
@@ -348,14 +348,16 @@ const Staff = () => {
               <button
                 key={section.id}
                 onClick={() => handleSectionToggle(section.id as any)}
-                className={`group relative w-12 h-12 rounded-lg flex items-center justify-center transition-all hover:bg-primary/10 ${
+                className={`group relative w-16 rounded-lg flex flex-col items-center justify-center py-2 transition-all hover:bg-primary/10 ${
                   isActive ? 'bg-primary text-primary-foreground' : 'text-muted-foreground'
                 }`}
                 title={section.title}
               >
-                <Icon className="w-5 h-5" />
-                <span className="absolute left-full ml-2 px-2 py-1 bg-popover text-popover-foreground text-xs rounded opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity whitespace-nowrap z-50 shadow-md">
-                  {section.title}
+                <Icon className="w-4 h-4 mb-1" />
+                <span className="text-[8px] leading-tight text-center px-0.5 font-medium uppercase tracking-tight">
+                  {section.title.split(' ').map((word, i) => (
+                    <span key={i} className="block">{word}</span>
+                  ))}
                 </span>
               </button>
             );
