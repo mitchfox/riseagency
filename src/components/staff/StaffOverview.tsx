@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Maximize2, Minimize2, Target, CheckSquare, Users, Calendar, Link2, TrendingUp } from "lucide-react";
 import { StaffSchedule } from "./StaffSchedule";
 import marbleOverlay from "@/assets/smudged-marble-overlay.png";
-import { players } from "@/data/players";
+import { supabase } from "@/integrations/supabase/client";
 
 interface WidgetProps {
   id: string;
@@ -110,6 +110,22 @@ const Widget = ({ id, title, icon: Icon, size, expanded, onToggleExpand, childre
 export const StaffOverview = ({ isAdmin }: { isAdmin: boolean }) => {
   const [expandedWidget, setExpandedWidget] = useState<string | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
+  const [players, setPlayers] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchPlayers = async () => {
+      const { data, error } = await supabase
+        .from('players')
+        .select('*')
+        .order('name');
+      
+      if (data && !error) {
+        setPlayers(data);
+      }
+    };
+
+    fetchPlayers();
+  }, []);
 
   const toggleWidget = (id: string) => {
     setExpandedWidget(expandedWidget === id ? null : id);
@@ -281,21 +297,25 @@ export const StaffOverview = ({ isAdmin }: { isAdmin: boolean }) => {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
           {players.map((player) => (
             <div key={player.id} className="flex flex-col p-2 border border-border/50 rounded hover:bg-accent/50 hover:border-primary/30 transition-all group">
-              <img src={player.image} alt={player.name} className="w-full h-14 object-cover border border-primary/30 mb-1" />
+              <img 
+                src={player.image_url || player.image || "/players/player1.jpg"} 
+                alt={player.name} 
+                className="w-full h-14 object-cover border border-primary/30 mb-1" 
+              />
               <span className="text-[10px] md:text-[10px] font-semibold text-center">{player.name}</span>
               <span className="text-[9px] text-muted-foreground mb-1 text-center">{player.position}</span>
               <div className="flex gap-1 w-full">
                 <Button 
                   size="sm" 
                   className="h-5 text-[10px] md:text-[9px] px-1.5 flex-1 bg-primary hover:bg-primary/90 text-primary-foreground border-0" 
-                  onClick={() => navigateToPlayer(player.id, 'analysis')}
+                  onClick={() => navigateToPlayer(player.slug || player.id, 'analysis')}
                 >
                   Analysis
                 </Button>
                 <Button 
                   size="sm" 
                   className="h-5 text-[10px] md:text-[9px] px-1.5 flex-1 bg-primary hover:bg-primary/90 text-primary-foreground border-0" 
-                  onClick={() => navigateToPlayer(player.id, 'programming')}
+                  onClick={() => navigateToPlayer(player.slug || player.id, 'programming')}
                 >
                   Programming
                 </Button>
