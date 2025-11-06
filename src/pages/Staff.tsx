@@ -47,7 +47,8 @@ import {
   BellRing, 
   Network, 
   Scale,
-  Shield
+  Shield,
+  Lock
 } from "lucide-react";
 
 const Staff = () => {
@@ -296,23 +297,26 @@ const Staff = () => {
       id: 'overview',
       title: 'Overview',
       icon: Calendar,
-      sections: [{ id: 'overview', title: 'Overview', icon: Calendar }]
+      sections: [{ id: 'overview', title: 'Overview', icon: Calendar }],
+      locked: false
     },
-    ...(!isMarketeer ? [{
+    {
       id: 'coaching',
       title: 'Coaching & Management',
       icon: Dumbbell,
+      locked: isMarketeer,
       sections: [
         { id: 'players', title: 'Player Management', icon: UserCog },
         { id: 'coaching', title: 'Coaching Database', icon: Dumbbell },
         { id: 'analysis', title: 'Analysis Writer', icon: LineChart },
         { id: 'updates', title: 'Player Updates', icon: BellRing },
       ]
-    }] : []),
+    },
     {
       id: 'network',
       title: 'Network & Recruitment',
       icon: Network,
+      locked: false,
       sections: [
         { id: 'clubnetwork', title: 'Club Network', icon: Network },
         { id: 'playerlist', title: 'Player List', icon: Users },
@@ -324,6 +328,7 @@ const Staff = () => {
       id: 'marketing',
       title: 'Marketing & Brand',
       icon: Megaphone,
+      locked: false,
       sections: [
         { id: 'marketing', title: 'Marketing', icon: Megaphone },
         { id: 'blog', title: 'News Articles', icon: Newspaper },
@@ -331,16 +336,17 @@ const Staff = () => {
         { id: 'visitors', title: 'Site Visitors', icon: Eye },
       ]
     },
-    ...(!isMarketeer ? [{
+    {
       id: 'admin',
       title: 'Admin & Legal',
       icon: Scale,
+      locked: isMarketeer,
       sections: [
         { id: 'legal', title: 'Legal', icon: Scale },
         { id: 'invoices', title: 'Invoices', icon: FileCheck },
         ...(isAdmin ? [{ id: 'staffaccounts', title: 'Staff Accounts', icon: Shield }] : []),
       ]
-    }] : [])
+    }
   ];
 
   const filteredCategories = categories.map(category => ({
@@ -439,13 +445,21 @@ const Staff = () => {
                 {/* Category Button */}
                 <button
                   onClick={() => {
+                    if (category.locked) {
+                      toast.error("You don't have permission to access this section");
+                      return;
+                    }
                     if (isSingleSection) {
                       handleSectionToggle(category.sections[0].id as any);
                     } else {
                       setExpandedCategory(isExpanded ? null : category.id);
                     }
                   }}
-                  className={`group relative w-full rounded-lg flex flex-col items-center justify-center py-2 md:py-3 px-1 md:px-2 transition-all hover:bg-primary/20 ${
+                  className={`group relative w-full rounded-lg flex flex-col items-center justify-center py-2 md:py-3 px-1 md:px-2 transition-all ${
+                    category.locked 
+                      ? 'opacity-50 cursor-not-allowed hover:bg-muted/30' 
+                      : 'hover:bg-primary/20'
+                  } ${
                     hasActiveSection || isExpanded ? 'bg-gradient-to-br from-primary via-primary to-primary-glow shadow-lg' : ''
                   }`}
                 >
@@ -455,6 +469,10 @@ const Staff = () => {
                       <span key={i} className="block">{word}</span>
                     ))}
                   </span>
+                  {/* Lock icon */}
+                  {category.locked && (
+                    <Lock className="absolute bottom-1 right-1 w-2.5 h-2.5 md:w-3 md:h-3 text-muted-foreground" />
+                  )}
                 </button>
 
                 {/* Sections (shown when expanded) */}
