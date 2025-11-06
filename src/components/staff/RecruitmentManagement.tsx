@@ -11,6 +11,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Users, MessageSquare, Plus, Trash2, Edit } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface Prospect {
   id: string;
@@ -49,6 +50,7 @@ export const RecruitmentManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   const [activeTab, setActiveTab] = useState("prospects");
   const [prospects, setProspects] = useState<Prospect[]>([]);
   const [loading, setLoading] = useState(true);
+  const isMobile = useIsMobile();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingProspect, setEditingProspect] = useState<Prospect | null>(null);
   const [formData, setFormData] = useState({
@@ -327,7 +329,7 @@ export const RecruitmentManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   return (
     <div className="space-y-6">
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="flex w-full sm:grid sm:grid-cols-2">
+        <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="prospects" className="flex-1">
             <Users className="w-4 h-4 mr-2" />
             Prospect Board
@@ -354,14 +356,14 @@ export const RecruitmentManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                     Add Prospect
                   </Button>
                 </DialogTrigger>
-              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+              <DialogContent className="w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>
                     {editingProspect ? "Edit Prospect" : "Add New Prospect"}
                   </DialogTitle>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="name">Name *</Label>
                       <Input
@@ -382,7 +384,7 @@ export const RecruitmentManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="position">Position</Label>
                       <Input
@@ -410,7 +412,7 @@ export const RecruitmentManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="age_group">Age Group *</Label>
                       <Select
@@ -449,7 +451,7 @@ export const RecruitmentManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="contact_email">Email</Label>
                       <Input
@@ -512,26 +514,26 @@ export const RecruitmentManagement = ({ isAdmin }: { isAdmin: boolean }) => {
 
           {/* Prospect Board Grid */}
           <ScrollArea className="w-full">
-            <div className="min-w-[1200px]">
+            <div className={isMobile ? "min-w-[600px]" : "min-w-[1200px]"}>
               {/* Header Row */}
-              <div className="grid grid-cols-6 gap-2 mb-2">
+              <div className={`grid ${isMobile ? 'grid-cols-3' : 'grid-cols-6'} gap-2 mb-2`}>
                 <div className="p-3 text-center font-bebas uppercase text-sm rounded-lg" style={{ backgroundColor: 'hsl(0, 0%, 20%)', color: 'hsl(0, 0%, 100%)' }}>
-                  Age Group
+                  {isMobile ? 'Age' : 'Age Group'}
                 </div>
-                {stages.map(stage => (
+                {(isMobile ? stages.slice(0, 2) : stages).map(stage => (
                   <div 
                     key={stage.value}
                     className="p-3 text-center font-bebas uppercase text-sm rounded-lg"
                     style={{ backgroundColor: 'hsl(43, 49%, 61%)', color: 'hsl(0, 0%, 0%)' }}
                   >
-                    {stage.label}
+                    {isMobile ? stage.label.slice(0, 5) : stage.label}
                   </div>
                 ))}
               </div>
 
               {/* Grid Rows */}
               {ageGroups.map(ageGroup => (
-                <div key={ageGroup.value} className="grid grid-cols-6 gap-2 mb-2">
+                <div key={ageGroup.value} className={`grid ${isMobile ? 'grid-cols-3' : 'grid-cols-6'} gap-2 mb-2`}>
                   {/* Age Group Label */}
                   <div 
                     className="p-3 rounded-lg flex flex-col items-center justify-center border"
@@ -540,21 +542,23 @@ export const RecruitmentManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                       borderColor: 'rgba(255, 255, 255, 0.1)'
                     }}
                   >
-                    <div className="text-2xl font-bebas" style={{ color: 'hsl(43, 49%, 61%)' }}>
+                    <div className={`font-bebas ${isMobile ? 'text-xl' : 'text-2xl'}`} style={{ color: 'hsl(43, 49%, 61%)' }}>
                       {ageGroup.value}
                     </div>
-                    <div className="text-xs text-muted-foreground">
-                      {ageGroup.label.split(' - ')[1]}
-                    </div>
+                    {!isMobile && (
+                      <div className="text-xs text-muted-foreground">
+                        {ageGroup.label.split(' - ')[1]}
+                      </div>
+                    )}
                   </div>
 
                   {/* Stage Cells */}
-                  {stages.map(stage => {
+                  {(isMobile ? stages.slice(0, 2) : stages).map(stage => {
                     const cellProspects = getProspectsForCell(ageGroup.value, stage.value);
                     return (
                       <div 
                         key={stage.value}
-                        className="p-2 rounded-lg min-h-[120px] border"
+                        className={`p-2 rounded-lg ${isMobile ? 'min-h-[100px]' : 'min-h-[120px]'} border`}
                         style={{ 
                           backgroundColor: 'hsl(0, 0%, 10%)',
                           borderColor: 'rgba(255, 255, 255, 0.1)'
@@ -565,7 +569,7 @@ export const RecruitmentManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                             {cellProspects.map(prospect => (
                               <div
                                 key={prospect.id}
-                                className={`group relative p-2 rounded border hover:scale-105 transition-transform ${isAdmin ? 'cursor-pointer' : 'cursor-default'}`}
+                                className={`group relative ${isMobile ? 'p-1.5' : 'p-2'} rounded border hover:scale-105 transition-transform ${isAdmin ? 'cursor-pointer' : 'cursor-default'}`}
                                 style={{ 
                                   backgroundColor: 'hsl(0, 0%, 20%)',
                                   borderColor: getPriorityColor(prospect.priority),
@@ -573,8 +577,8 @@ export const RecruitmentManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                 }}
                                 onClick={isAdmin ? () => handleEdit(prospect) : undefined}
                               >
-                                <div className="text-xs font-bold truncate" style={{ color: 'hsl(43, 49%, 61%)' }}>
-                                  {prospect.name}
+                                <div className={`${isMobile ? 'text-[10px]' : 'text-xs'} font-bold truncate`} style={{ color: 'hsl(43, 49%, 61%)' }}>
+                                  {isMobile ? prospect.name.split(' ')[0] : prospect.name}
                                 </div>
                                 {prospect.position && (
                                   <div className="text-[10px] text-muted-foreground truncate">
@@ -619,7 +623,7 @@ export const RecruitmentManagement = ({ isAdmin }: { isAdmin: boolean }) => {
             </div>
 
             {/* Legend */}
-            <div className="flex items-center gap-4 text-sm text-muted-foreground pt-4 border-t">
+            <div className={`flex ${isMobile ? 'flex-col' : 'items-center'} gap-4 text-sm text-muted-foreground pt-4 border-t`}>
               <div className="flex items-center gap-2">
                 <div className="w-4 h-4 rounded border-2" style={{ borderColor: 'hsl(0, 70%, 50%)' }} />
                 <span>High Priority</span>
@@ -679,13 +683,13 @@ export const RecruitmentManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                     <CardContent>
                       <div className="space-y-3">
                         {templatesForType.map(template => (
-                          <div key={template.id} className="flex items-start justify-between p-4 border rounded-lg hover:bg-accent/50 transition-colors">
+                          <div key={template.id} className="flex flex-col sm:flex-row items-start justify-between gap-3 p-4 border rounded-lg hover:bg-accent/50 transition-colors">
                             <div className="flex-1">
                               <h4 className="font-medium mb-1">{template.message_title}</h4>
                               <p className="text-sm text-muted-foreground line-clamp-2">{template.message_content}</p>
                             </div>
                             {isAdmin && (
-                              <div className="flex gap-2 ml-4">
+                              <div className="flex gap-2 sm:ml-4 self-end sm:self-auto">
                                 <Button
                                   size="icon"
                                   variant="ghost"
@@ -716,7 +720,7 @@ export const RecruitmentManagement = ({ isAdmin }: { isAdmin: boolean }) => {
 
       {/* Template Dialog */}
       <Dialog open={templateDialogOpen} onOpenChange={setTemplateDialogOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editingTemplate ? "Edit Template" : "Create Template"}</DialogTitle>
           </DialogHeader>

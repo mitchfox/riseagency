@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Edit, X } from "lucide-react";
 import { getCountryFlagUrl } from "@/lib/countryFlags";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface Player {
   id: string;
@@ -29,6 +30,7 @@ export const PlayerList = ({ isAdmin }: { isAdmin: boolean }) => {
   const [players, setPlayers] = useState<Player[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
+  const isMobile = useIsMobile();
   const [formData, setFormData] = useState({
     name: "",
     club: "",
@@ -147,19 +149,96 @@ export const PlayerList = ({ isAdmin }: { isAdmin: boolean }) => {
 
   return (
     <div className="space-y-4">
-      <div className="rounded-lg border bg-card overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow className="hover:bg-transparent border-b">
-              <TableHead className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Name</TableHead>
-              <TableHead className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Club</TableHead>
-              <TableHead className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Nat</TableHead>
-              <TableHead className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Position</TableHead>
-              {isAdmin && <TableHead className="text-xs uppercase tracking-wider text-muted-foreground font-semibold w-20"></TableHead>}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {players.map((player, index) => {
+      {isMobile ? (
+        // Mobile Card View
+        <div className="space-y-3">
+          {players.map((player) => {
+            const { club, clubLogo } = getClubInfo(player);
+            return (
+              <div 
+                key={player.id} 
+                className="p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
+              >
+                <div className="flex items-start gap-3">
+                  <div className="h-14 w-14 rounded-full bg-muted overflow-hidden flex-shrink-0">
+                    <img
+                      src={`/players/${player.name.toLowerCase().replace(/\s+/g, '-')}.png`}
+                      alt={player.name}
+                      className="h-full w-full object-cover"
+                      onError={(e) => {
+                        e.currentTarget.src = '/players/player1.jpg';
+                      }}
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <div>
+                        <h3 className="font-semibold text-base leading-tight">{player.name}</h3>
+                        <div className="flex items-center gap-1.5 mt-1">
+                          <img
+                            src={getCountryFlagUrl(player.nationality)}
+                            alt={player.nationality}
+                            className="w-4 h-3 object-cover rounded-sm"
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none';
+                            }}
+                          />
+                          <span className="text-xs text-muted-foreground">{player.nationality}</span>
+                        </div>
+                      </div>
+                      {isAdmin && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEdit(player)}
+                          className="h-8 w-8 p-0 flex-shrink-0"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      <div>
+                        <span className="text-muted-foreground text-xs">Club</span>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          {clubLogo && (
+                            <img
+                              src={clubLogo}
+                              alt={club || "Club"}
+                              className="h-4 w-4 object-contain"
+                            />
+                          )}
+                          <span className="text-sm truncate">{club || "—"}</span>
+                        </div>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground text-xs">Position</span>
+                        <div className="text-sm font-semibold uppercase tracking-wide mt-0.5">
+                          {player.position}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        // Desktop Table View
+        <div className="rounded-lg border bg-card overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow className="hover:bg-transparent border-b">
+                <TableHead className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Name</TableHead>
+                <TableHead className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Club</TableHead>
+                <TableHead className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Nat</TableHead>
+                <TableHead className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Position</TableHead>
+                {isAdmin && <TableHead className="text-xs uppercase tracking-wider text-muted-foreground font-semibold w-20"></TableHead>}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {players.map((player, index) => {
               const { club, clubLogo } = getClubInfo(player);
               return (
                 <TableRow 
@@ -232,13 +311,14 @@ export const PlayerList = ({ isAdmin }: { isAdmin: boolean }) => {
                   )}
                 </TableRow>
               );
-            })}
-          </TableBody>
-        </Table>
-      </div>
+              })}
+            </TableBody>
+          </Table>
+        </div>
+      )}
 
       <Dialog open={!!editingPlayer} onOpenChange={() => setEditingPlayer(null)}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex justify-between items-center">
               Edit Player Details
@@ -253,8 +333,9 @@ export const PlayerList = ({ isAdmin }: { isAdmin: boolean }) => {
           </DialogHeader>
 
           <div className="space-y-4">
-            <div>
-              <Label htmlFor="name">Name</Label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="name">Name</Label>
               <Input
                 id="name"
                 value={formData.name}
@@ -262,10 +343,9 @@ export const PlayerList = ({ isAdmin }: { isAdmin: boolean }) => {
                   setFormData({ ...formData, name: e.target.value })
                 }
               />
-            </div>
-
-            <div>
-              <Label htmlFor="club">Club</Label>
+              </div>
+              <div>
+                <Label htmlFor="club">Club</Label>
               <Input
                 id="club"
                 value={formData.club}
@@ -274,10 +354,12 @@ export const PlayerList = ({ isAdmin }: { isAdmin: boolean }) => {
                 }
                 placeholder="Enter club name"
               />
+              </div>
             </div>
 
-            <div>
-              <Label htmlFor="club_logo">Club Logo URL</Label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="club_logo">Club Logo URL</Label>
               <Input
                 id="club_logo"
                 value={formData.club_logo}
@@ -286,10 +368,9 @@ export const PlayerList = ({ isAdmin }: { isAdmin: boolean }) => {
                 }
                 placeholder="https://example.com/logo.png"
               />
-            </div>
-
-            <div>
-              <Label htmlFor="position">Position</Label>
+              </div>
+              <div>
+                <Label htmlFor="position">Position</Label>
               <Input
                 id="position"
                 value={formData.position}
@@ -297,10 +378,12 @@ export const PlayerList = ({ isAdmin }: { isAdmin: boolean }) => {
                   setFormData({ ...formData, position: e.target.value })
                 }
               />
+              </div>
             </div>
 
-            <div>
-              <Label htmlFor="age">Age</Label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="age">Age</Label>
               <Input
                 id="age"
                 type="number"
@@ -309,10 +392,9 @@ export const PlayerList = ({ isAdmin }: { isAdmin: boolean }) => {
                   setFormData({ ...formData, age: parseInt(e.target.value) || 0 })
                 }
               />
-            </div>
-
-            <div>
-              <Label htmlFor="nationality">Nationality</Label>
+              </div>
+              <div>
+                <Label htmlFor="nationality">Nationality</Label>
               <Input
                 id="nationality"
                 value={formData.nationality}
@@ -320,10 +402,12 @@ export const PlayerList = ({ isAdmin }: { isAdmin: boolean }) => {
                   setFormData({ ...formData, nationality: e.target.value })
                 }
               />
+              </div>
             </div>
 
-            <div>
-              <Label htmlFor="email">Email</Label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
                 type="email"
@@ -333,10 +417,9 @@ export const PlayerList = ({ isAdmin }: { isAdmin: boolean }) => {
                 }
                 placeholder="player@example.com"
               />
-            </div>
-
-            <div>
-              <Label htmlFor="image_url">Player Image URL</Label>
+              </div>
+              <div>
+                <Label htmlFor="image_url">Player Image URL</Label>
               <Input
                 id="image_url"
                 value={formData.image_url}
@@ -345,10 +428,12 @@ export const PlayerList = ({ isAdmin }: { isAdmin: boolean }) => {
                 }
                 placeholder="https://example.com/player.png"
               />
+              </div>
             </div>
 
-            <div>
-              <Label htmlFor="category">Category</Label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="category">Category</Label>
               <Input
                 id="category"
                 value={formData.category}
@@ -357,10 +442,9 @@ export const PlayerList = ({ isAdmin }: { isAdmin: boolean }) => {
                 }
                 placeholder="e.g., Professional, Youth"
               />
-            </div>
-
-            <div>
-              <Label htmlFor="representation_status">Representation Status</Label>
+              </div>
+              <div>
+                <Label htmlFor="representation_status">Representation Status</Label>
               <Input
                 id="representation_status"
                 value={formData.representation_status}
@@ -369,6 +453,7 @@ export const PlayerList = ({ isAdmin }: { isAdmin: boolean }) => {
                 }
                 placeholder="e.g., represented, other"
               />
+              </div>
             </div>
 
             <div>
