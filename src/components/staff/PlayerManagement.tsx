@@ -93,7 +93,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
     // Arrays
     externalLinks: [] as { label: string; url: string }[],
     strengths: [] as string[],
-    tacticalFormations: [] as {
+    tacticalSchemes: [] as {
       formation: string;
       positions: string[];
       teamName: string;
@@ -297,8 +297,8 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       bio.strengthsAndPlayStyle = formData.strengths;
     }
 
-    if (formData.tacticalFormations.length > 0) {
-      bio.schemeHistory = formData.tacticalFormations; // Use 'schemeHistory' to match existing structure
+    if (formData.tacticalSchemes.length > 0) {
+      bio.schemeHistory = formData.tacticalSchemes; // Use 'schemeHistory' to match existing structure
     }
 
     if (formData.seasonStats.length > 0) {
@@ -341,9 +341,9 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       visible_on_stars_page: player.visible_on_stars_page || false,
       image_url: player.image_url || "",
       
-      // Club Info
-      club: player.club || "",
-      club_logo: player.club_logo || "",
+      // Club Info - read from player table OR bio JSON
+      club: player.club || bioData?.currentClub || "",
+      club_logo: player.club_logo || bioData?.currentClubLogo || "",
       
       // Bio JSON fields - handle both 'bio' and 'text' keys
       bioText: bioData?.bio || bioData?.text || "",
@@ -354,7 +354,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       // Arrays from bio - ensure proper structure with defaults
       externalLinks: Array.isArray(bioData?.externalLinks) ? bioData.externalLinks : [],
       strengths: Array.isArray(bioData?.strengthsAndPlayStyle) ? bioData.strengthsAndPlayStyle : [],
-      tacticalFormations: (Array.isArray(bioData?.tacticalFormations) ? bioData.tacticalFormations : 
+      tacticalSchemes: (Array.isArray(bioData?.tacticalFormations) ? bioData.tacticalFormations : 
                           Array.isArray(bioData?.schemeHistory) ? bioData.schemeHistory : []).map(f => ({
         formation: f?.formation || "",
         positions: Array.isArray(f?.positions) ? f.positions : [],
@@ -1319,7 +1319,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                   <TabsTrigger value="basic">Basic</TabsTrigger>
                   <TabsTrigger value="career">Career</TabsTrigger>
                   <TabsTrigger value="bio">Bio</TabsTrigger>
-                  <TabsTrigger value="tactical">Tactical</TabsTrigger>
+                  <TabsTrigger value="tactical">Schemes</TabsTrigger>
                   <TabsTrigger value="stats">Stats</TabsTrigger>
                   <TabsTrigger value="links">Links</TabsTrigger>
                 </TabsList>
@@ -1601,20 +1601,20 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                   </div>
                 </TabsContent>
 
-                {/* Tactical Formations Tab */}
+                {/* Tactical Schemes Tab */}
                 <TabsContent value="tactical" className="space-y-4">
-                  <Label>Tactical Formations</Label>
-                  {formData.tacticalFormations.map((formation, index) => (
+                  <Label>Tactical Schemes</Label>
+                  {formData.tacticalSchemes.map((scheme, index) => (
                     <Card key={index} className="p-4 space-y-3">
                       <div className="flex justify-between items-center">
-                        <h4 className="font-medium">Formation {index + 1}</h4>
+                        <h4 className="font-medium">Scheme {index + 1}</h4>
                         <Button
                           type="button"
                           variant="destructive"
                           size="sm"
                           onClick={() => {
-                            const newFormations = formData.tacticalFormations.filter((_, i) => i !== index);
-                            setFormData({ ...formData, tacticalFormations: newFormations });
+                            const newSchemes = formData.tacticalSchemes.filter((_, i) => i !== index);
+                            setFormData({ ...formData, tacticalSchemes: newSchemes });
                           }}
                         >
                           <Trash2 className="h-4 w-4" />
@@ -1622,59 +1622,59 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                       </div>
                       <div className="grid grid-cols-2 gap-3">
                         <Input
-                          value={formation.formation || ""}
+                          value={scheme.formation || ""}
                           onChange={(e) => {
-                            const newFormations = [...formData.tacticalFormations];
-                            newFormations[index].formation = e.target.value;
-                            setFormData({ ...formData, tacticalFormations: newFormations });
+                            const newSchemes = [...formData.tacticalSchemes];
+                            newSchemes[index].formation = e.target.value;
+                            setFormData({ ...formData, tacticalSchemes: newSchemes });
                           }}
                           placeholder="Formation (e.g., 4-3-3)"
                         />
                         <Input
-                          value={(Array.isArray(formation.positions) ? formation.positions : []).join(", ")}
+                          value={(Array.isArray(scheme.positions) ? scheme.positions : []).join(", ")}
                           onChange={(e) => {
-                            const newFormations = [...formData.tacticalFormations];
-                            newFormations[index].positions = e.target.value.split(",").map(p => p.trim()).filter(p => p);
-                            setFormData({ ...formData, tacticalFormations: newFormations });
+                            const newSchemes = [...formData.tacticalSchemes];
+                            newSchemes[index].positions = e.target.value.split(",").map(p => p.trim()).filter(p => p);
+                            setFormData({ ...formData, tacticalSchemes: newSchemes });
                           }}
                           placeholder="Positions (e.g., CM, RCM)"
                         />
                         <Input
-                          value={formation.teamName || ""}
+                          value={scheme.teamName || ""}
                           onChange={(e) => {
-                            const newFormations = [...formData.tacticalFormations];
-                            newFormations[index].teamName = e.target.value;
-                            setFormData({ ...formData, tacticalFormations: newFormations });
+                            const newSchemes = [...formData.tacticalSchemes];
+                            newSchemes[index].teamName = e.target.value;
+                            setFormData({ ...formData, tacticalSchemes: newSchemes });
                           }}
                           placeholder="Team Name"
                         />
                         <Input
-                          value={formation.matches || ""}
+                          value={scheme.matches || ""}
                           onChange={(e) => {
-                            const newFormations = [...formData.tacticalFormations];
+                            const newSchemes = [...formData.tacticalSchemes];
                             const value = e.target.value;
                             // Try to parse as number, otherwise keep as string
-                            newFormations[index].matches = isNaN(Number(value)) ? value : parseInt(value);
-                            setFormData({ ...formData, tacticalFormations: newFormations });
+                            newSchemes[index].matches = isNaN(Number(value)) ? value : parseInt(value);
+                            setFormData({ ...formData, tacticalSchemes: newSchemes });
                           }}
                           placeholder="Matches (e.g., 15 or 'CURRENT CLUB')"
                         />
                         <Input
-                          value={formation.clubLogo || ""}
+                          value={scheme.clubLogo || ""}
                           onChange={(e) => {
-                            const newFormations = [...formData.tacticalFormations];
-                            newFormations[index].clubLogo = e.target.value;
-                            setFormData({ ...formData, tacticalFormations: newFormations });
+                            const newSchemes = [...formData.tacticalSchemes];
+                            newSchemes[index].clubLogo = e.target.value;
+                            setFormData({ ...formData, tacticalSchemes: newSchemes });
                           }}
                           placeholder="Club Logo URL"
                           className="col-span-2"
                         />
                         <Input
-                          value={formation.playerImage || ""}
+                          value={scheme.playerImage || ""}
                           onChange={(e) => {
-                            const newFormations = [...formData.tacticalFormations];
-                            newFormations[index].playerImage = e.target.value;
-                            setFormData({ ...formData, tacticalFormations: newFormations });
+                            const newSchemes = [...formData.tacticalSchemes];
+                            newSchemes[index].playerImage = e.target.value;
+                            setFormData({ ...formData, tacticalSchemes: newSchemes });
                           }}
                           placeholder="Player Image URL"
                           className="col-span-2"
@@ -1688,8 +1688,8 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                     onClick={() => {
                       setFormData({ 
                         ...formData, 
-                        tacticalFormations: [
-                          ...formData.tacticalFormations, 
+                        tacticalSchemes: [
+                          ...formData.tacticalSchemes, 
                           {
                             formation: "",
                             positions: [],
@@ -1703,7 +1703,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                     }}
                   >
                     <Plus className="h-4 w-4 mr-2" />
-                    Add Formation
+                    Add Scheme
                   </Button>
                 </TabsContent>
 
