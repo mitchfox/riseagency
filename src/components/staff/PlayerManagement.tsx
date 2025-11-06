@@ -97,7 +97,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       formation: string;
       positions: string[];
       teamName: string;
-      matches: number;
+      matches: string | number; // Can be string like "CURRENT CLUB" or number
       clubLogo: string;
       playerImage: string;
     }[],
@@ -281,7 +281,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
 
   const reconstructBioJSON = () => {
     const bio: any = {
-      text: formData.bioText,
+      bio: formData.bioText, // Use 'bio' key to match existing structure
       dateOfBirth: formData.dateOfBirth || undefined,
       number: formData.number || undefined,
       whatsapp: formData.whatsapp || undefined,
@@ -298,7 +298,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
     }
 
     if (formData.tacticalFormations.length > 0) {
-      bio.tacticalFormations = formData.tacticalFormations;
+      bio.schemeHistory = formData.tacticalFormations; // Use 'schemeHistory' to match existing structure
     }
 
     if (formData.seasonStats.length > 0) {
@@ -345,10 +345,10 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       club: player.club || "",
       club_logo: player.club_logo || "",
       
-      // Bio JSON fields
-      bioText: bioData?.text || "",
+      // Bio JSON fields - handle both 'bio' and 'text' keys
+      bioText: bioData?.bio || bioData?.text || "",
       dateOfBirth: bioData?.dateOfBirth || "",
-      number: bioData?.number || "",
+      number: bioData?.number?.toString() || "",
       whatsapp: bioData?.whatsapp || "",
       
       // Arrays from bio - ensure proper structure with defaults
@@ -359,7 +359,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
         formation: f?.formation || "",
         positions: Array.isArray(f?.positions) ? f.positions : [],
         teamName: f?.teamName || "",
-        matches: typeof f?.matches === 'number' ? f.matches : 0,
+        matches: f?.matches || 0, // Keep as-is, can be string or number
         clubLogo: f?.clubLogo || "",
         playerImage: f?.playerImage || "",
       })),
@@ -1649,14 +1649,15 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                           placeholder="Team Name"
                         />
                         <Input
-                          type="number"
-                          value={formation.matches || 0}
+                          value={formation.matches || ""}
                           onChange={(e) => {
                             const newFormations = [...formData.tacticalFormations];
-                            newFormations[index].matches = parseInt(e.target.value) || 0;
+                            const value = e.target.value;
+                            // Try to parse as number, otherwise keep as string
+                            newFormations[index].matches = isNaN(Number(value)) ? value : parseInt(value);
                             setFormData({ ...formData, tacticalFormations: newFormations });
                           }}
-                          placeholder="Matches"
+                          placeholder="Matches (e.g., 15 or 'CURRENT CLUB')"
                         />
                         <Input
                           value={formation.clubLogo || ""}
