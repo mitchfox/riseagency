@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Users, MessageSquare, Plus, Trash2, Edit } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -616,21 +617,21 @@ export const RecruitmentManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                 </div>
               ))}
             </div>
-          </div>
 
-          {/* Legend */}
-          <div className="flex items-center gap-4 text-sm text-muted-foreground pt-4 border-t">
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded border-2" style={{ borderColor: 'hsl(0, 70%, 50%)' }} />
-              <span>High Priority</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded border-2" style={{ borderColor: 'hsl(43, 49%, 61%)' }} />
-              <span>Medium Priority</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded border-2" style={{ borderColor: 'hsl(140, 50%, 50%)' }} />
-              <span>Low Priority</span>
+            {/* Legend */}
+            <div className="flex items-center gap-4 text-sm text-muted-foreground pt-4 border-t">
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 rounded border-2" style={{ borderColor: 'hsl(0, 70%, 50%)' }} />
+                <span>High Priority</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 rounded border-2" style={{ borderColor: 'hsl(43, 49%, 61%)' }} />
+                <span>Medium Priority</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 rounded border-2" style={{ borderColor: 'hsl(140, 50%, 50%)' }} />
+                <span>Low Priority</span>
+              </div>
             </div>
           </ScrollArea>
         </TabsContent>
