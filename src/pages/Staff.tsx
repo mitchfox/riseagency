@@ -291,7 +291,7 @@ const Staff = () => {
     },
     {
       id: 'coaching',
-      title: 'Coaching',
+      title: 'Coaching & Management',
       icon: Dumbbell,
       sections: [
         { id: 'players', title: 'Player Management', icon: UserCog },
@@ -302,7 +302,7 @@ const Staff = () => {
     },
     {
       id: 'network',
-      title: 'Network',
+      title: 'Network & Recruitment',
       icon: Network,
       sections: [
         { id: 'clubnetwork', title: 'Club Network', icon: Network },
@@ -313,7 +313,7 @@ const Staff = () => {
     },
     {
       id: 'marketing',
-      title: 'Marketing',
+      title: 'Marketing & Brand',
       icon: Megaphone,
       sections: [
         { id: 'marketing', title: 'Marketing', icon: Megaphone },
@@ -324,7 +324,7 @@ const Staff = () => {
     },
     {
       id: 'admin',
-      title: 'Admin',
+      title: 'Admin & Legal',
       icon: Scale,
       sections: [
         { id: 'legal', title: 'Legal', icon: Scale },
@@ -379,29 +379,36 @@ const Staff = () => {
       {/* Main Layout with Sidebar */}
       <div className="flex flex-1 overflow-hidden relative">
         {/* Left Sidebar */}
-        <div className="w-20 border-r bg-muted/30 backdrop-blur-sm flex flex-col items-start py-4 gap-1 overflow-y-auto relative z-10">
+        <div className="w-24 border-r bg-muted/30 backdrop-blur-sm flex flex-col items-start py-4 gap-2 overflow-y-auto relative z-10">
           {filteredCategories.map((category) => {
             const CategoryIcon = category.icon;
             const isExpanded = expandedCategory === category.id;
             const hasActiveSection = category.sections.some(s => s.id === expandedSection);
+            const isSingleSection = category.sections.length === 1;
             
             return (
               <div key={category.id} className="w-full">
                 {/* Category Button */}
                 <button
-                  onClick={() => setExpandedCategory(isExpanded ? null : category.id)}
+                  onClick={() => {
+                    if (isSingleSection) {
+                      handleSectionToggle(category.sections[0].id as any);
+                    } else {
+                      setExpandedCategory(isExpanded ? null : category.id);
+                    }
+                  }}
                   onMouseEnter={() => setExpandedCategory(category.id)}
-                  className={`group relative w-full rounded-lg flex flex-col items-center justify-center py-2 transition-all hover:bg-primary/10 ${
+                  className={`group relative w-full rounded-lg flex flex-col items-center justify-center py-3 px-2 transition-all hover:bg-primary/10 ${
                     hasActiveSection ? 'bg-primary/20' : ''
                   }`}
                 >
-                  <div className="flex items-center gap-1">
-                    <CategoryIcon className="w-4 h-4" />
-                    {category.sections.length > 1 && (
+                  <div className="flex items-center gap-1 mb-1">
+                    <CategoryIcon className="w-5 h-5" />
+                    {!isSingleSection && (
                       isExpanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />
                     )}
                   </div>
-                  <span className="text-[8px] leading-tight text-center px-0.5 font-medium uppercase tracking-tight text-muted-foreground">
+                  <span className="text-[9px] leading-tight text-center px-0.5 font-medium uppercase tracking-tight text-muted-foreground">
                     {category.title.split(' ').map((word, i) => (
                       <span key={i} className="block">{word}</span>
                     ))}
@@ -409,8 +416,8 @@ const Staff = () => {
                 </button>
 
                 {/* Sections (shown when expanded) */}
-                {isExpanded && category.sections.length > 1 && (
-                  <div className="w-full pl-2 space-y-1 mt-1">
+                {isExpanded && !isSingleSection && (
+                  <div className="w-full pl-2 space-y-1.5 mt-1">
                     {category.sections.map((section) => {
                       const SectionIcon = section.icon;
                       const isActive = expandedSection === section.id;
@@ -418,12 +425,12 @@ const Staff = () => {
                         <button
                           key={section.id}
                           onClick={() => handleSectionToggle(section.id as any)}
-                          className={`group relative w-full rounded-lg flex flex-col items-center justify-center py-1.5 transition-all hover:bg-primary/10 ${
+                          className={`group relative w-full rounded-lg flex flex-col items-center justify-center py-2 px-1 transition-all hover:bg-primary/10 ${
                             isActive ? 'bg-primary text-primary-foreground' : 'text-muted-foreground'
                           }`}
                         >
-                          <SectionIcon className="w-3 h-3 mb-0.5" />
-                          <span className="text-[7px] leading-tight text-center px-0.5 font-medium uppercase tracking-tight">
+                          <SectionIcon className="w-4 h-4 mb-1" />
+                          <span className="text-[8px] leading-tight text-center px-0.5 font-medium uppercase tracking-tight">
                             {section.title.split(' ').map((word, i) => (
                               <span key={i} className="block">{word}</span>
                             ))}
@@ -433,19 +440,6 @@ const Staff = () => {
                     })}
                   </div>
                 )}
-
-                {/* Single section category (like Overview) */}
-                {category.sections.length === 1 && category.sections.map((section) => {
-                  const isActive = expandedSection === section.id;
-                  if (isActive && !isExpanded) {
-                    return (
-                      <div key={section.id} className="absolute left-20 top-0 z-50 bg-popover border rounded-lg shadow-lg p-2 whitespace-nowrap">
-                        <span className="text-xs">{section.title}</span>
-                      </div>
-                    );
-                  }
-                  return null;
-                })}
               </div>
             );
           })}
