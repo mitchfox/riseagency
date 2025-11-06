@@ -378,7 +378,7 @@ const Staff = () => {
       <div className="flex flex-1 overflow-hidden relative">
         {/* Left Sidebar */}
         <div className="w-24 border-r bg-muted/30 backdrop-blur-sm flex flex-col items-start py-4 gap-2 overflow-y-auto relative z-10">
-          {filteredCategories.map((category) => {
+          {filteredCategories.map((category, index) => {
             const CategoryIcon = category.icon;
             const isExpanded = expandedCategory === category.id;
             const hasActiveSection = category.sections.some(s => s.id === expandedSection);
@@ -398,21 +398,11 @@ const Staff = () => {
                       setExpandedCategory(isExpanded ? null : category.id);
                     }
                   }}
-                  onMouseEnter={() => {
-                    if (!isSingleSection) {
-                      setExpandedCategory(category.id);
-                    }
-                  }}
-                  onMouseLeave={() => {
-                    if (!isSingleSection && !hasActiveSection) {
-                      setExpandedCategory(null);
-                    }
-                  }}
                   className={`group relative w-full rounded-lg flex flex-col items-center justify-center py-3 px-2 transition-all hover:bg-primary/20 ${
                     hasActiveSection || isExpanded ? 'bg-gradient-to-br from-primary via-primary to-primary-glow shadow-lg' : ''
                   }`}
                 >
-                  <CategoryIcon className={`w-8 h-8 mb-1 ${hasActiveSection || isExpanded ? 'text-primary-foreground' : ''}`} />
+                  <CategoryIcon className={`w-6 h-6 mb-1 ${hasActiveSection || isExpanded ? 'text-primary-foreground' : ''}`} />
                   <span className={`text-[6px] leading-tight text-center px-0.5 font-medium uppercase tracking-tight ${hasActiveSection || isExpanded ? 'text-primary-foreground' : 'text-muted-foreground'}`}>
                     {category.title.split(' ').map((word, i) => (
                       <span key={i} className="block">{word}</span>
@@ -422,14 +412,7 @@ const Staff = () => {
 
                 {/* Sections (shown when expanded) */}
                 {isExpanded && !isSingleSection && (
-                  <div 
-                    className="w-full space-y-1.5 mt-2"
-                    onMouseLeave={() => {
-                      if (!hasActiveSection) {
-                        setExpandedCategory(null);
-                      }
-                    }}
-                  >
+                  <div className="w-full space-y-1.5 mt-2">
                     {category.sections.map((section) => {
                       const SectionIcon = section.icon;
                       const isActive = expandedSection === section.id;
@@ -441,7 +424,7 @@ const Staff = () => {
                             isActive ? 'bg-gradient-to-br from-primary via-primary to-primary-glow text-primary-foreground shadow-md' : 'text-muted-foreground'
                           }`}
                         >
-                          <SectionIcon className="w-6 h-6 mb-1" />
+                          <SectionIcon className="w-5 h-5 mb-1" />
                           <span className="text-[6px] leading-tight text-center px-0.5 font-medium uppercase tracking-tight">
                             {section.title.split(' ').map((word, i) => (
                               <span key={i} className="block">{word}</span>
@@ -450,6 +433,13 @@ const Staff = () => {
                         </button>
                       );
                     })}
+                  </div>
+                )}
+                
+                {/* Gold divider between categories */}
+                {index < filteredCategories.length - 1 && (
+                  <div className="w-full px-2 py-2">
+                    <div className="h-px bg-gradient-to-r from-transparent via-primary to-transparent opacity-50" />
                   </div>
                 )}
               </div>
