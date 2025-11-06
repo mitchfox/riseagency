@@ -46,7 +46,7 @@ const Widget = ({ id, title, icon: Icon, size, expanded, onToggleExpand, childre
               e.stopPropagation();
               onToggleExpand();
             }}
-            className="absolute top-4 right-4 z-50 h-10 w-10 p-0 bg-primary hover:bg-primary/90 shadow-lg"
+            className="absolute top-20 right-4 z-[100] h-10 w-10 p-0 bg-primary hover:bg-primary/90 shadow-lg"
           >
             <Minimize2 className="h-5 w-5" />
           </Button>
