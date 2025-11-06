@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Maximize2, Minimize2, Target, CheckSquare, Users, Calendar, Link2, TrendingUp } from "lucide-react";
 import { StaffSchedule } from "./StaffSchedule";
 import marbleOverlay from "@/assets/smudged-marble-overlay.png";
+import { players } from "@/data/players";
 
 interface WidgetProps {
   id: string;
@@ -48,8 +49,11 @@ const Widget = ({ id, title, icon: Icon, size, expanded, onToggleExpand, childre
         <Button
           variant="ghost"
           size="sm"
-          onClick={onToggleExpand}
-          className="h-6 w-6 p-0 hover:bg-primary/10"
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleExpand();
+          }}
+          className="h-6 w-6 p-0 hover:bg-primary/10 relative z-20"
         >
           {expanded ? (
             <Minimize2 className="h-3 w-3" />
@@ -237,69 +241,29 @@ export const StaffOverview = ({ isAdmin }: { isAdmin: boolean }) => {
         onToggleExpand={() => toggleWidget("represented")}
       >
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
-          <div className="flex flex-col p-2 border border-border/50 rounded hover:bg-accent/50 hover:border-primary/30 transition-all group">
-            <img src="/players/tyrese-omotoye.png" alt="Tyrese Omotoye" className="w-full h-14 object-cover border border-primary/30 mb-1" />
-            <span className="text-[10px] md:text-[10px] font-semibold text-center">Tyrese Omotoye</span>
-            <span className="text-[9px] text-muted-foreground mb-1 text-center">Forward</span>
-            <div className="flex gap-1 w-full">
-              <Button 
-                size="sm" 
-                className="h-5 text-[10px] md:text-[9px] px-1.5 flex-1 bg-primary hover:bg-primary/90 text-primary-foreground border-0" 
-                onClick={() => navigateToPlayer('tyrese-omotoye', 'analysis')}
-              >
-                Analysis
-              </Button>
-              <Button 
-                size="sm" 
-                className="h-5 text-[10px] md:text-[9px] px-1.5 flex-1 bg-primary hover:bg-primary/90 text-primary-foreground border-0" 
-                onClick={() => navigateToPlayer('tyrese-omotoye', 'programming')}
-              >
-                Programming
-              </Button>
+          {players.map((player) => (
+            <div key={player.id} className="flex flex-col p-2 border border-border/50 rounded hover:bg-accent/50 hover:border-primary/30 transition-all group">
+              <img src={player.image} alt={player.name} className="w-full h-14 object-cover border border-primary/30 mb-1" />
+              <span className="text-[10px] md:text-[10px] font-semibold text-center">{player.name}</span>
+              <span className="text-[9px] text-muted-foreground mb-1 text-center">{player.position}</span>
+              <div className="flex gap-1 w-full">
+                <Button 
+                  size="sm" 
+                  className="h-5 text-[10px] md:text-[9px] px-1.5 flex-1 bg-primary hover:bg-primary/90 text-primary-foreground border-0" 
+                  onClick={() => navigateToPlayer(player.id, 'analysis')}
+                >
+                  Analysis
+                </Button>
+                <Button 
+                  size="sm" 
+                  className="h-5 text-[10px] md:text-[9px] px-1.5 flex-1 bg-primary hover:bg-primary/90 text-primary-foreground border-0" 
+                  onClick={() => navigateToPlayer(player.id, 'programming')}
+                >
+                  Programming
+                </Button>
+              </div>
             </div>
-          </div>
-          <div className="flex flex-col p-2 border border-border/50 rounded hover:bg-accent/50 hover:border-primary/30 transition-all group">
-            <img src="/players/michael-mulligan.png" alt="Michael Mulligan" className="w-full h-14 object-cover border border-primary/30 mb-1" />
-            <span className="text-[10px] md:text-[10px] font-semibold text-center">Michael Mulligan</span>
-            <span className="text-[9px] text-muted-foreground mb-1 text-center">Midfielder</span>
-            <div className="flex gap-1 w-full">
-              <Button 
-                size="sm" 
-                className="h-5 text-[10px] md:text-[9px] px-1.5 flex-1 bg-primary hover:bg-primary/90 text-primary-foreground border-0" 
-                onClick={() => navigateToPlayer('michael-mulligan', 'analysis')}
-              >
-                Analysis
-              </Button>
-              <Button 
-                size="sm" 
-                className="h-5 text-[10px] md:text-[9px] px-1.5 flex-1 bg-primary hover:bg-primary/90 text-primary-foreground border-0" 
-                onClick={() => navigateToPlayer('michael-mulligan', 'programming')}
-              >
-                Programming
-              </Button>
-            </div>
-          </div>
-          <div className="flex flex-col p-2 border border-border/50 rounded hover:bg-accent/50 hover:border-primary/30 transition-all group">
-            <img src="/players/jaroslav-svoboda.jpg" alt="Jaroslav Svoboda" className="w-full h-14 object-cover border border-primary/30 mb-1" />
-            <span className="text-[10px] md:text-[10px] font-semibold text-center">Jaroslav Svoboda</span>
-            <span className="text-[9px] text-muted-foreground mb-1 text-center">Defender</span>
-            <div className="flex gap-1 w-full">
-              <Button 
-                size="sm" 
-                className="h-5 text-[10px] md:text-[9px] px-1.5 flex-1 bg-primary hover:bg-primary/90 text-primary-foreground border-0" 
-                onClick={() => navigateToPlayer('jaroslav-svoboda', 'analysis')}
-              >
-                Analysis
-              </Button>
-              <Button 
-                size="sm" 
-                className="h-5 text-[10px] md:text-[9px] px-1.5 flex-1 bg-primary hover:bg-primary/90 text-primary-foreground border-0" 
-                onClick={() => navigateToPlayer('jaroslav-svoboda', 'programming')}
-              >
-                Programming
-              </Button>
-            </div>
-          </div>
+          ))}
         </div>
       </Widget>
     </div>
