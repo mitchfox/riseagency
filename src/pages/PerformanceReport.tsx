@@ -21,7 +21,7 @@ interface PerformanceAction {
 }
 
 interface StrikerStats {
-  [key: string]: number | undefined;
+  [key: string]: number | string | any[] | undefined;
 }
 
 interface AnalysisDetails {
@@ -287,21 +287,36 @@ const PerformanceReport = () => {
                         <div key={key} className="text-center p-3 bg-background rounded-md">
                           <p className="text-xs text-muted-foreground mb-1">{displayName}</p>
                           <p className="font-bold text-lg">
-                            {typeof value === 'number' 
-                              ? (key.includes('turnovers') || key.includes('interceptions') || key.includes('progressive_passes') || key.includes('regains'))
-                                ? Math.round(value)
-                                : value < 10 
-                                  ? value.toFixed(3) 
-                                  : value
-                              : value}
+                            {(() => {
+                              if (typeof value === 'number') {
+                                if (key.includes('turnovers') || key.includes('interceptions') || key.includes('progressive_passes') || key.includes('regains')) {
+                                  return Math.round(value);
+                                }
+                                return value < 10 ? value.toFixed(3) : value;
+                              }
+                              if (Array.isArray(value)) {
+                                return value.filter(v => v != null).map(v => String(v)).join(', ') || '-';
+                              }
+                              if (value !== null && typeof value === 'object') {
+                                return JSON.stringify(value);
+                              }
+                              return String(value);
+                            })()}
                           </p>
                           {per90Value !== undefined && per90Value !== null && (
                             <p className="text-xs text-muted-foreground mt-1">
-                              per 90: {typeof per90Value === 'number' 
-                                ? per90Value < 10 
-                                  ? per90Value.toFixed(3) 
-                                  : per90Value
-                                : per90Value}
+                              per 90: {(() => {
+                                if (typeof per90Value === 'number') {
+                                  return per90Value < 10 ? per90Value.toFixed(3) : per90Value;
+                                }
+                                if (Array.isArray(per90Value)) {
+                                  return per90Value.filter(v => v != null).map(v => String(v)).join(', ') || '-';
+                                }
+                                if (per90Value !== null && typeof per90Value === 'object') {
+                                  return JSON.stringify(per90Value);
+                                }
+                                return String(per90Value);
+                              })()}
                             </p>
                           )}
                         </div>

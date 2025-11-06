@@ -935,7 +935,12 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                             if (value === null || value === undefined) {
                                               displayValue = '-';
                                             } else if (Array.isArray(value)) {
-                                              displayValue = value.filter(v => v != null).join(', ');
+                                              // Extra safety: ensure value is actually an array with valid methods
+                                              try {
+                                                displayValue = value.filter(v => v != null && v !== undefined).map(v => String(v)).join(', ') || '-';
+                                              } catch (e) {
+                                                displayValue = '-';
+                                              }
                                             } else if (typeof value === 'object') {
                                               displayValue = JSON.stringify(value);
                                             } else {
