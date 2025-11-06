@@ -126,10 +126,9 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
     const tabParam = searchParams.get('tab');
     
     if (playerSlug) {
-      // Find player by slug (name converted to lowercase with dashes)
-      const player = players.find(p => 
-        p.name.toLowerCase().replace(/\s+/g, '-') === playerSlug
-      );
+      // First try to find by ID (UUID format), then by slug (name-based)
+      const player = players.find(p => p.id === playerSlug) || 
+                     players.find(p => p.name.toLowerCase().replace(/\s+/g, '-') === playerSlug);
       
       if (player) {
         setSelectedPlayerId(player.id);
