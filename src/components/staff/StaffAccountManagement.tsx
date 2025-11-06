@@ -12,7 +12,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 interface StaffAccount {
   email: string;
   password: string;
-  role: "admin" | "staff";
+  role: "admin" | "staff" | "marketeer";
   fullName: string;
 }
 
@@ -49,7 +49,7 @@ export const StaffAccountManagement = () => {
             full_name
           )
         `)
-        .in('role', ['admin', 'staff']);
+        .in('role', ['admin', 'staff', 'marketeer']);
 
       if (error) throw error;
       console.log('Fetched accounts:', data);
@@ -126,7 +126,8 @@ export const StaffAccountManagement = () => {
         // Don't show credentials for existing accounts
         setCreatedAccount(null);
       } else {
-        toast.success(`${newAccount.role === "admin" ? "Admin" : "Staff"} account created successfully`);
+        const roleLabel = newAccount.role === "admin" ? "Admin" : newAccount.role === "marketeer" ? "Marketeer" : "Staff";
+        toast.success(`${roleLabel} account created successfully`);
         // Store created account details to display (only for new accounts)
         setCreatedAccount({ ...newAccount });
       }
@@ -191,7 +192,7 @@ export const StaffAccountManagement = () => {
       setCreatedAccount({
         email: email,
         password: newPassword,
-        role: role as "admin" | "staff",
+        role: role as "admin" | "staff" | "marketeer",
         fullName: fullName,
       });
     } catch (error) {
@@ -371,7 +372,7 @@ export const StaffAccountManagement = () => {
                 <Label htmlFor="staff-role">Role *</Label>
                 <Select
                   value={newAccount.role}
-                  onValueChange={(value: "admin" | "staff") =>
+                  onValueChange={(value: "admin" | "staff" | "marketeer") =>
                     setNewAccount({ ...newAccount, role: value })
                   }
                 >
@@ -381,6 +382,7 @@ export const StaffAccountManagement = () => {
                   <SelectContent>
                     <SelectItem value="admin">Admin (Full Access)</SelectItem>
                     <SelectItem value="staff">Staff (View Only)</SelectItem>
+                    <SelectItem value="marketeer">Marketeer (Marketing & Recruitment)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -391,6 +393,7 @@ export const StaffAccountManagement = () => {
               <ul className="text-sm text-muted-foreground space-y-1 ml-4">
                 <li>• <strong>Admin:</strong> Can view and edit all content</li>
                 <li>• <strong>Staff:</strong> Can view all content but cannot make changes</li>
+                <li>• <strong>Marketeer:</strong> Can edit Network & Recruitment and Marketing & Brand sections</li>
               </ul>
             </div>
 
