@@ -46,7 +46,9 @@ import {
   BellRing, 
   Network, 
   Scale,
-  Shield
+  Shield,
+  ChevronDown,
+  ChevronRight
 } from "lucide-react";
 
 const Staff = () => {
@@ -59,6 +61,7 @@ const Staff = () => {
   const [rememberMe, setRememberMe] = useState(false);
   const [expandedSection, setExpandedSection] = useState<'overview' | 'staffaccounts' | 'players' | 'playerlist' | 'recruitment' | 'blog' | 'betweenthelines' | 'coaching' | 'analysis' | 'marketing' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'legal' | null>('overview');
   const [searchQuery, setSearchQuery] = useState("");
+  const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
   const navigate = useNavigate();
 
   // Check URL parameters for section and player
@@ -279,28 +282,64 @@ const Staff = () => {
     );
   }
 
-  const sections = [
-    { id: 'overview', title: 'Overview', icon: Calendar },
-    { id: 'playerlist', title: 'Player List', icon: Users },
-    { id: 'players', title: 'Player Management', icon: UserCog },
-    { id: 'recruitment', title: 'Recruitment', icon: Target },
-    { id: 'coaching', title: 'Coaching Database', icon: Dumbbell },
-    { id: 'analysis', title: 'Analysis Writer', icon: LineChart },
-    { id: 'marketing', title: 'Marketing', icon: Megaphone },
-    { id: 'blog', title: 'News Articles', icon: Newspaper },
-    { id: 'betweenthelines', title: 'Between The Lines', icon: FileText },
-    { id: 'submissions', title: 'Form Submissions', icon: Mail },
-    { id: 'visitors', title: 'Site Visitors', icon: Eye },
-    { id: 'invoices', title: 'Invoices', icon: FileCheck },
-    { id: 'updates', title: 'Player Updates', icon: BellRing },
-    { id: 'clubnetwork', title: 'Club Network', icon: Network },
-    { id: 'legal', title: 'Legal', icon: Scale },
-    ...(isAdmin ? [{ id: 'staffaccounts', title: 'Staff Accounts', icon: Shield }] : []),
-  ] as const;
+  const categories = [
+    {
+      id: 'overview',
+      title: 'Overview',
+      icon: Calendar,
+      sections: [{ id: 'overview', title: 'Overview', icon: Calendar }]
+    },
+    {
+      id: 'coaching',
+      title: 'Coaching',
+      icon: Dumbbell,
+      sections: [
+        { id: 'players', title: 'Player Management', icon: UserCog },
+        { id: 'coaching', title: 'Coaching Database', icon: Dumbbell },
+        { id: 'analysis', title: 'Analysis Writer', icon: LineChart },
+        { id: 'updates', title: 'Player Updates', icon: BellRing },
+      ]
+    },
+    {
+      id: 'network',
+      title: 'Network',
+      icon: Network,
+      sections: [
+        { id: 'clubnetwork', title: 'Club Network', icon: Network },
+        { id: 'playerlist', title: 'Player List', icon: Users },
+        { id: 'recruitment', title: 'Recruitment', icon: Target },
+        { id: 'submissions', title: 'Form Submissions', icon: Mail },
+      ]
+    },
+    {
+      id: 'marketing',
+      title: 'Marketing',
+      icon: Megaphone,
+      sections: [
+        { id: 'marketing', title: 'Marketing', icon: Megaphone },
+        { id: 'blog', title: 'News Articles', icon: Newspaper },
+        { id: 'betweenthelines', title: 'Between The Lines', icon: FileText },
+        { id: 'visitors', title: 'Site Visitors', icon: Eye },
+      ]
+    },
+    {
+      id: 'admin',
+      title: 'Admin',
+      icon: Scale,
+      sections: [
+        { id: 'legal', title: 'Legal', icon: Scale },
+        { id: 'invoices', title: 'Invoices', icon: FileCheck },
+        ...(isAdmin ? [{ id: 'staffaccounts', title: 'Staff Accounts', icon: Shield }] : []),
+      ]
+    }
+  ];
 
-  const filteredSections = sections.filter(section =>
-    section.title.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredCategories = categories.map(category => ({
+    ...category,
+    sections: category.sections.filter(section =>
+      section.title.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+  })).filter(category => category.sections.length > 0);
 
   return (
     <div className="min-h-screen bg-background flex flex-col relative overflow-hidden">
@@ -340,26 +379,74 @@ const Staff = () => {
       {/* Main Layout with Sidebar */}
       <div className="flex flex-1 overflow-hidden relative">
         {/* Left Sidebar */}
-        <div className="w-20 border-r bg-muted/30 backdrop-blur-sm flex flex-col items-center py-4 gap-2 overflow-y-auto relative z-10">
-          {filteredSections.map((section) => {
-            const Icon = section.icon;
-            const isActive = expandedSection === section.id;
+        <div className="w-20 border-r bg-muted/30 backdrop-blur-sm flex flex-col items-start py-4 gap-1 overflow-y-auto relative z-10">
+          {filteredCategories.map((category) => {
+            const CategoryIcon = category.icon;
+            const isExpanded = expandedCategory === category.id;
+            const hasActiveSection = category.sections.some(s => s.id === expandedSection);
+            
             return (
-              <button
-                key={section.id}
-                onClick={() => handleSectionToggle(section.id as any)}
-                className={`group relative w-16 rounded-lg flex flex-col items-center justify-center py-2 transition-all hover:bg-primary/10 ${
-                  isActive ? 'bg-primary text-primary-foreground' : 'text-muted-foreground'
-                }`}
-                title={section.title}
-              >
-                <Icon className="w-4 h-4 mb-1" />
-                <span className="text-[8px] leading-tight text-center px-0.5 font-medium uppercase tracking-tight">
-                  {section.title.split(' ').map((word, i) => (
-                    <span key={i} className="block">{word}</span>
-                  ))}
-                </span>
-              </button>
+              <div key={category.id} className="w-full">
+                {/* Category Button */}
+                <button
+                  onClick={() => setExpandedCategory(isExpanded ? null : category.id)}
+                  onMouseEnter={() => setExpandedCategory(category.id)}
+                  className={`group relative w-full rounded-lg flex flex-col items-center justify-center py-2 transition-all hover:bg-primary/10 ${
+                    hasActiveSection ? 'bg-primary/20' : ''
+                  }`}
+                >
+                  <div className="flex items-center gap-1">
+                    <CategoryIcon className="w-4 h-4" />
+                    {category.sections.length > 1 && (
+                      isExpanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />
+                    )}
+                  </div>
+                  <span className="text-[8px] leading-tight text-center px-0.5 font-medium uppercase tracking-tight text-muted-foreground">
+                    {category.title.split(' ').map((word, i) => (
+                      <span key={i} className="block">{word}</span>
+                    ))}
+                  </span>
+                </button>
+
+                {/* Sections (shown when expanded) */}
+                {isExpanded && category.sections.length > 1 && (
+                  <div className="w-full pl-2 space-y-1 mt-1">
+                    {category.sections.map((section) => {
+                      const SectionIcon = section.icon;
+                      const isActive = expandedSection === section.id;
+                      return (
+                        <button
+                          key={section.id}
+                          onClick={() => handleSectionToggle(section.id as any)}
+                          className={`group relative w-full rounded-lg flex flex-col items-center justify-center py-1.5 transition-all hover:bg-primary/10 ${
+                            isActive ? 'bg-primary text-primary-foreground' : 'text-muted-foreground'
+                          }`}
+                        >
+                          <SectionIcon className="w-3 h-3 mb-0.5" />
+                          <span className="text-[7px] leading-tight text-center px-0.5 font-medium uppercase tracking-tight">
+                            {section.title.split(' ').map((word, i) => (
+                              <span key={i} className="block">{word}</span>
+                            ))}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Single section category (like Overview) */}
+                {category.sections.length === 1 && category.sections.map((section) => {
+                  const isActive = expandedSection === section.id;
+                  if (isActive && !isExpanded) {
+                    return (
+                      <div key={section.id} className="absolute left-20 top-0 z-50 bg-popover border rounded-lg shadow-lg p-2 whitespace-nowrap">
+                        <span className="text-xs">{section.title}</span>
+                      </div>
+                    );
+                  }
+                  return null;
+                })}
+              </div>
             );
           })}
         </div>
@@ -371,7 +458,7 @@ const Staff = () => {
               <Card className="animate-in fade-in slide-in-from-top-4 duration-300">
                 <CardHeader>
                   <CardTitle className="text-2xl">
-                    {sections.find(s => s.id === expandedSection)?.title}
+                    {categories.flatMap(c => c.sections).find(s => s.id === expandedSection)?.title}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
