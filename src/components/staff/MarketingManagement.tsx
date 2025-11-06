@@ -208,7 +208,7 @@ export const MarketingManagement = ({ isAdmin }: { isAdmin: boolean }) => {
               <CardDescription>Quick access to all marketing tools and templates</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4">
                 {marketingLinks.map((link) => {
                   const Icon = link.icon;
                   return (
@@ -271,7 +271,7 @@ export const MarketingManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                   <p className="text-sm">Upload images and videos to build your marketing gallery</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4">
                   {galleryItems.map((item) => (
                     <Card key={item.id} className="overflow-hidden">
                       <div className="relative aspect-video bg-muted">

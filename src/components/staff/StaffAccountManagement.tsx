@@ -324,7 +324,7 @@ export const StaffAccountManagement = () => {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleCreateAccount} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="staff-email">Email Address *</Label>
                 <Input
