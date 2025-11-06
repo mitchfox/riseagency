@@ -50,8 +50,17 @@ const Widget = ({ id, title, icon: Icon, size, expanded, onToggleExpand, childre
           >
             <Minimize2 className="h-5 w-5" />
           </Button>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 border-b border-border/30 px-3 py-2 relative z-10">
-            <div className="flex items-center gap-2">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 border-b border-border/30 px-3 py-2 relative z-10 overflow-hidden">
+            <div 
+              className="absolute inset-0 opacity-30 pointer-events-none z-0"
+              style={{ 
+                backgroundImage: `url(${marbleOverlay})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                mixBlendMode: 'overlay'
+              }}
+            />
+            <div className="flex items-center gap-2 relative z-10">
               <div className="p-1.5 rounded bg-primary/10 border border-primary/20">
                 <Icon className="w-3.5 h-3.5 text-primary" />
               </div>
@@ -77,8 +86,17 @@ const Widget = ({ id, title, icon: Icon, size, expanded, onToggleExpand, childre
           mixBlendMode: 'overlay'
         }}
       />
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 border-b border-border/30 px-3 py-2 relative z-10">
-        <div className="flex items-center gap-2">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 border-b border-border/30 px-3 py-2 relative z-10 overflow-hidden">
+        <div 
+          className="absolute inset-0 opacity-30 pointer-events-none z-0"
+          style={{ 
+            backgroundImage: `url(${marbleOverlay})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            mixBlendMode: 'overlay'
+          }}
+        />
+        <div className="flex items-center gap-2 relative z-10">
           <div className="p-1.5 rounded bg-primary/10 border border-primary/20">
             <Icon className="w-3.5 h-3.5 text-primary" />
           </div>
