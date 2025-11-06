@@ -30,6 +30,7 @@ import TermsOfService from "./pages/TermsOfService";
 import AnalysisViewer from "./pages/AnalysisViewer";
 import Intro from "./pages/Intro";
 import PlayersList from "./pages/PlayersList";
+import ClubNetwork from "./pages/ClubNetwork";
 
 const queryClient = new QueryClient();
 
@@ -52,6 +53,7 @@ const App = () => {
           <Route path="/players" element={<Players />} />
           <Route path="/players-list" element={<PlayersList />} />
           <Route path="/clubs" element={<Clubs />} />
+          <Route path="/club-network" element={<ClubNetwork />} />
           <Route path="/coaches" element={<Coaches />} />
           <Route path="/scouts" element={<Scouts />} />
           <Route path="/performance" element={<Performance />} />
