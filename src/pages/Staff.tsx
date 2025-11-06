@@ -46,9 +46,7 @@ import {
   BellRing, 
   Network, 
   Scale,
-  Shield,
-  ChevronDown,
-  ChevronRight
+  Shield
 } from "lucide-react";
 
 const Staff = () => {
@@ -386,8 +384,11 @@ const Staff = () => {
             const hasActiveSection = category.sections.some(s => s.id === expandedSection);
             const isSingleSection = category.sections.length === 1;
             
+            // Hide this category if another one is expanded
+            const shouldShow = !expandedCategory || expandedCategory === category.id || isSingleSection;
+            
             return (
-              <div key={category.id} className="w-full">
+              <div key={category.id} className={`w-full ${!shouldShow ? 'hidden' : ''}`}>
                 {/* Category Button */}
                 <button
                   onClick={() => {
@@ -397,18 +398,22 @@ const Staff = () => {
                       setExpandedCategory(isExpanded ? null : category.id);
                     }
                   }}
-                  onMouseEnter={() => setExpandedCategory(category.id)}
-                  className={`group relative w-full rounded-lg flex flex-col items-center justify-center py-3 px-2 transition-all hover:bg-primary/10 ${
-                    hasActiveSection ? 'bg-primary/20' : ''
+                  onMouseEnter={() => {
+                    if (!isSingleSection) {
+                      setExpandedCategory(category.id);
+                    }
+                  }}
+                  onMouseLeave={() => {
+                    if (!isSingleSection && !hasActiveSection) {
+                      setExpandedCategory(null);
+                    }
+                  }}
+                  className={`group relative w-full rounded-lg flex flex-col items-center justify-center py-3 px-2 transition-all hover:bg-primary/20 ${
+                    hasActiveSection || isExpanded ? 'bg-gradient-to-br from-primary via-primary to-primary-glow shadow-lg' : ''
                   }`}
                 >
-                  <div className="flex items-center gap-1 mb-1">
-                    <CategoryIcon className="w-5 h-5" />
-                    {!isSingleSection && (
-                      isExpanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />
-                    )}
-                  </div>
-                  <span className="text-[9px] leading-tight text-center px-0.5 font-medium uppercase tracking-tight text-muted-foreground">
+                  <CategoryIcon className={`w-8 h-8 mb-1 ${hasActiveSection || isExpanded ? 'text-primary-foreground' : ''}`} />
+                  <span className={`text-[6px] leading-tight text-center px-0.5 font-medium uppercase tracking-tight ${hasActiveSection || isExpanded ? 'text-primary-foreground' : 'text-muted-foreground'}`}>
                     {category.title.split(' ').map((word, i) => (
                       <span key={i} className="block">{word}</span>
                     ))}
@@ -417,7 +422,14 @@ const Staff = () => {
 
                 {/* Sections (shown when expanded) */}
                 {isExpanded && !isSingleSection && (
-                  <div className="w-full pl-2 space-y-1.5 mt-1">
+                  <div 
+                    className="w-full space-y-1.5 mt-2"
+                    onMouseLeave={() => {
+                      if (!hasActiveSection) {
+                        setExpandedCategory(null);
+                      }
+                    }}
+                  >
                     {category.sections.map((section) => {
                       const SectionIcon = section.icon;
                       const isActive = expandedSection === section.id;
@@ -425,12 +437,12 @@ const Staff = () => {
                         <button
                           key={section.id}
                           onClick={() => handleSectionToggle(section.id as any)}
-                          className={`group relative w-full rounded-lg flex flex-col items-center justify-center py-2 px-1 transition-all hover:bg-primary/10 ${
-                            isActive ? 'bg-primary text-primary-foreground' : 'text-muted-foreground'
+                          className={`group relative w-full rounded-lg flex flex-col items-center justify-center py-2 px-1 transition-all hover:bg-primary/20 ${
+                            isActive ? 'bg-gradient-to-br from-primary via-primary to-primary-glow text-primary-foreground shadow-md' : 'text-muted-foreground'
                           }`}
                         >
-                          <SectionIcon className="w-4 h-4 mb-1" />
-                          <span className="text-[8px] leading-tight text-center px-0.5 font-medium uppercase tracking-tight">
+                          <SectionIcon className="w-6 h-6 mb-1" />
+                          <span className="text-[6px] leading-tight text-center px-0.5 font-medium uppercase tracking-tight">
                             {section.title.split(' ').map((word, i) => (
                               <span key={i} className="block">{word}</span>
                             ))}
