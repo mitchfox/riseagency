@@ -323,17 +323,17 @@ export const StaffOverview = ({ isAdmin }: { isAdmin: boolean }) => {
               />
               <span className="text-[10px] md:text-[10px] font-semibold text-center">{player.name}</span>
               <span className="text-[9px] text-muted-foreground mb-1 text-center">{player.position}</span>
-              <div className="flex gap-1 w-full">
+              <div className="flex gap-0.5 w-full">
                 <Button 
                   size="sm" 
-                  className="h-5 text-[10px] md:text-[9px] px-1.5 flex-1 bg-primary hover:bg-primary/90 text-primary-foreground border-0" 
+                  className="h-5 text-[8px] px-1 flex-1 bg-primary hover:bg-primary/90 text-primary-foreground border-0" 
                   onClick={() => navigateToPlayer(player.slug || player.id, 'analysis')}
                 >
                   Analysis
                 </Button>
                 <Button 
                   size="sm" 
-                  className="h-5 text-[10px] md:text-[9px] px-1.5 flex-1 bg-primary hover:bg-primary/90 text-primary-foreground border-0" 
+                  className="h-5 text-[8px] px-1 flex-1 bg-primary hover:bg-primary/90 text-primary-foreground border-0" 
                   onClick={() => navigateToPlayer(player.slug || player.id, 'programming')}
                 >
                   Programming
