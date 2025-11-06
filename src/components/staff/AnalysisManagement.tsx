@@ -542,22 +542,22 @@ Title: ${formData.scheme_title || 'Not specified'}`;
 
   return (
     <div className="space-y-4">
-      <div className="flex gap-2">
+      <div className="flex flex-col sm:flex-row gap-2">
         <Button 
           onClick={() => handleOpenDialog("pre-match")}
-          className="bg-gradient-to-r from-slate-300 to-slate-400 text-slate-900 hover:from-slate-400 hover:to-slate-500"
+          className="bg-gradient-to-r from-slate-300 to-slate-400 text-slate-900 hover:from-slate-400 hover:to-slate-500 w-full sm:w-auto"
         >
           <Plus className="w-4 h-4 mr-2" />
-          New Pre-Match Analysis
+          <span className="sm:inline">New Pre-Match Analysis</span>
         </Button>
         <Button 
           onClick={() => handleOpenDialog("post-match")}
-          className="bg-gradient-to-r from-amber-400 to-yellow-500 text-slate-900 hover:from-amber-500 hover:to-yellow-600"
+          className="bg-gradient-to-r from-amber-400 to-yellow-500 text-slate-900 hover:from-amber-500 hover:to-yellow-600 w-full sm:w-auto"
         >
           <Plus className="w-4 h-4 mr-2" />
-          New Post-Match Analysis
+          <span className="sm:inline">New Post-Match Analysis</span>
         </Button>
-        <Button onClick={() => handleOpenDialog("concept")}>
+        <Button onClick={() => handleOpenDialog("concept")} className="w-full sm:w-auto">
           <Plus className="w-4 h-4 mr-2" />
           New Concept
         </Button>
@@ -565,7 +565,7 @@ Title: ${formData.scheme_title || 'Not specified'}`;
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
 
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full">
             <DialogHeader>
               <DialogTitle>
                 {editingAnalysis ? "Edit" : "New"}{" "}
@@ -593,7 +593,7 @@ Title: ${formData.scheme_title || 'Not specified'}`;
                         }
                       />
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <Label>Home Team</Label>
                         <Input
@@ -642,7 +642,7 @@ Title: ${formData.scheme_title || 'Not specified'}`;
                       </div>
                     </div>
                     
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <Label>Home Team Background Color</Label>
                         <p className="text-xs text-muted-foreground mb-2">
@@ -853,7 +853,7 @@ Title: ${formData.scheme_title || 'Not specified'}`;
 
                     {formData.selected_scheme && formData.starting_xi && formData.starting_xi.length > 0 && (
                       <div>
-                        <div className="grid grid-cols-2 gap-4 mb-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                           <div>
                             <Label>Kit Primary Color</Label>
                             <Input
@@ -877,7 +877,7 @@ Title: ${formData.scheme_title || 'Not specified'}`;
                         </div>
 
                         <Label className="mb-2 block">Starting XI Preview</Label>
-                        <div className="relative bg-green-700 rounded-lg p-8 min-h-[400px]">
+                        <div className="relative bg-green-700 rounded-lg p-4 sm:p-8 min-h-[300px] sm:min-h-[400px]">
                           <div className="text-white text-center mb-2 text-lg font-bold">
                             {formData.selected_scheme}
                           </div>
@@ -909,19 +909,19 @@ Title: ${formData.scheme_title || 'Not specified'}`;
                         <div className="mt-4 space-y-2 max-h-60 overflow-y-auto">
                           <Label>Enter Player Details</Label>
                           {formData.starting_xi.map((player: any, index: number) => (
-                            <div key={index} className="grid grid-cols-3 gap-2 items-center bg-muted p-2 rounded">
+                            <div key={index} className="flex flex-col sm:grid sm:grid-cols-3 gap-2 items-start sm:items-center bg-muted p-2 rounded">
                               <span className="text-xs font-medium">{player.position}</span>
                               <Input
                                 placeholder="Surname"
                                 value={player.surname}
                                 onChange={(e) => updateStartingXIPlayer(index, 'surname', e.target.value)}
-                                className="h-8 text-xs"
+                                className="h-8 text-xs w-full"
                               />
                               <Input
                                 placeholder="No."
                                 value={player.number}
                                 onChange={(e) => updateStartingXIPlayer(index, 'number', e.target.value)}
-                                className="h-8 text-xs"
+                                className="h-8 text-xs w-full"
                               />
                             </div>
                           ))}
@@ -1010,7 +1010,7 @@ Title: ${formData.scheme_title || 'Not specified'}`;
                         />
                       )}
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <Label>Home Team</Label>
                         <Input
@@ -1031,7 +1031,7 @@ Title: ${formData.scheme_title || 'Not specified'}`;
                         />
                       </div>
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <Label>Away Team</Label>
                         <Input
@@ -1118,7 +1118,7 @@ Title: ${formData.scheme_title || 'Not specified'}`;
               {/* Link to Player Performance Report */}
               <div className="space-y-4 border-t pt-4">
                 <h3 className="font-semibold">Link to Performance Report</h3>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <Label>Player</Label>
                     <Select value={selectedPlayerId} onValueChange={setSelectedPlayerId}>
@@ -1265,13 +1265,13 @@ Title: ${formData.scheme_title || 'Not specified'}`;
                             }
                             disabled={uploadingImage}
                           />
-                          <div className="flex flex-wrap gap-4 mt-2">
+                          <div className="flex flex-wrap gap-2 sm:gap-4 mt-2">
                             {point.images?.map((img, imgIndex) => (
                               <div key={imgIndex} className="relative">
                                 <img
                                   src={img}
                                   alt={`Point ${index + 1} Image ${imgIndex + 1}`}
-                                  className="w-48 h-48 object-cover rounded shadow-lg"
+                                  className="w-32 h-32 sm:w-48 sm:h-48 object-cover rounded shadow-lg"
                                 />
                                 <Button
                                   variant="destructive"
@@ -1305,8 +1305,8 @@ Title: ${formData.scheme_title || 'Not specified'}`;
         {analyses.map((analysis) => (
           <Card key={analysis.id}>
             <CardHeader>
-              <CardTitle className="flex justify-between items-center">
-                <div>
+              <CardTitle className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                <div className="flex-1">
                   <span className="text-sm text-muted-foreground mr-2">
                     {analysis.analysis_type === "pre-match"
                       ? "Pre-Match"
@@ -1314,18 +1314,21 @@ Title: ${formData.scheme_title || 'Not specified'}`;
                       ? "Post-Match"
                       : "Concept"}
                   </span>
-                  {analysis.title ||
-                    (analysis.analysis_type === "pre-match"
-                      ? `${analysis.home_team} vs ${analysis.away_team}`
-                      : analysis.analysis_type === "post-match"
-                      ? `${analysis.home_team} vs ${analysis.away_team}`
-                      : "Untitled Concept")}
+                  <span className="text-sm sm:text-base">
+                    {analysis.title ||
+                      (analysis.analysis_type === "pre-match"
+                        ? `${analysis.home_team} vs ${analysis.away_team}`
+                        : analysis.analysis_type === "post-match"
+                        ? `${analysis.home_team} vs ${analysis.away_team}`
+                        : "Untitled Concept")}
+                  </span>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 w-full sm:w-auto">
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => window.open(`/analysis/${analysis.id}`, '_blank')}
+                    className="flex-1 sm:flex-none"
                   >
                     View Analysis
                   </Button>
