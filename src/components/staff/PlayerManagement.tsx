@@ -498,7 +498,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
         
         {/* Gold border separator */}
         {representedPlayers.length > 0 && mandatedPlayers.length > 0 && (
-          <div className="h-0.5 bg-gradient-to-r from-transparent via-yellow-500 to-transparent my-2" />
+          <div className="h-0.5 bg-gradient-to-r from-transparent via-gold to-transparent my-2" />
         )}
         
         {/* Mandated Players */}
@@ -522,7 +522,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
         
         {/* Gold border separator */}
         {mandatedPlayers.length > 0 && otherPlayers.length > 0 && (
-          <div className="h-0.5 bg-gradient-to-r from-transparent via-yellow-500 to-transparent my-2" />
+          <div className="h-0.5 bg-gradient-to-r from-transparent via-gold to-transparent my-2" />
         )}
         
         {/* Other Players */}
@@ -621,7 +621,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
 
             {/* Gold Border Separator */}
             {groupedPlayers.represented.length > 0 && groupedPlayers.mandated.length > 0 && (
-              <div className="h-1 bg-gradient-to-r from-transparent via-yellow-500 to-transparent rounded-full" />
+              <div className="h-1 bg-gradient-to-r from-transparent via-gold to-transparent rounded-full" />
             )}
 
             {/* Mandated Players */}
@@ -689,7 +689,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
 
             {/* Gold Border Separator */}
             {groupedPlayers.mandated.length > 0 && groupedPlayers.other.length > 0 && (
-              <div className="h-1 bg-gradient-to-r from-transparent via-yellow-500 to-transparent rounded-full" />
+              <div className="h-1 bg-gradient-to-r from-transparent via-gold to-transparent rounded-full" />
             )}
 
             {/* Other Players */}
@@ -1142,27 +1142,109 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                 ? JSON.parse(selectedPlayer.highlights)
                                 : selectedPlayer.highlights;
                               
-                              const matchHighlights = highlights.matchHighlights || [];
+                              const matchHighlights = Array.isArray(highlights) ? highlights : (highlights.matchHighlights || []);
 
-                              if (matchHighlights.length > 0) {
-                                return (
-                                  <div className="grid grid-cols-2 gap-3">
-                                    {matchHighlights.map((highlight: any, idx: number) => (
-                                      <div key={idx} className="border rounded-lg p-3 hover:bg-secondary/30 transition-colors">
-                                        <video 
-                                          src={highlight.videoUrl}
-                                          controls
-                                          className="w-full h-40 object-cover rounded mb-2"
-                                        />
-                                        <p className="text-sm font-medium">{highlight.name}</p>
-                                      </div>
-                                    ))}
-                                  </div>
-                                );
-                              }
-                              return <p className="text-center text-muted-foreground py-8">No match highlights available</p>;
+                              return (
+                                <div className="space-y-4">
+                                  <Button 
+                                    onClick={() => {
+                                      const input = document.createElement('input');
+                                      input.type = 'file';
+                                      input.multiple = true;
+                                      input.accept = 'video/mp4,video/quicktime,video/x-msvideo,video/*';
+                                      input.onchange = async (e: any) => {
+                                        const files = e.target.files;
+                                        if (files && files.length > 0) {
+                                          try {
+                                            for (const file of files) {
+                                              const formData = new FormData();
+                                              formData.append('file', file);
+                                              formData.append('playerEmail', selectedPlayer.email || '');
+                                              formData.append('clipName', file.name.replace(/\.[^/.]+$/, ''));
+                                              
+                                              const response = await fetch(
+                                                `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/upload-player-highlight`,
+                                                {
+                                                  method: 'POST',
+                                                  headers: {
+                                                    'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+                                                    'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+                                                  },
+                                                  body: formData,
+                                                }
+                                              );
+
+                                              if (!response.ok) throw new Error('Upload failed');
+                                            }
+                                            toast.success('Clips uploaded successfully!');
+                                            fetchPlayers();
+                                          } catch (error: any) {
+                                            toast.error('Failed to upload: ' + error.message);
+                                          }
+                                        }
+                                      };
+                                      input.click();
+                                    }}
+                                    variant="outline"
+                                    size="sm"
+                                  >
+                                    <Plus className="w-4 h-4 mr-2" />
+                                    Upload Highlight
+                                  </Button>
+                                  
+                                  {matchHighlights.length > 0 ? (
+                                    <div className="grid grid-cols-2 gap-3">
+                                      {matchHighlights.map((highlight: any, idx: number) => (
+                                        <div key={idx} className="border rounded-lg p-3 hover:bg-secondary/30 transition-colors space-y-2">
+                                          <video 
+                                            src={highlight.videoUrl}
+                                            controls
+                                            className="w-full h-40 object-cover rounded"
+                                          />
+                                          <p className="text-sm font-medium truncate">{highlight.name}</p>
+                                          <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={async () => {
+                                              if (!confirm('Delete this highlight?')) return;
+                                              try {
+                                                const response = await fetch(
+                                                  `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/delete-player-highlight`,
+                                                  {
+                                                    method: 'POST',
+                                                    headers: {
+                                                      'Content-Type': 'application/json',
+                                                      'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+                                                    },
+                                                    body: JSON.stringify({
+                                                      playerEmail: selectedPlayer.email,
+                                                      clipName: highlight.name,
+                                                      videoUrl: highlight.videoUrl,
+                                                    }),
+                                                  }
+                                                );
+                                                if (!response.ok) throw new Error('Delete failed');
+                                                toast.success('Deleted successfully!');
+                                                fetchPlayers();
+                                              } catch (error: any) {
+                                                toast.error('Failed to delete: ' + error.message);
+                                              }
+                                            }}
+                                            className="w-full text-destructive hover:text-destructive"
+                                          >
+                                            <Trash2 className="w-4 h-4 mr-2" />
+                                            Delete
+                                          </Button>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  ) : (
+                                    <p className="text-center text-muted-foreground py-8">No match highlights yet</p>
+                                  )}
+                                </div>
+                              );
                             } catch (e) {
-                              return <p className="text-center text-muted-foreground py-8">No match highlights available</p>;
+                              return <p className="text-center text-muted-foreground py-8">Error loading highlights</p>;
                             }
                           })()}
                         </TabsContent>
@@ -1176,25 +1258,107 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                               
                               const bestClips = highlights.bestClips || [];
 
-                              if (bestClips.length > 0) {
-                                return (
-                                  <div className="grid grid-cols-2 gap-3">
-                                    {bestClips.map((clip: any, idx: number) => (
-                                      <div key={idx} className="border rounded-lg p-3 hover:bg-secondary/30 transition-colors">
-                                        <video 
-                                          src={clip.videoUrl}
-                                          controls
-                                          className="w-full h-40 object-cover rounded mb-2"
-                                        />
-                                        <p className="text-sm font-medium">{clip.name}</p>
-                                      </div>
-                                    ))}
-                                  </div>
-                                );
-                              }
-                              return <p className="text-center text-muted-foreground py-8">No best clips available</p>;
+                              return (
+                                <div className="space-y-4">
+                                  <Button 
+                                    onClick={() => {
+                                      const input = document.createElement('input');
+                                      input.type = 'file';
+                                      input.multiple = true;
+                                      input.accept = 'video/mp4,video/quicktime,video/x-msvideo,video/*';
+                                      input.onchange = async (e: any) => {
+                                        const files = e.target.files;
+                                        if (files && files.length > 0) {
+                                          try {
+                                            for (const file of files) {
+                                              const formData = new FormData();
+                                              formData.append('file', file);
+                                              formData.append('playerEmail', selectedPlayer.email || '');
+                                              formData.append('clipName', file.name.replace(/\.[^/.]+$/, ''));
+                                              
+                                              const response = await fetch(
+                                                `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/upload-player-highlight`,
+                                                {
+                                                  method: 'POST',
+                                                  headers: {
+                                                    'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+                                                    'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+                                                  },
+                                                  body: formData,
+                                                }
+                                              );
+
+                                              if (!response.ok) throw new Error('Upload failed');
+                                            }
+                                            toast.success('Clips uploaded successfully!');
+                                            fetchPlayers();
+                                          } catch (error: any) {
+                                            toast.error('Failed to upload: ' + error.message);
+                                          }
+                                        }
+                                      };
+                                      input.click();
+                                    }}
+                                    variant="outline"
+                                    size="sm"
+                                  >
+                                    <Plus className="w-4 h-4 mr-2" />
+                                    Upload Clip
+                                  </Button>
+                                  
+                                  {bestClips.length > 0 ? (
+                                    <div className="grid grid-cols-2 gap-3">
+                                      {bestClips.map((clip: any, idx: number) => (
+                                        <div key={idx} className="border rounded-lg p-3 hover:bg-secondary/30 transition-colors space-y-2">
+                                          <video 
+                                            src={clip.videoUrl}
+                                            controls
+                                            className="w-full h-40 object-cover rounded"
+                                          />
+                                          <p className="text-sm font-medium truncate">{clip.name}</p>
+                                          <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={async () => {
+                                              if (!confirm('Delete this clip?')) return;
+                                              try {
+                                                const response = await fetch(
+                                                  `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/delete-player-highlight`,
+                                                  {
+                                                    method: 'POST',
+                                                    headers: {
+                                                      'Content-Type': 'application/json',
+                                                      'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+                                                    },
+                                                    body: JSON.stringify({
+                                                      playerEmail: selectedPlayer.email,
+                                                      clipName: clip.name,
+                                                      videoUrl: clip.videoUrl,
+                                                    }),
+                                                  }
+                                                );
+                                                if (!response.ok) throw new Error('Delete failed');
+                                                toast.success('Deleted successfully!');
+                                                fetchPlayers();
+                                              } catch (error: any) {
+                                                toast.error('Failed to delete: ' + error.message);
+                                              }
+                                            }}
+                                            className="w-full text-destructive hover:text-destructive"
+                                          >
+                                            <Trash2 className="w-4 h-4 mr-2" />
+                                            Delete
+                                          </Button>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  ) : (
+                                    <p className="text-center text-muted-foreground py-8">No best clips yet</p>
+                                  )}
+                                </div>
+                              );
                             } catch (e) {
-                              return <p className="text-center text-muted-foreground py-8">No best clips available</p>;
+                              return <p className="text-center text-muted-foreground py-8">Error loading clips</p>;
                             }
                           })()}
                         </TabsContent>
