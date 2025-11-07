@@ -429,8 +429,8 @@ const Staff = () => {
 
       {/* Main Layout with Sidebar */}
       <div className="flex flex-1 relative">
-        {/* Left Sidebar - Sticky */}
-        <div className="sticky top-0 h-screen flex w-14 md:w-24 border-r bg-muted/30 backdrop-blur-sm flex-col items-start py-4 gap-2 overflow-y-auto relative z-10">
+        {/* Left Sidebar - Fixed */}
+        <div className="fixed top-[120px] md:top-[88px] left-0 bottom-0 w-14 md:w-24 border-r bg-muted/30 backdrop-blur-sm flex flex-col items-start py-4 gap-2 overflow-y-auto z-10">
           {filteredCategories.map((category, index) => {
             const CategoryIcon = category.icon;
             const isExpanded = expandedCategory === category.id;
@@ -515,7 +515,7 @@ const Staff = () => {
         </div>
 
         {/* Main Content Area */}
-        <main className="flex-1 overflow-y-auto relative z-10">
+        <main className="flex-1 overflow-y-auto relative z-10 ml-14 md:ml-24">
           {expandedSection ? (
             <div className="container mx-auto px-3 md:px-6 py-4 md:py-6">
               <Card className="animate-in fade-in slide-in-from-top-4 duration-300">

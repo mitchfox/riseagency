@@ -106,6 +106,11 @@ export const InvoiceManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (!formData.player_id) {
+      toast.error("Please select a player");
+      return;
+    }
+
     const invoiceData = {
       player_id: formData.player_id,
       invoice_number: formData.invoice_number,
