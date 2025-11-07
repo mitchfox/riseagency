@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Edit, FileText, LineChart, Video, Calendar, Plus, DollarSign, User, Trash2 } from "lucide-react";
+import { Edit, FileText, LineChart, Video, Calendar, Plus, DollarSign, User, Trash2, Eye } from "lucide-react";
 import { PerformanceActionsDialog } from "./PerformanceActionsDialog";
 import { CreatePerformanceReportDialog } from "./CreatePerformanceReportDialog";
 import { ProgrammingManagement } from "./ProgrammingManagement";
@@ -995,13 +995,12 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                         variant="secondary"
                                         size="sm"
                                         onClick={() => {
-                                          setSelectedAnalysisId(analysis.id);
-                                          setSelectedPlayerName(selectedPlayer!.name);
-                                          setIsPerformanceActionsDialogOpen(true);
+                                          const slug = `${selectedPlayer!.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-vs-${analysis.opponent.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`.replace(/-+/g, '-');
+                                          window.open(`/performance-report/${slug}-${analysis.id}`, '_blank');
                                         }}
                                       >
-                                        <LineChart className="w-4 h-4 mr-2" />
-                                        Actions
+                                        <Eye className="w-4 h-4 mr-2" />
+                                        View
                                       </Button>
                                     </div>
                                   </div>
