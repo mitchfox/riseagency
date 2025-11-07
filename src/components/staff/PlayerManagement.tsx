@@ -10,6 +10,7 @@ import { PerformanceActionsDialog } from "./PerformanceActionsDialog";
 import { CreatePerformanceReportDialog } from "./CreatePerformanceReportDialog";
 import { ProgrammingManagement } from "./ProgrammingManagement";
 import { PlayerFixtures } from "./PlayerFixtures";
+import { PlayerImages } from "./PlayerImages";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -1423,84 +1424,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                               Upload Images
                             </Button>
                             
-                            {(() => {
-                              const [images, setImages] = useState<any[]>([]);
-                              const [loading, setLoading] = useState(true);
-                              
-                              useEffect(() => {
-                                const fetchImages = async () => {
-                                  const { data, error } = await supabase
-                                    .from('marketing_gallery')
-                                    .select('*')
-                                    .eq('category', 'players')
-                                    .eq('file_type', 'image')
-                                    .ilike('title', `%${selectedPlayer.name}%`)
-                                    .order('created_at', { ascending: false });
-                                  
-                                  if (!error) {
-                                    setImages(data || []);
-                                  }
-                                  setLoading(false);
-                                };
-                                fetchImages();
-                              }, [selectedPlayer.name]);
-                              
-                              if (loading) {
-                                return <p className="text-center text-muted-foreground py-8">Loading images...</p>;
-                              }
-                              
-                              return images.length > 0 ? (
-                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                                  {images.map((image) => (
-                                    <div key={image.id} className="border rounded-lg p-3 hover:bg-secondary/30 transition-colors space-y-2">
-                                      <img 
-                                        src={image.file_url}
-                                        alt={image.title}
-                                        className="w-full h-48 object-cover rounded"
-                                      />
-                                      <p className="text-sm font-medium truncate">{image.title}</p>
-                                      {isAdmin && (
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          onClick={async () => {
-                                            if (!confirm('Delete this image from marketing gallery?')) return;
-                                            try {
-                                              const urlParts = image.file_url.split('/');
-                                              const filePath = urlParts[urlParts.length - 1];
-                                              
-                                              const { error: storageError } = await supabase.storage
-                                                .from('marketing-gallery')
-                                                .remove([filePath]);
-                                              
-                                              if (storageError) console.error('Storage delete error:', storageError);
-                                              
-                                              const { error: dbError } = await supabase
-                                                .from('marketing_gallery')
-                                                .delete()
-                                                .eq('id', image.id);
-                                              
-                                              if (dbError) throw dbError;
-                                              
-                                              toast.success('Deleted successfully!');
-                                              setImages(images.filter(i => i.id !== image.id));
-                                            } catch (error: any) {
-                                              toast.error('Failed to delete: ' + error.message);
-                                            }
-                                          }}
-                                          className="w-full text-destructive hover:text-destructive"
-                                        >
-                                          <Trash2 className="w-4 h-4 mr-2" />
-                                          Delete
-                                        </Button>
-                                      )}
-                                    </div>
-                                  ))}
-                                </div>
-                              ) : (
-                                <p className="text-center text-muted-foreground py-8">No images yet. Upload some to sync with marketing gallery.</p>
-                              );
-                            })()}
+                            <PlayerImages playerName={selectedPlayer.name} isAdmin={isAdmin} />
                           </div>
                         </TabsContent>
                       </Tabs>
