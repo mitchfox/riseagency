@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar, FileText, Image, Table, Folder, HardDrive, ExternalLink, Upload, Trash2, Play } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -62,18 +63,21 @@ interface GalleryItem {
   file_url: string;
   file_type: 'image' | 'video';
   thumbnail_url: string | null;
+  category: 'brand' | 'players' | 'other';
   created_at: string;
 }
 
 export const MarketingManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   const [activeTab, setActiveTab] = useState("resources");
   const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([]);
+  const [categoryFilter, setCategoryFilter] = useState<'all' | 'brand' | 'players' | 'other'>('all');
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadForm, setUploadForm] = useState({
     title: '',
     description: '',
     file: null as File | null,
+    category: 'other' as 'brand' | 'players' | 'other',
   });
 
   useEffect(() => {
@@ -134,13 +138,14 @@ export const MarketingManagement = ({ isAdmin }: { isAdmin: boolean }) => {
           description: uploadForm.description || null,
           file_url: publicUrl,
           file_type: fileType,
+          category: uploadForm.category,
         }]);
 
       if (dbError) throw dbError;
 
       toast.success('File uploaded successfully');
       setShowUploadDialog(false);
-      setUploadForm({ title: '', description: '', file: null });
+      setUploadForm({ title: '', description: '', file: null, category: 'other' });
       fetchGalleryItems();
     } catch (error) {
       console.error('Upload error:', error);
@@ -250,29 +255,48 @@ export const MarketingManagement = ({ isAdmin }: { isAdmin: boolean }) => {
         <TabsContent value="gallery" className="space-y-4">
           <Card>
             <CardHeader>
-              <div className="flex justify-between items-center">
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
                   <CardTitle>Marketing Gallery</CardTitle>
                   <CardDescription>Upload and manage images and videos for marketing</CardDescription>
                 </div>
-                {isAdmin && (
-                  <Button onClick={() => setShowUploadDialog(true)}>
-                    <Upload className="w-4 h-4 mr-2" />
-                    Upload Media
-                  </Button>
-                )}
+                <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+                  <Select value={categoryFilter} onValueChange={(v) => setCategoryFilter(v as any)}>
+                    <SelectTrigger className="w-full sm:w-[180px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Categories</SelectItem>
+                      <SelectItem value="brand">Brand</SelectItem>
+                      <SelectItem value="players">Players</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {isAdmin && (
+                    <Button onClick={() => setShowUploadDialog(true)} size="sm" className="md:size-default">
+                      <Upload className="w-4 h-4 mr-2" />
+                      <span className="hidden sm:inline">Upload Media</span>
+                      <span className="sm:hidden">Upload</span>
+                    </Button>
+                  )}
+                </div>
               </div>
             </CardHeader>
             <CardContent>
-              {galleryItems.length === 0 ? (
+              {(() => {
+                const filtered = categoryFilter === 'all' 
+                  ? galleryItems 
+                  : galleryItems.filter(item => item.category === categoryFilter);
+                
+                return filtered.length === 0 ? (
                 <div className="text-center py-12 text-muted-foreground">
                   <Image className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                  <p className="text-lg mb-2">No media uploaded yet</p>
+                  <p className="text-lg mb-2">No media in this category</p>
                   <p className="text-sm">Upload images and videos to build your marketing gallery</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-                  {galleryItems.map((item) => (
+                  {filtered.map((item) => (
                     <Card key={item.id} className="overflow-hidden">
                       <div className="relative aspect-video bg-muted">
                         {item.file_type === 'image' ? (
@@ -322,7 +346,8 @@ export const MarketingManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                     </Card>
                   ))}
                 </div>
-              )}
+              );
+              })()}
             </CardContent>
           </Card>
         </TabsContent>
@@ -374,6 +399,24 @@ export const MarketingManagement = ({ isAdmin }: { isAdmin: boolean }) => {
             </div>
 
             <div>
+              <Label htmlFor="upload-category">Category *</Label>
+              <Select
+                value={uploadForm.category}
+                onValueChange={(v) => setUploadForm({ ...uploadForm, category: v as any })}
+                required
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="brand">Brand</SelectItem>
+                  <SelectItem value="players">Players</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
               <Label htmlFor="upload-file">File *</Label>
               <Input
                 id="upload-file"
@@ -393,7 +436,7 @@ export const MarketingManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                 variant="outline"
                 onClick={() => {
                   setShowUploadDialog(false);
-                  setUploadForm({ title: '', description: '', file: null });
+                  setUploadForm({ title: '', description: '', file: null, category: 'other' });
                 }}
                 disabled={uploading}
               >

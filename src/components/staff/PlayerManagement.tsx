@@ -1130,14 +1130,15 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
               <TabsContent value="highlights">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Video Content</CardTitle>
+                    <CardTitle>Video Content & Images</CardTitle>
                   </CardHeader>
                   <CardContent>
                     {selectedPlayer?.highlights ? (
                       <Tabs defaultValue="match-highlights" className="w-full">
-                        <TabsList className="grid w-full grid-cols-2">
+                        <TabsList className="grid w-full grid-cols-3">
                           <TabsTrigger value="match-highlights">Match Highlights</TabsTrigger>
                           <TabsTrigger value="best-clips">Best Clips</TabsTrigger>
+                          <TabsTrigger value="images">Images</TabsTrigger>
                         </TabsList>
                         
                         <TabsContent value="match-highlights" className="mt-4">
@@ -1367,10 +1368,145 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                             }
                           })()}
                         </TabsContent>
+                        
+                        <TabsContent value="images" className="mt-4">
+                          <div className="space-y-4">
+                            <Button 
+                              onClick={() => {
+                                const input = document.createElement('input');
+                                input.type = 'file';
+                                input.multiple = true;
+                                input.accept = 'image/jpeg,image/png,image/gif,image/webp,image/*';
+                                input.onchange = async (e: any) => {
+                                  const files = e.target.files;
+                                  if (files && files.length > 0) {
+                                    try {
+                                      for (const file of files) {
+                                        const fileExt = file.name.split('.').pop();
+                                        const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+                                        const filePath = `${fileName}`;
+                                        
+                                        const { error: uploadError } = await supabase.storage
+                                          .from('marketing-gallery')
+                                          .upload(filePath, file);
+                                        
+                                        if (uploadError) throw uploadError;
+                                        
+                                        const { data: { publicUrl } } = supabase.storage
+                                          .from('marketing-gallery')
+                                          .getPublicUrl(filePath);
+                                        
+                                        const { error: dbError } = await supabase
+                                          .from('marketing_gallery')
+                                          .insert([{
+                                            title: `${selectedPlayer.name} - ${file.name.replace(/\.[^/.]+$/, '')}`,
+                                            description: `Player image for ${selectedPlayer.name}`,
+                                            file_url: publicUrl,
+                                            file_type: 'image',
+                                            category: 'players',
+                                          }]);
+                                        
+                                        if (dbError) throw dbError;
+                                      }
+                                      toast.success('Images uploaded successfully!');
+                                    } catch (error: any) {
+                                      toast.error('Failed to upload: ' + error.message);
+                                    }
+                                  }
+                                };
+                                input.click();
+                              }}
+                              variant="outline"
+                              size="sm"
+                            >
+                              <Plus className="w-4 h-4 mr-2" />
+                              Upload Images
+                            </Button>
+                            
+                            {(() => {
+                              const [images, setImages] = useState<any[]>([]);
+                              const [loading, setLoading] = useState(true);
+                              
+                              useEffect(() => {
+                                const fetchImages = async () => {
+                                  const { data, error } = await supabase
+                                    .from('marketing_gallery')
+                                    .select('*')
+                                    .eq('category', 'players')
+                                    .eq('file_type', 'image')
+                                    .ilike('title', `%${selectedPlayer.name}%`)
+                                    .order('created_at', { ascending: false });
+                                  
+                                  if (!error) {
+                                    setImages(data || []);
+                                  }
+                                  setLoading(false);
+                                };
+                                fetchImages();
+                              }, [selectedPlayer.name]);
+                              
+                              if (loading) {
+                                return <p className="text-center text-muted-foreground py-8">Loading images...</p>;
+                              }
+                              
+                              return images.length > 0 ? (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                                  {images.map((image) => (
+                                    <div key={image.id} className="border rounded-lg p-3 hover:bg-secondary/30 transition-colors space-y-2">
+                                      <img 
+                                        src={image.file_url}
+                                        alt={image.title}
+                                        className="w-full h-48 object-cover rounded"
+                                      />
+                                      <p className="text-sm font-medium truncate">{image.title}</p>
+                                      {isAdmin && (
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={async () => {
+                                            if (!confirm('Delete this image from marketing gallery?')) return;
+                                            try {
+                                              const urlParts = image.file_url.split('/');
+                                              const filePath = urlParts[urlParts.length - 1];
+                                              
+                                              const { error: storageError } = await supabase.storage
+                                                .from('marketing-gallery')
+                                                .remove([filePath]);
+                                              
+                                              if (storageError) console.error('Storage delete error:', storageError);
+                                              
+                                              const { error: dbError } = await supabase
+                                                .from('marketing_gallery')
+                                                .delete()
+                                                .eq('id', image.id);
+                                              
+                                              if (dbError) throw dbError;
+                                              
+                                              toast.success('Deleted successfully!');
+                                              setImages(images.filter(i => i.id !== image.id));
+                                            } catch (error: any) {
+                                              toast.error('Failed to delete: ' + error.message);
+                                            }
+                                          }}
+                                          className="w-full text-destructive hover:text-destructive"
+                                        >
+                                          <Trash2 className="w-4 h-4 mr-2" />
+                                          Delete
+                                        </Button>
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <p className="text-center text-muted-foreground py-8">No images yet. Upload some to sync with marketing gallery.</p>
+                              );
+                            })()}
+                          </div>
+                        </TabsContent>
                       </Tabs>
                     ) : (
                       <p className="text-center text-muted-foreground py-8">
-                        No video content uploaded yet.
+                        No content uploaded yet.
                       </p>
                     )}
                   </CardContent>

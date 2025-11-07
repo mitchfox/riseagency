@@ -659,6 +659,7 @@ export type Database = {
       }
       marketing_gallery: {
         Row: {
+          category: string
           created_at: string
           description: string | null
           file_type: string
@@ -669,6 +670,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          category?: string
           created_at?: string
           description?: string | null
           file_type: string
@@ -679,6 +681,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          category?: string
           created_at?: string
           description?: string | null
           file_type?: string

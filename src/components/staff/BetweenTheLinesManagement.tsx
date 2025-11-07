@@ -187,15 +187,15 @@ const BetweenTheLinesManagement = ({ isAdmin }: { isAdmin: boolean }) => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Between The Lines Management</h2>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+        <h2 className="text-xl sm:text-2xl font-bold">Between The Lines Management</h2>
         {!isAdmin && (
           <div className="text-sm text-muted-foreground">View Only</div>
         )}
         {isAdmin && (
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button onClick={() => {
+              <Button size="sm" className="md:size-default w-full sm:w-auto" onClick={() => {
                 setEditingPost(null);
                 setFormData({ title: "", content: "", excerpt: "", published: false, image_url: "", category: "" });
                 setImageFile(null);
@@ -203,7 +203,7 @@ const BetweenTheLinesManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                 Add New Post
               </Button>
             </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto p-4 sm:p-6">
+          <DialogContent className="w-[95vw] sm:max-w-2xl max-h-[85vh] overflow-y-auto p-4 sm:p-6">
             <DialogHeader>
               <DialogTitle>{editingPost ? "Edit Post" : "Add New Post"}</DialogTitle>
             </DialogHeader>
@@ -304,27 +304,28 @@ const BetweenTheLinesManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                 onClick={() => setExpandedPostId(isExpanded ? null : post.id)}
                 className="hover:bg-accent/50 transition-colors"
               >
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 text-foreground font-normal">
-                      <span>{post.title}</span>
-                      <span className="text-muted-foreground">•</span>
-                      <span className="text-muted-foreground text-sm">
-                        {post.published ? "Published" : "Draft"}
-                      </span>
-                      {post.category && (
-                        <>
-                          <span className="text-muted-foreground">•</span>
-                          <span className="text-muted-foreground text-sm">{post.category}</span>
-                        </>
-                      )}
-                      <span className="text-muted-foreground">•</span>
-                      <span className="text-muted-foreground text-sm">
-                        {new Date(post.created_at).toLocaleDateString('en-GB')}
-                      </span>
+                <div className="flex justify-between items-start gap-2">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 text-foreground font-normal">
+                      <span className="truncate">{post.title}</span>
+                      <div className="flex flex-wrap items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+                        <span className="text-muted-foreground">
+                          {post.published ? "Published" : "Draft"}
+                        </span>
+                        {post.category && (
+                          <>
+                            <span className="text-muted-foreground">•</span>
+                            <span className="text-muted-foreground truncate">{post.category}</span>
+                          </>
+                        )}
+                        <span className="text-muted-foreground">•</span>
+                        <span className="text-muted-foreground whitespace-nowrap">
+                          {new Date(post.created_at).toLocaleDateString('en-GB')}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                  <div className="text-muted-foreground ml-4">
+                  <div className="text-muted-foreground ml-2 flex-shrink-0">
                     {isExpanded ? "▼" : "▶"}
                   </div>
                 </div>
@@ -333,12 +334,13 @@ const BetweenTheLinesManagement = ({ isAdmin }: { isAdmin: boolean }) => {
               {isExpanded && (
                 <CardContent className="space-y-4">
                   {isAdmin && (
-                    <div className="flex justify-end gap-2 pb-4 border-b">
-                      <Button variant="outline" size="sm" onClick={() => startEdit(post)}>
+                    <div className="flex flex-col sm:flex-row justify-end gap-2 pb-4 border-b">
+                      <Button variant="outline" size="sm" onClick={() => startEdit(post)} className="w-full sm:w-auto">
                         <Edit className="w-4 h-4 mr-2" />
-                        Edit Article
+                        <span className="hidden sm:inline">Edit Article</span>
+                        <span className="sm:hidden">Edit</span>
                       </Button>
-                      <Button variant="destructive" size="sm" onClick={() => handleDelete(post.id)}>
+                      <Button variant="destructive" size="sm" onClick={() => handleDelete(post.id)} className="w-full sm:w-auto">
                         <Trash2 className="w-4 h-4 mr-2" />
                         Delete
                       </Button>
@@ -346,25 +348,25 @@ const BetweenTheLinesManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                   )}
                   
                   {post.image_url && (
-                    <div className="flex justify-center">
+                    <div className="flex justify-center overflow-hidden">
                       <img 
                         src={post.image_url} 
                         alt={post.title} 
-                        className="max-w-full h-auto max-h-64 object-cover rounded-lg" 
+                        className="max-w-full w-full h-auto max-h-64 object-cover rounded-lg" 
                       />
                     </div>
                   )}
                   
                   {post.excerpt && (
-                    <div>
+                    <div className="overflow-hidden">
                       <p className="text-sm text-muted-foreground mb-1">Excerpt</p>
-                      <p className="text-sm">{post.excerpt}</p>
+                      <p className="text-sm break-words">{post.excerpt}</p>
                     </div>
                   )}
                   
-                  <div>
+                  <div className="overflow-hidden">
                     <p className="text-sm text-muted-foreground mb-1">Content</p>
-                    <div className="text-sm whitespace-pre-wrap">{post.content}</div>
+                    <div className="text-sm whitespace-pre-wrap break-words max-h-96 overflow-y-auto">{post.content}</div>
                   </div>
                 </CardContent>
               )}
