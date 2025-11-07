@@ -50,8 +50,7 @@ const Login = () => {
         localStorage.setItem("player_remember_me", "true");
         localStorage.setItem("player_email", email);
       } else {
-        localStorage.removeItem("player_saved_email");
-        localStorage.removeItem("player_remember_me");
+        // Don't save email for future logins, but keep them logged in this session
         sessionStorage.setItem("player_email", email);
       }
       

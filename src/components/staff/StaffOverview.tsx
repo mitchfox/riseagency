@@ -29,7 +29,7 @@ const Widget = ({ id, title, icon: Icon, size, expanded, onToggleExpand, childre
 
   if (expanded) {
     return (
-      <div className="fixed inset-0 z-50 bg-background p-4 overflow-auto">
+      <div className="fixed inset-0 z-50 bg-background p-4 pt-20 overflow-auto">
         <Card className="h-full flex flex-col border-border/50 bg-card/50 backdrop-blur-sm relative overflow-hidden">
           <div 
             className="absolute inset-0 opacity-20 pointer-events-none z-0"

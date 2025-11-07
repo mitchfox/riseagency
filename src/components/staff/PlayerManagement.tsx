@@ -837,7 +837,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
 
             {/* Tabbed Sections */}
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="flex flex-nowrap overflow-x-auto md:grid md:grid-cols-5 w-full gap-1">
+              <TabsList className="flex flex-nowrap overflow-x-auto md:grid md:grid-cols-5 w-full gap-1 bg-background border-b">
                 <TabsTrigger value="analysis" className="flex-shrink-0 whitespace-nowrap px-3">
                   <LineChart className="w-4 h-4 mr-2" />
                   <span className="hidden sm:inline">Analysis</span>

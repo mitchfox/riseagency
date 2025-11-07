@@ -690,26 +690,40 @@ export const RecruitmentManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                               <h4 className="text-sm sm:text-base font-medium mb-1">{template.message_title}</h4>
                               <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">{template.message_content}</p>
                             </div>
-                            {isAdmin && (
-                              <div className="flex gap-2 sm:ml-4 w-full sm:w-auto justify-end">
-                                <Button
-                                  size="icon"
-                                  variant="ghost"
-                                  className="h-8 w-8"
-                                  onClick={() => handleTemplateEdit(template)}
-                                >
-                                  <Edit className="w-4 h-4" />
-                                </Button>
-                                <Button
-                                  size="icon"
-                                  variant="ghost"
-                                  className="h-8 w-8"
-                                  onClick={() => handleTemplateDelete(template.id)}
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </Button>
-                              </div>
-                            )}
+                            <div className="flex gap-2 sm:ml-4 w-full sm:w-auto justify-end">
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="h-8 w-8"
+                                onClick={() => {
+                                  navigator.clipboard.writeText(template.message_content);
+                                  toast.success("Message copied to clipboard");
+                                }}
+                                title="Copy message"
+                              >
+                                <MessageSquare className="w-4 h-4" />
+                              </Button>
+                              {isAdmin && (
+                                <>
+                                  <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    className="h-8 w-8"
+                                    onClick={() => handleTemplateEdit(template)}
+                                  >
+                                    <Edit className="w-4 h-4" />
+                                  </Button>
+                                  <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    className="h-8 w-8"
+                                    onClick={() => handleTemplateDelete(template.id)}
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </Button>
+                                </>
+                              )}
+                            </div>
                           </div>
                         ))}
                       </div>
