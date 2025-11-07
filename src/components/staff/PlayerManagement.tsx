@@ -976,20 +976,34 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                       )}
                                     </div>
                                     
-                                    {/* Right: Action Button */}
-                                    <Button
-                                      variant="secondary"
-                                      size="sm"
-                                      onClick={() => {
-                                        setSelectedAnalysisId(analysis.id);
-                                        setSelectedPlayerName(selectedPlayer!.name);
-                                        setIsPerformanceActionsDialogOpen(true);
-                                      }}
-                                      className="flex-shrink-0"
-                                    >
-                                      <LineChart className="w-4 h-4 mr-2" />
-                                      Actions
-                                    </Button>
+                                    {/* Right: Action Buttons */}
+                                    <div className="flex gap-2 flex-shrink-0">
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => {
+                                          setEditReportAnalysisId(analysis.id);
+                                          setCreateReportPlayerId(selectedPlayerId!);
+                                          setCreateReportPlayerName(selectedPlayer!.name);
+                                          setIsCreateReportDialogOpen(true);
+                                        }}
+                                      >
+                                        <Edit className="w-4 h-4 mr-2" />
+                                        Edit
+                                      </Button>
+                                      <Button
+                                        variant="secondary"
+                                        size="sm"
+                                        onClick={() => {
+                                          setSelectedAnalysisId(analysis.id);
+                                          setSelectedPlayerName(selectedPlayer!.name);
+                                          setIsPerformanceActionsDialogOpen(true);
+                                        }}
+                                      >
+                                        <LineChart className="w-4 h-4 mr-2" />
+                                        Actions
+                                      </Button>
+                                    </div>
                                   </div>
                                 </div>
                               );
