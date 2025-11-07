@@ -287,25 +287,25 @@ const BlogManagement = ({ isAdmin }: { isAdmin: boolean }) => {
             <Card key={post.id} className="cursor-pointer">
               <CardHeader 
                 onClick={() => setExpandedPostId(isExpanded ? null : post.id)}
-                className="hover:bg-accent/50 transition-colors"
+                className="hover:bg-accent/50 transition-colors p-3 sm:p-6"
               >
                 <div className="flex justify-between items-start gap-2">
                   <div className="flex-1 min-w-0">
                     <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 text-foreground font-normal">
-                      <span className="truncate">{post.title}</span>
-                      <div className="flex flex-wrap items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+                      <span className="text-sm sm:text-base break-words">{post.title}</span>
+                      <div className="flex flex-wrap items-center gap-1 sm:gap-2 text-[10px] sm:text-xs">
                         <span className="text-muted-foreground">
                           {post.published ? "Published" : "Draft"}
                         </span>
                         {post.category && (
                           <>
                             <span className="text-muted-foreground">•</span>
-                            <span className="text-muted-foreground truncate">{post.category}</span>
+                            <span className="text-muted-foreground truncate max-w-[120px] sm:max-w-none">{post.category}</span>
                           </>
                         )}
                         <span className="text-muted-foreground">•</span>
                         <span className="text-muted-foreground whitespace-nowrap">
-                          {new Date(post.created_at).toLocaleDateString('en-GB')}
+                          {new Date(post.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })}
                         </span>
                       </div>
                     </div>
@@ -317,16 +317,16 @@ const BlogManagement = ({ isAdmin }: { isAdmin: boolean }) => {
               </CardHeader>
               
               {isExpanded && (
-                <CardContent className="space-y-4">
+                <CardContent className="space-y-4 p-3 sm:p-6">
                   {isAdmin && (
                     <div className="flex flex-col sm:flex-row justify-end gap-2 pb-4 border-b">
-                      <Button variant="outline" size="sm" onClick={() => startEdit(post)} className="w-full sm:w-auto">
-                        <Edit className="w-4 h-4 mr-2" />
+                      <Button variant="outline" size="sm" onClick={() => startEdit(post)} className="w-full sm:w-auto text-xs sm:text-sm">
+                        <Edit className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
                         <span className="hidden sm:inline">Edit Article</span>
                         <span className="sm:hidden">Edit</span>
                       </Button>
-                      <Button variant="destructive" size="sm" onClick={() => handleDelete(post.id)} className="w-full sm:w-auto">
-                        <Trash2 className="w-4 h-4 mr-2" />
+                      <Button variant="destructive" size="sm" onClick={() => handleDelete(post.id)} className="w-full sm:w-auto text-xs sm:text-sm">
+                        <Trash2 className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
                         Delete
                       </Button>
                     </div>
@@ -337,21 +337,21 @@ const BlogManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                       <img 
                         src={post.image_url} 
                         alt={post.title} 
-                        className="max-w-full w-full h-auto max-h-64 object-cover rounded-lg" 
+                        className="max-w-full w-full h-auto max-h-48 sm:max-h-64 object-cover rounded-lg" 
                       />
                     </div>
                   )}
                   
                   {post.excerpt && (
                     <div className="overflow-hidden">
-                      <p className="text-sm text-muted-foreground mb-1">Excerpt</p>
-                      <p className="text-sm break-words">{post.excerpt}</p>
+                      <p className="text-xs sm:text-sm text-muted-foreground mb-1">Excerpt</p>
+                      <p className="text-xs sm:text-sm break-words">{post.excerpt}</p>
                     </div>
                   )}
                   
                   <div className="overflow-hidden">
-                    <p className="text-sm text-muted-foreground mb-1">Content</p>
-                    <div className="text-sm whitespace-pre-wrap break-words max-h-96 overflow-y-auto">{post.content}</div>
+                    <p className="text-xs sm:text-sm text-muted-foreground mb-1">Content</p>
+                    <div className="text-xs sm:text-sm whitespace-pre-wrap break-words max-h-64 sm:max-h-96 overflow-y-auto">{post.content}</div>
                   </div>
                 </CardContent>
               )}

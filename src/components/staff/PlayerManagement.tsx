@@ -812,23 +812,23 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                 </div>
               </CardHeader>
               {selectedPlayerStats && (
-                <CardContent>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-                    <div className="p-4 bg-secondary/30 rounded-lg">
-                      <div className="text-2xl md:text-3xl font-bold text-primary">{selectedPlayerStats.goals}</div>
-                      <div className="text-xs md:text-sm text-muted-foreground mt-1">Goals</div>
+                <CardContent className="p-3 sm:p-6">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4 text-center">
+                    <div className="p-2 sm:p-4 bg-secondary/30 rounded-lg">
+                      <div className="text-xl sm:text-2xl md:text-3xl font-bold text-primary">{selectedPlayerStats.goals}</div>
+                      <div className="text-[10px] sm:text-xs md:text-sm text-muted-foreground mt-1">Goals</div>
                     </div>
-                    <div className="p-4 bg-secondary/30 rounded-lg">
-                      <div className="text-2xl md:text-3xl font-bold text-primary">{selectedPlayerStats.assists}</div>
-                      <div className="text-xs md:text-sm text-muted-foreground mt-1">Assists</div>
+                    <div className="p-2 sm:p-4 bg-secondary/30 rounded-lg">
+                      <div className="text-xl sm:text-2xl md:text-3xl font-bold text-primary">{selectedPlayerStats.assists}</div>
+                      <div className="text-[10px] sm:text-xs md:text-sm text-muted-foreground mt-1">Assists</div>
                     </div>
-                    <div className="p-4 bg-secondary/30 rounded-lg">
-                      <div className="text-2xl md:text-3xl font-bold text-primary">{selectedPlayerStats.matches}</div>
-                      <div className="text-xs md:text-sm text-muted-foreground mt-1">Matches</div>
+                    <div className="p-2 sm:p-4 bg-secondary/30 rounded-lg">
+                      <div className="text-xl sm:text-2xl md:text-3xl font-bold text-primary">{selectedPlayerStats.matches}</div>
+                      <div className="text-[10px] sm:text-xs md:text-sm text-muted-foreground mt-1">Matches</div>
                     </div>
-                    <div className="p-4 bg-secondary/30 rounded-lg">
-                      <div className="text-2xl md:text-3xl font-bold text-primary">{selectedPlayerStats.minutes}</div>
-                      <div className="text-xs md:text-sm text-muted-foreground mt-1">Minutes</div>
+                    <div className="p-2 sm:p-4 bg-secondary/30 rounded-lg">
+                      <div className="text-xl sm:text-2xl md:text-3xl font-bold text-primary">{selectedPlayerStats.minutes}</div>
+                      <div className="text-[10px] sm:text-xs md:text-sm text-muted-foreground mt-1">Minutes</div>
                     </div>
                   </div>
                 </CardContent>

@@ -324,18 +324,20 @@ export const SiteVisitorsManagement = ({ isAdmin }: { isAdmin: boolean }) => {
 
         <Card>
           <CardHeader>
-            <CardTitle>Visitor Details: {selectedVisitor}</CardTitle>
+            <CardTitle className="text-base sm:text-lg break-words">
+              Visitor Details: <span className="block sm:inline text-sm sm:text-base">{selectedVisitor}</span>
+            </CardTitle>
           </CardHeader>
-          <CardContent>
-            <ScrollArea className="w-full">
-              <div className="rounded-md border min-w-[600px]">
+          <CardContent className="p-3 sm:p-6">
+            <ScrollArea className="w-full h-[500px]">
+              <div className="rounded-md border min-w-full">
                 <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Page Path</TableHead>
-                    <TableHead>Duration</TableHead>
-                    <TableHead>Location</TableHead>
-                    <TableHead>Visited At</TableHead>
+                    <TableHead className="text-xs sm:text-sm">Page Path</TableHead>
+                    <TableHead className="text-xs sm:text-sm">Duration</TableHead>
+                    <TableHead className="hidden md:table-cell text-xs sm:text-sm">Location</TableHead>
+                    <TableHead className="text-xs sm:text-sm">Visited At</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -348,11 +350,16 @@ export const SiteVisitorsManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                   ) : (
                     visitorDetails.map((visit) => (
                       <TableRow key={visit.id}>
-                        <TableCell className="font-medium">{visit.page_path}</TableCell>
-                        <TableCell>{formatDuration(visit.duration)}</TableCell>
-                        <TableCell>{formatLocation(visit.location)}</TableCell>
-                        <TableCell className="text-sm">
-                          {new Date(visit.visited_at).toLocaleString()}
+                        <TableCell className="font-medium text-xs sm:text-sm truncate max-w-[120px] sm:max-w-none">{visit.page_path}</TableCell>
+                        <TableCell className="text-xs sm:text-sm">{formatDuration(visit.duration)}</TableCell>
+                        <TableCell className="hidden md:table-cell text-xs sm:text-sm">{formatLocation(visit.location)}</TableCell>
+                        <TableCell className="text-xs sm:text-sm">
+                          {new Date(visit.visited_at).toLocaleString('en-GB', { 
+                            day: '2-digit', 
+                            month: '2-digit', 
+                            hour: '2-digit', 
+                            minute: '2-digit' 
+                          })}
                         </TableCell>
                       </TableRow>
                     ))

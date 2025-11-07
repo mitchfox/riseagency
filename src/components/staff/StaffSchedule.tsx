@@ -314,8 +314,8 @@ export const StaffSchedule = ({ isAdmin }: { isAdmin: boolean }) => {
       </div>
 
       {/* Calendar Grid */}
-      <div className="overflow-x-auto">
-        <div className="min-w-[800px]">
+      <div className={isMobile ? "" : "overflow-x-auto"}>
+        <div className={isMobile ? "w-full" : "min-w-[800px]"}>
           {/* Header Row */}
           <div className={`grid ${isMobile ? 'grid-cols-2' : 'grid-cols-8'} gap-2 mb-2`}>
             <div 

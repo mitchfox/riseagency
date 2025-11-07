@@ -167,29 +167,29 @@ export const StaffOverview = ({ isAdmin }: { isAdmin: boolean }) => {
         expanded={expandedWidget === "goals"}
         onToggleExpand={() => toggleWidget("goals")}
       >
-        <div className="space-y-2">
+        <div className="space-y-2 px-1">
           <div className="group">
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-xs font-medium">Player Signings</span>
-              <span className="text-xs font-bold">3<span className="text-muted-foreground">/5</span></span>
+            <div className="flex items-center justify-between mb-1 gap-2">
+              <span className="text-[10px] sm:text-xs font-medium truncate">Player Signings</span>
+              <span className="text-[10px] sm:text-xs font-bold whitespace-nowrap">3<span className="text-muted-foreground">/5</span></span>
             </div>
             <div className="w-full bg-muted/50 rounded-full h-1.5 overflow-hidden">
               <div className="bg-gradient-to-r from-primary to-primary-glow h-1.5 rounded-full transition-all" style={{ width: '60%' }} />
             </div>
           </div>
           <div className="group">
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-xs font-medium">Revenue</span>
-              <span className="text-xs font-bold">€45k<span className="text-muted-foreground">/€100k</span></span>
+            <div className="flex items-center justify-between mb-1 gap-2">
+              <span className="text-[10px] sm:text-xs font-medium truncate">Revenue</span>
+              <span className="text-[10px] sm:text-xs font-bold whitespace-nowrap">€45k<span className="text-muted-foreground">/€100k</span></span>
             </div>
             <div className="w-full bg-muted/50 rounded-full h-1.5 overflow-hidden">
               <div className="bg-gradient-to-r from-amber-500 to-amber-400 h-1.5 rounded-full transition-all" style={{ width: '45%' }} />
             </div>
           </div>
           <div className="group">
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-xs font-medium">Partnerships</span>
-              <span className="text-xs font-bold">7<span className="text-muted-foreground">/10</span></span>
+            <div className="flex items-center justify-between mb-1 gap-2">
+              <span className="text-[10px] sm:text-xs font-medium truncate">Partnerships</span>
+              <span className="text-[10px] sm:text-xs font-bold whitespace-nowrap">7<span className="text-muted-foreground">/10</span></span>
             </div>
             <div className="w-full bg-muted/50 rounded-full h-1.5 overflow-hidden">
               <div className="bg-gradient-to-r from-emerald-500 to-emerald-400 h-1.5 rounded-full transition-all" style={{ width: '70%' }} />
