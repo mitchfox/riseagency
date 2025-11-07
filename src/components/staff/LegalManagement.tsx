@@ -170,22 +170,24 @@ const LegalManagement = ({ isAdmin }: LegalManagementProps) => {
     <div className="space-y-6">
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'contract' | 'regulation')}>
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="contract" className="flex items-center gap-2">
-            <FileText className="h-4 w-4" />
-            Contracts ({contracts.length})
+          <TabsTrigger value="contract" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+            <FileText className="h-3 w-3 sm:h-4 sm:w-4" />
+            <span className="hidden xs:inline">Contracts ({contracts.length})</span>
+            <span className="xs:hidden">Contracts ({contracts.length})</span>
           </TabsTrigger>
-          <TabsTrigger value="regulation" className="flex items-center gap-2">
-            <Scale className="h-4 w-4" />
-            Rules & Regulations ({regulations.length})
+          <TabsTrigger value="regulation" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+            <Scale className="h-3 w-3 sm:h-4 sm:w-4" />
+            <span className="hidden xs:inline">Rules & Regulations ({regulations.length})</span>
+            <span className="xs:hidden">Rules ({regulations.length})</span>
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="contract" className="space-y-4">
           <div className="flex justify-between items-center">
-            <h3 className="text-lg sm:text-xl font-semibold">Contracts</h3>
+            <h3 className="text-base sm:text-lg md:text-xl font-semibold">Contracts</h3>
             {isAdmin && (
-              <Button onClick={() => openAddDialog('contract')} size="sm" className="md:size-default">
-                <Plus className="h-4 w-4 mr-2" />
+              <Button onClick={() => openAddDialog('contract')} size="sm" className="text-xs sm:text-sm">
+                <Plus className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                 <span className="hidden sm:inline">Add Contract</span>
                 <span className="sm:hidden">Add</span>
               </Button>
@@ -255,10 +257,10 @@ const LegalManagement = ({ isAdmin }: LegalManagementProps) => {
 
         <TabsContent value="regulation" className="space-y-4">
           <div className="flex justify-between items-center">
-            <h3 className="text-lg sm:text-xl font-semibold">Rules & Regulations</h3>
+            <h3 className="text-base sm:text-lg md:text-xl font-semibold">Rules & Regulations</h3>
             {isAdmin && (
-              <Button onClick={() => openAddDialog('regulation')} size="sm" className="md:size-default">
-                <Plus className="h-4 w-4 mr-2" />
+              <Button onClick={() => openAddDialog('regulation')} size="sm" className="text-xs sm:text-sm">
+                <Plus className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                 <span className="hidden sm:inline">Add Regulation</span>
                 <span className="sm:hidden">Add</span>
               </Button>

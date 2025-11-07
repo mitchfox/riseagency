@@ -563,9 +563,9 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                         className="cursor-pointer hover:shadow-lg transition-all overflow-hidden"
                         onClick={() => setSelectedPlayerId(player.id)}
                       >
-                        <div className="flex h-full">
-                          {/* Image Section - Left Side */}
-                          <div className="w-32 flex-shrink-0 relative">
+                        <div className="flex flex-col sm:flex-row h-full">
+                          {/* Image Section - Top on mobile, Left on desktop */}
+                          <div className="w-full h-48 sm:w-32 sm:h-auto flex-shrink-0 relative">
                             <img 
                               src={player.image_url || undefined} 
                               alt={player.name}
@@ -573,23 +573,23 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                             />
                           </div>
                           
-                          {/* Content Section - Right Side */}
-                          <div className="flex-1 flex flex-col p-4">
+                          {/* Content Section - Bottom on mobile, Right on desktop */}
+                          <div className="flex-1 flex flex-col p-3 sm:p-4">
                             <div className="flex-1">
-                              <h3 className="font-semibold text-lg mb-1">{player.name}</h3>
-                              <p className="text-sm text-muted-foreground mb-2">{player.position}</p>
-                              <div className="flex items-center gap-2 text-xs text-muted-foreground mb-3">
+                              <h3 className="font-semibold text-base sm:text-lg mb-1 truncate">{player.name}</h3>
+                              <p className="text-xs sm:text-sm text-muted-foreground mb-2">{player.position}</p>
+                              <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2 sm:mb-3">
                                 <span>{player.age}y</span>
                                 <span>•</span>
-                                <span>{player.nationality}</span>
+                                <span className="truncate">{player.nationality}</span>
                               </div>
                               
                               {player.club && (
-                                <div className="flex items-center gap-2 text-sm mb-3">
+                                <div className="flex items-center gap-2 text-xs sm:text-sm mb-2 sm:mb-3">
                                   {player.club_logo && (
-                                    <img src={player.club_logo} alt="" className="w-5 h-5 object-contain" />
+                                    <img src={player.club_logo} alt="" className="w-4 h-4 sm:w-5 sm:h-5 object-contain flex-shrink-0" />
                                   )}
-                                  <span className="text-muted-foreground">{player.club}</span>
+                                  <span className="text-muted-foreground truncate">{player.club}</span>
                                 </div>
                               )}
                             </div>
@@ -597,16 +597,16 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                             {playerStats && (
                               <div className="grid grid-cols-3 gap-2 text-center text-xs pt-2 border-t border-border/50">
                                 <div>
-                                  <div className="font-semibold text-lg">{playerStats.goals}</div>
-                                  <div className="text-muted-foreground">Goals</div>
+                                  <div className="font-semibold text-base sm:text-lg">{playerStats.goals}</div>
+                                  <div className="text-muted-foreground text-[10px] sm:text-xs">Goals</div>
                                 </div>
                                 <div>
-                                  <div className="font-semibold text-lg">{playerStats.assists}</div>
-                                  <div className="text-muted-foreground">Assists</div>
+                                  <div className="font-semibold text-base sm:text-lg">{playerStats.assists}</div>
+                                  <div className="text-muted-foreground text-[10px] sm:text-xs">Assists</div>
                                 </div>
                                 <div>
-                                  <div className="font-semibold text-lg">{playerStats.matches}</div>
-                                  <div className="text-muted-foreground">Matches</div>
+                                  <div className="font-semibold text-base sm:text-lg">{playerStats.matches}</div>
+                                  <div className="text-muted-foreground text-[10px] sm:text-xs">Matches</div>
                                 </div>
                               </div>
                             )}

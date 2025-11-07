@@ -405,7 +405,7 @@ export const StaffSchedule = ({ isAdmin }: { isAdmin: boolean }) => {
                     >
                       {/* Day number in top right */}
                       <span 
-                        className={`absolute top-0.5 right-0.5 ${isMobile ? 'text-[9px]' : 'text-xs'} opacity-50`}
+                        className={`absolute top-0.5 right-0.5 ${isMobile ? 'text-[7px]' : 'text-xs'} opacity-40`}
                         style={{ color: 'hsl(0, 0%, 100%)' }}
                       >
                         {format(currentDate, 'd')}
@@ -418,20 +418,20 @@ export const StaffSchedule = ({ isAdmin }: { isAdmin: boolean }) => {
                             item.type === 'endDate' ? (
                               <div 
                                 key={`end-${idx}`}
-                                className={`${isMobile ? 'text-[8px] p-0.5' : 'text-xs p-1'} rounded`}
+                                className={`${isMobile ? 'text-[10px] p-1' : 'text-xs p-1'} rounded`}
                                 style={{ 
                                   backgroundColor: 'hsl(43, 49%, 61%)',
                                   color: 'hsl(0, 0%, 0%)'
                                 }}
                                 title={`${item.data.playerName} - ${item.data.programName}${item.data.phaseName ? ` (${item.data.phaseName})` : ''}`}
                               >
-                                <div className="font-bold truncate">{isMobile ? item.data.playerName.split(' ')[0] : item.data.playerName}</div>
-                                {!isMobile && <div className="text-[10px] truncate opacity-75">{item.data.phaseName || item.data.programName}</div>}
+                                <div className={`font-bold truncate ${isMobile ? 'text-xs' : ''}`}>{item.data.playerName}</div>
+                                <div className={`${isMobile ? 'text-[9px]' : 'text-[10px]'} truncate opacity-75`}>{item.data.phaseName || item.data.programName}</div>
                               </div>
                             ) : (
                               <div 
                                 key={`fixture-${idx}`}
-                                className={`${isMobile ? 'text-[8px] p-0.5' : 'text-xs p-1'} rounded border border-dashed opacity-70`}
+                                className={`${isMobile ? 'text-[10px] p-1' : 'text-xs p-1'} rounded border border-dashed opacity-70`}
                                 style={{ 
                                   backgroundColor: 'hsl(0, 0%, 20%)',
                                   borderColor: 'hsl(0, 0%, 40%)',
@@ -439,8 +439,8 @@ export const StaffSchedule = ({ isAdmin }: { isAdmin: boolean }) => {
                                 }}
                                 title={`${item.data.home_team} vs ${item.data.away_team}${item.data.competition ? ` - ${item.data.competition}` : ''}`}
                               >
-                                <div className="truncate">⚽ {isMobile ? item.data.home_team.substring(0, 8) : item.data.home_team}</div>
-                                {!isMobile && <div className="truncate text-[10px]">vs {item.data.away_team}</div>}
+                                <div className={`truncate ${isMobile ? 'font-semibold' : ''}`}>⚽ {item.data.home_team}</div>
+                                <div className={`truncate ${isMobile ? 'text-[9px]' : 'text-[10px]'}`}>vs {item.data.away_team}</div>
                               </div>
                             )
                           ))}

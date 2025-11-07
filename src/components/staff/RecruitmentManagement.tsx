@@ -514,20 +514,20 @@ export const RecruitmentManagement = ({ isAdmin }: { isAdmin: boolean }) => {
           </div>
 
           {/* Prospect Board Grid */}
-          <ScrollArea className="w-full">
-            <div className={isMobile ? "min-w-[600px]" : "min-w-[1200px]"}>
+          <div className="w-full overflow-x-auto">
+            <div className={isMobile ? "min-w-[500px]" : "min-w-[1200px]"}>
               {/* Header Row */}
               <div className={`grid ${isMobile ? 'grid-cols-3' : 'grid-cols-6'} gap-2 mb-2`}>
-                <div className="p-3 text-center font-bebas uppercase text-sm rounded-lg" style={{ backgroundColor: 'hsl(0, 0%, 20%)', color: 'hsl(0, 0%, 100%)' }}>
+                <div className={`${isMobile ? 'p-2' : 'p-3'} text-center font-bebas uppercase ${isMobile ? 'text-xs' : 'text-sm'} rounded-lg`} style={{ backgroundColor: 'hsl(0, 0%, 20%)', color: 'hsl(0, 0%, 100%)' }}>
                   {isMobile ? 'Age' : 'Age Group'}
                 </div>
                 {(isMobile ? stages.slice(0, 2) : stages).map(stage => (
                   <div 
                     key={stage.value}
-                    className="p-3 text-center font-bebas uppercase text-sm rounded-lg"
+                    className={`${isMobile ? 'p-2' : 'p-3'} text-center font-bebas uppercase ${isMobile ? 'text-xs' : 'text-sm'} rounded-lg`}
                     style={{ backgroundColor: 'hsl(43, 49%, 61%)', color: 'hsl(0, 0%, 0%)' }}
                   >
-                    {isMobile ? stage.label.slice(0, 5) : stage.label}
+                    {isMobile ? stage.label.split(' ')[0] : stage.label}
                   </div>
                 ))}
               </div>
@@ -537,13 +537,13 @@ export const RecruitmentManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                 <div key={ageGroup.value} className={`grid ${isMobile ? 'grid-cols-3' : 'grid-cols-6'} gap-2 mb-2`}>
                   {/* Age Group Label */}
                   <div 
-                    className="p-3 rounded-lg flex flex-col items-center justify-center border"
+                    className={`${isMobile ? 'p-2' : 'p-3'} rounded-lg flex flex-col items-center justify-center border`}
                     style={{ 
                       backgroundColor: 'hsl(0, 0%, 15%)',
                       borderColor: 'rgba(255, 255, 255, 0.1)'
                     }}
                   >
-                    <div className={`font-bebas ${isMobile ? 'text-xl' : 'text-2xl'}`} style={{ color: 'hsl(43, 49%, 61%)' }}>
+                    <div className={`font-bebas ${isMobile ? 'text-lg' : 'text-2xl'}`} style={{ color: 'hsl(43, 49%, 61%)' }}>
                       {ageGroup.value}
                     </div>
                     {!isMobile && (
@@ -559,18 +559,18 @@ export const RecruitmentManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                     return (
                       <div 
                         key={stage.value}
-                        className={`p-2 rounded-lg ${isMobile ? 'min-h-[100px]' : 'min-h-[120px]'} border`}
+                        className={`${isMobile ? 'p-1' : 'p-2'} rounded-lg ${isMobile ? 'min-h-[80px]' : 'min-h-[120px]'} border`}
                         style={{ 
                           backgroundColor: 'hsl(0, 0%, 10%)',
                           borderColor: 'rgba(255, 255, 255, 0.1)'
                         }}
                       >
                         {cellProspects.length > 0 ? (
-                          <div className="flex flex-wrap gap-1">
+                          <div className="flex flex-col gap-1">
                             {cellProspects.map(prospect => (
                               <div
                                 key={prospect.id}
-                                className={`group relative ${isMobile ? 'p-1.5' : 'p-2'} rounded border hover:scale-105 transition-transform ${isAdmin ? 'cursor-pointer' : 'cursor-default'}`}
+                                className={`group relative ${isMobile ? 'p-1' : 'p-2'} rounded border hover:scale-105 transition-transform ${isAdmin ? 'cursor-pointer' : 'cursor-default'}`}
                                 style={{ 
                                   backgroundColor: 'hsl(0, 0%, 20%)',
                                   borderColor: getPriorityColor(prospect.priority),
@@ -578,15 +578,15 @@ export const RecruitmentManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                 }}
                                 onClick={isAdmin ? () => handleEdit(prospect) : undefined}
                               >
-                                <div className={`${isMobile ? 'text-[10px]' : 'text-xs'} font-bold truncate`} style={{ color: 'hsl(43, 49%, 61%)' }}>
-                                  {isMobile ? prospect.name.split(' ')[0] : prospect.name}
+                                <div className={`${isMobile ? 'text-[9px]' : 'text-xs'} font-bold truncate max-w-full`} style={{ color: 'hsl(43, 49%, 61%)' }}>
+                                  {isMobile ? prospect.name.substring(0, 12) : prospect.name}
                                 </div>
-                                {prospect.position && (
+                                {!isMobile && prospect.position && (
                                   <div className="text-[10px] text-muted-foreground truncate">
                                     {prospect.position}
                                   </div>
                                 )}
-                                {prospect.current_club && (
+                                {!isMobile && prospect.current_club && (
                                   <div className="text-[10px] text-muted-foreground truncate">
                                     {prospect.current_club}
                                   </div>
@@ -638,7 +638,7 @@ export const RecruitmentManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                 <span>Low Priority</span>
               </div>
             </div>
-          </ScrollArea>
+          </div>
         </TabsContent>
 
         <TabsContent value="templates" className="space-y-4">
