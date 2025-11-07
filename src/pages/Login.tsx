@@ -44,15 +44,17 @@ const Login = () => {
         return;
       }
 
-      // Save email to localStorage if remember me is checked
-      if (rememberMe) {
-        localStorage.setItem("player_saved_email", email);
-        localStorage.setItem("player_remember_me", "true");
-        localStorage.setItem("player_email", email);
-      } else {
-        // Don't save email for future logins, but keep them logged in this session
-        sessionStorage.setItem("player_email", email);
-      }
+    // Always save login session to localStorage to persist across page reloads
+    localStorage.setItem("player_email", email);
+    
+    // Remember me only controls whether email is pre-filled on next login
+    if (rememberMe) {
+      localStorage.setItem("player_saved_email", email);
+      localStorage.setItem("player_remember_me", "true");
+    } else {
+      localStorage.removeItem("player_saved_email");
+      localStorage.removeItem("player_remember_me");
+    }
       
       toast.success("Welcome to your portal!");
       navigate("/dashboard");
