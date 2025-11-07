@@ -341,8 +341,8 @@ export const RecruitmentManagement = ({ isAdmin }: { isAdmin: boolean }) => {
         </TabsList>
 
         <TabsContent value="prospects" className="space-y-4">
-          <div className="flex justify-between items-center">
-            <div className="text-sm text-muted-foreground">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+            <div className="text-xs sm:text-sm text-muted-foreground">
               {prospects.length} prospect{prospects.length !== 1 ? 's' : ''} tracked
             </div>
             {isAdmin && (
@@ -351,9 +351,10 @@ export const RecruitmentManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                 if (!open) resetForm();
               }}>
                 <DialogTrigger asChild>
-                  <Button>
+                  <Button size="sm" className="w-full sm:w-auto">
                     <Plus className="w-4 h-4 mr-2" />
-                    Add Prospect
+                    <span className="hidden sm:inline">Add Prospect</span>
+                    <span className="sm:hidden">Add</span>
                   </Button>
                 </DialogTrigger>
               <DialogContent className="w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -641,16 +642,17 @@ export const RecruitmentManagement = ({ isAdmin }: { isAdmin: boolean }) => {
         </TabsContent>
 
         <TabsContent value="templates" className="space-y-4">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-semibold">Message Templates</h3>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
+            <h3 className="text-base sm:text-lg font-semibold">Message Templates</h3>
             {isAdmin && (
-              <Button onClick={() => {
+              <Button size="sm" className="w-full sm:w-auto" onClick={() => {
                 setEditingTemplate(null);
                 setTemplateFormData({ recipient_type: "", message_title: "", message_content: "" });
                 setTemplateDialogOpen(true);
               }}>
                 <Plus className="w-4 h-4 mr-2" />
-                Create Template
+                <span className="hidden sm:inline">Create Template</span>
+                <span className="sm:hidden">Create</span>
               </Button>
             )}
           </div>
@@ -678,21 +680,22 @@ export const RecruitmentManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                 return (
                   <Card key={recipientType}>
                     <CardHeader>
-                      <CardTitle className="text-lg">{recipientType}</CardTitle>
+                      <CardTitle className="text-base sm:text-lg">{recipientType}</CardTitle>
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-3">
                         {templatesForType.map(template => (
-                          <div key={template.id} className="flex flex-col sm:flex-row items-start justify-between gap-3 p-4 border rounded-lg hover:bg-accent/50 transition-colors">
-                            <div className="flex-1">
-                              <h4 className="font-medium mb-1">{template.message_title}</h4>
-                              <p className="text-sm text-muted-foreground line-clamp-2">{template.message_content}</p>
+                          <div key={template.id} className="flex flex-col sm:flex-row items-start justify-between gap-3 p-3 sm:p-4 border rounded-lg hover:bg-accent/50 transition-colors">
+                            <div className="flex-1 w-full">
+                              <h4 className="text-sm sm:text-base font-medium mb-1">{template.message_title}</h4>
+                              <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">{template.message_content}</p>
                             </div>
                             {isAdmin && (
-                              <div className="flex gap-2 sm:ml-4 self-end sm:self-auto">
+                              <div className="flex gap-2 sm:ml-4 w-full sm:w-auto justify-end">
                                 <Button
                                   size="icon"
                                   variant="ghost"
+                                  className="h-8 w-8"
                                   onClick={() => handleTemplateEdit(template)}
                                 >
                                   <Edit className="w-4 h-4" />
@@ -700,6 +703,7 @@ export const RecruitmentManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                 <Button
                                   size="icon"
                                   variant="ghost"
+                                  className="h-8 w-8"
                                   onClick={() => handleTemplateDelete(template.id)}
                                 >
                                   <Trash2 className="w-4 h-4" />

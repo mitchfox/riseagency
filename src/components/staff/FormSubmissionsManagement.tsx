@@ -169,22 +169,26 @@ export const FormSubmissionsManagement = ({ isAdmin }: { isAdmin: boolean }) => 
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-2xl font-bebas uppercase tracking-wider">
+        <CardTitle className="text-lg sm:text-2xl font-bebas uppercase tracking-wider">
           Form Submissions
         </CardTitle>
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="all" className="w-full">
-          <TabsList className="mb-4">
-            <TabsTrigger value="all">
-              All ({submissions.length})
-            </TabsTrigger>
-            {Object.keys(groupedSubmissions).map((formType) => (
-              <TabsTrigger key={formType} value={formType}>
-                {getFormTypeLabel(formType)} ({groupedSubmissions[formType].length})
+          <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+            <TabsList className="mb-4 w-max sm:w-auto">
+              <TabsTrigger value="all" className="text-xs sm:text-sm">
+                All ({submissions.length})
               </TabsTrigger>
-            ))}
-          </TabsList>
+              {Object.keys(groupedSubmissions).map((formType) => (
+                <TabsTrigger key={formType} value={formType} className="text-xs sm:text-sm">
+                  <span className="hidden sm:inline">{getFormTypeLabel(formType)}</span>
+                  <span className="sm:hidden">{getFormTypeLabel(formType).split(' ')[0]}</span>
+                  {' '}({groupedSubmissions[formType].length})
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </div>
 
           <TabsContent value="all" className="space-y-4">
             {submissions.length === 0 ? (
@@ -194,16 +198,16 @@ export const FormSubmissionsManagement = ({ isAdmin }: { isAdmin: boolean }) => 
             ) : (
               submissions.map((submission) => (
                 <Card key={submission.id}>
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between mb-3">
+                  <CardContent className="p-3 sm:p-4">
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-3">
                       <div className="flex items-center gap-2">
                         {getFormIcon(submission.form_type)}
-                        <Badge variant="secondary">
+                        <Badge variant="secondary" className="text-xs">
                           {getFormTypeLabel(submission.form_type)}
                         </Badge>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm text-muted-foreground">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                        <span className="text-xs sm:text-sm text-muted-foreground">
                           {format(new Date(submission.created_at), "MMM d, yyyy 'at' h:mm a")}
                         </span>
                         {getSubmissionEmail(submission) && (
@@ -211,10 +215,11 @@ export const FormSubmissionsManagement = ({ isAdmin }: { isAdmin: boolean }) => 
                             size="sm"
                             variant="outline"
                             onClick={() => handleSendEmail(submission)}
-                            className="gap-2"
+                            className="gap-2 w-full sm:w-auto"
                           >
                             <Send className="w-4 h-4" />
-                            Send Email
+                            <span className="hidden sm:inline">Send Email</span>
+                            <span className="sm:hidden">Email</span>
                           </Button>
                         )}
                       </div>
@@ -230,13 +235,13 @@ export const FormSubmissionsManagement = ({ isAdmin }: { isAdmin: boolean }) => 
             <TabsContent key={formType} value={formType} className="space-y-4">
               {formSubmissions.map((submission) => (
                 <Card key={submission.id}>
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between mb-3">
-                      <Badge variant="secondary">
+                  <CardContent className="p-3 sm:p-4">
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-3">
+                      <Badge variant="secondary" className="text-xs w-fit">
                         {getFormTypeLabel(submission.form_type)}
                       </Badge>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm text-muted-foreground">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                        <span className="text-xs sm:text-sm text-muted-foreground">
                           {format(new Date(submission.created_at), "MMM d, yyyy 'at' h:mm a")}
                         </span>
                         {getSubmissionEmail(submission) && (
@@ -244,10 +249,11 @@ export const FormSubmissionsManagement = ({ isAdmin }: { isAdmin: boolean }) => 
                             size="sm"
                             variant="outline"
                             onClick={() => handleSendEmail(submission)}
-                            className="gap-2"
+                            className="gap-2 w-full sm:w-auto"
                           >
                             <Send className="w-4 h-4" />
-                            Send Email
+                            <span className="hidden sm:inline">Send Email</span>
+                            <span className="sm:hidden">Email</span>
                           </Button>
                         )}
                       </div>
