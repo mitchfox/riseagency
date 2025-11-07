@@ -154,9 +154,11 @@ const Dashboard = () => {
   };
 
   const handleFileUpload = async (files: FileList) => {
-    const playerEmail = localStorage.getItem("player_email") || sessionStorage.getItem("player_email");
+    const { data: { session } } = await supabase.auth.getSession();
+    const playerEmail = session?.user?.email;
     if (!playerEmail) {
       toast.error("Please log in again");
+      navigate("/login");
       return;
     }
 
@@ -242,9 +244,11 @@ const Dashboard = () => {
     if (!confirm('Are you sure you want to delete this clip?')) return;
 
     try {
-      const playerEmail = localStorage.getItem("player_email") || sessionStorage.getItem("player_email");
+      const { data: { session } } = await supabase.auth.getSession();
+      const playerEmail = session?.user?.email;
       if (!playerEmail) {
         toast.error("Please log in again");
+        navigate("/login");
         return;
       }
 
@@ -277,8 +281,15 @@ const Dashboard = () => {
   };
 
   const handleRenameClip = async (oldName: string, newName: string, videoUrl: string) => {
-    const playerEmail = localStorage.getItem("player_email") || sessionStorage.getItem("player_email");
-    if (!playerEmail || !newName.trim()) return;
+    const { data: { session } } = await supabase.auth.getSession();
+    const playerEmail = session?.user?.email;
+    if (!playerEmail || !newName.trim()) {
+      if (!playerEmail) {
+        toast.error("Please log in again");
+        navigate("/login");
+      }
+      return;
+    }
 
     try {
       const response = await fetch(
@@ -315,12 +326,40 @@ const Dashboard = () => {
     fetchDailyAphorism();
   }, [navigate]);
 
+  useEffect(() => {
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (!session) {
+          navigate("/login");
+        }
+      }
+    );
+
+    return () => subscription.unsubscribe();
+  }, [navigate]);
+
   const checkAuth = async () => {
     try {
-      // Check localStorage first (persistent), then sessionStorage (session only)
-      const playerEmail = localStorage.getItem("player_email") || sessionStorage.getItem("player_email");
+      // Get current session from Supabase
+      const { data: { session } } = await supabase.auth.getSession();
       
-      if (!playerEmail) {
+      if (!session?.user?.email) {
+        navigate("/login");
+        return;
+      }
+
+      const playerEmail = session.user.email;
+
+      // Verify this email exists in players table
+      const { data: player, error: playerError } = await supabase
+        .from("players")
+        .select("id")
+        .eq("email", playerEmail)
+        .maybeSingle();
+
+      if (playerError || !player) {
+        await supabase.auth.signOut();
         navigate("/login");
         return;
       }
@@ -431,28 +470,33 @@ const Dashboard = () => {
 
   // Set up real-time subscription for player_analysis updates
   useEffect(() => {
-    const playerEmail = localStorage.getItem("player_email") || sessionStorage.getItem("player_email");
-    if (!playerEmail) return;
+    const setupRealtimeSubscription = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      const playerEmail = session?.user?.email;
+      if (!playerEmail) return;
 
-    const channel = supabase
-      .channel('dashboard-analysis-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'player_analysis'
-        },
-        () => {
-          // Refetch analyses when any change occurs
-          fetchAnalyses(playerEmail);
-        }
-      )
-      .subscribe();
+      const channel = supabase
+        .channel('dashboard-analysis-changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'player_analysis'
+          },
+          () => {
+            // Refetch analyses when any change occurs
+            fetchAnalyses(playerEmail);
+          }
+        )
+        .subscribe();
 
-    return () => {
-      supabase.removeChannel(channel);
+      return () => {
+        supabase.removeChannel(channel);
+      };
     };
+
+    setupRealtimeSubscription();
   }, []);
 
   const fetchPrograms = async (email: string | undefined) => {
@@ -572,9 +616,7 @@ const Dashboard = () => {
   };
 
   const handleLogout = async () => {
-    // Clear both session and persistent storage
-    sessionStorage.removeItem("player_email");
-    localStorage.removeItem("player_email");
+    await supabase.auth.signOut();
     toast.success("Logged out successfully");
     navigate("/login");
   };
