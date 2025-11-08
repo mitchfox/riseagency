@@ -1314,8 +1314,8 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, onViewR
         </DialogContent>
       </Dialog>
 
-      <div className="space-y-4">
-        <div className="flex justify-between items-center">
+        <div className="space-y-4">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
           <div className="flex gap-2 items-center">
             <input
               type="checkbox"
@@ -1327,21 +1327,24 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, onViewR
               Select All
             </span>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             {isAdmin && selectedFixtures.size > 0 && (
               <Button 
                 variant="destructive" 
                 size="sm"
                 onClick={handleBulkDelete}
+                className="h-8 px-2 sm:px-3 text-xs sm:text-sm"
               >
-                <Trash2 className="mr-2 h-4 w-4" />
-                Remove Fixtures ({selectedFixtures.size})
+                <Trash2 className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Remove Fixtures ({selectedFixtures.size})</span>
+                <span className="sm:hidden">Remove ({selectedFixtures.size})</span>
               </Button>
             )}
             {isAdmin && (
-              <Button size="sm" onClick={() => handleOpenDialog()}>
-                <Plus className="mr-2 h-4 w-4" />
-                Add Fixture
+              <Button size="sm" onClick={() => handleOpenDialog()} className="h-8 px-2 sm:px-3 text-xs sm:text-sm">
+                <Plus className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Add Fixture</span>
+                <span className="sm:hidden">Add</span>
               </Button>
             )}
           </div>
@@ -1439,7 +1442,7 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, onViewR
             return (
               <div 
                 key={pf.id} 
-                className="flex items-center gap-3 border rounded-lg p-3 hover:border-primary transition-colors cursor-pointer"
+                className="border rounded-lg p-2 sm:p-3 hover:border-primary transition-colors cursor-pointer"
                 onClick={(e) => {
                   // Don't trigger if clicking checkbox or buttons
                   if ((e.target as HTMLElement).tagName !== 'INPUT' && 
@@ -1449,116 +1452,239 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, onViewR
                   }
                 }}
               >
-                <input
-                  type="checkbox"
-                  checked={selectedFixtures.has(pf.id)}
-                  onChange={() => toggleFixtureSelection(pf.id)}
-                  onClick={(e) => e.stopPropagation()}
-                  className="cursor-pointer h-4 w-4"
-                />
-                
-                <span className="text-sm text-muted-foreground min-w-[80px]">
-                  {new Date(pf.fixtures.match_date).toLocaleDateString('en-GB')}
-                </span>
-              
-                <div className="flex flex-col flex-1">
-                  <span className="text-sm font-medium">
-                    {opponent.includes(" vs ") ? opponent : `vs ${opponent}`}
-                  </span>
-                  {result && (
+                {/* Mobile Layout */}
+                <div className="flex md:hidden flex-col gap-2">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={selectedFixtures.has(pf.id)}
+                      onChange={() => toggleFixtureSelection(pf.id)}
+                      onClick={(e) => e.stopPropagation()}
+                      className="cursor-pointer h-4 w-4 flex-shrink-0"
+                    />
                     <span className="text-xs text-muted-foreground">
-                      {result}
+                      {new Date(pf.fixtures.match_date).toLocaleDateString('en-GB')}
                     </span>
-                  )}
+                    <div className="flex-1 min-w-0">
+                      <span className="text-sm font-medium truncate block">
+                        {opponent.includes(" vs ") ? opponent : `vs ${opponent}`}
+                      </span>
+                      {result && (
+                        <span className="text-xs text-muted-foreground">
+                          {result}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {pf.minutes_played !== null && pf.minutes_played !== undefined && (
+                      <span className="text-xs text-muted-foreground">
+                        {pf.minutes_played} min
+                      </span>
+                    )}
+                    
+                    {r90Score !== undefined && (
+                      <div className={`${r90Color} text-white text-xs font-bold px-2 py-1 rounded`}>
+                        R90: {r90Score.toFixed(2)}
+                      </div>
+                    )}
+                    
+                    {r90Score !== undefined && analysisData.has(pf.fixture_id) && onViewReport && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const analysis = analysisData.get(pf.fixture_id);
+                          if (analysis) {
+                            onViewReport(analysis.id, playerName);
+                          }
+                        }}
+                        className="h-7 px-2 text-xs"
+                      >
+                        <FileText className="w-3 h-3" />
+                      </Button>
+                    )}
+                    {analysisData.has(pf.fixture_id) && analysisData.get(pf.fixture_id)?.analysis_writer_id && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const analysis = analysisData.get(pf.fixture_id);
+                          if (analysis?.analysis_writer_id) {
+                            navigate(`/analysis/${analysis.analysis_writer_id}`);
+                          }
+                        }}
+                        className="h-7 px-2 text-xs"
+                      >
+                        <FileText className="w-3 h-3" />
+                      </Button>
+                    )}
+                    {analysisData.has(pf.fixture_id) && analysisData.get(pf.fixture_id)?.pdf_url && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const analysis = analysisData.get(pf.fixture_id);
+                          if (analysis?.pdf_url) {
+                            window.open(analysis.pdf_url, '_blank');
+                          }
+                        }}
+                        className="h-7 px-2 text-xs"
+                      >
+                        📄
+                      </Button>
+                    )}
+                    {analysisData.has(pf.fixture_id) && analysisData.get(pf.fixture_id)?.video_url && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const analysis = analysisData.get(pf.fixture_id);
+                          if (analysis?.video_url) {
+                            window.open(analysis.video_url, '_blank');
+                          }
+                        }}
+                        className="h-7 px-2 text-xs"
+                      >
+                        📹
+                      </Button>
+                    )}
+                    {isAdmin && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleOpenDialog(pf);
+                        }}
+                        className="h-7 px-2 text-xs"
+                      >
+                        <Pencil className="w-3 h-3" />
+                      </Button>
+                    )}
+                  </div>
                 </div>
                 
-                {pf.minutes_played !== null && pf.minutes_played !== undefined && (
-                  <span className="text-sm text-muted-foreground">
-                    {pf.minutes_played} min
+                {/* Desktop Layout */}
+                <div className="hidden md:flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    checked={selectedFixtures.has(pf.id)}
+                    onChange={() => toggleFixtureSelection(pf.id)}
+                    onClick={(e) => e.stopPropagation()}
+                    className="cursor-pointer h-4 w-4"
+                  />
+                  
+                  <span className="text-sm text-muted-foreground min-w-[80px]">
+                    {new Date(pf.fixtures.match_date).toLocaleDateString('en-GB')}
                   </span>
-                )}
                 
-                {r90Score !== undefined && (
-                  <div className={`${r90Color} text-white text-sm font-bold px-3 py-1 rounded`}>
-                    R90: {r90Score.toFixed(2)}
+                  <div className="flex flex-col flex-1">
+                    <span className="text-sm font-medium">
+                      {opponent.includes(" vs ") ? opponent : `vs ${opponent}`}
+                    </span>
+                    {result && (
+                      <span className="text-xs text-muted-foreground">
+                        {result}
+                      </span>
+                    )}
                   </div>
-                )}
-                
-                <div className="flex gap-2">
-                  {r90Score !== undefined && analysisData.has(pf.fixture_id) && onViewReport && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        const analysis = analysisData.get(pf.fixture_id);
-                        if (analysis) {
-                          onViewReport(analysis.id, playerName);
-                        }
-                      }}
-                    >
-                      <FileText className="w-4 h-4 mr-1" />
-                      View Report
-                    </Button>
+                  
+                  {pf.minutes_played !== null && pf.minutes_played !== undefined && (
+                    <span className="text-sm text-muted-foreground">
+                      {pf.minutes_played} min
+                    </span>
                   )}
-                  {analysisData.has(pf.fixture_id) && analysisData.get(pf.fixture_id)?.analysis_writer_id && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        const analysis = analysisData.get(pf.fixture_id);
-                        if (analysis?.analysis_writer_id) {
-                          navigate(`/analysis/${analysis.analysis_writer_id}`);
-                        }
-                      }}
-                    >
-                      <FileText className="w-4 h-4 mr-1" />
-                      View Analysis
-                    </Button>
+                  
+                  {r90Score !== undefined && (
+                    <div className={`${r90Color} text-white text-sm font-bold px-3 py-1 rounded`}>
+                      R90: {r90Score.toFixed(2)}
+                    </div>
                   )}
-                  {analysisData.has(pf.fixture_id) && analysisData.get(pf.fixture_id)?.pdf_url && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        const analysis = analysisData.get(pf.fixture_id);
-                        if (analysis?.pdf_url) {
-                          window.open(analysis.pdf_url, '_blank');
-                        }
-                      }}
-                    >
-                      <FileText className="w-4 h-4 mr-1" />
-                      PDF
-                    </Button>
-                  )}
-                  {analysisData.has(pf.fixture_id) && analysisData.get(pf.fixture_id)?.video_url && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        const analysis = analysisData.get(pf.fixture_id);
-                        if (analysis?.video_url) {
-                          window.open(analysis.video_url, '_blank');
-                        }
-                      }}
-                    >
-                      📹 Video
-                    </Button>
-                  )}
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleOpenDialog(pf);
-                    }}
-                  >
-                    <Pencil className="w-4 h-4 mr-1" />
-                    Edit
-                  </Button>
+                  
+                  <div className="flex gap-2">
+                    {r90Score !== undefined && analysisData.has(pf.fixture_id) && onViewReport && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const analysis = analysisData.get(pf.fixture_id);
+                          if (analysis) {
+                            onViewReport(analysis.id, playerName);
+                          }
+                        }}
+                      >
+                        <FileText className="w-4 h-4 mr-1" />
+                        View Report
+                      </Button>
+                    )}
+                    {analysisData.has(pf.fixture_id) && analysisData.get(pf.fixture_id)?.analysis_writer_id && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const analysis = analysisData.get(pf.fixture_id);
+                          if (analysis?.analysis_writer_id) {
+                            navigate(`/analysis/${analysis.analysis_writer_id}`);
+                          }
+                        }}
+                      >
+                        <FileText className="w-4 h-4 mr-1" />
+                        View Analysis
+                      </Button>
+                    )}
+                    {analysisData.has(pf.fixture_id) && analysisData.get(pf.fixture_id)?.pdf_url && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const analysis = analysisData.get(pf.fixture_id);
+                          if (analysis?.pdf_url) {
+                            window.open(analysis.pdf_url, '_blank');
+                          }
+                        }}
+                      >
+                        <FileText className="w-4 h-4 mr-1" />
+                        PDF
+                      </Button>
+                    )}
+                    {analysisData.has(pf.fixture_id) && analysisData.get(pf.fixture_id)?.video_url && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const analysis = analysisData.get(pf.fixture_id);
+                          if (analysis?.video_url) {
+                            window.open(analysis.video_url, '_blank');
+                          }
+                        }}
+                      >
+                        📹 Video
+                      </Button>
+                    )}
+                    {isAdmin && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleOpenDialog(pf);
+                        }}
+                      >
+                        <Pencil className="w-4 h-4 mr-1" />
+                        Edit
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </div>
             );

@@ -977,7 +977,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                     </div>
                                     
                                     {/* Right: Action Buttons */}
-                                    <div className="flex gap-2 flex-shrink-0">
+                                    <div className="flex gap-1 sm:gap-2 flex-shrink-0">
                                       <Button
                                         variant="outline"
                                         size="sm"
@@ -987,9 +987,10 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                           setCreateReportPlayerName(selectedPlayer!.name);
                                           setIsCreateReportDialogOpen(true);
                                         }}
+                                        className="h-8 px-2 sm:px-3"
                                       >
-                                        <Edit className="w-4 h-4 mr-2" />
-                                        Edit
+                                        <Edit className="w-4 h-4 sm:mr-2" />
+                                        <span className="hidden sm:inline">Edit</span>
                                       </Button>
                                       <Button
                                         variant="secondary"
@@ -998,9 +999,10 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                           const slug = `${selectedPlayer!.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-vs-${analysis.opponent.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`.replace(/-+/g, '-');
                                           window.open(`/performance-report/${slug}-${analysis.id}`, '_blank');
                                         }}
+                                        className="h-8 px-2 sm:px-3"
                                       >
-                                        <Eye className="w-4 h-4 mr-2" />
-                                        View
+                                        <Eye className="w-4 h-4 sm:mr-2" />
+                                        <span className="hidden sm:inline">View</span>
                                       </Button>
                                     </div>
                                   </div>
