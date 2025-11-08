@@ -103,7 +103,7 @@ export const PlayerCard = ({ player, viewMode = "grid" }: PlayerCardProps) => {
     <Link
       ref={cardRef}
       to={`/stars/${playerSlug}`}
-      className="group relative block overflow-hidden transition-all duration-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary group-hover/container:brightness-[0.3] hover:!brightness-100"
+      className="group relative block overflow-hidden transition-all duration-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
     >
       {/* Hover and focus glow effect - desktop only */}
       <div className="absolute inset-0 opacity-0 md:group-hover:opacity-100 md:group-focus-visible:opacity-100 transition-opacity duration-500 pointer-events-none z-10">
@@ -112,12 +112,24 @@ export const PlayerCard = ({ player, viewMode = "grid" }: PlayerCardProps) => {
 
       {/* Player Image */}
       <div className="relative aspect-[3/4] overflow-hidden">
+        {/* Background Layer - fades when other cards are hovered */}
         <img
           src={player.image_url || player.image}
           alt={player.name}
-          className={`w-full h-full object-cover transition-all duration-700 ${
+          className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 group-hover/container:brightness-[0.3] ${
             isInView ? "grayscale-0" : "grayscale"
           } md:grayscale md:group-hover:grayscale-0`}
+        />
+        
+        {/* Foreground Layer (Player Cutout) - stays bright */}
+        <img
+          src={player.cutout_image_url || player.image_url || player.image}
+          alt={`${player.name} foreground`}
+          className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 ${
+            isInView ? "grayscale-0" : "grayscale"
+          } md:grayscale md:group-hover:grayscale-0 ${
+            player.cutout_image_url ? 'opacity-100' : 'opacity-0 md:group-hover:opacity-0'
+          }`}
         />
         {/* Position badge - top right, smaller on mobile */}
         <div className="absolute top-4 right-4">
