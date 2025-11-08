@@ -98,7 +98,7 @@ const Index = () => {
                     REALISE POTENTIAL • REALISE POTENTIAL • REALISE POTENTIAL • REALISE POTENTIAL • REALISE POTENTIAL • REALISE POTENTIAL •
                   </h1>
                 </div>
-                <p className="text-xl md:text-2xl text-white/90 max-w-3xl mx-auto font-light tracking-wide italic">
+                <p className="text-xl md:text-2xl text-white/90 max-w-3xl lg:max-w-5xl mx-auto font-light tracking-wide italic">
                   Elite Football Representation & Performance Optimisation
                 </p>
               </div>
@@ -146,7 +146,7 @@ const Index = () => {
               <h2 className="text-4xl md:text-6xl lg:text-7xl font-bebas uppercase tracking-wider text-foreground leading-tight">
                 Performance-First <span className="text-primary">Agency</span>
               </h2>
-              <p className="text-base md:text-xl lg:text-2xl text-muted-foreground leading-relaxed max-w-4xl mx-auto font-light">
+              <p className="text-base md:text-xl lg:text-2xl text-muted-foreground leading-relaxed max-w-4xl lg:max-w-6xl mx-auto font-light">
                 RISE Football is the performance-first agency, ensuring our players, coaches and clubs develop optimally on the pitch, as well as off. To reach their potential, we provide our clients with an extensive training, analysis and recovery protocol while utilising our network to put them in a position to succeed.
               </p>
               <div className="flex justify-center gap-12 pt-8">

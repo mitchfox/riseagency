@@ -103,7 +103,7 @@ export const PlayerCard = ({ player, viewMode = "grid" }: PlayerCardProps) => {
     <Link
       ref={cardRef}
       to={`/stars/${playerSlug}`}
-      className="group relative block overflow-hidden transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+      className="group relative block overflow-hidden transition-all duration-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary group-hover/container:brightness-[0.3] hover:!brightness-100"
     >
       {/* Hover and focus glow effect - desktop only */}
       <div className="absolute inset-0 opacity-0 md:group-hover:opacity-100 md:group-focus-visible:opacity-100 transition-opacity duration-500 pointer-events-none z-10">

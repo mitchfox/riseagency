@@ -176,7 +176,7 @@ const Stars = () => {
               <h1 className="text-6xl md:text-8xl font-bebas uppercase tracking-wider text-foreground mb-4">
                 Our Stars
               </h1>
-              <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+              <p className="text-xl text-muted-foreground max-w-3xl lg:max-w-5xl mx-auto">
                 Meet our talented roster of professional footballers
               </p>
             </div>
@@ -294,7 +294,7 @@ const Stars = () => {
             <div
               className={
                 viewMode === "grid"
-                  ? "grid md:grid-cols-2 lg:grid-cols-3 gap-8"
+                  ? "grid md:grid-cols-2 lg:grid-cols-3 gap-8 group/container"
                   : "flex flex-col divide-y divide-border"
               }
             >
