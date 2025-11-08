@@ -1,18 +1,29 @@
 import { useEffect } from 'react';
 import { PushNotifications } from '@capacitor/push-notifications';
+import { Capacitor } from '@capacitor/core';
 import { toast } from '@/hooks/use-toast';
 
 export const usePushNotifications = () => {
   useEffect(() => {
+    // Only initialize push notifications on native platforms (iOS/Android)
+    if (!Capacitor.isNativePlatform()) {
+      console.log('Push notifications are only available on native platforms');
+      return;
+    }
+
     const initPushNotifications = async () => {
-      // Request permission to use push notifications
-      const result = await PushNotifications.requestPermissions();
-      
-      if (result.receive === 'granted') {
-        // Register with Apple / Google to receive push via APNS/FCM
-        await PushNotifications.register();
-      } else {
-        console.log('Push notification permission denied');
+      try {
+        // Request permission to use push notifications
+        const result = await PushNotifications.requestPermissions();
+        
+        if (result.receive === 'granted') {
+          // Register with Apple / Google to receive push via APNS/FCM
+          await PushNotifications.register();
+        } else {
+          console.log('Push notification permission denied');
+        }
+      } catch (error) {
+        console.error('Failed to initialize push notifications:', error);
       }
     };
 

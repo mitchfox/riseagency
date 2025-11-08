@@ -869,7 +869,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
               <TabsContent value="analysis" className="space-y-4">
                 <Tabs defaultValue="performance" className="w-full">
                   <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="performance">Performance Analysis</TabsTrigger>
+                    <TabsTrigger value="performance">Performance Reports</TabsTrigger>
                     <TabsTrigger value="tactical">Tactical Analysis</TabsTrigger>
                   </TabsList>
 
@@ -877,7 +877,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                     <Card>
                       <CardHeader>
                         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                          <CardTitle>Performance Analysis</CardTitle>
+                          <CardTitle>Performance Reports</CardTitle>
                           <Button
                             size="sm"
                             onClick={() => {
@@ -911,99 +911,113 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                               return (
                                 <div
                                   key={analysis.id}
-                                  className="rounded-lg overflow-hidden text-white flex items-stretch"
+                                  className="rounded-lg overflow-hidden text-white flex flex-col md:flex-row md:items-stretch"
                                 >
-                                  {/* Left: R90 Score with colored background */}
+                                  {/* R90 Score - Horizontal on Mobile, Vertical on Desktop */}
                                   {analysis.r90_score !== null && analysis.r90_score !== undefined && (
-                                    <div className={`${getR90ColorClass(analysis.r90_score)} flex items-center justify-center p-4 flex-shrink-0`}>
-                                      <div className="text-center">
-                                        <div className="text-4xl font-bold">
-                                          {analysis.r90_score.toFixed(2)}
+                                    <>
+                                      {/* Mobile: Horizontal R90 */}
+                                      <div className={`md:hidden ${getR90ColorClass(analysis.r90_score)} flex items-center gap-3 p-3`}>
+                                        <div className="flex items-center gap-2">
+                                          <div className="text-3xl font-bold">
+                                            {analysis.r90_score.toFixed(2)}
+                                          </div>
+                                          <div className="w-8 h-8 ${getR90ColorClass(analysis.r90_score)} rounded border-2 border-white/50"></div>
                                         </div>
-                                        <div className="text-xs opacity-80">R90</div>
+                                        <div className="text-xs opacity-90 font-medium">R90 SCORE</div>
                                       </div>
-                                    </div>
+                                      
+                                      {/* Desktop: Vertical R90 */}
+                                      <div className={`hidden md:flex ${getR90ColorClass(analysis.r90_score)} items-center justify-center p-4 flex-shrink-0`}>
+                                        <div className="text-center">
+                                          <div className="text-4xl font-bold">
+                                            {analysis.r90_score.toFixed(2)}
+                                          </div>
+                                          <div className="text-xs opacity-80">R90</div>
+                                        </div>
+                                      </div>
+                                    </>
                                   )}
                                   
-                                  {/* Right: Match info and stats with black background */}
-                                  <div className="bg-black flex-1 p-4 flex items-center justify-between gap-4">
-                                    <div className="flex-1">
-                                      <h4 className="text-lg font-semibold truncate">{analysis.opponent}</h4>
-                                      <div className="flex flex-wrap items-center gap-3 text-sm opacity-90 mt-1">
-                                        <span>{new Date(analysis.analysis_date).toLocaleDateString('en-GB')}</span>
-                                        {analysis.result && (
-                                          <>
-                                            <span>•</span>
-                                            <span>{analysis.result}</span>
-                                          </>
-                                        )}
-                                        {analysis.minutes_played && (
-                                          <>
-                                            <span>•</span>
-                                            <span>{analysis.minutes_played} min</span>
-                                          </>
+                                  {/* Match info and stats with black background */}
+                                  <div className="bg-black flex-1 p-3 md:p-4">
+                                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-4">
+                                      <div className="flex-1 min-w-0">
+                                        <h4 className="text-base md:text-lg font-semibold truncate">{analysis.opponent}</h4>
+                                        <div className="flex flex-wrap items-center gap-2 md:gap-3 text-xs md:text-sm opacity-90 mt-1">
+                                          <span>{new Date(analysis.analysis_date).toLocaleDateString('en-GB')}</span>
+                                          {analysis.result && (
+                                            <>
+                                              <span>•</span>
+                                              <span>{analysis.result}</span>
+                                            </>
+                                          )}
+                                          {analysis.minutes_played && (
+                                            <>
+                                              <span>•</span>
+                                              <span>{analysis.minutes_played} min</span>
+                                            </>
+                                          )}
+                                        </div>
+                                        
+                                        {/* Advanced Stats - Compact */}
+                                        {analysis.striker_stats && Object.keys(analysis.striker_stats).length > 0 && (
+                                          <div className="flex flex-wrap gap-x-3 md:gap-x-4 gap-y-1 text-[10px] md:text-xs opacity-80 mt-2">
+                                            {Object.entries(analysis.striker_stats).map(([key, value]) => {
+                                              let displayValue = '';
+                                              if (value === null || value === undefined) {
+                                                displayValue = '-';
+                                              } else if (Array.isArray(value)) {
+                                                try {
+                                                  displayValue = value.filter(v => v != null && v !== undefined).map(v => String(v)).join(', ') || '-';
+                                                } catch (e) {
+                                                  displayValue = '-';
+                                                }
+                                              } else if (typeof value === 'object') {
+                                                displayValue = JSON.stringify(value);
+                                              } else {
+                                                displayValue = String(value);
+                                              }
+                                              
+                                              return (
+                                                <span key={key} className="whitespace-nowrap">
+                                                  <span className="font-medium">{key.replace(/_/g, ' ')}</span>: {displayValue}
+                                                </span>
+                                              );
+                                            })}
+                                          </div>
                                         )}
                                       </div>
                                       
-                                      {/* Advanced Stats - Compact Single/Two Line */}
-                                      {analysis.striker_stats && Object.keys(analysis.striker_stats).length > 0 && (
-                                        <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs opacity-80 mt-2">
-                                          {Object.entries(analysis.striker_stats).map(([key, value]) => {
-                                            // Safely convert value to string, handling arrays, objects, null, undefined
-                                            let displayValue = '';
-                                            if (value === null || value === undefined) {
-                                              displayValue = '-';
-                                            } else if (Array.isArray(value)) {
-                                              // Extra safety: ensure value is actually an array with valid methods
-                                              try {
-                                                displayValue = value.filter(v => v != null && v !== undefined).map(v => String(v)).join(', ') || '-';
-                                              } catch (e) {
-                                                displayValue = '-';
-                                              }
-                                            } else if (typeof value === 'object') {
-                                              displayValue = JSON.stringify(value);
-                                            } else {
-                                              displayValue = String(value);
-                                            }
-                                            
-                                            return (
-                                              <span key={key}>
-                                                <span className="font-medium">{key.replace(/_/g, ' ')}</span>: {displayValue}
-                                              </span>
-                                            );
-                                          })}
-                                        </div>
-                                      )}
-                                    </div>
-                                    
-                                    {/* Right: Action Buttons */}
-                                    <div className="flex gap-1 sm:gap-2 flex-shrink-0">
-                                      <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => {
-                                          setEditReportAnalysisId(analysis.id);
-                                          setCreateReportPlayerId(selectedPlayerId!);
-                                          setCreateReportPlayerName(selectedPlayer!.name);
-                                          setIsCreateReportDialogOpen(true);
-                                        }}
-                                        className="h-8 px-2 sm:px-3"
-                                      >
-                                        <Edit className="w-4 h-4 sm:mr-2" />
-                                        <span className="hidden sm:inline">Edit</span>
-                                      </Button>
-                                      <Button
-                                        variant="secondary"
-                                        size="sm"
-                                        onClick={() => {
-                                          const slug = `${selectedPlayer!.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-vs-${analysis.opponent.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`.replace(/-+/g, '-');
-                                          window.open(`/performance-report/${slug}-${analysis.id}`, '_blank');
-                                        }}
-                                        className="h-8 px-2 sm:px-3"
-                                      >
-                                        <Eye className="w-4 h-4 sm:mr-2" />
-                                        <span className="hidden sm:inline">View</span>
-                                      </Button>
+                                      {/* Action Buttons */}
+                                      <div className="flex gap-2 flex-shrink-0">
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          onClick={() => {
+                                            setEditReportAnalysisId(analysis.id);
+                                            setCreateReportPlayerId(selectedPlayerId!);
+                                            setCreateReportPlayerName(selectedPlayer!.name);
+                                            setIsCreateReportDialogOpen(true);
+                                          }}
+                                          className="h-8 px-2 md:px-3"
+                                        >
+                                          <Edit className="w-3 h-3 md:w-4 md:h-4 md:mr-2" />
+                                          <span className="hidden md:inline">Edit</span>
+                                        </Button>
+                                        <Button
+                                          variant="secondary"
+                                          size="sm"
+                                          onClick={() => {
+                                            const slug = `${selectedPlayer!.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-vs-${analysis.opponent.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`.replace(/-+/g, '-');
+                                            window.open(`/performance-report/${slug}-${analysis.id}`, '_blank');
+                                          }}
+                                          className="h-8 px-2 md:px-3"
+                                        >
+                                          <Eye className="w-3 h-3 md:w-4 md:h-4 md:mr-2" />
+                                          <span className="hidden md:inline">View</span>
+                                        </Button>
+                                      </div>
                                     </div>
                                   </div>
                                 </div>
@@ -1030,23 +1044,23 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                             {tacticalAnalyses[selectedPlayerId].map((analysis) => (
                               <div
                                 key={analysis.id}
-                                className="p-4 border rounded-lg hover:bg-secondary/30 transition-colors"
+                                className="p-3 md:p-4 border rounded-lg hover:bg-secondary/30 transition-colors"
                               >
-                                <div className="flex items-start justify-between">
-                                  <div className="flex-1">
-                                    <div className="flex items-center gap-2 mb-2">
-                                      <span className="text-xs px-2 py-1 rounded bg-primary/20 text-primary font-medium">
+                                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex flex-wrap items-center gap-2 mb-2">
+                                      <span className="text-[10px] md:text-xs px-2 py-1 rounded bg-primary/20 text-primary font-medium whitespace-nowrap">
                                         {analysis.analysis_type}
                                       </span>
                                       {analysis.match_date && (
-                                        <span className="text-sm text-muted-foreground">
+                                        <span className="text-xs md:text-sm text-muted-foreground">
                                           {new Date(analysis.match_date).toLocaleDateString()}
                                         </span>
                                       )}
                                     </div>
-                                    <h4 className="font-medium mb-1">{analysis.title || 'Untitled'}</h4>
+                                    <h4 className="font-medium mb-1 text-sm md:text-base">{analysis.title || 'Untitled'}</h4>
                                     {analysis.home_team && analysis.away_team && (
-                                      <p className="text-sm text-muted-foreground">
+                                      <p className="text-xs md:text-sm text-muted-foreground">
                                         {analysis.home_team} vs {analysis.away_team}
                                         {analysis.home_score !== null && analysis.away_score !== null && (
                                           <span className="ml-2 font-medium">
@@ -1060,6 +1074,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                     variant="outline"
                                     size="sm"
                                     onClick={() => window.open(`/analysis/${analysis.id}`, '_blank')}
+                                    className="w-full sm:w-auto"
                                   >
                                     View
                                   </Button>
@@ -1081,7 +1096,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
               <TabsContent value="programming">
                 <Card>
                   <CardHeader>
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                       <CardTitle>Training Programs</CardTitle>
                       <Button
                         size="sm"
@@ -1090,6 +1105,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                           setSelectedProgrammingPlayerName(selectedPlayer!.name);
                           setIsProgrammingDialogOpen(true);
                         }}
+                        className="w-full sm:w-auto"
                       >
                         <Plus className="w-4 h-4 mr-2" />
                         Manage Programs
@@ -1102,7 +1118,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                         {playerPrograms[selectedPlayerId].map((program) => (
                           <div
                             key={program.id}
-                            className="p-4 border rounded-lg hover:bg-secondary/30 transition-colors cursor-pointer"
+                            className="p-3 md:p-4 border rounded-lg hover:bg-secondary/30 transition-colors cursor-pointer"
                             onClick={() => {
                               setSelectedProgrammingPlayerId(selectedPlayerId!);
                               setSelectedProgrammingPlayerName(selectedPlayer!.name);
@@ -1110,22 +1126,22 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                             }}
                           >
                             <div className="flex items-start justify-between">
-                              <div className="flex-1">
-                                <div className="flex items-center gap-2 mb-1">
-                                  <h4 className="font-medium">{program.program_name}</h4>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex flex-wrap items-center gap-2 mb-1">
+                                  <h4 className="font-medium text-sm md:text-base truncate">{program.program_name}</h4>
                                   {program.is_current && (
-                                    <span className="text-xs px-2 py-1 rounded bg-primary/20 text-primary font-medium">
+                                    <span className="text-[10px] md:text-xs px-2 py-1 rounded bg-primary/20 text-primary font-medium whitespace-nowrap">
                                       Current
                                     </span>
                                   )}
                                 </div>
                                 {program.phase_name && (
-                                  <p className="text-sm text-muted-foreground">
+                                  <p className="text-xs md:text-sm text-muted-foreground">
                                     Phase: {program.phase_name}
                                   </p>
                                 )}
                                 {program.phase_dates && (
-                                  <p className="text-xs text-muted-foreground mt-1">
+                                  <p className="text-[10px] md:text-xs text-muted-foreground mt-1">
                                     {program.phase_dates}
                                   </p>
                                 )}
@@ -1135,7 +1151,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                         ))}
                       </div>
                     ) : (
-                      <p className="text-center text-muted-foreground py-8">
+                      <p className="text-center text-muted-foreground py-8 text-sm">
                         No programs yet. Click "Manage Programs" to create one.
                       </p>
                     )}
