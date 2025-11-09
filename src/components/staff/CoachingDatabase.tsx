@@ -679,26 +679,35 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
           [file.name]: { status: 'uploading', progress: 50 }
         }));
 
-        const formData = new FormData();
-        formData.append('file', file);
+        // Upload PDF to storage
+        const fileName = `analysis-pdfs/${Date.now()}-${file.name}`;
+        const { error: uploadError } = await supabase.storage
+          .from('analysis-files')
+          .upload(fileName, file);
 
-        setUploadProgress(prev => ({
-          ...prev,
-          [file.name]: { status: 'processing', progress: 75 }
-        }));
+        if (uploadError) throw uploadError;
 
-        const { data, error } = await supabase.functions.invoke('parse-opposition-analysis', {
-          body: formData,
+        // Get public URL
+        const { data: urlData } = supabase.storage
+          .from('analysis-files')
+          .getPublicUrl(fileName);
+
+        // Create database entry
+        const { error: dbError } = await supabase.from('coaching_analysis').insert({
+          title: file.name.replace('.pdf', ''),
+          description: `Uploaded PDF: ${file.name}`,
+          content: urlData.publicUrl,
+          category: 'PDF Document',
         });
 
-        if (error) throw error;
+        if (dbError) throw dbError;
 
         setUploadProgress(prev => ({
           ...prev,
-          [file.name]: { status: 'success', progress: 100, added: data.added }
+          [file.name]: { status: 'success', progress: 100 }
         }));
 
-        toast.success(`Successfully parsed ${file.name} and added ${data.added} examples`);
+        toast.success(`Successfully uploaded ${file.name}`);
       } catch (error) {
         console.error(`Error uploading ${file.name}:`, error);
         setUploadProgress(prev => ({
@@ -951,8 +960,7 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
                           'secondary'
                         }>
                           {status.status === 'uploading' ? 'Uploading' :
-                           status.status === 'processing' ? 'Processing' :
-                           status.status === 'success' ? `Added ${status.added} examples` :
+                           status.status === 'success' ? 'Uploaded' :
                            'Failed'}
                         </Badge>
                       </div>
