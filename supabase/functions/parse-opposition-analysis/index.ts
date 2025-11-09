@@ -38,6 +38,8 @@ serve(async (req) => {
       throw new Error('LOVABLE_API_KEY not configured');
     }
 
+    console.log('Calling AI API to parse PDF...');
+
     const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -87,12 +89,13 @@ Important:
             content: [
               {
                 type: 'text',
-                text: 'Parse this opposition analysis PDF and extract all content according to the structure.'
+                text: 'Parse this opposition analysis PDF document and extract all content according to the structure.'
               },
               {
-                type: 'image_url',
-                image_url: {
-                  url: `data:application/pdf;base64,${base64}`
+                type: 'file',
+                file: {
+                  data: base64,
+                  mime_type: 'application/pdf'
                 }
               }
             ]
@@ -104,8 +107,12 @@ Important:
 
     if (!aiResponse.ok) {
       const errorText = await aiResponse.text();
-      console.error('AI API Error:', errorText);
-      throw new Error(`AI API error: ${aiResponse.status}`);
+      console.error('AI API Error Response:', {
+        status: aiResponse.status,
+        statusText: aiResponse.statusText,
+        body: errorText
+      });
+      throw new Error(`AI API error: ${aiResponse.status} - ${errorText}`);
     }
 
     const aiData = await aiResponse.json();
