@@ -36,6 +36,7 @@ interface CoachingItem {
   content?: string | null;
   exercises?: Exercise[] | null;
   category?: string | null;
+  subcategory?: string | null;
   tags?: string[] | null;
   created_at: string;
   updated_at: string;
@@ -55,6 +56,7 @@ interface CoachingItem {
   video_url?: string | null;
   is_own_video?: boolean | null;
   author?: string | null;
+  score?: number | null;
 }
 
 const tableConfigs = {
@@ -114,6 +116,23 @@ const tableConfigs = {
     icon: LineChart,
     color: 'indigo',
   },
+};
+
+const getScoreColor = (score: number | null) => {
+  if (score === null || score === undefined) return 'bg-muted text-muted-foreground';
+  
+  // Positive scores
+  if (score >= 0.1) return 'bg-green-600 text-white font-bold';
+  if (score > 0.01) return 'bg-green-500 text-white';
+  if (score > 0) return 'bg-green-400 text-white';
+  
+  // Negative scores
+  if (score <= -0.1) return 'bg-red-600 text-white font-bold';
+  if (score < -0.01) return 'bg-red-500 text-white';
+  if (score < 0) return 'bg-red-400 text-white';
+  
+  // Exactly 0
+  return 'bg-muted text-muted-foreground';
 };
 
 export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
@@ -1045,11 +1064,23 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
                               <CardTitle className="text-base line-clamp-2 mb-1">
                                 {activeTab === 'coaching_aphorisms' ? item.featured_text : item.title}
                               </CardTitle>
-                              {item.category && (
-                                <Badge variant="secondary" className="text-xs">
-                                  {item.category}
-                                </Badge>
-                              )}
+                              <div className="flex flex-wrap gap-2 items-center">
+                                {item.category && (
+                                  <Badge variant="secondary" className="text-xs">
+                                    {item.category}
+                                  </Badge>
+                                )}
+                                {activeTab === 'r90_ratings' && item.subcategory && (
+                                  <Badge variant="outline" className="text-xs">
+                                    {item.subcategory}
+                                  </Badge>
+                                )}
+                                {activeTab === 'r90_ratings' && item.score !== null && item.score !== undefined && (
+                                  <Badge className={`${getScoreColor(item.score)} text-xs font-mono px-2`}>
+                                    {item.score.toFixed(4)}
+                                  </Badge>
+                                )}
+                              </div>
                             </div>
                           </div>
                           {isAdmin && (
