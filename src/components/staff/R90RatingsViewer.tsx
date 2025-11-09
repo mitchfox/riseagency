@@ -5,7 +5,12 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, LineChart } from "lucide-react";
+import { Loader2, LineChart, Search, Sparkles } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { toast } from "sonner";
 
 interface R90Rating {
   id: string;
@@ -37,6 +42,9 @@ export const R90RatingsViewer = ({ open, onOpenChange, initialCategory, searchTe
   const [ratings, setRatings] = useState<R90Rating[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [aiSearching, setAiSearching] = useState(false);
+  const [actionType, setActionType] = useState('');
+  const [actionContext, setActionContext] = useState('');
 
   // Update category when initialCategory changes
   useEffect(() => {
@@ -87,9 +95,79 @@ export const R90RatingsViewer = ({ open, onOpenChange, initialCategory, searchTe
     }
   };
 
+  const handleAiSearch = async () => {
+    if (!actionType.trim()) {
+      toast.error("Please enter an action type");
+      return;
+    }
+
+    setAiSearching(true);
+    try {
+      // Fetch all ratings to pass to AI
+      const { data: allRatings, error: ratingsError } = await supabase
+        .from('r90_ratings')
+        .select('*');
+
+      if (ratingsError) throw ratingsError;
+
+      // Use AI to find the most relevant rating
+      const { data, error } = await supabase.functions.invoke('find-r90-rating', {
+        body: {
+          actionType,
+          actionContext,
+          ratings: allRatings?.map(r => ({
+            id: r.id,
+            title: r.title,
+            description: r.description,
+            category: r.category,
+            content: r.content
+          }))
+        }
+      });
+
+      if (error) {
+        console.error('AI search error:', error);
+        toast.error("Failed to search ratings: " + error.message);
+        return;
+      }
+
+      if (data?.matchedRatings && data.matchedRatings.length > 0) {
+        const matchedIds = data.matchedRatings.map((r: any) => r.id);
+        const matchedRatings = allRatings?.filter(r => matchedIds.includes(r.id)) || [];
+        setRatings(matchedRatings);
+        toast.success(`Found ${matchedRatings.length} relevant rating${matchedRatings.length > 1 ? 's' : ''}`);
+      } else {
+        toast.info("No matching ratings found. Try different terms.");
+      }
+    } catch (error: any) {
+      console.error('Error in AI search:', error);
+      toast.error("Failed to search ratings");
+    } finally {
+      setAiSearching(false);
+    }
+  };
+
+  // Parse content into structured data
+  const parseContent = (content: string | null) => {
+    if (!content) return null;
+    
+    const lines = content.split('\n').filter(line => line.trim());
+    const tableData: Array<{ label: string; value: string }> = [];
+    
+    lines.forEach(line => {
+      // Match patterns like "Successful: +0.05"
+      const match = line.match(/^(.+?):\s*(.+)$/);
+      if (match) {
+        tableData.push({ label: match[1].trim(), value: match[2].trim() });
+      }
+    });
+    
+    return tableData.length > 0 ? tableData : null;
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh]">
+      <DialogContent className="max-w-6xl max-h-[90vh]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <LineChart className="w-5 h-5 text-indigo-600" />
@@ -98,6 +176,59 @@ export const R90RatingsViewer = ({ open, onOpenChange, initialCategory, searchTe
         </DialogHeader>
 
         <div className="space-y-4">
+          {/* AI-Powered Search */}
+          <Card className="border-2 border-purple-200 bg-purple-50/50">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-purple-600" />
+                AI-Powered Search
+              </CardTitle>
+              <CardDescription className="text-xs">
+                Describe the action and context to find the most relevant R90 rating
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div>
+                <Label htmlFor="action-type" className="text-xs">Action Type *</Label>
+                <Input
+                  id="action-type"
+                  value={actionType}
+                  onChange={(e) => setActionType(e.target.value)}
+                  placeholder="e.g., pass, tackle, dribble"
+                  className="text-sm"
+                />
+              </div>
+              <div>
+                <Label htmlFor="action-context" className="text-xs">Context & Details</Label>
+                <Input
+                  id="action-context"
+                  value={actionContext}
+                  onChange={(e) => setActionContext(e.target.value)}
+                  placeholder="e.g., under pressure, in space, forward, backwards"
+                  className="text-sm"
+                />
+              </div>
+              <Button 
+                onClick={handleAiSearch} 
+                disabled={aiSearching}
+                className="w-full"
+                size="sm"
+              >
+                {aiSearching ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Searching...
+                  </>
+                ) : (
+                  <>
+                    <Search className="w-4 h-4 mr-2" />
+                    Find Matching Ratings
+                  </>
+                )}
+              </Button>
+            </CardContent>
+          </Card>
+
           {/* Category Filter */}
           <Select value={selectedCategory} onValueChange={setSelectedCategory}>
             <SelectTrigger className="w-full">
@@ -128,36 +259,64 @@ export const R90RatingsViewer = ({ open, onOpenChange, initialCategory, searchTe
               </div>
             ) : (
               <div className="space-y-3 pr-4">
-                {ratings.map((rating) => (
-                  <Card key={rating.id} className="border-l-4 border-l-indigo-500">
-                    <CardHeader className="pb-3">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex-1 min-w-0">
-                          <CardTitle className="text-base line-clamp-2 mb-1">
-                            {rating.title}
-                          </CardTitle>
-                          {rating.category && (
-                            <Badge variant="secondary" className="text-xs">
-                              {rating.category}
-                            </Badge>
-                          )}
+                {ratings.map((rating) => {
+                  const parsedContent = parseContent(rating.content);
+                  
+                  return (
+                    <Card key={rating.id} className="border-l-4 border-l-indigo-500">
+                      <CardHeader className="pb-3">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex-1 min-w-0">
+                            <CardTitle className="text-base mb-1">
+                              {rating.title}
+                            </CardTitle>
+                            {rating.category && (
+                              <Badge variant="secondary" className="text-xs">
+                                {rating.category}
+                              </Badge>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                      {rating.description && (
-                        <CardDescription className="text-sm mt-2 line-clamp-2">
-                          {rating.description}
-                        </CardDescription>
+                        {rating.description && (
+                          <CardDescription className="text-sm mt-2">
+                            {rating.description}
+                          </CardDescription>
+                        )}
+                      </CardHeader>
+                      {parsedContent ? (
+                        <CardContent className="pt-0">
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead className="w-2/3">Action Context</TableHead>
+                                <TableHead>Score Value</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {parsedContent.map((row, idx) => (
+                                <TableRow key={idx}>
+                                  <TableCell className="font-medium">{row.label}</TableCell>
+                                  <TableCell className={
+                                    row.value.includes('+') ? 'text-green-600 font-bold' : 
+                                    row.value.includes('-') ? 'text-red-600 font-bold' : ''
+                                  }>
+                                    {row.value}
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </CardContent>
+                      ) : rating.content && (
+                        <CardContent className="pt-0">
+                          <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                            {rating.content}
+                          </p>
+                        </CardContent>
                       )}
-                    </CardHeader>
-                    {rating.content && (
-                      <CardContent className="pt-0">
-                        <p className="text-sm text-muted-foreground whitespace-pre-wrap line-clamp-4">
-                          {rating.content}
-                        </p>
-                      </CardContent>
-                    )}
-                  </Card>
-                ))}
+                    </Card>
+                  );
+                })}
               </div>
             )}
           </ScrollArea>

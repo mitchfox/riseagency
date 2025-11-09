@@ -38,3 +38,6 @@ verify_jwt = true
 
 [functions.fill-action-scores]
 verify_jwt = true
+
+[functions.find-r90-rating]
+verify_jwt = true
