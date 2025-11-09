@@ -19,16 +19,18 @@ serve(async (req) => {
       throw new Error('No file provided');
     }
 
-    // Get PDF as base64 - process in chunks to avoid stack overflow
+    // Get PDF as base64 - optimized for large files
     const arrayBuffer = await file.arrayBuffer();
-    const uint8Array = new Uint8Array(arrayBuffer);
-    let binaryString = '';
-    const chunkSize = 8192; // Process 8KB at a time
-    for (let i = 0; i < uint8Array.length; i += chunkSize) {
-      const chunk = uint8Array.slice(i, i + chunkSize);
-      binaryString += String.fromCharCode(...chunk);
+    const bytes = new Uint8Array(arrayBuffer);
+    
+    // Convert to base64 using a more efficient method for large files
+    let base64 = '';
+    const chunkSize = 32768; // 32KB chunks for optimal performance
+    for (let i = 0; i < bytes.length; i += chunkSize) {
+      const chunk = bytes.subarray(i, Math.min(i + chunkSize, bytes.length));
+      base64 += String.fromCharCode.apply(null, Array.from(chunk));
     }
-    const base64 = btoa(binaryString);
+    base64 = btoa(base64);
 
     // Use Lovable AI to parse the PDF
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');

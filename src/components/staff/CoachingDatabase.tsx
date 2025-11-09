@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { Plus, Edit, Trash2, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Database, Search, Calendar, Clock, Dumbbell, Brain, Target, BookOpen, Quote, LineChart, Settings, Upload } from "lucide-react";
 import { ExerciseDatabaseSelector } from "./ExerciseDatabaseSelector";
@@ -154,7 +155,7 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
   const itemsPerPage = 20;
   const [isImporting, setIsImporting] = useState(false);
   const [isR90ManagementOpen, setIsR90ManagementOpen] = useState(false);
-  const [isUploadingPdf, setIsUploadingPdf] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<Record<string, { status: 'uploading' | 'processing' | 'success' | 'error', progress: number, added?: number, error?: string }>>({});
 
   useEffect(() => {
     setCurrentPage(1);
@@ -661,11 +662,30 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
-    setIsUploadingPdf(true);
-    try {
-      for (const file of Array.from(files)) {
+    const fileArray = Array.from(files);
+    
+    // Initialize progress for all files
+    const initialProgress: Record<string, any> = {};
+    fileArray.forEach(file => {
+      initialProgress[file.name] = { status: 'uploading', progress: 0 };
+    });
+    setUploadProgress(initialProgress);
+
+    // Process all files in parallel
+    const uploadPromises = fileArray.map(async (file) => {
+      try {
+        setUploadProgress(prev => ({
+          ...prev,
+          [file.name]: { status: 'uploading', progress: 50 }
+        }));
+
         const formData = new FormData();
         formData.append('file', file);
+
+        setUploadProgress(prev => ({
+          ...prev,
+          [file.name]: { status: 'processing', progress: 75 }
+        }));
 
         const { data, error } = await supabase.functions.invoke('parse-opposition-analysis', {
           body: formData,
@@ -673,15 +693,26 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
 
         if (error) throw error;
 
-        toast.success(`Successfully parsed ${file.name} and added ${data.added} examples to database`);
+        setUploadProgress(prev => ({
+          ...prev,
+          [file.name]: { status: 'success', progress: 100, added: data.added }
+        }));
+
+        toast.success(`Successfully parsed ${file.name} and added ${data.added} examples`);
+      } catch (error) {
+        console.error(`Error uploading ${file.name}:`, error);
+        setUploadProgress(prev => ({
+          ...prev,
+          [file.name]: { status: 'error', progress: 0, error: error instanceof Error ? error.message : 'Upload failed' }
+        }));
+        toast.error(`Failed to upload ${file.name}`);
       }
-    } catch (error) {
-      console.error('Error uploading PDFs:', error);
-      toast.error('Failed to upload PDFs');
-    } finally {
-      setIsUploadingPdf(false);
-      e.target.value = ''; // Reset input
-    }
+    });
+
+    await Promise.all(uploadPromises);
+    
+    e.target.value = ''; // Reset input
+    fetchItems(); // Refresh the list
   };
 
   const resetForm = () => {
@@ -790,10 +821,10 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
                       <Button 
                         onClick={() => document.getElementById('pdf-upload')?.click()}
                         className="w-full sm:w-auto"
-                        disabled={isUploadingPdf}
+                        disabled={Object.keys(uploadProgress).length > 0}
                       >
                         <Upload className="w-4 h-4 mr-2" />
-                        {isUploadingPdf ? 'Uploading...' : 'Upload PDFs'}
+                        {Object.keys(uploadProgress).length > 0 ? 'Uploading...' : 'Upload PDFs'}
                       </Button>
                     </>
                   ) : (
@@ -893,6 +924,45 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
                     </SelectContent>
                   </Select>
                 )}
+              </div>
+            )}
+
+            {/* PDF Upload Progress */}
+            {key === 'coaching_analysis' && Object.keys(uploadProgress).length > 0 && (
+              <div className="mb-6 space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-semibold">Upload Progress</h3>
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => setUploadProgress({})}
+                  >
+                    Clear
+                  </Button>
+                </div>
+                {Object.entries(uploadProgress).map(([filename, status]) => (
+                  <Card key={filename} className="overflow-hidden">
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium truncate flex-1">{filename}</span>
+                        <Badge variant={
+                          status.status === 'success' ? 'default' :
+                          status.status === 'error' ? 'destructive' :
+                          'secondary'
+                        }>
+                          {status.status === 'uploading' ? 'Uploading' :
+                           status.status === 'processing' ? 'Processing' :
+                           status.status === 'success' ? `Added ${status.added} examples` :
+                           'Failed'}
+                        </Badge>
+                      </div>
+                      <Progress value={status.progress} className="h-2" />
+                      {status.error && (
+                        <p className="text-xs text-destructive mt-2">{status.error}</p>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))}
               </div>
             )}
 
