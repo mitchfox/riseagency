@@ -19,6 +19,7 @@ interface R90Rating {
   description: string | null;
   content: string | null;
   category: string | null;
+  subcategory: string | null;
   created_at: string;
 }
 
@@ -49,6 +50,8 @@ export const R90RatingsViewer = ({ open, onOpenChange, initialCategory, searchTe
   const [actionContext, setActionContext] = useState('');
   const [showAiSearch, setShowAiSearch] = useState(false);
   const [expandedRatings, setExpandedRatings] = useState<Set<string>>(new Set());
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
+  const [expandedSubcategories, setExpandedSubcategories] = useState<Set<string>>(new Set());
   const [searchFilter, setSearchFilter] = useState('');
 
   // Update category when initialCategory changes
@@ -197,6 +200,26 @@ export const R90RatingsViewer = ({ open, onOpenChange, initialCategory, searchTe
     return tableData.length > 0 ? tableData : null;
   };
 
+  // Group ratings by category and subcategory
+  const groupedRatings = () => {
+    const groups: Record<string, Record<string, R90Rating[]>> = {};
+    
+    ratings.forEach(rating => {
+      const category = rating.category || 'Uncategorized';
+      const subcategory = rating.subcategory || 'General';
+      
+      if (!groups[category]) {
+        groups[category] = {};
+      }
+      if (!groups[category][subcategory]) {
+        groups[category][subcategory] = [];
+      }
+      groups[category][subcategory].push(rating);
+    });
+    
+    return groups;
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-6xl max-h-[90vh]">
@@ -336,85 +359,167 @@ export const R90RatingsViewer = ({ open, onOpenChange, initialCategory, searchTe
               </div>
             ) : (
               <div className="space-y-3 pr-4">
-                {ratings.map((rating) => {
-                  const parsedContent = parseContent(rating.content);
-                  const isExpanded = expandedRatings.has(rating.id);
+                {Object.entries(groupedRatings()).map(([category, subcategories]) => {
+                  const categoryKey = category;
+                  const isCategoryExpanded = expandedCategories.has(categoryKey);
                   
                   return (
                     <Collapsible
-                      key={rating.id}
-                      open={isExpanded}
+                      key={categoryKey}
+                      open={isCategoryExpanded}
                       onOpenChange={(open) => {
-                        setExpandedRatings(prev => {
+                        setExpandedCategories(prev => {
                           const newSet = new Set(prev);
                           if (open) {
-                            newSet.add(rating.id);
+                            newSet.add(categoryKey);
                           } else {
-                            newSet.delete(rating.id);
+                            newSet.delete(categoryKey);
                           }
                           return newSet;
                         });
                       }}
                     >
-                      <Card className="border-l-4 border-l-indigo-500">
+                      <Card className="border-2 border-primary/20">
                         <CollapsibleTrigger className="w-full">
                           <CardHeader className="pb-3 hover:bg-accent/50 transition-colors cursor-pointer">
-                            <div className="flex items-start justify-between gap-3">
-                              <div className="flex-1 min-w-0 text-left">
-                                <div className="flex items-center gap-2">
-                                  <CardTitle className="text-base mb-1">
-                                    {rating.title}
-                                  </CardTitle>
-                                  <ChevronDown 
-                                    className={`h-4 w-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
-                                  />
-                                </div>
-                                {rating.category && (
-                                  <Badge variant="secondary" className="text-xs">
-                                    {rating.category}
-                                  </Badge>
-                                )}
-                              </div>
+                            <div className="flex items-center justify-between">
+                              <CardTitle className="text-lg font-bold text-primary">
+                                {category}
+                              </CardTitle>
+                              <ChevronDown 
+                                className={`h-5 w-5 transition-transform ${isCategoryExpanded ? 'rotate-180' : ''}`}
+                              />
                             </div>
-                            {rating.description && (
-                              <CardDescription className="text-sm mt-2 text-left">
-                                {rating.description}
-                              </CardDescription>
-                            )}
                           </CardHeader>
                         </CollapsibleTrigger>
                         <CollapsibleContent>
-                          {parsedContent ? (
-                            <CardContent className="pt-0">
-                              <Table>
-                                <TableHeader>
-                                  <TableRow>
-                                    <TableHead className="w-2/3">Action Context</TableHead>
-                                    <TableHead>Score Value</TableHead>
-                                  </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                  {parsedContent.map((row, idx) => (
-                                    <TableRow key={idx}>
-                                      <TableCell className="font-medium">{row.label}</TableCell>
-                                      <TableCell className={
-                                        row.value.includes('+') ? 'text-green-600 font-bold' : 
-                                        row.value.includes('-') ? 'text-red-600 font-bold' : ''
-                                      }>
-                                        {row.value}
-                                      </TableCell>
-                                    </TableRow>
-                                  ))}
-                                </TableBody>
-                              </Table>
-                            </CardContent>
-                          ) : rating.content && (
-                            <CardContent className="pt-0">
-                              <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-                                {rating.content}
-                              </p>
-                            </CardContent>
-                          )}
+                          <CardContent className="space-y-3 pt-0">
+                            {Object.entries(subcategories).map(([subcategory, ratingsInSubcat]) => {
+                              const subcategoryKey = `${categoryKey}-${subcategory}`;
+                              const isSubcategoryExpanded = expandedSubcategories.has(subcategoryKey);
+                              
+                              return (
+                                <Collapsible
+                                  key={subcategoryKey}
+                                  open={isSubcategoryExpanded}
+                                  onOpenChange={(open) => {
+                                    setExpandedSubcategories(prev => {
+                                      const newSet = new Set(prev);
+                                      if (open) {
+                                        newSet.add(subcategoryKey);
+                                      } else {
+                                        newSet.delete(subcategoryKey);
+                                      }
+                                      return newSet;
+                                    });
+                                  }}
+                                >
+                                  <Card className="border-l-4 border-l-indigo-400">
+                                    <CollapsibleTrigger className="w-full">
+                                      <CardHeader className="pb-2 hover:bg-accent/30 transition-colors cursor-pointer">
+                                        <div className="flex items-center justify-between">
+                                          <CardTitle className="text-base font-semibold">
+                                            {subcategory}
+                                          </CardTitle>
+                                          <div className="flex items-center gap-2">
+                                            <Badge variant="outline" className="text-xs">
+                                              {ratingsInSubcat.length}
+                                            </Badge>
+                                            <ChevronDown 
+                                              className={`h-4 w-4 transition-transform ${isSubcategoryExpanded ? 'rotate-180' : ''}`}
+                                            />
+                                          </div>
+                                        </div>
+                                      </CardHeader>
+                                    </CollapsibleTrigger>
+                                    <CollapsibleContent>
+                                      <CardContent className="space-y-2 pt-0">
+                                        {ratingsInSubcat.map((rating) => {
+                                          const parsedContent = parseContent(rating.content);
+                                          const isExpanded = expandedRatings.has(rating.id);
+                                          
+                                          return (
+                                            <Collapsible
+                                              key={rating.id}
+                                              open={isExpanded}
+                                              onOpenChange={(open) => {
+                                                setExpandedRatings(prev => {
+                                                  const newSet = new Set(prev);
+                                                  if (open) {
+                                                    newSet.add(rating.id);
+                                                  } else {
+                                                    newSet.delete(rating.id);
+                                                  }
+                                                  return newSet;
+                                                });
+                                              }}
+                                            >
+                                              <Card className="border">
+                                                <CollapsibleTrigger className="w-full">
+                                                  <CardHeader className="pb-2 hover:bg-accent/20 transition-colors cursor-pointer">
+                                                    <div className="flex items-start justify-between gap-3">
+                                                      <div className="flex-1 min-w-0 text-left">
+                                                        <div className="flex items-center gap-2">
+                                                          <CardTitle className="text-sm">
+                                                            {rating.title}
+                                                          </CardTitle>
+                                                          <ChevronDown 
+                                                            className={`h-3 w-3 transition-transform flex-shrink-0 ${isExpanded ? 'rotate-180' : ''}`}
+                                                          />
+                                                        </div>
+                                                      </div>
+                                                    </div>
+                                                    {rating.description && (
+                                                      <CardDescription className="text-xs mt-1 text-left">
+                                                        {rating.description}
+                                                      </CardDescription>
+                                                    )}
+                                                  </CardHeader>
+                                                </CollapsibleTrigger>
+                                                <CollapsibleContent>
+                                                  {parsedContent ? (
+                                                    <CardContent className="pt-0">
+                                                      <Table>
+                                                        <TableHeader>
+                                                          <TableRow>
+                                                            <TableHead className="w-2/3 text-xs">Action Context</TableHead>
+                                                            <TableHead className="text-xs">Score Value</TableHead>
+                                                          </TableRow>
+                                                        </TableHeader>
+                                                        <TableBody>
+                                                          {parsedContent.map((row, idx) => (
+                                                            <TableRow key={idx}>
+                                                              <TableCell className="text-xs">{row.label}</TableCell>
+                                                              <TableCell className={`text-xs ${
+                                                                row.value.includes('+') ? 'text-green-600 font-bold' : 
+                                                                row.value.includes('-') ? 'text-red-600 font-bold' : ''
+                                                              }`}>
+                                                                {row.value}
+                                                              </TableCell>
+                                                            </TableRow>
+                                                          ))}
+                                                        </TableBody>
+                                                      </Table>
+                                                    </CardContent>
+                                                  ) : rating.content && (
+                                                    <CardContent className="pt-0">
+                                                      <p className="text-xs text-muted-foreground whitespace-pre-wrap">
+                                                        {rating.content}
+                                                      </p>
+                                                    </CardContent>
+                                                  )}
+                                                </CollapsibleContent>
+                                              </Card>
+                                            </Collapsible>
+                                          );
+                                        })}
+                                      </CardContent>
+                                    </CollapsibleContent>
+                                  </Card>
+                                </Collapsible>
+                              );
+                            })}
+                          </CardContent>
                         </CollapsibleContent>
                       </Card>
                     </Collapsible>
