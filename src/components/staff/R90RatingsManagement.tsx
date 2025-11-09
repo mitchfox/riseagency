@@ -53,6 +53,7 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
   const [isAddingNew, setIsAddingNew] = useState(false);
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
   const [expandedSubcategories, setExpandedSubcategories] = useState<Set<string>>(new Set());
+  const [isSplitting, setIsSplitting] = useState(false);
   
   const [formData, setFormData] = useState({
     title: '',
@@ -223,6 +224,27 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
     return 'bg-green-500 text-white';
   };
 
+  const handleSplitBundledRatings = async () => {
+    if (!confirm('This will split all bundled R90 ratings (with multiple scores in content) into separate entries. This cannot be undone. Continue?')) {
+      return;
+    }
+
+    setIsSplitting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('split-r90-ratings');
+      
+      if (error) throw error;
+      
+      toast.success(`Successfully split ratings: ${data.bundledRatingsProcessed} bundled → ${data.newRatingsCreated} individual ratings`);
+      fetchRatings();
+    } catch (error: any) {
+      console.error('Error splitting ratings:', error);
+      toast.error('Failed to split ratings: ' + error.message);
+    } finally {
+      setIsSplitting(false);
+    }
+  };
+
   const toggleCategory = (category: string) => {
     const newExpanded = new Set(expandedCategories);
     if (newExpanded.has(category)) {
@@ -251,10 +273,20 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
         <DialogHeader>
           <div className="flex items-center justify-between">
             <DialogTitle>Manage R90 Ratings</DialogTitle>
-            <Button onClick={handleAddNew} size="sm">
-              <Plus className="w-4 h-4 mr-2" />
-              Add New Rating
-            </Button>
+            <div className="flex gap-2">
+              <Button 
+                onClick={handleSplitBundledRatings} 
+                variant="outline" 
+                size="sm"
+                disabled={isSplitting}
+              >
+                {isSplitting ? 'Splitting...' : 'Split Bundled Ratings'}
+              </Button>
+              <Button onClick={handleAddNew} size="sm">
+                <Plus className="w-4 h-4 mr-2" />
+                Add New Rating
+              </Button>
+            </div>
           </div>
         </DialogHeader>
 

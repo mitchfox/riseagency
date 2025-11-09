@@ -41,3 +41,6 @@ verify_jwt = true
 
 [functions.find-r90-rating]
 verify_jwt = true
+
+[functions.split-r90-ratings]
+verify_jwt = true
