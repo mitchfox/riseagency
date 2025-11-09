@@ -540,6 +540,7 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
 
       // Update form data with generated paragraphs
       if (aiWriter.targetPointIndex !== undefined) {
+        // Update existing point
         const updatedPoints = [...(formData.points || [])];
         updatedPoints[aiWriter.targetPointIndex] = {
           ...updatedPoints[aiWriter.targetPointIndex],
@@ -547,9 +548,21 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
           paragraph_2: paragraph2 || updatedPoints[aiWriter.targetPointIndex].paragraph_2
         };
         setFormData({ ...formData, points: updatedPoints });
+      } else {
+        // Create new point
+        const newPoint = {
+          title: "",
+          paragraph_1: paragraph1,
+          paragraph_2: paragraph2,
+          images: []
+        };
+        setFormData({
+          ...formData,
+          points: [...(formData.points || []), newPoint]
+        });
       }
 
-      toast.success("Analysis paragraphs generated successfully");
+      toast.success("Analysis point created successfully");
       setAiWriter({ open: false, category: 'pre-match', paragraph1Info: '', paragraph2Info: '' });
     } catch (error: any) {
       console.error('Error generating with AI:', error);
