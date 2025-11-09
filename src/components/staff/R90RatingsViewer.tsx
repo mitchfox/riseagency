@@ -49,6 +49,7 @@ export const R90RatingsViewer = ({ open, onOpenChange, initialCategory, searchTe
   const [actionContext, setActionContext] = useState('');
   const [showAiSearch, setShowAiSearch] = useState(false);
   const [expandedRatings, setExpandedRatings] = useState<Set<string>>(new Set());
+  const [searchFilter, setSearchFilter] = useState('');
 
   // Update category when initialCategory changes
   useEffect(() => {
@@ -72,6 +73,13 @@ export const R90RatingsViewer = ({ open, onOpenChange, initialCategory, searchTe
     }
   }, [open, selectedCategory]);
 
+  // Re-filter when search filter changes
+  useEffect(() => {
+    if (open) {
+      fetchRatings();
+    }
+  }, [searchFilter]);
+
   const fetchRatings = async () => {
     setLoading(true);
     try {
@@ -90,13 +98,24 @@ export const R90RatingsViewer = ({ open, onOpenChange, initialCategory, searchTe
       
       let filteredData = data || [];
       
-      // Filter by search term if provided
+      // Filter by search term if provided (legacy support for prop)
       if (searchTerm && searchTerm.trim()) {
         const searchLower = searchTerm.toLowerCase();
         filteredData = filteredData.filter(rating => 
           rating.title?.toLowerCase().includes(searchLower) ||
           rating.description?.toLowerCase().includes(searchLower) ||
           rating.content?.toLowerCase().includes(searchLower)
+        );
+      }
+      
+      // Apply live search filter
+      if (searchFilter && searchFilter.trim()) {
+        const filterLower = searchFilter.toLowerCase();
+        filteredData = filteredData.filter(rating => 
+          rating.title?.toLowerCase().includes(filterLower) ||
+          rating.description?.toLowerCase().includes(filterLower) ||
+          rating.content?.toLowerCase().includes(filterLower) ||
+          rating.category?.toLowerCase().includes(filterLower)
         );
       }
       
@@ -281,6 +300,25 @@ export const R90RatingsViewer = ({ open, onOpenChange, initialCategory, searchTe
               ))}
             </SelectContent>
           </Select>
+
+          {/* Live Search Filter */}
+          <div className="space-y-2">
+            <Label htmlFor="search-filter" className="text-sm font-medium">
+              Search Ratings
+            </Label>
+            <Input
+              id="search-filter"
+              value={searchFilter}
+              onChange={(e) => setSearchFilter(e.target.value)}
+              placeholder="Type to filter ratings..."
+              className="w-full"
+            />
+            {searchFilter && (
+              <p className="text-xs text-muted-foreground">
+                Showing ratings containing "{searchFilter}"
+              </p>
+            )}
+          </div>
 
           {/* Ratings List */}
           <ScrollArea className="h-[60vh]">
