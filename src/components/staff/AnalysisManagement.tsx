@@ -76,7 +76,8 @@ interface Matchup {
 interface AIWriterState {
   open: boolean;
   category: 'pre-match' | 'post-match' | 'concept' | 'other';
-  infoInput: string;
+  paragraph1Info: string;
+  paragraph2Info: string;
   targetPointIndex?: number;
 }
 
@@ -94,7 +95,8 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
   const [aiWriter, setAiWriter] = useState<AIWriterState>({
     open: false,
     category: 'pre-match',
-    infoInput: ''
+    paragraph1Info: '',
+    paragraph2Info: ''
   });
 
   // Form states
@@ -486,84 +488,77 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
     setFormData({ ...formData, points: updatedPoints });
   };
 
-  const openAIWriter = (category: AIWriterState['category'], pointIndex?: number) => {
+
+  const openAIWriter = (category: 'pre-match' | 'post-match' | 'concept' | 'other', pointIndex?: number) => {
     setAiWriter({
       open: true,
       category,
-      infoInput: '',
+      paragraph1Info: '',
+      paragraph2Info: '',
       targetPointIndex: pointIndex
     });
   };
 
   const generateWithAIWriter = async () => {
-    if (!aiWriter.infoInput.trim()) {
-      toast.error('Please enter some information first');
+    if (!aiWriter.paragraph1Info.trim() && !aiWriter.paragraph2Info.trim()) {
+      toast.error("Please provide information for at least one paragraph");
       return;
     }
 
     setAiGenerating(true);
     try {
-      const context = `Analysis Type: ${aiWriter.category}
-Important Information: ${aiWriter.infoInput}`;
-      
-      // Generate both paragraphs
-      const { data: para1Data, error: error1 } = await supabase.functions.invoke('ai-write', {
-        body: { 
-          prompt: `Write the first paragraph of a ${aiWriter.category} analysis based on the information provided.`,
-          context,
-          type: 'analysis-paragraph'
-        }
-      });
+      let paragraph1 = '';
+      let paragraph2 = '';
 
-      if (error1) throw error1;
-      if (para1Data.error) {
-        if (para1Data.error.includes('Rate limit')) {
-          toast.error('AI rate limit reached. Please wait a moment and try again.');
-        } else if (para1Data.error.includes('credits')) {
-          toast.error('AI credits exhausted. Please add credits in Settings > Workspace > Usage.');
-        } else {
-          throw new Error(para1Data.error);
-        }
-        return;
-      }
-
-      const { data: para2Data, error: error2 } = await supabase.functions.invoke('ai-write', {
-        body: { 
-          prompt: `Write the second paragraph of a ${aiWriter.category} analysis that expands on the first paragraph.`,
-          context: context + `\n\nFirst Paragraph: ${para1Data.text}`,
-          type: 'analysis-paragraph'
-        }
-      });
-
-      if (error2) throw error2;
-      if (para2Data.error) throw new Error(para2Data.error);
-
-      // Add or update point
-      if (aiWriter.targetPointIndex !== undefined) {
-        updatePoint(aiWriter.targetPointIndex, 'paragraph_1', para1Data.text);
-        updatePoint(aiWriter.targetPointIndex, 'paragraph_2', para2Data.text);
-      } else {
-        const newPoint: Point = {
-          title: aiWriter.infoInput.substring(0, 50),
-          paragraph_1: para1Data.text,
-          paragraph_2: para2Data.text,
-          images: []
-        };
-        setFormData({
-          ...formData,
-          points: [...(formData.points || []), newPoint]
+      // Generate paragraph 1 if info provided
+      if (aiWriter.paragraph1Info.trim()) {
+        const { data: data1, error: error1 } = await supabase.functions.invoke('ai-write', {
+          body: {
+            prompt: `Write a professional analysis paragraph based on this information: ${aiWriter.paragraph1Info}`,
+            context: `Analysis Type: ${aiWriter.category}`,
+            type: 'analysis-paragraph'
+          }
         });
+
+        if (error1) throw error1;
+        paragraph1 = data1.text;
       }
 
-      toast.success('AI content generated successfully!');
-      setAiWriter({ open: false, category: 'pre-match', infoInput: '' });
+      // Generate paragraph 2 if info provided
+      if (aiWriter.paragraph2Info.trim()) {
+        const { data: data2, error: error2 } = await supabase.functions.invoke('ai-write', {
+          body: {
+            prompt: `Write a professional analysis paragraph based on this information: ${aiWriter.paragraph2Info}`,
+            context: `Analysis Type: ${aiWriter.category}`,
+            type: 'analysis-paragraph'
+          }
+        });
+
+        if (error2) throw error2;
+        paragraph2 = data2.text;
+      }
+
+      // Update form data with generated paragraphs
+      if (aiWriter.targetPointIndex !== undefined) {
+        const updatedPoints = [...(formData.points || [])];
+        updatedPoints[aiWriter.targetPointIndex] = {
+          ...updatedPoints[aiWriter.targetPointIndex],
+          paragraph_1: paragraph1 || updatedPoints[aiWriter.targetPointIndex].paragraph_1,
+          paragraph_2: paragraph2 || updatedPoints[aiWriter.targetPointIndex].paragraph_2
+        };
+        setFormData({ ...formData, points: updatedPoints });
+      }
+
+      toast.success("Analysis paragraphs generated successfully");
+      setAiWriter({ open: false, category: 'pre-match', paragraph1Info: '', paragraph2Info: '' });
     } catch (error: any) {
-      console.error('AI generation error:', error);
-      toast.error('Failed to generate content with AI');
+      console.error('Error generating with AI:', error);
+      toast.error(error.message || "Failed to generate content");
     } finally {
       setAiGenerating(false);
     }
   };
+
 
   const generateWithAI = async (field: string, pointIndex?: number) => {
     setAiGenerating(true);
@@ -680,17 +675,17 @@ Title: ${formData.scheme_title || 'Not specified'}`;
               <TabsContent value="pre-match" className="space-y-4">
                 {analysisType === "pre-match" && (
                   <>
-                    <div className="flex justify-between items-center">
-                      <h3 className="font-semibold">Pre-Match Analysis</h3>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => openAIWriter('pre-match')}
-                      >
-                        <Sparkles className="w-4 h-4 mr-2" />
-                        AI Pre-Match Point Writer
-                      </Button>
-                    </div>
+                  <div className="flex justify-between items-center">
+                    <h3 className="font-semibold">Pre-Match Analysis</h3>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => openAIWriter('pre-match')}
+                    >
+                      <Sparkles className="w-4 h-4 mr-2" />
+                      AI Pre-Match Point Writer
+                    </Button>
+                  </div>
                     <div className="space-y-4">
                       <h3 className="font-semibold">Overview</h3>
                     <div>
@@ -1104,17 +1099,17 @@ Title: ${formData.scheme_title || 'Not specified'}`;
               <TabsContent value="post-match" className="space-y-4">
                 {analysisType === "post-match" && (
                   <>
-                    <div className="flex justify-between items-center">
-                      <h3 className="font-semibold">Post-Match Analysis</h3>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => openAIWriter('post-match')}
-                      >
-                        <Sparkles className="w-4 h-4 mr-2" />
-                        AI Post-Match Point Writer
-                      </Button>
-                    </div>
+                  <div className="flex justify-between items-center">
+                    <h3 className="font-semibold">Post-Match Analysis</h3>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => openAIWriter('post-match')}
+                    >
+                      <Sparkles className="w-4 h-4 mr-2" />
+                      AI Post-Match Point Writer
+                    </Button>
+                  </div>
                     <div className="space-y-4">
                       <h3 className="font-semibold">Overview</h3>
                     <div>
@@ -1253,7 +1248,17 @@ Title: ${formData.scheme_title || 'Not specified'}`;
               </TabsContent>
 
               <TabsContent value="other" className="space-y-4">
-                <h3 className="font-semibold">Other Settings</h3>
+                <div className="flex justify-between items-center">
+                  <h3 className="font-semibold">Other Settings</h3>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => openAIWriter('other')}
+                  >
+                    <Sparkles className="w-4 h-4 mr-2" />
+                    AI Other Point Writer
+                  </Button>
+                </div>
                 
                 {/* Link to Player Performance Report */}
                 <div className="space-y-4 border-t pt-4">
@@ -1446,31 +1451,43 @@ Title: ${formData.scheme_title || 'Not specified'}`;
       <Dialog open={aiWriter.open} onOpenChange={(open) => setAiWriter({ ...aiWriter, open })}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>AI {aiWriter.category.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')} Writer</DialogTitle>
+            <DialogTitle>AI {aiWriter.category.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')} Point Writer</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label>Important Information</Label>
+              <Label>Paragraph 1 Information</Label>
               <p className="text-xs text-muted-foreground mb-2">
-                Enter key details that should be included in the analysis
+                Enter key details for the first paragraph
               </p>
               <Textarea
-                value={aiWriter.infoInput}
-                onChange={(e) => setAiWriter({ ...aiWriter, infoInput: e.target.value })}
-                placeholder="e.g., Player showed excellent positioning, created 3 key chances, dominated aerial duels..."
-                rows={4}
+                value={aiWriter.paragraph1Info}
+                onChange={(e) => setAiWriter({ ...aiWriter, paragraph1Info: e.target.value })}
+                placeholder="e.g., Player showed excellent positioning, created 3 key chances..."
+                rows={3}
+              />
+            </div>
+            <div>
+              <Label>Paragraph 2 Information</Label>
+              <p className="text-xs text-muted-foreground mb-2">
+                Enter key details for the second paragraph
+              </p>
+              <Textarea
+                value={aiWriter.paragraph2Info}
+                onChange={(e) => setAiWriter({ ...aiWriter, paragraph2Info: e.target.value })}
+                placeholder="e.g., Dominated aerial duels, strong defensive contribution..."
+                rows={3}
               />
             </div>
             <div className="flex justify-end gap-2">
               <Button
                 variant="outline"
-                onClick={() => setAiWriter({ open: false, category: 'pre-match', infoInput: '' })}
+                onClick={() => setAiWriter({ open: false, category: 'pre-match', paragraph1Info: '', paragraph2Info: '' })}
               >
                 Cancel
               </Button>
               <Button
                 onClick={generateWithAIWriter}
-                disabled={aiGenerating || !aiWriter.infoInput.trim()}
+                disabled={aiGenerating || (!aiWriter.paragraph1Info.trim() && !aiWriter.paragraph2Info.trim())}
               >
                 <Sparkles className="w-4 h-4 mr-2" />
                 {aiGenerating ? 'Generating...' : 'Generate Paragraphs'}
