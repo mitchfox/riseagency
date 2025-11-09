@@ -1199,6 +1199,42 @@ export type Database = {
         }
         Relationships: []
       }
+      r90_ratings: {
+        Row: {
+          attachments: Json | null
+          category: string | null
+          content: string | null
+          created_at: string
+          description: string | null
+          id: string
+          tags: string[] | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          attachments?: Json | null
+          category?: string | null
+          content?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          attachments?: Json | null
+          category?: string | null
+          content?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       site_visits: {
         Row: {
           created_at: string

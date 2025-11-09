@@ -11,11 +11,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
-import { Plus, Edit, Trash2, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Database, Search, Calendar, Clock, Dumbbell, Brain, Target, BookOpen, Quote } from "lucide-react";
+import { Plus, Edit, Trash2, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Database, Search, Calendar, Clock, Dumbbell, Brain, Target, BookOpen, Quote, LineChart } from "lucide-react";
 import { ExerciseDatabaseSelector } from "./ExerciseDatabaseSelector";
 
 
-type TableType = 'coaching_sessions' | 'coaching_programmes' | 'coaching_drills' | 'coaching_exercises' | 'coaching_analysis' | 'psychological_sessions' | 'coaching_aphorisms';
+type TableType = 'coaching_sessions' | 'coaching_programmes' | 'coaching_drills' | 'coaching_exercises' | 'coaching_analysis' | 'psychological_sessions' | 'coaching_aphorisms' | 'r90_ratings';
 
 interface Exercise {
   name: string;
@@ -105,6 +105,13 @@ const tableConfigs = {
     icon: Quote,
     color: 'amber',
   },
+  r90_ratings: {
+    label: 'R90 Ratings',
+    singular: 'R90 Rating',
+    fields: ['title', 'description', 'content', 'category'],
+    icon: LineChart,
+    color: 'indigo',
+  },
 };
 
 export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
@@ -170,6 +177,19 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
       return;
     }
     
+    // For R90 ratings, use predefined categories
+    if (activeTab === 'r90_ratings') {
+      setCategories([
+        'Pressing',
+        'Defensive',
+        'Aerial Duels',
+        'Attacking Crosses',
+        'On-Ball Decision-Making',
+        'Off-Ball Movement'
+      ]);
+      return;
+    }
+    
     try {
       const { data, error } = await supabase
         .from(activeTab)
@@ -231,6 +251,11 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
         // Apply skill filter
         if (selectedSkill !== 'all') {
           query = query.contains('tags', [selectedSkill]);
+        }
+      } else if (activeTab === 'r90_ratings') {
+        // Apply category filter for R90 ratings
+        if (selectedCategory !== 'all') {
+          query = query.eq('category', selectedCategory);
         }
       }
 
@@ -862,7 +887,7 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
                           </div>
                         )}
 
-                        {key !== 'coaching_sessions' && (
+                        {key !== 'coaching_sessions' && key !== 'r90_ratings' && (
                           <div className="space-y-2">
                             <Label htmlFor="category">Category</Label>
                             <Input
@@ -870,6 +895,28 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
                               value={formData.category}
                               onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                             />
+                          </div>
+                        )}
+
+                        {key === 'r90_ratings' && (
+                          <div className="space-y-2">
+                            <Label htmlFor="category">Category *</Label>
+                            <Select
+                              value={formData.category}
+                              onValueChange={(value) => setFormData({ ...formData, category: value })}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select category" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="Pressing">Pressing</SelectItem>
+                                <SelectItem value="Defensive">Defensive</SelectItem>
+                                <SelectItem value="Aerial Duels">Aerial Duels</SelectItem>
+                                <SelectItem value="Attacking Crosses">Attacking Crosses</SelectItem>
+                                <SelectItem value="On-Ball Decision-Making">On-Ball Decision-Making</SelectItem>
+                                <SelectItem value="Off-Ball Movement">Off-Ball Movement</SelectItem>
+                              </SelectContent>
+                            </Select>
                           </div>
                         )}
                       </>
@@ -1133,6 +1180,20 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
                     </Select>
                   </>
                 )}
+                
+                {activeTab === 'r90_ratings' && (
+                  <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                    <SelectTrigger className="w-full sm:w-64">
+                      <SelectValue placeholder="All Categories" />
+                    </SelectTrigger>
+                    <SelectContent className="z-50">
+                      <SelectItem value="all">All Categories</SelectItem>
+                      {categories.map((cat) => (
+                        <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
               </div>
             )}
 
@@ -1162,6 +1223,7 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
                     'cyan': 'border-l-cyan-500',
                     'pink': 'border-l-pink-500',
                     'amber': 'border-l-amber-500',
+                    'indigo': 'border-l-indigo-500',
                   }[config.color] || 'border-l-primary';
                   
                   const bgClass = {
@@ -1172,6 +1234,7 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
                     'cyan': 'bg-cyan-500/10',
                     'pink': 'bg-pink-500/10',
                     'amber': 'bg-amber-500/10',
+                    'indigo': 'bg-indigo-500/10',
                   }[config.color] || 'bg-primary/10';
                   
                   const iconColorClass = {
@@ -1182,6 +1245,7 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
                     'cyan': 'text-cyan-600',
                     'pink': 'text-pink-600',
                     'amber': 'text-amber-600',
+                    'indigo': 'text-indigo-600',
                   }[config.color] || 'text-primary';
 
                   return (
