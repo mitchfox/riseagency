@@ -865,9 +865,9 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
 
               <TabsContent value="analysis" className="space-y-4">
                 <Tabs defaultValue="performance" className="w-full">
-                  <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="performance">Performance Reports</TabsTrigger>
-                    <TabsTrigger value="tactical">Tactical Analysis</TabsTrigger>
+                  <TabsList className="flex flex-nowrap overflow-x-auto md:grid md:grid-cols-2 w-full gap-1 bg-muted/30 border-b p-1">
+                    <TabsTrigger value="performance" className="flex-shrink-0 whitespace-nowrap px-4 py-2 text-sm md:text-base min-w-[160px]">Performance Reports</TabsTrigger>
+                    <TabsTrigger value="tactical" className="flex-shrink-0 whitespace-nowrap px-4 py-2 text-sm md:text-base min-w-[160px]">Tactical Analysis</TabsTrigger>
                   </TabsList>
 
                   <TabsContent value="performance" className="mt-4">
