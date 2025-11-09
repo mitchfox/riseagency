@@ -872,11 +872,12 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
 
                   <TabsContent value="performance" className="mt-4">
                     <Card>
-                      <CardHeader>
+                      <CardHeader className="px-3 md:px-6 py-3 md:py-4">
                         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                          <CardTitle>Performance Reports</CardTitle>
+                          <CardTitle className="hidden md:block text-lg">Performance Reports</CardTitle>
                           <Button
                             size="sm"
+                            className="w-full sm:w-auto"
                             onClick={() => {
                               setCreateReportPlayerId(selectedPlayerId!);
                               setCreateReportPlayerName(selectedPlayer!.name);
@@ -888,7 +889,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                           </Button>
                         </div>
                       </CardHeader>
-                      <CardContent>
+                      <CardContent className="px-3 md:px-6 py-4">
                         {playerAnalyses[selectedPlayerId]?.length > 0 ? (
                           <div className="space-y-3">
                             {playerAnalyses[selectedPlayerId].map((analysis) => {
@@ -1032,10 +1033,10 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
 
                   <TabsContent value="tactical" className="mt-4">
                     <Card>
-                      <CardHeader>
-                        <CardTitle>Tactical Analysis</CardTitle>
+                      <CardHeader className="px-3 md:px-6 py-3 md:py-4">
+                        <CardTitle className="hidden md:block text-lg">Tactical Analysis</CardTitle>
                       </CardHeader>
-                      <CardContent>
+                      <CardContent className="px-3 md:px-6 py-4">
                         {tacticalAnalyses[selectedPlayerId]?.length > 0 ? (
                           <div className="space-y-3">
                             {tacticalAnalyses[selectedPlayerId].map((analysis) => (
