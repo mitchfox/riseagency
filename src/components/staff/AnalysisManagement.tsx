@@ -630,26 +630,339 @@ Title: ${formData.scheme_title || 'Not specified'}`;
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row gap-2">
-        <Button 
-          onClick={() => handleOpenDialog("pre-match")}
-          className="bg-gradient-to-r from-slate-300 to-slate-400 text-slate-900 hover:from-slate-400 hover:to-slate-500 w-full sm:w-auto"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          <span className="sm:inline">New Pre-Match Analysis</span>
-        </Button>
-        <Button 
-          onClick={() => handleOpenDialog("post-match")}
-          className="bg-gradient-to-r from-amber-400 to-yellow-500 text-slate-900 hover:from-amber-500 hover:to-yellow-600 w-full sm:w-auto"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          <span className="sm:inline">New Post-Match Analysis</span>
-        </Button>
-        <Button onClick={() => handleOpenDialog("concept")} className="w-full sm:w-auto">
-          <Plus className="w-4 h-4 mr-2" />
-          New Concept
-        </Button>
-      </div>
+      <Tabs defaultValue="pre-match" className="space-y-4">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="pre-match">Pre-Match</TabsTrigger>
+          <TabsTrigger value="post-match">Post-Match</TabsTrigger>
+          <TabsTrigger value="concepts">Concepts</TabsTrigger>
+          <TabsTrigger value="other">Other</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="pre-match" className="space-y-4">
+          <Button 
+            onClick={() => handleOpenDialog("pre-match")}
+            className="bg-gradient-to-r from-slate-300 to-slate-400 text-slate-900 hover:from-slate-400 hover:to-slate-500 w-full"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            New Pre-Match Analysis
+          </Button>
+
+          <Card className="bg-secondary/20">
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Sparkles className="w-5 h-5" />
+                AI Pre-Match Point Writer
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label>Paragraph 1 Info</Label>
+                <Textarea
+                  placeholder="Enter key information for paragraph 1..."
+                  value={aiWriter.paragraph1Info}
+                  onChange={(e) => setAiWriter({ ...aiWriter, paragraph1Info: e.target.value, category: 'pre-match' })}
+                />
+              </div>
+              <div>
+                <Label>Paragraph 2 Info</Label>
+                <Textarea
+                  placeholder="Enter key information for paragraph 2..."
+                  value={aiWriter.paragraph2Info}
+                  onChange={(e) => setAiWriter({ ...aiWriter, paragraph2Info: e.target.value, category: 'pre-match' })}
+                />
+              </div>
+              <Button 
+                onClick={generateWithAIWriter} 
+                disabled={aiGenerating}
+                className="w-full"
+              >
+                <Sparkles className="w-4 h-4 mr-2" />
+                {aiGenerating ? "Generating..." : "Generate Point"}
+              </Button>
+            </CardContent>
+          </Card>
+
+          <div className="grid gap-4">
+            {analyses.filter(a => a.analysis_type === "pre-match").map((analysis) => (
+              <Card key={analysis.id}>
+                <CardHeader>
+                  <CardTitle className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                    <div className="flex-1">
+                      <span className="text-sm text-muted-foreground mr-2">Pre-Match</span>
+                      <span className="text-sm sm:text-base">
+                        {analysis.title || `${analysis.home_team} vs ${analysis.away_team}`}
+                      </span>
+                    </div>
+                    <div className="flex gap-2 w-full sm:w-auto">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => window.open(`/analysis/${analysis.id}`, '_blank')}
+                        className="flex-1 sm:flex-initial"
+                      >
+                        View Analysis
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleOpenDialog("pre-match", analysis)}
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </Button>
+                      {isAdmin && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDelete(analysis.id)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      )}
+                    </div>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground">
+                    Created: {new Date(analysis.created_at).toLocaleDateString()}
+                  </p>
+                  {analysis.key_details && (
+                    <p className="text-sm mt-2">{analysis.key_details}</p>
+                  )}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="post-match" className="space-y-4">
+          <Button 
+            onClick={() => handleOpenDialog("post-match")}
+            className="bg-gradient-to-r from-amber-400 to-yellow-500 text-slate-900 hover:from-amber-500 hover:to-yellow-600 w-full"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            New Post-Match Analysis
+          </Button>
+
+          <Card className="bg-secondary/20">
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Sparkles className="w-5 h-5" />
+                AI Post-Match Point Writer
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label>Paragraph 1 Info</Label>
+                <Textarea
+                  placeholder="Enter key information for paragraph 1..."
+                  value={aiWriter.paragraph1Info}
+                  onChange={(e) => setAiWriter({ ...aiWriter, paragraph1Info: e.target.value, category: 'post-match' })}
+                />
+              </div>
+              <div>
+                <Label>Paragraph 2 Info</Label>
+                <Textarea
+                  placeholder="Enter key information for paragraph 2..."
+                  value={aiWriter.paragraph2Info}
+                  onChange={(e) => setAiWriter({ ...aiWriter, paragraph2Info: e.target.value, category: 'post-match' })}
+                />
+              </div>
+              <Button 
+                onClick={generateWithAIWriter} 
+                disabled={aiGenerating}
+                className="w-full"
+              >
+                <Sparkles className="w-4 h-4 mr-2" />
+                {aiGenerating ? "Generating..." : "Generate Point"}
+              </Button>
+            </CardContent>
+          </Card>
+
+          <div className="grid gap-4">
+            {analyses.filter(a => a.analysis_type === "post-match").map((analysis) => (
+              <Card key={analysis.id}>
+                <CardHeader>
+                  <CardTitle className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                    <div className="flex-1">
+                      <span className="text-sm text-muted-foreground mr-2">Post-Match</span>
+                      <span className="text-sm sm:text-base">
+                        {analysis.title || `${analysis.home_team} vs ${analysis.away_team}`}
+                      </span>
+                    </div>
+                    <div className="flex gap-2 w-full sm:w-auto">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => window.open(`/analysis/${analysis.id}`, '_blank')}
+                        className="flex-1 sm:flex-initial"
+                      >
+                        View Analysis
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleOpenDialog("post-match", analysis)}
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </Button>
+                      {isAdmin && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDelete(analysis.id)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      )}
+                    </div>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground">
+                    Created: {new Date(analysis.created_at).toLocaleDateString()}
+                  </p>
+                  {analysis.key_details && (
+                    <p className="text-sm mt-2">{analysis.key_details}</p>
+                  )}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="concepts" className="space-y-4">
+          <Button 
+            onClick={() => handleOpenDialog("concept")}
+            className="w-full"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            New Concept
+          </Button>
+
+          <Card className="bg-secondary/20">
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Sparkles className="w-5 h-5" />
+                AI Concept Writer
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label>Paragraph 1 Info</Label>
+                <Textarea
+                  placeholder="Enter key information for paragraph 1..."
+                  value={aiWriter.paragraph1Info}
+                  onChange={(e) => setAiWriter({ ...aiWriter, paragraph1Info: e.target.value, category: 'concept' })}
+                />
+              </div>
+              <div>
+                <Label>Paragraph 2 Info</Label>
+                <Textarea
+                  placeholder="Enter key information for paragraph 2..."
+                  value={aiWriter.paragraph2Info}
+                  onChange={(e) => setAiWriter({ ...aiWriter, paragraph2Info: e.target.value, category: 'concept' })}
+                />
+              </div>
+              <Button 
+                onClick={generateWithAIWriter} 
+                disabled={aiGenerating}
+                className="w-full"
+              >
+                <Sparkles className="w-4 h-4 mr-2" />
+                {aiGenerating ? "Generating..." : "Generate Point"}
+              </Button>
+            </CardContent>
+          </Card>
+
+          <div className="grid gap-4">
+            {analyses.filter(a => a.analysis_type === "concept").map((analysis) => (
+              <Card key={analysis.id}>
+                <CardHeader>
+                  <CardTitle className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                    <div className="flex-1">
+                      <span className="text-sm text-muted-foreground mr-2">Concept</span>
+                      <span className="text-sm sm:text-base">
+                        {analysis.title || "Untitled Concept"}
+                      </span>
+                    </div>
+                    <div className="flex gap-2 w-full sm:w-auto">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => window.open(`/analysis/${analysis.id}`, '_blank')}
+                        className="flex-1 sm:flex-initial"
+                      >
+                        View Analysis
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleOpenDialog("concept", analysis)}
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </Button>
+                      {isAdmin && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDelete(analysis.id)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      )}
+                    </div>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground">
+                    Created: {new Date(analysis.created_at).toLocaleDateString()}
+                  </p>
+                  {analysis.concept && (
+                    <p className="text-sm mt-2">{analysis.concept}</p>
+                  )}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="other" className="space-y-4">
+          <Card className="bg-secondary/20">
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Sparkles className="w-5 h-5" />
+                AI Point Writer
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label>Paragraph 1 Info</Label>
+                <Textarea
+                  placeholder="Enter key information for paragraph 1..."
+                  value={aiWriter.paragraph1Info}
+                  onChange={(e) => setAiWriter({ ...aiWriter, paragraph1Info: e.target.value, category: 'other' })}
+                />
+              </div>
+              <div>
+                <Label>Paragraph 2 Info</Label>
+                <Textarea
+                  placeholder="Enter key information for paragraph 2..."
+                  value={aiWriter.paragraph2Info}
+                  onChange={(e) => setAiWriter({ ...aiWriter, paragraph2Info: e.target.value, category: 'other' })}
+                />
+              </div>
+              <Button 
+                onClick={generateWithAIWriter} 
+                disabled={aiGenerating}
+                className="w-full"
+              >
+                <Sparkles className="w-4 h-4 mr-2" />
+                {aiGenerating ? "Generating..." : "Generate Point"}
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
 
@@ -1532,75 +1845,6 @@ Title: ${formData.scheme_title || 'Not specified'}`;
             </div>
           </DialogContent>
       </Dialog>
-
-      {/* Existing Analyses List */}
-      <div className="grid gap-4">
-        {analyses.map((analysis) => (
-          <Card key={analysis.id}>
-            <CardHeader>
-              <CardTitle className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                <div className="flex-1">
-                  <span className="text-sm text-muted-foreground mr-2">
-                    {analysis.analysis_type === "pre-match"
-                      ? "Pre-Match"
-                      : analysis.analysis_type === "post-match"
-                      ? "Post-Match"
-                      : "Concept"}
-                  </span>
-                  <span className="text-sm sm:text-base">
-                    {analysis.title ||
-                      (analysis.analysis_type === "pre-match"
-                        ? `${analysis.home_team} vs ${analysis.away_team}`
-                        : analysis.analysis_type === "post-match"
-                        ? `${analysis.home_team} vs ${analysis.away_team}`
-                        : "Untitled Concept")}
-                  </span>
-                </div>
-                <div className="flex gap-2 w-full sm:w-auto">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => window.open(`/analysis/${analysis.id}`, '_blank')}
-                    className="flex-1 sm:flex-none"
-                  >
-                    View Analysis
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() =>
-                      handleOpenDialog(analysis.analysis_type, analysis)
-                    }
-                  >
-                    <Pencil className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleDelete(analysis.id)}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                Created: {new Date(analysis.created_at).toLocaleDateString()}
-              </p>
-              {analysis.analysis_type === "pre-match" && (
-                <p className="text-sm mt-2">{analysis.key_details}</p>
-              )}
-              {analysis.analysis_type === "post-match" && (
-                <p className="text-sm mt-2">{analysis.key_details}</p>
-              )}
-              {analysis.analysis_type === "concept" && (
-                <p className="text-sm mt-2">{analysis.concept}</p>
-              )}
-            </CardContent>
-          </Card>
-        ))}
-      </div>
     </div>
   );
 };
