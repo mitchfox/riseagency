@@ -5,11 +5,12 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, LineChart, Search, Sparkles } from "lucide-react";
+import { Loader2, LineChart, Search, Sparkles, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { toast } from "sonner";
 
 interface R90Rating {
@@ -47,6 +48,7 @@ export const R90RatingsViewer = ({ open, onOpenChange, initialCategory, searchTe
   const [actionType, setActionType] = useState('');
   const [actionContext, setActionContext] = useState('');
   const [showAiSearch, setShowAiSearch] = useState(false);
+  const [expandedRatings, setExpandedRatings] = useState<Set<string>>(new Set());
 
   // Update category when initialCategory changes
   useEffect(() => {
@@ -298,60 +300,86 @@ export const R90RatingsViewer = ({ open, onOpenChange, initialCategory, searchTe
               <div className="space-y-3 pr-4">
                 {ratings.map((rating) => {
                   const parsedContent = parseContent(rating.content);
+                  const isExpanded = expandedRatings.has(rating.id);
                   
                   return (
-                    <Card key={rating.id} className="border-l-4 border-l-indigo-500">
-                      <CardHeader className="pb-3">
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="flex-1 min-w-0">
-                            <CardTitle className="text-base mb-1">
-                              {rating.title}
-                            </CardTitle>
-                            {rating.category && (
-                              <Badge variant="secondary" className="text-xs">
-                                {rating.category}
-                              </Badge>
+                    <Collapsible
+                      key={rating.id}
+                      open={isExpanded}
+                      onOpenChange={(open) => {
+                        setExpandedRatings(prev => {
+                          const newSet = new Set(prev);
+                          if (open) {
+                            newSet.add(rating.id);
+                          } else {
+                            newSet.delete(rating.id);
+                          }
+                          return newSet;
+                        });
+                      }}
+                    >
+                      <Card className="border-l-4 border-l-indigo-500">
+                        <CollapsibleTrigger className="w-full">
+                          <CardHeader className="pb-3 hover:bg-accent/50 transition-colors cursor-pointer">
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="flex-1 min-w-0 text-left">
+                                <div className="flex items-center gap-2">
+                                  <CardTitle className="text-base mb-1">
+                                    {rating.title}
+                                  </CardTitle>
+                                  <ChevronDown 
+                                    className={`h-4 w-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                                  />
+                                </div>
+                                {rating.category && (
+                                  <Badge variant="secondary" className="text-xs">
+                                    {rating.category}
+                                  </Badge>
+                                )}
+                              </div>
+                            </div>
+                            {rating.description && (
+                              <CardDescription className="text-sm mt-2 text-left">
+                                {rating.description}
+                              </CardDescription>
                             )}
-                          </div>
-                        </div>
-                        {rating.description && (
-                          <CardDescription className="text-sm mt-2">
-                            {rating.description}
-                          </CardDescription>
-                        )}
-                      </CardHeader>
-                      {parsedContent ? (
-                        <CardContent className="pt-0">
-                          <Table>
-                            <TableHeader>
-                              <TableRow>
-                                <TableHead className="w-2/3">Action Context</TableHead>
-                                <TableHead>Score Value</TableHead>
-                              </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                              {parsedContent.map((row, idx) => (
-                                <TableRow key={idx}>
-                                  <TableCell className="font-medium">{row.label}</TableCell>
-                                  <TableCell className={
-                                    row.value.includes('+') ? 'text-green-600 font-bold' : 
-                                    row.value.includes('-') ? 'text-red-600 font-bold' : ''
-                                  }>
-                                    {row.value}
-                                  </TableCell>
-                                </TableRow>
-                              ))}
-                            </TableBody>
-                          </Table>
-                        </CardContent>
-                      ) : rating.content && (
-                        <CardContent className="pt-0">
-                          <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-                            {rating.content}
-                          </p>
-                        </CardContent>
-                      )}
-                    </Card>
+                          </CardHeader>
+                        </CollapsibleTrigger>
+                        <CollapsibleContent>
+                          {parsedContent ? (
+                            <CardContent className="pt-0">
+                              <Table>
+                                <TableHeader>
+                                  <TableRow>
+                                    <TableHead className="w-2/3">Action Context</TableHead>
+                                    <TableHead>Score Value</TableHead>
+                                  </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                  {parsedContent.map((row, idx) => (
+                                    <TableRow key={idx}>
+                                      <TableCell className="font-medium">{row.label}</TableCell>
+                                      <TableCell className={
+                                        row.value.includes('+') ? 'text-green-600 font-bold' : 
+                                        row.value.includes('-') ? 'text-red-600 font-bold' : ''
+                                      }>
+                                        {row.value}
+                                      </TableCell>
+                                    </TableRow>
+                                  ))}
+                                </TableBody>
+                              </Table>
+                            </CardContent>
+                          ) : rating.content && (
+                            <CardContent className="pt-0">
+                              <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                                {rating.content}
+                              </p>
+                            </CardContent>
+                          )}
+                        </CollapsibleContent>
+                      </Card>
+                    </Collapsible>
                   );
                 })}
               </div>
