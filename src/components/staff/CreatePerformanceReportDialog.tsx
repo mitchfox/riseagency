@@ -56,6 +56,7 @@ export const CreatePerformanceReportDialog = ({
   const [isEditMode, setIsEditMode] = useState(false);
   const [playerClub, setPlayerClub] = useState<string>("");
   const [actionTypes, setActionTypes] = useState<string[]>([]);
+  const [previousScores, setPreviousScores] = useState<Record<number, string>>({});
 
   // Key stats
   const [r90Score, setR90Score] = useState("");
@@ -366,10 +367,42 @@ export const CreatePerformanceReportDialog = ({
     setActions(newActions);
   };
 
-  const updateAction = (index: number, field: keyof PerformanceAction, value: string) => {
+  const updateAction = async (index: number, field: keyof PerformanceAction, value: string) => {
     const newActions = [...actions];
     newActions[index] = { ...newActions[index], [field]: value };
     setActions(newActions);
+
+    // If action_type changed, fetch previous scores
+    if (field === "action_type" && value) {
+      await fetchPreviousScores(index, value);
+    }
+  };
+
+  const fetchPreviousScores = async (actionIndex: number, actionType: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("performance_report_actions")
+        .select("action_score")
+        .eq("action_type", actionType)
+        .not("action_score", "is", null)
+        .order("created_at", { ascending: false })
+        .limit(50);
+
+      if (error) throw error;
+
+      if (data && data.length > 0) {
+        const scores = data.map(item => item.action_score.toFixed(5)).join(", ");
+        setPreviousScores(prev => ({ ...prev, [actionIndex]: scores }));
+      } else {
+        setPreviousScores(prev => {
+          const newScores = { ...prev };
+          delete newScores[actionIndex];
+          return newScores;
+        });
+      }
+    } catch (error: any) {
+      console.error("Error fetching previous scores:", error);
+    }
   };
 
   const handleDelete = async () => {
@@ -909,6 +942,11 @@ export const CreatePerformanceReportDialog = ({
                       placeholder="Select or type new"
                       className="text-sm"
                     />
+                    {previousScores[index] && (
+                      <p className="text-xs text-gold mt-1">
+                        Previous: {previousScores[index]}
+                      </p>
+                    )}
                   </div>
                   
                   <div>
@@ -981,6 +1019,11 @@ export const CreatePerformanceReportDialog = ({
                           placeholder="Select or type"
                           className="w-40 text-sm"
                         />
+                        {previousScores[index] && (
+                          <p className="text-xs text-gold mt-1">
+                            {previousScores[index]}
+                          </p>
+                        )}
                       </td>
                       <td className="p-2">
                         <Textarea

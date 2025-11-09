@@ -38,6 +38,7 @@ export const PerformanceActionsDialog = ({
   const [strikerStats, setStrikerStats] = useState<any>(null);
   const [r90Score, setR90Score] = useState<number | null>(null);
   const [actionTypes, setActionTypes] = useState<string[]>([]);
+  const [previousScores, setPreviousScores] = useState<string>("");
   const [newAction, setNewAction] = useState<PerformanceAction>({
     action_number: 1,
     minute: 0,
@@ -103,6 +104,38 @@ export const PerformanceActionsDialog = ({
     } catch (error: any) {
       console.error("Error fetching actions:", error);
       toast.error("Failed to load performance actions");
+    }
+  };
+
+  const fetchPreviousScores = async (actionType: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("performance_report_actions")
+        .select("action_score")
+        .eq("action_type", actionType)
+        .not("action_score", "is", null)
+        .order("created_at", { ascending: false })
+        .limit(50);
+
+      if (error) throw error;
+
+      if (data && data.length > 0) {
+        const scores = data.map(item => item.action_score.toFixed(5)).join(", ");
+        setPreviousScores(scores);
+      } else {
+        setPreviousScores("");
+      }
+    } catch (error: any) {
+      console.error("Error fetching previous scores:", error);
+    }
+  };
+
+  const handleActionTypeChange = async (value: string) => {
+    setNewAction({ ...newAction, action_type: value });
+    if (value) {
+      await fetchPreviousScores(value);
+    } else {
+      setPreviousScores("");
     }
   };
 
@@ -264,9 +297,14 @@ export const PerformanceActionsDialog = ({
                   id="action_type"
                   list="action-types-list"
                   value={newAction.action_type}
-                  onChange={(e) => setNewAction({ ...newAction, action_type: e.target.value })}
+                  onChange={(e) => handleActionTypeChange(e.target.value)}
                   placeholder="Select or type new action type"
                 />
+                {previousScores && (
+                  <p className="text-xs text-gold">
+                    Previous: {previousScores}
+                  </p>
+                )}
               </div>
               <div className="space-y-2 col-span-2 md:col-span-3">
                 <Label htmlFor="action_description">Action Description *</Label>
