@@ -19,6 +19,7 @@ interface R90Rating {
   content: string | null;
   category: string | null;
   subcategory: string | null;
+  score: number | null;
   created_at: string;
 }
 
@@ -58,7 +59,8 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
     description: '',
     content: '',
     category: '',
-    subcategory: ''
+    subcategory: '',
+    score: ''
   });
 
   useEffect(() => {
@@ -113,7 +115,8 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
       description: rating.description || '',
       content: rating.content || '',
       category: rating.category || '',
-      subcategory: rating.subcategory || ''
+      subcategory: rating.subcategory || '',
+      score: rating.score?.toString() || ''
     });
     setIsAddingNew(false);
   };
@@ -126,7 +129,8 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
       description: '',
       content: '',
       category: '',
-      subcategory: ''
+      subcategory: '',
+      score: ''
     });
   };
 
@@ -137,6 +141,8 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
     }
 
     try {
+      const scoreValue = formData.score ? parseFloat(formData.score) : null;
+      
       if (isAddingNew) {
         const { error } = await supabase
           .from('r90_ratings')
@@ -145,7 +151,8 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
             description: formData.description || null,
             content: formData.content || null,
             category: formData.category,
-            subcategory: formData.subcategory || null
+            subcategory: formData.subcategory || null,
+            score: scoreValue
           }]);
 
         if (error) throw error;
@@ -158,7 +165,8 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
             description: formData.description || null,
             content: formData.content || null,
             category: formData.category,
-            subcategory: formData.subcategory || null
+            subcategory: formData.subcategory || null,
+            score: scoreValue
           })
           .eq('id', editingId);
 
@@ -201,8 +209,18 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
       description: '',
       content: '',
       category: '',
-      subcategory: ''
+      subcategory: '',
+      score: ''
     });
+  };
+
+  const getScoreColor = (score: number | null) => {
+    if (score === null || score === undefined) return 'bg-muted text-muted-foreground';
+    if (score <= 0.025) return 'bg-red-500 text-white';
+    if (score <= 0.050) return 'bg-orange-500 text-white';
+    if (score <= 0.075) return 'bg-yellow-500 text-black';
+    if (score <= 0.100) return 'bg-lime-500 text-black';
+    return 'bg-green-500 text-white';
   };
 
   const toggleCategory = (category: string) => {
@@ -305,8 +323,17 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
                                     >
                                       <div className="flex items-start justify-between gap-2">
                                         <div className="flex-1 min-w-0">
-                                          <div className="font-medium text-sm line-clamp-1">
-                                            {rating.title}
+                                          <div className="flex items-center gap-2">
+                                            <div className="font-medium text-sm line-clamp-1 flex-1">
+                                              {rating.title}
+                                            </div>
+                                            {rating.score !== null && rating.score !== undefined && (
+                                              <Badge 
+                                                className={`${getScoreColor(rating.score)} text-xs font-mono px-2 shrink-0`}
+                                              >
+                                                {rating.score.toFixed(4)}
+                                              </Badge>
+                                            )}
                                           </div>
                                           {rating.description && (
                                             <div className="text-xs text-muted-foreground line-clamp-1 mt-0.5">
@@ -421,6 +448,21 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
                       </Select>
                     </div>
                   )}
+
+                  <div className="space-y-2">
+                    <Label htmlFor="score">R90 Score</Label>
+                    <Input
+                      id="score"
+                      type="number"
+                      step="0.0001"
+                      value={formData.score}
+                      onChange={(e) => setFormData({ ...formData, score: e.target.value })}
+                      placeholder="e.g., 0.0025"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Scale: 0-0.025 (Poor), 0.026-0.050 (Below Avg), 0.051-0.075 (Average), 0.076-0.100 (Good), 0.101+ (Excellent)
+                    </p>
+                  </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="description">Description</Label>
