@@ -44,3 +44,6 @@ verify_jwt = true
 
 [functions.split-r90-ratings]
 verify_jwt = true
+
+[functions.parse-opposition-analysis]
+verify_jwt = true

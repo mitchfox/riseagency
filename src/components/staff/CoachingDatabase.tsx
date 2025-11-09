@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
-import { Plus, Edit, Trash2, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Database, Search, Calendar, Clock, Dumbbell, Brain, Target, BookOpen, Quote, LineChart, Settings } from "lucide-react";
+import { Plus, Edit, Trash2, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Database, Search, Calendar, Clock, Dumbbell, Brain, Target, BookOpen, Quote, LineChart, Settings, Upload } from "lucide-react";
 import { ExerciseDatabaseSelector } from "./ExerciseDatabaseSelector";
 import { R90RatingsManagement } from "./R90RatingsManagement";
 
@@ -154,6 +154,7 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
   const itemsPerPage = 20;
   const [isImporting, setIsImporting] = useState(false);
   const [isR90ManagementOpen, setIsR90ManagementOpen] = useState(false);
+  const [isUploadingPdf, setIsUploadingPdf] = useState(false);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -656,6 +657,33 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
     setIsDialogOpen(true);
   };
 
+  const handlePdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    setIsUploadingPdf(true);
+    try {
+      for (const file of Array.from(files)) {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const { data, error } = await supabase.functions.invoke('parse-opposition-analysis', {
+          body: formData,
+        });
+
+        if (error) throw error;
+
+        toast.success(`Successfully parsed ${file.name} and added ${data.added} examples to database`);
+      }
+    } catch (error) {
+      console.error('Error uploading PDFs:', error);
+      toast.error('Failed to upload PDFs');
+    } finally {
+      setIsUploadingPdf(false);
+      e.target.value = ''; // Reset input
+    }
+  };
+
   const resetForm = () => {
     setFormData({
       title: '',
@@ -748,6 +776,27 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
                       <Settings className="w-4 h-4 mr-2" />
                       Manage All Ratings
                     </Button>
+                  )}
+                  {key === 'coaching_analysis' && (
+                    <>
+                      <Input
+                        type="file"
+                        accept="application/pdf"
+                        multiple
+                        onChange={handlePdfUpload}
+                        className="hidden"
+                        id="pdf-upload"
+                      />
+                      <Button 
+                        onClick={() => document.getElementById('pdf-upload')?.click()}
+                        variant="outline"
+                        className="w-full sm:w-auto"
+                        disabled={isUploadingPdf}
+                      >
+                        <Upload className="w-4 h-4 mr-2" />
+                        {isUploadingPdf ? 'Uploading...' : 'Upload PDFs'}
+                      </Button>
+                    </>
                   )}
                   <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                     <DialogTrigger asChild>
