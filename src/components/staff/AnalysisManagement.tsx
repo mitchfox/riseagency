@@ -488,17 +488,6 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
     setFormData({ ...formData, points: updatedPoints });
   };
 
-
-  const openAIWriter = (category: 'pre-match' | 'post-match' | 'concept' | 'other', pointIndex?: number) => {
-    setAiWriter({
-      open: true,
-      category,
-      paragraph1Info: '',
-      paragraph2Info: '',
-      targetPointIndex: pointIndex
-    });
-  };
-
   const generateWithAIWriter = async () => {
     if (!aiWriter.paragraph1Info.trim() && !aiWriter.paragraph2Info.trim()) {
       toast.error("Please provide information for at least one paragraph");
@@ -688,17 +677,6 @@ Title: ${formData.scheme_title || 'Not specified'}`;
               <TabsContent value="pre-match" className="space-y-4">
                 {analysisType === "pre-match" && (
                   <>
-                  <div className="flex justify-between items-center">
-                    <h3 className="font-semibold">Pre-Match Analysis</h3>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => openAIWriter('pre-match')}
-                    >
-                      <Sparkles className="w-4 h-4 mr-2" />
-                      AI Pre-Match Point Writer
-                    </Button>
-                  </div>
                     <div className="space-y-4">
                       <h3 className="font-semibold">Overview</h3>
                     <div>
@@ -1104,6 +1082,41 @@ Title: ${formData.scheme_title || 'Not specified'}`;
                         }
                       />
                     </div>
+                      
+                      <Card className="bg-secondary/20">
+                        <CardHeader>
+                          <CardTitle className="text-lg flex items-center gap-2">
+                            <Sparkles className="w-5 h-5" />
+                            AI Pre-Match Point Writer
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                          <div>
+                            <Label>Paragraph 1 Info</Label>
+                            <Textarea
+                              placeholder="Enter key information for paragraph 1..."
+                              value={aiWriter.paragraph1Info}
+                              onChange={(e) => setAiWriter({ ...aiWriter, paragraph1Info: e.target.value, category: 'pre-match' })}
+                            />
+                          </div>
+                          <div>
+                            <Label>Paragraph 2 Info</Label>
+                            <Textarea
+                              placeholder="Enter key information for paragraph 2..."
+                              value={aiWriter.paragraph2Info}
+                              onChange={(e) => setAiWriter({ ...aiWriter, paragraph2Info: e.target.value, category: 'pre-match' })}
+                            />
+                          </div>
+                          <Button 
+                            onClick={generateWithAIWriter} 
+                            disabled={aiGenerating}
+                            className="w-full"
+                          >
+                            <Sparkles className="w-4 h-4 mr-2" />
+                            {aiGenerating ? "Generating..." : "Generate Point"}
+                          </Button>
+                        </CardContent>
+                      </Card>
                   </div>
                   </>
                 )}
@@ -1112,17 +1125,6 @@ Title: ${formData.scheme_title || 'Not specified'}`;
               <TabsContent value="post-match" className="space-y-4">
                 {analysisType === "post-match" && (
                   <>
-                  <div className="flex justify-between items-center">
-                    <h3 className="font-semibold">Post-Match Analysis</h3>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => openAIWriter('post-match')}
-                    >
-                      <Sparkles className="w-4 h-4 mr-2" />
-                      AI Post-Match Point Writer
-                    </Button>
-                  </div>
                     <div className="space-y-4">
                       <h3 className="font-semibold">Overview</h3>
                     <div>
@@ -1208,6 +1210,41 @@ Title: ${formData.scheme_title || 'Not specified'}`;
                         placeholder="Green: Great positioning | Yellow: Work on first touch | Red: Needs better decision making"
                       />
                     </div>
+                      
+                      <Card className="bg-secondary/20">
+                        <CardHeader>
+                          <CardTitle className="text-lg flex items-center gap-2">
+                            <Sparkles className="w-5 h-5" />
+                            AI Post-Match Point Writer
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                          <div>
+                            <Label>Paragraph 1 Info</Label>
+                            <Textarea
+                              placeholder="Enter key information for paragraph 1..."
+                              value={aiWriter.paragraph1Info}
+                              onChange={(e) => setAiWriter({ ...aiWriter, paragraph1Info: e.target.value, category: 'post-match' })}
+                            />
+                          </div>
+                          <div>
+                            <Label>Paragraph 2 Info</Label>
+                            <Textarea
+                              placeholder="Enter key information for paragraph 2..."
+                              value={aiWriter.paragraph2Info}
+                              onChange={(e) => setAiWriter({ ...aiWriter, paragraph2Info: e.target.value, category: 'post-match' })}
+                            />
+                          </div>
+                          <Button 
+                            onClick={generateWithAIWriter} 
+                            disabled={aiGenerating}
+                            className="w-full"
+                          >
+                            <Sparkles className="w-4 h-4 mr-2" />
+                            {aiGenerating ? "Generating..." : "Generate Point"}
+                          </Button>
+                        </CardContent>
+                      </Card>
                   </div>
                   </>
                 )}
@@ -1216,17 +1253,6 @@ Title: ${formData.scheme_title || 'Not specified'}`;
               <TabsContent value="concepts" className="space-y-4">
                 {analysisType === "concept" && (
                   <>
-                    <div className="flex justify-between items-center">
-                      <h3 className="font-semibold">Concept Analysis</h3>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => openAIWriter('concept')}
-                      >
-                        <Sparkles className="w-4 h-4 mr-2" />
-                        AI Concept Writer
-                      </Button>
-                    </div>
                     <div className="space-y-4">
                       <div>
                         <Label>Title</Label>
@@ -1255,23 +1281,47 @@ Title: ${formData.scheme_title || 'Not specified'}`;
                         }
                       />
                     </div>
+                      
+                      <Card className="bg-secondary/20">
+                        <CardHeader>
+                          <CardTitle className="text-lg flex items-center gap-2">
+                            <Sparkles className="w-5 h-5" />
+                            AI Concept Writer
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                          <div>
+                            <Label>Paragraph 1 Info</Label>
+                            <Textarea
+                              placeholder="Enter key information for paragraph 1..."
+                              value={aiWriter.paragraph1Info}
+                              onChange={(e) => setAiWriter({ ...aiWriter, paragraph1Info: e.target.value, category: 'concept' })}
+                            />
+                          </div>
+                          <div>
+                            <Label>Paragraph 2 Info</Label>
+                            <Textarea
+                              placeholder="Enter key information for paragraph 2..."
+                              value={aiWriter.paragraph2Info}
+                              onChange={(e) => setAiWriter({ ...aiWriter, paragraph2Info: e.target.value, category: 'concept' })}
+                            />
+                          </div>
+                          <Button 
+                            onClick={generateWithAIWriter} 
+                            disabled={aiGenerating}
+                            className="w-full"
+                          >
+                            <Sparkles className="w-4 h-4 mr-2" />
+                            {aiGenerating ? "Generating..." : "Generate Point"}
+                          </Button>
+                        </CardContent>
+                      </Card>
                   </div>
                   </>
                 )}
               </TabsContent>
 
               <TabsContent value="other" className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <h3 className="font-semibold">Other Settings</h3>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => openAIWriter('other')}
-                  >
-                    <Sparkles className="w-4 h-4 mr-2" />
-                    AI Other Point Writer
-                  </Button>
-                </div>
                 
                 {/* Link to Player Performance Report */}
                 <div className="space-y-4 border-t pt-4">
@@ -1460,56 +1510,7 @@ Title: ${formData.scheme_title || 'Not specified'}`;
           </DialogContent>
       </Dialog>
 
-      {/* AI Writer Dialog */}
-      <Dialog open={aiWriter.open} onOpenChange={(open) => setAiWriter({ ...aiWriter, open })}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>AI {aiWriter.category.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')} Point Writer</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label>Paragraph 1 Information</Label>
-              <p className="text-xs text-muted-foreground mb-2">
-                Enter key details for the first paragraph
-              </p>
-              <Textarea
-                value={aiWriter.paragraph1Info}
-                onChange={(e) => setAiWriter({ ...aiWriter, paragraph1Info: e.target.value })}
-                placeholder="e.g., Player showed excellent positioning, created 3 key chances..."
-                rows={3}
-              />
-            </div>
-            <div>
-              <Label>Paragraph 2 Information</Label>
-              <p className="text-xs text-muted-foreground mb-2">
-                Enter key details for the second paragraph
-              </p>
-              <Textarea
-                value={aiWriter.paragraph2Info}
-                onChange={(e) => setAiWriter({ ...aiWriter, paragraph2Info: e.target.value })}
-                placeholder="e.g., Dominated aerial duels, strong defensive contribution..."
-                rows={3}
-              />
-            </div>
-            <div className="flex justify-end gap-2">
-              <Button
-                variant="outline"
-                onClick={() => setAiWriter({ open: false, category: 'pre-match', paragraph1Info: '', paragraph2Info: '' })}
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={generateWithAIWriter}
-                disabled={aiGenerating || (!aiWriter.paragraph1Info.trim() && !aiWriter.paragraph2Info.trim())}
-              >
-                <Sparkles className="w-4 h-4 mr-2" />
-                {aiGenerating ? 'Generating...' : 'Generate Paragraphs'}
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
+      {/* Existing Analyses List */}
       <div className="grid gap-4">
         {analyses.map((analysis) => (
           <Card key={analysis.id}>
