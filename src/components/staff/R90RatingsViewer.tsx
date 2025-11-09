@@ -103,23 +103,34 @@ export const R90RatingsViewer = ({ open, onOpenChange, initialCategory, searchTe
       
       // Filter by search term if provided (legacy support for prop)
       if (searchTerm && searchTerm.trim()) {
-        const searchLower = searchTerm.toLowerCase();
-        filteredData = filteredData.filter(rating => 
-          rating.title?.toLowerCase().includes(searchLower) ||
-          rating.description?.toLowerCase().includes(searchLower) ||
-          rating.content?.toLowerCase().includes(searchLower)
-        );
+        const searchWords = searchTerm.toLowerCase().split(/\s+/).filter(w => w.length > 0);
+        filteredData = filteredData.filter(rating => {
+          const searchableText = [
+            rating.title || '',
+            rating.description || '',
+            rating.content || '',
+            rating.category || '',
+            rating.subcategory || ''
+          ].join(' ').toLowerCase();
+          
+          return searchWords.some(word => searchableText.includes(word));
+        });
       }
       
       // Apply live search filter
       if (searchFilter && searchFilter.trim()) {
-        const filterLower = searchFilter.toLowerCase();
-        filteredData = filteredData.filter(rating => 
-          rating.title?.toLowerCase().includes(filterLower) ||
-          rating.description?.toLowerCase().includes(filterLower) ||
-          rating.content?.toLowerCase().includes(filterLower) ||
-          rating.category?.toLowerCase().includes(filterLower)
-        );
+        const filterWords = searchFilter.toLowerCase().split(/\s+/).filter(w => w.length > 0);
+        filteredData = filteredData.filter(rating => {
+          const searchableText = [
+            rating.title || '',
+            rating.description || '',
+            rating.content || '',
+            rating.category || '',
+            rating.subcategory || ''
+          ].join(' ').toLowerCase();
+          
+          return filterWords.some(word => searchableText.includes(word));
+        });
       }
       
       setRatings(filteredData);
