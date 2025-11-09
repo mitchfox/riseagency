@@ -42,6 +42,8 @@ export const PerformanceActionsDialog = ({
   const [actionTypes, setActionTypes] = useState<string[]>([]);
   const [previousScores, setPreviousScores] = useState<Array<{score: number, description: string}>>([]);
   const [isR90ViewerOpen, setIsR90ViewerOpen] = useState(false);
+  const [r90ViewerCategory, setR90ViewerCategory] = useState<string | undefined>(undefined);
+  const [r90ViewerSearch, setR90ViewerSearch] = useState<string | undefined>(undefined);
   const [newAction, setNewAction] = useState<PerformanceAction>({
     action_number: 1,
     minute: 0,
@@ -50,6 +52,52 @@ export const PerformanceActionsDialog = ({
     action_description: "",
     notes: "",
   });
+
+  // Function to intelligently map action type/description to R90 category
+  const getR90CategoryFromAction = (actionType: string, actionDescription: string): string => {
+    const combined = `${actionType} ${actionDescription}`.toLowerCase();
+    
+    if (combined.includes('press') || combined.includes('counter-press') || combined.includes('high press')) {
+      return 'Pressing';
+    }
+    if (combined.includes('tackle') || combined.includes('block') || combined.includes('intercept') || 
+        combined.includes('defend') || combined.includes('recovery')) {
+      return 'Defensive';
+    }
+    if (combined.includes('aerial') || combined.includes('header') || combined.includes('duel in air')) {
+      return 'Aerial Duels';
+    }
+    if (combined.includes('cross') || combined.includes('cutback') || combined.includes('delivery')) {
+      return 'Attacking Crosses';
+    }
+    if (combined.includes('dribble') || combined.includes('carry') || combined.includes('turn') || 
+        combined.includes('1v1') || combined.includes('pass') || combined.includes('shot')) {
+      return 'On-Ball Decision-Making';
+    }
+    if (combined.includes('run') || combined.includes('movement') || combined.includes('position') || 
+        combined.includes('space') || combined.includes('support')) {
+      return 'Off-Ball Movement';
+    }
+    
+    return 'all';
+  };
+
+  const openSmartR90Viewer = (action: PerformanceAction) => {
+    if (!action.action_type) {
+      // Fallback to generic R90 viewer
+      setR90ViewerCategory(undefined);
+      setR90ViewerSearch(undefined);
+      setIsR90ViewerOpen(true);
+      return;
+    }
+    
+    const category = getR90CategoryFromAction(action.action_type, action.action_description);
+    const searchTerm = action.action_type;
+    
+    setR90ViewerCategory(category);
+    setR90ViewerSearch(searchTerm);
+    setIsR90ViewerOpen(true);
+  };
 
   useEffect(() => {
     if (open && analysisId) {
@@ -415,8 +463,20 @@ export const PerformanceActionsDialog = ({
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => setIsR90ViewerOpen(true)}
-                          title="View R90 Ratings"
+                          onClick={() => openSmartR90Viewer(action)}
+                          title="Smart Link to R90 Ratings"
+                        >
+                          <LineChart className="w-4 h-4 text-green-600" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setR90ViewerCategory(undefined);
+                            setR90ViewerSearch(undefined);
+                            setIsR90ViewerOpen(true);
+                          }}
+                          title="View All R90 Ratings"
                         >
                           <LineChart className="w-4 h-4 text-indigo-600" />
                         </Button>
@@ -458,6 +518,8 @@ export const PerformanceActionsDialog = ({
       <R90RatingsViewer
         open={isR90ViewerOpen}
         onOpenChange={setIsR90ViewerOpen}
+        initialCategory={r90ViewerCategory}
+        searchTerm={r90ViewerSearch}
       />
     </Dialog>
   );

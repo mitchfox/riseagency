@@ -19,6 +19,8 @@ interface R90Rating {
 interface R90RatingsViewerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  initialCategory?: string;
+  searchTerm?: string;
 }
 
 const R90_CATEGORIES = [
@@ -31,10 +33,17 @@ const R90_CATEGORIES = [
   'Off-Ball Movement'
 ];
 
-export const R90RatingsViewer = ({ open, onOpenChange }: R90RatingsViewerProps) => {
+export const R90RatingsViewer = ({ open, onOpenChange, initialCategory, searchTerm }: R90RatingsViewerProps) => {
   const [ratings, setRatings] = useState<R90Rating[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('all');
+
+  // Update category when initialCategory changes
+  useEffect(() => {
+    if (initialCategory && open) {
+      setSelectedCategory(initialCategory);
+    }
+  }, [initialCategory, open]);
 
   useEffect(() => {
     if (open) {
@@ -57,7 +66,20 @@ export const R90RatingsViewer = ({ open, onOpenChange }: R90RatingsViewerProps) 
       const { data, error } = await query;
 
       if (error) throw error;
-      setRatings(data || []);
+      
+      let filteredData = data || [];
+      
+      // Filter by search term if provided
+      if (searchTerm && searchTerm.trim()) {
+        const searchLower = searchTerm.toLowerCase();
+        filteredData = filteredData.filter(rating => 
+          rating.title?.toLowerCase().includes(searchLower) ||
+          rating.description?.toLowerCase().includes(searchLower) ||
+          rating.content?.toLowerCase().includes(searchLower)
+        );
+      }
+      
+      setRatings(filteredData);
     } catch (error) {
       console.error('Error fetching R90 ratings:', error);
     } finally {
