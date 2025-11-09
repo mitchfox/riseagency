@@ -132,7 +132,7 @@ export const PlayerCard = ({ player, viewMode = "grid" }: PlayerCardProps) => {
           }`}
         />
         {/* Position badge - top right, smaller on mobile */}
-        <div className="absolute top-4 right-4 z-40">
+        <div className="absolute top-4 right-4 z-5">
           <span className="text-xl md:text-3xl text-primary tracking-wider" style={{ fontFamily: "'BBH Sans Bartle', 'Bebas Neue', sans-serif" }}>
             {player.position}
           </span>
