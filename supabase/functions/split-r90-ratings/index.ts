@@ -36,15 +36,22 @@ serve(async (req) => {
       const lines = rating.content.split('\n').filter((line: string) => line.trim());
       
       for (const line of lines) {
-        // Parse lines like "Successful (Own Third): +0.008" or "Unsuccessful: -0.005405 (all thirds)"
-        const successMatch = line.match(/^Successful\s*\(([^)]+)\):\s*([+\-]?[\d.]+|xG value|xA value)/i);
-        const unsuccessMatch = line.match(/^Unsuccessful\s*\(([^)]+)\):\s*([+\-]?[\d.]+|xG value|xA value)/i);
+        // Parse various patterns:
+        // 1. "Successful (Own Third): +0.008"
+        // 2. "Unsuccessful (Own Third): -0.01"
+        // 3. "Unsuccessful: -0.005405 (all thirds)"
+        // 4. "Successful: -0.002 (all thirds)"
+        
+        const successWithThirdMatch = line.match(/^Successful\s*\(([^)]+)\):\s*([+\-]?[\d.]+|xG value|xA value)/i);
+        const unsuccessWithThirdMatch = line.match(/^Unsuccessful\s*\(([^)]+)\):\s*([+\-]?[\d.]+|xG value|xA value)/i);
+        const successAllMatch = line.match(/^Successful:\s*([+\-]?[\d.]+|xG value|xA value)\s*\(all thirds\)/i);
         const unsuccessAllMatch = line.match(/^Unsuccessful:\s*([+\-]?[\d.]+|xG value|xA value)\s*\(all thirds\)/i);
         
-        if (successMatch) {
-          const [, third, scoreStr] = successMatch;
+        const baseTitle = rating.title.replace(/^(In Space|Under Pressure)\s*-\s*/, '');
+        
+        if (successWithThirdMatch) {
+          const [, third, scoreStr] = successWithThirdMatch;
           const score = parseScore(scoreStr);
-          const baseTitle = rating.title.replace(/^(In Space|Under Pressure)\s*-\s*/, '');
           
           newRatings.push({
             title: `${baseTitle} - Successful (${third})`,
@@ -54,10 +61,9 @@ serve(async (req) => {
             score: score,
             content: null
           });
-        } else if (unsuccessMatch) {
-          const [, third, scoreStr] = unsuccessMatch;
+        } else if (unsuccessWithThirdMatch) {
+          const [, third, scoreStr] = unsuccessWithThirdMatch;
           const score = parseScore(scoreStr);
-          const baseTitle = rating.title.replace(/^(In Space|Under Pressure)\s*-\s*/, '');
           
           newRatings.push({
             title: `${baseTitle} - Unsuccessful (${third})`,
@@ -67,12 +73,22 @@ serve(async (req) => {
             score: score,
             content: null
           });
+        } else if (successAllMatch) {
+          const [, scoreStr] = successAllMatch;
+          const score = parseScore(scoreStr);
+          
+          newRatings.push({
+            title: `${baseTitle} - Successful (All Thirds)`,
+            description: rating.description,
+            category: rating.category,
+            subcategory: rating.subcategory,
+            score: score,
+            content: null
+          });
         } else if (unsuccessAllMatch) {
           const [, scoreStr] = unsuccessAllMatch;
           const score = parseScore(scoreStr);
-          const baseTitle = rating.title.replace(/^(In Space|Under Pressure)\s*-\s*/, '');
           
-          // Create one entry for all thirds
           newRatings.push({
             title: `${baseTitle} - Unsuccessful (All Thirds)`,
             description: rating.description,
