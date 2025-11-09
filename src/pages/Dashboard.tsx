@@ -1173,7 +1173,10 @@ const Dashboard = () => {
                                                         return (
                                                            <div className="text-center">
                                                              <div className="text-sm md:text-3xl font-bold mb-1">{day}<sup className="text-[10px] md:text-base">{suffix}</sup></div>
-                                                             <div className="text-[8px] md:text-base font-medium italic">{format(date, 'MMMM')}</div>
+                                                              <div className="text-[8px] md:text-base font-medium italic">
+                                                                <span className="md:hidden">{format(date, 'MMM')}</span>
+                                                                <span className="hidden md:inline">{format(date, 'MMMM')}</span>
+                                                              </div>
                                                            </div>
                                                         );
                                                       })() : <span>{week.week}</span>}
