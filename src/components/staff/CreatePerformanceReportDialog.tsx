@@ -391,6 +391,15 @@ export const CreatePerformanceReportDialog = ({
     }
   };
 
+  // Extract keywords from description for better matching
+  const getKeywords = (text: string) => {
+    const commonWords = ['the', 'a', 'an', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'from', 'by', 'and', 'or', 'but'];
+    return text
+      .toLowerCase()
+      .split(/\s+/)
+      .filter(word => word.length > 3 && !commonWords.includes(word));
+  };
+
   const fetchPreviousScores = async (actionIndex: number, actionType: string) => {
     try {
       const { data, error } = await supabase
@@ -409,16 +418,40 @@ export const CreatePerformanceReportDialog = ({
       console.log(`Previous scores for "${actionType}":`, data);
 
       if (data && data.length > 0) {
-        // Sort by score ascending (lowest to highest)
-        const sortedScores = data
-          .map(item => ({
-            score: item.action_score,
-            description: item.action_description || ""
-          }))
-          .sort((a, b) => a.score - b.score);
+        // Get current action's description keywords
+        const currentAction = actions[actionIndex];
+        const currentKeywords = currentAction?.action_description 
+          ? getKeywords(currentAction.action_description)
+          : [];
+
+        // Filter and sort by relevance
+        const filteredScores = data
+          .map(item => {
+            const score = item.action_score;
+            const description = item.action_description || "";
+            
+            // Calculate relevance score based on keyword matches
+            if (!description || currentKeywords.length === 0) {
+              return { score, description, relevance: 0 };
+            }
+            
+            const itemKeywords = getKeywords(description);
+            const matches = currentKeywords.filter(kw => 
+              itemKeywords.some(ikw => ikw.includes(kw) || kw.includes(ikw))
+            ).length;
+            
+            return { score, description, relevance: matches };
+          })
+          .filter(item => item.relevance > 0 || currentKeywords.length === 0)
+          .sort((a, b) => {
+            // Sort by relevance first (descending), then by score (ascending)
+            if (b.relevance !== a.relevance) return b.relevance - a.relevance;
+            return a.score - b.score;
+          })
+          .slice(0, 5); // Show only top 5 most relevant
         
-        console.log(`Setting previous scores for action ${actionIndex}:`, sortedScores);
-        setPreviousScores(prev => ({ ...prev, [actionIndex]: sortedScores }));
+        console.log(`Setting previous scores for action ${actionIndex}:`, filteredScores);
+        setPreviousScores(prev => ({ ...prev, [actionIndex]: filteredScores }));
       } else {
         console.log(`No previous scores found for "${actionType}"`);
         setPreviousScores(prev => {
