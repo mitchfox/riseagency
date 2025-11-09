@@ -720,6 +720,11 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
 
     await Promise.all(uploadPromises);
     
+    // Clear progress after 2 seconds
+    setTimeout(() => {
+      setUploadProgress({});
+    }, 2000);
+    
     e.target.value = ''; // Reset input
     fetchItems(); // Refresh the list
   };
