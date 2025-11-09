@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Pencil, Trash2, Plus, X, Upload, Sparkles } from "lucide-react";
+import { Pencil, Trash2, Plus, X, Upload, Sparkles, Database } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -103,8 +103,12 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
     category: 'pre-match' as 'pre-match' | 'post-match',
     overviewInfo: ''
   });
+  const [schemeWriter, setSchemeWriter] = useState({
+    open: false,
+    schemeInfo: ''
+  });
   const [examplesDialogOpen, setExamplesDialogOpen] = useState(false);
-  const [examplesCategory, setExamplesCategory] = useState<'pre-match' | 'post-match' | 'concept' | 'other'>('pre-match');
+  const [examplesCategory, setExamplesCategory] = useState<'pre-match' | 'post-match' | 'concept' | 'other' | 'scheme'>('pre-match');
   const [examplesType, setExamplesType] = useState<'point' | 'overview'>('point');
   const [examples, setExamples] = useState<any[]>([]);
   const [editingExample, setEditingExample] = useState<any | null>(null);
@@ -623,6 +627,58 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
     }
   };
 
+  const generateScheme = async () => {
+    if (!schemeWriter.schemeInfo.trim()) {
+      toast.error("Please provide information for the scheme");
+      return;
+    }
+
+    setAiGenerating(true);
+    try {
+      // Fetch scheme examples
+      const { data: styleExamples } = await supabase
+        .from('analysis_point_examples')
+        .select('paragraph_1, paragraph_2')
+        .eq('category', 'scheme')
+        .eq('example_type', 'point')
+        .limit(3);
+
+      const exampleContext = styleExamples && styleExamples.length > 0
+        ? `\n\nExample scheme writing style references:\n${styleExamples.map((ex, i) => 
+            `Example ${i + 1}:\nParagraph 1: ${ex.paragraph_1 || ''}\nParagraph 2: ${ex.paragraph_2 || ''}`
+          ).join('\n\n')}`
+        : '';
+
+      const { data, error } = await supabase.functions.invoke('ai-write', {
+        body: {
+          prompt: `Write two tactical scheme analysis paragraphs based on this information: ${schemeWriter.schemeInfo}. Match the writing style, vocabulary level, and level of detail shown in the examples. Separate the two paragraphs with a double line break.`,
+          context: `Analysis Type: scheme${exampleContext}`,
+          type: 'analysis-paragraph'
+        }
+      });
+
+      if (error) throw error;
+
+      const text = data.text;
+      const [p1, p2] = text.split('\n\n').filter((p: string) => p.trim());
+
+      // Update scheme paragraphs in formData
+      setFormData({ 
+        ...formData, 
+        scheme_paragraph_1: p1 || '',
+        scheme_paragraph_2: p2 || ''
+      });
+
+      toast.success("Scheme generated successfully");
+      setSchemeWriter({ open: false, schemeInfo: '' });
+    } catch (error: any) {
+      console.error('Error generating scheme:', error);
+      toast.error(error.message || "Failed to generate scheme");
+    } finally {
+      setAiGenerating(false);
+    }
+  };
+
   const generateWithAIWriter = async () => {
     if (!aiWriter.paragraph1Info.trim() && !aiWriter.paragraph2Info.trim()) {
       toast.error("Please provide information for at least one paragraph");
@@ -810,6 +866,13 @@ Title: ${formData.scheme_title || 'Not specified'}`;
               AI Pre-Match Point Writer
             </Button>
             <Button 
+              onClick={() => setSchemeWriter({ open: true, schemeInfo: '' })}
+              variant="outline"
+            >
+              <Sparkles className="w-4 h-4 mr-2" />
+              AI Scheme Writer
+            </Button>
+            <Button 
               onClick={() => {
                 setExamplesCategory('pre-match');
                 setExamplesType('point');
@@ -830,6 +893,17 @@ Title: ${formData.scheme_title || 'Not specified'}`;
               variant="outline"
             >
               Overview Examples
+            </Button>
+            <Button 
+              onClick={() => {
+                setExamplesCategory('scheme');
+                setExamplesType('point');
+                setExamplesDialogOpen(true);
+                fetchExamples('scheme', 'point');
+              }}
+              variant="outline"
+            >
+              Scheme Examples
             </Button>
           </div>
 
@@ -2052,6 +2126,44 @@ Title: ${formData.scheme_title || 'Not specified'}`;
               >
                 <Sparkles className="w-4 h-4 mr-2" />
                 {aiGenerating ? 'Generating...' : 'Generate Overview'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Scheme Writer Dialog */}
+      <Dialog open={schemeWriter.open} onOpenChange={(open) => setSchemeWriter({ ...schemeWriter, open })}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>AI Scheme Writer</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Scheme Information</Label>
+              <p className="text-xs text-muted-foreground mb-2">
+                Enter tactical scheme details and strategy
+              </p>
+              <Textarea
+                value={schemeWriter.schemeInfo}
+                onChange={(e) => setSchemeWriter({ ...schemeWriter, schemeInfo: e.target.value })}
+                placeholder="e.g., 4-3-3 formation, high press, wide attacking play..."
+                rows={5}
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setSchemeWriter({ open: false, schemeInfo: '' })}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={generateScheme}
+                disabled={aiGenerating || !schemeWriter.schemeInfo.trim()}
+              >
+                <Sparkles className="w-4 h-4 mr-2" />
+                {aiGenerating ? 'Generating...' : 'Generate Scheme'}
               </Button>
             </div>
           </div>
