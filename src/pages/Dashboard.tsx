@@ -967,14 +967,28 @@ const Dashboard = () => {
                                   <Button 
                                     variant="outline" 
                                     size="sm"
-                                    onClick={() => {
-                                      const viewerUrl = `/pdf-viewer?url=${encodeURIComponent(item.analysis.content)}`;
-                                      window.open(viewerUrl, '_blank', 'noopener,noreferrer');
+                                    onClick={async () => {
+                                      try {
+                                        const response = await fetch(item.analysis.content);
+                                        const blob = await response.blob();
+                                        const url = window.URL.createObjectURL(blob);
+                                        const link = document.createElement('a');
+                                        link.href = url;
+                                        link.download = `${item.analysis.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.pdf`;
+                                        document.body.appendChild(link);
+                                        link.click();
+                                        document.body.removeChild(link);
+                                        window.URL.revokeObjectURL(url);
+                                        toast.success("PDF downloaded");
+                                      } catch (error) {
+                                        console.error('Error downloading PDF:', error);
+                                        toast.error("Failed to download PDF");
+                                      }
                                     }}
                                     className="flex-shrink-0"
                                   >
                                     <FileText className="w-4 h-4 mr-2" />
-                                    View PDF
+                                    Download PDF
                                   </Button>
                                 )}
                               </div>
