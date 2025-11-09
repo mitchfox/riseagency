@@ -954,9 +954,6 @@ const Dashboard = () => {
                               <div className="flex items-start justify-between gap-4">
                                 <div className="flex-1">
                                   <h3 className="font-semibold text-lg mb-2">{item.analysis.title}</h3>
-                                  {item.analysis.description && (
-                                    <p className="text-sm text-muted-foreground mb-3">{item.analysis.description}</p>
-                                  )}
                                   {item.analysis.category && (
                                     <span className="inline-block px-2 py-1 text-xs rounded bg-primary/10 text-primary">
                                       {item.analysis.category}
