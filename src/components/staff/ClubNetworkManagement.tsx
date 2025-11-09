@@ -69,10 +69,9 @@ const createCustomIcon = (contact: Contact) => {
 
 const ClubNetworkManagement = () => {
   const [contacts, setContacts] = useState<Contact[]>([]);
-  const [view, setView] = useState<'map' | 'list'>('map');
+  const [view, setView] = useState<'map' | 'list'>('list');
   const [showDialog, setShowDialog] = useState(false);
   const [editingContact, setEditingContact] = useState<Contact | null>(null);
-  const [mapReady, setMapReady] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     club_name: '',
@@ -89,18 +88,6 @@ const ClubNetworkManagement = () => {
 
   useEffect(() => {
     fetchContacts();
-  }, []);
-
-  useEffect(() => {
-    // Delay map rendering to ensure proper context initialization
-    const timer = setTimeout(() => {
-      setMapReady(true);
-    }, 100);
-    
-    return () => {
-      clearTimeout(timer);
-      setMapReady(false);
-    };
   }, []);
 
   const fetchContacts = async () => {
@@ -251,65 +238,59 @@ const ClubNetworkManagement = () => {
 
       {view === 'map' ? (
         <div className="relative w-full h-[600px] rounded-lg border overflow-hidden">
-          {mapReady ? (
-            <MapContainer
-              key="club-network-map"
-              center={[20, 0]}
-              zoom={2}
-              style={{ height: '100%', width: '100%' }}
-              className="z-0"
-            >
-              <TileLayer
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              />
-              {contacts
-                .filter((contact) => contact.latitude && contact.longitude)
-                .map((contact) => (
-                  <Marker
-                    key={contact.id}
-                    position={[contact.latitude!, contact.longitude!]}
-                    icon={createCustomIcon(contact)}
-                    eventHandlers={{
-                      click: () => openEditDialog(contact),
-                    }}
-                  >
-                    <Popup>
-                      <div className="min-w-[200px]">
-                        <h3 className="font-bold text-base mb-2">
-                          {contact.club_name || contact.name}
-                        </h3>
-                        <div className="space-y-1 text-sm">
-                          {contact.name && <p><strong>Contact:</strong> {contact.name}</p>}
-                          {contact.position && <p><strong>Position:</strong> {contact.position}</p>}
-                          {contact.email && (
-                            <p><strong>Email:</strong> <a href={`mailto:${contact.email}`} className="text-primary hover:underline">{contact.email}</a></p>
-                          )}
-                          {contact.phone && <p><strong>Phone:</strong> {contact.phone}</p>}
-                          {contact.city && contact.country && (
-                            <p><strong>Location:</strong> {contact.city}, {contact.country}</p>
-                          )}
-                          {contact.notes && (
-                            <p className="mt-2 text-muted-foreground">{contact.notes}</p>
-                          )}
-                        </div>
-                        <Button
-                          size="sm"
-                          className="w-full mt-3"
-                          onClick={() => openEditDialog(contact)}
-                        >
-                          Edit Contact
-                        </Button>
+          <MapContainer
+            key="club-network-map"
+            center={[20, 0]}
+            zoom={2}
+            style={{ height: '100%', width: '100%' }}
+            className="z-0"
+          >
+            <TileLayer
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            />
+            {contacts
+              .filter((contact) => contact.latitude && contact.longitude)
+              .map((contact) => (
+                <Marker
+                  key={contact.id}
+                  position={[contact.latitude!, contact.longitude!]}
+                  icon={createCustomIcon(contact)}
+                  eventHandlers={{
+                    click: () => openEditDialog(contact),
+                  }}
+                >
+                  <Popup>
+                    <div className="min-w-[200px]">
+                      <h3 className="font-bold text-base mb-2">
+                        {contact.club_name || contact.name}
+                      </h3>
+                      <div className="space-y-1 text-sm">
+                        {contact.name && <p><strong>Contact:</strong> {contact.name}</p>}
+                        {contact.position && <p><strong>Position:</strong> {contact.position}</p>}
+                        {contact.email && (
+                          <p><strong>Email:</strong> <a href={`mailto:${contact.email}`} className="text-primary hover:underline">{contact.email}</a></p>
+                        )}
+                        {contact.phone && <p><strong>Phone:</strong> {contact.phone}</p>}
+                        {contact.city && contact.country && (
+                          <p><strong>Location:</strong> {contact.city}, {contact.country}</p>
+                        )}
+                        {contact.notes && (
+                          <p className="mt-2 text-muted-foreground">{contact.notes}</p>
+                        )}
                       </div>
-                    </Popup>
-                  </Marker>
-                ))}
-            </MapContainer>
-          ) : (
-            <div className="flex items-center justify-center h-full">
-              <p className="text-muted-foreground">Loading map...</p>
-            </div>
-          )}
+                      <Button
+                        size="sm"
+                        className="w-full mt-3"
+                        onClick={() => openEditDialog(contact)}
+                      >
+                        Edit Contact
+                      </Button>
+                    </div>
+                  </Popup>
+                </Marker>
+              ))}
+          </MapContainer>
         </div>
       ) : (
         <div className="space-y-4">
