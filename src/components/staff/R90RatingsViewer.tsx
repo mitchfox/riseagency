@@ -26,6 +26,7 @@ interface R90RatingsViewerProps {
   onOpenChange: (open: boolean) => void;
   initialCategory?: string;
   searchTerm?: string;
+  prefilledSearch?: { type: string; context: string } | null;
 }
 
 const R90_CATEGORIES = [
@@ -38,13 +39,14 @@ const R90_CATEGORIES = [
   'Off-Ball Movement'
 ];
 
-export const R90RatingsViewer = ({ open, onOpenChange, initialCategory, searchTerm }: R90RatingsViewerProps) => {
+export const R90RatingsViewer = ({ open, onOpenChange, initialCategory, searchTerm, prefilledSearch }: R90RatingsViewerProps) => {
   const [ratings, setRatings] = useState<R90Rating[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [aiSearching, setAiSearching] = useState(false);
   const [actionType, setActionType] = useState('');
   const [actionContext, setActionContext] = useState('');
+  const [showAiSearch, setShowAiSearch] = useState(false);
 
   // Update category when initialCategory changes
   useEffect(() => {
@@ -52,6 +54,15 @@ export const R90RatingsViewer = ({ open, onOpenChange, initialCategory, searchTe
       setSelectedCategory(initialCategory);
     }
   }, [initialCategory, open]);
+
+  // Prefill search and auto-expand when prefilledSearch is provided
+  useEffect(() => {
+    if (prefilledSearch && open) {
+      setActionType(prefilledSearch.type);
+      setActionContext(prefilledSearch.context);
+      setShowAiSearch(true);
+    }
+  }, [prefilledSearch, open]);
 
   useEffect(() => {
     if (open) {
@@ -176,57 +187,83 @@ export const R90RatingsViewer = ({ open, onOpenChange, initialCategory, searchTe
         </DialogHeader>
 
         <div className="space-y-4">
-          {/* AI-Powered Search */}
+          {/* AI-Powered Search - Collapsible */}
           <Card className="border-2 border-purple-200 bg-purple-50/50">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-purple-600" />
-                AI-Powered Search
+            <CardHeader 
+              className="pb-3 cursor-pointer hover:bg-purple-100/30 transition-colors"
+              onClick={() => setShowAiSearch(!showAiSearch)}
+            >
+              <CardTitle className="text-sm flex items-center justify-between">
+                <span className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-purple-600" />
+                  AI-Powered Search
+                </span>
+                <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                  {showAiSearch ? '−' : '+'}
+                </Button>
               </CardTitle>
-              <CardDescription className="text-xs">
-                Describe the action and context to find the most relevant R90 rating
-              </CardDescription>
+              {!showAiSearch && (
+                <CardDescription className="text-xs">
+                  Click to search by action and context
+                </CardDescription>
+              )}
             </CardHeader>
-            <CardContent className="space-y-3">
-              <div>
-                <Label htmlFor="action-type" className="text-xs">Action Type *</Label>
-                <Input
-                  id="action-type"
-                  value={actionType}
-                  onChange={(e) => setActionType(e.target.value)}
-                  placeholder="e.g., pass, tackle, dribble"
-                  className="text-sm"
-                />
-              </div>
-              <div>
-                <Label htmlFor="action-context" className="text-xs">Context & Details</Label>
-                <Input
-                  id="action-context"
-                  value={actionContext}
-                  onChange={(e) => setActionContext(e.target.value)}
-                  placeholder="e.g., under pressure, in space, forward, backwards"
-                  className="text-sm"
-                />
-              </div>
-              <Button 
-                onClick={handleAiSearch} 
-                disabled={aiSearching}
-                className="w-full"
-                size="sm"
-              >
-                {aiSearching ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Searching...
-                  </>
-                ) : (
-                  <>
-                    <Search className="w-4 h-4 mr-2" />
-                    Find Matching Ratings
-                  </>
-                )}
-              </Button>
-            </CardContent>
+            {showAiSearch && (
+              <CardContent className="space-y-3">
+                <div>
+                  <Label htmlFor="action-type" className="text-xs">Action Type *</Label>
+                  <Input
+                    id="action-type"
+                    value={actionType}
+                    onChange={(e) => setActionType(e.target.value)}
+                    placeholder="e.g., pass, tackle, dribble"
+                    className="text-sm"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="action-context" className="text-xs">Context & Details</Label>
+                  <Input
+                    id="action-context"
+                    value={actionContext}
+                    onChange={(e) => setActionContext(e.target.value)}
+                    placeholder="e.g., under pressure, in space, forward, backwards"
+                    className="text-sm"
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <Button 
+                    onClick={handleAiSearch} 
+                    disabled={aiSearching}
+                    className="flex-1"
+                    size="sm"
+                  >
+                    {aiSearching ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Searching...
+                      </>
+                    ) : (
+                      <>
+                        <Search className="w-4 h-4 mr-2" />
+                        Find Ratings
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      setActionType('');
+                      setActionContext('');
+                      setShowAiSearch(false);
+                      fetchRatings();
+                    }}
+                    variant="outline"
+                    size="sm"
+                  >
+                    Clear
+                  </Button>
+                </div>
+              </CardContent>
+            )}
           </Card>
 
           {/* Category Filter */}

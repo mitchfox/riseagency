@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
-import { Plus, Trash2, AlertTriangle, LineChart, Sparkles } from "lucide-react";
+import { Plus, Trash2, AlertTriangle, LineChart, Sparkles, Search } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { R90RatingsViewer } from "./R90RatingsViewer";
@@ -63,6 +63,7 @@ export const CreatePerformanceReportDialog = ({
   const [r90ViewerCategory, setR90ViewerCategory] = useState<string | undefined>(undefined);
   const [r90ViewerSearch, setR90ViewerSearch] = useState<string | undefined>(undefined);
   const [isFillingScores, setIsFillingScores] = useState(false);
+  const [aiSearchAction, setAiSearchAction] = useState<{ type: string; context: string } | null>(null);
 
   // Key stats
   const [r90Score, setR90Score] = useState("");
@@ -114,6 +115,15 @@ export const CreatePerformanceReportDialog = ({
     
     setR90ViewerCategory(category);
     setR90ViewerSearch(searchTerm);
+    setIsR90ViewerOpen(true);
+  };
+
+  const openAiSearch = (actionIndex: number) => {
+    const action = actions[actionIndex];
+    setAiSearchAction({
+      type: action.action_type || '',
+      context: action.action_description || ''
+    });
     setIsR90ViewerOpen(true);
   };
 
@@ -1069,6 +1079,15 @@ export const CreatePerformanceReportDialog = ({
                     <span className="font-semibold text-sm">Action #{action.action_number}</span>
                     <div className="flex gap-1">
                       <Button
+                        onClick={() => openAiSearch(index)}
+                        size="icon"
+                        variant="ghost"
+                        className="h-8 w-8"
+                        title="AI Search for Rating"
+                      >
+                        <Search className="h-4 w-4 text-purple-600" />
+                      </Button>
+                      <Button
                         onClick={() => openSmartR90Viewer(index)}
                         size="icon"
                         variant="ghost"
@@ -1081,6 +1100,7 @@ export const CreatePerformanceReportDialog = ({
                         onClick={() => {
                           setR90ViewerCategory(undefined);
                           setR90ViewerSearch(undefined);
+                          setAiSearchAction(null);
                           setIsR90ViewerOpen(true);
                         }}
                         size="icon"
@@ -1270,6 +1290,15 @@ export const CreatePerformanceReportDialog = ({
                       <td className="p-2">
                         <div className="flex gap-1">
                           <Button
+                            onClick={() => openAiSearch(index)}
+                            size="icon"
+                            variant="ghost"
+                            className="h-8 w-8"
+                            title="AI Search for Rating"
+                          >
+                            <Search className="h-4 w-4 text-purple-600" />
+                          </Button>
+                          <Button
                             onClick={() => openSmartR90Viewer(index)}
                             size="icon"
                             variant="ghost"
@@ -1282,6 +1311,7 @@ export const CreatePerformanceReportDialog = ({
                             onClick={() => {
                               setR90ViewerCategory(undefined);
                               setR90ViewerSearch(undefined);
+                              setAiSearchAction(null);
                               setIsR90ViewerOpen(true);
                             }}
                             size="icon"
@@ -1377,9 +1407,17 @@ export const CreatePerformanceReportDialog = ({
       {/* R90 Ratings Viewer */}
       <R90RatingsViewer
         open={isR90ViewerOpen}
-        onOpenChange={setIsR90ViewerOpen}
+        onOpenChange={(open) => {
+          setIsR90ViewerOpen(open);
+          if (!open) {
+            setAiSearchAction(null);
+            setR90ViewerCategory(undefined);
+            setR90ViewerSearch(undefined);
+          }
+        }}
         initialCategory={r90ViewerCategory}
         searchTerm={r90ViewerSearch}
+        prefilledSearch={aiSearchAction}
       />
     </Dialog>
   );

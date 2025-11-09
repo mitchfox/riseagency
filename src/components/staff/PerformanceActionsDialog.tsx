@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Trash2, Plus, LineChart } from "lucide-react";
+import { Trash2, Plus, LineChart, Search } from "lucide-react";
 import { R90RatingsViewer } from "./R90RatingsViewer";
 
 interface PerformanceAction {
@@ -44,6 +44,7 @@ export const PerformanceActionsDialog = ({
   const [isR90ViewerOpen, setIsR90ViewerOpen] = useState(false);
   const [r90ViewerCategory, setR90ViewerCategory] = useState<string | undefined>(undefined);
   const [r90ViewerSearch, setR90ViewerSearch] = useState<string | undefined>(undefined);
+  const [aiSearchAction, setAiSearchAction] = useState<{ type: string; context: string } | null>(null);
   const [newAction, setNewAction] = useState<PerformanceAction>({
     action_number: 1,
     minute: 0,
@@ -96,6 +97,14 @@ export const PerformanceActionsDialog = ({
     
     setR90ViewerCategory(category);
     setR90ViewerSearch(searchTerm);
+    setIsR90ViewerOpen(true);
+  };
+
+  const openAiSearch = (action: PerformanceAction) => {
+    setAiSearchAction({
+      type: action.action_type || '',
+      context: action.action_description || ''
+    });
     setIsR90ViewerOpen(true);
   };
 
@@ -463,6 +472,14 @@ export const PerformanceActionsDialog = ({
                         <Button
                           variant="ghost"
                           size="sm"
+                          onClick={() => openAiSearch(action)}
+                          title="AI Search for Rating"
+                        >
+                          <Search className="w-4 h-4 text-purple-600" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
                           onClick={() => openSmartR90Viewer(action)}
                           title="Smart Link to R90 Ratings"
                         >
@@ -474,6 +491,7 @@ export const PerformanceActionsDialog = ({
                           onClick={() => {
                             setR90ViewerCategory(undefined);
                             setR90ViewerSearch(undefined);
+                            setAiSearchAction(null);
                             setIsR90ViewerOpen(true);
                           }}
                           title="View All R90 Ratings"
@@ -517,9 +535,17 @@ export const PerformanceActionsDialog = ({
       {/* R90 Ratings Viewer */}
       <R90RatingsViewer
         open={isR90ViewerOpen}
-        onOpenChange={setIsR90ViewerOpen}
+        onOpenChange={(open) => {
+          setIsR90ViewerOpen(open);
+          if (!open) {
+            setAiSearchAction(null);
+            setR90ViewerCategory(undefined);
+            setR90ViewerSearch(undefined);
+          }
+        }}
         initialCategory={r90ViewerCategory}
         searchTerm={r90ViewerSearch}
+        prefilledSearch={aiSearchAction}
       />
     </Dialog>
   );
