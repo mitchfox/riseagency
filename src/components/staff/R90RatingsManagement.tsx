@@ -499,9 +499,6 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
                       onChange={(e) => setFormData({ ...formData, score: e.target.value })}
                       placeholder="e.g., 0.0025"
                     />
-                    <p className="text-xs text-muted-foreground">
-                      Scale: 0-0.025 (Poor), 0.026-0.050 (Below Avg), 0.051-0.075 (Average), 0.076-0.100 (Good), 0.101+ (Excellent)
-                    </p>
                   </div>
 
                   <div className="space-y-2">
