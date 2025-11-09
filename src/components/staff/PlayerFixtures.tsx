@@ -755,16 +755,19 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, onViewR
           <div className="flex-1 overflow-y-auto">
           {editingPlayerFixture ? (
             <div className="space-y-4">
+              <div>
+                <Label htmlFor="edit_opponent" className="text-base font-semibold">Who is the opponent? *</Label>
+                <Input
+                  id="edit_opponent"
+                  value={editGameData.opponent}
+                  onChange={(e) => setEditGameData({ ...editGameData, opponent: e.target.value })}
+                  placeholder="Enter opponent team name"
+                  className="mt-2"
+                  required
+                />
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="edit_opponent">Opponent *</Label>
-                  <Input
-                    id="edit_opponent"
-                    value={editGameData.opponent}
-                    onChange={(e) => setEditGameData({ ...editGameData, opponent: e.target.value })}
-                    required
-                  />
-                </div>
                 <div>
                   <Label htmlFor="edit_result">Result *</Label>
                   <Input
@@ -772,19 +775,6 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, onViewR
                     placeholder="e.g., 4-2 (W)"
                     value={editGameData.result}
                     onChange={(e) => setEditGameData({ ...editGameData, result: e.target.value })}
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="edit_date">Date *</Label>
-                  <Input
-                    id="edit_date"
-                    type="date"
-                    value={editGameData.match_date}
-                    onChange={(e) => setEditGameData({ ...editGameData, match_date: e.target.value })}
                     required
                   />
                 </div>
@@ -797,6 +787,17 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, onViewR
                     onChange={(e) => setEditGameData({ ...editGameData, minutes_played: e.target.value })}
                   />
                 </div>
+              </div>
+
+              <div>
+                <Label htmlFor="edit_date">Date *</Label>
+                <Input
+                  id="edit_date"
+                  type="date"
+                  value={editGameData.match_date}
+                  onChange={(e) => setEditGameData({ ...editGameData, match_date: e.target.value })}
+                  required
+                />
               </div>
 
               <div>
@@ -953,27 +954,23 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, onViewR
               </TabsList>
 
               <TabsContent value="manual" className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label>Home Team</Label>
-                    <Input
-                      value={manualFixture.home_team}
-                      onChange={(e) =>
-                        setManualFixture({ ...manualFixture, home_team: e.target.value })
-                      }
-                      placeholder="Home Team"
-                    />
-                  </div>
-                  <div>
-                    <Label>Away Team</Label>
-                    <Input
-                      value={manualFixture.away_team}
-                      onChange={(e) =>
-                        setManualFixture({ ...manualFixture, away_team: e.target.value })
-                      }
-                      placeholder="Away Team"
-                    />
-                  </div>
+                <div>
+                  <Label className="text-base font-semibold">Who is the opponent?</Label>
+                  <Input
+                    value={manualFixture.away_team}
+                    onChange={(e) =>
+                      setManualFixture({ 
+                        ...manualFixture, 
+                        home_team: playerTeam || "For",
+                        away_team: e.target.value 
+                      })
+                    }
+                    placeholder="Enter opponent team name"
+                    className="mt-2"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Just enter the opponent's name - we'll handle the rest
+                  </p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
