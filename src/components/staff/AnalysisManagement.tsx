@@ -2059,7 +2059,7 @@ Title: ${formData.scheme_title || 'Not specified'}`;
               <Textarea
                 value={aiWriter.paragraph1Info}
                 onChange={(e) => setAiWriter({ ...aiWriter, paragraph1Info: e.target.value })}
-                placeholder="e.g., Player showed excellent positioning, created 3 key chances..."
+                placeholder="Provide specific observations, statistics, tactical details, and technical points. Include concrete examples like player names, numbers, specific actions, positioning details, and measurable outcomes that match the depth and specificity shown in the database examples."
                 rows={3}
               />
             </div>
@@ -2071,7 +2071,7 @@ Title: ${formData.scheme_title || 'Not specified'}`;
               <Textarea
                 value={aiWriter.paragraph2Info}
                 onChange={(e) => setAiWriter({ ...aiWriter, paragraph2Info: e.target.value })}
-                placeholder="e.g., Dominated aerial duels, strong defensive contribution..."
+                placeholder="Add follow-up details, recommendations, specific clip references, technical adjustments, or actionable coaching points. Use the same professional terminology and level of tactical detail as the examples."
                 rows={3}
               />
             </div>
@@ -2109,7 +2109,7 @@ Title: ${formData.scheme_title || 'Not specified'}`;
               <Textarea
                 value={overviewWriter.overviewInfo}
                 onChange={(e) => setOverviewWriter({ ...overviewWriter, overviewInfo: e.target.value })}
-                placeholder="e.g., Key tactical points, match context, important details..."
+                placeholder="Provide comprehensive match/tactical information including: opponent formation and style, key players with shirt numbers, specific tactical weaknesses to exploit, defensive approach, offensive strategies, player matchups, and any injuries/suspensions. Include concrete details that match the depth and technical language of the database examples."
                 rows={5}
               />
             </div>
@@ -2147,7 +2147,7 @@ Title: ${formData.scheme_title || 'Not specified'}`;
               <Textarea
                 value={schemeWriter.schemeInfo}
                 onChange={(e) => setSchemeWriter({ ...schemeWriter, schemeInfo: e.target.value })}
-                placeholder="e.g., 4-3-3 formation, high press, wide attacking play..."
+                placeholder="Detail the opponent's formation (e.g., 3-4-2-1, 4-3-3), key personnel with names and numbers, their tactical approach in different phases, specific positional weaknesses, spaces to exploit, defensive and offensive patterns, transitions, pressing triggers, and how to counter their system. Match the tactical depth and professional terminology of the database examples."
                 rows={5}
               />
             </div>
