@@ -217,11 +217,19 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
 
   const getScoreColor = (score: number | null) => {
     if (score === null || score === undefined) return 'bg-muted text-muted-foreground';
-    if (score <= 0.025) return 'bg-red-500 text-white';
-    if (score <= 0.050) return 'bg-orange-500 text-white';
-    if (score <= 0.075) return 'bg-yellow-500 text-black';
-    if (score <= 0.100) return 'bg-lime-500 text-black';
-    return 'bg-green-500 text-white';
+    
+    // Positive scores
+    if (score >= 0.1) return 'bg-green-600 text-white font-bold';
+    if (score > 0.01) return 'bg-green-500 text-white';
+    if (score > 0) return 'bg-green-400 text-white';
+    
+    // Negative scores
+    if (score <= -0.1) return 'bg-red-600 text-white font-bold';
+    if (score < -0.01) return 'bg-red-500 text-white';
+    if (score < 0) return 'bg-red-400 text-white';
+    
+    // Exactly 0
+    return 'bg-muted text-muted-foreground';
   };
 
   const handleSplitBundledRatings = async () => {
