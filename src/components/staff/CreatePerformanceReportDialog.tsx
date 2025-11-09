@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
 import { Plus, Trash2, AlertTriangle } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
@@ -56,7 +57,7 @@ export const CreatePerformanceReportDialog = ({
   const [isEditMode, setIsEditMode] = useState(false);
   const [playerClub, setPlayerClub] = useState<string>("");
   const [actionTypes, setActionTypes] = useState<string[]>([]);
-  const [previousScores, setPreviousScores] = useState<Record<number, string>>({});
+  const [previousScores, setPreviousScores] = useState<Record<number, Array<{score: number, description: string}>>>({});
 
   // Key stats
   const [r90Score, setR90Score] = useState("");
@@ -391,7 +392,7 @@ export const CreatePerformanceReportDialog = ({
     try {
       const { data, error } = await supabase
         .from("performance_report_actions")
-        .select("action_score")
+        .select("action_score, action_description")
         .eq("action_type", actionType)
         .not("action_score", "is", null)
         .order("created_at", { ascending: false })
@@ -405,9 +406,16 @@ export const CreatePerformanceReportDialog = ({
       console.log(`Previous scores for "${actionType}":`, data);
 
       if (data && data.length > 0) {
-        const scores = data.map(item => item.action_score.toFixed(5)).join(", ");
-        console.log(`Setting previous scores for action ${actionIndex}:`, scores);
-        setPreviousScores(prev => ({ ...prev, [actionIndex]: scores }));
+        // Sort by score ascending (lowest to highest)
+        const sortedScores = data
+          .map(item => ({
+            score: item.action_score,
+            description: item.action_description || ""
+          }))
+          .sort((a, b) => a.score - b.score);
+        
+        console.log(`Setting previous scores for action ${actionIndex}:`, sortedScores);
+        setPreviousScores(prev => ({ ...prev, [actionIndex]: sortedScores }));
       } else {
         console.log(`No previous scores found for "${actionType}"`);
         setPreviousScores(prev => {
@@ -959,9 +967,25 @@ export const CreatePerformanceReportDialog = ({
                       className="text-sm"
                     />
                     {previousScores[index] && (
-                      <p className="text-[10px] mt-1 font-medium" style={{ color: 'hsl(43, 49%, 61%)' }}>
-                        Previous: {previousScores[index]}
-                      </p>
+                      <div className="text-[10px] mt-1 font-medium" style={{ color: 'hsl(43, 49%, 61%)' }}>
+                        <span className="mr-1">Previous:</span>
+                        {previousScores[index].map((item, idx) => (
+                          <Tooltip key={idx}>
+                            <TooltipTrigger asChild>
+                              <button
+                                type="button"
+                                className="hover:underline cursor-pointer"
+                                style={{ color: 'hsl(43, 49%, 61%)' }}
+                              >
+                                {item.score.toFixed(5)}{idx < previousScores[index].length - 1 ? ", " : ""}
+                              </button>
+                            </TooltipTrigger>
+                            <TooltipContent className="max-w-xs">
+                              <p className="text-xs">{item.description}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        ))}
+                      </div>
                     )}
                   </div>
                   
@@ -1036,9 +1060,24 @@ export const CreatePerformanceReportDialog = ({
                           className="w-40 text-sm"
                         />
                         {previousScores[index] && (
-                          <p className="text-[10px] font-medium" style={{ color: 'hsl(43, 49%, 61%)' }}>
-                            {previousScores[index]}
-                          </p>
+                          <div className="text-[10px] font-medium inline-flex flex-wrap gap-x-1" style={{ color: 'hsl(43, 49%, 61%)' }}>
+                            {previousScores[index].map((item, idx) => (
+                              <Tooltip key={idx}>
+                                <TooltipTrigger asChild>
+                                  <button
+                                    type="button"
+                                    className="hover:underline cursor-pointer"
+                                    style={{ color: 'hsl(43, 49%, 61%)' }}
+                                  >
+                                    {item.score.toFixed(5)}{idx < previousScores[index].length - 1 ? "," : ""}
+                                  </button>
+                                </TooltipTrigger>
+                                <TooltipContent className="max-w-xs">
+                                  <p className="text-xs">{item.description}</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            ))}
+                          </div>
                         )}
                       </td>
                       <td className="p-2">

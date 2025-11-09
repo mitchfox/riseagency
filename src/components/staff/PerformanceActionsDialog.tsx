@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Trash2, Plus } from "lucide-react";
@@ -38,7 +39,7 @@ export const PerformanceActionsDialog = ({
   const [strikerStats, setStrikerStats] = useState<any>(null);
   const [r90Score, setR90Score] = useState<number | null>(null);
   const [actionTypes, setActionTypes] = useState<string[]>([]);
-  const [previousScores, setPreviousScores] = useState<string>("");
+  const [previousScores, setPreviousScores] = useState<Array<{score: number, description: string}>>([]);
   const [newAction, setNewAction] = useState<PerformanceAction>({
     action_number: 1,
     minute: 0,
@@ -111,7 +112,7 @@ export const PerformanceActionsDialog = ({
     try {
       const { data, error } = await supabase
         .from("performance_report_actions")
-        .select("action_score")
+        .select("action_score, action_description")
         .eq("action_type", actionType)
         .not("action_score", "is", null)
         .order("created_at", { ascending: false })
@@ -120,10 +121,17 @@ export const PerformanceActionsDialog = ({
       if (error) throw error;
 
       if (data && data.length > 0) {
-        const scores = data.map(item => item.action_score.toFixed(5)).join(", ");
-        setPreviousScores(scores);
+        // Sort by score ascending (lowest to highest)
+        const sortedScores = data
+          .map(item => ({
+            score: item.action_score,
+            description: item.action_description || ""
+          }))
+          .sort((a, b) => a.score - b.score);
+        
+        setPreviousScores(sortedScores);
       } else {
-        setPreviousScores("");
+        setPreviousScores([]);
       }
     } catch (error: any) {
       console.error("Error fetching previous scores:", error);
@@ -135,7 +143,7 @@ export const PerformanceActionsDialog = ({
     if (value) {
       await fetchPreviousScores(value);
     } else {
-      setPreviousScores("");
+      setPreviousScores([]);
     }
   };
 
@@ -300,10 +308,26 @@ export const PerformanceActionsDialog = ({
                   onChange={(e) => handleActionTypeChange(e.target.value)}
                   placeholder="Select or type new action type"
                 />
-                {previousScores && (
-                  <p className="text-[10px] font-medium" style={{ color: 'hsl(43, 49%, 61%)' }}>
-                    Previous: {previousScores}
-                  </p>
+                {previousScores.length > 0 && (
+                  <div className="text-[10px] font-medium" style={{ color: 'hsl(43, 49%, 61%)' }}>
+                    <span className="mr-1">Previous:</span>
+                    {previousScores.map((item, idx) => (
+                      <Tooltip key={idx}>
+                        <TooltipTrigger asChild>
+                          <button
+                            type="button"
+                            className="hover:underline cursor-pointer"
+                            style={{ color: 'hsl(43, 49%, 61%)' }}
+                          >
+                            {item.score.toFixed(5)}{idx < previousScores.length - 1 ? ", " : ""}
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-xs">
+                          <p className="text-xs">{item.description}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    ))}
+                  </div>
                 )}
               </div>
               <div className="space-y-2 col-span-2 md:col-span-3">
