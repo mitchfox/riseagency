@@ -2220,7 +2220,9 @@ Title: ${formData.scheme_title || 'Not specified'}`;
               <Textarea
                 value={overviewWriter.overviewInfo}
                 onChange={(e) => setOverviewWriter({ ...overviewWriter, overviewInfo: e.target.value })}
-                placeholder="Provide comprehensive match/tactical information including: opponent formation and style, key players with shirt numbers, specific tactical weaknesses to exploit, defensive approach, offensive strategies, player matchups, and any injuries/suspensions. Include concrete details that match the depth and technical language of the database examples."
+                placeholder={overviewWriter.category === 'pre-match' 
+                  ? "Provide comprehensive match/tactical information including: opponent formation and style, key players with shirt numbers, specific tactical weaknesses to exploit, defensive approach, offensive strategies, player matchups, and any injuries/suspensions. Include concrete details that match the depth and technical language of the database examples."
+                  : "Provide comprehensive post-match analysis including: player performance highlights, key moments and turning points, tactical execution (what worked/didn't work), strengths demonstrated, areas for improvement, decision-making quality, physical and mental performance, and specific examples from the match. Include concrete details that match the depth and technical language of the database examples."}
                 rows={5}
               />
             </div>
