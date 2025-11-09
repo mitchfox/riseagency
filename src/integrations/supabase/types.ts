@@ -935,6 +935,49 @@ export type Database = {
           },
         ]
       }
+      player_other_analysis: {
+        Row: {
+          analysis_id: string
+          assigned_at: string
+          id: string
+          player_id: string
+        }
+        Insert: {
+          analysis_id: string
+          assigned_at?: string
+          id?: string
+          player_id: string
+        }
+        Update: {
+          analysis_id?: string
+          assigned_at?: string
+          id?: string
+          player_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "player_other_analysis_analysis_id_fkey"
+            columns: ["analysis_id"]
+            isOneToOne: false
+            referencedRelation: "coaching_analysis"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "player_other_analysis_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "player_other_analysis_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       player_programs: {
         Row: {
           created_at: string

@@ -88,6 +88,7 @@ const Dashboard = () => {
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [highlightsData, setHighlightsData] = useState<any>({ matchHighlights: [], bestClips: [] });
   const [fileUploadProgress, setFileUploadProgress] = useState<Record<string, number>>({});
+  const [otherAnalyses, setOtherAnalyses] = useState<any[]>([]);
 
   // Session color mapping with hover states
   const getSessionColor = (sessionKey: string) => {
@@ -445,6 +446,27 @@ const Dashboard = () => {
           setAnalyses(mergedAnalyses);
         }
       }
+
+      // Fetch other analyses assigned to this player
+      const { data: otherAnalysesData, error: otherAnalysesError } = await supabase
+        .from("player_other_analysis")
+        .select(`
+          id,
+          assigned_at,
+          analysis:coaching_analysis (
+            id,
+            title,
+            description,
+            content,
+            category
+          )
+        `)
+        .eq("player_id", playerData.id)
+        .order("assigned_at", { ascending: false });
+
+      if (!otherAnalysesError && otherAnalysesData) {
+        setOtherAnalyses(otherAnalysesData);
+      }
     } catch (error: any) {
       console.error("Error fetching analyses:", error);
       toast.error("Failed to load analysis data");
@@ -735,12 +757,15 @@ const Dashboard = () => {
 
             <TabsContent value="analysis" className="space-y-6">
               <Tabs defaultValue="performance" className="w-full">
-                <TabsList className="grid w-full grid-cols-1 sm:grid-cols-2 gap-2 mb-4 bg-muted h-auto p-2">
+                <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3 gap-2 mb-4 bg-muted h-auto p-2">
                   <TabsTrigger value="performance" className="font-bebas uppercase text-sm sm:text-base">
                     Performance Analysis
                   </TabsTrigger>
                   <TabsTrigger value="concepts" className="font-bebas uppercase text-sm sm:text-base">
                     Concepts
+                  </TabsTrigger>
+                  <TabsTrigger value="other" className="font-bebas uppercase text-sm sm:text-base">
+                    Other Analysis
                   </TabsTrigger>
                 </TabsList>
 
@@ -899,6 +924,57 @@ const Dashboard = () => {
                                   <p className="text-muted-foreground whitespace-pre-wrap">{concept.explanation}</p>
                                 </div>
                               )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+
+                <TabsContent value="other">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-3xl font-bebas uppercase tracking-wider">
+                        Other Analysis
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      {otherAnalyses.length === 0 ? (
+                        <div className="py-8">
+                          <p className="text-center text-muted-foreground">No other analysis available yet.</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          {otherAnalyses.map((item: any) => (
+                            <div 
+                              key={item.id} 
+                              className="border rounded-lg p-4 hover:border-primary transition-colors bg-card"
+                            >
+                              <div className="flex items-start justify-between gap-4">
+                                <div className="flex-1">
+                                  <h3 className="font-semibold text-lg mb-2">{item.analysis.title}</h3>
+                                  {item.analysis.description && (
+                                    <p className="text-sm text-muted-foreground mb-3">{item.analysis.description}</p>
+                                  )}
+                                  {item.analysis.category && (
+                                    <span className="inline-block px-2 py-1 text-xs rounded bg-primary/10 text-primary">
+                                      {item.analysis.category}
+                                    </span>
+                                  )}
+                                </div>
+                                {item.analysis.content && (
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm"
+                                    onClick={() => window.open(item.analysis.content, '_blank')}
+                                    className="flex-shrink-0"
+                                  >
+                                    <FileText className="w-4 h-4 mr-2" />
+                                    View PDF
+                                  </Button>
+                                )}
+                              </div>
                             </div>
                           ))}
                         </div>

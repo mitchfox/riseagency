@@ -110,6 +110,10 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   });
   const [tacticalAnalyses, setTacticalAnalyses] = useState<Record<string, any[]>>({});
   const [playerPrograms, setPlayerPrograms] = useState<Record<string, any[]>>({});
+  const [otherAnalyses, setOtherAnalyses] = useState<Record<string, any[]>>({});
+  const [isAssignAnalysisDialogOpen, setIsAssignAnalysisDialogOpen] = useState(false);
+  const [availableAnalyses, setAvailableAnalyses] = useState<any[]>([]);
+  const [selectedAnalysisToAssign, setSelectedAnalysisToAssign] = useState<string>("");
 
   useEffect(() => {
     fetchPlayers();
@@ -117,6 +121,8 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
     fetchAllInvoices();
     fetchTacticalAnalyses();
     fetchAllPrograms();
+    fetchOtherAnalyses();
+    fetchAvailableAnalyses();
   }, []);
 
   // Read player and tab from URL params
@@ -266,6 +272,93 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       setPlayerPrograms(programsMap);
     } catch (error: any) {
       toast.error("Failed to fetch programs: " + error.message);
+    }
+  };
+
+  const fetchOtherAnalyses = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("player_other_analysis")
+        .select(`
+          id,
+          player_id,
+          assigned_at,
+          analysis:coaching_analysis (
+            id,
+            title,
+            description,
+            content,
+            category
+          )
+        `)
+        .order("assigned_at", { ascending: false });
+
+      if (error) throw error;
+
+      const otherMap: Record<string, any[]> = {};
+      data?.forEach(item => {
+        if (!otherMap[item.player_id]) {
+          otherMap[item.player_id] = [];
+        }
+        otherMap[item.player_id].push(item);
+      });
+      setOtherAnalyses(otherMap);
+    } catch (error: any) {
+      toast.error("Failed to fetch other analyses: " + error.message);
+    }
+  };
+
+  const fetchAvailableAnalyses = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("coaching_analysis")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      setAvailableAnalyses(data || []);
+    } catch (error: any) {
+      console.error("Failed to fetch available analyses:", error);
+    }
+  };
+
+  const handleAssignAnalysis = async () => {
+    if (!selectedPlayerId || !selectedAnalysisToAssign) return;
+
+    try {
+      const { error } = await supabase
+        .from("player_other_analysis")
+        .insert({
+          player_id: selectedPlayerId,
+          analysis_id: selectedAnalysisToAssign,
+        });
+
+      if (error) throw error;
+
+      toast.success("Analysis assigned successfully");
+      setIsAssignAnalysisDialogOpen(false);
+      setSelectedAnalysisToAssign("");
+      fetchOtherAnalyses();
+    } catch (error: any) {
+      toast.error("Failed to assign analysis: " + error.message);
+    }
+  };
+
+  const handleUnassignAnalysis = async (assignmentId: string) => {
+    if (!confirm("Remove this analysis from the player?")) return;
+
+    try {
+      const { error } = await supabase
+        .from("player_other_analysis")
+        .delete()
+        .eq("id", assignmentId);
+
+      if (error) throw error;
+
+      toast.success("Analysis removed");
+      fetchOtherAnalyses();
+    } catch (error: any) {
+      toast.error("Failed to remove analysis: " + error.message);
     }
   };
 
@@ -905,9 +998,10 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
 
               <TabsContent value="analysis" className="mt-0 space-y-4">
                 <Tabs defaultValue="performance" className="w-full">
-                  <TabsList className="flex flex-col md:grid md:grid-cols-2 w-full gap-1 bg-muted/20 rounded-lg p-1 mb-4">
+                  <TabsList className="flex flex-col md:grid md:grid-cols-3 w-full gap-1 bg-muted/20 rounded-lg p-1 mb-4">
                     <TabsTrigger value="performance" className="w-full justify-center px-3 py-2.5 text-xs md:text-sm">Performance Reports</TabsTrigger>
                     <TabsTrigger value="tactical" className="w-full justify-center px-3 py-2.5 text-xs md:text-sm">Tactical Analysis</TabsTrigger>
+                    <TabsTrigger value="other" className="w-full justify-center px-3 py-2.5 text-xs md:text-sm">Other Analysis</TabsTrigger>
                   </TabsList>
 
                   <TabsContent value="performance" className="mt-4">
@@ -1123,6 +1217,77 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                         ) : (
                           <p className="text-center text-muted-foreground py-8">
                             No tactical analysis available yet.
+                          </p>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
+
+                  <TabsContent value="other" className="mt-4">
+                    <Card>
+                      <CardHeader className="px-3 md:px-6 py-3 md:py-4">
+                        <div className="flex items-center justify-between">
+                          <CardTitle className="hidden md:block text-lg">Other Analysis</CardTitle>
+                          <Button
+                            size="sm"
+                            onClick={() => setIsAssignAnalysisDialogOpen(true)}
+                          >
+                            <Plus className="w-4 h-4 mr-2" />
+                            Assign Analysis
+                          </Button>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="px-3 md:px-6 py-4">
+                        {otherAnalyses[selectedPlayerId]?.length > 0 ? (
+                          <div className="space-y-3">
+                            {otherAnalyses[selectedPlayerId].map((item: any) => (
+                              <div
+                                key={item.id}
+                                className="p-3 md:p-4 border rounded-lg hover:bg-secondary/30 transition-colors"
+                              >
+                                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                                  <div className="flex-1 min-w-0">
+                                    <h4 className="font-medium mb-1 text-sm md:text-base">{item.analysis.title}</h4>
+                                    {item.analysis.description && (
+                                      <p className="text-xs md:text-sm text-muted-foreground mb-2">{item.analysis.description}</p>
+                                    )}
+                                    <div className="flex flex-wrap items-center gap-2">
+                                      {item.analysis.category && (
+                                        <span className="text-[10px] md:text-xs px-2 py-1 rounded bg-primary/20 text-primary">
+                                          {item.analysis.category}
+                                        </span>
+                                      )}
+                                      <span className="text-xs text-muted-foreground">
+                                        Assigned {new Date(item.assigned_at).toLocaleDateString()}
+                                      </span>
+                                    </div>
+                                  </div>
+                                  <div className="flex gap-2">
+                                    {item.analysis.content && (
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => window.open(item.analysis.content, '_blank')}
+                                      >
+                                        <FileText className="w-4 h-4 mr-2" />
+                                        View
+                                      </Button>
+                                    )}
+                                    <Button
+                                      variant="destructive"
+                                      size="sm"
+                                      onClick={() => handleUnassignAnalysis(item.id)}
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </Button>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-center text-muted-foreground py-8">
+                            No other analysis assigned yet.
                           </p>
                         )}
                       </CardContent>
@@ -2200,6 +2365,39 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
               </div>
             </form>
           </ScrollArea>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isAssignAnalysisDialogOpen} onOpenChange={setIsAssignAnalysisDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Assign Analysis to Player</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Select Analysis</Label>
+              <Select value={selectedAnalysisToAssign} onValueChange={setSelectedAnalysisToAssign}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Choose an analysis..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableAnalyses.map((analysis) => (
+                    <SelectItem key={analysis.id} value={analysis.id}>
+                      {analysis.title} {analysis.category && `(${analysis.category})`}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setIsAssignAnalysisDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleAssignAnalysis} disabled={!selectedAnalysisToAssign}>
+                Assign
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
