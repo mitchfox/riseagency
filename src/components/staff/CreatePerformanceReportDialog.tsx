@@ -297,6 +297,13 @@ export const CreatePerformanceReportDialog = ({
             notes: action.notes || "",
           }))
         );
+        
+        // Fetch previous scores for each action
+        actionsData.forEach((action, index) => {
+          if (action.action_type) {
+            fetchPreviousScores(index, action.action_type);
+          }
+        });
       }
     } catch (error: any) {
       console.error("Error fetching existing data:", error);
@@ -374,7 +381,9 @@ export const CreatePerformanceReportDialog = ({
 
     // If action_type changed, fetch previous scores
     if (field === "action_type" && value) {
-      await fetchPreviousScores(index, value);
+      const trimmedValue = value.trim();
+      console.log(`Action type changed to: "${trimmedValue}" for action index ${index}`);
+      await fetchPreviousScores(index, trimmedValue);
     }
   };
 
@@ -388,12 +397,19 @@ export const CreatePerformanceReportDialog = ({
         .order("created_at", { ascending: false })
         .limit(50);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching previous scores:", error);
+        throw error;
+      }
+
+      console.log(`Previous scores for "${actionType}":`, data);
 
       if (data && data.length > 0) {
         const scores = data.map(item => item.action_score.toFixed(5)).join(", ");
+        console.log(`Setting previous scores for action ${actionIndex}:`, scores);
         setPreviousScores(prev => ({ ...prev, [actionIndex]: scores }));
       } else {
+        console.log(`No previous scores found for "${actionType}"`);
         setPreviousScores(prev => {
           const newScores = { ...prev };
           delete newScores[actionIndex];
@@ -943,7 +959,7 @@ export const CreatePerformanceReportDialog = ({
                       className="text-sm"
                     />
                     {previousScores[index] && (
-                      <p className="text-xs text-gold mt-1">
+                      <p className="text-[10px] mt-1 font-medium" style={{ color: 'hsl(43, 49%, 61%)' }}>
                         Previous: {previousScores[index]}
                       </p>
                     )}
@@ -1020,7 +1036,7 @@ export const CreatePerformanceReportDialog = ({
                           className="w-40 text-sm"
                         />
                         {previousScores[index] && (
-                          <p className="text-xs text-gold mt-1">
+                          <p className="text-[10px] font-medium" style={{ color: 'hsl(43, 49%, 61%)' }}>
                             {previousScores[index]}
                           </p>
                         )}

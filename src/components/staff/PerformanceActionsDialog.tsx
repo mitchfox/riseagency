@@ -301,7 +301,7 @@ export const PerformanceActionsDialog = ({
                   placeholder="Select or type new action type"
                 />
                 {previousScores && (
-                  <p className="text-xs text-gold">
+                  <p className="text-[10px] font-medium" style={{ color: 'hsl(43, 49%, 61%)' }}>
                     Previous: {previousScores}
                   </p>
                 )}
