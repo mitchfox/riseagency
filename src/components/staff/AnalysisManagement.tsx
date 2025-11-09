@@ -73,6 +73,13 @@ interface Matchup {
   image_url: string;
 }
 
+interface AIWriterState {
+  open: boolean;
+  category: 'pre-match' | 'post-match' | 'concept' | 'other';
+  infoInput: string;
+  targetPointIndex?: number;
+}
+
 interface AnalysisManagementProps {
   isAdmin: boolean;
 }
@@ -84,6 +91,11 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
   const [editingAnalysis, setEditingAnalysis] = useState<Analysis | null>(null);
   const [analysisType, setAnalysisType] = useState<AnalysisType>("pre-match");
   const [aiGenerating, setAiGenerating] = useState(false);
+  const [aiWriter, setAiWriter] = useState<AIWriterState>({
+    open: false,
+    category: 'pre-match',
+    infoInput: ''
+  });
 
   // Form states
   const [formData, setFormData] = useState<Partial<Analysis>>({
@@ -474,6 +486,85 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
     setFormData({ ...formData, points: updatedPoints });
   };
 
+  const openAIWriter = (category: AIWriterState['category'], pointIndex?: number) => {
+    setAiWriter({
+      open: true,
+      category,
+      infoInput: '',
+      targetPointIndex: pointIndex
+    });
+  };
+
+  const generateWithAIWriter = async () => {
+    if (!aiWriter.infoInput.trim()) {
+      toast.error('Please enter some information first');
+      return;
+    }
+
+    setAiGenerating(true);
+    try {
+      const context = `Analysis Type: ${aiWriter.category}
+Important Information: ${aiWriter.infoInput}`;
+      
+      // Generate both paragraphs
+      const { data: para1Data, error: error1 } = await supabase.functions.invoke('ai-write', {
+        body: { 
+          prompt: `Write the first paragraph of a ${aiWriter.category} analysis based on the information provided.`,
+          context,
+          type: 'analysis-paragraph'
+        }
+      });
+
+      if (error1) throw error1;
+      if (para1Data.error) {
+        if (para1Data.error.includes('Rate limit')) {
+          toast.error('AI rate limit reached. Please wait a moment and try again.');
+        } else if (para1Data.error.includes('credits')) {
+          toast.error('AI credits exhausted. Please add credits in Settings > Workspace > Usage.');
+        } else {
+          throw new Error(para1Data.error);
+        }
+        return;
+      }
+
+      const { data: para2Data, error: error2 } = await supabase.functions.invoke('ai-write', {
+        body: { 
+          prompt: `Write the second paragraph of a ${aiWriter.category} analysis that expands on the first paragraph.`,
+          context: context + `\n\nFirst Paragraph: ${para1Data.text}`,
+          type: 'analysis-paragraph'
+        }
+      });
+
+      if (error2) throw error2;
+      if (para2Data.error) throw new Error(para2Data.error);
+
+      // Add or update point
+      if (aiWriter.targetPointIndex !== undefined) {
+        updatePoint(aiWriter.targetPointIndex, 'paragraph_1', para1Data.text);
+        updatePoint(aiWriter.targetPointIndex, 'paragraph_2', para2Data.text);
+      } else {
+        const newPoint: Point = {
+          title: aiWriter.infoInput.substring(0, 50),
+          paragraph_1: para1Data.text,
+          paragraph_2: para2Data.text,
+          images: []
+        };
+        setFormData({
+          ...formData,
+          points: [...(formData.points || []), newPoint]
+        });
+      }
+
+      toast.success('AI content generated successfully!');
+      setAiWriter({ open: false, category: 'pre-match', infoInput: '' });
+    } catch (error: any) {
+      console.error('AI generation error:', error);
+      toast.error('Failed to generate content with AI');
+    } finally {
+      setAiGenerating(false);
+    }
+  };
+
   const generateWithAI = async (field: string, pointIndex?: number) => {
     setAiGenerating(true);
     try {
@@ -578,11 +669,30 @@ Title: ${formData.scheme_title || 'Not specified'}`;
               </DialogTitle>
             </DialogHeader>
 
-            <div className="space-y-4">
-              {analysisType === "pre-match" && (
-                <>
-                  <div className="space-y-4">
-                    <h3 className="font-semibold">Overview</h3>
+            <Tabs defaultValue="pre-match" className="space-y-4">
+              <TabsList className="grid w-full grid-cols-4">
+                <TabsTrigger value="pre-match">Pre-Match</TabsTrigger>
+                <TabsTrigger value="post-match">Post-Match</TabsTrigger>
+                <TabsTrigger value="concepts">Concepts</TabsTrigger>
+                <TabsTrigger value="other">Other</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="pre-match" className="space-y-4">
+                {analysisType === "pre-match" && (
+                  <>
+                    <div className="flex justify-between items-center">
+                      <h3 className="font-semibold">Pre-Match Analysis</h3>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => openAIWriter('pre-match')}
+                      >
+                        <Sparkles className="w-4 h-4 mr-2" />
+                        AI Pre-Match Point Writer
+                      </Button>
+                    </div>
+                    <div className="space-y-4">
+                      <h3 className="font-semibold">Overview</h3>
                     <div>
                       <Label>Match Date</Label>
                       <Input
@@ -987,13 +1097,26 @@ Title: ${formData.scheme_title || 'Not specified'}`;
                       />
                     </div>
                   </div>
-                </>
-              )}
+                  </>
+                )}
+              </TabsContent>
 
-              {analysisType === "post-match" && (
-                <>
-                  <div className="space-y-4">
-                    <h3 className="font-semibold">Overview</h3>
+              <TabsContent value="post-match" className="space-y-4">
+                {analysisType === "post-match" && (
+                  <>
+                    <div className="flex justify-between items-center">
+                      <h3 className="font-semibold">Post-Match Analysis</h3>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => openAIWriter('post-match')}
+                      >
+                        <Sparkles className="w-4 h-4 mr-2" />
+                        AI Post-Match Point Writer
+                      </Button>
+                    </div>
+                    <div className="space-y-4">
+                      <h3 className="font-semibold">Overview</h3>
                     <div>
                       <Label>Player Image (Optional)</Label>
                       <Input
@@ -1078,14 +1201,27 @@ Title: ${formData.scheme_title || 'Not specified'}`;
                       />
                     </div>
                   </div>
-                </>
-              )}
+                  </>
+                )}
+              </TabsContent>
 
-              {analysisType === "concept" && (
-                <>
-                  <div className="space-y-4">
-                    <div>
-                      <Label>Title</Label>
+              <TabsContent value="concepts" className="space-y-4">
+                {analysisType === "concept" && (
+                  <>
+                    <div className="flex justify-between items-center">
+                      <h3 className="font-semibold">Concept Analysis</h3>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => openAIWriter('concept')}
+                      >
+                        <Sparkles className="w-4 h-4 mr-2" />
+                        AI Concept Writer
+                      </Button>
+                    </div>
+                    <div className="space-y-4">
+                      <div>
+                        <Label>Title</Label>
                       <Input
                         value={formData.title || ""}
                         onChange={(e) =>
@@ -1112,11 +1248,15 @@ Title: ${formData.scheme_title || 'Not specified'}`;
                       />
                     </div>
                   </div>
-                </>
-              )}
+                  </>
+                )}
+              </TabsContent>
 
-              {/* Link to Player Performance Report */}
-              <div className="space-y-4 border-t pt-4">
+              <TabsContent value="other" className="space-y-4">
+                <h3 className="font-semibold">Other Settings</h3>
+                
+                {/* Link to Player Performance Report */}
+                <div className="space-y-4 border-t pt-4">
                 <h3 className="font-semibold">Link to Performance Report</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
@@ -1158,8 +1298,8 @@ Title: ${formData.scheme_title || 'Not specified'}`;
                 </div>
               </div>
 
-              {/* Points section - common for all types */}
-              {(analysisType === "pre-match" || analysisType === "post-match" || analysisType === "concept") && (
+                {/* Points section - common for all types */}
+                {(analysisType === "pre-match" || analysisType === "post-match" || analysisType === "concept") && (
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
                     <h3 className="font-semibold">
@@ -1289,16 +1429,55 @@ Title: ${formData.scheme_title || 'Not specified'}`;
                     </Card>
                   ))}
                 </div>
-              )}
+                )}
+              </TabsContent>
+            </Tabs>
 
-              <div className="flex justify-end gap-2 pt-4">
-                <Button variant="outline" onClick={handleCloseDialog}>
-                  Cancel
-                </Button>
-                <Button onClick={handleSave}>Save Analysis</Button>
-              </div>
+            <div className="flex justify-end gap-2 pt-4 border-t mt-4">
+              <Button variant="outline" onClick={handleCloseDialog}>
+                Cancel
+              </Button>
+              <Button onClick={handleSave}>Save Analysis</Button>
             </div>
           </DialogContent>
+      </Dialog>
+
+      {/* AI Writer Dialog */}
+      <Dialog open={aiWriter.open} onOpenChange={(open) => setAiWriter({ ...aiWriter, open })}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>AI {aiWriter.category.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')} Writer</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Important Information</Label>
+              <p className="text-xs text-muted-foreground mb-2">
+                Enter key details that should be included in the analysis
+              </p>
+              <Textarea
+                value={aiWriter.infoInput}
+                onChange={(e) => setAiWriter({ ...aiWriter, infoInput: e.target.value })}
+                placeholder="e.g., Player showed excellent positioning, created 3 key chances, dominated aerial duels..."
+                rows={4}
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setAiWriter({ open: false, category: 'pre-match', infoInput: '' })}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={generateWithAIWriter}
+                disabled={aiGenerating || !aiWriter.infoInput.trim()}
+              >
+                <Sparkles className="w-4 h-4 mr-2" />
+                {aiGenerating ? 'Generating...' : 'Generate Paragraphs'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
       </Dialog>
 
       <div className="grid gap-4">
