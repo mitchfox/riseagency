@@ -838,39 +838,39 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
 
             {/* Tabbed Sections */}
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="flex flex-col md:grid md:grid-cols-5 w-full gap-2 bg-muted/30 border-b p-2">
-                <TabsTrigger value="analysis" className="w-full justify-start px-4 py-3 text-sm md:text-base">
-                  <LineChart className="w-4 h-4 mr-2" />
+              <TabsList className="flex flex-col md:grid md:grid-cols-5 w-full gap-1.5 bg-sidebar-accent/50 backdrop-blur-sm rounded-lg p-1.5 mb-6">
+                <TabsTrigger value="analysis" className="w-full justify-start px-4 py-3 text-sm md:text-base data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                  <LineChart className="w-4 h-4 mr-2 flex-shrink-0" />
                   <span>Analysis</span>
                 </TabsTrigger>
-                <TabsTrigger value="programming" className="w-full justify-start px-4 py-3 text-sm md:text-base">
-                  <FileText className="w-4 h-4 mr-2" />
+                <TabsTrigger value="programming" className="w-full justify-start px-4 py-3 text-sm md:text-base data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                  <FileText className="w-4 h-4 mr-2 flex-shrink-0" />
                   <span className="hidden sm:inline">Programming</span>
                   <span className="sm:hidden">Programs</span>
                 </TabsTrigger>
-                <TabsTrigger value="highlights" className="w-full justify-start px-4 py-3 text-sm md:text-base">
-                  <Video className="w-4 h-4 mr-2" />
+                <TabsTrigger value="highlights" className="w-full justify-start px-4 py-3 text-sm md:text-base data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                  <Video className="w-4 h-4 mr-2 flex-shrink-0" />
                   <span className="hidden sm:inline">Highlights</span>
                   <span className="sm:hidden">Videos</span>
                 </TabsTrigger>
-                <TabsTrigger value="fixtures" className="w-full justify-start px-4 py-3 text-sm md:text-base">
-                  <Calendar className="w-4 h-4 mr-2" />
+                <TabsTrigger value="fixtures" className="w-full justify-start px-4 py-3 text-sm md:text-base data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                  <Calendar className="w-4 h-4 mr-2 flex-shrink-0" />
                   <span>Fixtures</span>
                 </TabsTrigger>
-                <TabsTrigger value="invoices" className="w-full justify-start px-4 py-3 text-sm md:text-base">
-                  <DollarSign className="w-4 h-4 mr-2" />
+                <TabsTrigger value="invoices" className="w-full justify-start px-4 py-3 text-sm md:text-base data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                  <DollarSign className="w-4 h-4 mr-2 flex-shrink-0" />
                   <span>Invoices</span>
                 </TabsTrigger>
               </TabsList>
 
-              <TabsContent value="analysis" className="mt-4 space-y-4">
+              <TabsContent value="analysis" className="mt-0 space-y-4">
                 <Tabs defaultValue="performance" className="w-full">
-                  <TabsList className="flex flex-col md:grid md:grid-cols-2 w-full gap-2 bg-muted/30 border-b p-2">
-                    <TabsTrigger value="performance" className="w-full justify-start px-4 py-3 text-sm md:text-base">Performance Reports</TabsTrigger>
-                    <TabsTrigger value="tactical" className="w-full justify-start px-4 py-3 text-sm md:text-base">Tactical Analysis</TabsTrigger>
+                  <TabsList className="flex flex-col md:grid md:grid-cols-2 w-full gap-1 bg-muted/20 rounded-lg p-1 mb-4">
+                    <TabsTrigger value="performance" className="w-full justify-center px-3 py-2.5 text-xs md:text-sm">Performance Reports</TabsTrigger>
+                    <TabsTrigger value="tactical" className="w-full justify-center px-3 py-2.5 text-xs md:text-sm">Tactical Analysis</TabsTrigger>
                   </TabsList>
 
-                  <TabsContent value="performance" className="mt-6">
+                  <TabsContent value="performance" className="mt-4">
                     <Card>
                       <CardHeader className="px-3 md:px-6 py-3 md:py-4">
                         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
@@ -1031,7 +1031,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                     </Card>
                   </TabsContent>
 
-                  <TabsContent value="tactical" className="mt-6">
+                  <TabsContent value="tactical" className="mt-4">
                     <Card>
                       <CardHeader className="px-3 md:px-6 py-3 md:py-4">
                         <CardTitle className="hidden md:block text-lg">Tactical Analysis</CardTitle>
@@ -1091,7 +1091,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                 </Tabs>
               </TabsContent>
 
-              <TabsContent value="programming" className="mt-6">
+              <TabsContent value="programming" className="mt-0">
                 <Card>
                   <CardHeader className="px-3 md:px-6 py-3 md:py-4">
                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
@@ -1157,7 +1157,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                 </Card>
               </TabsContent>
 
-              <TabsContent value="highlights" className="mt-6">
+              <TabsContent value="highlights" className="mt-0">
                 <Card>
                   <CardHeader className="px-3 md:px-6 py-3 md:py-4">
                     <CardTitle>Video Content & Images</CardTitle>
@@ -1466,7 +1466,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                 </Card>
               </TabsContent>
 
-              <TabsContent value="fixtures" className="mt-6">
+              <TabsContent value="fixtures" className="mt-0">
                 <Card>
                   <CardHeader className="px-3 md:px-6 py-3 md:py-4">
                     <CardTitle>Fixtures</CardTitle>
@@ -1481,7 +1481,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                 </Card>
               </TabsContent>
 
-              <TabsContent value="invoices" className="mt-6">
+              <TabsContent value="invoices" className="mt-0">
                 <Card>
                   <CardHeader className="px-3 md:px-6 py-3 md:py-4">
                     <CardTitle>Invoices</CardTitle>
