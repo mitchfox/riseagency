@@ -838,39 +838,39 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
 
             {/* Tabbed Sections */}
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="flex flex-col md:grid md:grid-cols-5 w-full gap-1 bg-muted/30 border-b p-1">
-                <TabsTrigger value="analysis" className="w-full px-4 py-2 text-sm md:text-base">
+              <TabsList className="flex flex-col md:grid md:grid-cols-5 w-full gap-2 bg-muted/30 border-b p-2">
+                <TabsTrigger value="analysis" className="w-full justify-start px-4 py-3 text-sm md:text-base">
                   <LineChart className="w-4 h-4 mr-2" />
                   <span>Analysis</span>
                 </TabsTrigger>
-                <TabsTrigger value="programming" className="w-full px-4 py-2 text-sm md:text-base">
+                <TabsTrigger value="programming" className="w-full justify-start px-4 py-3 text-sm md:text-base">
                   <FileText className="w-4 h-4 mr-2" />
                   <span className="hidden sm:inline">Programming</span>
                   <span className="sm:hidden">Programs</span>
                 </TabsTrigger>
-                <TabsTrigger value="highlights" className="w-full px-4 py-2 text-sm md:text-base">
+                <TabsTrigger value="highlights" className="w-full justify-start px-4 py-3 text-sm md:text-base">
                   <Video className="w-4 h-4 mr-2" />
                   <span className="hidden sm:inline">Highlights</span>
                   <span className="sm:hidden">Videos</span>
                 </TabsTrigger>
-                <TabsTrigger value="fixtures" className="w-full px-4 py-2 text-sm md:text-base">
+                <TabsTrigger value="fixtures" className="w-full justify-start px-4 py-3 text-sm md:text-base">
                   <Calendar className="w-4 h-4 mr-2" />
                   <span>Fixtures</span>
                 </TabsTrigger>
-                <TabsTrigger value="invoices" className="w-full px-4 py-2 text-sm md:text-base">
+                <TabsTrigger value="invoices" className="w-full justify-start px-4 py-3 text-sm md:text-base">
                   <DollarSign className="w-4 h-4 mr-2" />
                   <span>Invoices</span>
                 </TabsTrigger>
               </TabsList>
 
-              <TabsContent value="analysis" className="space-y-4">
+              <TabsContent value="analysis" className="mt-4 space-y-4">
                 <Tabs defaultValue="performance" className="w-full">
-                  <TabsList className="flex flex-col md:grid md:grid-cols-2 w-full gap-1 bg-muted/30 border-b p-1">
-                    <TabsTrigger value="performance" className="w-full px-4 py-2 text-sm md:text-base">Performance Reports</TabsTrigger>
-                    <TabsTrigger value="tactical" className="w-full px-4 py-2 text-sm md:text-base">Tactical Analysis</TabsTrigger>
+                  <TabsList className="flex flex-col md:grid md:grid-cols-2 w-full gap-2 bg-muted/30 border-b p-2">
+                    <TabsTrigger value="performance" className="w-full justify-start px-4 py-3 text-sm md:text-base">Performance Reports</TabsTrigger>
+                    <TabsTrigger value="tactical" className="w-full justify-start px-4 py-3 text-sm md:text-base">Tactical Analysis</TabsTrigger>
                   </TabsList>
 
-                  <TabsContent value="performance" className="mt-4">
+                  <TabsContent value="performance" className="mt-6">
                     <Card>
                       <CardHeader className="px-3 md:px-6 py-3 md:py-4">
                         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
@@ -1031,7 +1031,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                     </Card>
                   </TabsContent>
 
-                  <TabsContent value="tactical" className="mt-4">
+                  <TabsContent value="tactical" className="mt-6">
                     <Card>
                       <CardHeader className="px-3 md:px-6 py-3 md:py-4">
                         <CardTitle className="hidden md:block text-lg">Tactical Analysis</CardTitle>
@@ -1091,9 +1091,9 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                 </Tabs>
               </TabsContent>
 
-              <TabsContent value="programming">
+              <TabsContent value="programming" className="mt-6">
                 <Card>
-                  <CardHeader>
+                  <CardHeader className="px-3 md:px-6 py-3 md:py-4">
                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                       <CardTitle>Training Programs</CardTitle>
                       <Button
@@ -1110,7 +1110,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                       </Button>
                     </div>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="px-3 md:px-6 py-4">
                     {playerPrograms[selectedPlayerId]?.length > 0 ? (
                       <div className="space-y-3">
                         {playerPrograms[selectedPlayerId].map((program) => (
@@ -1157,18 +1157,18 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                 </Card>
               </TabsContent>
 
-              <TabsContent value="highlights">
+              <TabsContent value="highlights" className="mt-6">
                 <Card>
-                  <CardHeader>
+                  <CardHeader className="px-3 md:px-6 py-3 md:py-4">
                     <CardTitle>Video Content & Images</CardTitle>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="px-3 md:px-6 py-4">
                     {selectedPlayer?.highlights ? (
                       <Tabs defaultValue="match-highlights" className="w-full">
-                        <TabsList className="grid w-full grid-cols-3">
-                          <TabsTrigger value="match-highlights">Match Highlights</TabsTrigger>
-                          <TabsTrigger value="best-clips">Best Clips</TabsTrigger>
-                          <TabsTrigger value="images">Images</TabsTrigger>
+                        <TabsList className="flex flex-col md:grid md:w-full md:grid-cols-3 gap-2 p-2">
+                          <TabsTrigger value="match-highlights" className="w-full justify-start px-4 py-3 text-sm">Match Highlights</TabsTrigger>
+                          <TabsTrigger value="best-clips" className="w-full justify-start px-4 py-3 text-sm">Best Clips</TabsTrigger>
+                          <TabsTrigger value="images" className="w-full justify-start px-4 py-3 text-sm">Images</TabsTrigger>
                         </TabsList>
                         
                         <TabsContent value="match-highlights" className="mt-4">
@@ -1466,12 +1466,12 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                 </Card>
               </TabsContent>
 
-              <TabsContent value="fixtures">
+              <TabsContent value="fixtures" className="mt-6">
                 <Card>
-                  <CardHeader>
+                  <CardHeader className="px-3 md:px-6 py-3 md:py-4">
                     <CardTitle>Fixtures</CardTitle>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="px-3 md:px-6 py-4">
                     <PlayerFixtures 
                       playerId={selectedPlayerId!} 
                       playerName={selectedPlayer!.name}
@@ -1481,12 +1481,12 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                 </Card>
               </TabsContent>
 
-              <TabsContent value="invoices">
+              <TabsContent value="invoices" className="mt-6">
                 <Card>
-                  <CardHeader>
+                  <CardHeader className="px-3 md:px-6 py-3 md:py-4">
                     <CardTitle>Invoices</CardTitle>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="px-3 md:px-6 py-4">
                     {playerInvoices[selectedPlayerId]?.length > 0 ? (
                       <div className="space-y-3">
                          {playerInvoices[selectedPlayerId].map((invoice) => (
