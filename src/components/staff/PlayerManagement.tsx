@@ -838,30 +838,28 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
 
             {/* Tabbed Sections */}
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="flex flex-col md:grid md:grid-cols-5 w-full gap-1.5 bg-sidebar-accent/50 backdrop-blur-sm rounded-lg p-1.5 mb-6">
-                <TabsTrigger value="analysis" className="w-full justify-start px-4 py-3 text-sm md:text-base data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                  <LineChart className="w-4 h-4 mr-2 flex-shrink-0" />
-                  <span>Analysis</span>
-                </TabsTrigger>
-                <TabsTrigger value="programming" className="w-full justify-start px-4 py-3 text-sm md:text-base data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                  <FileText className="w-4 h-4 mr-2 flex-shrink-0" />
-                  <span className="hidden sm:inline">Programming</span>
-                  <span className="sm:hidden">Programs</span>
-                </TabsTrigger>
-                <TabsTrigger value="highlights" className="w-full justify-start px-4 py-3 text-sm md:text-base data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                  <Video className="w-4 h-4 mr-2 flex-shrink-0" />
-                  <span className="hidden sm:inline">Highlights</span>
-                  <span className="sm:hidden">Videos</span>
-                </TabsTrigger>
-                <TabsTrigger value="fixtures" className="w-full justify-start px-4 py-3 text-sm md:text-base data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                  <Calendar className="w-4 h-4 mr-2 flex-shrink-0" />
-                  <span>Fixtures</span>
-                </TabsTrigger>
-                <TabsTrigger value="invoices" className="w-full justify-start px-4 py-3 text-sm md:text-base data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                  <DollarSign className="w-4 h-4 mr-2 flex-shrink-0" />
-                  <span>Invoices</span>
-                </TabsTrigger>
-              </TabsList>
+            <TabsList className="flex md:grid md:grid-cols-5 w-full gap-1.5 overflow-x-auto scrollbar-hide bg-sidebar-accent/50 backdrop-blur-sm rounded-lg p-1.5 mb-4">
+              <TabsTrigger value="analysis" className="flex items-center gap-2 flex-shrink-0 whitespace-nowrap px-3 md:px-4 py-2 md:py-3 text-xs md:text-base min-w-[100px] md:min-w-0 md:w-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                <LineChart className="w-4 h-4 flex-shrink-0" />
+                <span>Analysis</span>
+              </TabsTrigger>
+              <TabsTrigger value="programming" className="flex items-center gap-2 flex-shrink-0 whitespace-nowrap px-3 md:px-4 py-2 md:py-3 text-xs md:text-base min-w-[100px] md:min-w-0 md:w-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                <FileText className="w-4 h-4 flex-shrink-0" />
+                <span>Programs</span>
+              </TabsTrigger>
+              <TabsTrigger value="highlights" className="flex items-center gap-2 flex-shrink-0 whitespace-nowrap px-3 md:px-4 py-2 md:py-3 text-xs md:text-base min-w-[100px] md:min-w-0 md:w-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                <Video className="w-4 h-4 flex-shrink-0" />
+                <span>Videos</span>
+              </TabsTrigger>
+              <TabsTrigger value="fixtures" className="flex items-center gap-2 flex-shrink-0 whitespace-nowrap px-3 md:px-4 py-2 md:py-3 text-xs md:text-base min-w-[100px] md:min-w-0 md:w-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                <Calendar className="w-4 h-4 flex-shrink-0" />
+                <span>Fixtures</span>
+              </TabsTrigger>
+              <TabsTrigger value="invoices" className="flex items-center gap-2 flex-shrink-0 whitespace-nowrap px-3 md:px-4 py-2 md:py-3 text-xs md:text-base min-w-[100px] md:min-w-0 md:w-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                <DollarSign className="w-4 h-4 flex-shrink-0" />
+                <span>Invoices</span>
+              </TabsTrigger>
+            </TabsList>
 
               <TabsContent value="analysis" className="mt-0 space-y-4">
                 <Tabs defaultValue="performance" className="w-full">
