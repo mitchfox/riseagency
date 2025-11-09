@@ -19,9 +19,16 @@ serve(async (req) => {
       throw new Error('No file provided');
     }
 
-    // Get PDF as base64
+    // Get PDF as base64 - process in chunks to avoid stack overflow
     const arrayBuffer = await file.arrayBuffer();
-    const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+    const uint8Array = new Uint8Array(arrayBuffer);
+    let binaryString = '';
+    const chunkSize = 8192; // Process 8KB at a time
+    for (let i = 0; i < uint8Array.length; i += chunkSize) {
+      const chunk = uint8Array.slice(i, i + chunkSize);
+      binaryString += String.fromCharCode(...chunk);
+    }
+    const base64 = btoa(binaryString);
 
     // Use Lovable AI to parse the PDF
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
