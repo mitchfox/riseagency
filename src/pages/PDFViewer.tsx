@@ -16,34 +16,9 @@ const PDFViewer = () => {
       return;
     }
 
-    const loadPDF = async () => {
-      try {
-        // Use our edge function proxy to avoid browser blocking
-        const proxyUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/proxy-pdf?url=${encodeURIComponent(pdfUrl)}`;
-        const response = await fetch(proxyUrl);
-        
-        if (!response.ok) {
-          throw new Error('Failed to load PDF');
-        }
-        
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        setBlobUrl(url);
-        setLoading(false);
-      } catch (err) {
-        console.error('Error loading PDF:', err);
-        setError(true);
-        setLoading(false);
-      }
-    };
-
-    loadPDF();
-
-    return () => {
-      if (blobUrl) {
-        window.URL.revokeObjectURL(blobUrl);
-      }
-    };
+    // Directly use the PDF URL in iframe since the bucket is public
+    setBlobUrl(pdfUrl);
+    setLoading(false);
   }, [pdfUrl]);
 
   if (loading) {
