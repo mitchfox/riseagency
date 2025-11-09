@@ -18,6 +18,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface Player {
   id: string;
@@ -113,7 +114,8 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   const [otherAnalyses, setOtherAnalyses] = useState<Record<string, any[]>>({});
   const [isAssignAnalysisDialogOpen, setIsAssignAnalysisDialogOpen] = useState(false);
   const [availableAnalyses, setAvailableAnalyses] = useState<any[]>([]);
-  const [selectedAnalysisToAssign, setSelectedAnalysisToAssign] = useState<string>("");
+  const [selectedAnalysesToAssign, setSelectedAnalysesToAssign] = useState<string[]>([]);
+  const [analysisSearchQuery, setAnalysisSearchQuery] = useState("");
 
   useEffect(() => {
     fetchPlayers();
@@ -323,21 +325,24 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   };
 
   const handleAssignAnalysis = async () => {
-    if (!selectedPlayerId || !selectedAnalysisToAssign) return;
+    if (!selectedPlayerId || selectedAnalysesToAssign.length === 0) return;
 
     try {
+      const inserts = selectedAnalysesToAssign.map(analysisId => ({
+        player_id: selectedPlayerId,
+        analysis_id: analysisId
+      }));
+
       const { error } = await supabase
         .from("player_other_analysis")
-        .insert({
-          player_id: selectedPlayerId,
-          analysis_id: selectedAnalysisToAssign,
-        });
+        .insert(inserts);
 
       if (error) throw error;
 
-      toast.success("Analysis assigned successfully");
+      toast.success(`${selectedAnalysesToAssign.length} analysis/analyses assigned successfully`);
       setIsAssignAnalysisDialogOpen(false);
-      setSelectedAnalysisToAssign("");
+      setSelectedAnalysesToAssign([]);
+      setAnalysisSearchQuery("");
       fetchOtherAnalyses();
     } catch (error: any) {
       toast.error("Failed to assign analysis: " + error.message);
@@ -2369,33 +2374,63 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       </Dialog>
 
       <Dialog open={isAssignAnalysisDialogOpen} onOpenChange={setIsAssignAnalysisDialogOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Assign Analysis to Player</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Select Analysis</Label>
-              <Select value={selectedAnalysisToAssign} onValueChange={setSelectedAnalysisToAssign}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Choose an analysis..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableAnalyses.map((analysis) => (
-                    <SelectItem key={analysis.id} value={analysis.id}>
-                      {analysis.title} {analysis.category && `(${analysis.category})`}
-                    </SelectItem>
+            <Input
+              placeholder="Search analyses..."
+              value={analysisSearchQuery}
+              onChange={(e) => setAnalysisSearchQuery(e.target.value)}
+            />
+            <ScrollArea className="h-[400px] border rounded-md p-4">
+              <div className="space-y-2">
+                {availableAnalyses
+                  .filter(analysis => 
+                    analysis.title?.toLowerCase().includes(analysisSearchQuery.toLowerCase()) ||
+                    analysis.description?.toLowerCase().includes(analysisSearchQuery.toLowerCase()) ||
+                    analysis.content?.toLowerCase().includes(analysisSearchQuery.toLowerCase())
+                  )
+                  .map((analysis) => (
+                    <div key={analysis.id} className="flex items-start space-x-2 p-2 hover:bg-accent rounded-md">
+                      <Checkbox
+                        id={analysis.id}
+                        checked={selectedAnalysesToAssign.includes(analysis.id)}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setSelectedAnalysesToAssign([...selectedAnalysesToAssign, analysis.id]);
+                          } else {
+                            setSelectedAnalysesToAssign(selectedAnalysesToAssign.filter(id => id !== analysis.id));
+                          }
+                        }}
+                        className="mt-1"
+                      />
+                      <label htmlFor={analysis.id} className="flex-1 cursor-pointer">
+                        <div className="font-medium">{analysis.title}</div>
+                        {analysis.description && (
+                          <div className="text-sm text-muted-foreground">{analysis.description}</div>
+                        )}
+                        {analysis.category && (
+                          <div className="text-xs text-muted-foreground mt-1">{analysis.category}</div>
+                        )}
+                      </label>
+                    </div>
                   ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setIsAssignAnalysisDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button onClick={handleAssignAnalysis} disabled={!selectedAnalysisToAssign}>
-                Assign
-              </Button>
+              </div>
+            </ScrollArea>
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-muted-foreground">
+                {selectedAnalysesToAssign.length} selected
+              </span>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => setIsAssignAnalysisDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={handleAssignAnalysis} disabled={selectedAnalysesToAssign.length === 0}>
+                  Assign Selected
+                </Button>
+              </div>
             </div>
           </div>
         </DialogContent>

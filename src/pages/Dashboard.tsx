@@ -967,7 +967,15 @@ const Dashboard = () => {
                                   <Button 
                                     variant="outline" 
                                     size="sm"
-                                    onClick={() => window.open(item.analysis.content, '_blank')}
+                                    onClick={() => {
+                                      const link = document.createElement('a');
+                                      link.href = item.analysis.content;
+                                      link.target = '_blank';
+                                      link.rel = 'noopener noreferrer';
+                                      document.body.appendChild(link);
+                                      link.click();
+                                      document.body.removeChild(link);
+                                    }}
                                     className="flex-shrink-0"
                                   >
                                     <FileText className="w-4 h-4 mr-2" />
