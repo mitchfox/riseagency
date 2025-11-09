@@ -675,8 +675,6 @@ Title: ${formData.scheme_title || 'Not specified'}`;
               </TabsList>
 
               <TabsContent value="pre-match" className="space-y-4">
-                {analysisType === "pre-match" && (
-                  <>
                     <div className="space-y-4">
                       <h3 className="font-semibold">Overview</h3>
                     <div>
@@ -1118,13 +1116,9 @@ Title: ${formData.scheme_title || 'Not specified'}`;
                         </CardContent>
                       </Card>
                   </div>
-                  </>
-                )}
               </TabsContent>
 
               <TabsContent value="post-match" className="space-y-4">
-                {analysisType === "post-match" && (
-                  <>
                     <div className="space-y-4">
                       <h3 className="font-semibold">Overview</h3>
                     <div>
@@ -1246,13 +1240,9 @@ Title: ${formData.scheme_title || 'Not specified'}`;
                         </CardContent>
                       </Card>
                   </div>
-                  </>
-                )}
               </TabsContent>
 
               <TabsContent value="concepts" className="space-y-4">
-                {analysisType === "concept" && (
-                  <>
                     <div className="space-y-4">
                       <div>
                         <Label>Title</Label>
@@ -1317,12 +1307,45 @@ Title: ${formData.scheme_title || 'Not specified'}`;
                         </CardContent>
                       </Card>
                   </div>
-                  </>
-                )}
               </TabsContent>
 
               <TabsContent value="other" className="space-y-4">
                 
+                <Card className="bg-secondary/20">
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <Sparkles className="w-5 h-5" />
+                      AI Point Writer
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <Label>Paragraph 1 Info</Label>
+                      <Textarea
+                        placeholder="Enter key information for paragraph 1..."
+                        value={aiWriter.paragraph1Info}
+                        onChange={(e) => setAiWriter({ ...aiWriter, paragraph1Info: e.target.value, category: 'other' })}
+                      />
+                    </div>
+                    <div>
+                      <Label>Paragraph 2 Info</Label>
+                      <Textarea
+                        placeholder="Enter key information for paragraph 2..."
+                        value={aiWriter.paragraph2Info}
+                        onChange={(e) => setAiWriter({ ...aiWriter, paragraph2Info: e.target.value, category: 'other' })}
+                      />
+                    </div>
+                    <Button 
+                      onClick={generateWithAIWriter} 
+                      disabled={aiGenerating}
+                      className="w-full"
+                    >
+                      <Sparkles className="w-4 h-4 mr-2" />
+                      {aiGenerating ? "Generating..." : "Generate Point"}
+                    </Button>
+                  </CardContent>
+                </Card>
+
                 {/* Link to Player Performance Report */}
                 <div className="space-y-4 border-t pt-4">
                 <h3 className="font-semibold">Link to Performance Report</h3>
