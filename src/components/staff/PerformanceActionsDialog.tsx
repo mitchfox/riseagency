@@ -304,29 +304,35 @@ export const PerformanceActionsDialog = ({
             ) : (
               <div className="space-y-2 max-h-[400px] overflow-y-auto">
                 {actions.map((action) => (
-                  <div key={action.id} className="flex items-start gap-3 p-3 border rounded hover:bg-accent/50">
-                    <div className="min-w-[40px] font-bold text-muted-foreground">#{action.action_number}</div>
-                    <div className="flex-1 space-y-1">
-                      <div className="flex items-center gap-3">
-                        <span className="text-sm text-muted-foreground">{(action.minute ?? 0).toFixed(2)}'</span>
-                        <span className={`text-sm font-mono ${getActionScoreColor(action.action_score ?? 0)}`}>
+                  <div key={action.id} className="p-3 border rounded hover:bg-accent/50 space-y-2">
+                    {/* Single line header with key info */}
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 flex-wrap min-w-0">
+                        <span className="font-bold text-muted-foreground whitespace-nowrap">#{action.action_number}</span>
+                        <span className="text-sm text-muted-foreground whitespace-nowrap">{(action.minute ?? 0).toFixed(2)}'</span>
+                        <span className={`text-sm font-mono whitespace-nowrap ${getActionScoreColor(action.action_score ?? 0)}`}>
                           {(action.action_score ?? 0).toFixed(5)}
                         </span>
-                        <span className="font-semibold">{action.action_type}</span>
+                        <span className="font-semibold truncate">{action.action_type}</span>
                       </div>
-                      <p className="text-sm">{action.action_description}</p>
-                      {action.notes && (
-                        <p className="text-xs text-muted-foreground italic">{action.notes}</p>
+                      {isAdmin && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => action.id && handleDeleteAction(action.id)}
+                          className="flex-shrink-0"
+                        >
+                          <Trash2 className="w-4 h-4 text-destructive" />
+                        </Button>
                       )}
                     </div>
-                    {isAdmin && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => action.id && handleDeleteAction(action.id)}
-                      >
-                        <Trash2 className="w-4 h-4 text-destructive" />
-                      </Button>
+                    
+                    {/* Description on its own line */}
+                    <p className="text-sm">{action.action_description}</p>
+                    
+                    {/* Notes if present */}
+                    {action.notes && (
+                      <p className="text-xs text-muted-foreground italic">{action.notes}</p>
                     )}
                   </div>
                 ))}
