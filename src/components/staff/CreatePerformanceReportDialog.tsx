@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
-import { Plus, Trash2, AlertTriangle, LineChart } from "lucide-react";
+import { Plus, Trash2, AlertTriangle, LineChart, Sparkles } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { R90RatingsViewer } from "./R90RatingsViewer";
@@ -60,6 +60,7 @@ export const CreatePerformanceReportDialog = ({
   const [actionTypes, setActionTypes] = useState<string[]>([]);
   const [previousScores, setPreviousScores] = useState<Record<number, Array<{score: number, description: string}>>>({});
   const [isR90ViewerOpen, setIsR90ViewerOpen] = useState(false);
+  const [isFillingScores, setIsFillingScores] = useState(false);
 
   // Key stats
   const [r90Score, setR90Score] = useState("");
@@ -460,6 +461,66 @@ export const CreatePerformanceReportDialog = ({
       toast.error("Failed to delete performance report: " + error.message);
     } finally {
       setDeleting(false);
+    }
+  };
+
+  const handleFillEmptyScores = async () => {
+    // Get actions that have empty scores
+    const actionsToFill = actions
+      .map((action, index) => ({ ...action, index }))
+      .filter(action => !action.action_score || action.action_score === "");
+
+    if (actionsToFill.length === 0) {
+      toast.info("All actions already have scores");
+      return;
+    }
+
+    if (!actionsToFill.every(a => a.action_type && a.action_description)) {
+      toast.error("Please fill in action type and description for all actions before auto-filling scores");
+      return;
+    }
+
+    setIsFillingScores(true);
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('fill-action-scores', {
+        body: {
+          actions: actionsToFill.map(a => ({
+            action_type: a.action_type,
+            action_description: a.action_description
+          }))
+        }
+      });
+
+      if (error) {
+        console.error('Error filling scores:', error);
+        toast.error("Failed to fill scores: " + error.message);
+        return;
+      }
+
+      if (!data?.scores || !Array.isArray(data.scores)) {
+        toast.error("Invalid response from AI service");
+        return;
+      }
+
+      // Update actions with AI-generated scores
+      const updatedActions = [...actions];
+      actionsToFill.forEach((action, i) => {
+        const score = data.scores[i]?.score || 0;
+        updatedActions[action.index] = {
+          ...updatedActions[action.index],
+          action_score: score.toString()
+        };
+      });
+
+      setActions(updatedActions);
+      toast.success(`Successfully filled ${actionsToFill.length} empty score${actionsToFill.length > 1 ? 's' : ''}`);
+      
+    } catch (error: any) {
+      console.error('Error in handleFillEmptyScores:', error);
+      toast.error("Failed to auto-fill scores");
+    } finally {
+      setIsFillingScores(false);
     }
   };
 
@@ -1184,10 +1245,19 @@ export const CreatePerformanceReportDialog = ({
               </AlertDialog>
             )}
             <div className="flex flex-col sm:flex-row gap-2 sm:ml-auto">
-              <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading || deleting} className="w-full sm:w-auto">
+              <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading || deleting || isFillingScores} className="w-full sm:w-auto">
                 Cancel
               </Button>
-              <Button onClick={handleSave} disabled={loading || deleting} className="w-full sm:w-auto">
+              <Button 
+                variant="secondary" 
+                onClick={handleFillEmptyScores} 
+                disabled={loading || deleting || isFillingScores || actions.length === 0}
+                className="w-full sm:w-auto"
+              >
+                <Sparkles className="h-4 w-4 mr-2" />
+                {isFillingScores ? "Filling Scores..." : "Fill Empty Scores"}
+              </Button>
+              <Button onClick={handleSave} disabled={loading || deleting || isFillingScores} className="w-full sm:w-auto">
                 {loading ? (analysisId ? "Updating..." : "Creating...") : (analysisId ? "Update Report" : "Create Report")}
               </Button>
             </div>

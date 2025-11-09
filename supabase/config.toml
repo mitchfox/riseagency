@@ -35,3 +35,6 @@ verify_jwt = false
 
 [functions.create-player-account]
 verify_jwt = true
+
+[functions.fill-action-scores]
+verify_jwt = true
