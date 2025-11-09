@@ -116,7 +116,7 @@ export const PlayerCard = ({ player, viewMode = "grid" }: PlayerCardProps) => {
         <img
           src={player.image_url || player.image}
           alt={player.name}
-          className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 group-hover/container:brightness-[0.3] ${
+          className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 group-hover/container:brightness-[0.3] z-0 ${
             isInView ? "grayscale-0" : "grayscale"
           } md:grayscale md:group-hover:grayscale-0`}
         />
@@ -125,21 +125,21 @@ export const PlayerCard = ({ player, viewMode = "grid" }: PlayerCardProps) => {
         <img
           src={player.cutout_image_url || player.image_url || player.image}
           alt={`${player.name} foreground`}
-          className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 ${
+          className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 z-30 ${
             isInView ? "grayscale-0" : "grayscale"
           } md:grayscale md:group-hover:grayscale-0 ${
             player.cutout_image_url ? 'opacity-100' : 'opacity-0 md:group-hover:opacity-0'
           }`}
         />
         {/* Position badge - top right, smaller on mobile */}
-        <div className="absolute top-4 right-4">
+        <div className="absolute top-4 right-4 z-40">
           <span className="text-xl md:text-3xl text-primary tracking-wider" style={{ fontFamily: "'BBH Sans Bartle', 'Bebas Neue', sans-serif" }}>
             {player.position}
           </span>
         </div>
 
         {/* Hover Overlay - Key Info */}
-        <div className="absolute inset-0 bg-black/90 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-between p-6 z-20">
+        <div className="absolute inset-0 bg-black/90 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-between p-6 z-10">
           {/* Top Section */}
           <div className="grid grid-cols-2 gap-4">
             {/* Age */}
