@@ -8,9 +8,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
-import { Plus, Trash2, AlertTriangle } from "lucide-react";
+import { Plus, Trash2, AlertTriangle, LineChart } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { R90RatingsViewer } from "./R90RatingsViewer";
 
 interface CreatePerformanceReportDialogProps {
   open: boolean;
@@ -58,6 +59,7 @@ export const CreatePerformanceReportDialog = ({
   const [playerClub, setPlayerClub] = useState<string>("");
   const [actionTypes, setActionTypes] = useState<string[]>([]);
   const [previousScores, setPreviousScores] = useState<Record<number, Array<{score: number, description: string}>>>({});
+  const [isR90ViewerOpen, setIsR90ViewerOpen] = useState(false);
 
   // Key stats
   const [r90Score, setR90Score] = useState("");
@@ -922,15 +924,26 @@ export const CreatePerformanceReportDialog = ({
                 <div key={index} className="border rounded-lg p-4 space-y-3 bg-card">
                   <div className="flex justify-between items-center mb-2">
                     <span className="font-semibold text-sm">Action #{action.action_number}</span>
-                    <Button
-                      onClick={() => removeAction(index)}
-                      size="icon"
-                      variant="ghost"
-                      className="text-destructive h-8 w-8"
-                      disabled={actions.length === 1}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <div className="flex gap-1">
+                      <Button
+                        onClick={() => setIsR90ViewerOpen(true)}
+                        size="icon"
+                        variant="ghost"
+                        className="h-8 w-8"
+                        title="View R90 Ratings"
+                      >
+                        <LineChart className="h-4 w-4 text-indigo-600" />
+                      </Button>
+                      <Button
+                        onClick={() => removeAction(index)}
+                        size="icon"
+                        variant="ghost"
+                        className="text-destructive h-8 w-8"
+                        disabled={actions.length === 1}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                   
                    <div className="grid grid-cols-2 gap-3">
@@ -1025,7 +1038,7 @@ export const CreatePerformanceReportDialog = ({
                     <th className="text-left p-2 text-sm font-semibold">Type</th>
                     <th className="text-left p-2 text-sm font-semibold">Description</th>
                     <th className="text-left p-2 text-sm font-semibold">Notes</th>
-                    <th className="w-12"></th>
+                    <th className="w-20"></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1099,15 +1112,26 @@ export const CreatePerformanceReportDialog = ({
                         />
                       </td>
                       <td className="p-2">
-                        <Button
-                          onClick={() => removeAction(index)}
-                          size="icon"
-                          variant="ghost"
-                          className="text-destructive h-8 w-8"
-                          disabled={actions.length === 1}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        <div className="flex gap-1">
+                          <Button
+                            onClick={() => setIsR90ViewerOpen(true)}
+                            size="icon"
+                            variant="ghost"
+                            className="h-8 w-8"
+                            title="View R90 Ratings"
+                          >
+                            <LineChart className="h-4 w-4 text-indigo-600" />
+                          </Button>
+                          <Button
+                            onClick={() => removeAction(index)}
+                            size="icon"
+                            variant="ghost"
+                            className="text-destructive h-8 w-8"
+                            disabled={actions.length === 1}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -1171,6 +1195,12 @@ export const CreatePerformanceReportDialog = ({
         </div>
         )}
       </DialogContent>
+
+      {/* R90 Ratings Viewer */}
+      <R90RatingsViewer
+        open={isR90ViewerOpen}
+        onOpenChange={setIsR90ViewerOpen}
+      />
     </Dialog>
   );
 };

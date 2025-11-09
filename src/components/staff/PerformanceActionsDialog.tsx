@@ -7,7 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Trash2, Plus } from "lucide-react";
+import { Trash2, Plus, LineChart } from "lucide-react";
+import { R90RatingsViewer } from "./R90RatingsViewer";
 
 interface PerformanceAction {
   id?: string;
@@ -40,6 +41,7 @@ export const PerformanceActionsDialog = ({
   const [r90Score, setR90Score] = useState<number | null>(null);
   const [actionTypes, setActionTypes] = useState<string[]>([]);
   const [previousScores, setPreviousScores] = useState<Array<{score: number, description: string}>>([]);
+  const [isR90ViewerOpen, setIsR90ViewerOpen] = useState(false);
   const [newAction, setNewAction] = useState<PerformanceAction>({
     action_number: 1,
     minute: 0,
@@ -377,16 +379,25 @@ export const PerformanceActionsDialog = ({
                         </span>
                         <span className="font-semibold truncate">{action.action_type}</span>
                       </div>
-                      {isAdmin && (
+                      <div className="flex gap-1 flex-shrink-0">
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => action.id && handleDeleteAction(action.id)}
-                          className="flex-shrink-0"
+                          onClick={() => setIsR90ViewerOpen(true)}
+                          title="View R90 Ratings"
                         >
-                          <Trash2 className="w-4 h-4 text-destructive" />
+                          <LineChart className="w-4 h-4 text-indigo-600" />
                         </Button>
-                      )}
+                        {isAdmin && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => action.id && handleDeleteAction(action.id)}
+                          >
+                            <Trash2 className="w-4 h-4 text-destructive" />
+                          </Button>
+                        )}
+                      </div>
                     </div>
                     
                     {/* Description on its own line */}
@@ -410,6 +421,12 @@ export const PerformanceActionsDialog = ({
           </datalist>
         </div>
       </DialogContent>
+
+      {/* R90 Ratings Viewer */}
+      <R90RatingsViewer
+        open={isR90ViewerOpen}
+        onOpenChange={setIsR90ViewerOpen}
+      />
     </Dialog>
   );
 };
