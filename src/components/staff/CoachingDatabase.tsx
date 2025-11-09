@@ -11,8 +11,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
-import { Plus, Edit, Trash2, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Database, Search, Calendar, Clock, Dumbbell, Brain, Target, BookOpen, Quote, LineChart } from "lucide-react";
+import { Plus, Edit, Trash2, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Database, Search, Calendar, Clock, Dumbbell, Brain, Target, BookOpen, Quote, LineChart, Settings } from "lucide-react";
 import { ExerciseDatabaseSelector } from "./ExerciseDatabaseSelector";
+import { R90RatingsManagement } from "./R90RatingsManagement";
 
 
 type TableType = 'coaching_sessions' | 'coaching_programmes' | 'coaching_drills' | 'coaching_exercises' | 'coaching_analysis' | 'psychological_sessions' | 'coaching_aphorisms' | 'r90_ratings';
@@ -130,6 +131,7 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
     content: '',
     exercises: { preSession: [] as Exercise[], session: [] as Exercise[] },
     category: '',
+    subcategory: '',
     load: '',
     video_url: '',
     is_own_video: false,
@@ -151,6 +153,7 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
   const [skills, setSkills] = useState<string[]>([]);
   const itemsPerPage = 20;
   const [isImporting, setIsImporting] = useState(false);
+  const [isR90ManagementOpen, setIsR90ManagementOpen] = useState(false);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -575,6 +578,7 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
         content: '',
         exercises: { preSession: [], session: [] },
         category: '',
+        subcategory: '',
         load: '',
         video_url: '',
         is_own_video: false,
@@ -632,6 +636,7 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
       content: item.content || '',
       exercises: exercisesData,
       category: item.category || '',
+      subcategory: (item as any).subcategory || '',
       duration: item.duration || '',
       weeks: item.weeks || '',
       setup: item.setup || '',
@@ -658,6 +663,7 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
       content: '',
       exercises: { preSession: [], session: [] },
       category: '',
+      subcategory: '',
       load: '',
       video_url: '',
       is_own_video: false,
@@ -732,13 +738,24 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
                 <div className="text-sm text-muted-foreground">View Only</div>
               )}
               {isAdmin && (
-                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button onClick={resetForm} className="w-full sm:w-auto">
-                      <Plus className="w-4 h-4 mr-2" />
-                      Add {config.singular}
+                <>
+                  {key === 'r90_ratings' && (
+                    <Button 
+                      onClick={() => setIsR90ManagementOpen(true)}
+                      variant="outline"
+                      className="w-full sm:w-auto"
+                    >
+                      <Settings className="w-4 h-4 mr-2" />
+                      Manage All Ratings
                     </Button>
-                  </DialogTrigger>
+                  )}
+                  <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button onClick={resetForm} className="w-full sm:w-auto">
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add {config.singular}
+                      </Button>
+                    </DialogTrigger>
                 <DialogContent className="max-w-6xl max-h-[90vh] overflow-hidden flex flex-col">
                   <DialogHeader className="flex-shrink-0">
                     <DialogTitle>
@@ -899,25 +916,39 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
                         )}
 
                         {key === 'r90_ratings' && (
-                          <div className="space-y-2">
-                            <Label htmlFor="category">Category *</Label>
-                            <Select
-                              value={formData.category}
-                              onValueChange={(value) => setFormData({ ...formData, category: value })}
-                            >
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select category" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="Pressing">Pressing</SelectItem>
-                                <SelectItem value="Defensive">Defensive</SelectItem>
-                                <SelectItem value="Aerial Duels">Aerial Duels</SelectItem>
-                                <SelectItem value="Attacking Crosses">Attacking Crosses</SelectItem>
-                                <SelectItem value="On-Ball Decision-Making">On-Ball Decision-Making</SelectItem>
-                                <SelectItem value="Off-Ball Movement">Off-Ball Movement</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
+                          <>
+                            <div className="space-y-2">
+                              <Label htmlFor="category">Category *</Label>
+                              <Select
+                                value={formData.category}
+                                onValueChange={(value) => setFormData({ ...formData, category: value, subcategory: '' })}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select category" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="Pressing">Pressing</SelectItem>
+                                  <SelectItem value="Defensive">Defensive</SelectItem>
+                                  <SelectItem value="Aerial Duels">Aerial Duels</SelectItem>
+                                  <SelectItem value="Attacking Crosses">Attacking Crosses</SelectItem>
+                                  <SelectItem value="On-Ball Decision-Making">On-Ball Decision-Making</SelectItem>
+                                  <SelectItem value="Off-Ball Movement">Off-Ball Movement</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            
+                            {formData.category && (
+                              <div className="space-y-2">
+                                <Label htmlFor="subcategory">Subcategory</Label>
+                                <Input
+                                  id="subcategory"
+                                  value={formData.subcategory || ''}
+                                  onChange={(e) => setFormData({ ...formData, subcategory: e.target.value })}
+                                  placeholder="e.g., Under Pressure, In Space"
+                                />
+                              </div>
+                            )}
+                          </>
                         )}
                       </>
                     )}
@@ -1111,6 +1142,7 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
                   </div>
                 </DialogContent>
               </Dialog>
+              </>
               )}
             </div>
 
@@ -1412,6 +1444,11 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
           </div>
         </DialogContent>
       </Dialog>
+
+      <R90RatingsManagement
+        open={isR90ManagementOpen}
+        onOpenChange={setIsR90ManagementOpen}
+      />
     </div>
   );
 };
