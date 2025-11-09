@@ -838,31 +838,28 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
 
             {/* Tabbed Sections */}
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="flex flex-nowrap overflow-x-auto md:grid md:grid-cols-5 w-full gap-1 bg-background border-b">
-                <TabsTrigger value="analysis" className="flex-shrink-0 whitespace-nowrap px-3">
+              <TabsList className="flex flex-nowrap overflow-x-auto md:grid md:grid-cols-5 w-full gap-1 bg-muted/30 border-b p-1">
+                <TabsTrigger value="analysis" className="flex-shrink-0 whitespace-nowrap px-4 py-2 text-sm md:text-base min-w-[100px]">
                   <LineChart className="w-4 h-4 mr-2" />
-                  <span className="hidden sm:inline">Analysis</span>
-                  <span className="sm:hidden">Analysis</span>
+                  <span>Analysis</span>
                 </TabsTrigger>
-                <TabsTrigger value="programming" className="flex-shrink-0 whitespace-nowrap px-3">
+                <TabsTrigger value="programming" className="flex-shrink-0 whitespace-nowrap px-4 py-2 text-sm md:text-base min-w-[110px]">
                   <FileText className="w-4 h-4 mr-2" />
                   <span className="hidden sm:inline">Programming</span>
                   <span className="sm:hidden">Programs</span>
                 </TabsTrigger>
-                <TabsTrigger value="highlights" className="flex-shrink-0 whitespace-nowrap px-3">
+                <TabsTrigger value="highlights" className="flex-shrink-0 whitespace-nowrap px-4 py-2 text-sm md:text-base min-w-[110px]">
                   <Video className="w-4 h-4 mr-2" />
                   <span className="hidden sm:inline">Highlights</span>
                   <span className="sm:hidden">Videos</span>
                 </TabsTrigger>
-                <TabsTrigger value="fixtures" className="flex-shrink-0 whitespace-nowrap px-3">
+                <TabsTrigger value="fixtures" className="flex-shrink-0 whitespace-nowrap px-4 py-2 text-sm md:text-base min-w-[100px]">
                   <Calendar className="w-4 h-4 mr-2" />
-                  <span className="hidden sm:inline">Fixtures</span>
-                  <span className="sm:hidden">Fixtures</span>
+                  <span>Fixtures</span>
                 </TabsTrigger>
-                <TabsTrigger value="invoices" className="flex-shrink-0 whitespace-nowrap px-3">
+                <TabsTrigger value="invoices" className="flex-shrink-0 whitespace-nowrap px-4 py-2 text-sm md:text-base min-w-[100px]">
                   <DollarSign className="w-4 h-4 mr-2" />
-                  <span className="hidden sm:inline">Invoices</span>
-                  <span className="sm:hidden">Invoices</span>
+                  <span>Invoices</span>
                 </TabsTrigger>
               </TabsList>
 
@@ -917,14 +914,14 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                   {analysis.r90_score !== null && analysis.r90_score !== undefined && (
                                     <>
                                       {/* Mobile: Horizontal R90 */}
-                                      <div className={`md:hidden ${getR90ColorClass(analysis.r90_score)} flex items-center gap-3 p-3`}>
-                                        <div className="flex items-center gap-2">
+                                      <div className={`md:hidden ${getR90ColorClass(analysis.r90_score)} p-3`}>
+                                        <div className="flex items-center justify-center gap-2 mb-2">
                                           <div className="text-3xl font-bold">
                                             {analysis.r90_score.toFixed(2)}
                                           </div>
-                                          <div className="w-8 h-8 ${getR90ColorClass(analysis.r90_score)} rounded border-2 border-white/50"></div>
+                                          <div className={`w-8 h-8 ${getR90ColorClass(analysis.r90_score)} rounded border-2 border-white/50`}></div>
                                         </div>
-                                        <div className="text-xs opacity-90 font-medium">R90 SCORE</div>
+                                        <div className="text-xs opacity-90 font-medium text-center">R90 SCORE</div>
                                       </div>
                                       
                                       {/* Desktop: Vertical R90 */}
