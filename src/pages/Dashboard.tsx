@@ -967,29 +967,9 @@ const Dashboard = () => {
                                   <Button 
                                     variant="outline" 
                                     size="sm"
-                                    onClick={async () => {
-                                      try {
-                                        toast.info("Loading PDF...");
-                                        
-                                        const response = await fetch(item.analysis.content);
-                                        const blob = await response.blob();
-                                        
-                                        const blobUrl = window.URL.createObjectURL(blob);
-                                        const link = document.createElement('a');
-                                        link.href = blobUrl;
-                                        link.target = '_blank';
-                                        link.rel = 'noopener noreferrer';
-                                        document.body.appendChild(link);
-                                        link.click();
-                                        document.body.removeChild(link);
-                                        
-                                        setTimeout(() => window.URL.revokeObjectURL(blobUrl), 1000);
-                                        
-                                        toast.success("PDF opened");
-                                      } catch (error) {
-                                        console.error('Error opening PDF:', error);
-                                        toast.error("Failed to open PDF");
-                                      }
+                                    onClick={() => {
+                                      const viewerUrl = `/pdf-viewer?url=${encodeURIComponent(item.analysis.content)}`;
+                                      window.open(viewerUrl, '_blank', 'noopener,noreferrer');
                                     }}
                                     className="flex-shrink-0"
                                   >

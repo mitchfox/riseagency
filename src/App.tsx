@@ -31,6 +31,7 @@ import AnalysisViewer from "./pages/AnalysisViewer";
 import Intro from "./pages/Intro";
 import PlayersList from "./pages/PlayersList";
 import ClubNetwork from "./pages/ClubNetwork";
+import PDFViewer from "./pages/PDFViewer";
 
 const queryClient = new QueryClient();
 
@@ -72,6 +73,7 @@ const App = () => {
           <Route path="/replace-program" element={<ReplaceProgram />} />
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           <Route path="/terms-of-service" element={<TermsOfService />} />
+          <Route path="/pdf-viewer" element={<PDFViewer />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
