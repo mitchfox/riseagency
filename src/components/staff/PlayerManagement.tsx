@@ -838,26 +838,26 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
 
             {/* Tabbed Sections */}
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="flex flex-nowrap overflow-x-auto md:grid md:grid-cols-5 w-full gap-1 bg-muted/30 border-b p-1">
-                <TabsTrigger value="analysis" className="flex-shrink-0 whitespace-nowrap px-4 py-2 text-sm md:text-base min-w-[100px]">
+              <TabsList className="flex flex-col md:grid md:grid-cols-5 w-full gap-1 bg-muted/30 border-b p-1">
+                <TabsTrigger value="analysis" className="w-full px-4 py-2 text-sm md:text-base">
                   <LineChart className="w-4 h-4 mr-2" />
                   <span>Analysis</span>
                 </TabsTrigger>
-                <TabsTrigger value="programming" className="flex-shrink-0 whitespace-nowrap px-4 py-2 text-sm md:text-base min-w-[110px]">
+                <TabsTrigger value="programming" className="w-full px-4 py-2 text-sm md:text-base">
                   <FileText className="w-4 h-4 mr-2" />
                   <span className="hidden sm:inline">Programming</span>
                   <span className="sm:hidden">Programs</span>
                 </TabsTrigger>
-                <TabsTrigger value="highlights" className="flex-shrink-0 whitespace-nowrap px-4 py-2 text-sm md:text-base min-w-[110px]">
+                <TabsTrigger value="highlights" className="w-full px-4 py-2 text-sm md:text-base">
                   <Video className="w-4 h-4 mr-2" />
                   <span className="hidden sm:inline">Highlights</span>
                   <span className="sm:hidden">Videos</span>
                 </TabsTrigger>
-                <TabsTrigger value="fixtures" className="flex-shrink-0 whitespace-nowrap px-4 py-2 text-sm md:text-base min-w-[100px]">
+                <TabsTrigger value="fixtures" className="w-full px-4 py-2 text-sm md:text-base">
                   <Calendar className="w-4 h-4 mr-2" />
                   <span>Fixtures</span>
                 </TabsTrigger>
-                <TabsTrigger value="invoices" className="flex-shrink-0 whitespace-nowrap px-4 py-2 text-sm md:text-base min-w-[100px]">
+                <TabsTrigger value="invoices" className="w-full px-4 py-2 text-sm md:text-base">
                   <DollarSign className="w-4 h-4 mr-2" />
                   <span>Invoices</span>
                 </TabsTrigger>
