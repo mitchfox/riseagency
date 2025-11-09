@@ -18,7 +18,14 @@ const PDFViewer = () => {
 
     const loadPDF = async () => {
       try {
-        const response = await fetch(pdfUrl);
+        // Use our edge function proxy to avoid browser blocking
+        const proxyUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/proxy-pdf?url=${encodeURIComponent(pdfUrl)}`;
+        const response = await fetch(proxyUrl);
+        
+        if (!response.ok) {
+          throw new Error('Failed to load PDF');
+        }
+        
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
         setBlobUrl(url);
