@@ -838,28 +838,70 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
 
             {/* Tabbed Sections */}
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="flex md:grid md:grid-cols-5 w-full gap-1.5 overflow-x-auto scrollbar-hide bg-sidebar-accent/50 backdrop-blur-sm rounded-lg p-1.5 mb-4">
-              <TabsTrigger value="analysis" className="flex items-center gap-2 flex-shrink-0 whitespace-nowrap px-3 md:px-4 py-2 md:py-3 text-xs md:text-base min-w-[100px] md:min-w-0 md:w-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                <LineChart className="w-4 h-4 flex-shrink-0" />
-                <span>Analysis</span>
-              </TabsTrigger>
-              <TabsTrigger value="programming" className="flex items-center gap-2 flex-shrink-0 whitespace-nowrap px-3 md:px-4 py-2 md:py-3 text-xs md:text-base min-w-[100px] md:min-w-0 md:w-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                <FileText className="w-4 h-4 flex-shrink-0" />
-                <span>Programs</span>
-              </TabsTrigger>
-              <TabsTrigger value="highlights" className="flex items-center gap-2 flex-shrink-0 whitespace-nowrap px-3 md:px-4 py-2 md:py-3 text-xs md:text-base min-w-[100px] md:min-w-0 md:w-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                <Video className="w-4 h-4 flex-shrink-0" />
-                <span>Videos</span>
-              </TabsTrigger>
-              <TabsTrigger value="fixtures" className="flex items-center gap-2 flex-shrink-0 whitespace-nowrap px-3 md:px-4 py-2 md:py-3 text-xs md:text-base min-w-[100px] md:min-w-0 md:w-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                <Calendar className="w-4 h-4 flex-shrink-0" />
-                <span>Fixtures</span>
-              </TabsTrigger>
-              <TabsTrigger value="invoices" className="flex items-center gap-2 flex-shrink-0 whitespace-nowrap px-3 md:px-4 py-2 md:py-3 text-xs md:text-base min-w-[100px] md:min-w-0 md:w-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                <DollarSign className="w-4 h-4 flex-shrink-0" />
-                <span>Invoices</span>
-              </TabsTrigger>
-            </TabsList>
+              {/* Mobile Dropdown */}
+              <div className="md:hidden mb-4">
+                <Select value={activeTab} onValueChange={setActiveTab}>
+                  <SelectTrigger className="w-full bg-background border-border z-50">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-background border-border z-50">
+                    <SelectItem value="analysis">
+                      <div className="flex items-center gap-2">
+                        <LineChart className="w-4 h-4" />
+                        <span>Analysis</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="programming">
+                      <div className="flex items-center gap-2">
+                        <FileText className="w-4 h-4" />
+                        <span>Programs</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="highlights">
+                      <div className="flex items-center gap-2">
+                        <Video className="w-4 h-4" />
+                        <span>Videos</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="fixtures">
+                      <div className="flex items-center gap-2">
+                        <Calendar className="w-4 h-4" />
+                        <span>Fixtures</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="invoices">
+                      <div className="flex items-center gap-2">
+                        <DollarSign className="w-4 h-4" />
+                        <span>Invoices</span>
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Desktop Tabs */}
+              <TabsList className="hidden md:grid md:grid-cols-5 w-full gap-1.5 bg-sidebar-accent/50 backdrop-blur-sm rounded-lg p-1.5 mb-4">
+                <TabsTrigger value="analysis" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                  <LineChart className="w-4 h-4 flex-shrink-0" />
+                  <span>Analysis</span>
+                </TabsTrigger>
+                <TabsTrigger value="programming" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                  <FileText className="w-4 h-4 flex-shrink-0" />
+                  <span>Programs</span>
+                </TabsTrigger>
+                <TabsTrigger value="highlights" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                  <Video className="w-4 h-4 flex-shrink-0" />
+                  <span>Videos</span>
+                </TabsTrigger>
+                <TabsTrigger value="fixtures" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                  <Calendar className="w-4 h-4 flex-shrink-0" />
+                  <span>Fixtures</span>
+                </TabsTrigger>
+                <TabsTrigger value="invoices" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                  <DollarSign className="w-4 h-4 flex-shrink-0" />
+                  <span>Invoices</span>
+                </TabsTrigger>
+              </TabsList>
 
               <TabsContent value="analysis" className="mt-0 space-y-4">
                 <Tabs defaultValue="performance" className="w-full">
