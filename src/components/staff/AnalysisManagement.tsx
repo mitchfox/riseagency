@@ -98,14 +98,21 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
     paragraph1Info: '',
     paragraph2Info: ''
   });
+  const [overviewWriter, setOverviewWriter] = useState({
+    open: false,
+    category: 'pre-match' as 'pre-match' | 'post-match',
+    overviewInfo: ''
+  });
   const [examplesDialogOpen, setExamplesDialogOpen] = useState(false);
   const [examplesCategory, setExamplesCategory] = useState<'pre-match' | 'post-match' | 'concept' | 'other'>('pre-match');
+  const [examplesType, setExamplesType] = useState<'point' | 'overview'>('point');
   const [examples, setExamples] = useState<any[]>([]);
   const [editingExample, setEditingExample] = useState<any | null>(null);
   const [exampleFormData, setExampleFormData] = useState({
     title: '',
     paragraph_1: '',
     paragraph_2: '',
+    content: '',
     notes: ''
   });
 
@@ -498,12 +505,13 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
     setFormData({ ...formData, points: updatedPoints });
   };
 
-  const fetchExamples = async (category: string) => {
+  const fetchExamples = async (category: string, type: 'point' | 'overview' = 'point') => {
     try {
       const { data, error } = await supabase
         .from('analysis_point_examples')
         .select('*')
         .eq('category', category)
+        .eq('example_type', type)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -521,7 +529,8 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
           .from('analysis_point_examples')
           .update({
             ...exampleFormData,
-            category: examplesCategory
+            category: examplesCategory,
+            example_type: examplesType
           })
           .eq('id', editingExample.id);
 
@@ -532,16 +541,17 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
           .from('analysis_point_examples')
           .insert({
             ...exampleFormData,
-            category: examplesCategory
+            category: examplesCategory,
+            example_type: examplesType
           });
 
         if (error) throw error;
         toast.success('Example added');
       }
 
-      setExampleFormData({ title: '', paragraph_1: '', paragraph_2: '', notes: '' });
+      setExampleFormData({ title: '', paragraph_1: '', paragraph_2: '', content: '', notes: '' });
       setEditingExample(null);
-      fetchExamples(examplesCategory);
+      fetchExamples(examplesCategory, examplesType);
     } catch (error: any) {
       console.error('Error saving example:', error);
       toast.error('Failed to save example');
@@ -559,10 +569,57 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
 
       if (error) throw error;
       toast.success('Example deleted');
-      fetchExamples(examplesCategory);
+      fetchExamples(examplesCategory, examplesType);
     } catch (error: any) {
       console.error('Error deleting example:', error);
       toast.error('Failed to delete example');
+    }
+  };
+
+  const generateOverview = async () => {
+    if (!overviewWriter.overviewInfo.trim()) {
+      toast.error("Please provide information for the overview");
+      return;
+    }
+
+    setAiGenerating(true);
+    try {
+      // Fetch overview examples for this category
+      const { data: styleExamples } = await supabase
+        .from('analysis_point_examples')
+        .select('content')
+        .eq('category', overviewWriter.category)
+        .eq('example_type', 'overview')
+        .limit(3);
+
+      const exampleContext = styleExamples && styleExamples.length > 0
+        ? `\n\nExample overview writing style references:\n${styleExamples.map((ex, i) => 
+            `Example ${i + 1}:\n${ex.content || ''}`
+          ).join('\n\n')}`
+        : '';
+
+      const { data, error } = await supabase.functions.invoke('ai-write', {
+        body: {
+          prompt: `Write a comprehensive overview paragraph for a ${overviewWriter.category} analysis based on this information: ${overviewWriter.overviewInfo}. Match the writing style, vocabulary level, and level of detail shown in the examples. This should be one cohesive paragraph.`,
+          context: `Analysis Type: ${overviewWriter.category}${exampleContext}`,
+          type: 'analysis-overview'
+        }
+      });
+
+      if (error) throw error;
+
+      const overview = data.text;
+
+      // Update the key_details field in formData
+      setFormData({ ...formData, key_details: overview });
+
+      toast.success("Overview generated successfully");
+      setOverviewWriter({ open: false, category: 'pre-match', overviewInfo: '' });
+    } catch (error: any) {
+      console.error('Error generating overview:', error);
+      toast.error(error.message || "Failed to generate overview");
+    } finally {
+      setAiGenerating(false);
     }
   };
 
@@ -739,6 +796,13 @@ Title: ${formData.scheme_title || 'Not specified'}`;
               New Pre-Match Analysis
             </Button>
             <Button 
+              onClick={() => setOverviewWriter({ open: true, category: 'pre-match', overviewInfo: '' })}
+              variant="outline"
+            >
+              <Sparkles className="w-4 h-4 mr-2" />
+              AI Overview Writer
+            </Button>
+            <Button 
               onClick={() => setAiWriter({ ...aiWriter, open: true, category: 'pre-match', paragraph1Info: '', paragraph2Info: '' })}
               variant="outline"
             >
@@ -748,12 +812,24 @@ Title: ${formData.scheme_title || 'Not specified'}`;
             <Button 
               onClick={() => {
                 setExamplesCategory('pre-match');
+                setExamplesType('point');
                 setExamplesDialogOpen(true);
-                fetchExamples('pre-match');
+                fetchExamples('pre-match', 'point');
               }}
               variant="outline"
             >
-              Pre-Match Examples Database
+              Point Examples
+            </Button>
+            <Button 
+              onClick={() => {
+                setExamplesCategory('pre-match');
+                setExamplesType('overview');
+                setExamplesDialogOpen(true);
+                fetchExamples('pre-match', 'overview');
+              }}
+              variant="outline"
+            >
+              Overview Examples
             </Button>
           </div>
 
@@ -819,6 +895,13 @@ Title: ${formData.scheme_title || 'Not specified'}`;
               New Post-Match Analysis
             </Button>
             <Button 
+              onClick={() => setOverviewWriter({ open: true, category: 'post-match', overviewInfo: '' })}
+              variant="outline"
+            >
+              <Sparkles className="w-4 h-4 mr-2" />
+              AI Overview Writer
+            </Button>
+            <Button 
               onClick={() => setAiWriter({ ...aiWriter, open: true, category: 'post-match', paragraph1Info: '', paragraph2Info: '' })}
               variant="outline"
             >
@@ -828,12 +911,24 @@ Title: ${formData.scheme_title || 'Not specified'}`;
             <Button 
               onClick={() => {
                 setExamplesCategory('post-match');
+                setExamplesType('point');
                 setExamplesDialogOpen(true);
-                fetchExamples('post-match');
+                fetchExamples('post-match', 'point');
               }}
               variant="outline"
             >
-              Post-Match Examples Database
+              Point Examples
+            </Button>
+            <Button 
+              onClick={() => {
+                setExamplesCategory('post-match');
+                setExamplesType('overview');
+                setExamplesDialogOpen(true);
+                fetchExamples('post-match', 'overview');
+              }}
+              variant="outline"
+            >
+              Overview Examples
             </Button>
           </div>
 
@@ -907,8 +1002,9 @@ Title: ${formData.scheme_title || 'Not specified'}`;
             <Button 
               onClick={() => {
                 setExamplesCategory('concept');
+                setExamplesType('point');
                 setExamplesDialogOpen(true);
-                fetchExamples('concept');
+                fetchExamples('concept', 'point');
               }}
               variant="outline"
             >
@@ -980,8 +1076,9 @@ Title: ${formData.scheme_title || 'Not specified'}`;
             <Button 
               onClick={() => {
                 setExamplesCategory('other');
+                setExamplesType('point');
                 setExamplesDialogOpen(true);
-                fetchExamples('other');
+                fetchExamples('other', 'point');
               }}
               variant="outline"
             >
@@ -1923,12 +2020,50 @@ Title: ${formData.scheme_title || 'Not specified'}`;
         </DialogContent>
       </Dialog>
 
+      {/* Overview Writer Dialog */}
+      <Dialog open={overviewWriter.open} onOpenChange={(open) => setOverviewWriter({ ...overviewWriter, open })}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>AI {overviewWriter.category.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')} Overview Writer</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Overview Information</Label>
+              <p className="text-xs text-muted-foreground mb-2">
+                Enter key details for the overview paragraph
+              </p>
+              <Textarea
+                value={overviewWriter.overviewInfo}
+                onChange={(e) => setOverviewWriter({ ...overviewWriter, overviewInfo: e.target.value })}
+                placeholder="e.g., Key tactical points, match context, important details..."
+                rows={5}
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setOverviewWriter({ open: false, category: 'pre-match', overviewInfo: '' })}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={generateOverview}
+                disabled={aiGenerating || !overviewWriter.overviewInfo.trim()}
+              >
+                <Sparkles className="w-4 h-4 mr-2" />
+                {aiGenerating ? 'Generating...' : 'Generate Overview'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Examples Database Dialog */}
       <Dialog open={examplesDialogOpen} onOpenChange={setExamplesDialogOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {examplesCategory.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')} Examples Database
+              {examplesCategory.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')} {examplesType === 'overview' ? 'Overview' : 'Point'} Examples
             </DialogTitle>
           </DialogHeader>
 
@@ -1946,24 +2081,38 @@ Title: ${formData.scheme_title || 'Not specified'}`;
                     placeholder="e.g., Defensive Positioning Analysis"
                   />
                 </div>
-                <div>
-                  <Label>Paragraph 1</Label>
-                  <Textarea
-                    value={exampleFormData.paragraph_1}
-                    onChange={(e) => setExampleFormData({ ...exampleFormData, paragraph_1: e.target.value })}
-                    placeholder="Example paragraph showing desired writing style..."
-                    rows={4}
-                  />
-                </div>
-                <div>
-                  <Label>Paragraph 2</Label>
-                  <Textarea
-                    value={exampleFormData.paragraph_2}
-                    onChange={(e) => setExampleFormData({ ...exampleFormData, paragraph_2: e.target.value })}
-                    placeholder="Example paragraph showing desired writing style..."
-                    rows={4}
-                  />
-                </div>
+                {examplesType === 'overview' ? (
+                  <div>
+                    <Label>Overview Paragraph</Label>
+                    <Textarea
+                      value={exampleFormData.content}
+                      onChange={(e) => setExampleFormData({ ...exampleFormData, content: e.target.value })}
+                      placeholder="Example overview paragraph showing desired writing style..."
+                      rows={6}
+                    />
+                  </div>
+                ) : (
+                  <>
+                    <div>
+                      <Label>Paragraph 1</Label>
+                      <Textarea
+                        value={exampleFormData.paragraph_1}
+                        onChange={(e) => setExampleFormData({ ...exampleFormData, paragraph_1: e.target.value })}
+                        placeholder="Example paragraph showing desired writing style..."
+                        rows={4}
+                      />
+                    </div>
+                    <div>
+                      <Label>Paragraph 2</Label>
+                      <Textarea
+                        value={exampleFormData.paragraph_2}
+                        onChange={(e) => setExampleFormData({ ...exampleFormData, paragraph_2: e.target.value })}
+                        placeholder="Example paragraph showing desired writing style..."
+                        rows={4}
+                      />
+                    </div>
+                  </>
+                )}
                 <div>
                   <Label>Notes (Optional)</Label>
                   <Textarea
@@ -1982,7 +2131,7 @@ Title: ${formData.scheme_title || 'Not specified'}`;
                       variant="outline" 
                       onClick={() => {
                         setEditingExample(null);
-                        setExampleFormData({ title: '', paragraph_1: '', paragraph_2: '', notes: '' });
+                        setExampleFormData({ title: '', paragraph_1: '', paragraph_2: '', content: '', notes: '' });
                       }}
                     >
                       Cancel Edit
@@ -2012,6 +2161,7 @@ Title: ${formData.scheme_title || 'Not specified'}`;
                                 title: example.title || '',
                                 paragraph_1: example.paragraph_1 || '',
                                 paragraph_2: example.paragraph_2 || '',
+                                content: example.content || '',
                                 notes: example.notes || ''
                               });
                             }}
@@ -2031,6 +2181,9 @@ Title: ${formData.scheme_title || 'Not specified'}`;
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-2">
+                      {example.content && (
+                        <p className="text-sm">{example.content}</p>
+                      )}
                       {example.paragraph_1 && (
                         <p className="text-sm">{example.paragraph_1}</p>
                       )}

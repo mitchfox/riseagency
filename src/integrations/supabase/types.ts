@@ -136,7 +136,9 @@ export type Database = {
       analysis_point_examples: {
         Row: {
           category: string
+          content: string | null
           created_at: string
+          example_type: string
           id: string
           notes: string | null
           paragraph_1: string | null
@@ -146,7 +148,9 @@ export type Database = {
         }
         Insert: {
           category: string
+          content?: string | null
           created_at?: string
+          example_type?: string
           id?: string
           notes?: string | null
           paragraph_1?: string | null
@@ -156,7 +160,9 @@ export type Database = {
         }
         Update: {
           category?: string
+          content?: string | null
           created_at?: string
+          example_type?: string
           id?: string
           notes?: string | null
           paragraph_1?: string | null
