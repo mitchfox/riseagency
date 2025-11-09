@@ -133,6 +133,39 @@ export type Database = {
           },
         ]
       }
+      analysis_point_examples: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          notes: string | null
+          paragraph_1: string | null
+          paragraph_2: string | null
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          paragraph_1?: string | null
+          paragraph_2?: string | null
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          paragraph_1?: string | null
+          paragraph_2?: string | null
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       blog_posts: {
         Row: {
           author_id: string

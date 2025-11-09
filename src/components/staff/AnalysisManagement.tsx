@@ -98,6 +98,16 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
     paragraph1Info: '',
     paragraph2Info: ''
   });
+  const [examplesDialogOpen, setExamplesDialogOpen] = useState(false);
+  const [examplesCategory, setExamplesCategory] = useState<'pre-match' | 'post-match' | 'concept' | 'other'>('pre-match');
+  const [examples, setExamples] = useState<any[]>([]);
+  const [editingExample, setEditingExample] = useState<any | null>(null);
+  const [exampleFormData, setExampleFormData] = useState({
+    title: '',
+    paragraph_1: '',
+    paragraph_2: '',
+    notes: ''
+  });
 
   // Form states
   const [formData, setFormData] = useState<Partial<Analysis>>({
@@ -488,6 +498,74 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
     setFormData({ ...formData, points: updatedPoints });
   };
 
+  const fetchExamples = async (category: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('analysis_point_examples')
+        .select('*')
+        .eq('category', category)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setExamples(data || []);
+    } catch (error: any) {
+      console.error('Error fetching examples:', error);
+      toast.error('Failed to load examples');
+    }
+  };
+
+  const handleSaveExample = async () => {
+    try {
+      if (editingExample) {
+        const { error } = await supabase
+          .from('analysis_point_examples')
+          .update({
+            ...exampleFormData,
+            category: examplesCategory
+          })
+          .eq('id', editingExample.id);
+
+        if (error) throw error;
+        toast.success('Example updated');
+      } else {
+        const { error } = await supabase
+          .from('analysis_point_examples')
+          .insert({
+            ...exampleFormData,
+            category: examplesCategory
+          });
+
+        if (error) throw error;
+        toast.success('Example added');
+      }
+
+      setExampleFormData({ title: '', paragraph_1: '', paragraph_2: '', notes: '' });
+      setEditingExample(null);
+      fetchExamples(examplesCategory);
+    } catch (error: any) {
+      console.error('Error saving example:', error);
+      toast.error('Failed to save example');
+    }
+  };
+
+  const handleDeleteExample = async (id: string) => {
+    if (!confirm('Delete this example?')) return;
+
+    try {
+      const { error } = await supabase
+        .from('analysis_point_examples')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      toast.success('Example deleted');
+      fetchExamples(examplesCategory);
+    } catch (error: any) {
+      console.error('Error deleting example:', error);
+      toast.error('Failed to delete example');
+    }
+  };
+
   const generateWithAIWriter = async () => {
     if (!aiWriter.paragraph1Info.trim() && !aiWriter.paragraph2Info.trim()) {
       toast.error("Please provide information for at least one paragraph");
@@ -496,6 +574,19 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
 
     setAiGenerating(true);
     try {
+      // Fetch examples for this category to use as style reference
+      const { data: styleExamples } = await supabase
+        .from('analysis_point_examples')
+        .select('paragraph_1, paragraph_2')
+        .eq('category', aiWriter.category)
+        .limit(3);
+
+      const exampleContext = styleExamples && styleExamples.length > 0
+        ? `\n\nExample writing style references:\n${styleExamples.map((ex, i) => 
+            `Example ${i + 1}:\n${ex.paragraph_1 || ''}\n${ex.paragraph_2 || ''}`
+          ).join('\n\n')}`
+        : '';
+
       let paragraph1 = '';
       let paragraph2 = '';
 
@@ -503,8 +594,8 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
       if (aiWriter.paragraph1Info.trim()) {
         const { data: data1, error: error1 } = await supabase.functions.invoke('ai-write', {
           body: {
-            prompt: `Write a professional analysis paragraph based on this information: ${aiWriter.paragraph1Info}`,
-            context: `Analysis Type: ${aiWriter.category}`,
+            prompt: `Write a professional analysis paragraph based on this information: ${aiWriter.paragraph1Info}. Match the writing style, vocabulary level, and level of detail shown in the examples.`,
+            context: `Analysis Type: ${aiWriter.category}${exampleContext}`,
             type: 'analysis-paragraph'
           }
         });
@@ -517,8 +608,8 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
       if (aiWriter.paragraph2Info.trim()) {
         const { data: data2, error: error2 } = await supabase.functions.invoke('ai-write', {
           body: {
-            prompt: `Write a professional analysis paragraph based on this information: ${aiWriter.paragraph2Info}`,
-            context: `Analysis Type: ${aiWriter.category}`,
+            prompt: `Write a professional analysis paragraph based on this information: ${aiWriter.paragraph2Info}. Match the writing style, vocabulary level, and level of detail shown in the examples.`,
+            context: `Analysis Type: ${aiWriter.category}${exampleContext}`,
             type: 'analysis-paragraph'
           }
         });
@@ -639,7 +730,7 @@ Title: ${formData.scheme_title || 'Not specified'}`;
         </TabsList>
 
         <TabsContent value="pre-match" className="space-y-4">
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             <Button 
               onClick={() => handleOpenDialog("pre-match")}
               className="bg-gradient-to-r from-slate-300 to-slate-400 text-slate-900 hover:from-slate-400 hover:to-slate-500"
@@ -653,6 +744,16 @@ Title: ${formData.scheme_title || 'Not specified'}`;
             >
               <Sparkles className="w-4 h-4 mr-2" />
               AI Pre-Match Point Writer
+            </Button>
+            <Button 
+              onClick={() => {
+                setExamplesCategory('pre-match');
+                setExamplesDialogOpen(true);
+                fetchExamples('pre-match');
+              }}
+              variant="outline"
+            >
+              Pre-Match Examples Database
             </Button>
           </div>
 
@@ -709,7 +810,7 @@ Title: ${formData.scheme_title || 'Not specified'}`;
         </TabsContent>
 
         <TabsContent value="post-match" className="space-y-4">
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             <Button 
               onClick={() => handleOpenDialog("post-match")}
               className="bg-gradient-to-r from-amber-400 to-yellow-500 text-slate-900 hover:from-amber-500 hover:to-yellow-600"
@@ -723,6 +824,16 @@ Title: ${formData.scheme_title || 'Not specified'}`;
             >
               <Sparkles className="w-4 h-4 mr-2" />
               AI Post-Match Point Writer
+            </Button>
+            <Button 
+              onClick={() => {
+                setExamplesCategory('post-match');
+                setExamplesDialogOpen(true);
+                fetchExamples('post-match');
+              }}
+              variant="outline"
+            >
+              Post-Match Examples Database
             </Button>
           </div>
 
@@ -779,7 +890,7 @@ Title: ${formData.scheme_title || 'Not specified'}`;
         </TabsContent>
 
         <TabsContent value="concepts" className="space-y-4">
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             <Button 
               onClick={() => handleOpenDialog("concept")}
             >
@@ -792,6 +903,16 @@ Title: ${formData.scheme_title || 'Not specified'}`;
             >
               <Sparkles className="w-4 h-4 mr-2" />
               AI Concept Writer
+            </Button>
+            <Button 
+              onClick={() => {
+                setExamplesCategory('concept');
+                setExamplesDialogOpen(true);
+                fetchExamples('concept');
+              }}
+              variant="outline"
+            >
+              Concept Examples Database
             </Button>
           </div>
 
@@ -848,13 +969,25 @@ Title: ${formData.scheme_title || 'Not specified'}`;
         </TabsContent>
 
         <TabsContent value="other" className="space-y-4">
-          <Button 
-            onClick={() => setAiWriter({ ...aiWriter, open: true, category: 'other', paragraph1Info: '', paragraph2Info: '' })}
-            variant="outline"
-          >
-            <Sparkles className="w-4 h-4 mr-2" />
-            AI Point Writer
-          </Button>
+          <div className="flex gap-2 flex-wrap">
+            <Button 
+              onClick={() => setAiWriter({ ...aiWriter, open: true, category: 'other', paragraph1Info: '', paragraph2Info: '' })}
+              variant="outline"
+            >
+              <Sparkles className="w-4 h-4 mr-2" />
+              AI Point Writer
+            </Button>
+            <Button 
+              onClick={() => {
+                setExamplesCategory('other');
+                setExamplesDialogOpen(true);
+                fetchExamples('other');
+              }}
+              variant="outline"
+            >
+              Examples Database
+            </Button>
+          </div>
         </TabsContent>
       </Tabs>
 
@@ -1785,6 +1918,132 @@ Title: ${formData.scheme_title || 'Not specified'}`;
                 <Sparkles className="w-4 h-4 mr-2" />
                 {aiGenerating ? 'Generating...' : 'Generate Point'}
               </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Examples Database Dialog */}
+      <Dialog open={examplesDialogOpen} onOpenChange={setExamplesDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {examplesCategory.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')} Examples Database
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">{editingExample ? 'Edit' : 'Add'} Example</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label>Title (Optional)</Label>
+                  <Input
+                    value={exampleFormData.title}
+                    onChange={(e) => setExampleFormData({ ...exampleFormData, title: e.target.value })}
+                    placeholder="e.g., Defensive Positioning Analysis"
+                  />
+                </div>
+                <div>
+                  <Label>Paragraph 1</Label>
+                  <Textarea
+                    value={exampleFormData.paragraph_1}
+                    onChange={(e) => setExampleFormData({ ...exampleFormData, paragraph_1: e.target.value })}
+                    placeholder="Example paragraph showing desired writing style..."
+                    rows={4}
+                  />
+                </div>
+                <div>
+                  <Label>Paragraph 2</Label>
+                  <Textarea
+                    value={exampleFormData.paragraph_2}
+                    onChange={(e) => setExampleFormData({ ...exampleFormData, paragraph_2: e.target.value })}
+                    placeholder="Example paragraph showing desired writing style..."
+                    rows={4}
+                  />
+                </div>
+                <div>
+                  <Label>Notes (Optional)</Label>
+                  <Textarea
+                    value={exampleFormData.notes}
+                    onChange={(e) => setExampleFormData({ ...exampleFormData, notes: e.target.value })}
+                    placeholder="Notes about this example..."
+                    rows={2}
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <Button onClick={handleSaveExample}>
+                    {editingExample ? 'Update' : 'Add'} Example
+                  </Button>
+                  {editingExample && (
+                    <Button 
+                      variant="outline" 
+                      onClick={() => {
+                        setEditingExample(null);
+                        setExampleFormData({ title: '', paragraph_1: '', paragraph_2: '', notes: '' });
+                      }}
+                    >
+                      Cancel Edit
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            <div className="space-y-2">
+              <h3 className="font-semibold">Existing Examples</h3>
+              {examples.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No examples yet. Add some to help the AI match your writing style.</p>
+              ) : (
+                examples.map((example) => (
+                  <Card key={example.id}>
+                    <CardHeader>
+                      <CardTitle className="text-sm flex justify-between items-start">
+                        <span>{example.title || 'Untitled Example'}</span>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setEditingExample(example);
+                              setExampleFormData({
+                                title: example.title || '',
+                                paragraph_1: example.paragraph_1 || '',
+                                paragraph_2: example.paragraph_2 || '',
+                                notes: example.notes || ''
+                              });
+                            }}
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </Button>
+                          {isAdmin && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDeleteExample(example.id)}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          )}
+                        </div>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                      {example.paragraph_1 && (
+                        <p className="text-sm">{example.paragraph_1}</p>
+                      )}
+                      {example.paragraph_2 && (
+                        <p className="text-sm">{example.paragraph_2}</p>
+                      )}
+                      {example.notes && (
+                        <p className="text-xs text-muted-foreground italic">{example.notes}</p>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))
+              )}
             </div>
           </div>
         </DialogContent>
