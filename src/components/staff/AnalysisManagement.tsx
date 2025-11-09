@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Pencil, Trash2, Plus, X, Upload, Sparkles, Database } from "lucide-react";
+import { Pencil, Trash2, Plus, X, Upload, Sparkles, Database, Copy } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -107,6 +107,24 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
     open: false,
     schemeInfo: ''
   });
+  const [generatedContent, setGeneratedContent] = useState<{
+    open: boolean;
+    type: 'point' | 'overview' | 'scheme';
+    content: string;
+    paragraph1?: string;
+    paragraph2?: string;
+    category: string;
+  }>({
+    open: false,
+    type: 'point',
+    content: '',
+    category: 'pre-match'
+  });
+  const [tweakDialog, setTweakDialog] = useState({
+    open: false,
+    tweakInstructions: ''
+  });
+  const [editMode, setEditMode] = useState(false);
   const [examplesDialogOpen, setExamplesDialogOpen] = useState(false);
   const [examplesCategory, setExamplesCategory] = useState<'pre-match' | 'post-match' | 'concept' | 'other' | 'scheme'>('pre-match');
   const [examplesType, setExamplesType] = useState<'point' | 'overview'>('point');
@@ -614,10 +632,13 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
 
       const overview = data.text;
 
-      // Update the key_details field in formData
-      setFormData({ ...formData, key_details: overview });
-
-      toast.success("Overview generated successfully");
+      // Show preview dialog instead of directly applying
+      setGeneratedContent({
+        open: true,
+        type: 'overview',
+        content: overview,
+        category: overviewWriter.category
+      });
       setOverviewWriter({ open: false, category: 'pre-match', overviewInfo: '' });
     } catch (error: any) {
       console.error('Error generating overview:', error);
@@ -662,14 +683,15 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
       const text = data.text;
       const [p1, p2] = text.split('\n\n').filter((p: string) => p.trim());
 
-      // Update scheme paragraphs in formData
-      setFormData({ 
-        ...formData, 
-        scheme_paragraph_1: p1 || '',
-        scheme_paragraph_2: p2 || ''
+      // Show preview dialog
+      setGeneratedContent({
+        open: true,
+        type: 'scheme',
+        content: text,
+        paragraph1: p1 || '',
+        paragraph2: p2 || '',
+        category: 'scheme'
       });
-
-      toast.success("Scheme generated successfully");
       setSchemeWriter({ open: false, schemeInfo: '' });
     } catch (error: any) {
       console.error('Error generating scheme:', error);
@@ -731,31 +753,15 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
         paragraph2 = data2.text;
       }
 
-      // Update form data with generated paragraphs
-      if (aiWriter.targetPointIndex !== undefined) {
-        // Update existing point
-        const updatedPoints = [...(formData.points || [])];
-        updatedPoints[aiWriter.targetPointIndex] = {
-          ...updatedPoints[aiWriter.targetPointIndex],
-          paragraph_1: paragraph1 || updatedPoints[aiWriter.targetPointIndex].paragraph_1,
-          paragraph_2: paragraph2 || updatedPoints[aiWriter.targetPointIndex].paragraph_2
-        };
-        setFormData({ ...formData, points: updatedPoints });
-      } else {
-        // Create new point
-        const newPoint = {
-          title: "",
-          paragraph_1: paragraph1,
-          paragraph_2: paragraph2,
-          images: []
-        };
-        setFormData({
-          ...formData,
-          points: [...(formData.points || []), newPoint]
-        });
-      }
-
-      toast.success("Analysis point created successfully");
+      // Show preview dialog
+      setGeneratedContent({
+        open: true,
+        type: 'point',
+        content: `${paragraph1}\n\n${paragraph2}`,
+        paragraph1,
+        paragraph2,
+        category: aiWriter.category
+      });
       setAiWriter({ open: false, category: 'pre-match', paragraph1Info: '', paragraph2Info: '' });
     } catch (error: any) {
       console.error('Error generating with AI:', error);
@@ -823,6 +829,111 @@ Title: ${formData.scheme_title || 'Not specified'}`;
     } catch (error: any) {
       console.error('AI generation error:', error);
       toast.error('Failed to generate content with AI');
+    } finally {
+      setAiGenerating(false);
+    }
+  };
+
+  const handleApplyGenerated = () => {
+    if (generatedContent.type === 'overview') {
+      setFormData({ ...formData, key_details: generatedContent.content });
+    } else if (generatedContent.type === 'scheme') {
+      setFormData({ 
+        ...formData, 
+        scheme_paragraph_1: generatedContent.paragraph1 || '',
+        scheme_paragraph_2: generatedContent.paragraph2 || ''
+      });
+    } else if (generatedContent.type === 'point') {
+      const newPoint = {
+        title: "",
+        paragraph_1: generatedContent.paragraph1 || '',
+        paragraph_2: generatedContent.paragraph2 || '',
+        images: []
+      };
+      setFormData({
+        ...formData,
+        points: [...(formData.points || []), newPoint]
+      });
+    }
+    toast.success("Content applied!");
+    setGeneratedContent({ open: false, type: 'point', content: '', category: 'pre-match' });
+    setEditMode(false);
+  };
+
+  const handleCopyGenerated = async () => {
+    try {
+      await navigator.clipboard.writeText(generatedContent.content);
+      toast.success("Copied to clipboard!");
+    } catch (error) {
+      toast.error("Failed to copy");
+    }
+  };
+
+  const handleSaveToDatabase = async () => {
+    try {
+      const dataToSave: any = {
+        category: generatedContent.category,
+        example_type: generatedContent.type === 'overview' ? 'overview' : 'point'
+      };
+
+      if (generatedContent.type === 'overview') {
+        dataToSave.content = generatedContent.content;
+        dataToSave.title = `Generated ${new Date().toLocaleDateString()}`;
+      } else {
+        dataToSave.paragraph_1 = generatedContent.paragraph1 || '';
+        dataToSave.paragraph_2 = generatedContent.paragraph2 || '';
+        dataToSave.title = `Generated ${new Date().toLocaleDateString()}`;
+      }
+
+      const { error } = await supabase
+        .from('analysis_point_examples')
+        .insert(dataToSave);
+
+      if (error) throw error;
+      toast.success("Saved to examples database!");
+    } catch (error) {
+      console.error('Error saving to database:', error);
+      toast.error("Failed to save to database");
+    }
+  };
+
+  const handleTweak = async () => {
+    if (!tweakDialog.tweakInstructions.trim()) {
+      toast.error("Please provide tweak instructions");
+      return;
+    }
+
+    setAiGenerating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('ai-write', {
+        body: {
+          prompt: `Modify this text according to these instructions: ${tweakDialog.tweakInstructions}\n\nOriginal text:\n${generatedContent.content}`,
+          context: `Keep the same style and structure, just apply the requested modifications.`,
+          type: 'analysis-paragraph'
+        }
+      });
+
+      if (error) throw error;
+
+      const tweaked = data.text;
+
+      if (generatedContent.type === 'overview') {
+        setGeneratedContent({ ...generatedContent, content: tweaked });
+      } else {
+        const [p1, p2] = tweaked.split('\n\n').filter((p: string) => p.trim());
+        setGeneratedContent({
+          ...generatedContent,
+          content: tweaked,
+          paragraph1: p1 || generatedContent.paragraph1,
+          paragraph2: p2 || generatedContent.paragraph2
+        });
+      }
+
+      toast.success("Content tweaked!");
+      setTweakDialog({ open: false, tweakInstructions: '' });
+    } catch (error) {
+      console.error('Error tweaking content:', error);
+      toast.error("Failed to tweak content");
     } finally {
       setAiGenerating(false);
     }
@@ -2164,6 +2275,122 @@ Title: ${formData.scheme_title || 'Not specified'}`;
               >
                 <Sparkles className="w-4 h-4 mr-2" />
                 {aiGenerating ? 'Generating...' : 'Generate Scheme'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Generated Content Preview Dialog */}
+      <Dialog open={generatedContent.open} onOpenChange={(open) => {
+        if (!open) {
+          setGeneratedContent({ open: false, type: 'point', content: '', category: 'pre-match' });
+          setEditMode(false);
+        }
+      }}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Generated Content Preview</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {editMode ? (
+              generatedContent.type === 'overview' ? (
+                <div>
+                  <Label>Edit Overview</Label>
+                  <Textarea
+                    value={generatedContent.content}
+                    onChange={(e) => setGeneratedContent({ ...generatedContent, content: e.target.value })}
+                    rows={10}
+                  />
+                </div>
+              ) : (
+                <>
+                  <div>
+                    <Label>Edit Paragraph 1</Label>
+                    <Textarea
+                      value={generatedContent.paragraph1 || ''}
+                      onChange={(e) => setGeneratedContent({ 
+                        ...generatedContent, 
+                        paragraph1: e.target.value,
+                        content: `${e.target.value}\n\n${generatedContent.paragraph2 || ''}`
+                      })}
+                      rows={6}
+                    />
+                  </div>
+                  <div>
+                    <Label>Edit Paragraph 2</Label>
+                    <Textarea
+                      value={generatedContent.paragraph2 || ''}
+                      onChange={(e) => setGeneratedContent({ 
+                        ...generatedContent, 
+                        paragraph2: e.target.value,
+                        content: `${generatedContent.paragraph1 || ''}\n\n${e.target.value}`
+                      })}
+                      rows={6}
+                    />
+                  </div>
+                </>
+              )
+            ) : (
+              <div className="p-4 bg-muted rounded-lg whitespace-pre-wrap">
+                {generatedContent.content}
+              </div>
+            )}
+
+            <div className="flex gap-2 flex-wrap">
+              <Button onClick={() => setTweakDialog({ open: true, tweakInstructions: '' })}>
+                <Sparkles className="w-4 h-4 mr-2" />
+                Tweak
+              </Button>
+              <Button variant="outline" onClick={() => setEditMode(!editMode)}>
+                <Pencil className="w-4 h-4 mr-2" />
+                {editMode ? 'Preview' : 'Edit'}
+              </Button>
+              <Button variant="outline" onClick={handleCopyGenerated}>
+                <Copy className="w-4 h-4 mr-2" />
+                Copy
+              </Button>
+              <Button variant="outline" onClick={handleSaveToDatabase}>
+                <Database className="w-4 h-4 mr-2" />
+                Save to Database
+              </Button>
+              <Button onClick={handleApplyGenerated}>
+                Apply
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Tweak Dialog */}
+      <Dialog open={tweakDialog.open} onOpenChange={(open) => setTweakDialog({ open, tweakInstructions: '' })}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Tweak Content</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>What would you like to change?</Label>
+              <Textarea
+                value={tweakDialog.tweakInstructions}
+                onChange={(e) => setTweakDialog({ ...tweakDialog, tweakInstructions: e.target.value })}
+                placeholder="e.g., Make it more concise, add more technical details, change the tone..."
+                rows={4}
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setTweakDialog({ open: false, tweakInstructions: '' })}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleTweak}
+                disabled={aiGenerating || !tweakDialog.tweakInstructions.trim()}
+              >
+                <Sparkles className="w-4 h-4 mr-2" />
+                {aiGenerating ? 'Tweaking...' : 'Apply Tweak'}
               </Button>
             </div>
           </div>
