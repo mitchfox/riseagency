@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
-import { Plus, Trash2, AlertTriangle, LineChart, Sparkles, Search } from "lucide-react";
+import { Plus, Trash2, AlertTriangle, LineChart, Sparkles, Search, Loader2 } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { R90RatingsViewer } from "./R90RatingsViewer";
@@ -553,6 +553,50 @@ export const CreatePerformanceReportDialog = ({
       toast.error("Failed to delete performance report: " + error.message);
     } finally {
       setDeleting(false);
+    }
+  };
+
+  const fillSingleActionScore = async (index: number) => {
+    const action = actions[index];
+    
+    if (!action.action_type || !action.action_description) {
+      toast.error("Action needs type and description to fill score");
+      return;
+    }
+
+    setIsFillingScores(true);
+    try {
+      // Call the fill-action-scores edge function with single action
+      const { data, error } = await supabase.functions.invoke('fill-action-scores', {
+        body: { actions: [{ ...action, index: 0 }] }
+      });
+
+      if (error) {
+        console.error('Edge function error:', error);
+        throw error;
+      }
+
+      if (!data?.scores || data.scores.length === 0) {
+        throw new Error("No score returned from function");
+      }
+
+      const score = data.scores[0]?.score || 0;
+      
+      // Update the action with the filled score
+      const updatedActions = [...actions];
+      updatedActions[index] = {
+        ...updatedActions[index],
+        action_score: score.toString()
+      };
+      setActions(updatedActions);
+      
+      toast.success(`Score filled: ${score.toFixed(5)}`);
+      
+    } catch (error: any) {
+      console.error('Error filling score:', error);
+      toast.error("Failed to fill score");
+    } finally {
+      setIsFillingScores(false);
     }
   };
 
@@ -1111,6 +1155,20 @@ export const CreatePerformanceReportDialog = ({
                         <LineChart className="h-4 w-4 text-indigo-600" />
                       </Button>
                       <Button
+                        onClick={() => fillSingleActionScore(index)}
+                        size="icon"
+                        variant="ghost"
+                        className="h-8 w-8"
+                        title="Fill Score with AI"
+                        disabled={isFillingScores}
+                      >
+                        {isFillingScores ? (
+                          <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
+                        ) : (
+                          <Sparkles className="h-4 w-4 text-blue-600" />
+                        )}
+                      </Button>
+                      <Button
                         onClick={() => removeAction(index)}
                         size="icon"
                         variant="ghost"
@@ -1320,6 +1378,20 @@ export const CreatePerformanceReportDialog = ({
                             title="View All R90 Ratings"
                           >
                             <LineChart className="h-4 w-4 text-indigo-600" />
+                          </Button>
+                          <Button
+                            onClick={() => fillSingleActionScore(index)}
+                            size="icon"
+                            variant="ghost"
+                            className="h-8 w-8"
+                            title="Fill Score with AI"
+                            disabled={isFillingScores}
+                          >
+                            {isFillingScores ? (
+                              <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
+                            ) : (
+                              <Sparkles className="h-4 w-4 text-blue-600" />
+                            )}
                           </Button>
                           <Button
                             onClick={() => removeAction(index)}
