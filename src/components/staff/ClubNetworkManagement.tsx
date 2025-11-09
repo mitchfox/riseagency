@@ -5,16 +5,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
-import { Plus, X, MapPin, List } from 'lucide-react';
+import { Plus, X } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
+
 
 interface Contact {
   id: string;
@@ -31,94 +29,8 @@ interface Contact {
   notes: string | null;
 }
 
-// Fix for default marker icons in React-Leaflet
-delete (L.Icon.Default.prototype as any)._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
-});
-
-// Custom marker icon
-const createCustomIcon = (contact: Contact) => {
-  return L.divIcon({
-    className: 'custom-marker',
-    html: `
-      <div style="
-        background: hsl(var(--primary));
-        border: 3px solid white;
-        border-radius: 50%;
-        width: 32px;
-        height: 32px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-        font-weight: bold;
-        color: white;
-        font-size: 14px;
-      ">
-        ${contact.club_name ? contact.club_name.substring(0, 2).toUpperCase() : '📍'}
-      </div>
-    `,
-    iconSize: [32, 32],
-    iconAnchor: [16, 32],
-    popupAnchor: [0, -32],
-  });
-};
-
-// Separate component for map markers to ensure proper context
-const MapMarkers = ({ contacts, onEdit }: { contacts: Contact[], onEdit: (contact: Contact) => void }) => {
-  return (
-    <>
-      {contacts
-        .filter((contact) => contact.latitude && contact.longitude)
-        .map((contact) => (
-          <Marker
-            key={contact.id}
-            position={[contact.latitude!, contact.longitude!]}
-            icon={createCustomIcon(contact)}
-            eventHandlers={{
-              click: () => onEdit(contact),
-            }}
-          >
-            <Popup>
-              <div className="min-w-[200px]">
-                <h3 className="font-bold text-base mb-2">
-                  {contact.club_name || contact.name}
-                </h3>
-                <div className="space-y-1 text-sm">
-                  {contact.name && <p><strong>Contact:</strong> {contact.name}</p>}
-                  {contact.position && <p><strong>Position:</strong> {contact.position}</p>}
-                  {contact.email && (
-                    <p><strong>Email:</strong> <a href={`mailto:${contact.email}`} className="text-primary hover:underline">{contact.email}</a></p>
-                  )}
-                  {contact.phone && <p><strong>Phone:</strong> {contact.phone}</p>}
-                  {contact.city && contact.country && (
-                    <p><strong>Location:</strong> {contact.city}, {contact.country}</p>
-                  )}
-                  {contact.notes && (
-                    <p className="mt-2 text-muted-foreground">{contact.notes}</p>
-                  )}
-                </div>
-                <Button
-                  size="sm"
-                  className="w-full mt-3"
-                  onClick={() => onEdit(contact)}
-                >
-                  Edit Contact
-                </Button>
-              </div>
-            </Popup>
-          </Marker>
-        ))}
-    </>
-  );
-};
-
 const ClubNetworkManagement = () => {
   const [contacts, setContacts] = useState<Contact[]>([]);
-  const [view, setView] = useState<'map' | 'list'>('list');
   const [showDialog, setShowDialog] = useState(false);
   const [editingContact, setEditingContact] = useState<Contact | null>(null);
   const [formData, setFormData] = useState({
@@ -261,50 +173,14 @@ const ClubNetworkManagement = () => {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <div className="flex gap-2">
-          <Button
-            variant={view === 'map' ? 'default' : 'outline'}
-            onClick={() => setView('map')}
-            size="sm"
-          >
-            <MapPin className="h-4 w-4 mr-2" />
-            Map View
-          </Button>
-          <Button
-            variant={view === 'list' ? 'default' : 'outline'}
-            onClick={() => setView('list')}
-            size="sm"
-          >
-            <List className="h-4 w-4 mr-2" />
-            List View
-          </Button>
-        </div>
+        <h2 className="text-xl font-semibold">Club Network Contacts</h2>
         <Button onClick={openAddDialog}>
           <Plus className="h-4 w-4 mr-2" />
           Add Contact
         </Button>
       </div>
 
-      {view === 'map' && (
-        <div className="relative w-full h-[600px] rounded-lg border overflow-hidden">
-          <MapContainer
-            key="club-network-map"
-            center={[20, 0]}
-            zoom={2}
-            style={{ height: '100%', width: '100%' }}
-            className="z-0"
-          >
-            <TileLayer
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            />
-            <MapMarkers contacts={contacts} onEdit={openEditDialog} />
-          </MapContainer>
-        </div>
-      )}
-
-      {view === 'list' && (
-        <div className="space-y-4">
+      <div className="space-y-4">
           {contacts.map((contact) => (
             <div
               key={contact.id}
@@ -359,9 +235,8 @@ const ClubNetworkManagement = () => {
                 </p>
               )}
             </div>
-          ))}
-        </div>
-      )}
+        ))}
+      </div>
 
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
         <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto p-4 md:p-6">
