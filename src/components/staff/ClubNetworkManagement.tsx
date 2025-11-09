@@ -67,6 +67,55 @@ const createCustomIcon = (contact: Contact) => {
   });
 };
 
+// Separate component for map markers to ensure proper context
+const MapMarkers = ({ contacts, onEdit }: { contacts: Contact[], onEdit: (contact: Contact) => void }) => {
+  return (
+    <>
+      {contacts
+        .filter((contact) => contact.latitude && contact.longitude)
+        .map((contact) => (
+          <Marker
+            key={contact.id}
+            position={[contact.latitude!, contact.longitude!]}
+            icon={createCustomIcon(contact)}
+            eventHandlers={{
+              click: () => onEdit(contact),
+            }}
+          >
+            <Popup>
+              <div className="min-w-[200px]">
+                <h3 className="font-bold text-base mb-2">
+                  {contact.club_name || contact.name}
+                </h3>
+                <div className="space-y-1 text-sm">
+                  {contact.name && <p><strong>Contact:</strong> {contact.name}</p>}
+                  {contact.position && <p><strong>Position:</strong> {contact.position}</p>}
+                  {contact.email && (
+                    <p><strong>Email:</strong> <a href={`mailto:${contact.email}`} className="text-primary hover:underline">{contact.email}</a></p>
+                  )}
+                  {contact.phone && <p><strong>Phone:</strong> {contact.phone}</p>}
+                  {contact.city && contact.country && (
+                    <p><strong>Location:</strong> {contact.city}, {contact.country}</p>
+                  )}
+                  {contact.notes && (
+                    <p className="mt-2 text-muted-foreground">{contact.notes}</p>
+                  )}
+                </div>
+                <Button
+                  size="sm"
+                  className="w-full mt-3"
+                  onClick={() => onEdit(contact)}
+                >
+                  Edit Contact
+                </Button>
+              </div>
+            </Popup>
+          </Marker>
+        ))}
+    </>
+  );
+};
+
 const ClubNetworkManagement = () => {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [view, setView] = useState<'map' | 'list'>('list');
@@ -236,7 +285,7 @@ const ClubNetworkManagement = () => {
         </Button>
       </div>
 
-      {view === 'map' ? (
+      {view === 'map' && (
         <div className="relative w-full h-[600px] rounded-lg border overflow-hidden">
           <MapContainer
             key="club-network-map"
@@ -249,50 +298,12 @@ const ClubNetworkManagement = () => {
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
-            {contacts
-              .filter((contact) => contact.latitude && contact.longitude)
-              .map((contact) => (
-                <Marker
-                  key={contact.id}
-                  position={[contact.latitude!, contact.longitude!]}
-                  icon={createCustomIcon(contact)}
-                  eventHandlers={{
-                    click: () => openEditDialog(contact),
-                  }}
-                >
-                  <Popup>
-                    <div className="min-w-[200px]">
-                      <h3 className="font-bold text-base mb-2">
-                        {contact.club_name || contact.name}
-                      </h3>
-                      <div className="space-y-1 text-sm">
-                        {contact.name && <p><strong>Contact:</strong> {contact.name}</p>}
-                        {contact.position && <p><strong>Position:</strong> {contact.position}</p>}
-                        {contact.email && (
-                          <p><strong>Email:</strong> <a href={`mailto:${contact.email}`} className="text-primary hover:underline">{contact.email}</a></p>
-                        )}
-                        {contact.phone && <p><strong>Phone:</strong> {contact.phone}</p>}
-                        {contact.city && contact.country && (
-                          <p><strong>Location:</strong> {contact.city}, {contact.country}</p>
-                        )}
-                        {contact.notes && (
-                          <p className="mt-2 text-muted-foreground">{contact.notes}</p>
-                        )}
-                      </div>
-                      <Button
-                        size="sm"
-                        className="w-full mt-3"
-                        onClick={() => openEditDialog(contact)}
-                      >
-                        Edit Contact
-                      </Button>
-                    </div>
-                  </Popup>
-                </Marker>
-              ))}
+            <MapMarkers contacts={contacts} onEdit={openEditDialog} />
           </MapContainer>
         </div>
-      ) : (
+      )}
+
+      {view === 'list' && (
         <div className="space-y-4">
           {contacts.map((contact) => (
             <div
