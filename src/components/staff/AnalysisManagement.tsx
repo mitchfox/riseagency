@@ -967,7 +967,7 @@ Title: ${formData.scheme_title || 'Not specified'}`;
               variant="outline"
             >
               <Sparkles className="w-4 h-4 mr-2" />
-              AI Overview Writer
+              AI Pre-Match Overview Writer
             </Button>
             <Button 
               onClick={() => setAiWriter({ ...aiWriter, open: true, category: 'pre-match', paragraph1Info: '', paragraph2Info: '' })}
@@ -1084,7 +1084,7 @@ Title: ${formData.scheme_title || 'Not specified'}`;
               variant="outline"
             >
               <Sparkles className="w-4 h-4 mr-2" />
-              AI Overview Writer
+              AI Post-Match Overview Writer
             </Button>
             <Button 
               onClick={() => setAiWriter({ ...aiWriter, open: true, category: 'post-match', paragraph1Info: '', paragraph2Info: '' })}
