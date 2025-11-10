@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -870,14 +870,51 @@ export const RecruitmentManagement = ({ isAdmin }: { isAdmin: boolean }) => {
           </DialogHeader>
           
           <div className="space-y-4">
-            {aiWriterTemplate && (
-              <div className="p-3 bg-accent/50 rounded-lg border">
-                <div className="text-sm font-medium mb-1">Using Template: {aiWriterTemplate.message_title}</div>
-                <div className="text-xs text-muted-foreground">
-                  The AI will use this template as a reference for style and structure
+            <div className="space-y-2">
+              <Label>Template (Optional)</Label>
+              <Select
+                value={aiWriterTemplate?.id || "none"}
+                onValueChange={(value) => {
+                  if (value === "none") {
+                    setAiWriterTemplate(null);
+                  } else {
+                    const selected = templates.find(t => t.id === value);
+                    setAiWriterTemplate(selected || null);
+                  }
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a template to use as reference" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No template</SelectItem>
+                  {RECIPIENT_TYPES.map(recipientType => {
+                    const templatesForType = groupedTemplates[recipientType] || [];
+                    if (templatesForType.length === 0) return null;
+                    return (
+                      <React.Fragment key={recipientType}>
+                        <SelectItem value={`header-${recipientType}`} disabled className="font-semibold">
+                          {recipientType}
+                        </SelectItem>
+                        {templatesForType.map(template => (
+                          <SelectItem key={template.id} value={template.id}>
+                            {template.message_title}
+                          </SelectItem>
+                        ))}
+                      </React.Fragment>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
+              {aiWriterTemplate && (
+                <div className="p-3 bg-accent/50 rounded-lg border">
+                  <div className="text-sm font-medium mb-1">Using Template: {aiWriterTemplate.message_title}</div>
+                  <div className="text-xs text-muted-foreground">
+                    The AI will use this template as a reference for style and structure
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
 
             <div className="space-y-2">
               <Label htmlFor="ai-info">Relevant Information</Label>
