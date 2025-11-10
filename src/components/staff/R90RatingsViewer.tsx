@@ -20,6 +20,7 @@ interface R90Rating {
   content: string | null;
   category: string | null;
   subcategory: string | null;
+  score: number | null;
   created_at: string;
 }
 
@@ -191,6 +192,24 @@ export const R90RatingsViewer = ({ open, onOpenChange, initialCategory, searchTe
     } finally {
       setAiSearching(false);
     }
+  };
+
+  // Helper function for score colors
+  const getScoreColor = (score: number | null) => {
+    if (score === null || score === undefined) return 'bg-muted text-muted-foreground';
+    
+    // Positive scores
+    if (score >= 0.1) return 'bg-green-600 text-white font-bold';
+    if (score > 0.01) return 'bg-green-500 text-white';
+    if (score > 0) return 'bg-green-400 text-white';
+    
+    // Negative scores
+    if (score <= -0.1) return 'bg-red-600 text-white font-bold';
+    if (score < -0.01) return 'bg-red-500 text-white';
+    if (score < 0) return 'bg-red-400 text-white';
+    
+    // Exactly 0
+    return 'bg-muted text-muted-foreground';
   };
 
   // Parse content into structured data
@@ -469,19 +488,26 @@ export const R90RatingsViewer = ({ open, onOpenChange, initialCategory, searchTe
                                                 >
                                                   <Card className="border">
                                                     <CollapsibleTrigger className="w-full">
-                                                      <CardHeader className="pb-2 hover:bg-accent/20 transition-colors cursor-pointer">
-                                                        <div className="flex items-start justify-between gap-3">
-                                                          <div className="flex-1 min-w-0 text-left">
-                                                            <div className="flex items-center gap-2">
-                                                              <CardTitle className="text-sm">
-                                                                {rating.title}
-                                                              </CardTitle>
-                                                              <ChevronDown 
-                                                                className={`h-3 w-3 transition-transform flex-shrink-0 ${isExpanded ? 'rotate-180' : ''}`}
-                                                              />
-                                                            </div>
-                                                          </div>
-                                                        </div>
+                                                       <CardHeader className="pb-2 hover:bg-accent/20 transition-colors cursor-pointer">
+                                                         <div className="flex items-start justify-between gap-3">
+                                                           <div className="flex-1 min-w-0 text-left">
+                                                             <div className="flex items-center gap-2 flex-wrap">
+                                                               <CardTitle className="text-sm">
+                                                                 {rating.title}
+                                                               </CardTitle>
+                                                               {rating.score !== null && rating.score !== undefined && (
+                                                                 <Badge 
+                                                                   className={`${getScoreColor(rating.score)} text-xs font-mono px-2 shrink-0`}
+                                                                 >
+                                                                   {rating.score.toFixed(4)}
+                                                                 </Badge>
+                                                               )}
+                                                               <ChevronDown 
+                                                                 className={`h-3 w-3 transition-transform flex-shrink-0 ${isExpanded ? 'rotate-180' : ''}`}
+                                                               />
+                                                             </div>
+                                                           </div>
+                                                         </div>
                                                         {rating.description && (
                                                           <CardDescription className="text-xs mt-1 text-left">
                                                             {rating.description}
