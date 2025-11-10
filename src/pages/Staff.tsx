@@ -73,6 +73,15 @@ const Staff = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
   const [sidebarSearchOpen, setSidebarSearchOpen] = useState(false);
+  const [searchResults, setSearchResults] = useState<Array<{
+    id: string;
+    title: string;
+    description?: string;
+    section: string;
+    sectionId: string;
+    type: string;
+  }>>([]);
+  const [searchLoading, setSearchLoading] = useState(false);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
@@ -164,6 +173,142 @@ const Staff = () => {
       setIsMarketeer(false);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const performGlobalSearch = async (query: string) => {
+    if (!query || query.length < 2) {
+      setSearchResults([]);
+      return;
+    }
+
+    setSearchLoading(true);
+    const results: Array<{
+      id: string;
+      title: string;
+      description?: string;
+      section: string;
+      sectionId: string;
+      type: string;
+    }> = [];
+
+    try {
+      const searchTerm = `%${query}%`;
+
+      // Search players
+      const { data: players } = await supabase
+        .from('players')
+        .select('id, name, position, club')
+        .ilike('name', searchTerm)
+        .limit(5);
+
+      players?.forEach(player => {
+        results.push({
+          id: player.id,
+          title: player.name,
+          description: `${player.position} - ${player.club || 'No club'}`,
+          section: 'Player Management',
+          sectionId: 'players',
+          type: 'player'
+        });
+      });
+
+      // Search updates
+      const { data: updates } = await supabase
+        .from('updates')
+        .select('id, title, content, date')
+        .or(`title.ilike.${searchTerm},content.ilike.${searchTerm}`)
+        .limit(5);
+
+      updates?.forEach(update => {
+        results.push({
+          id: update.id,
+          title: update.title,
+          description: update.content?.substring(0, 100) + '...',
+          section: 'Player Updates',
+          sectionId: 'updates',
+          type: 'update'
+        });
+      });
+
+      // Search blog posts
+      const { data: blogs } = await supabase
+        .from('blog_posts')
+        .select('id, title, excerpt')
+        .or(`title.ilike.${searchTerm},excerpt.ilike.${searchTerm}`)
+        .limit(5);
+
+      blogs?.forEach(blog => {
+        results.push({
+          id: blog.id,
+          title: blog.title,
+          description: blog.excerpt,
+          section: 'News Articles',
+          sectionId: 'blog',
+          type: 'blog'
+        });
+      });
+
+      // Search analyses
+      const { data: analyses } = await supabase
+        .from('analyses')
+        .select('id, title, analysis_type')
+        .ilike('title', searchTerm)
+        .limit(5);
+
+      analyses?.forEach(analysis => {
+        results.push({
+          id: analysis.id,
+          title: analysis.title || 'Untitled Analysis',
+          description: analysis.analysis_type,
+          section: 'Analysis Writer',
+          sectionId: 'analysis',
+          type: 'analysis'
+        });
+      });
+
+      // Search prospects
+      const { data: prospects } = await supabase
+        .from('prospects')
+        .select('id, name, position, current_club')
+        .ilike('name', searchTerm)
+        .limit(5);
+
+      prospects?.forEach(prospect => {
+        results.push({
+          id: prospect.id,
+          title: prospect.name,
+          description: `${prospect.position || 'Unknown'} - ${prospect.current_club || 'No club'}`,
+          section: 'Recruitment',
+          sectionId: 'recruitment',
+          type: 'prospect'
+        });
+      });
+
+      // Search invoices
+      const { data: invoices } = await supabase
+        .from('invoices')
+        .select('id, invoice_number, description, amount')
+        .or(`invoice_number.ilike.${searchTerm},description.ilike.${searchTerm}`)
+        .limit(5);
+
+      invoices?.forEach(invoice => {
+        results.push({
+          id: invoice.id,
+          title: invoice.invoice_number,
+          description: `${invoice.description || ''} - ${invoice.amount}`,
+          section: 'Invoices',
+          sectionId: 'invoices',
+          type: 'invoice'
+        });
+      });
+
+      setSearchResults(results);
+    } catch (error) {
+      console.error('Search error:', error);
+      toast.error('Failed to search');
+    } finally {
+      setSearchLoading(false);
     }
   };
 
@@ -453,12 +598,48 @@ const Staff = () => {
       <div className="flex flex-1 relative">
         {/* Quick Search Command Dialog */}
         <CommandDialog open={sidebarSearchOpen} onOpenChange={setSidebarSearchOpen}>
-          <CommandInput placeholder="Search sections..." />
+          <CommandInput 
+            placeholder="Search all content..." 
+            onValueChange={(value) => performGlobalSearch(value)}
+          />
           <CommandList>
-            <CommandEmpty>No sections found.</CommandEmpty>
-            {categories.map((category) => (
-              <CommandGroup key={category.id} heading={category.title}>
-                {category.sections.map((section) => {
+            {searchLoading ? (
+              <div className="py-6 text-center text-sm text-muted-foreground">Searching...</div>
+            ) : searchResults.length === 0 ? (
+              <CommandEmpty>No results found. Try searching for players, updates, blog posts, or other content.</CommandEmpty>
+            ) : (
+              <>
+                <CommandGroup heading="Search Results">
+                  {searchResults.map((result) => (
+                    <CommandItem
+                      key={`${result.type}-${result.id}`}
+                      onSelect={() => {
+                        handleSectionToggle(result.sectionId as any);
+                        setExpandedCategory(
+                          categories.find(c => c.sections.some(s => s.id === result.sectionId))?.id || null
+                        );
+                        setSidebarSearchOpen(false);
+                        toast.success(`Opened ${result.section}`);
+                      }}
+                    >
+                      <div className="flex flex-col gap-1 flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">{result.title}</span>
+                          <span className="text-xs text-muted-foreground">in {result.section}</span>
+                        </div>
+                        {result.description && (
+                          <span className="text-xs text-muted-foreground">{result.description}</span>
+                        )}
+                      </div>
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </>
+            )}
+            
+            <CommandGroup heading="Sections">
+              {categories.flatMap(category => 
+                category.sections.map((section) => {
                   const Icon = section.icon;
                   return (
                     <CommandItem
@@ -478,9 +659,9 @@ const Staff = () => {
                       <span>{section.title}</span>
                     </CommandItem>
                   );
-                })}
-              </CommandGroup>
-            ))}
+                })
+              )}
+            </CommandGroup>
           </CommandList>
         </CommandDialog>
 
