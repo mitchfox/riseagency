@@ -332,12 +332,6 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
       toast.error('Please select a category');
       return;
     }
-    
-    // Require subcategory if available for the selected category
-    if (SUBCATEGORY_OPTIONS[newMappingCategory] && !newMappingSubcategory) {
-      toast.error('Please select a subcategory');
-      return;
-    }
 
     try {
       // Normalize subcategory to null if empty
