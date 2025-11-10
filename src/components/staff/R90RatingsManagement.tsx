@@ -325,26 +325,45 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
         .eq('action_type', actionType)
         .maybeSingle();
 
-      if (existing) {
-        // Update existing mapping
-        const { error } = await supabase
-          .from('action_r90_category_mappings')
-          .update({ r90_category: category })
-          .eq('action_type', actionType);
+      if (category === '__none__') {
+        // Delete mapping if "None" is selected
+        if (existing) {
+          const { error } = await supabase
+            .from('action_r90_category_mappings')
+            .delete()
+            .eq('action_type', actionType);
 
-        if (error) throw error;
+          if (error) throw error;
+        }
+        // Update local state
+        setActionMappings(prev => {
+          const newMappings = { ...prev };
+          delete newMappings[actionType];
+          return newMappings;
+        });
+        toast.success(`Removed mapping for "${actionType}"`);
       } else {
-        // Insert new mapping
-        const { error } = await supabase
-          .from('action_r90_category_mappings')
-          .insert({ action_type: actionType, r90_category: category });
+        if (existing) {
+          // Update existing mapping
+          const { error } = await supabase
+            .from('action_r90_category_mappings')
+            .update({ r90_category: category })
+            .eq('action_type', actionType);
 
-        if (error) throw error;
+          if (error) throw error;
+        } else {
+          // Insert new mapping
+          const { error } = await supabase
+            .from('action_r90_category_mappings')
+            .insert({ action_type: actionType, r90_category: category });
+
+          if (error) throw error;
+        }
+
+        // Update local state
+        setActionMappings(prev => ({ ...prev, [actionType]: category }));
+        toast.success(`Mapped "${actionType}" to ${category}`);
       }
-
-      // Update local state
-      setActionMappings(prev => ({ ...prev, [actionType]: category }));
-      toast.success(`Mapped "${actionType}" to ${category}`);
     } catch (error: any) {
       console.error('Error updating action mapping:', error);
       toast.error('Failed to update mapping: ' + error.message);
@@ -633,14 +652,14 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
                   <div key={actionType} className="flex items-center gap-3 p-2 border rounded hover:bg-accent/30">
                     <div className="flex-1 text-sm font-medium truncate">{actionType}</div>
                     <Select
-                      value={actionMappings[actionType] || ''}
+                      value={actionMappings[actionType] || '__none__'}
                       onValueChange={(value) => handleActionMappingChange(actionType, value)}
                     >
                       <SelectTrigger className="w-48">
                         <SelectValue placeholder="Select category" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">None</SelectItem>
+                        <SelectItem value="__none__">None</SelectItem>
                         {R90_CATEGORIES.map((cat) => (
                           <SelectItem key={cat} value={cat}>
                             {cat}
