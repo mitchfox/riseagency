@@ -332,6 +332,12 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
       toast.error('Please select a category');
       return;
     }
+    
+    // Require subcategory if available for the selected category
+    if (SUBCATEGORY_OPTIONS[newMappingCategory] && !newMappingSubcategory) {
+      toast.error('Please select a subcategory');
+      return;
+    }
 
     try {
       const { data, error } = await supabase
@@ -713,52 +719,60 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
                       
                       {/* Add New Mapping Form */}
                       {isAddingNew && (
-                        <div className="flex gap-2 items-end pt-2 border-t">
-                          <div className="flex-1">
-                            <Select
-                              value={newMappingCategory}
-                              onValueChange={(value) => {
-                                setNewMappingCategory(value);
-                                setNewMappingSubcategory('');
-                              }}
-                            >
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select category" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {R90_CATEGORIES.map((cat) => (
-                                  <SelectItem key={cat} value={cat}>
-                                    {cat}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
+                        <div className="space-y-2 pt-2 border-t">
+                          <div className="text-xs text-muted-foreground">
+                            Add R90 Subcategory Mapping
                           </div>
-                          
-                          {newMappingCategory && SUBCATEGORY_OPTIONS[newMappingCategory] && (
+                          <div className="flex gap-2 items-end">
                             <div className="flex-1">
                               <Select
-                                value={newMappingSubcategory || '__none__'}
-                                onValueChange={(value) => setNewMappingSubcategory(value === '__none__' ? '' : value)}
+                                value={newMappingCategory}
+                                onValueChange={(value) => {
+                                  setNewMappingCategory(value);
+                                  setNewMappingSubcategory('');
+                                }}
                               >
                                 <SelectTrigger>
-                                  <SelectValue placeholder="Subcategory (optional)" />
+                                  <SelectValue placeholder="Select category *" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  <SelectItem value="__none__">None</SelectItem>
-                                  {SUBCATEGORY_OPTIONS[newMappingCategory].map((sub) => (
-                                    <SelectItem key={sub} value={sub}>
-                                      {sub}
+                                  {R90_CATEGORIES.map((cat) => (
+                                    <SelectItem key={cat} value={cat}>
+                                      {cat}
                                     </SelectItem>
                                   ))}
                                 </SelectContent>
                               </Select>
                             </div>
-                          )}
-                          
-                          <Button onClick={() => handleAddMapping(actionType)} size="sm">
-                            Add
-                          </Button>
+                            
+                            {newMappingCategory && SUBCATEGORY_OPTIONS[newMappingCategory] && (
+                              <div className="flex-1">
+                                <Select
+                                  value={newMappingSubcategory || '__none__'}
+                                  onValueChange={(value) => setNewMappingSubcategory(value === '__none__' ? '' : value)}
+                                >
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select subcategory *" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {SUBCATEGORY_OPTIONS[newMappingCategory].map((sub) => (
+                                      <SelectItem key={sub} value={sub}>
+                                        {sub}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            )}
+                            
+                            <Button 
+                              onClick={() => handleAddMapping(actionType)} 
+                              size="sm"
+                              disabled={!newMappingCategory || (SUBCATEGORY_OPTIONS[newMappingCategory] && !newMappingSubcategory)}
+                            >
+                              Add
+                            </Button>
+                          </div>
                         </div>
                       )}
                     </div>
