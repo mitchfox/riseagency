@@ -340,6 +340,22 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
     }
 
     try {
+      // Check if this exact mapping already exists
+      const { data: existingMapping, error: checkError } = await supabase
+        .from('action_r90_category_mappings')
+        .select('id')
+        .eq('action_type', actionType)
+        .eq('r90_category', newMappingCategory)
+        .eq('r90_subcategory', newMappingSubcategory || null)
+        .maybeSingle();
+
+      if (checkError) throw checkError;
+
+      if (existingMapping) {
+        toast.error('This mapping already exists');
+        return;
+      }
+
       const { data, error } = await supabase
         .from('action_r90_category_mappings')
         .insert({

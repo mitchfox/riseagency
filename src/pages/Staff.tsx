@@ -489,15 +489,13 @@ const Staff = () => {
           {/* Search Button */}
           <button
             onClick={() => setSidebarSearchOpen(true)}
-            className="group w-full rounded-lg flex flex-col items-center justify-center py-2 md:py-3 px-1 md:px-2 transition-all hover:bg-primary/20 mb-2"
+            className="group w-full rounded-lg flex flex-col items-center justify-center py-2 md:py-3 px-1 md:px-2 transition-all hover:bg-primary/20"
             title="Search sections (⌘K)"
           >
             <div className="p-1.5 md:p-2 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors border border-primary/20">
               <Search className="w-3 h-3 md:w-4 md:h-4 text-primary" />
             </div>
-            <span className="text-[9px] md:text-[10px] mt-1 text-muted-foreground group-hover:text-primary transition-colors font-medium">Search</span>
           </button>
-          <div className="w-full border-t border-border/30 mb-1" />
           {filteredCategories.map((category, index) => {
             const CategoryIcon = category.icon;
             const isExpanded = expandedCategory === category.id;
