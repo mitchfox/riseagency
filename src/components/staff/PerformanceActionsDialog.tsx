@@ -97,7 +97,7 @@ export const PerformanceActionsDialog = ({
     try {
       const { data: mappings } = await supabase
         .from('action_r90_category_mappings')
-        .select('r90_category, r90_subcategory')
+        .select('r90_category, r90_subcategory, r90_sub_subcategory')
         .eq('action_type', action.action_type.trim());
       
       // Prioritize specific subcategory mappings over wildcard mappings

@@ -46,6 +46,19 @@ const SUBCATEGORY_OPTIONS: Record<string, string[]> = {
   'Off-Ball Movement': ['Attacking Runs', 'Defensive Positioning']
 };
 
+// Nested subcategories (sub-subcategories) for subcategories that need them
+const SUB_SUBCATEGORY_OPTIONS: Record<string, Record<string, string[]>> = {
+  'Defensive': {
+    '1v1 Defending': ['Body Shape', 'Timing', 'Recovery'],
+    'Positioning': ['Zonal Awareness', 'Marking', 'Coverage'],
+    'Tackling': ['Standing Tackle', 'Sliding Tackle', 'Block Tackle']
+  },
+  'On-Ball Decision-Making': {
+    'Under Pressure': ['First Touch', 'Quick Release', 'Protection'],
+    'In Space': ['Vision', 'Execution', 'Timing']
+  }
+};
+
 export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagementProps) => {
   const [ratings, setRatings] = useState<R90Rating[]>([]);
   const [loading, setLoading] = useState(false);
@@ -57,11 +70,12 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
   
   // Action type mapping state
   const [actionTypes, setActionTypes] = useState<string[]>([]);
-  const [actionMappings, setActionMappings] = useState<Record<string, Array<{ id: string, category: string, subcategory?: string }>>>({});
+  const [actionMappings, setActionMappings] = useState<Record<string, Array<{ id: string, category: string, subcategory?: string, sub_subcategory?: string }>>>({});
   const [loadingMappings, setLoadingMappings] = useState(false);
   const [addingMappingFor, setAddingMappingFor] = useState<string | null>(null);
   const [newMappingCategory, setNewMappingCategory] = useState('');
   const [newMappingSubcategory, setNewMappingSubcategory] = useState('');
+  const [newMappingSubSubcategory, setNewMappingSubSubcategory] = useState('');
   
   const [formData, setFormData] = useState({
     title: '',
@@ -122,7 +136,7 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
       if (mappingsError) throw mappingsError;
 
       // Create a map of action_type -> array of mappings
-      const mappingsMap: Record<string, Array<{ id: string, category: string, subcategory?: string }>> = {};
+      const mappingsMap: Record<string, Array<{ id: string, category: string, subcategory?: string, sub_subcategory?: string }>> = {};
       mappingsData?.forEach(m => {
         if (!mappingsMap[m.action_type]) {
           mappingsMap[m.action_type] = [];
@@ -130,7 +144,8 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
         mappingsMap[m.action_type].push({ 
           id: m.id,
           category: m.r90_category,
-          subcategory: m.r90_subcategory || undefined
+          subcategory: m.r90_subcategory || undefined,
+          sub_subcategory: m.r90_sub_subcategory || undefined
         });
       });
       setActionMappings(mappingsMap);
@@ -334,8 +349,9 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
     }
 
     try {
-      // Normalize subcategory to null if empty
+      // Normalize subcategory and sub-subcategory to null if empty
       const subcategoryValue = newMappingSubcategory?.trim() ? newMappingSubcategory : null;
+      const subSubcategoryValue = newMappingSubSubcategory?.trim() ? newMappingSubSubcategory : null;
       
       // Check if this exact mapping already exists
       let query = supabase
@@ -344,11 +360,16 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
         .eq('action_type', actionType)
         .eq('r90_category', newMappingCategory);
       
-      // Handle null subcategory check properly
       if (subcategoryValue === null) {
         query = query.is('r90_subcategory', null);
       } else {
         query = query.eq('r90_subcategory', subcategoryValue);
+      }
+      
+      if (subSubcategoryValue === null) {
+        query = query.is('r90_sub_subcategory', null);
+      } else {
+        query = query.eq('r90_sub_subcategory', subSubcategoryValue);
       }
       
       const { data: existingMapping, error: checkError } = await query.maybeSingle();
@@ -365,7 +386,8 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
         .insert({
           action_type: actionType,
           r90_category: newMappingCategory,
-          r90_subcategory: subcategoryValue
+          r90_subcategory: subcategoryValue,
+          r90_sub_subcategory: subSubcategoryValue
         })
         .select()
         .single();
@@ -379,7 +401,8 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
           {
             id: data.id,
             category: newMappingCategory,
-            subcategory: subcategoryValue || undefined
+            subcategory: subcategoryValue || undefined,
+            sub_subcategory: subSubcategoryValue || undefined
           }
         ]
       }));
@@ -387,6 +410,7 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
       setAddingMappingFor(null);
       setNewMappingCategory('');
       setNewMappingSubcategory('');
+      setNewMappingSubSubcategory('');
       toast.success('Mapping added');
     } catch (error: any) {
       console.error('Error adding mapping:', error);
@@ -710,6 +734,7 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
                             setAddingMappingFor(isAddingNew ? null : actionType);
                             setNewMappingCategory('');
                             setNewMappingSubcategory('');
+                            setNewMappingSubSubcategory('');
                           }}
                         >
                           {isAddingNew ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
@@ -722,9 +747,21 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
                           {mappings.map((mapping) => (
                             <div key={mapping.id} className="flex items-center gap-2 text-sm bg-accent/20 p-2 rounded">
                               <Badge variant="secondary">{mapping.category}</Badge>
-                              <Badge variant="outline" className={!mapping.subcategory ? "text-muted-foreground italic" : ""}>
-                                {mapping.subcategory || "All subcategories"}
-                              </Badge>
+                              {mapping.subcategory && (
+                                <Badge variant="outline">
+                                  {mapping.subcategory}
+                                </Badge>
+                              )}
+                              {!mapping.subcategory && (
+                                <Badge variant="outline" className="text-muted-foreground italic">
+                                  All subcategories
+                                </Badge>
+                              )}
+                              {mapping.sub_subcategory && (
+                                <Badge variant="outline" className="text-xs">
+                                  {mapping.sub_subcategory}
+                                </Badge>
+                              )}
                               <Button
                                 size="sm"
                                 variant="ghost"
@@ -751,6 +788,7 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
                                 onValueChange={(value) => {
                                   setNewMappingCategory(value);
                                   setNewMappingSubcategory('');
+                                  setNewMappingSubSubcategory('');
                                 }}
                               >
                                 <SelectTrigger>
@@ -770,7 +808,10 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
                               <div className="flex-1">
                                 <Select
                                   value={newMappingSubcategory || '__none__'}
-                                  onValueChange={(value) => setNewMappingSubcategory(value === '__none__' ? '' : value)}
+                                  onValueChange={(value) => {
+                                    setNewMappingSubcategory(value === '__none__' ? '' : value);
+                                    setNewMappingSubSubcategory('');
+                                  }}
                                 >
                                   <SelectTrigger>
                                     <SelectValue />
@@ -782,6 +823,30 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
                                     {SUBCATEGORY_OPTIONS[newMappingCategory].map((sub) => (
                                       <SelectItem key={sub} value={sub}>
                                         {sub}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            )}
+                            
+                            {newMappingCategory && newMappingSubcategory && 
+                             SUB_SUBCATEGORY_OPTIONS[newMappingCategory]?.[newMappingSubcategory] && (
+                              <div className="flex-1">
+                                <Select
+                                  value={newMappingSubSubcategory || '__none__'}
+                                  onValueChange={(value) => setNewMappingSubSubcategory(value === '__none__' ? '' : value)}
+                                >
+                                  <SelectTrigger>
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="__none__">
+                                      All sub-subcategories
+                                    </SelectItem>
+                                    {SUB_SUBCATEGORY_OPTIONS[newMappingCategory][newMappingSubcategory].map((subSub) => (
+                                      <SelectItem key={subSub} value={subSub}>
+                                        {subSub}
                                       </SelectItem>
                                     ))}
                                   </SelectContent>

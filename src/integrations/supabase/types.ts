@@ -20,6 +20,7 @@ export type Database = {
           created_at: string
           id: string
           r90_category: string
+          r90_sub_subcategory: string | null
           r90_subcategory: string | null
           updated_at: string
         }
@@ -28,6 +29,7 @@ export type Database = {
           created_at?: string
           id?: string
           r90_category: string
+          r90_sub_subcategory?: string | null
           r90_subcategory?: string | null
           updated_at?: string
         }
@@ -36,6 +38,7 @@ export type Database = {
           created_at?: string
           id?: string
           r90_category?: string
+          r90_sub_subcategory?: string | null
           r90_subcategory?: string | null
           updated_at?: string
         }
