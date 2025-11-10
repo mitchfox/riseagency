@@ -7,7 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Trash2, Plus, LineChart, Search, Loader2, Sparkles } from "lucide-react";
+import { Trash2, Plus, LineChart, Search, Loader2, Sparkles, ChevronDown, ChevronUp } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { R90RatingsViewer } from "./R90RatingsViewer";
 
 interface PerformanceAction {
@@ -41,6 +42,8 @@ export const PerformanceActionsDialog = ({
   const [r90Score, setR90Score] = useState<number | null>(null);
   const [actionTypes, setActionTypes] = useState<string[]>([]);
   const [previousScores, setPreviousScores] = useState<Array<{score: number, description: string}>>([]);
+  const [isScoresExpanded, setIsScoresExpanded] = useState(false);
+  const [selectedScoreIndices, setSelectedScoreIndices] = useState<Set<number>>(new Set());
   const [isR90ViewerOpen, setIsR90ViewerOpen] = useState(false);
   const [r90ViewerCategory, setR90ViewerCategory] = useState<string | undefined>(undefined);
   const [r90ViewerSearch, setR90ViewerSearch] = useState<string | undefined>(undefined);
@@ -495,13 +498,47 @@ export const PerformanceActionsDialog = ({
                 />
                 {previousScores.length > 0 && (
                   <div className="text-[10px] mt-1 p-2 rounded bg-muted/50 font-medium" style={{ color: 'hsl(43, 49%, 61%)' }}>
-                    <div className="mb-1 font-semibold">R90 ratings for this action:</div>
-                    <div className="space-y-0.5">
-                      {previousScores.map((item, idx) => (
-                        <div key={idx} className="font-mono">
-                          {item.description} {item.score.toFixed(4)}
-                        </div>
-                      ))}
+                    <div className="flex items-center justify-between mb-1">
+                      <div className="font-semibold">R90 ratings for this action:</div>
+                      {previousScores.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => setIsScoresExpanded(!isScoresExpanded)}
+                          className="text-primary hover:underline flex items-center gap-1"
+                        >
+                          {isScoresExpanded ? (
+                            <>Collapse <ChevronUp className="h-3 w-3" /></>
+                          ) : (
+                            <>See all ({previousScores.length}) <ChevronDown className="h-3 w-3" /></>
+                          )}
+                        </button>
+                      )}
+                    </div>
+                    <div className="space-y-1">
+                      {(isScoresExpanded ? previousScores : previousScores.slice(0, 1)).map((item, idx) => {
+                        const actualIdx = isScoresExpanded ? idx : 0;
+                        const isSelected = selectedScoreIndices.has(actualIdx);
+                        return (
+                          <div key={idx} className="flex items-start gap-2">
+                            <Checkbox
+                              checked={isSelected}
+                              onCheckedChange={(checked) => {
+                                const newSelected = new Set(selectedScoreIndices);
+                                if (checked) {
+                                  newSelected.add(actualIdx);
+                                } else {
+                                  newSelected.delete(actualIdx);
+                                }
+                                setSelectedScoreIndices(newSelected);
+                              }}
+                              className="mt-0.5"
+                            />
+                            <label className="font-mono flex-1 cursor-pointer">
+                              {item.description} {item.score.toFixed(4)}
+                            </label>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 )}

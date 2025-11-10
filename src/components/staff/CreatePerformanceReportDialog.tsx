@@ -8,7 +8,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
-import { Plus, Trash2, AlertTriangle, LineChart, Sparkles, Search, Loader2 } from "lucide-react";
+import { Plus, Trash2, AlertTriangle, LineChart, Sparkles, Search, Loader2, ChevronDown, ChevronUp } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { R90RatingsViewer } from "./R90RatingsViewer";
@@ -59,6 +60,8 @@ export const CreatePerformanceReportDialog = ({
   const [playerClub, setPlayerClub] = useState<string>("");
   const [actionTypes, setActionTypes] = useState<string[]>([]);
   const [previousScores, setPreviousScores] = useState<Record<number, Array<{score: number, description: string}>>>({});
+  const [expandedScores, setExpandedScores] = useState<Set<number>>(new Set());
+  const [selectedScores, setSelectedScores] = useState<Record<number, Set<number>>>({}); // actionIndex -> Set of score indices
   const [isR90ViewerOpen, setIsR90ViewerOpen] = useState(false);
   const [r90ViewerCategory, setR90ViewerCategory] = useState<string | undefined>(undefined);
   const [r90ViewerSearch, setR90ViewerSearch] = useState<string | undefined>(undefined);
@@ -1297,13 +1300,58 @@ export const CreatePerformanceReportDialog = ({
                     />
                     {previousScores[index] && previousScores[index].length > 0 && (
                       <div className="text-[10px] mt-1 p-2 rounded bg-muted/50 font-medium" style={{ color: 'hsl(43, 49%, 61%)' }}>
-                        <div className="mb-1 font-semibold">R90 ratings for this action:</div>
-                        <div className="space-y-0.5">
-                          {previousScores[index].map((item, idx) => (
-                            <div key={idx} className="font-mono">
-                              {item.description} {item.score.toFixed(4)}
-                            </div>
-                          ))}
+                        <div className="flex items-center justify-between mb-1">
+                          <div className="font-semibold">R90 ratings for this action:</div>
+                          {previousScores[index].length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const newExpanded = new Set(expandedScores);
+                                if (newExpanded.has(index)) {
+                                  newExpanded.delete(index);
+                                } else {
+                                  newExpanded.add(index);
+                                }
+                                setExpandedScores(newExpanded);
+                              }}
+                              className="text-primary hover:underline flex items-center gap-1"
+                            >
+                              {expandedScores.has(index) ? (
+                                <>Collapse <ChevronUp className="h-3 w-3" /></>
+                              ) : (
+                                <>See all ({previousScores[index].length}) <ChevronDown className="h-3 w-3" /></>
+                              )}
+                            </button>
+                          )}
+                        </div>
+                        <div className="space-y-1">
+                          {(expandedScores.has(index) ? previousScores[index] : previousScores[index].slice(0, 1)).map((item, scoreIdx) => {
+                            const actualIdx = expandedScores.has(index) ? scoreIdx : 0;
+                            const isSelected = selectedScores[index]?.has(actualIdx) ?? false;
+                            return (
+                              <div key={scoreIdx} className="flex items-start gap-2">
+                                <Checkbox
+                                  checked={isSelected}
+                                  onCheckedChange={(checked) => {
+                                    const newSelected = { ...selectedScores };
+                                    if (!newSelected[index]) {
+                                      newSelected[index] = new Set();
+                                    }
+                                    if (checked) {
+                                      newSelected[index].add(actualIdx);
+                                    } else {
+                                      newSelected[index].delete(actualIdx);
+                                    }
+                                    setSelectedScores(newSelected);
+                                  }}
+                                  className="mt-0.5"
+                                />
+                                <label className="font-mono flex-1 cursor-pointer">
+                                  {item.description} {item.score.toFixed(4)}
+                                </label>
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
                     )}
@@ -1437,28 +1485,62 @@ export const CreatePerformanceReportDialog = ({
                         </div>
                       </td>
                     </tr>
-                    {previousScores[index] && (
+                    {previousScores[index] && previousScores[index].length > 0 && (
                       <tr className="border-t bg-muted/20">
                         <td colSpan={7} className="p-2">
                           <div className="text-[10px] p-2 rounded bg-muted/50 font-medium" style={{ color: 'hsl(43, 49%, 61%)' }}>
-                            <div className="mb-1 font-semibold">R90 ratings in this category mapping:</div>
-                            <div className="flex flex-wrap gap-1">
-                              {previousScores[index].map((item, idx) => (
-                                <Tooltip key={idx}>
-                                  <TooltipTrigger asChild>
-                                    <button
-                                      type="button"
-                                      className="hover:underline cursor-pointer px-1 py-0.5 rounded bg-background"
-                                      style={{ color: 'hsl(43, 49%, 61%)' }}
-                                    >
-                                      {item.score.toFixed(5)}
-                                    </button>
-                                  </TooltipTrigger>
-                                  <TooltipContent className="max-w-xs">
-                                    <p className="text-xs">{item.description}</p>
-                                  </TooltipContent>
-                                </Tooltip>
-                              ))}
+                            <div className="flex items-center justify-between mb-1">
+                              <div className="font-semibold">R90 ratings in this category mapping:</div>
+                              {previousScores[index].length > 1 && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const newExpanded = new Set(expandedScores);
+                                    if (newExpanded.has(index)) {
+                                      newExpanded.delete(index);
+                                    } else {
+                                      newExpanded.add(index);
+                                    }
+                                    setExpandedScores(newExpanded);
+                                  }}
+                                  className="text-primary hover:underline flex items-center gap-1"
+                                >
+                                  {expandedScores.has(index) ? (
+                                    <>Collapse <ChevronUp className="h-3 w-3" /></>
+                                  ) : (
+                                    <>See all ({previousScores[index].length}) <ChevronDown className="h-3 w-3" /></>
+                                  )}
+                                </button>
+                              )}
+                            </div>
+                            <div className="space-y-1">
+                              {(expandedScores.has(index) ? previousScores[index] : previousScores[index].slice(0, 1)).map((item, scoreIdx) => {
+                                const actualIdx = expandedScores.has(index) ? scoreIdx : 0;
+                                const isSelected = selectedScores[index]?.has(actualIdx) ?? false;
+                                return (
+                                  <div key={scoreIdx} className="flex items-start gap-2">
+                                    <Checkbox
+                                      checked={isSelected}
+                                      onCheckedChange={(checked) => {
+                                        const newSelected = { ...selectedScores };
+                                        if (!newSelected[index]) {
+                                          newSelected[index] = new Set();
+                                        }
+                                        if (checked) {
+                                          newSelected[index].add(actualIdx);
+                                        } else {
+                                          newSelected[index].delete(actualIdx);
+                                        }
+                                        setSelectedScores(newSelected);
+                                      }}
+                                      className="mt-0.5"
+                                    />
+                                    <label className="font-mono flex-1 cursor-pointer">
+                                      {item.description} {item.score.toFixed(4)}
+                                    </label>
+                                  </div>
+                                );
+                              })}
                             </div>
                           </div>
                         </td>
