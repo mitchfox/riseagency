@@ -11,13 +11,13 @@ import { Search, Menu } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import {
   Command,
-  CommandDialog,
   CommandEmpty,
   CommandGroup,
   CommandInput,
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import PlayerManagement from "@/components/staff/PlayerManagement";
 import { PlayerList } from "@/components/staff/PlayerList";
 import BlogManagement from "@/components/staff/BlogManagement";
@@ -598,21 +598,23 @@ const Staff = () => {
       {/* Main Layout with Sidebar */}
       <div className="flex flex-1 relative">
         {/* Quick Search Command Dialog */}
-        <CommandDialog open={sidebarSearchOpen} onOpenChange={setSidebarSearchOpen}>
-          <CommandInput 
-            placeholder="Search players, updates, content..." 
-            onValueChange={(value) => {
-              // Clear previous timeout
-              if (searchTimeoutRef.current) {
-                clearTimeout(searchTimeoutRef.current);
-              }
-              // Set new timeout for debounced search
-              searchTimeoutRef.current = setTimeout(() => {
-                performGlobalSearch(value);
-              }, 300);
-            }}
-          />
-          <CommandList>
+        <Dialog open={sidebarSearchOpen} onOpenChange={setSidebarSearchOpen}>
+          <DialogContent className="overflow-hidden p-0 shadow-lg">
+            <Command shouldFilter={false} className="[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:text-muted-foreground [&_[cmdk-group]:not([hidden])_~[cmdk-group]]:pt-0 [&_[cmdk-group]]:px-2 [&_[cmdk-input-wrapper]_svg]:h-5 [&_[cmdk-input-wrapper]_svg]:w-5 [&_[cmdk-input]]:h-12 [&_[cmdk-item]]:px-2 [&_[cmdk-item]]:py-3 [&_[cmdk-item]_svg]:h-5 [&_[cmdk-item]_svg]:w-5">
+              <CommandInput 
+                placeholder="Search players, updates, content..." 
+                onValueChange={(value) => {
+                  // Clear previous timeout
+                  if (searchTimeoutRef.current) {
+                    clearTimeout(searchTimeoutRef.current);
+                  }
+                  // Set new timeout for debounced search
+                  searchTimeoutRef.current = setTimeout(() => {
+                    performGlobalSearch(value);
+                  }, 300);
+                }}
+              />
+              <CommandList>
             {searchLoading ? (
               <div className="py-6 text-center text-sm text-muted-foreground">Searching...</div>
             ) : (
@@ -681,7 +683,9 @@ const Staff = () => {
               </>
             )}
           </CommandList>
-        </CommandDialog>
+            </Command>
+          </DialogContent>
+        </Dialog>
 
         {/* Left Sidebar - Fixed */}
         <div className="fixed top-[120px] md:top-[88px] left-0 bottom-0 w-14 md:w-24 border-r bg-muted/30 backdrop-blur-sm flex flex-col items-start py-4 gap-2 overflow-y-auto z-10">
