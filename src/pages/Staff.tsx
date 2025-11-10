@@ -9,6 +9,15 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Search, Menu } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import {
+  Command,
+  CommandDialog,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import PlayerManagement from "@/components/staff/PlayerManagement";
 import { PlayerList } from "@/components/staff/PlayerList";
 import BlogManagement from "@/components/staff/BlogManagement";
@@ -63,6 +72,7 @@ const Staff = () => {
   const [expandedSection, setExpandedSection] = useState<'overview' | 'staffaccounts' | 'players' | 'playerlist' | 'recruitment' | 'blog' | 'betweenthelines' | 'coaching' | 'analysis' | 'marketing' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'legal' | null>('overview');
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
+  const [sidebarSearchOpen, setSidebarSearchOpen] = useState(false);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
@@ -73,6 +83,18 @@ const Staff = () => {
       setExpandedSection(section as any);
     }
   }, [searchParams, isStaff]);
+
+  // Keyboard shortcut for search
+  useEffect(() => {
+    const down = (e: KeyboardEvent) => {
+      if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        setSidebarSearchOpen((open) => !open);
+      }
+    };
+    document.addEventListener("keydown", down);
+    return () => document.removeEventListener("keydown", down);
+  }, []);
 
   const handleSectionToggle = (section: 'overview' | 'staffaccounts' | 'players' | 'playerlist' | 'recruitment' | 'blog' | 'betweenthelines' | 'coaching' | 'analysis' | 'marketing' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'legal') => {
     setExpandedSection(expandedSection === section ? null : section);
@@ -429,8 +451,53 @@ const Staff = () => {
 
       {/* Main Layout with Sidebar */}
       <div className="flex flex-1 relative">
+        {/* Quick Search Command Dialog */}
+        <CommandDialog open={sidebarSearchOpen} onOpenChange={setSidebarSearchOpen}>
+          <CommandInput placeholder="Search sections..." />
+          <CommandList>
+            <CommandEmpty>No sections found.</CommandEmpty>
+            {categories.map((category) => (
+              <CommandGroup key={category.id} heading={category.title}>
+                {category.sections.map((section) => {
+                  const Icon = section.icon;
+                  return (
+                    <CommandItem
+                      key={section.id}
+                      onSelect={() => {
+                        if (category.locked) {
+                          toast.error("You don't have permission to access this section");
+                          return;
+                        }
+                        handleSectionToggle(section.id as any);
+                        setExpandedCategory(category.id);
+                        setSidebarSearchOpen(false);
+                      }}
+                      disabled={category.locked}
+                    >
+                      <Icon className="mr-2 h-4 w-4" />
+                      <span>{section.title}</span>
+                    </CommandItem>
+                  );
+                })}
+              </CommandGroup>
+            ))}
+          </CommandList>
+        </CommandDialog>
+
         {/* Left Sidebar - Fixed */}
         <div className="fixed top-[120px] md:top-[88px] left-0 bottom-0 w-14 md:w-24 border-r bg-muted/30 backdrop-blur-sm flex flex-col items-start py-4 gap-2 overflow-y-auto z-10">
+          {/* Search Button */}
+          <button
+            onClick={() => setSidebarSearchOpen(true)}
+            className="group w-full rounded-lg flex flex-col items-center justify-center py-2 md:py-3 px-1 md:px-2 transition-all hover:bg-primary/20 mb-2"
+            title="Search sections (⌘K)"
+          >
+            <div className="p-1.5 md:p-2 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors border border-primary/20">
+              <Search className="w-3 h-3 md:w-4 md:h-4 text-primary" />
+            </div>
+            <span className="text-[9px] md:text-[10px] mt-1 text-muted-foreground group-hover:text-primary transition-colors font-medium">Search</span>
+          </button>
+          <div className="w-full border-t border-border/30 mb-1" />
           {filteredCategories.map((category, index) => {
             const CategoryIcon = category.icon;
             const isExpanded = expandedCategory === category.id;
