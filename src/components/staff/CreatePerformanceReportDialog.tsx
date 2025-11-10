@@ -865,7 +865,7 @@ export const CreatePerformanceReportDialog = ({
             <div className="text-center">Loading...</div>
           </div>
         ) : (
-          <div className="space-y-4 sm:space-y-6">
+          <div className="space-y-4 sm:space-y-6 pb-20">
           {/* Fixture Selection */}
           <div>
             <Label htmlFor="fixture">Select Fixture *</Label>
