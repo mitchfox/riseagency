@@ -100,7 +100,7 @@ export const CreatePerformanceReportDialog = ({
     return 'all';
   };
 
-  const openSmartR90Viewer = (actionIndex: number) => {
+  const openSmartR90Viewer = async (actionIndex: number) => {
     const action = actions[actionIndex];
     if (!action.action_type) {
       // Fallback to generic R90 viewer
@@ -110,6 +110,26 @@ export const CreatePerformanceReportDialog = ({
       return;
     }
     
+    // First, try to get category from database mapping
+    try {
+      const { data: mapping } = await supabase
+        .from('action_r90_category_mappings')
+        .select('r90_category')
+        .eq('action_type', action.action_type.trim())
+        .maybeSingle();
+      
+      if (mapping?.r90_category) {
+        console.log(`Using mapped category: ${action.action_type} -> ${mapping.r90_category}`);
+        setR90ViewerCategory(mapping.r90_category);
+        setR90ViewerSearch(action.action_type);
+        setIsR90ViewerOpen(true);
+        return;
+      }
+    } catch (error) {
+      console.error('Error fetching category mapping:', error);
+    }
+    
+    // Fallback to keyword-based matching
     const category = getR90CategoryFromAction(action.action_type, action.action_description);
     const searchTerm = action.action_type;
     
@@ -442,11 +462,30 @@ export const CreatePerformanceReportDialog = ({
     newActions[index] = { ...newActions[index], [field]: value };
     setActions(newActions);
 
-    // If action_type changed, fetch previous scores
+    // If action_type changed, fetch previous scores and category mapping
     if (field === "action_type" && value) {
       const trimmedValue = value.trim();
       console.log(`Action type changed to: "${trimmedValue}" for action index ${index}`);
       await fetchPreviousScores(index, trimmedValue);
+      
+      // Fetch R90 category mapping for this action type
+      try {
+        const { data: mapping } = await supabase
+          .from('action_r90_category_mappings')
+          .select('r90_category')
+          .eq('action_type', trimmedValue)
+          .maybeSingle();
+        
+        if (mapping?.r90_category) {
+          console.log(`Found category mapping: ${trimmedValue} -> ${mapping.r90_category}`);
+          // Store the suggested category for this action index
+          toast.success(`Suggested R90 category: ${mapping.r90_category}`, {
+            description: 'Click the smart link button to view ratings for this category'
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching category mapping:', error);
+      }
     }
   };
 

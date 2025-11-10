@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      action_r90_category_mappings: {
+        Row: {
+          action_type: string
+          created_at: string
+          id: string
+          r90_category: string
+          updated_at: string
+        }
+        Insert: {
+          action_type: string
+          created_at?: string
+          id?: string
+          r90_category: string
+          updated_at?: string
+        }
+        Update: {
+          action_type?: string
+          created_at?: string
+          id?: string
+          r90_category?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       analyses: {
         Row: {
           analysis_type: string

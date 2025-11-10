@@ -55,6 +55,11 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
   const [expandedSubcategories, setExpandedSubcategories] = useState<Set<string>>(new Set());
   const [isSplitting, setIsSplitting] = useState(false);
   
+  // Action type mapping state
+  const [actionTypes, setActionTypes] = useState<string[]>([]);
+  const [actionMappings, setActionMappings] = useState<Record<string, string>>({});
+  const [loadingMappings, setLoadingMappings] = useState(false);
+  
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -67,6 +72,7 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
   useEffect(() => {
     if (open) {
       fetchRatings();
+      fetchActionTypesAndMappings();
     }
   }, [open]);
 
@@ -87,6 +93,43 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
       toast.error('Failed to load ratings');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchActionTypesAndMappings = async () => {
+    setLoadingMappings(true);
+    try {
+      // Fetch all unique action types from performance_report_actions
+      const { data: actionsData, error: actionsError } = await supabase
+        .from('performance_report_actions')
+        .select('action_type')
+        .not('action_type', 'is', null);
+
+      if (actionsError) throw actionsError;
+
+      // Get unique action types
+      const uniqueTypes = [...new Set(actionsData?.map(a => a.action_type) || [])].sort();
+      setActionTypes(uniqueTypes);
+
+      // Fetch existing mappings
+      const { data: mappingsData, error: mappingsError } = await supabase
+        .from('action_r90_category_mappings')
+        .select('*');
+
+      if (mappingsError) throw mappingsError;
+
+      // Create a map of action_type -> r90_category
+      const mappingsMap: Record<string, string> = {};
+      mappingsData?.forEach(m => {
+        mappingsMap[m.action_type] = m.r90_category;
+      });
+      setActionMappings(mappingsMap);
+
+    } catch (error) {
+      console.error('Error fetching action types and mappings:', error);
+      toast.error('Failed to load action type mappings');
+    } finally {
+      setLoadingMappings(false);
     }
   };
 
@@ -271,6 +314,41 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
       newExpanded.add(key);
     }
     setExpandedSubcategories(newExpanded);
+  };
+
+  const handleActionMappingChange = async (actionType: string, category: string) => {
+    try {
+      // Check if mapping exists
+      const { data: existing } = await supabase
+        .from('action_r90_category_mappings')
+        .select('id')
+        .eq('action_type', actionType)
+        .maybeSingle();
+
+      if (existing) {
+        // Update existing mapping
+        const { error } = await supabase
+          .from('action_r90_category_mappings')
+          .update({ r90_category: category })
+          .eq('action_type', actionType);
+
+        if (error) throw error;
+      } else {
+        // Insert new mapping
+        const { error } = await supabase
+          .from('action_r90_category_mappings')
+          .insert({ action_type: actionType, r90_category: category });
+
+        if (error) throw error;
+      }
+
+      // Update local state
+      setActionMappings(prev => ({ ...prev, [actionType]: category }));
+      toast.success(`Mapped "${actionType}" to ${category}`);
+    } catch (error: any) {
+      console.error('Error updating action mapping:', error);
+      toast.error('Failed to update mapping: ' + error.message);
+    }
   };
 
   const grouped = groupedRatings();
@@ -535,6 +613,45 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
                 </div>
               </ScrollArea>
             </div>
+          )}
+        </div>
+
+        {/* Action Type Category Mappings */}
+        <div className="border-t pt-4 mt-4">
+          <h3 className="font-semibold mb-3 text-sm">Action Type Category Assignments</h3>
+          <p className="text-xs text-muted-foreground mb-3">
+            Assign action types to R90 categories to automatically suggest the right category when creating performance reports.
+          </p>
+          {loadingMappings ? (
+            <div className="text-center py-4 text-sm text-muted-foreground">Loading action types...</div>
+          ) : actionTypes.length === 0 ? (
+            <div className="text-center py-4 text-sm text-muted-foreground">No action types found in performance reports yet.</div>
+          ) : (
+            <ScrollArea className="h-48">
+              <div className="space-y-2 pr-4">
+                {actionTypes.map((actionType) => (
+                  <div key={actionType} className="flex items-center gap-3 p-2 border rounded hover:bg-accent/30">
+                    <div className="flex-1 text-sm font-medium truncate">{actionType}</div>
+                    <Select
+                      value={actionMappings[actionType] || ''}
+                      onValueChange={(value) => handleActionMappingChange(actionType, value)}
+                    >
+                      <SelectTrigger className="w-48">
+                        <SelectValue placeholder="Select category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">None</SelectItem>
+                        {R90_CATEGORIES.map((cat) => (
+                          <SelectItem key={cat} value={cat}>
+                            {cat}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                ))}
+              </div>
+            </ScrollArea>
           )}
         </div>
       </DialogContent>

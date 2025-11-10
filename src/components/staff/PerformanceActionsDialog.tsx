@@ -84,7 +84,7 @@ export const PerformanceActionsDialog = ({
     return 'all';
   };
 
-  const openSmartR90Viewer = (action: PerformanceAction) => {
+  const openSmartR90Viewer = async (action: PerformanceAction) => {
     if (!action.action_type) {
       // Fallback to generic R90 viewer
       setR90ViewerCategory(undefined);
@@ -93,6 +93,26 @@ export const PerformanceActionsDialog = ({
       return;
     }
     
+    // First, try to get category from database mapping
+    try {
+      const { data: mapping } = await supabase
+        .from('action_r90_category_mappings')
+        .select('r90_category')
+        .eq('action_type', action.action_type.trim())
+        .maybeSingle();
+      
+      if (mapping?.r90_category) {
+        console.log(`Using mapped category: ${action.action_type} -> ${mapping.r90_category}`);
+        setR90ViewerCategory(mapping.r90_category);
+        setR90ViewerSearch(action.action_type);
+        setIsR90ViewerOpen(true);
+        return;
+      }
+    } catch (error) {
+      console.error('Error fetching category mapping:', error);
+    }
+    
+    // Fallback to keyword-based matching
     const category = getR90CategoryFromAction(action.action_type, action.action_description);
     const searchTerm = action.action_type;
     
