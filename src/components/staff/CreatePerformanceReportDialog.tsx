@@ -538,15 +538,6 @@ export const CreatePerformanceReportDialog = ({
 
   const fetchCategoryScores = async (actionIndex: number, category: string, subcategory: string | null = null, subSubcategory: string | null = null) => {
     try {
-      const actionType = actions[actionIndex]?.action_type || '';
-      
-      // Extract keywords from action type for filtering
-      const keywords = actionType
-        .toLowerCase()
-        .replace(/[^\w\s]/g, '')
-        .split(/\s+/)
-        .filter(word => word.length > 2);
-
       // Build query based on mapping specificity
       let query = supabase
         .from("r90_ratings")
@@ -572,18 +563,8 @@ export const CreatePerformanceReportDialog = ({
       }
 
       if (r90Data && r90Data.length > 0) {
-        // Filter ratings by keywords from action type
-        const filteredData = r90Data.filter(item => {
-          const titleLower = (item.title || '').toLowerCase();
-          const descLower = (item.description || '').toLowerCase();
-          // Match if ANY keyword is found in title or description
-          return keywords.some(keyword => 
-            titleLower.includes(keyword) || descLower.includes(keyword)
-          );
-        });
-
         // Map R90 ratings to the format expected by the UI
-        const scores = filteredData.map(item => ({
+        const scores = r90Data.map(item => ({
           score: item.score,
           description: item.description || item.title || ""
         }));
