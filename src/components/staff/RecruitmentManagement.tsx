@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Users, MessageSquare, Plus, Trash2, Edit } from "lucide-react";
+import { Users, MessageSquare, Plus, Trash2, Edit, Sparkles, Copy } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -76,6 +76,13 @@ export const RecruitmentManagement = ({ isAdmin }: { isAdmin: boolean }) => {
     message_title: "",
     message_content: ""
   });
+
+  // AI Message Writer state
+  const [aiWriterOpen, setAiWriterOpen] = useState(false);
+  const [aiWriterTemplate, setAiWriterTemplate] = useState<MarketingTemplate | null>(null);
+  const [aiWriterInfo, setAiWriterInfo] = useState("");
+  const [aiGeneratedMessage, setAiGeneratedMessage] = useState("");
+  const [isGenerating, setIsGenerating] = useState(false);
 
   const ageGroups = [
     { value: 'A', label: 'A - FIRST TEAM' },
@@ -325,6 +332,51 @@ export const RecruitmentManagement = ({ isAdmin }: { isAdmin: boolean }) => {
     acc[template.recipient_type].push(template);
     return acc;
   }, {} as Record<string, MarketingTemplate[]>);
+
+  // AI Message Writer functions
+  const handleGenerateMessage = async () => {
+    if (!aiWriterInfo.trim()) {
+      toast.error("Please provide relevant information for the message");
+      return;
+    }
+
+    setIsGenerating(true);
+    try {
+      const context = aiWriterTemplate 
+        ? `Use this template as a reference:\n\nTitle: ${aiWriterTemplate.message_title}\nContent: ${aiWriterTemplate.message_content}\n\n`
+        : '';
+
+      const { data, error } = await supabase.functions.invoke('ai-write', {
+        body: {
+          type: 'recruitment-message',
+          prompt: aiWriterInfo,
+          context: context
+        }
+      });
+
+      if (error) throw error;
+      
+      setAiGeneratedMessage(data.text);
+      toast.success("Message generated successfully");
+    } catch (error: any) {
+      console.error("Error generating message:", error);
+      toast.error(error.message || "Failed to generate message");
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleCopyGeneratedMessage = () => {
+    navigator.clipboard.writeText(aiGeneratedMessage);
+    toast.success("Message copied to clipboard");
+  };
+
+  const handleOpenAiWriter = (template?: MarketingTemplate) => {
+    setAiWriterTemplate(template || null);
+    setAiWriterInfo("");
+    setAiGeneratedMessage("");
+    setAiWriterOpen(true);
+  };
 
   return (
     <div className="space-y-6">
@@ -644,17 +696,29 @@ export const RecruitmentManagement = ({ isAdmin }: { isAdmin: boolean }) => {
         <TabsContent value="templates" className="space-y-4">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
             <h3 className="text-base sm:text-lg font-semibold">Message Templates</h3>
-            {isAdmin && (
-              <Button size="sm" className="w-full sm:w-auto" onClick={() => {
-                setEditingTemplate(null);
-                setTemplateFormData({ recipient_type: "", message_title: "", message_content: "" });
-                setTemplateDialogOpen(true);
-              }}>
-                <Plus className="w-4 h-4 mr-2" />
-                <span className="hidden sm:inline">Create Template</span>
-                <span className="sm:hidden">Create</span>
+            <div className="flex gap-2 w-full sm:w-auto">
+              <Button 
+                size="sm" 
+                variant="outline" 
+                className="flex-1 sm:flex-initial"
+                onClick={() => handleOpenAiWriter()}
+              >
+                <Sparkles className="w-4 h-4 mr-2" />
+                <span className="hidden sm:inline">AI Message Writer</span>
+                <span className="sm:hidden">AI Writer</span>
               </Button>
-            )}
+              {isAdmin && (
+                <Button size="sm" className="flex-1 sm:flex-initial" onClick={() => {
+                  setEditingTemplate(null);
+                  setTemplateFormData({ recipient_type: "", message_title: "", message_content: "" });
+                  setTemplateDialogOpen(true);
+                }}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  <span className="hidden sm:inline">Create Template</span>
+                  <span className="sm:hidden">Create</span>
+                </Button>
+              )}
+            </div>
           </div>
 
           {loading ? (
@@ -690,7 +754,16 @@ export const RecruitmentManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                               <h4 className="text-sm sm:text-base font-medium mb-1">{template.message_title}</h4>
                               <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">{template.message_content}</p>
                             </div>
-                            <div className="flex gap-2 sm:ml-4 w-full sm:w-auto justify-end">
+                             <div className="flex gap-2 sm:ml-4 w-full sm:w-auto justify-end">
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="h-8 w-8"
+                                onClick={() => handleOpenAiWriter(template)}
+                                title="Use as AI template"
+                              >
+                                <Sparkles className="w-4 h-4" />
+                              </Button>
                               <Button
                                 size="icon"
                                 variant="ghost"
@@ -781,6 +854,85 @@ export const RecruitmentManagement = ({ isAdmin }: { isAdmin: boolean }) => {
             <Button variant="outline" onClick={() => setTemplateDialogOpen(false)}>Cancel</Button>
             <Button onClick={handleTemplateSubmit}>
               {editingTemplate ? "Update Template" : "Create Template"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* AI Message Writer Dialog */}
+      <Dialog open={aiWriterOpen} onOpenChange={setAiWriterOpen}>
+        <DialogContent className="w-[95vw] sm:max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Sparkles className="w-5 h-5" />
+              AI Message Writer
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            {aiWriterTemplate && (
+              <div className="p-3 bg-accent/50 rounded-lg border">
+                <div className="text-sm font-medium mb-1">Using Template: {aiWriterTemplate.message_title}</div>
+                <div className="text-xs text-muted-foreground">
+                  The AI will use this template as a reference for style and structure
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <Label htmlFor="ai-info">Relevant Information</Label>
+              <Textarea
+                id="ai-info"
+                value={aiWriterInfo}
+                onChange={(e) => setAiWriterInfo(e.target.value)}
+                placeholder="Provide key details for the message: recipient name, their background, specific points to address, purpose of the message, any personal touches or specific requests..."
+                rows={8}
+                className="resize-none"
+              />
+              <p className="text-xs text-muted-foreground">
+                Include specific details like: recipient details, purpose of outreach, key selling points, player/prospect information, any personalization needed, tone preferences, etc.
+              </p>
+            </div>
+
+            <Button 
+              onClick={handleGenerateMessage} 
+              disabled={isGenerating || !aiWriterInfo.trim()}
+              className="w-full"
+            >
+              <Sparkles className="w-4 h-4 mr-2" />
+              {isGenerating ? "Generating..." : "Generate Message"}
+            </Button>
+
+            {aiGeneratedMessage && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="generated-message">Generated Message</Label>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={handleCopyGeneratedMessage}
+                  >
+                    <Copy className="w-4 h-4 mr-2" />
+                    Copy
+                  </Button>
+                </div>
+                <Textarea
+                  id="generated-message"
+                  value={aiGeneratedMessage}
+                  onChange={(e) => setAiGeneratedMessage(e.target.value)}
+                  rows={12}
+                  className="font-sans"
+                />
+                <p className="text-xs text-muted-foreground">
+                  You can edit the generated message above before copying or using it
+                </p>
+              </div>
+            )}
+          </div>
+
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setAiWriterOpen(false)}>
+              Close
             </Button>
           </div>
         </DialogContent>

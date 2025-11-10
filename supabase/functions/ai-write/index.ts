@@ -43,6 +43,17 @@ Keep paragraphs focused and 3-5 sentences long.`;
       systemPrompt = `You are a professional football analyst creating concise analysis section titles.
 Create clear, professional titles (2-5 words) that capture the key tactical concept or area of focus.
 Examples: "Defensive Positioning", "Pressing Triggers", "Ball Progression", "Creating Space"`;
+    } else if (type === 'recruitment-message') {
+      systemPrompt = `You are a professional football recruitment specialist writing outreach messages.
+Write compelling, personalized messages that:
+- Build rapport and establish connection
+- Highlight relevant opportunities or value propositions
+- Use appropriate tone for the recipient (player, parent, agent, technical director, scout, manager)
+- Include specific details provided in the context
+- Are concise yet informative (2-4 paragraphs)
+- End with a clear call to action or next steps
+
+Maintain professionalism while being warm and approachable. Avoid being overly salesy or generic.`;
     }
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
