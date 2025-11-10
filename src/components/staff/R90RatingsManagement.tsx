@@ -738,14 +738,14 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
                           {newMappingCategory && SUBCATEGORY_OPTIONS[newMappingCategory] && (
                             <div className="flex-1">
                               <Select
-                                value={newMappingSubcategory}
-                                onValueChange={setNewMappingSubcategory}
+                                value={newMappingSubcategory || '__none__'}
+                                onValueChange={(value) => setNewMappingSubcategory(value === '__none__' ? '' : value)}
                               >
                                 <SelectTrigger>
                                   <SelectValue placeholder="Subcategory (optional)" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  <SelectItem value="">None</SelectItem>
+                                  <SelectItem value="__none__">None</SelectItem>
                                   {SUBCATEGORY_OPTIONS[newMappingCategory].map((sub) => (
                                     <SelectItem key={sub} value={sub}>
                                       {sub}
