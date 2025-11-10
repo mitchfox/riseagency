@@ -390,14 +390,16 @@ export const CreatePerformanceReportDialog = ({
             try {
               const { data: mappings } = await supabase
                 .from('action_r90_category_mappings')
-                .select('r90_category, r90_subcategory')
+                .select('r90_category, r90_subcategory, r90_sub_subcategory')
                 .eq('action_type', action.action_type);
               
-              // Prioritize specific subcategory mappings over wildcard mappings
-              const mapping = mappings?.find(m => m.r90_subcategory !== null) || mappings?.[0];
+              // Prioritize most specific mapping (with sub-subcategory, then subcategory, then category-only)
+              const mapping = mappings?.find(m => m.r90_sub_subcategory !== null) || 
+                             mappings?.find(m => m.r90_subcategory !== null) || 
+                             mappings?.[0];
               
               if (mapping?.r90_category) {
-                await fetchCategoryScores(index, mapping.r90_category);
+                await fetchCategoryScores(index, mapping.r90_category, mapping.r90_subcategory, mapping.r90_sub_subcategory);
               } else {
                 // Fallback to keyword-based detection
                 const category = getR90CategoryFromAction(action.action_type, action.action_description || '');
@@ -494,20 +496,23 @@ export const CreatePerformanceReportDialog = ({
       try {
         const { data: mappings } = await supabase
           .from('action_r90_category_mappings')
-          .select('r90_category, r90_subcategory')
+          .select('r90_category, r90_subcategory, r90_sub_subcategory')
           .eq('action_type', trimmedValue);
         
-        // Prioritize specific subcategory mappings over wildcard mappings
-        const mapping = mappings?.find(m => m.r90_subcategory !== null) || mappings?.[0];
+        // Prioritize most specific mapping (with sub-subcategory, then subcategory, then category-only)
+        const mapping = mappings?.find(m => m.r90_sub_subcategory !== null) || 
+                       mappings?.find(m => m.r90_subcategory !== null) || 
+                       mappings?.[0];
         
         if (mapping?.r90_category) {
-          console.log(`Found category mapping: ${trimmedValue} -> ${mapping.r90_category}${mapping.r90_subcategory ? ' > ' + mapping.r90_subcategory : ''}`);
+          const mappingPath = `${mapping.r90_category}${mapping.r90_subcategory ? ' > ' + mapping.r90_subcategory : ''}${mapping.r90_sub_subcategory ? ' > ' + mapping.r90_sub_subcategory : ''}`;
+          console.log(`Found category mapping: ${trimmedValue} -> ${mappingPath}`);
           
-          // Fetch all scores for this R90 category
-          await fetchCategoryScores(index, mapping.r90_category);
+          // Fetch all scores for this R90 category hierarchy
+          await fetchCategoryScores(index, mapping.r90_category, mapping.r90_subcategory, mapping.r90_sub_subcategory);
           
-          toast.success(`Suggested R90 category: ${mapping.r90_category}${mapping.r90_subcategory ? ' > ' + mapping.r90_subcategory : ''}`, {
-            description: 'Click the smart link button to view ratings for this category'
+          toast.success(`Suggested R90 category: ${mappingPath}`, {
+            description: 'Scores filtered by this category hierarchy'
           });
         } else {
           // No mapping found, try keyword-based detection
@@ -531,27 +536,40 @@ export const CreatePerformanceReportDialog = ({
       .filter(word => word.length > 3 && !commonWords.includes(word));
   };
 
-  const fetchCategoryScores = async (actionIndex: number, category: string) => {
+  const fetchCategoryScores = async (actionIndex: number, category: string, subcategory: string | null = null, subSubcategory: string | null = null) => {
     try {
-      // First, get all R90 ratings for this category
-      const { data: r90Data, error: r90Error } = await supabase
+      // Build query based on mapping specificity
+      let query = supabase
         .from("r90_ratings")
-        .select("score, description")
+        .select("score, description, title, category, subcategory")
         .eq("category", category)
         .not("score", "is", null);
+
+      // If subcategory is specified in mapping, filter by it
+      if (subcategory) {
+        query = query.eq("subcategory", subcategory);
+        
+        // If sub-subcategory is also specified, filter by tags
+        // (since sub-subcategory is stored in tags array in r90_ratings)
+        if (subSubcategory) {
+          query = query.contains("tags", [subSubcategory]);
+        }
+      }
+
+      const { data: r90Data, error: r90Error } = await query;
 
       if (r90Error) {
         console.error("Error fetching R90 scores:", r90Error);
         throw r90Error;
       }
 
-      console.log(`R90 scores for category "${category}":`, r90Data);
+      console.log(`R90 scores for category "${category}"${subcategory ? ` > ${subcategory}` : ''}${subSubcategory ? ` > ${subSubcategory}` : ''}:`, r90Data);
 
       if (r90Data && r90Data.length > 0) {
         // Map R90 ratings to the format expected by the UI
         const scores = r90Data.map(item => ({
           score: item.score,
-          description: item.description || ""
+          description: item.description || item.title || ""
         }));
         
         setPreviousScores(prev => ({
@@ -1282,7 +1300,7 @@ export const CreatePerformanceReportDialog = ({
                     />
                     {previousScores[index] && (
                       <div className="text-[10px] mt-1 p-2 rounded bg-muted/50 font-medium" style={{ color: 'hsl(43, 49%, 61%)' }}>
-                        <div className="mb-1 font-semibold">Related scores in this category:</div>
+                        <div className="mb-1 font-semibold">R90 ratings in this category mapping:</div>
                         <div className="flex flex-wrap gap-1">
                           {previousScores[index].map((item, idx) => (
                             <Tooltip key={idx}>
@@ -1437,7 +1455,7 @@ export const CreatePerformanceReportDialog = ({
                       <tr className="border-t bg-muted/20">
                         <td colSpan={7} className="p-2">
                           <div className="text-[10px] p-2 rounded bg-muted/50 font-medium" style={{ color: 'hsl(43, 49%, 61%)' }}>
-                            <div className="mb-1 font-semibold">Related scores in this category:</div>
+                            <div className="mb-1 font-semibold">R90 ratings in this category mapping:</div>
                             <div className="flex flex-wrap gap-1">
                               {previousScores[index].map((item, idx) => (
                                 <Tooltip key={idx}>

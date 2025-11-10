@@ -199,14 +199,27 @@ export const PerformanceActionsDialog = ({
       .filter(word => word.length > 3 && !commonWords.includes(word));
   };
 
-  const fetchCategoryScores = async (category: string) => {
+  const fetchCategoryScores = async (category: string, subcategory: string | null, subSubcategory: string | null) => {
     try {
-      // Fetch all R90 ratings for this category
-      const { data: r90Data, error } = await supabase
+      // Build query based on mapping specificity
+      let query = supabase
         .from("r90_ratings")
-        .select("score, description")
+        .select("score, description, title, category, subcategory")
         .eq("category", category)
         .not("score", "is", null);
+
+      // If subcategory is specified in mapping, filter by it
+      if (subcategory) {
+        query = query.eq("subcategory", subcategory);
+        
+        // If sub-subcategory is also specified, we'd filter by tags
+        // (since sub-subcategory is stored in tags array in r90_ratings)
+        if (subSubcategory) {
+          query = query.contains("tags", [subSubcategory]);
+        }
+      }
+
+      const { data: r90Data, error } = await query;
 
       if (error) throw error;
 
@@ -214,7 +227,7 @@ export const PerformanceActionsDialog = ({
         // Map R90 ratings to the format expected by the UI
         const scores = r90Data.map(item => ({
           score: item.score,
-          description: item.description || ""
+          description: item.description || item.title || ""
         }));
         
         setPreviousScores(scores);
@@ -233,14 +246,16 @@ export const PerformanceActionsDialog = ({
       try {
         const { data: mappings } = await supabase
           .from('action_r90_category_mappings')
-          .select('r90_category, r90_subcategory')
+          .select('r90_category, r90_subcategory, r90_sub_subcategory')
           .eq('action_type', value);
         
-        // Prioritize specific subcategory mappings over wildcard mappings
-        const mapping = mappings?.find(m => m.r90_subcategory !== null) || mappings?.[0];
+        // Prioritize most specific mapping (with sub-subcategory, then subcategory, then category-only)
+        const mapping = mappings?.find(m => m.r90_sub_subcategory !== null) || 
+                       mappings?.find(m => m.r90_subcategory !== null) || 
+                       mappings?.[0];
         
         if (mapping?.r90_category) {
-          await fetchCategoryScores(mapping.r90_category);
+          await fetchCategoryScores(mapping.r90_category, mapping.r90_subcategory, mapping.r90_sub_subcategory);
         } else {
           setPreviousScores([]);
         }
@@ -481,7 +496,7 @@ export const PerformanceActionsDialog = ({
                 />
                 {previousScores.length > 0 && (
                   <div className="text-[10px] mt-1 p-2 rounded bg-muted/50 font-medium" style={{ color: 'hsl(43, 49%, 61%)' }}>
-                    <div className="mb-1 font-semibold">Related scores in this category:</div>
+                    <div className="mb-1 font-semibold">R90 ratings in this category mapping:</div>
                     <div className="flex flex-wrap gap-1">
                       {previousScores.map((item, idx) => (
                         <Tooltip key={idx}>
