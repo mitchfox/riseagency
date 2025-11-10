@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -1318,8 +1318,9 @@ export const CreatePerformanceReportDialog = ({
                 </thead>
                 <tbody>
                   {actions.map((action, index) => (
-                    <tr key={index} className="border-t">
-                      <td className="p-2 text-sm">{action.action_number}</td>
+                    <React.Fragment key={index}>
+                      <tr className="border-t">
+                        <td className="p-2 text-sm">{action.action_number}</td>
                       <td className="p-2">
                         <Input
                           type="text"
@@ -1365,29 +1366,6 @@ export const CreatePerformanceReportDialog = ({
                           className="min-w-[140px] min-h-[40px] text-sm"
                           rows={1}
                         />
-                        {previousScores[index] && (
-                          <div className="text-[10px] mt-1 p-1 rounded bg-muted/50 font-medium" style={{ color: 'hsl(43, 49%, 61%)' }}>
-                            <div className="mb-0.5 font-semibold text-[9px]">Related:</div>
-                            <div className="flex flex-wrap gap-0.5">
-                              {previousScores[index].map((item, idx) => (
-                                <Tooltip key={idx}>
-                                  <TooltipTrigger asChild>
-                                    <button
-                                      type="button"
-                                      className="hover:underline cursor-pointer px-1 py-0.5 rounded bg-background text-[9px]"
-                                      style={{ color: 'hsl(43, 49%, 61%)' }}
-                                    >
-                                      {item.score.toFixed(5)}
-                                    </button>
-                                  </TooltipTrigger>
-                                  <TooltipContent className="max-w-xs">
-                                    <p className="text-xs">{item.description}</p>
-                                  </TooltipContent>
-                                </Tooltip>
-                              ))}
-                            </div>
-                          </div>
-                        )}
                       </td>
                       <td className="p-2">
                         <div className="flex gap-1">
@@ -1449,6 +1427,34 @@ export const CreatePerformanceReportDialog = ({
                         </div>
                       </td>
                     </tr>
+                    {previousScores[index] && (
+                      <tr className="border-t bg-muted/20">
+                        <td colSpan={7} className="p-2">
+                          <div className="text-[10px] p-2 rounded bg-muted/50 font-medium" style={{ color: 'hsl(43, 49%, 61%)' }}>
+                            <div className="mb-1 font-semibold">Related scores in this category:</div>
+                            <div className="flex flex-wrap gap-1">
+                              {previousScores[index].map((item, idx) => (
+                                <Tooltip key={idx}>
+                                  <TooltipTrigger asChild>
+                                    <button
+                                      type="button"
+                                      className="hover:underline cursor-pointer px-1 py-0.5 rounded bg-background"
+                                      style={{ color: 'hsl(43, 49%, 61%)' }}
+                                    >
+                                      {item.score.toFixed(5)}
+                                    </button>
+                                  </TooltipTrigger>
+                                  <TooltipContent className="max-w-xs">
+                                    <p className="text-xs">{item.description}</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              ))}
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                    </React.Fragment>
                   ))}
                 </tbody>
               </table>
