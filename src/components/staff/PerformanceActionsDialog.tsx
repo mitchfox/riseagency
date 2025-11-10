@@ -97,12 +97,12 @@ export const PerformanceActionsDialog = ({
     try {
       const { data: mapping } = await supabase
         .from('action_r90_category_mappings')
-        .select('r90_category')
+        .select('r90_category, r90_subcategory')
         .eq('action_type', action.action_type.trim())
         .maybeSingle();
       
       if (mapping?.r90_category) {
-        console.log(`Using mapped category: ${action.action_type} -> ${mapping.r90_category}`);
+        console.log(`Using mapped category: ${action.action_type} -> ${mapping.r90_category}${mapping.r90_subcategory ? ' > ' + mapping.r90_subcategory : ''}`);
         setR90ViewerCategory(mapping.r90_category);
         setR90ViewerSearch(action.action_type);
         setIsR90ViewerOpen(true);
@@ -197,63 +197,53 @@ export const PerformanceActionsDialog = ({
       .filter(word => word.length > 3 && !commonWords.includes(word));
   };
 
-  const fetchPreviousScores = async (actionType: string) => {
+  const fetchCategoryScores = async (category: string) => {
     try {
-      const { data, error } = await supabase
-        .from("performance_report_actions")
-        .select("action_score, action_description")
-        .eq("action_type", actionType)
-        .not("action_score", "is", null)
-        .order("created_at", { ascending: false })
-        .limit(50);
+      // Fetch all R90 ratings for this category
+      const { data: r90Data, error } = await supabase
+        .from("r90_ratings")
+        .select("score, description")
+        .eq("category", category)
+        .not("score", "is", null);
 
       if (error) throw error;
 
-      if (data && data.length > 0) {
-        // Get current action's description keywords
-        const currentKeywords = newAction.action_description 
-          ? getKeywords(newAction.action_description)
-          : [];
-
-        // Filter and sort by relevance
-        const filteredScores = data
-          .map(item => {
-            const score = item.action_score;
-            const description = item.action_description || "";
-            
-            // Calculate relevance score based on keyword matches
-            if (!description || currentKeywords.length === 0) {
-              return { score, description, relevance: 0 };
-            }
-            
-            const itemKeywords = getKeywords(description);
-            const matches = currentKeywords.filter(kw => 
-              itemKeywords.some(ikw => ikw.includes(kw) || kw.includes(ikw))
-            ).length;
-            
-            return { score, description, relevance: matches };
-          })
-          .filter(item => item.relevance > 0 || currentKeywords.length === 0)
-          .sort((a, b) => {
-            // Sort by relevance first (descending), then by score (ascending)
-            if (b.relevance !== a.relevance) return b.relevance - a.relevance;
-            return a.score - b.score;
-          })
-          .slice(0, 5); // Show only top 5 most relevant
+      if (r90Data && r90Data.length > 0) {
+        // Map R90 ratings to the format expected by the UI
+        const scores = r90Data.map(item => ({
+          score: item.score,
+          description: item.description || ""
+        }));
         
-        setPreviousScores(filteredScores);
+        setPreviousScores(scores);
       } else {
         setPreviousScores([]);
       }
     } catch (error: any) {
-      console.error("Error fetching previous scores:", error);
+      console.error("Error fetching category scores:", error);
     }
   };
 
   const handleActionTypeChange = async (value: string) => {
     setNewAction({ ...newAction, action_type: value });
     if (value) {
-      await fetchPreviousScores(value);
+      // Fetch R90 category mapping for this action type
+      try {
+        const { data: mapping } = await supabase
+          .from('action_r90_category_mappings')
+          .select('r90_category, r90_subcategory')
+          .eq('action_type', value)
+          .maybeSingle();
+        
+        if (mapping?.r90_category) {
+          await fetchCategoryScores(mapping.r90_category);
+        } else {
+          setPreviousScores([]);
+        }
+      } catch (error) {
+        console.error('Error fetching category mapping:', error);
+        setPreviousScores([]);
+      }
     } else {
       setPreviousScores([]);
     }

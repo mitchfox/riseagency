@@ -381,10 +381,28 @@ export const CreatePerformanceReportDialog = ({
           }))
         );
         
-        // Fetch previous scores for each action
-        actionsData.forEach((action, index) => {
+        // Fetch category scores for each action based on mapping
+        actionsData.forEach(async (action, index) => {
           if (action.action_type) {
-            fetchPreviousScores(index, action.action_type);
+            try {
+              const { data: mapping } = await supabase
+                .from('action_r90_category_mappings')
+                .select('r90_category')
+                .eq('action_type', action.action_type)
+                .maybeSingle();
+              
+              if (mapping?.r90_category) {
+                await fetchCategoryScores(index, mapping.r90_category);
+              } else {
+                // Fallback to keyword-based detection
+                const category = getR90CategoryFromAction(action.action_type, action.action_description || '');
+                if (category && category !== 'all') {
+                  await fetchCategoryScores(index, category);
+                }
+              }
+            } catch (error) {
+              console.error('Error fetching scores for action:', error);
+            }
           }
         });
       }
@@ -462,26 +480,34 @@ export const CreatePerformanceReportDialog = ({
     newActions[index] = { ...newActions[index], [field]: value };
     setActions(newActions);
 
-    // If action_type changed, fetch previous scores and category mapping
+    // If action_type changed, fetch category scores and mapping
     if (field === "action_type" && value) {
       const trimmedValue = value.trim();
       console.log(`Action type changed to: "${trimmedValue}" for action index ${index}`);
-      await fetchPreviousScores(index, trimmedValue);
       
       // Fetch R90 category mapping for this action type
       try {
         const { data: mapping } = await supabase
           .from('action_r90_category_mappings')
-          .select('r90_category')
+          .select('r90_category, r90_subcategory')
           .eq('action_type', trimmedValue)
           .maybeSingle();
         
         if (mapping?.r90_category) {
-          console.log(`Found category mapping: ${trimmedValue} -> ${mapping.r90_category}`);
-          // Store the suggested category for this action index
-          toast.success(`Suggested R90 category: ${mapping.r90_category}`, {
+          console.log(`Found category mapping: ${trimmedValue} -> ${mapping.r90_category}${mapping.r90_subcategory ? ' > ' + mapping.r90_subcategory : ''}`);
+          
+          // Fetch all scores for this R90 category
+          await fetchCategoryScores(index, mapping.r90_category);
+          
+          toast.success(`Suggested R90 category: ${mapping.r90_category}${mapping.r90_subcategory ? ' > ' + mapping.r90_subcategory : ''}`, {
             description: 'Click the smart link button to view ratings for this category'
           });
+        } else {
+          // No mapping found, try keyword-based detection
+          const category = getR90CategoryFromAction(trimmedValue, '');
+          if (category && category !== 'all') {
+            await fetchCategoryScores(index, category);
+          }
         }
       } catch (error) {
         console.error('Error fetching category mapping:', error);
@@ -498,68 +524,41 @@ export const CreatePerformanceReportDialog = ({
       .filter(word => word.length > 3 && !commonWords.includes(word));
   };
 
-  const fetchPreviousScores = async (actionIndex: number, actionType: string) => {
+  const fetchCategoryScores = async (actionIndex: number, category: string) => {
     try {
-      const { data, error } = await supabase
-        .from("performance_report_actions")
-        .select("action_score, action_description")
-        .eq("action_type", actionType)
-        .not("action_score", "is", null)
-        .order("created_at", { ascending: false })
-        .limit(50);
+      // First, get all R90 ratings for this category
+      const { data: r90Data, error: r90Error } = await supabase
+        .from("r90_ratings")
+        .select("score, description")
+        .eq("category", category)
+        .not("score", "is", null);
 
-      if (error) {
-        console.error("Error fetching previous scores:", error);
-        throw error;
+      if (r90Error) {
+        console.error("Error fetching R90 scores:", r90Error);
+        throw r90Error;
       }
 
-      console.log(`Previous scores for "${actionType}":`, data);
+      console.log(`R90 scores for category "${category}":`, r90Data);
 
-      if (data && data.length > 0) {
-        // Get current action's description keywords
-        const currentAction = actions[actionIndex];
-        const currentKeywords = currentAction?.action_description 
-          ? getKeywords(currentAction.action_description)
-          : [];
-
-        // Filter and sort by relevance
-        const filteredScores = data
-          .map(item => {
-            const score = item.action_score;
-            const description = item.action_description || "";
-            
-            // Calculate relevance score based on keyword matches
-            if (!description || currentKeywords.length === 0) {
-              return { score, description, relevance: 0 };
-            }
-            
-            const itemKeywords = getKeywords(description);
-            const matches = currentKeywords.filter(kw => 
-              itemKeywords.some(ikw => ikw.includes(kw) || kw.includes(ikw))
-            ).length;
-            
-            return { score, description, relevance: matches };
-          })
-          .filter(item => item.relevance > 0 || currentKeywords.length === 0)
-          .sort((a, b) => {
-            // Sort by relevance first (descending), then by score (ascending)
-            if (b.relevance !== a.relevance) return b.relevance - a.relevance;
-            return a.score - b.score;
-          })
-          .slice(0, 5); // Show only top 5 most relevant
+      if (r90Data && r90Data.length > 0) {
+        // Map R90 ratings to the format expected by the UI
+        const scores = r90Data.map(item => ({
+          score: item.score,
+          description: item.description || ""
+        }));
         
-        console.log(`Setting previous scores for action ${actionIndex}:`, filteredScores);
-        setPreviousScores(prev => ({ ...prev, [actionIndex]: filteredScores }));
+        setPreviousScores(prev => ({
+          ...prev,
+          [actionIndex]: scores
+        }));
       } else {
-        console.log(`No previous scores found for "${actionType}"`);
-        setPreviousScores(prev => {
-          const newScores = { ...prev };
-          delete newScores[actionIndex];
-          return newScores;
-        });
+        setPreviousScores(prev => ({
+          ...prev,
+          [actionIndex]: []
+        }));
       }
     } catch (error: any) {
-      console.error("Error fetching previous scores:", error);
+      console.error("Error fetching category scores:", error);
     }
   };
 

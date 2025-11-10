@@ -57,8 +57,11 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
   
   // Action type mapping state
   const [actionTypes, setActionTypes] = useState<string[]>([]);
-  const [actionMappings, setActionMappings] = useState<Record<string, string>>({});
+  const [actionMappings, setActionMappings] = useState<Record<string, { category: string, subcategory?: string }>>({});
   const [loadingMappings, setLoadingMappings] = useState(false);
+  const [selectedActionTypes, setSelectedActionTypes] = useState<Set<string>>(new Set());
+  const [bulkCategory, setBulkCategory] = useState('');
+  const [bulkSubcategory, setBulkSubcategory] = useState('');
   
   const [formData, setFormData] = useState({
     title: '',
@@ -118,10 +121,13 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
 
       if (mappingsError) throw mappingsError;
 
-      // Create a map of action_type -> r90_category
-      const mappingsMap: Record<string, string> = {};
+      // Create a map of action_type -> { category, subcategory }
+      const mappingsMap: Record<string, { category: string, subcategory?: string }> = {};
       mappingsData?.forEach(m => {
-        mappingsMap[m.action_type] = m.r90_category;
+        mappingsMap[m.action_type] = { 
+          category: m.r90_category,
+          subcategory: m.r90_subcategory || undefined
+        };
       });
       setActionMappings(mappingsMap);
 
@@ -316,7 +322,7 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
     setExpandedSubcategories(newExpanded);
   };
 
-  const handleActionMappingChange = async (actionType: string, category: string) => {
+  const handleActionMappingChange = async (actionType: string, category: string, subcategory?: string) => {
     try {
       // Check if mapping exists
       const { data: existing } = await supabase
@@ -347,7 +353,10 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
           // Update existing mapping
           const { error } = await supabase
             .from('action_r90_category_mappings')
-            .update({ r90_category: category })
+            .update({ 
+              r90_category: category,
+              r90_subcategory: subcategory || null
+            })
             .eq('action_type', actionType);
 
           if (error) throw error;
@@ -355,19 +364,65 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
           // Insert new mapping
           const { error } = await supabase
             .from('action_r90_category_mappings')
-            .insert({ action_type: actionType, r90_category: category });
+            .insert({ 
+              action_type: actionType, 
+              r90_category: category,
+              r90_subcategory: subcategory || null
+            });
 
           if (error) throw error;
         }
 
         // Update local state
-        setActionMappings(prev => ({ ...prev, [actionType]: category }));
-        toast.success(`Mapped "${actionType}" to ${category}`);
+        setActionMappings(prev => ({ 
+          ...prev, 
+          [actionType]: { category, subcategory } 
+        }));
+        toast.success(`Mapped "${actionType}" to ${category}${subcategory ? ` > ${subcategory}` : ''}`);
       }
     } catch (error: any) {
       console.error('Error updating action mapping:', error);
       toast.error('Failed to update mapping: ' + error.message);
     }
+  };
+
+  const handleBulkAssignment = async () => {
+    if (selectedActionTypes.size === 0) {
+      toast.error('Please select at least one action type');
+      return;
+    }
+    if (!bulkCategory || bulkCategory === '__none__') {
+      toast.error('Please select a category');
+      return;
+    }
+
+    try {
+      const actionTypesArray = Array.from(selectedActionTypes);
+      
+      for (const actionType of actionTypesArray) {
+        await handleActionMappingChange(actionType, bulkCategory, bulkSubcategory || undefined);
+      }
+
+      setSelectedActionTypes(new Set());
+      setBulkCategory('');
+      setBulkSubcategory('');
+      toast.success(`Successfully assigned ${actionTypesArray.length} action types`);
+    } catch (error: any) {
+      console.error('Error in bulk assignment:', error);
+      toast.error('Failed to complete bulk assignment');
+    }
+  };
+
+  const toggleActionTypeSelection = (actionType: string) => {
+    setSelectedActionTypes(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(actionType)) {
+        newSet.delete(actionType);
+      } else {
+        newSet.add(actionType);
+      }
+      return newSet;
+    });
   };
 
   const grouped = groupedRatings();
@@ -640,22 +695,29 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
           <h3 className="font-semibold mb-3 text-sm">Action Type Category Assignments</h3>
           <p className="text-xs text-muted-foreground mb-3">
             Assign action types to R90 categories to automatically suggest the right category when creating performance reports.
+            Select multiple action types to assign them in bulk.
           </p>
           {loadingMappings ? (
             <div className="text-center py-4 text-sm text-muted-foreground">Loading action types...</div>
           ) : actionTypes.length === 0 ? (
             <div className="text-center py-4 text-sm text-muted-foreground">No action types found in performance reports yet.</div>
           ) : (
-            <ScrollArea className="h-48">
-              <div className="space-y-2 pr-4">
-                {actionTypes.map((actionType) => (
-                  <div key={actionType} className="flex items-center gap-3 p-2 border rounded hover:bg-accent/30">
-                    <div className="flex-1 text-sm font-medium truncate">{actionType}</div>
+            <>
+              {/* Bulk Assignment Section */}
+              {selectedActionTypes.size > 0 && (
+                <div className="mb-4 p-3 border rounded bg-accent/10">
+                  <div className="text-sm font-medium mb-2">
+                    Bulk Assign {selectedActionTypes.size} Selected Action Types
+                  </div>
+                  <div className="flex gap-2">
                     <Select
-                      value={actionMappings[actionType] || '__none__'}
-                      onValueChange={(value) => handleActionMappingChange(actionType, value)}
+                      value={bulkCategory}
+                      onValueChange={(value) => {
+                        setBulkCategory(value);
+                        if (value === '__none__') setBulkSubcategory('');
+                      }}
                     >
-                      <SelectTrigger className="w-48">
+                      <SelectTrigger className="flex-1">
                         <SelectValue placeholder="Select category" />
                       </SelectTrigger>
                       <SelectContent>
@@ -667,10 +729,105 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
                         ))}
                       </SelectContent>
                     </Select>
+                    
+                    {bulkCategory && bulkCategory !== '__none__' && SUBCATEGORY_OPTIONS[bulkCategory] && (
+                      <Select
+                        value={bulkSubcategory}
+                        onValueChange={setBulkSubcategory}
+                      >
+                        <SelectTrigger className="flex-1">
+                          <SelectValue placeholder="Select subcategory (optional)" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="">None</SelectItem>
+                          {SUBCATEGORY_OPTIONS[bulkCategory].map((sub) => (
+                            <SelectItem key={sub} value={sub}>
+                              {sub}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                    
+                    <Button onClick={handleBulkAssignment} size="sm">
+                      Assign
+                    </Button>
+                    <Button 
+                      onClick={() => setSelectedActionTypes(new Set())} 
+                      variant="outline" 
+                      size="sm"
+                    >
+                      Clear
+                    </Button>
                   </div>
-                ))}
-              </div>
-            </ScrollArea>
+                </div>
+              )}
+              
+              <ScrollArea className="h-64">
+                <div className="space-y-2 pr-4">
+                  {actionTypes.map((actionType) => {
+                    const mapping = actionMappings[actionType];
+                    const currentCategory = mapping?.category || '__none__';
+                    const currentSubcategory = mapping?.subcategory || '';
+                    
+                    return (
+                      <div key={actionType} className="flex items-start gap-3 p-2 border rounded hover:bg-accent/30">
+                        <input
+                          type="checkbox"
+                          checked={selectedActionTypes.has(actionType)}
+                          onChange={() => toggleActionTypeSelection(actionType)}
+                          className="mt-2"
+                        />
+                        <div className="flex-1 text-sm font-medium truncate pt-1.5">{actionType}</div>
+                        <div className="flex gap-2 items-center">
+                          <Select
+                            value={currentCategory}
+                            onValueChange={(value) => {
+                              if (value === '__none__') {
+                                handleActionMappingChange(actionType, value);
+                              } else {
+                                handleActionMappingChange(actionType, value, currentSubcategory);
+                              }
+                            }}
+                          >
+                            <SelectTrigger className="w-40">
+                              <SelectValue placeholder="Category" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="__none__">None</SelectItem>
+                              {R90_CATEGORIES.map((cat) => (
+                                <SelectItem key={cat} value={cat}>
+                                  {cat}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          
+                          {currentCategory !== '__none__' && SUBCATEGORY_OPTIONS[currentCategory] && (
+                            <Select
+                              value={currentSubcategory}
+                              onValueChange={(value) => handleActionMappingChange(actionType, currentCategory, value || undefined)}
+                            >
+                              <SelectTrigger className="w-40">
+                                <SelectValue placeholder="Subcategory" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="">None</SelectItem>
+                                {SUBCATEGORY_OPTIONS[currentCategory].map((sub) => (
+                                  <SelectItem key={sub} value={sub}>
+                                    {sub}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </ScrollArea>
+            </>
           )}
         </div>
       </DialogContent>
