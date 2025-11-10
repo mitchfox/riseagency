@@ -10,7 +10,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Plus, Edit2, Save, X, ChevronDown, Trash2 } from "lucide-react";
+import { Plus, Edit2, Save, X, ChevronDown, Trash2, Sparkles } from "lucide-react";
 
 interface R90Rating {
   id: string;
@@ -76,6 +76,7 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
   const [newMappingCategory, setNewMappingCategory] = useState('');
   const [newMappingSubcategory, setNewMappingSubcategory] = useState('');
   const [newMappingSubSubcategory, setNewMappingSubSubcategory] = useState('');
+  const [isAutoMapping, setIsAutoMapping] = useState(false);
   
   const [formData, setFormData] = useState({
     title: '',
@@ -440,6 +441,43 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
     }
   };
 
+  const handleAutoMapAll = async () => {
+    setIsAutoMapping(true);
+    try {
+      // Get all unmapped action types
+      const unmappedTypes = actionTypes.filter(type => !actionMappings[type] || actionMappings[type].length === 0);
+      
+      if (unmappedTypes.length === 0) {
+        toast.info('All action types are already mapped');
+        return;
+      }
+
+      toast.info(`Auto-mapping ${unmappedTypes.length} action types...`);
+
+      const { data, error } = await supabase.functions.invoke('auto-map-action-categories', {
+        body: {
+          action_types: unmappedTypes,
+          auto_apply: true
+        }
+      });
+
+      if (error) throw error;
+
+      if (data?.success) {
+        toast.success(data.message || 'Auto-mapping completed');
+        // Refresh mappings
+        await fetchActionTypesAndMappings();
+      } else {
+        throw new Error(data?.error || 'Unknown error');
+      }
+    } catch (error: any) {
+      console.error('Error auto-mapping:', error);
+      toast.error(error.message || 'Failed to auto-map action types');
+    } finally {
+      setIsAutoMapping(false);
+    }
+  };
+
   const grouped = groupedRatings();
 
   return (
@@ -707,11 +745,23 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
 
         {/* Action Type Category Mappings */}
         <div className="border-t pt-4 mt-4">
-          <h3 className="font-semibold mb-3 text-sm">Action Type Category Assignments</h3>
-          <p className="text-xs text-muted-foreground mb-3">
-            Assign action types to R90 categories to automatically suggest the right category when creating performance reports.
-            Select multiple action types to assign them in bulk.
-          </p>
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <h3 className="font-semibold text-sm">Action Type Category Assignments</h3>
+              <p className="text-xs text-muted-foreground mt-1">
+                Assign action types to R90 categories to automatically suggest the right category when creating performance reports.
+              </p>
+            </div>
+            <Button
+              onClick={handleAutoMapAll}
+              disabled={isAutoMapping || loadingMappings}
+              size="sm"
+              className="ml-4"
+            >
+              <Sparkles className="w-4 h-4 mr-2" />
+              {isAutoMapping ? 'Auto-mapping...' : 'Auto-Map All'}
+            </Button>
+          </div>
           {loadingMappings ? (
             <div className="text-center py-4 text-sm text-muted-foreground">Loading action types...</div>
           ) : actionTypes.length === 0 ? (
