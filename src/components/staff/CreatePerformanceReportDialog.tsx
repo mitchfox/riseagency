@@ -538,6 +538,15 @@ export const CreatePerformanceReportDialog = ({
 
   const fetchCategoryScores = async (actionIndex: number, category: string, subcategory: string | null = null, subSubcategory: string | null = null) => {
     try {
+      const actionType = actions[actionIndex]?.action_type || '';
+      
+      // Extract keywords from action type for filtering
+      const keywords = actionType
+        .toLowerCase()
+        .replace(/[^\w\s]/g, '')
+        .split(/\s+/)
+        .filter(word => word.length > 2);
+
       // Build query based on mapping specificity
       let query = supabase
         .from("r90_ratings")
@@ -550,7 +559,6 @@ export const CreatePerformanceReportDialog = ({
         query = query.eq("subcategory", subcategory);
         
         // If sub-subcategory is also specified, filter by tags
-        // (since sub-subcategory is stored in tags array in r90_ratings)
         if (subSubcategory) {
           query = query.contains("tags", [subSubcategory]);
         }
@@ -563,11 +571,19 @@ export const CreatePerformanceReportDialog = ({
         throw r90Error;
       }
 
-      console.log(`R90 scores for category "${category}"${subcategory ? ` > ${subcategory}` : ''}${subSubcategory ? ` > ${subSubcategory}` : ''}:`, r90Data);
-
       if (r90Data && r90Data.length > 0) {
+        // Filter ratings by keywords from action type
+        const filteredData = r90Data.filter(item => {
+          const titleLower = (item.title || '').toLowerCase();
+          const descLower = (item.description || '').toLowerCase();
+          // Match if ANY keyword is found in title or description
+          return keywords.some(keyword => 
+            titleLower.includes(keyword) || descLower.includes(keyword)
+          );
+        });
+
         // Map R90 ratings to the format expected by the UI
-        const scores = r90Data.map(item => ({
+        const scores = filteredData.map(item => ({
           score: item.score,
           description: item.description || item.title || ""
         }));
@@ -1298,25 +1314,14 @@ export const CreatePerformanceReportDialog = ({
                       className="text-sm min-h-[60px]"
                       rows={2}
                     />
-                    {previousScores[index] && (
+                    {previousScores[index] && previousScores[index].length > 0 && (
                       <div className="text-[10px] mt-1 p-2 rounded bg-muted/50 font-medium" style={{ color: 'hsl(43, 49%, 61%)' }}>
-                        <div className="mb-1 font-semibold">R90 ratings in this category mapping:</div>
-                        <div className="flex flex-wrap gap-1">
+                        <div className="mb-1 font-semibold">R90 ratings for this action:</div>
+                        <div className="space-y-0.5">
                           {previousScores[index].map((item, idx) => (
-                            <Tooltip key={idx}>
-                              <TooltipTrigger asChild>
-                                <button
-                                  type="button"
-                                  className="hover:underline cursor-pointer px-1 py-0.5 rounded bg-background"
-                                  style={{ color: 'hsl(43, 49%, 61%)' }}
-                                >
-                                  {item.score.toFixed(5)}
-                                </button>
-                              </TooltipTrigger>
-                              <TooltipContent className="max-w-xs">
-                                <p className="text-xs">{item.description}</p>
-                              </TooltipContent>
-                            </Tooltip>
+                            <div key={idx} className="font-mono">
+                              {item.description} {item.score.toFixed(4)}
+                            </div>
                           ))}
                         </div>
                       </div>
