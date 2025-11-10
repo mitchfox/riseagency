@@ -779,11 +779,11 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
                                   onValueChange={(value) => setNewMappingSubcategory(value === '__none__' ? '' : value)}
                                 >
                                   <SelectTrigger>
-                                    <SelectValue placeholder="All subcategories (optional)" />
+                                    <SelectValue />
                                   </SelectTrigger>
                                   <SelectContent>
                                     <SelectItem value="__none__">
-                                      <span className="text-muted-foreground italic">All subcategories</span>
+                                      All subcategories
                                     </SelectItem>
                                     {SUBCATEGORY_OPTIONS[newMappingCategory].map((sub) => (
                                       <SelectItem key={sub} value={sub}>
