@@ -732,14 +732,14 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
                     
                     {bulkCategory && bulkCategory !== '__none__' && SUBCATEGORY_OPTIONS[bulkCategory] && (
                       <Select
-                        value={bulkSubcategory}
-                        onValueChange={setBulkSubcategory}
+                        value={bulkSubcategory || '__none__'}
+                        onValueChange={(value) => setBulkSubcategory(value === '__none__' ? '' : value)}
                       >
                         <SelectTrigger className="flex-1">
                           <SelectValue placeholder="Select subcategory (optional)" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">None</SelectItem>
+                          <SelectItem value="__none__">None</SelectItem>
                           {SUBCATEGORY_OPTIONS[bulkCategory].map((sub) => (
                             <SelectItem key={sub} value={sub}>
                               {sub}
@@ -805,14 +805,14 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
                           
                           {currentCategory !== '__none__' && SUBCATEGORY_OPTIONS[currentCategory] && (
                             <Select
-                              value={currentSubcategory}
-                              onValueChange={(value) => handleActionMappingChange(actionType, currentCategory, value || undefined)}
+                              value={currentSubcategory || '__none__'}
+                              onValueChange={(value) => handleActionMappingChange(actionType, currentCategory, value === '__none__' ? undefined : value)}
                             >
                               <SelectTrigger className="w-40">
                                 <SelectValue placeholder="Subcategory" />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="">None</SelectItem>
+                                <SelectItem value="__none__">None</SelectItem>
                                 {SUBCATEGORY_OPTIONS[currentCategory].map((sub) => (
                                   <SelectItem key={sub} value={sub}>
                                     {sub}
