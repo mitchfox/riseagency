@@ -340,14 +340,24 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
     }
 
     try {
+      // Normalize subcategory to null if empty
+      const subcategoryValue = newMappingSubcategory?.trim() ? newMappingSubcategory : null;
+      
       // Check if this exact mapping already exists
-      const { data: existingMapping, error: checkError } = await supabase
+      let query = supabase
         .from('action_r90_category_mappings')
         .select('id')
         .eq('action_type', actionType)
-        .eq('r90_category', newMappingCategory)
-        .eq('r90_subcategory', newMappingSubcategory || null)
-        .maybeSingle();
+        .eq('r90_category', newMappingCategory);
+      
+      // Handle null subcategory check properly
+      if (subcategoryValue === null) {
+        query = query.is('r90_subcategory', null);
+      } else {
+        query = query.eq('r90_subcategory', subcategoryValue);
+      }
+      
+      const { data: existingMapping, error: checkError } = await query.maybeSingle();
 
       if (checkError) throw checkError;
 
@@ -361,7 +371,7 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
         .insert({
           action_type: actionType,
           r90_category: newMappingCategory,
-          r90_subcategory: newMappingSubcategory || null
+          r90_subcategory: subcategoryValue
         })
         .select()
         .single();
@@ -375,7 +385,7 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
           {
             id: data.id,
             category: newMappingCategory,
-            subcategory: newMappingSubcategory || undefined
+            subcategory: subcategoryValue || undefined
           }
         ]
       }));
@@ -384,9 +394,10 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
       setNewMappingCategory('');
       setNewMappingSubcategory('');
       toast.success('Mapping added');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error adding mapping:', error);
-      toast.error('Failed to add mapping');
+      const errorMessage = error?.message || 'Failed to add mapping';
+      toast.error(errorMessage);
     }
   };
 
