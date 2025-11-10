@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -82,6 +82,7 @@ const Staff = () => {
     type: string;
   }>>([]);
   const [searchLoading, setSearchLoading] = useState(false);
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
@@ -601,9 +602,14 @@ const Staff = () => {
           <CommandInput 
             placeholder="Search players, updates, content..." 
             onValueChange={(value) => {
-              // Debounce search
-              const timeoutId = setTimeout(() => performGlobalSearch(value), 300);
-              return () => clearTimeout(timeoutId);
+              // Clear previous timeout
+              if (searchTimeoutRef.current) {
+                clearTimeout(searchTimeoutRef.current);
+              }
+              // Set new timeout for debounced search
+              searchTimeoutRef.current = setTimeout(() => {
+                performGlobalSearch(value);
+              }, 300);
             }}
           />
           <CommandList>
