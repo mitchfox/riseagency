@@ -772,13 +772,15 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
                     
                     return (
                       <div key={actionType} className="flex items-start gap-3 p-2 border rounded hover:bg-accent/30">
-                        <input
-                          type="checkbox"
-                          checked={selectedActionTypes.has(actionType)}
-                          onChange={() => toggleActionTypeSelection(actionType)}
-                          className="mt-2"
-                        />
-                        <div className="flex-1 text-sm font-medium truncate pt-1.5">{actionType}</div>
+                        <div className="flex items-center h-10">
+                          <input
+                            type="checkbox"
+                            checked={selectedActionTypes.has(actionType)}
+                            onChange={() => toggleActionTypeSelection(actionType)}
+                            className="w-4 h-4 rounded border-2 border-primary cursor-pointer accent-primary"
+                          />
+                        </div>
+                        <div className="flex-1 text-sm font-medium truncate pt-2">{actionType}</div>
                         <div className="flex gap-2 items-center">
                           <Select
                             value={currentCategory}
