@@ -325,7 +325,7 @@ export const StaffOverview = ({ isAdmin }: { isAdmin: boolean }) => {
               />
               <span className="text-[10px] md:text-[10px] font-semibold text-center">{player.name}</span>
               <span className="text-[9px] text-muted-foreground mb-1 text-center">{player.position}</span>
-              <div className="flex gap-0.5 w-full">
+              <div className="flex flex-col lg:flex-row gap-0.5 w-full">
                 <Button 
                   size="sm" 
                   className="h-5 text-[8px] px-1 flex-1 bg-primary hover:bg-primary/90 text-primary-foreground border-0" 
