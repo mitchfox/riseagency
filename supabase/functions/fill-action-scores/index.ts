@@ -40,7 +40,7 @@ serve(async (req) => {
     // Fetch all R90 ratings from database
     const { data: ratings, error: ratingsError } = await supabase
       .from('r90_ratings')
-      .select('id, title, description, content, category');
+      .select('id, title, description, content, category, subcategory, score');
 
     if (ratingsError) {
       console.error('Error fetching R90 ratings:', ratingsError);
@@ -55,29 +55,31 @@ serve(async (req) => {
     for (const action of actions) {
       try {
         // Create a structured prompt for AI
-        const systemPrompt = `You are an expert football/soccer analyst specializing in R90 performance ratings. Your task is to match player actions to the most appropriate R90 rating entry and extract the correct score.
+        const systemPrompt = `You are an expert football/soccer analyst specializing in R90 performance ratings. Your task is to match player actions to the most appropriate R90 rating entry and return the correct score.
 
 R90 Rating Database (${ratings?.length || 0} entries):
 ${ratings?.map(r => `
 ID: ${r.id}
 Title: ${r.title}
-Category: ${r.category}
+Category: ${r.category}${r.subcategory ? ` - ${r.subcategory}` : ''}
+Score: ${r.score !== null && r.score !== undefined ? r.score : 'N/A'}
 Description: ${r.description || 'N/A'}
-Content/Scores: ${r.content || 'N/A'}
+Details: ${r.content || 'N/A'}
 ---`).join('\n')}
 
 Instructions:
 1. Analyze the action type and description provided
-2. Find the BEST matching R90 rating entry from the database above
-3. Extract the appropriate numerical score from that entry's content
-4. Consider context: successful vs unsuccessful, location on field, pressure situation
-5. Return ONLY a valid decimal number (e.g., 0.0672, -0.0054, 0.012)
-6. If no good match exists, return 0`;
+2. Find the BEST matching R90 rating entry from the database above by comparing the action to the Title, Category, Description, and Details
+3. Return the Score value from that matching entry
+4. Consider context: successful vs unsuccessful, location on field, pressure situation, and match the subcategory if relevant
+5. Return ONLY the numerical score value from the matching entry (e.g., 0.0672, -0.0054, 0.012)
+6. If the entry has a score field, use that value directly
+7. If no good match exists or score is N/A, return 0`;
 
         const userPrompt = `Action Type: ${action.action_type}
 Action Description: ${action.action_description}
 
-What is the appropriate R90 score for this action? Return only the numerical score.`;
+What is the R90 score for this action? Find the matching R90 rating entry and return its score value.`;
 
         // Call Lovable AI
         const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
@@ -91,8 +93,7 @@ What is the appropriate R90 score for this action? Return only the numerical sco
             messages: [
               { role: 'system', content: systemPrompt },
               { role: 'user', content: userPrompt }
-            ],
-            temperature: 0.3,
+            ]
           }),
         });
 

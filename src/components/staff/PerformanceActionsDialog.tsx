@@ -445,27 +445,6 @@ export const PerformanceActionsDialog = ({
                   onChange={(e) => handleActionTypeChange(e.target.value)}
                   placeholder="Select or type new action type"
                 />
-                {previousScores.length > 0 && (
-                  <div className="text-[10px] font-medium" style={{ color: 'hsl(43, 49%, 61%)' }}>
-                    <span className="mr-1">Previous:</span>
-                    {previousScores.map((item, idx) => (
-                      <Tooltip key={idx}>
-                        <TooltipTrigger asChild>
-                          <button
-                            type="button"
-                            className="hover:underline cursor-pointer"
-                            style={{ color: 'hsl(43, 49%, 61%)' }}
-                          >
-                            {item.score.toFixed(5)}{idx < previousScores.length - 1 ? ", " : ""}
-                          </button>
-                        </TooltipTrigger>
-                        <TooltipContent className="max-w-xs">
-                          <p className="text-xs">{item.description}</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    ))}
-                  </div>
-                )}
               </div>
               <div className="space-y-2 col-span-2 md:col-span-3">
                 <Label htmlFor="action_description">Action Description *</Label>
@@ -486,6 +465,29 @@ export const PerformanceActionsDialog = ({
                   placeholder="Additional notes or coaching points"
                   rows={2}
                 />
+                {previousScores.length > 0 && (
+                  <div className="text-[10px] mt-1 p-2 rounded bg-muted/50 font-medium" style={{ color: 'hsl(43, 49%, 61%)' }}>
+                    <div className="mb-1 font-semibold">Related scores in this category:</div>
+                    <div className="flex flex-wrap gap-1">
+                      {previousScores.map((item, idx) => (
+                        <Tooltip key={idx}>
+                          <TooltipTrigger asChild>
+                            <button
+                              type="button"
+                              className="hover:underline cursor-pointer px-1 py-0.5 rounded bg-background"
+                              style={{ color: 'hsl(43, 49%, 61%)' }}
+                            >
+                              {item.score.toFixed(5)}
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent className="max-w-xs">
+                            <p className="text-xs">{item.description}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
               <Button onClick={handleAddAction} disabled={loading} className="mt-4">

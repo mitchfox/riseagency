@@ -1213,27 +1213,6 @@ export const CreatePerformanceReportDialog = ({
                       placeholder="Select or type new"
                       className="text-sm"
                     />
-                    {previousScores[index] && (
-                      <div className="text-[10px] mt-1 font-medium" style={{ color: 'hsl(43, 49%, 61%)' }}>
-                        <span className="mr-1">Previous:</span>
-                        {previousScores[index].map((item, idx) => (
-                          <Tooltip key={idx}>
-                            <TooltipTrigger asChild>
-                              <button
-                                type="button"
-                                className="hover:underline cursor-pointer"
-                                style={{ color: 'hsl(43, 49%, 61%)' }}
-                              >
-                                {item.score.toFixed(5)}{idx < previousScores[index].length - 1 ? ", " : ""}
-                              </button>
-                            </TooltipTrigger>
-                            <TooltipContent className="max-w-xs">
-                              <p className="text-xs">{item.description}</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        ))}
-                      </div>
-                    )}
                   </div>
                   
                   <div>
@@ -1256,6 +1235,29 @@ export const CreatePerformanceReportDialog = ({
                       className="text-sm min-h-[60px]"
                       rows={2}
                     />
+                    {previousScores[index] && (
+                      <div className="text-[10px] mt-1 p-2 rounded bg-muted/50 font-medium" style={{ color: 'hsl(43, 49%, 61%)' }}>
+                        <div className="mb-1 font-semibold">Related scores in this category:</div>
+                        <div className="flex flex-wrap gap-1">
+                          {previousScores[index].map((item, idx) => (
+                            <Tooltip key={idx}>
+                              <TooltipTrigger asChild>
+                                <button
+                                  type="button"
+                                  className="hover:underline cursor-pointer px-1 py-0.5 rounded bg-background"
+                                  style={{ color: 'hsl(43, 49%, 61%)' }}
+                                >
+                                  {item.score.toFixed(5)}
+                                </button>
+                              </TooltipTrigger>
+                              <TooltipContent className="max-w-xs">
+                                <p className="text-xs">{item.description}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
@@ -1306,26 +1308,6 @@ export const CreatePerformanceReportDialog = ({
                           placeholder="Select or type"
                           className="w-40 text-sm"
                         />
-                        {previousScores[index] && (
-                          <div className="text-[10px] font-medium inline-flex flex-wrap gap-x-1" style={{ color: 'hsl(43, 49%, 61%)' }}>
-                            {previousScores[index].map((item, idx) => (
-                              <Tooltip key={idx}>
-                                <TooltipTrigger asChild>
-                                  <button
-                                    type="button"
-                                    className="hover:underline cursor-pointer"
-                                    style={{ color: 'hsl(43, 49%, 61%)' }}
-                                  >
-                                    {item.score.toFixed(5)}{idx < previousScores[index].length - 1 ? "," : ""}
-                                  </button>
-                                </TooltipTrigger>
-                                <TooltipContent className="max-w-xs">
-                                  <p className="text-xs">{item.description}</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            ))}
-                          </div>
-                        )}
                       </td>
                       <td className="p-2">
                         <Textarea
@@ -1344,6 +1326,29 @@ export const CreatePerformanceReportDialog = ({
                           className="min-w-[140px] min-h-[40px] text-sm"
                           rows={1}
                         />
+                        {previousScores[index] && (
+                          <div className="text-[10px] mt-1 p-1 rounded bg-muted/50 font-medium" style={{ color: 'hsl(43, 49%, 61%)' }}>
+                            <div className="mb-0.5 font-semibold text-[9px]">Related:</div>
+                            <div className="flex flex-wrap gap-0.5">
+                              {previousScores[index].map((item, idx) => (
+                                <Tooltip key={idx}>
+                                  <TooltipTrigger asChild>
+                                    <button
+                                      type="button"
+                                      className="hover:underline cursor-pointer px-1 py-0.5 rounded bg-background text-[9px]"
+                                      style={{ color: 'hsl(43, 49%, 61%)' }}
+                                    >
+                                      {item.score.toFixed(5)}
+                                    </button>
+                                  </TooltipTrigger>
+                                  <TooltipContent className="max-w-xs">
+                                    <p className="text-xs">{item.description}</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </td>
                       <td className="p-2">
                         <div className="flex gap-1">
