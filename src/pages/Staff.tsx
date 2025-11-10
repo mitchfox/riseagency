@@ -200,13 +200,13 @@ const Staff = () => {
         .from('players')
         .select('id, name, position, club')
         .ilike('name', searchTerm)
-        .limit(5);
+        .limit(10);
 
       players?.forEach(player => {
         results.push({
           id: player.id,
           title: player.name,
-          description: `${player.position} - ${player.club || 'No club'}`,
+          description: `${player.position}${player.club ? ` at ${player.club}` : ''}`,
           section: 'Player Management',
           sectionId: 'players',
           type: 'player'
@@ -224,7 +224,7 @@ const Staff = () => {
         results.push({
           id: update.id,
           title: update.title,
-          description: update.content?.substring(0, 100) + '...',
+          description: update.content?.substring(0, 80) + '...',
           section: 'Player Updates',
           sectionId: 'updates',
           type: 'update'
@@ -242,7 +242,7 @@ const Staff = () => {
         results.push({
           id: blog.id,
           title: blog.title,
-          description: blog.excerpt,
+          description: blog.excerpt?.substring(0, 80),
           section: 'News Articles',
           sectionId: 'blog',
           type: 'blog'
@@ -278,7 +278,7 @@ const Staff = () => {
         results.push({
           id: prospect.id,
           title: prospect.name,
-          description: `${prospect.position || 'Unknown'} - ${prospect.current_club || 'No club'}`,
+          description: `${prospect.position || 'Unknown'}${prospect.current_club ? ` at ${prospect.current_club}` : ''}`,
           section: 'Recruitment',
           sectionId: 'recruitment',
           type: 'prospect'
@@ -296,7 +296,7 @@ const Staff = () => {
         results.push({
           id: invoice.id,
           title: invoice.invoice_number,
-          description: `${invoice.description || ''} - ${invoice.amount}`,
+          description: `${invoice.description || ''} - €${invoice.amount}`,
           section: 'Invoices',
           sectionId: 'invoices',
           type: 'invoice'
@@ -599,69 +599,81 @@ const Staff = () => {
         {/* Quick Search Command Dialog */}
         <CommandDialog open={sidebarSearchOpen} onOpenChange={setSidebarSearchOpen}>
           <CommandInput 
-            placeholder="Search all content..." 
-            onValueChange={(value) => performGlobalSearch(value)}
+            placeholder="Search players, updates, content..." 
+            onValueChange={(value) => {
+              // Debounce search
+              const timeoutId = setTimeout(() => performGlobalSearch(value), 300);
+              return () => clearTimeout(timeoutId);
+            }}
           />
           <CommandList>
             {searchLoading ? (
               <div className="py-6 text-center text-sm text-muted-foreground">Searching...</div>
-            ) : searchResults.length === 0 ? (
-              <CommandEmpty>No results found. Try searching for players, updates, blog posts, or other content.</CommandEmpty>
             ) : (
               <>
-                <CommandGroup heading="Search Results">
-                  {searchResults.map((result) => (
-                    <CommandItem
-                      key={`${result.type}-${result.id}`}
-                      onSelect={() => {
-                        handleSectionToggle(result.sectionId as any);
-                        setExpandedCategory(
-                          categories.find(c => c.sections.some(s => s.id === result.sectionId))?.id || null
-                        );
-                        setSidebarSearchOpen(false);
-                        toast.success(`Opened ${result.section}`);
-                      }}
-                    >
-                      <div className="flex flex-col gap-1 flex-1">
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium">{result.title}</span>
-                          <span className="text-xs text-muted-foreground">in {result.section}</span>
+                {searchResults.length > 0 && (
+                  <CommandGroup heading={`Found ${searchResults.length} result${searchResults.length !== 1 ? 's' : ''}`}>
+                    {searchResults.map((result) => (
+                      <CommandItem
+                        key={`${result.type}-${result.id}`}
+                        onSelect={() => {
+                          handleSectionToggle(result.sectionId as any);
+                          setExpandedCategory(
+                            categories.find(c => c.sections.some(s => s.id === result.sectionId))?.id || null
+                          );
+                          setSidebarSearchOpen(false);
+                          toast.success(`Opening ${result.section}`);
+                        }}
+                        className="cursor-pointer"
+                      >
+                        <div className="flex flex-col gap-1 flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium">{result.title}</span>
+                            <span className="text-xs px-1.5 py-0.5 rounded bg-primary/10 text-primary">{result.section}</span>
+                          </div>
+                          {result.description && (
+                            <span className="text-xs text-muted-foreground line-clamp-1">{result.description}</span>
+                          )}
                         </div>
-                        {result.description && (
-                          <span className="text-xs text-muted-foreground">{result.description}</span>
-                        )}
-                      </div>
-                    </CommandItem>
-                  ))}
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                )}
+                
+                {searchResults.length === 0 && (
+                  <CommandEmpty>
+                    {searchLoading ? 'Searching...' : 'No results found. Try searching for players, updates, or other content.'}
+                  </CommandEmpty>
+                )}
+                
+                <CommandGroup heading="Jump to Section">
+                  {categories.flatMap(category => 
+                    category.sections.map((section) => {
+                      const Icon = section.icon;
+                      return (
+                        <CommandItem
+                          key={section.id}
+                          onSelect={() => {
+                            if (category.locked) {
+                              toast.error("You don't have permission to access this section");
+                              return;
+                            }
+                            handleSectionToggle(section.id as any);
+                            setExpandedCategory(category.id);
+                            setSidebarSearchOpen(false);
+                          }}
+                          disabled={category.locked}
+                          className="cursor-pointer"
+                        >
+                          <Icon className="mr-2 h-4 w-4" />
+                          <span>{section.title}</span>
+                        </CommandItem>
+                      );
+                    })
+                  )}
                 </CommandGroup>
               </>
             )}
-            
-            <CommandGroup heading="Sections">
-              {categories.flatMap(category => 
-                category.sections.map((section) => {
-                  const Icon = section.icon;
-                  return (
-                    <CommandItem
-                      key={section.id}
-                      onSelect={() => {
-                        if (category.locked) {
-                          toast.error("You don't have permission to access this section");
-                          return;
-                        }
-                        handleSectionToggle(section.id as any);
-                        setExpandedCategory(category.id);
-                        setSidebarSearchOpen(false);
-                      }}
-                      disabled={category.locked}
-                    >
-                      <Icon className="mr-2 h-4 w-4" />
-                      <span>{section.title}</span>
-                    </CommandItem>
-                  );
-                })
-              )}
-            </CommandGroup>
           </CommandList>
         </CommandDialog>
 
