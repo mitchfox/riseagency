@@ -95,11 +95,13 @@ export const PerformanceActionsDialog = ({
     
     // First, try to get category from database mapping
     try {
-      const { data: mapping } = await supabase
+      const { data: mappings } = await supabase
         .from('action_r90_category_mappings')
         .select('r90_category, r90_subcategory')
-        .eq('action_type', action.action_type.trim())
-        .maybeSingle();
+        .eq('action_type', action.action_type.trim());
+      
+      // Prioritize specific subcategory mappings over wildcard mappings
+      const mapping = mappings?.find(m => m.r90_subcategory !== null) || mappings?.[0];
       
       if (mapping?.r90_category) {
         console.log(`Using mapped category: ${action.action_type} -> ${mapping.r90_category}${mapping.r90_subcategory ? ' > ' + mapping.r90_subcategory : ''}`);
@@ -229,11 +231,13 @@ export const PerformanceActionsDialog = ({
     if (value) {
       // Fetch R90 category mapping for this action type
       try {
-        const { data: mapping } = await supabase
+        const { data: mappings } = await supabase
           .from('action_r90_category_mappings')
           .select('r90_category, r90_subcategory')
-          .eq('action_type', value)
-          .maybeSingle();
+          .eq('action_type', value);
+        
+        // Prioritize specific subcategory mappings over wildcard mappings
+        const mapping = mappings?.find(m => m.r90_subcategory !== null) || mappings?.[0];
         
         if (mapping?.r90_category) {
           await fetchCategoryScores(mapping.r90_category);

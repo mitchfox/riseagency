@@ -111,12 +111,15 @@ export const CreatePerformanceReportDialog = ({
     }
     
     // First, try to get category from database mapping
+    // Check for both exact subcategory matches and wildcard (null subcategory) matches
     try {
-      const { data: mapping } = await supabase
+      const { data: mappings } = await supabase
         .from('action_r90_category_mappings')
-        .select('r90_category')
-        .eq('action_type', action.action_type.trim())
-        .maybeSingle();
+        .select('r90_category, r90_subcategory')
+        .eq('action_type', action.action_type.trim());
+      
+      // Prioritize specific subcategory mappings over wildcard mappings
+      const mapping = mappings?.find(m => m.r90_subcategory !== null) || mappings?.[0];
       
       if (mapping?.r90_category) {
         console.log(`Using mapped category: ${action.action_type} -> ${mapping.r90_category}`);
@@ -385,11 +388,13 @@ export const CreatePerformanceReportDialog = ({
         actionsData.forEach(async (action, index) => {
           if (action.action_type) {
             try {
-              const { data: mapping } = await supabase
+              const { data: mappings } = await supabase
                 .from('action_r90_category_mappings')
-                .select('r90_category')
-                .eq('action_type', action.action_type)
-                .maybeSingle();
+                .select('r90_category, r90_subcategory')
+                .eq('action_type', action.action_type);
+              
+              // Prioritize specific subcategory mappings over wildcard mappings
+              const mapping = mappings?.find(m => m.r90_subcategory !== null) || mappings?.[0];
               
               if (mapping?.r90_category) {
                 await fetchCategoryScores(index, mapping.r90_category);
@@ -487,11 +492,13 @@ export const CreatePerformanceReportDialog = ({
       
       // Fetch R90 category mapping for this action type
       try {
-        const { data: mapping } = await supabase
+        const { data: mappings } = await supabase
           .from('action_r90_category_mappings')
           .select('r90_category, r90_subcategory')
-          .eq('action_type', trimmedValue)
-          .maybeSingle();
+          .eq('action_type', trimmedValue);
+        
+        // Prioritize specific subcategory mappings over wildcard mappings
+        const mapping = mappings?.find(m => m.r90_subcategory !== null) || mappings?.[0];
         
         if (mapping?.r90_category) {
           console.log(`Found category mapping: ${trimmedValue} -> ${mapping.r90_category}${mapping.r90_subcategory ? ' > ' + mapping.r90_subcategory : ''}`);

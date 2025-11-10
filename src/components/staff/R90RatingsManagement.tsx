@@ -728,9 +728,9 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
                           {mappings.map((mapping) => (
                             <div key={mapping.id} className="flex items-center gap-2 text-sm bg-accent/20 p-2 rounded">
                               <Badge variant="secondary">{mapping.category}</Badge>
-                              {mapping.subcategory && (
-                                <Badge variant="outline">{mapping.subcategory}</Badge>
-                              )}
+                              <Badge variant="outline" className={!mapping.subcategory ? "text-muted-foreground italic" : ""}>
+                                {mapping.subcategory || "All subcategories"}
+                              </Badge>
                               <Button
                                 size="sm"
                                 variant="ghost"
@@ -748,7 +748,7 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
                       {isAddingNew && (
                         <div className="space-y-2 pt-2 border-t">
                           <div className="text-xs text-muted-foreground">
-                            Add R90 Subcategory Mapping
+                            Add R90 Category Mapping (leave subcategory blank for all subcategories)
                           </div>
                           <div className="flex gap-2 items-end">
                             <div className="flex-1">
@@ -779,9 +779,12 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
                                   onValueChange={(value) => setNewMappingSubcategory(value === '__none__' ? '' : value)}
                                 >
                                   <SelectTrigger>
-                                    <SelectValue placeholder="Select subcategory *" />
+                                    <SelectValue placeholder="All subcategories (optional)" />
                                   </SelectTrigger>
                                   <SelectContent>
+                                    <SelectItem value="__none__">
+                                      <span className="text-muted-foreground italic">All subcategories</span>
+                                    </SelectItem>
                                     {SUBCATEGORY_OPTIONS[newMappingCategory].map((sub) => (
                                       <SelectItem key={sub} value={sub}>
                                         {sub}
@@ -795,7 +798,7 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
                             <Button 
                               onClick={() => handleAddMapping(actionType)} 
                               size="sm"
-                              disabled={!newMappingCategory || (SUBCATEGORY_OPTIONS[newMappingCategory] && !newMappingSubcategory)}
+                              disabled={!newMappingCategory}
                             >
                               Add
                             </Button>
