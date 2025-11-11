@@ -143,32 +143,51 @@ Return ONLY a valid JSON array with this exact structure:
     const aiResult = await aiResponse.json();
     const aiContent = aiResult.choices[0]?.message?.content || '';
     
-    console.log('Full AI Response (first 500 chars):', aiContent.substring(0, 500));
+    console.log('Full AI Response length:', aiContent.length);
+    console.log('Response start:', aiContent.substring(0, 100));
+    console.log('Response end:', aiContent.substring(aiContent.length - 100));
 
-    // Parse the JSON response - handle markdown code blocks
+    // Parse the JSON response with multiple strategies
     let mappings;
     try {
       let jsonStr = aiContent.trim();
+      let parseStrategy = 'direct';
       
-      // Remove markdown code blocks using regex
-      // Matches ```json\n...\n``` or ```\n...\n```
-      const codeBlockMatch = jsonStr.match(/^```(?:json)?\s*\n([\s\S]*?)\n```\s*$/);
+      // Strategy 1: Try lenient regex to remove markdown code blocks
+      const codeBlockMatch = jsonStr.match(/```(?:json)?\s*([\s\S]*?)```/);
       if (codeBlockMatch) {
         jsonStr = codeBlockMatch[1].trim();
-        console.log('Extracted from markdown code block');
+        parseStrategy = 'regex-extraction';
+        console.log('✓ Extracted JSON using regex');
       }
       
-      console.log('JSON string to parse (first 200 chars):', jsonStr.substring(0, 200));
+      // Strategy 2: If still starts with backticks, try finding JSON array bounds
+      if (jsonStr.startsWith('```') || jsonStr.includes('```')) {
+        const firstBracket = jsonStr.indexOf('[');
+        const lastBracket = jsonStr.lastIndexOf(']');
+        
+        if (firstBracket !== -1 && lastBracket !== -1 && lastBracket > firstBracket) {
+          jsonStr = jsonStr.substring(firstBracket, lastBracket + 1);
+          parseStrategy = 'bracket-extraction';
+          console.log('✓ Extracted JSON using bracket bounds');
+        }
+      }
+      
+      console.log('Parse strategy:', parseStrategy);
+      console.log('JSON to parse (first 200 chars):', jsonStr.substring(0, 200));
+      
       mappings = JSON.parse(jsonStr);
       
       if (!Array.isArray(mappings)) {
         throw new Error('AI response is not an array');
       }
       
-      console.log('Successfully parsed', mappings.length, 'mappings');
+      console.log('✓ Successfully parsed', mappings.length, 'mappings');
     } catch (parseError: any) {
-      console.error('Failed to parse AI response:', parseError);
-      console.error('Raw AI content (first 1000 chars):', aiContent.substring(0, 1000));
+      console.error('❌ Failed to parse AI response:', parseError.message);
+      console.error('Response length:', aiContent.length);
+      console.error('First 500 chars:', aiContent.substring(0, 500));
+      console.error('Last 500 chars:', aiContent.substring(Math.max(0, aiContent.length - 500)));
       throw new Error(`Failed to parse AI mapping response: ${parseError.message}`);
     }
 
