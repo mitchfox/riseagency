@@ -57,7 +57,15 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
   
   // Action type mapping state
   const [actionTypes, setActionTypes] = useState<string[]>([]);
-  const [actionMappings, setActionMappings] = useState<Record<string, Array<{ id: string, category: string, subcategory?: string, selected_rating_ids?: string[] }>>>({});
+  
+  type ActionMapping = { 
+    id: string;
+    category: string;
+    subcategory?: string;
+    selected_rating_ids?: string[];
+  };
+  
+  const [actionMappings, setActionMappings] = useState<Record<string, ActionMapping[]>>({});
   const [loadingMappings, setLoadingMappings] = useState(false);
   const [addingMappingFor, setAddingMappingFor] = useState<string | null>(null);
   const [newMappingCategory, setNewMappingCategory] = useState('');
@@ -125,7 +133,7 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
       if (mappingsError) throw mappingsError;
 
       // Create a map of action_type -> array of mappings
-      const mappingsMap: Record<string, Array<{ id: string, category: string, subcategory?: string, sub_subcategory?: string }>> = {};
+      const mappingsMap: Record<string, ActionMapping[]> = {};
       mappingsData?.forEach(m => {
         if (!mappingsMap[m.action_type]) {
           mappingsMap[m.action_type] = [];
