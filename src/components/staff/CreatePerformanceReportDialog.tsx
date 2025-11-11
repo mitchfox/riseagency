@@ -118,7 +118,7 @@ export const CreatePerformanceReportDialog = ({
     try {
       const { data: mappings } = await supabase
         .from('action_r90_category_mappings')
-        .select('r90_category, r90_subcategory, r90_sub_subcategory')
+        .select('r90_category, r90_subcategory, selected_rating_ids')
         .eq('action_type', action.action_type.trim());
       
       // Prioritize specific subcategory mappings over wildcard mappings
@@ -393,16 +393,16 @@ export const CreatePerformanceReportDialog = ({
             try {
               const { data: mappings } = await supabase
                 .from('action_r90_category_mappings')
-                .select('r90_category, r90_subcategory, r90_sub_subcategory')
+                .select('r90_category, r90_subcategory, selected_rating_ids')
                 .eq('action_type', action.action_type);
               
-              // Prioritize most specific mapping (with sub-subcategory, then subcategory, then category-only)
-              const mapping = mappings?.find(m => m.r90_sub_subcategory !== null) || 
+              // Prioritize most specific mapping (with selected ratings, then subcategory, then category-only)
+              const mapping = mappings?.find(m => m.selected_rating_ids && m.selected_rating_ids.length > 0) || 
                              mappings?.find(m => m.r90_subcategory !== null) || 
                              mappings?.[0];
               
               if (mapping?.r90_category) {
-                await fetchCategoryScores(index, mapping.r90_category, mapping.r90_subcategory, mapping.r90_sub_subcategory);
+                await fetchCategoryScores(index, mapping.r90_category, mapping.r90_subcategory, mapping.selected_rating_ids || null);
               } else {
                 // Fallback to keyword-based detection
                 const category = getR90CategoryFromAction(action.action_type, action.action_description || '');
@@ -499,20 +499,20 @@ export const CreatePerformanceReportDialog = ({
       try {
         const { data: mappings } = await supabase
           .from('action_r90_category_mappings')
-          .select('r90_category, r90_subcategory, r90_sub_subcategory')
+          .select('r90_category, r90_subcategory, selected_rating_ids')
           .eq('action_type', trimmedValue);
         
-        // Prioritize most specific mapping (with sub-subcategory, then subcategory, then category-only)
-        const mapping = mappings?.find(m => m.r90_sub_subcategory !== null) || 
+        // Prioritize most specific mapping (with selected ratings, then subcategory, then category-only)
+        const mapping = mappings?.find(m => m.selected_rating_ids && m.selected_rating_ids.length > 0) || 
                        mappings?.find(m => m.r90_subcategory !== null) || 
                        mappings?.[0];
         
         if (mapping?.r90_category) {
-          const mappingPath = `${mapping.r90_category}${mapping.r90_subcategory ? ' > ' + mapping.r90_subcategory : ''}${mapping.r90_sub_subcategory ? ' > ' + mapping.r90_sub_subcategory : ''}`;
+          const mappingPath = `${mapping.r90_category}${mapping.r90_subcategory ? ' > ' + mapping.r90_subcategory : ''}${mapping.selected_rating_ids?.length ? ` (${mapping.selected_rating_ids.length} ratings)` : ''}`;
           console.log(`Found category mapping: ${trimmedValue} -> ${mappingPath}`);
           
           // Fetch all scores for this R90 category hierarchy
-          await fetchCategoryScores(index, mapping.r90_category, mapping.r90_subcategory, mapping.r90_sub_subcategory);
+          await fetchCategoryScores(index, mapping.r90_category, mapping.r90_subcategory, mapping.selected_rating_ids || null);
           
           toast.success(`Suggested R90 category: ${mappingPath}`, {
             description: 'Scores filtered by this category hierarchy'
@@ -539,9 +539,41 @@ export const CreatePerformanceReportDialog = ({
       .filter(word => word.length > 3 && !commonWords.includes(word));
   };
 
-  const fetchCategoryScores = async (actionIndex: number, category: string, subcategory: string | null = null, subSubcategory: string | null = null) => {
+  const fetchCategoryScores = async (actionIndex: number, category: string, subcategory: string | null = null, selectedRatingIds: string[] | null = null) => {
     try {
-      // Build query based on mapping specificity
+      // If specific rating IDs are selected, fetch only those
+      if (selectedRatingIds && selectedRatingIds.length > 0) {
+        const { data: r90Data, error: r90Error } = await supabase
+          .from("r90_ratings")
+          .select("score, description, title, category, subcategory")
+          .in("id", selectedRatingIds)
+          .not("score", "is", null);
+
+        if (r90Error) {
+          console.error("Error fetching R90 scores:", r90Error);
+          throw r90Error;
+        }
+
+        if (r90Data && r90Data.length > 0) {
+          const scores = r90Data.map(item => ({
+            score: item.score,
+            description: item.description || item.title || ""
+          }));
+          
+          setPreviousScores(prev => ({
+            ...prev,
+            [actionIndex]: scores
+          }));
+        } else {
+          setPreviousScores(prev => ({
+            ...prev,
+            [actionIndex]: []
+          }));
+        }
+        return;
+      }
+
+      // Otherwise, build query based on mapping specificity
       let query = supabase
         .from("r90_ratings")
         .select("score, description, title, category, subcategory")
@@ -551,11 +583,6 @@ export const CreatePerformanceReportDialog = ({
       // If subcategory is specified in mapping, filter by it
       if (subcategory) {
         query = query.eq("subcategory", subcategory);
-        
-        // If sub-subcategory is also specified, filter by tags
-        if (subSubcategory) {
-          query = query.contains("tags", [subSubcategory]);
-        }
       }
 
       const { data: r90Data, error: r90Error } = await query;
