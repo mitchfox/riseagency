@@ -59,7 +59,7 @@ export const CreatePerformanceReportDialog = ({
   const [isEditMode, setIsEditMode] = useState(false);
   const [playerClub, setPlayerClub] = useState<string>("");
   const [actionTypes, setActionTypes] = useState<string[]>([]);
-  const [previousScores, setPreviousScores] = useState<Record<number, Array<{score: number, description: string}>>>({});
+  const [previousScores, setPreviousScores] = useState<Record<number, Array<{score: number, title: string, description: string}>>>({});
   const [expandedScores, setExpandedScores] = useState<Set<number>>(new Set());
   const [selectedScores, setSelectedScores] = useState<Record<number, Set<number>>>({}); // actionIndex -> Set of score indices
   const [isR90ViewerOpen, setIsR90ViewerOpen] = useState(false);
@@ -557,7 +557,8 @@ export const CreatePerformanceReportDialog = ({
         if (r90Data && r90Data.length > 0) {
           const scores = r90Data.map(item => ({
             score: item.score,
-            description: item.description || item.title || ""
+            title: item.title || "",
+            description: item.description || ""
           }));
           
           setPreviousScores(prev => ({
@@ -596,7 +597,8 @@ export const CreatePerformanceReportDialog = ({
         // Map R90 ratings to the format expected by the UI
         const scores = r90Data.map(item => ({
           score: item.score,
-          description: item.description || item.title || ""
+          title: item.title || "",
+          description: item.description || ""
         }));
         
         setPreviousScores(prev => ({
@@ -1563,7 +1565,7 @@ export const CreatePerformanceReportDialog = ({
                                       className="mt-0.5"
                                     />
                                     <label className="font-mono flex-1 cursor-pointer">
-                                      {item.description} {item.score.toFixed(4)}
+                                      {item.title} {item.score.toFixed(4)}
                                     </label>
                                   </div>
                                 );
