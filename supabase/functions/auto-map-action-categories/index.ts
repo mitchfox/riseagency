@@ -143,26 +143,22 @@ Return ONLY a valid JSON array with this exact structure:
     const aiResult = await aiResponse.json();
     const aiContent = aiResult.choices[0]?.message?.content || '';
     
-    console.log('Full AI Response:', aiContent);
+    console.log('Full AI Response (first 500 chars):', aiContent.substring(0, 500));
 
-    // Parse the JSON response
+    // Parse the JSON response - handle markdown code blocks
     let mappings;
     try {
       let jsonStr = aiContent.trim();
       
-      // Remove markdown code blocks if present
-      if (jsonStr.startsWith('```')) {
-        // Find the first newline after the opening ```
-        const firstNewline = jsonStr.indexOf('\n');
-        // Find the closing ```
-        const lastBackticks = jsonStr.lastIndexOf('```');
-        
-        if (firstNewline !== -1 && lastBackticks > firstNewline) {
-          jsonStr = jsonStr.substring(firstNewline + 1, lastBackticks).trim();
-        }
+      // Remove markdown code blocks using regex
+      // Matches ```json\n...\n``` or ```\n...\n```
+      const codeBlockMatch = jsonStr.match(/^```(?:json)?\s*\n([\s\S]*?)\n```\s*$/);
+      if (codeBlockMatch) {
+        jsonStr = codeBlockMatch[1].trim();
+        console.log('Extracted from markdown code block');
       }
       
-      console.log('Attempting to parse JSON:', jsonStr.substring(0, 200));
+      console.log('JSON string to parse (first 200 chars):', jsonStr.substring(0, 200));
       mappings = JSON.parse(jsonStr);
       
       if (!Array.isArray(mappings)) {
@@ -172,7 +168,7 @@ Return ONLY a valid JSON array with this exact structure:
       console.log('Successfully parsed', mappings.length, 'mappings');
     } catch (parseError: any) {
       console.error('Failed to parse AI response:', parseError);
-      console.error('AI content that failed to parse:', aiContent);
+      console.error('Raw AI content (first 1000 chars):', aiContent.substring(0, 1000));
       throw new Error(`Failed to parse AI mapping response: ${parseError.message}`);
     }
 
