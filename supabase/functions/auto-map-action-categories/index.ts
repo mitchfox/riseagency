@@ -130,7 +130,7 @@ Return ONLY a valid JSON array with this exact structure:
           }
         ],
         temperature: 0.3,
-        max_tokens: 4000
+        max_tokens: 16000
       })
     });
 
@@ -161,15 +161,28 @@ Return ONLY a valid JSON array with this exact structure:
         console.log('✓ Extracted JSON using regex');
       }
       
-      // Strategy 2: If still starts with backticks, try finding JSON array bounds
-      if (jsonStr.startsWith('```') || jsonStr.includes('```')) {
-        const firstBracket = jsonStr.indexOf('[');
-        const lastBracket = jsonStr.lastIndexOf(']');
+      // Strategy 2: Try finding JSON array bounds (handles incomplete markdown)
+      const firstBracket = jsonStr.indexOf('[');
+      const lastBracket = jsonStr.lastIndexOf(']');
+      
+      if (firstBracket !== -1 && lastBracket > firstBracket) {
+        jsonStr = jsonStr.substring(firstBracket, lastBracket + 1);
+        parseStrategy = parseStrategy === 'regex-extraction' ? 'regex-extraction' : 'bracket-extraction';
+        console.log('✓ Extracted JSON array using bracket bounds');
+      } else if (firstBracket !== -1) {
+        // Response might be truncated - try to salvage it
+        console.warn('⚠️ Response appears truncated, attempting to fix...');
+        jsonStr = jsonStr.substring(firstBracket);
+        // Try to close incomplete JSON structures
+        const openBraces = (jsonStr.match(/{/g) || []).length;
+        const closeBraces = (jsonStr.match(/}/g) || []).length;
+        const missingBraces = openBraces - closeBraces;
         
-        if (firstBracket !== -1 && lastBracket !== -1 && lastBracket > firstBracket) {
-          jsonStr = jsonStr.substring(firstBracket, lastBracket + 1);
-          parseStrategy = 'bracket-extraction';
-          console.log('✓ Extracted JSON using bracket bounds');
+        if (missingBraces > 0) {
+          // Add missing closing braces and bracket
+          jsonStr += '\n' + '  }'.repeat(missingBraces) + '\n]';
+          parseStrategy = 'truncation-recovery';
+          console.log('✓ Attempted to recover truncated response');
         }
       }
       
