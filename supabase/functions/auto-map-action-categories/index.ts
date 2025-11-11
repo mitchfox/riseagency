@@ -143,18 +143,25 @@ Return ONLY a valid JSON array with this exact structure:
     const aiResult = await aiResponse.json();
     const aiContent = aiResult.choices[0]?.message?.content || '';
     
-    console.log('AI Response:', aiContent.substring(0, 500));
+    console.log('Full AI Response:', aiContent);
 
     // Parse the JSON response
     let mappings;
     try {
       // Try to extract JSON from markdown code blocks if present
       const jsonMatch = aiContent.match(/```(?:json)?\s*(\[[\s\S]*?\])\s*```/);
-      const jsonStr = jsonMatch ? jsonMatch[1] : aiContent;
+      const jsonStr = jsonMatch ? jsonMatch[1] : aiContent.trim();
+      
+      console.log('Attempting to parse JSON:', jsonStr.substring(0, 200));
       mappings = JSON.parse(jsonStr);
+      
+      if (!Array.isArray(mappings)) {
+        throw new Error('AI response is not an array');
+      }
     } catch (parseError) {
       console.error('Failed to parse AI response:', parseError);
-      throw new Error('Failed to parse AI mapping response');
+      console.error('AI content that failed to parse:', aiContent);
+      throw new Error(`Failed to parse AI mapping response: ${parseError.message}`);
     }
 
     console.log('Parsed mappings:', mappings.length, 'items');
