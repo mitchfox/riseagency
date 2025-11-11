@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -501,26 +502,35 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-6xl h-[90vh] flex flex-col">
         <DialogHeader>
-          <div className="flex items-center justify-between">
-            <DialogTitle>Manage R90 Ratings</DialogTitle>
-            <div className="flex gap-2">
-              <Button 
-                onClick={handleSplitBundledRatings} 
-                variant="outline" 
-                size="sm"
-                disabled={isSplitting}
-              >
-                {isSplitting ? 'Splitting...' : 'Split Bundled Ratings'}
-              </Button>
-              <Button onClick={handleAddNew} size="sm">
-                <Plus className="w-4 h-4 mr-2" />
-                Add New Rating
-              </Button>
-            </div>
-          </div>
+          <DialogTitle>Manage R90 Ratings & Action Mappings</DialogTitle>
         </DialogHeader>
 
-        <div className="flex-1 min-h-0 flex gap-4">
+        <Accordion type="multiple" defaultValue={["ratings"]} className="flex-1 min-h-0">
+          {/* R90 Ratings Management Section */}
+          <AccordionItem value="ratings">
+            <AccordionTrigger className="text-base font-semibold hover:no-underline">
+              <div className="flex items-center gap-2">
+                <span>R90 Ratings Management</span>
+                <Badge variant="secondary">{ratings.length}</Badge>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="flex items-center justify-end gap-2 mb-4">
+                <Button 
+                  onClick={handleSplitBundledRatings} 
+                  variant="outline" 
+                  size="sm"
+                  disabled={isSplitting}
+                >
+                  {isSplitting ? 'Splitting...' : 'Split Bundled Ratings'}
+                </Button>
+                <Button onClick={handleAddNew} size="sm">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add New Rating
+                </Button>
+              </div>
+
+              <div className="flex gap-4 h-[50vh]">
           {/* List View */}
           <ScrollArea className="flex-1 pr-4">
             {loading ? (
@@ -758,33 +768,41 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
               </ScrollArea>
             </div>
           )}
-        </div>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
 
-        {/* Action Type Category Mappings */}
-        <div className="border-t pt-4 mt-4">
-          <div className="flex items-center justify-between mb-3">
-            <div>
-              <h3 className="font-semibold text-sm">Action Type Category Assignments</h3>
-              <p className="text-xs text-muted-foreground mt-1">
-                Assign action types to R90 categories to automatically suggest the right category when creating performance reports.
-              </p>
-            </div>
-            <Button
-              onClick={handleAutoMapAll}
-              disabled={isAutoMapping || loadingMappings}
-              size="sm"
-              className="ml-4"
-            >
-              <Sparkles className="w-4 h-4 mr-2" />
-              {isAutoMapping ? 'Auto-mapping...' : 'Auto-Map All'}
-            </Button>
-          </div>
+          {/* Action Type Category Mappings Section */}
+          <AccordionItem value="mappings">
+            <AccordionTrigger className="text-base font-semibold hover:no-underline">
+              <div className="flex items-center gap-2">
+                <span>Action Type Category Assignments</span>
+                <Badge variant="secondary">{actionTypes.length}</Badge>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="mb-3">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs text-muted-foreground">
+                    Assign action types to R90 categories to automatically suggest the right category when creating performance reports.
+                  </p>
+                  <Button
+                    onClick={handleAutoMapAll}
+                    disabled={isAutoMapping || loadingMappings}
+                    size="sm"
+                    className="ml-4 shrink-0"
+                  >
+                    <Sparkles className="w-4 h-4 mr-2" />
+                    {isAutoMapping ? 'Auto-mapping...' : 'Auto-Map All'}
+                  </Button>
+                </div>
+              </div>
           {loadingMappings ? (
             <div className="text-center py-4 text-sm text-muted-foreground">Loading action types...</div>
           ) : actionTypes.length === 0 ? (
             <div className="text-center py-4 text-sm text-muted-foreground">No action types found in performance reports yet.</div>
           ) : (
-            <ScrollArea className="h-96">
+            <ScrollArea className="h-[50vh]">
               <div className="space-y-3 pr-4">
                 {actionTypes.map((actionType) => {
                   const mappings = actionMappings[actionType] || [];
@@ -954,7 +972,9 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
               </div>
             </ScrollArea>
           )}
-        </div>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
       </DialogContent>
     </Dialog>
   );
