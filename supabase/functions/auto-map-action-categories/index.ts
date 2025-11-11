@@ -115,7 +115,7 @@ Return ONLY a valid JSON array with this exact structure:
   }
 ]`;
 
-    const aiResponse = await fetch('https://api.lovable.app/v1/lovable-ai/chat', {
+    const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${lovableApiKey}`,
