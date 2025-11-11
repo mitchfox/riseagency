@@ -89,7 +89,7 @@ Available R90 Categories and their structure:
 ${JSON.stringify(categoryInfo, null, 2)}
 
 Action types to map:
-${actionTypesToMap.map((type, i) => `${i + 1}. ${type}`).join('\n')}
+${actionTypesToMap.map((type: string, i: number) => `${i + 1}. ${type}`).join('\n')}
 
 For each action type, determine:
 1. The most appropriate R90 category
@@ -148,9 +148,19 @@ Return ONLY a valid JSON array with this exact structure:
     // Parse the JSON response
     let mappings;
     try {
-      // Try to extract JSON from markdown code blocks if present
-      const jsonMatch = aiContent.match(/```(?:json)?\s*(\[[\s\S]*?\])\s*```/);
-      const jsonStr = jsonMatch ? jsonMatch[1] : aiContent.trim();
+      let jsonStr = aiContent.trim();
+      
+      // Remove markdown code blocks if present
+      if (jsonStr.startsWith('```')) {
+        // Find the first newline after the opening ```
+        const firstNewline = jsonStr.indexOf('\n');
+        // Find the closing ```
+        const lastBackticks = jsonStr.lastIndexOf('```');
+        
+        if (firstNewline !== -1 && lastBackticks > firstNewline) {
+          jsonStr = jsonStr.substring(firstNewline + 1, lastBackticks).trim();
+        }
+      }
       
       console.log('Attempting to parse JSON:', jsonStr.substring(0, 200));
       mappings = JSON.parse(jsonStr);
@@ -158,7 +168,9 @@ Return ONLY a valid JSON array with this exact structure:
       if (!Array.isArray(mappings)) {
         throw new Error('AI response is not an array');
       }
-    } catch (parseError) {
+      
+      console.log('Successfully parsed', mappings.length, 'mappings');
+    } catch (parseError: any) {
       console.error('Failed to parse AI response:', parseError);
       console.error('AI content that failed to parse:', aiContent);
       throw new Error(`Failed to parse AI mapping response: ${parseError.message}`);
