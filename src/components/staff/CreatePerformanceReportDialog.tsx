@@ -74,6 +74,7 @@ export const CreatePerformanceReportDialog = ({
   const [minutesPlayed, setMinutesPlayed] = useState("");
   const [opponent, setOpponent] = useState("");
   const [result, setResult] = useState("");
+  const [performanceOverview, setPerformanceOverview] = useState("");
 
   // Function to intelligently map action type/description to R90 category
   const getR90CategoryFromAction = (actionType: string, actionDescription: string): string => {
@@ -334,6 +335,7 @@ export const CreatePerformanceReportDialog = ({
       setOpponent(analysisData.opponent || "");
       setResult(analysisData.result || "");
       setSelectedFixtureId(analysisData.fixture_id || "");
+      setPerformanceOverview(analysisData.performance_overview || "");
 
       // Populate striker stats if they exist
       if (analysisData.striker_stats) {
@@ -431,6 +433,7 @@ export const CreatePerformanceReportDialog = ({
     setOpponent("");
     setResult("");
     setSelectedFixtureId("");
+    setPerformanceOverview("");
     setShowStrikerStats(false);
     setStrikerStats({
       xGChain: "",
@@ -799,6 +802,7 @@ export const CreatePerformanceReportDialog = ({
             opponent: opponent,
             result: result || null,
             striker_stats: strikerStatsJson,
+            performance_overview: performanceOverview || null,
           })
           .eq("id", analysisId);
 
@@ -838,6 +842,7 @@ export const CreatePerformanceReportDialog = ({
             opponent: opponent,
             result: result || null,
             striker_stats: strikerStatsJson,
+            performance_overview: performanceOverview || null,
           })
           .select()
           .single();
@@ -1201,6 +1206,19 @@ export const CreatePerformanceReportDialog = ({
               </div>
             </CollapsibleContent>
           </Collapsible>
+
+          {/* Performance Overview */}
+          <div>
+            <Label htmlFor="performance-overview">Performance Overview (Optional)</Label>
+            <Textarea
+              id="performance-overview"
+              value={performanceOverview}
+              onChange={(e) => setPerformanceOverview(e.target.value)}
+              placeholder="Briefly summarize what improved, what to continue working on, key focus areas, etc."
+              rows={4}
+              className="mt-2"
+            />
+          </div>
 
           {/* Performance Actions */}
           <div>

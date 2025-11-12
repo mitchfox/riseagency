@@ -33,6 +33,7 @@ interface AnalysisDetails {
   minutes_played: number | null;
   player_name: string;
   striker_stats?: StrikerStats | null;
+  performance_overview?: string | null;
 }
 
 const PerformanceReport = () => {
@@ -92,6 +93,7 @@ const PerformanceReport = () => {
         minutes_played: analysisData.minutes_played,
         player_name: analysisData.players?.name || "Unknown Player",
         striker_stats: analysisData.striker_stats as StrikerStats | null,
+        performance_overview: analysisData.performance_overview,
       });
 
       // Fetch performance actions
@@ -323,6 +325,13 @@ const PerformanceReport = () => {
                       );
                     })}
                 </div>
+              </div>
+            )}
+
+            {analysis.performance_overview && (
+              <div className="mt-6 p-4 bg-accent/10 rounded-lg border border-border">
+                <h3 className="font-bold text-lg mb-3">Performance Overview</h3>
+                <p className="text-sm whitespace-pre-wrap">{analysis.performance_overview}</p>
               </div>
             )}
           </CardContent>
