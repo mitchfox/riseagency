@@ -13,6 +13,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { R90RatingsViewer } from "./R90RatingsViewer";
+import { formatScoreWithFrequency } from "@/lib/utils";
 
 interface CreatePerformanceReportDialogProps {
   open: boolean;
@@ -1576,7 +1577,7 @@ export const CreatePerformanceReportDialog = ({
                                       className="mt-0.5"
                                     />
                                     <label className="font-mono flex-1 cursor-pointer">
-                                      {item.title} {item.score.toFixed(4)}
+                                      {item.title} {formatScoreWithFrequency(item.score)}
                                     </label>
                                   </div>
                                 );
