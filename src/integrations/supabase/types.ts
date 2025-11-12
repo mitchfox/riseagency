@@ -1197,6 +1197,33 @@ export type Database = {
         }
         Relationships: []
       }
+      playlists: {
+        Row: {
+          clips: Json
+          created_at: string
+          id: string
+          name: string
+          player_id: string
+          updated_at: string
+        }
+        Insert: {
+          clips?: Json
+          created_at?: string
+          id?: string
+          name: string
+          player_id: string
+          updated_at?: string
+        }
+        Update: {
+          clips?: Json
+          created_at?: string
+          id?: string
+          name?: string
+          player_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string | null

@@ -12,11 +12,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { NotificationPermission } from "@/components/NotificationPermission";
 import { toast } from "sonner";
-import { FileText, Play, Download, Upload, ChevronDown, Trash2, Lock, Calendar, Trophy, TrendingUp, Eye, EyeOff, ChevronUp, ChevronDown as ChevronDownIcon } from "lucide-react";
+import { FileText, Play, Download, Upload, ChevronDown, Trash2, Lock, Calendar, Trophy, TrendingUp, Eye, EyeOff, ChevronUp, ChevronDown as ChevronDownIcon, List } from "lucide-react";
 import { ClipNameEditor } from "@/components/ClipNameEditor";
 import { addDays, format, parseISO, startOfWeek, endOfWeek, isWithinInterval } from "date-fns";
 import { SEO } from "@/components/SEO";
 import { createPerformanceReportSlug } from "@/lib/urlHelpers";
+import { PlaylistManager } from "@/components/PlaylistManager";
 
 interface Analysis {
   id: string;
@@ -89,6 +90,7 @@ const Dashboard = () => {
   const [highlightsData, setHighlightsData] = useState<any>({ matchHighlights: [], bestClips: [] });
   const [fileUploadProgress, setFileUploadProgress] = useState<Record<string, number>>({});
   const [otherAnalyses, setOtherAnalyses] = useState<any[]>([]);
+  const [playlistManagerOpen, setPlaylistManagerOpen] = useState(false);
 
   // Session color mapping with hover states
   const getSessionColor = (sessionKey: string) => {
@@ -1979,27 +1981,37 @@ const Dashboard = () => {
                             </div>
                           ) : (
                             <div className="space-y-4">
-                              <div className="flex justify-between items-center">
-                                <Button 
-                                  onClick={() => {
-                                    const input = document.createElement('input');
-                                    input.type = 'file';
-                                    input.multiple = true;
-                                    input.accept = 'video/mp4,video/quicktime,video/x-msvideo,video/*';
-                                    input.onchange = (e: any) => {
-                                      const files = e.target.files;
-                                      if (files && files.length > 0) {
-                                        handleFileUpload(files);
-                                      }
-                                    };
-                                    input.click();
-                                  }}
-                                  variant="outline"
-                                  size="sm"
-                                >
-                                  <Upload className="w-4 h-4 mr-2" />
-                                  Upload Clip{uploadProgress !== null ? 'ping...' : 's'}
-                                </Button>
+                              <div className="flex justify-between items-center gap-2">
+                                <div className="flex gap-2">
+                                  <Button 
+                                    onClick={() => {
+                                      const input = document.createElement('input');
+                                      input.type = 'file';
+                                      input.multiple = true;
+                                      input.accept = 'video/mp4,video/quicktime,video/x-msvideo,video/*';
+                                      input.onchange = (e: any) => {
+                                        const files = e.target.files;
+                                        if (files && files.length > 0) {
+                                          handleFileUpload(files);
+                                        }
+                                      };
+                                      input.click();
+                                    }}
+                                    variant="outline"
+                                    size="sm"
+                                  >
+                                    <Upload className="w-4 h-4 mr-2" />
+                                    Upload Clip{uploadProgress !== null ? 'ping...' : 's'}
+                                  </Button>
+                                  <Button
+                                    onClick={() => setPlaylistManagerOpen(true)}
+                                    variant="default"
+                                    size="sm"
+                                  >
+                                    <List className="w-4 h-4 mr-2" />
+                                    Playlists
+                                  </Button>
+                                </div>
                                 {uploadProgress !== null && (
                                   <div className="text-sm text-muted-foreground">
                                     Uploading: {uploadProgress}%
@@ -2009,11 +2021,13 @@ const Dashboard = () => {
                               <div className="space-y-3">
                               {highlightsData.bestClips?.map((highlight: any, index: number) => (
                                 <div 
-                                  key={index}
-                                  className="border rounded-lg p-4 bg-card"
-                                >
-                                   <div className="flex items-center justify-between gap-2 md:gap-3">
-                                     <div className="flex-1 min-w-0">
+                                   key={index}
+                                   className="border rounded-lg p-4 bg-card"
+                                 >
+                                    <div className="flex items-center justify-between gap-2 md:gap-3">
+                                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                                        <span className="text-xl font-bold text-primary">{index + 1}.</span>
+                                        <div className="flex-1 min-w-0">
                                        {highlight.uploading ? (
                                          <div className="space-y-2">
                                            <div className="flex items-center justify-between">
@@ -2037,10 +2051,11 @@ const Dashboard = () => {
                                          <ClipNameEditor
                                            initialName={highlight.name}
                                            videoUrl={highlight.videoUrl}
-                                           onRename={(newName) => handleRenameClip(highlight.name, newName, highlight.videoUrl)}
-                                         />
-                                       )}
-                                     </div>
+                                            onRename={(newName) => handleRenameClip(highlight.name, newName, highlight.videoUrl)}
+                                          />
+                                        )}
+                                        </div>
+                                      </div>
                                      {!highlight.uploading && (
                                        <div className="flex gap-1 md:gap-2 flex-shrink-0">
                                          <Button 
@@ -2242,6 +2257,14 @@ const Dashboard = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {playlistManagerOpen && (
+        <PlaylistManager
+          playerData={playerData}
+          availableClips={highlightsData.bestClips || []}
+          onClose={() => setPlaylistManagerOpen(false)}
+        />
+      )}
     </div>
   );
 };
