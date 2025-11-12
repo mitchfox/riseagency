@@ -350,9 +350,15 @@ const Dashboard = () => {
       }
 
       const player = players[0];
-      const highlights = player.highlights as any;
+      
+      // Parse highlights properly - it might be a string or already an object
+      const highlights = player.highlights 
+        ? (typeof player.highlights === 'string' 
+            ? JSON.parse(player.highlights) 
+            : player.highlights)
+        : { matchHighlights: [], bestClips: [] };
 
-      if (!highlights || !highlights.bestClips) {
+      if (!highlights.bestClips || !Array.isArray(highlights.bestClips) || highlights.bestClips.length === 0) {
         throw new Error("No clips found");
       }
 
