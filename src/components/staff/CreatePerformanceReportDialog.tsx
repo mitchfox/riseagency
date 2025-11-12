@@ -1561,6 +1561,17 @@ export const CreatePerformanceReportDialog = ({
                                           newSelected[index].delete(actualIdx);
                                         }
                                         setSelectedScores(newSelected);
+                                        
+                                        // Calculate sum of selected scores and update action
+                                        const selectedIndices = checked 
+                                          ? [...Array.from(newSelected[index] || []), actualIdx]
+                                          : Array.from(newSelected[index] || []).filter(i => i !== actualIdx);
+                                        
+                                        const totalScore = selectedIndices.reduce((sum, idx) => {
+                                          return sum + (previousScores[index][idx]?.score || 0);
+                                        }, 0);
+                                        
+                                        updateAction(index, "action_score", totalScore.toString());
                                       }}
                                       className="mt-0.5"
                                     />
