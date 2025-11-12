@@ -847,6 +847,7 @@ export type Database = {
           notes: string | null
           opponent: string | null
           pdf_url: string | null
+          performance_overview: string | null
           player_id: string
           r90_score: number | null
           result: string | null
@@ -864,6 +865,7 @@ export type Database = {
           notes?: string | null
           opponent?: string | null
           pdf_url?: string | null
+          performance_overview?: string | null
           player_id: string
           r90_score?: number | null
           result?: string | null
@@ -881,6 +883,7 @@ export type Database = {
           notes?: string | null
           opponent?: string | null
           pdf_url?: string | null
+          performance_overview?: string | null
           player_id?: string
           r90_score?: number | null
           result?: string | null
