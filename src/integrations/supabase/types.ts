@@ -847,6 +847,7 @@ export type Database = {
           notes: string | null
           opponent: string | null
           pdf_url: string | null
+          performance_overview: string | null
           player_id: string
           r90_score: number | null
           result: string | null
@@ -864,6 +865,7 @@ export type Database = {
           notes?: string | null
           opponent?: string | null
           pdf_url?: string | null
+          performance_overview?: string | null
           player_id: string
           r90_score?: number | null
           result?: string | null
@@ -881,6 +883,7 @@ export type Database = {
           notes?: string | null
           opponent?: string | null
           pdf_url?: string | null
+          performance_overview?: string | null
           player_id?: string
           r90_score?: number | null
           result?: string | null
@@ -1401,6 +1404,7 @@ export type Database = {
           title: string
           updated_at: string
           visible: boolean
+          visible_to_player_ids: string[] | null
         }
         Insert: {
           content: string
@@ -1410,6 +1414,7 @@ export type Database = {
           title: string
           updated_at?: string
           visible?: boolean
+          visible_to_player_ids?: string[] | null
         }
         Update: {
           content?: string
@@ -1419,6 +1424,7 @@ export type Database = {
           title?: string
           updated_at?: string
           visible?: boolean
+          visible_to_player_ids?: string[] | null
         }
         Relationships: []
       }

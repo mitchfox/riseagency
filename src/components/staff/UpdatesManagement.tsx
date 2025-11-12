@@ -7,8 +7,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
-import { Plus, Edit, Trash2, Eye, EyeOff } from "lucide-react";
+import { Plus, Edit, Trash2, Eye, EyeOff, Users } from "lucide-react";
 import { format } from "date-fns";
 
 interface Update {
@@ -17,12 +19,19 @@ interface Update {
   content: string;
   date: string;
   visible: boolean;
+  visible_to_player_ids: string[] | null;
   created_at: string;
   updated_at: string;
 }
 
+interface Player {
+  id: string;
+  name: string;
+}
+
 export function UpdatesManagement({ isAdmin }: { isAdmin: boolean }) {
   const [updates, setUpdates] = useState<Update[]>([]);
+  const [players, setPlayers] = useState<Player[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingUpdate, setEditingUpdate] = useState<Update | null>(null);
@@ -30,11 +39,13 @@ export function UpdatesManagement({ isAdmin }: { isAdmin: boolean }) {
     title: "",
     content: "",
     date: new Date().toISOString().split('T')[0],
-    visible: true
+    visible: true,
+    visible_to_player_ids: [] as string[]
   });
 
   useEffect(() => {
     fetchUpdates();
+    fetchPlayers();
   }, []);
 
   const fetchUpdates = async () => {
@@ -54,14 +65,36 @@ export function UpdatesManagement({ isAdmin }: { isAdmin: boolean }) {
     }
   };
 
+  const fetchPlayers = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("players")
+        .select("id, name")
+        .order("name");
+
+      if (error) throw error;
+      setPlayers(data || []);
+    } catch (error: any) {
+      console.error("Error fetching players:", error);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     try {
+      // Convert empty array to null for cleaner database storage
+      const dataToSave = {
+        ...formData,
+        visible_to_player_ids: formData.visible_to_player_ids.length > 0 
+          ? formData.visible_to_player_ids 
+          : null
+      };
+
       if (editingUpdate) {
         const { error } = await supabase
           .from("updates")
-          .update(formData)
+          .update(dataToSave)
           .eq("id", editingUpdate.id);
 
         if (error) throw error;
@@ -69,7 +102,7 @@ export function UpdatesManagement({ isAdmin }: { isAdmin: boolean }) {
       } else {
         const { error } = await supabase
           .from("updates")
-          .insert([formData]);
+          .insert([dataToSave]);
 
         if (error) throw error;
         toast.success("Update created successfully");
@@ -90,7 +123,8 @@ export function UpdatesManagement({ isAdmin }: { isAdmin: boolean }) {
       title: update.title,
       content: update.content,
       date: update.date,
-      visible: update.visible
+      visible: update.visible,
+      visible_to_player_ids: update.visible_to_player_ids || []
     });
     setDialogOpen(true);
   };
@@ -134,9 +168,33 @@ export function UpdatesManagement({ isAdmin }: { isAdmin: boolean }) {
       title: "",
       content: "",
       date: new Date().toISOString().split('T')[0],
-      visible: true
+      visible: true,
+      visible_to_player_ids: []
     });
     setEditingUpdate(null);
+  };
+
+  const togglePlayerSelection = (playerId: string) => {
+    setFormData(prev => ({
+      ...prev,
+      visible_to_player_ids: prev.visible_to_player_ids.includes(playerId)
+        ? prev.visible_to_player_ids.filter(id => id !== playerId)
+        : [...prev.visible_to_player_ids, playerId]
+    }));
+  };
+
+  const selectAllPlayers = () => {
+    setFormData(prev => ({
+      ...prev,
+      visible_to_player_ids: players.map(p => p.id)
+    }));
+  };
+
+  const deselectAllPlayers = () => {
+    setFormData(prev => ({
+      ...prev,
+      visible_to_player_ids: []
+    }));
   };
 
   if (loading) {
@@ -209,6 +267,68 @@ export function UpdatesManagement({ isAdmin }: { isAdmin: boolean }) {
                 <Label htmlFor="visible">Visible to players</Label>
               </div>
 
+              {formData.visible && (
+                <div className="space-y-2">
+                  <Label>Visible to Specific Players (optional)</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Leave empty to show to all players, or select specific players
+                  </p>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" className="w-full justify-start">
+                        <Users className="w-4 h-4 mr-2" />
+                        {formData.visible_to_player_ids.length === 0
+                          ? "All Players"
+                          : formData.visible_to_player_ids.length === players.length
+                          ? "All Players Selected"
+                          : `${formData.visible_to_player_ids.length} Player${formData.visible_to_player_ids.length !== 1 ? 's' : ''} Selected`}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-80">
+                      <div className="space-y-3">
+                        <div className="flex gap-2">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={selectAllPlayers}
+                            className="flex-1"
+                          >
+                            Select All
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={deselectAllPlayers}
+                            className="flex-1"
+                          >
+                            Clear
+                          </Button>
+                        </div>
+                        <div className="max-h-64 overflow-y-auto space-y-2">
+                          {players.map((player) => (
+                            <div key={player.id} className="flex items-center space-x-2">
+                              <Checkbox
+                                id={player.id}
+                                checked={formData.visible_to_player_ids.includes(player.id)}
+                                onCheckedChange={() => togglePlayerSelection(player.id)}
+                              />
+                              <Label
+                                htmlFor={player.id}
+                                className="text-sm font-normal cursor-pointer flex-1"
+                              >
+                                {player.name}
+                              </Label>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                </div>
+              )}
+
               <div className="flex justify-end gap-2">
                 <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
                   Cancel
@@ -240,6 +360,11 @@ export function UpdatesManagement({ isAdmin }: { isAdmin: boolean }) {
                       <h4 className="font-semibold text-lg">{update.title}</h4>
                       {!update.visible && (
                         <span className="text-xs bg-muted px-2 py-1 rounded">Hidden</span>
+                      )}
+                      {update.visible && update.visible_to_player_ids && update.visible_to_player_ids.length > 0 && (
+                        <span className="text-xs bg-blue-500/10 text-blue-600 dark:text-blue-400 px-2 py-1 rounded">
+                          {update.visible_to_player_ids.length} Player{update.visible_to_player_ids.length !== 1 ? 's' : ''}
+                        </span>
                       )}
                     </div>
                     <p className="text-sm text-muted-foreground whitespace-pre-wrap mb-2">
