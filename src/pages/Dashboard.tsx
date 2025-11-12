@@ -91,6 +91,9 @@ const Dashboard = () => {
   const [fileUploadProgress, setFileUploadProgress] = useState<Record<string, number>>({});
   const [otherAnalyses, setOtherAnalyses] = useState<any[]>([]);
   const [playlistManagerOpen, setPlaylistManagerOpen] = useState(false);
+  const [videoPlayerOpen, setVideoPlayerOpen] = useState(false);
+  const [currentVideoUrl, setCurrentVideoUrl] = useState<string>("");
+  const [currentVideoName, setCurrentVideoName] = useState<string>("");
 
   // Session color mapping with hover states
   const getSessionColor = (sessionKey: string) => {
@@ -2056,17 +2059,21 @@ const Dashboard = () => {
                                         )}
                                         </div>
                                       </div>
-                                     {!highlight.uploading && (
-                                       <div className="flex gap-1 md:gap-2 flex-shrink-0">
-                                         <Button 
-                                           variant="outline" 
-                                           size="sm"
-                                           onClick={() => window.open(highlight.videoUrl, '_blank')}
-                                           className="h-8 px-2 md:px-3"
-                                         >
-                                           <Play className="w-4 h-4" />
-                                           <span className="hidden md:inline ml-2">Watch</span>
-                                         </Button>
+                                      {!highlight.uploading && (
+                                        <div className="flex gap-1 md:gap-2 flex-shrink-0">
+                                          <Button 
+                                            variant="outline" 
+                                            size="sm"
+                                            onClick={() => {
+                                              setCurrentVideoUrl(highlight.videoUrl);
+                                              setCurrentVideoName(highlight.name || `Clip ${index + 1}`);
+                                              setVideoPlayerOpen(true);
+                                            }}
+                                            className="h-8 px-2 md:px-3"
+                                          >
+                                            <Play className="w-4 h-4" />
+                                            <span className="hidden md:inline ml-2">Watch</span>
+                                          </Button>
                                          <Button 
                                            variant="ghost" 
                                            size="sm"
@@ -2265,6 +2272,30 @@ const Dashboard = () => {
           onClose={() => setPlaylistManagerOpen(false)}
         />
       )}
+
+      {/* Video Player Dialog */}
+      <Dialog open={videoPlayerOpen} onOpenChange={setVideoPlayerOpen}>
+        <DialogContent className="max-w-4xl">
+          <DialogHeader>
+            <DialogTitle className="font-bebas uppercase tracking-wider">
+              {currentVideoName}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="relative aspect-video bg-black rounded-lg overflow-hidden">
+            <video
+              key={currentVideoUrl}
+              controls
+              autoPlay
+              className="w-full h-full"
+              controlsList="nodownload"
+            >
+              <source src={currentVideoUrl} type="video/mp4" />
+              <source src={currentVideoUrl} type="video/quicktime" />
+              Your browser does not support the video tag.
+            </video>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
