@@ -869,7 +869,58 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
                         </Button>
                       </DialogTrigger>
                 <DialogContent className="max-w-6xl max-h-[90vh] overflow-hidden flex flex-col">
-...
+                  <DialogHeader>
+                    <DialogTitle>{editingItem ? 'Edit' : 'Add'} {config.singular}</DialogTitle>
+                  </DialogHeader>
+                  <ScrollArea className="flex-1 -mx-6 px-6">
+                    <form onSubmit={handleSubmit} className="space-y-6 py-4">
+                      {activeTab === 'coaching_aphorisms' ? (
+                        <>
+                          <div className="space-y-2">
+                            <Label htmlFor="featured_text">Featured Text *</Label>
+                            <Input
+                              id="featured_text"
+                              value={formData.featured_text}
+                              onChange={(e) => setFormData({ ...formData, featured_text: e.target.value })}
+                              placeholder="Main quote or featured text"
+                              required
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="body_text">Body Text</Label>
+                            <Textarea
+                              id="body_text"
+                              value={formData.body_text}
+                              onChange={(e) => setFormData({ ...formData, body_text: e.target.value })}
+                              placeholder="Additional context or explanation"
+                              rows={4}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="author">Author</Label>
+                            <Input
+                              id="author"
+                              value={formData.author}
+                              onChange={(e) => setFormData({ ...formData, author: e.target.value })}
+                              placeholder="Author name (optional)"
+                            />
+                          </div>
+                        </>
+                      ) : (
+                        <p className="text-sm text-muted-foreground">
+                          Form fields for other types not shown in this view
+                        </p>
+                      )}
+                      <div className="flex justify-end gap-2 pt-4">
+                        <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                          Cancel
+                        </Button>
+                        <Button type="submit" disabled={loading}>
+                          {loading ? 'Saving...' : editingItem ? 'Update' : 'Create'}
+                        </Button>
+                      </div>
+                    </form>
+                  </ScrollArea>
                 </DialogContent>
               </Dialog>
                   )}
