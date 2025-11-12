@@ -226,22 +226,23 @@ export const PlaylistManager = ({ playerData, availableClips, onClose }: Playlis
 
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bebas uppercase tracking-wider">
+          <DialogTitle className="text-xl md:text-2xl font-bebas uppercase tracking-wider">
             Manage Playlists
           </DialogTitle>
         </DialogHeader>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
           {/* Playlists List */}
           <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h3 className="font-bebas text-lg uppercase">Playlists</h3>
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="font-bebas text-base md:text-lg uppercase">Playlists</h3>
               <Button
                 size="sm"
                 onClick={() => setIsCreating(true)}
                 variant="outline"
+                className="h-8"
               >
                 <Plus className="w-4 h-4" />
               </Button>
@@ -268,24 +269,24 @@ export const PlaylistManager = ({ playerData, availableClips, onClose }: Playlis
               </div>
             )}
 
-            <div className="space-y-2">
+            <div className="space-y-2 max-h-[400px] overflow-y-auto">
               {playlists.map((playlist) => (
                 <div
                   key={playlist.id}
-                  className={`p-3 border rounded-lg cursor-pointer transition-colors ${
+                  className={`p-2 md:p-3 border rounded-lg cursor-pointer transition-colors ${
                     selectedPlaylist?.id === playlist.id 
                       ? 'bg-primary/10 border-primary' 
                       : 'hover:bg-muted'
                   }`}
                   onClick={() => setSelectedPlaylist(playlist)}
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 flex-1">
-                      <List className="w-4 h-4" />
-                      <span className="font-medium truncate">{playlist.name}</span>
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      <List className="w-4 h-4 flex-shrink-0" />
+                      <span className="font-medium truncate text-sm md:text-base">{playlist.name}</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-muted-foreground">
+                    <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
+                      <span className="text-xs md:text-sm text-muted-foreground px-2 py-0.5 bg-muted rounded">
                         {playlist.clips?.length || 0}
                       </span>
                       <Button
@@ -295,9 +296,9 @@ export const PlaylistManager = ({ playerData, availableClips, onClose }: Playlis
                           e.stopPropagation();
                           deletePlaylist(playlist.id);
                         }}
-                        className="h-6 w-6 p-0 text-destructive hover:text-destructive"
+                        className="h-7 w-7 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
                       >
-                        <Trash2 className="w-3 h-3" />
+                        <Trash2 className="w-3.5 h-3.5" />
                       </Button>
                     </div>
                   </div>
@@ -308,22 +309,22 @@ export const PlaylistManager = ({ playerData, availableClips, onClose }: Playlis
 
           {/* Available Clips */}
           <div className="space-y-3">
-            <h3 className="font-bebas text-lg uppercase">Available Clips</h3>
-            {selectedPlaylist && (
+            <h3 className="font-bebas text-base md:text-lg uppercase">Available Clips</h3>
+            {selectedPlaylist ? (
               <>
-                <div className="space-y-2 max-h-96 overflow-y-auto">
+                <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2">
                   {availableClips
                     .filter(clip => !selectedPlaylist.clips?.some(pc => pc.name === clip.name))
                     .map((clip) => (
                       <div
                         key={clip.name}
-                        className="flex items-center gap-2 p-2 border rounded hover:bg-muted"
+                        className="flex items-center gap-2 p-2 border rounded hover:bg-muted transition-colors"
                       >
                         <Checkbox
                           checked={selectedClips.has(clip.name)}
                           onCheckedChange={() => toggleClipSelection(clip.name)}
                         />
-                        <Label className="flex-1 cursor-pointer truncate text-sm">
+                        <Label className="flex-1 cursor-pointer text-xs md:text-sm leading-tight break-words">
                           {clip.name}
                         </Label>
                       </div>
@@ -333,19 +334,27 @@ export const PlaylistManager = ({ playerData, availableClips, onClose }: Playlis
                   size="sm"
                   onClick={addClipsToPlaylist}
                   disabled={selectedClips.size === 0}
-                  className="w-full"
+                  className="w-full h-9"
                 >
                   Add Selected ({selectedClips.size})
                 </Button>
               </>
+            ) : (
+              <p className="text-sm text-muted-foreground text-center py-8">
+                Select a playlist to view available clips
+              </p>
             )}
           </div>
 
           {/* Playlist Clips */}
           <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h3 className="font-bebas text-lg uppercase">
-                {selectedPlaylist ? selectedPlaylist.name : 'Select a playlist'}
+            <div className="flex items-center justify-between gap-2">
+              <h3 className="font-bebas text-base md:text-lg uppercase truncate flex-1 min-w-0">
+                {selectedPlaylist ? (
+                  <span className="truncate block">Clips</span>
+                ) : (
+                  'Select Playlist'
+                )}
               </h3>
               {selectedPlaylist && selectedPlaylist.clips?.length > 0 && (
                 <Button
@@ -353,31 +362,34 @@ export const PlaylistManager = ({ playerData, availableClips, onClose }: Playlis
                   onClick={savePlaylist}
                   disabled={saving}
                   variant="default"
+                  className="h-8 flex-shrink-0"
                 >
-                  <Save className="w-4 h-4 mr-2" />
-                  {saving ? 'Saving...' : 'Save'}
+                  <Save className="w-4 h-4 md:mr-2" />
+                  <span className="hidden md:inline">
+                    {saving ? 'Saving...' : 'Save'}
+                  </span>
                 </Button>
               )}
             </div>
 
-            {selectedPlaylist && (
-              <div className="space-y-2 max-h-96 overflow-y-auto">
+            {selectedPlaylist ? (
+              <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2">
                 {selectedPlaylist.clips?.sort((a, b) => a.order - b.order).map((clip, index) => (
                   <div
                     key={clip.name}
-                    className="flex items-center gap-2 p-2 border rounded bg-card"
+                    className="flex items-center gap-1.5 md:gap-2 p-2 border rounded bg-card"
                   >
-                    <span className="text-sm font-bold text-primary w-6">
+                    <span className="text-xs md:text-sm font-bold text-primary w-5 md:w-6 flex-shrink-0">
                       {index + 1}.
                     </span>
-                    <span className="flex-1 truncate text-sm">{clip.name}</span>
-                    <div className="flex flex-col gap-0.5">
+                    <span className="flex-1 text-xs md:text-sm leading-tight break-words min-w-0">{clip.name}</span>
+                    <div className="flex flex-col gap-0.5 flex-shrink-0">
                       <Button
                         size="sm"
                         variant="ghost"
                         onClick={() => reorderClip(index, 'up')}
                         disabled={index === 0}
-                        className="h-4 px-1 py-0"
+                        className="h-5 w-5 md:h-6 md:w-6 p-0 hover:bg-muted"
                       >
                         <ChevronUp className="w-3 h-3" />
                       </Button>
@@ -386,7 +398,7 @@ export const PlaylistManager = ({ playerData, availableClips, onClose }: Playlis
                         variant="ghost"
                         onClick={() => reorderClip(index, 'down')}
                         disabled={index === selectedPlaylist.clips.length - 1}
-                        className="h-4 px-1 py-0"
+                        className="h-5 w-5 md:h-6 md:w-6 p-0 hover:bg-muted"
                       >
                         <ChevronDown className="w-3 h-3" />
                       </Button>
@@ -395,19 +407,23 @@ export const PlaylistManager = ({ playerData, availableClips, onClose }: Playlis
                       size="sm"
                       variant="ghost"
                       onClick={() => removeClipFromPlaylist(clip.name)}
-                      className="h-6 w-6 p-0 text-destructive hover:text-destructive"
+                      className="h-7 w-7 p-0 text-destructive hover:text-destructive hover:bg-destructive/10 flex-shrink-0"
                     >
-                      <Trash2 className="w-3 h-3" />
+                      <Trash2 className="w-3.5 h-3.5" />
                     </Button>
                   </div>
                 ))}
               </div>
+            ) : (
+              <p className="text-sm text-muted-foreground text-center py-8">
+                Select a playlist to view clips
+              </p>
             )}
           </div>
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Close</Button>
+        <DialogFooter className="mt-4">
+          <Button variant="outline" onClick={onClose} className="w-full sm:w-auto">Close</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
