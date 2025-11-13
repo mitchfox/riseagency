@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { Plus, Trash2, Save, ChevronUp, ChevronDown, List } from "lucide-react";
+import { Plus, Trash2, Save, ChevronUp, ChevronDown, List, Play } from "lucide-react";
 import { Label } from "@/components/ui/label";
 
 interface Clip {
@@ -33,6 +33,7 @@ export const PlaylistManager = ({ playerData, availableClips, onClose }: Playlis
   const [isCreating, setIsCreating] = useState(false);
   const [selectedClips, setSelectedClips] = useState<Set<string>>(new Set());
   const [saving, setSaving] = useState(false);
+  const [playingVideo, setPlayingVideo] = useState<{ url: string; name: string } | null>(null);
 
   useEffect(() => {
     fetchPlaylists();
@@ -388,6 +389,15 @@ export const PlaylistManager = ({ playerData, availableClips, onClose }: Playlis
                       {index + 1}.
                     </span>
                     <span className="flex-1 text-xs md:text-sm leading-tight break-words min-w-0">{clip.name}</span>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setPlayingVideo({ url: clip.videoUrl, name: clip.name })}
+                      className="h-7 w-7 p-0 hover:bg-primary/10 text-primary flex-shrink-0"
+                      title="Watch clip"
+                    >
+                      <Play className="w-3.5 h-3.5" />
+                    </Button>
                     <div className="flex flex-col gap-0.5 flex-shrink-0">
                       <Button
                         size="sm"
@@ -431,6 +441,30 @@ export const PlaylistManager = ({ playerData, availableClips, onClose }: Playlis
           <Button variant="outline" onClick={onClose} className="w-full sm:w-auto">Close</Button>
         </DialogFooter>
       </DialogContent>
+
+      {/* Video Player Dialog */}
+      {playingVideo && (
+        <Dialog open={!!playingVideo} onOpenChange={() => setPlayingVideo(null)}>
+          <DialogContent className="max-w-4xl">
+            <DialogHeader>
+              <DialogTitle className="font-bebas uppercase tracking-wider">
+                {playingVideo.name}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="aspect-video w-full bg-black rounded-lg overflow-hidden">
+              <video
+                src={playingVideo.url}
+                controls
+                autoPlay
+                className="w-full h-full"
+                controlsList="nodownload"
+              >
+                Your browser does not support the video tag.
+              </video>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </Dialog>
   );
 };
