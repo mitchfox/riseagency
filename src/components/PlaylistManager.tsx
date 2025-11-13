@@ -269,8 +269,11 @@ export const PlaylistManager = ({ playerData, availableClips, onClose }: Playlis
               </div>
             )}
 
-            <div className="space-y-2 max-h-[400px] overflow-y-auto">
-              {playlists.map((playlist) => (
+            <div className="space-y-2 max-h-[300px] md:max-h-[400px] overflow-y-auto">
+              {playlists.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">No playlists yet. Create one to get started!</p>
+              ) : (
+                playlists.map((playlist) => (
                 <div
                   key={playlist.id}
                   className={`p-2 md:p-3 border rounded-lg cursor-pointer transition-colors ${
@@ -303,7 +306,8 @@ export const PlaylistManager = ({ playerData, availableClips, onClose }: Playlis
                     </div>
                   </div>
                 </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
 
@@ -312,7 +316,7 @@ export const PlaylistManager = ({ playerData, availableClips, onClose }: Playlis
             <h3 className="font-bebas text-base md:text-lg uppercase">Available Clips</h3>
             {selectedPlaylist ? (
               <>
-                <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2">
+                <div className="space-y-2 max-h-[250px] md:max-h-[400px] overflow-y-auto pr-2">
                   {availableClips
                     .filter(clip => !selectedPlaylist.clips?.some(pc => pc.name === clip.name))
                     .map((clip) => (
@@ -373,7 +377,7 @@ export const PlaylistManager = ({ playerData, availableClips, onClose }: Playlis
             </div>
 
             {selectedPlaylist ? (
-              <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2">
+              <div className="space-y-2 max-h-[250px] md:max-h-[400px] overflow-y-auto pr-2">
                 {selectedPlaylist.clips?.sort((a, b) => a.order - b.order).map((clip, index) => (
                   <div
                     key={clip.name}
