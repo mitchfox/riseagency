@@ -1932,16 +1932,10 @@ const Dashboard = () => {
                                                 const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
                                                 
                                                 if (isMobile) {
-                                                  // For mobile, use anchor with download attribute
+                                                  // For mobile, add download parameter to force download in new tab
                                                   toast.info("Starting download...");
-                                                  const link = document.createElement('a');
-                                                  link.href = videoUrl;
-                                                  link.download = fileName;
-                                                  link.target = '_blank';
-                                                  document.body.appendChild(link);
-                                                  link.click();
-                                                  document.body.removeChild(link);
-                                                  toast.success("Download started");
+                                                  const downloadUrl = `${videoUrl}${videoUrl.includes('?') ? '&' : '?'}download=${encodeURIComponent(fileName)}`;
+                                                  window.open(downloadUrl, '_blank');
                                                 } else {
                                                   // For desktop, use blob download
                                                   toast.info("Starting download...");
@@ -2109,16 +2103,10 @@ const Dashboard = () => {
                                                 const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
                                                 
                                                 if (isMobile) {
-                                                  // For mobile, use anchor with download attribute
+                                                  // For mobile, add download parameter to force download in new tab
                                                   toast.info("Starting download...");
-                                                  const link = document.createElement('a');
-                                                  link.href = videoUrl;
-                                                  link.download = fileName;
-                                                  link.target = '_blank';
-                                                  document.body.appendChild(link);
-                                                  link.click();
-                                                  document.body.removeChild(link);
-                                                  toast.success("Download started");
+                                                  const downloadUrl = `${videoUrl}${videoUrl.includes('?') ? '&' : '?'}download=${encodeURIComponent(fileName)}`;
+                                                  window.open(downloadUrl, '_blank');
                                                 } else {
                                                   // For desktop, use blob download
                                                   toast.info("Starting download...");
