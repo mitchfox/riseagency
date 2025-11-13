@@ -41,7 +41,10 @@ Deno.serve(async (req) => {
       );
     }
 
-    const parsed = player.highlights ? JSON.parse(player.highlights) : {};
+    // Handle both object and string formats (Supabase returns JSONB as objects)
+    const parsed = typeof player.highlights === 'string' 
+      ? JSON.parse(player.highlights) 
+      : (player.highlights || {});
     const bestClips = parsed.bestClips || [];
     
     // Find clip by name and URL
@@ -83,7 +86,7 @@ Deno.serve(async (req) => {
 
     const { error: updateError } = await supabase
       .from('players')
-      .update({ highlights: JSON.stringify(updatedHighlights) })
+      .update({ highlights: updatedHighlights })
       .eq('id', player.id);
 
     if (updateError) {
