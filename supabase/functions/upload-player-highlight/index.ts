@@ -68,8 +68,10 @@ Deno.serve(async (req) => {
       .from('analysis-files')
       .getPublicUrl(`highlights/${fileName}`);
 
-    // Update player highlights
-    const parsed = player.highlights ? JSON.parse(player.highlights) : {};
+    // Update player highlights (Supabase returns JSONB as objects, not strings)
+    const parsed = typeof player.highlights === 'string' 
+      ? JSON.parse(player.highlights) 
+      : (player.highlights || {});
     const updatedHighlights = {
       matchHighlights: parsed.matchHighlights || [],
       bestClips: [
@@ -84,7 +86,7 @@ Deno.serve(async (req) => {
 
     const { error: updateError } = await supabase
       .from('players')
-      .update({ highlights: JSON.stringify(updatedHighlights) })
+      .update({ highlights: updatedHighlights })
       .eq('id', player.id);
 
     if (updateError) {
