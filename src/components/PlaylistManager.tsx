@@ -41,16 +41,6 @@ export const PlaylistManager = ({ playerData, availableClips, onClose }: Playlis
   const fetchPlaylists = async () => {
     if (!playerData?.id) return;
 
-    // Check if user is authenticated
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      console.error('No active session when fetching playlists');
-      toast.error("Please log in again to view playlists");
-      return;
-    }
-
-    console.log('Fetching playlists for player:', playerData.id, 'with session:', session.user.email);
-
     const { data, error } = await supabase
       .from('playlists')
       .select('*')
@@ -63,7 +53,6 @@ export const PlaylistManager = ({ playerData, availableClips, onClose }: Playlis
       return;
     }
 
-    console.log('Fetched playlists:', data);
     setPlaylists((data || []).map(p => ({
       ...p,
       clips: (p.clips as any) || []
