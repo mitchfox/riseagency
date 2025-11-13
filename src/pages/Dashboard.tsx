@@ -1928,22 +1928,32 @@ const Dashboard = () => {
                                                 const videoUrl = highlight.videoUrl || highlight.url;
                                                 const fileName = highlight.name || highlight.title || `highlight-${index + 1}`;
                                                 
-                                                toast.info("Starting download...");
+                                                // Check if mobile device
+                                                const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
                                                 
-                                                const response = await fetch(videoUrl);
-                                                const blob = await response.blob();
-                                                
-                                                const blobUrl = window.URL.createObjectURL(blob);
-                                                const link = document.createElement('a');
-                                                link.href = blobUrl;
-                                                link.download = fileName;
-                                                document.body.appendChild(link);
-                                                link.click();
-                                                document.body.removeChild(link);
-                                                
-                                                window.URL.revokeObjectURL(blobUrl);
-                                                
-                                                toast.success("Download completed");
+                                                if (isMobile) {
+                                                  // For mobile, open in new tab (iOS doesn't support programmatic downloads well)
+                                                  toast.info("Opening video...");
+                                                  window.open(videoUrl, '_blank');
+                                                } else {
+                                                  // For desktop, use blob download
+                                                  toast.info("Starting download...");
+                                                  
+                                                  const response = await fetch(videoUrl);
+                                                  const blob = await response.blob();
+                                                  
+                                                  const blobUrl = window.URL.createObjectURL(blob);
+                                                  const link = document.createElement('a');
+                                                  link.href = blobUrl;
+                                                  link.download = fileName;
+                                                  document.body.appendChild(link);
+                                                  link.click();
+                                                  document.body.removeChild(link);
+                                                  
+                                                  window.URL.revokeObjectURL(blobUrl);
+                                                  
+                                                  toast.success("Download completed");
+                                                }
                                               } catch (error) {
                                                 console.error('Download error:', error);
                                                 toast.error("Download failed");
@@ -2082,33 +2092,43 @@ const Dashboard = () => {
                                           </Button>
                                          <Button 
                                            variant="ghost" 
-                                           size="sm"
-                                           onClick={async () => {
-                                             try {
-                                               const videoUrl = highlight.videoUrl || highlight.url;
-                                               const fileName = highlight.name || highlight.title || `clip-${index + 1}`;
-                                               
-                                               toast.info("Starting download...");
-                                               
-                                               const response = await fetch(videoUrl);
-                                               const blob = await response.blob();
-                                               
-                                               const blobUrl = window.URL.createObjectURL(blob);
-                                               const link = document.createElement('a');
-                                               link.href = blobUrl;
-                                               link.download = fileName;
-                                               document.body.appendChild(link);
-                                               link.click();
-                                               document.body.removeChild(link);
-                                               
-                                               window.URL.revokeObjectURL(blobUrl);
-                                               
-                                               toast.success("Download completed");
-                                             } catch (error) {
-                                               console.error('Download error:', error);
-                                               toast.error("Download failed");
-                                             }
-                                           }}
+                                            size="sm"
+                                            onClick={async () => {
+                                              try {
+                                                const videoUrl = highlight.videoUrl || highlight.url;
+                                                const fileName = highlight.name || highlight.title || `clip-${index + 1}`;
+                                                
+                                                // Check if mobile device
+                                                const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+                                                
+                                                if (isMobile) {
+                                                  // For mobile, open in new tab (iOS doesn't support programmatic downloads well)
+                                                  toast.info("Opening video...");
+                                                  window.open(videoUrl, '_blank');
+                                                } else {
+                                                  // For desktop, use blob download
+                                                  toast.info("Starting download...");
+                                                  
+                                                  const response = await fetch(videoUrl);
+                                                  const blob = await response.blob();
+                                                  
+                                                  const blobUrl = window.URL.createObjectURL(blob);
+                                                  const link = document.createElement('a');
+                                                  link.href = blobUrl;
+                                                  link.download = fileName;
+                                                  document.body.appendChild(link);
+                                                  link.click();
+                                                  document.body.removeChild(link);
+                                                  
+                                                  window.URL.revokeObjectURL(blobUrl);
+                                                  
+                                                  toast.success("Download completed");
+                                                }
+                                              } catch (error) {
+                                                console.error('Download error:', error);
+                                                toast.error("Download failed");
+                                              }
+                                            }}
                                            className="h-8 px-2"
                                          >
                                            <Download className="w-4 h-4" />
