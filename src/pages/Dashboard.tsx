@@ -235,7 +235,7 @@ const Dashboard = () => {
           ...prev,
           bestClips: prev.bestClips.map((clip: any) => 
             clip.uploadId === uploadId 
-              ? { ...clip, uploading: false, uploadSuccess: true }
+              ? { ...clip, uploading: false, justCompleted: true }
               : clip
           )
         }));
@@ -616,14 +616,14 @@ const Dashboard = () => {
         ? JSON.parse(typeof playerData.highlights === 'string' ? playerData.highlights : JSON.stringify(playerData.highlights))
         : { matchHighlights: [], bestClips: [] };
       
-      // Preserve uploading and failed clips when updating from database
+      // Preserve uploading, failed, and just completed clips when updating from database
       setHighlightsData((prev: any) => {
-        const uploadingOrFailed = (prev.bestClips || []).filter((clip: any) => 
-          clip.uploading || clip.uploadFailed
+        const uploadingOrFailedOrCompleted = (prev.bestClips || []).filter((clip: any) => 
+          clip.uploading || clip.uploadFailed || clip.justCompleted
         );
         return {
           ...highlights,
-          bestClips: [...uploadingOrFailed, ...highlights.bestClips]
+          bestClips: [...uploadingOrFailedOrCompleted, ...highlights.bestClips]
         };
       });
 
@@ -2202,7 +2202,7 @@ const Dashboard = () => {
                                    className="border rounded-lg p-4 bg-card"
                                  >
                                     <div className="flex items-center justify-between gap-2 md:gap-3">
-                                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                                       <div className="flex items-center gap-2 flex-1 min-w-0">
                                         <span className="text-xl font-bold text-primary">{index + 1}.</span>
                                         <div className="flex-1 min-w-0">
                                        {highlight.uploading ? (
@@ -2223,6 +2223,21 @@ const Dashboard = () => {
                                                />
                                              </div>
                                            )}
+                                         </div>
+                                       ) : highlight.justCompleted ? (
+                                         <div className="space-y-2">
+                                           <div className="flex items-center justify-between">
+                                             <p className="font-bebas text-lg uppercase tracking-wider truncate">{highlight.name}</p>
+                                             <span className="text-sm text-green-600 font-semibold">
+                                               Uploaded ✓
+                                             </span>
+                                           </div>
+                                           <div className="w-full bg-secondary rounded-full h-2 overflow-hidden">
+                                             <div 
+                                               className="bg-green-600 h-full transition-all duration-300"
+                                               style={{ width: '100%' }}
+                                             />
+                                           </div>
                                          </div>
                                        ) : highlight.uploadFailed ? (
                                          <div className="space-y-2">
@@ -2249,7 +2264,7 @@ const Dashboard = () => {
                                         )}
                                         </div>
                                       </div>
-                                      {!highlight.uploading && !highlight.uploadFailed && (
+                                      {!highlight.uploading && !highlight.uploadFailed && !highlight.justCompleted && (
                                         <div className="flex gap-1 md:gap-2 flex-shrink-0">
                                           <Button 
                                             variant="outline" 
