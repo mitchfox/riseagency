@@ -2130,15 +2130,15 @@ const Dashboard = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <Tabs defaultValue="best" className="w-full">
-                        <TabsList className="grid w-full grid-cols-2 mb-6">
-                          <TabsTrigger value="match" className="font-bebas uppercase">
-                            Match Highlights
-                          </TabsTrigger>
-                          <TabsTrigger value="best" className="font-bebas uppercase">
-                            Best Clips
-                          </TabsTrigger>
-                        </TabsList>
+                  <Tabs defaultValue="best" className="w-full" key="highlights-tabs">
+                    <TabsList className="grid w-full grid-cols-2 mb-6">
+                      <TabsTrigger value="match" className="font-bebas uppercase">
+                        Match Highlights
+                      </TabsTrigger>
+                      <TabsTrigger value="best" className="font-bebas uppercase">
+                        Best Clips
+                      </TabsTrigger>
+                    </TabsList>
                         
                         <TabsContent value="match">
                           {!highlightsData.matchHighlights || highlightsData.matchHighlights.length === 0 ? (
