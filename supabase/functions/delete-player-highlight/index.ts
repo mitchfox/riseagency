@@ -47,14 +47,26 @@ Deno.serve(async (req) => {
       : (player.highlights || {});
     const bestClips = parsed.bestClips || [];
     
+    console.log('Delete request - clipName:', clipName);
+    console.log('Delete request - videoUrl:', videoUrl);
+    console.log('Available clips:', bestClips.map((c: any) => ({ name: c.name, url: c.videoUrl })));
+    
     // Find clip by name and URL
     const clipIndex = bestClips.findIndex((clip: any) => 
       clip.name === clipName && clip.videoUrl === videoUrl
     );
     
     if (clipIndex === -1) {
+      console.error('Clip not found in array');
       return new Response(
-        JSON.stringify({ error: 'Clip not found' }),
+        JSON.stringify({ 
+          error: 'Clip not found',
+          details: {
+            requestedName: clipName,
+            requestedUrl: videoUrl,
+            availableClips: bestClips.length
+          }
+        }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }

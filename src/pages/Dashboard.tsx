@@ -275,6 +275,7 @@ const Dashboard = () => {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
+        console.error('Delete failed:', errorData);
         throw new Error(errorData.error || 'Delete failed');
       }
 
