@@ -51,9 +51,15 @@ Deno.serve(async (req) => {
     console.log('Delete request - videoUrl:', videoUrl);
     console.log('Available clips:', bestClips.map((c: any) => ({ name: c.name, url: c.videoUrl })));
     
-    // Find clip by name and URL
+    // Normalize strings for comparison (trim whitespace, normalize unicode)
+    const normalizeString = (str: string) => str.trim().normalize('NFC');
+    const normalizedClipName = normalizeString(clipName);
+    const normalizedVideoUrl = normalizeString(videoUrl);
+    
+    // Find clip by name and URL with normalized comparison
     const clipIndex = bestClips.findIndex((clip: any) => 
-      clip.name === clipName && clip.videoUrl === videoUrl
+      normalizeString(clip.name) === normalizedClipName && 
+      normalizeString(clip.videoUrl) === normalizedVideoUrl
     );
     
     if (clipIndex === -1) {
