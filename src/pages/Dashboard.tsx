@@ -638,62 +638,81 @@ const Dashboard = () => {
         return;
       }
 
-      // Parse bio data if it's JSON
+      // Parse bio data with bulletproof fallbacks
       let parsedPlayerData = { ...playerData };
-      if (playerData.bio) {
-        try {
-          // Handle case where bio might already be an object or a JSON string
+      try {
+        if (playerData.bio) {
           let bioData: any = playerData.bio;
           
-          // If it's a string, parse it
-          if (typeof bioData === 'string') {
-            bioData = JSON.parse(bioData);
-          }
-          
-          // If the parsed bioData has a nested "bio" string field, parse that too
-          if (bioData && typeof bioData === 'object' && typeof bioData.bio === 'string' && bioData.bio.trim()) {
+          // Parse string to object
+          if (typeof bioData === 'string' && bioData.trim()) {
             try {
-              const nestedBio = JSON.parse(bioData.bio);
-              // Only spread if nestedBio is a valid object
-              if (nestedBio && typeof nestedBio === 'object') {
-                bioData = { ...bioData, ...nestedBio };
-              }
-              delete bioData.bio; // Remove the string version
-            } catch (nestedError) {
-              console.log('Nested bio is not JSON, keeping as string');
-              // If nested bio isn't valid JSON, just keep the outer bio data
+              bioData = JSON.parse(bioData);
+            } catch {
+              console.warn('Bio is not valid JSON, skipping');
+              bioData = null;
             }
           }
           
-          // Ensure bioData is an object before spreading
+          // Handle nested bio string
+          if (bioData && typeof bioData === 'object' && !Array.isArray(bioData) && typeof bioData.bio === 'string' && bioData.bio.trim()) {
+            try {
+              const nestedBio = JSON.parse(bioData.bio);
+              if (nestedBio && typeof nestedBio === 'object' && !Array.isArray(nestedBio)) {
+                bioData = { ...bioData, ...nestedBio };
+                delete bioData.bio;
+              }
+            } catch {
+              // Nested bio not valid JSON, keep outer bioData
+            }
+          }
+          
+          // Only merge if bioData is a valid object
           if (bioData && typeof bioData === 'object' && !Array.isArray(bioData)) {
             parsedPlayerData = { ...playerData, ...bioData };
           }
-        } catch (e) {
-          console.error('Error parsing bio data:', e);
-          // Bio is not valid JSON, keep original playerData
         }
+      } catch (e) {
+        console.error('Error parsing player bio:', e);
       }
 
       setPlayerData(parsedPlayerData);
 
-      // Extract highlights data
-      let highlights = playerData.highlights 
-        ? JSON.parse(typeof playerData.highlights === 'string' ? playerData.highlights : JSON.stringify(playerData.highlights))
-        : { matchHighlights: [], bestClips: [] };
-      
-      // Ensure highlights has the correct structure (handle case where it's an array instead of object)
-      if (Array.isArray(highlights)) {
-        highlights = { matchHighlights: [], bestClips: [] };
+      // Extract highlights with bulletproof fallbacks
+      let highlights: any = { matchHighlights: [], bestClips: [] };
+      try {
+        if (playerData.highlights) {
+          let parsed = playerData.highlights;
+          
+          // Parse if string
+          if (typeof parsed === 'string' && parsed.trim()) {
+            try {
+              parsed = JSON.parse(parsed);
+            } catch {
+              console.warn('Highlights is not valid JSON, using defaults');
+            }
+          }
+          
+          // Validate structure
+          if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+            highlights = {
+              matchHighlights: Array.isArray(parsed.matchHighlights) ? parsed.matchHighlights : [],
+              bestClips: Array.isArray(parsed.bestClips) ? parsed.bestClips : []
+            };
+          }
+        }
+      } catch (e) {
+        console.error('Error parsing highlights:', e);
       }
       
-      // Preserve uploading, failed, and just completed clips when updating from database
+      // Preserve uploading/failed clips
       setHighlightsData((prev: any) => {
-        const uploadingOrFailedOrCompleted = (prev.bestClips || []).filter((clip: any) => 
-          clip.uploading || clip.uploadFailed || clip.justCompleted
-        );
+        const uploadingOrFailedOrCompleted = Array.isArray(prev.bestClips)
+          ? prev.bestClips.filter((clip: any) => clip.uploading || clip.uploadFailed || clip.justCompleted)
+          : [];
+        
         return {
-          ...highlights,
+          matchHighlights: highlights.matchHighlights || [],
           bestClips: [...uploadingOrFailedOrCompleted, ...(highlights.bestClips || [])]
         };
       });
@@ -720,8 +739,19 @@ const Dashboard = () => {
           .in("id", linkedAnalysisIds);
 
         if (!allAnalysesError && allAnalysesData) {
-          // Separate concepts from other analyses
-          setConcepts(allAnalysesData.filter(a => a.analysis_type === "concept"));
+          // Separate concepts from other analyses and normalize
+          const normalizedConcepts = allAnalysesData
+            .filter(a => a.analysis_type === "concept")
+            .map(concept => {
+              const points = concept.points && typeof concept.points === 'object' && Array.isArray(concept.points)
+                ? concept.points.map((point: any) => ({
+                    ...point,
+                    images: Array.isArray(point?.images) ? point.images : []
+                  }))
+                : [];
+              return { ...concept, points };
+            });
+          setConcepts(normalizedConcepts);
           
           // Add pre-match and post-match analyses to the analyses array
           const matchAnalyses = allAnalysesData.filter(a => 
@@ -824,10 +854,19 @@ const Dashboard = () => {
 
       if (programsError) throw programsError;
       
-      setPrograms(programsData || []);
+      // Normalize program data to ensure arrays exist
+      const normalizedPrograms = (programsData || []).map(program => ({
+        ...program,
+        weekly_schedules: Array.isArray(program.weekly_schedules) ? program.weekly_schedules : [],
+        sessions: program.sessions && typeof program.sessions === 'object' && !Array.isArray(program.sessions) 
+          ? program.sessions 
+          : {}
+      }));
+      
+      setPrograms(normalizedPrograms);
       
       // Set the current program as default
-      const currentProgram = programsData?.find(p => p.is_current);
+      const currentProgram = normalizedPrograms?.find(p => p.is_current);
       if (currentProgram) {
         setSelectedProgramId(currentProgram.id);
       } else if (programsData && programsData.length > 0) {
