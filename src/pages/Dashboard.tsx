@@ -167,7 +167,21 @@ const Dashboard = () => {
       return;
     }
 
-    // Upload files one at a time and refetch after each
+    // Add files to UI immediately with uploading status
+    const newClips = Array.from(files).map((file, index) => ({
+      name: file.name.replace(/\.[^/.]+$/, ''),
+      videoUrl: '',
+      addedAt: new Date().toISOString(),
+      uploading: true,
+      uploadId: `${Date.now()}_${index}_${file.name}`
+    }));
+
+    setHighlightsData((prev: any) => ({
+      ...prev,
+      bestClips: [...newClips, ...(prev.bestClips || [])]
+    }));
+
+    // Upload files one at a time
     let successCount = 0;
     let failCount = 0;
 
