@@ -17,10 +17,16 @@ const Login = () => {
   // Check if user is already logged in
   useEffect(() => {
     const checkAuth = async () => {
-      // Check localStorage and sessionStorage for player email
-      let playerEmail = localStorage.getItem("player_email") || sessionStorage.getItem("player_email");
+      // Check Supabase session first
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        navigate("/dashboard");
+        return;
+      }
+      
+      // Fallback: check localStorage
+      const playerEmail = localStorage.getItem("player_email") || sessionStorage.getItem("player_email");
       if (playerEmail) {
-        // Verify the email still exists in database
         const { data } = await supabase
           .from("players")
           .select("id")
@@ -30,7 +36,6 @@ const Login = () => {
         if (data) {
           navigate("/dashboard");
         } else {
-          // Email no longer valid, clear it
           localStorage.removeItem("player_email");
           sessionStorage.removeItem("player_email");
         }
@@ -65,13 +70,56 @@ const Login = () => {
         return;
       }
 
-      // Save login session to BOTH localStorage and sessionStorage for maximum persistence
+      // Use deterministic password for player auth
+      const playerPassword = `rise_player_${player.id}`;
+      
+      // Try to sign in first
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+        email: email,
+        password: playerPassword,
+      });
+
+      if (signInError) {
+        // If sign in fails, try to create the account
+        if (signInError.message.includes('Invalid login credentials')) {
+          const { error: signUpError } = await supabase.auth.signUp({
+            email: email,
+            password: playerPassword,
+            options: {
+              data: {
+                player_id: player.id,
+              }
+            }
+          });
+          
+          if (signUpError && !signUpError.message.includes('already registered')) {
+            throw signUpError;
+          }
+          
+          // If user already registered but credentials wrong, sign out any existing session and try again
+          if (signUpError?.message.includes('already registered')) {
+            await supabase.auth.signOut();
+            const { error: retryError } = await supabase.auth.signInWithPassword({
+              email: email,
+              password: playerPassword,
+            });
+            if (retryError) {
+              toast.error("Authentication issue. Please contact your coach.");
+              setLoading(false);
+              return;
+            }
+          }
+        } else {
+          throw signInError;
+        }
+      }
+
+      // Save login info
       try {
         localStorage.setItem("player_email", email);
         sessionStorage.setItem("player_email", email);
         localStorage.setItem("player_login_timestamp", Date.now().toString());
         
-        // Save email for auto-fill if remember me is checked
         if (rememberMe) {
           localStorage.setItem("player_saved_email", email);
           localStorage.setItem("player_remember_me", "true");
@@ -81,7 +129,6 @@ const Login = () => {
         }
       } catch (storageError) {
         console.error("Storage error:", storageError);
-        // Continue anyway - the app might still work
       }
       
       toast.success("Welcome to your portal!");
