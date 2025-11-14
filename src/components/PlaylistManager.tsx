@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { Plus, Trash2, Save, ChevronUp, ChevronDown, List, Play } from "lucide-react";
+import { Plus, X, Save, ChevronUp, ChevronDown, List, Play, Trash2 } from "lucide-react";
 import { Label } from "@/components/ui/label";
 
 interface Clip {
@@ -424,7 +424,7 @@ export const PlaylistManager = ({ playerData, availableClips, onClose }: Playlis
                       onClick={() => removeClipFromPlaylist(clip.name)}
                       className="h-7 w-7 p-0 text-destructive hover:text-destructive hover:bg-destructive/10 flex-shrink-0"
                     >
-                      <Trash2 className="w-3.5 h-3.5" />
+                      <X className="w-3.5 h-3.5" />
                     </Button>
                   </div>
                 ))}
