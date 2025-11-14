@@ -9,6 +9,8 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { NotificationPermission } from "@/components/NotificationPermission";
+import { NotificationSettings } from "@/components/NotificationSettings";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { toast } from "sonner";
 import { FileText, Play, Download, Upload, ChevronDown, Trash2, Lock, Calendar, Trophy, TrendingUp, Eye, EyeOff, ChevronUp, ChevronDown as ChevronDownIcon, List } from "lucide-react";
 import { ClipNameEditor } from "@/components/ClipNameEditor";
@@ -94,6 +96,9 @@ const Dashboard = () => {
   const [videoPlayerOpen, setVideoPlayerOpen] = useState(false);
   const [currentVideoUrl, setCurrentVideoUrl] = useState<string>("");
   const [currentVideoName, setCurrentVideoName] = useState<string>("");
+
+  // Initialize push notifications with player ID
+  usePushNotifications(playerData?.id);
 
   // Session color mapping with hover states
   const getSessionColor = (sessionKey: string) => {
@@ -1016,13 +1021,18 @@ const Dashboard = () => {
                   )}
                 </div>
               </div>
-              <Button 
-                variant="outline" 
-                onClick={handleLogout}
-                className="font-bebas uppercase tracking-wider"
-              >
-                Log Out
-              </Button>
+              <div className="flex items-center gap-2">
+                {playerData?.id && (
+                  <NotificationSettings playerId={playerData.id} />
+                )}
+                <Button 
+                  variant="outline" 
+                  onClick={handleLogout}
+                  className="font-bebas uppercase tracking-wider"
+                >
+                  Log Out
+                </Button>
+              </div>
             </div>
           </div>
 
