@@ -138,3 +138,66 @@ self.addEventListener('message', (event) => {
     self.skipWaiting();
   }
 });
+
+// Handle push notifications
+self.addEventListener('push', (event) => {
+  console.log('[Service Worker] Push notification received:', event);
+  
+  let notificationData = {
+    title: 'RISE Portal',
+    body: 'You have a new notification',
+    icon: '/lovable-uploads/icon-192x192.png',
+    badge: '/lovable-uploads/icon-192x192.png',
+    data: {}
+  };
+
+  if (event.data) {
+    try {
+      const payload = event.data.json();
+      notificationData = {
+        title: payload.title || notificationData.title,
+        body: payload.body || notificationData.body,
+        icon: notificationData.icon,
+        badge: notificationData.badge,
+        data: payload.data || {}
+      };
+    } catch (e) {
+      console.error('[Service Worker] Error parsing push data:', e);
+    }
+  }
+
+  event.waitUntil(
+    self.registration.showNotification(notificationData.title, {
+      body: notificationData.body,
+      icon: notificationData.icon,
+      badge: notificationData.badge,
+      data: notificationData.data,
+      vibrate: [200, 100, 200],
+      requireInteraction: false
+    })
+  );
+});
+
+// Handle notification clicks
+self.addEventListener('notificationclick', (event) => {
+  console.log('[Service Worker] Notification clicked:', event);
+  
+  event.notification.close();
+
+  // Open the app or focus existing window
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true })
+      .then((clientList) => {
+        // If app is already open, focus it
+        for (const client of clientList) {
+          if (client.url.includes(self.location.origin) && 'focus' in client) {
+            return client.focus();
+          }
+        }
+        // Otherwise open new window
+        if (clients.openWindow) {
+          return clients.openWindow('/dashboard');
+        }
+      })
+  );
+});

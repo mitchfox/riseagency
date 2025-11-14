@@ -1392,6 +1392,27 @@ export type Database = {
         }
         Relationships: []
       }
+      push_config: {
+        Row: {
+          created_at: string | null
+          id: string
+          private_key: string
+          public_key: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          private_key: string
+          public_key: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          private_key?: string
+          public_key?: string
+        }
+        Relationships: []
+      }
       push_notification_tokens: {
         Row: {
           created_at: string
@@ -1573,6 +1594,45 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      web_push_subscriptions: {
+        Row: {
+          created_at: string | null
+          id: string
+          player_id: string
+          subscription: Json
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          player_id: string
+          subscription: Json
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          player_id?: string
+          subscription?: Json
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "web_push_subscriptions_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: true
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "web_push_subscriptions_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: true
+            referencedRelation: "players_public"
             referencedColumns: ["id"]
           },
         ]
