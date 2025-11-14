@@ -19,7 +19,18 @@ interface PlayerProfileModalProps {
 const PlayerProfileModal = ({ open, onOpenChange, playerData }: PlayerProfileModalProps) => {
   if (!playerData) return null;
 
-  const parsedBio = playerData.bio ? JSON.parse(playerData.bio) : {};
+  // Safely parse bio - handle both JSON and plain text
+  let parsedBio: any = {};
+  if (playerData.bio) {
+    try {
+      // Try to parse as JSON first
+      parsedBio = JSON.parse(playerData.bio);
+    } catch {
+      // If it fails, treat it as plain text
+      parsedBio = { bio: playerData.bio };
+    }
+  }
+  
   const seasonStats = parsedBio.seasonStats || [];
   const strengthsAndPlayStyle = parsedBio.strengthsAndPlayStyle || [];
   const tacticalFormations = parsedBio.tacticalFormations || [];
