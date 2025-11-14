@@ -167,26 +167,19 @@ const Dashboard = () => {
       return;
     }
 
-    // Add files to UI immediately with uploading status
-    const newClips = Array.from(files).map((file, index) => ({
-      name: file.name.replace(/\.[^/.]+$/, ''), // Remove extension
-      videoUrl: '', // Will be filled after upload
-      addedAt: new Date().toISOString(),
-      uploading: true,
-      uploadId: `${Date.now()}_${index}_${file.name}` // Unique ID for tracking progress
-    }));
+    // Upload files one at a time and refetch after each
+    let successCount = 0;
+    let failCount = 0;
 
-    setHighlightsData((prev: any) => ({
-      ...prev,
-      bestClips: [...newClips, ...(prev.bestClips || [])]
-    }));
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const clipName = file.name.replace(/\.[^/.]+$/, ''); // Remove extension
+      const uploadId = `${Date.now()}_${i}_${file.name}`;
+      
+      try {
+        // Show this clip as uploading
+        setFileUploadProgress(prev => ({ ...prev, [uploadId]: 0 }));
 
-    try {
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        const clipName = file.name.replace(/\.[^/.]+$/, ''); // Remove extension
-        const uploadId = newClips[i].uploadId;
-        
         const formData = new FormData();
         formData.append('file', file);
         formData.append('playerEmail', playerEmail);
@@ -206,11 +199,6 @@ const Dashboard = () => {
             if (xhr.status === 200) {
               const data = JSON.parse(xhr.responseText);
               if (data.success) {
-                setFileUploadProgress(prev => {
-                  const newProgress = { ...prev };
-                  delete newProgress[uploadId];
-                  return newProgress;
-                });
                 resolve();
               } else {
                 reject(new Error(data.error || 'Upload failed'));
@@ -228,20 +216,38 @@ const Dashboard = () => {
           xhr.setRequestHeader('Authorization', `Bearer ${anonKey}`);
           xhr.send(formData);
         });
-      }
 
-      toast.success(`${files.length} clip(s) uploaded successfully!`);
-      
-      // Refetch player data to get actual URLs
-      await fetchAnalyses(playerEmail);
-    } catch (error: any) {
-      console.error('Upload error:', error);
-      toast.error(`Failed to upload: ${error.message}`);
-      
-      // Refetch to remove failed uploads
-      await fetchAnalyses(playerEmail);
-    } finally {
-      setFileUploadProgress({});
+        // Clear progress for this upload
+        setFileUploadProgress(prev => {
+          const newProgress = { ...prev };
+          delete newProgress[uploadId];
+          return newProgress;
+        });
+
+        successCount++;
+        
+        // Refetch data after each successful upload to show it immediately
+        await fetchAnalyses(playerEmail);
+      } catch (error: any) {
+        console.error(`Upload error for ${clipName}:`, error);
+        failCount++;
+        
+        // Clear progress for this failed upload
+        setFileUploadProgress(prev => {
+          const newProgress = { ...prev };
+          delete newProgress[uploadId];
+          return newProgress;
+        });
+      }
+    }
+
+    // Show final result
+    if (successCount > 0 && failCount === 0) {
+      toast.success(`${successCount} clip(s) uploaded successfully!`);
+    } else if (successCount > 0 && failCount > 0) {
+      toast.success(`${successCount} uploaded, ${failCount} failed`);
+    } else if (failCount > 0) {
+      toast.error(`Failed to upload ${failCount} clip(s)`);
     }
   };
 
