@@ -149,22 +149,8 @@ const PerformanceReport = () => {
   };
 
   const handleBackClick = () => {
-    if (isAuthenticated) {
-      // Authenticated user - go back to dashboard
-      navigate('/dashboard');
-    } else {
-      // Public viewer - go back to player profile on stars page
-      if (analysis?.player_name) {
-        const playerSlug = analysis.player_name
-          .toLowerCase()
-          .replace(/\s+/g, '-')
-          .replace(/[^a-z0-9-]/g, '');
-        navigate(`/stars/${playerSlug}`);
-      } else {
-        // Fallback to stars page
-        navigate('/stars');
-      }
-    }
+    // Always go back to previous page
+    navigate(-1);
   };
 
   console.log('PerformanceReport - Render - loading:', loading);
@@ -216,16 +202,16 @@ const PerformanceReport = () => {
       <main className="container mx-auto px-4 py-8">
         <Card className="mb-6">
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-3xl">Performance Report</CardTitle>
-              <div className="flex gap-2 print:hidden">
-                <Button onClick={handleSaveAsPDF} variant="default" size="sm">
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <CardTitle className="text-2xl md:text-3xl">Performance Report</CardTitle>
+              <div className="flex gap-2 print:hidden flex-wrap">
+                <Button onClick={handleSaveAsPDF} variant="default" size="sm" className="flex-1 md:flex-none">
                   <Download className="mr-2 h-4 w-4" />
                   Save as PDF
                 </Button>
-                <Button onClick={handleBackClick} variant="ghost" size="sm">
+                <Button onClick={handleBackClick} variant="ghost" size="sm" className="flex-1 md:flex-none">
                   <ArrowLeft className="mr-2 h-4 w-4" />
-                  {isAuthenticated ? "Back" : "Back to Profile"}
+                  Back
                 </Button>
               </div>
             </div>
@@ -347,34 +333,61 @@ const PerformanceReport = () => {
             {actions.length === 0 ? (
               <p className="text-center text-muted-foreground py-8">No performance actions recorded yet</p>
             ) : (
-              <div className="overflow-x-auto -mx-4 md:mx-0">
-                <table className="w-full min-w-full">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="text-left p-2 font-semibold text-xs md:text-sm whitespace-nowrap">#</th>
-                      <th className="text-left p-2 font-semibold text-xs md:text-sm whitespace-nowrap">Minute</th>
-                      <th className="text-left p-2 font-semibold text-xs md:text-sm whitespace-nowrap">Score</th>
-                      <th className="text-left p-2 font-semibold text-xs md:text-sm whitespace-nowrap">Action</th>
-                      <th className="text-left p-2 font-semibold text-xs md:text-sm">Description</th>
-                      <th className="text-left p-2 font-semibold text-xs md:text-sm hidden md:table-cell">Notes</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {actions.map((action) => (
-                      <tr key={action.id} className="border-b hover:bg-accent/50">
-                        <td className="p-2 text-xs md:text-sm whitespace-nowrap">{action.action_number}</td>
-                        <td className="p-2 text-xs md:text-sm whitespace-nowrap">{(action.minute ?? 0).toFixed(2)}</td>
-                        <td className={`p-2 text-xs md:text-sm whitespace-nowrap ${getActionScoreColor(action.action_score ?? 0)}`}>
+              <>
+                {/* Mobile: Card layout */}
+                <div className="block md:hidden space-y-4">
+                  {actions.map((action) => (
+                    <Card key={action.id} className="p-4 bg-muted/30">
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex gap-3">
+                          <span className="font-semibold text-lg">#{action.action_number}</span>
+                          <span className="text-sm text-muted-foreground">{(action.minute ?? 0).toFixed(2)}'</span>
+                        </div>
+                        <span className={`text-sm font-bold ${getActionScoreColor(action.action_score ?? 0)}`}>
                           {(action.action_score ?? 0).toFixed(5)}
-                        </td>
-                        <td className="p-2 font-medium text-xs md:text-sm whitespace-nowrap">{action.action_type}</td>
-                        <td className="p-2 text-xs md:text-sm">{action.action_description}</td>
-                        <td className="p-2 text-xs md:text-sm text-muted-foreground hidden md:table-cell">{action.notes || "-"}</td>
+                        </span>
+                      </div>
+                      <div className="font-medium text-sm mb-2 text-foreground">{action.action_type}</div>
+                      <div className="text-sm text-foreground/80 mb-2">{action.action_description}</div>
+                      {action.notes && (
+                        <div className="text-xs text-muted-foreground italic mt-2 pt-2 border-t border-border/50">
+                          {action.notes}
+                        </div>
+                      )}
+                    </Card>
+                  ))}
+                </div>
+
+                {/* Desktop: Table layout */}
+                <div className="hidden md:block overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="text-left p-2 font-semibold text-sm whitespace-nowrap">#</th>
+                        <th className="text-left p-2 font-semibold text-sm whitespace-nowrap">Minute</th>
+                        <th className="text-left p-2 font-semibold text-sm whitespace-nowrap">Score</th>
+                        <th className="text-left p-2 font-semibold text-sm whitespace-nowrap">Action</th>
+                        <th className="text-left p-2 font-semibold text-sm">Description</th>
+                        <th className="text-left p-2 font-semibold text-sm">Notes</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody>
+                      {actions.map((action) => (
+                        <tr key={action.id} className="border-b hover:bg-accent/50">
+                          <td className="p-2 text-sm whitespace-nowrap">{action.action_number}</td>
+                          <td className="p-2 text-sm whitespace-nowrap">{(action.minute ?? 0).toFixed(2)}</td>
+                          <td className={`p-2 text-sm whitespace-nowrap ${getActionScoreColor(action.action_score ?? 0)}`}>
+                            {(action.action_score ?? 0).toFixed(5)}
+                          </td>
+                          <td className="p-2 font-medium text-sm whitespace-nowrap">{action.action_type}</td>
+                          <td className="p-2 text-sm">{action.action_description}</td>
+                          <td className="p-2 text-sm text-muted-foreground">{action.notes || "-"}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
             )}
           </CardContent>
         </Card>
