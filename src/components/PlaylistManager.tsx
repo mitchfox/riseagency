@@ -134,93 +134,141 @@ export const PlaylistManager = ({ playerData, availableClips, onClose }: Playlis
   };
 
   const addClipsToPlaylist = async () => {
-    if (!selectedPlaylist || selectedClips.size === 0) return;
+    if (!selectedPlaylist || selectedClips.size === 0 || !playerData?.email) return;
 
-    const existingClips = selectedPlaylist.clips || [];
-    const maxOrder = existingClips.length > 0 
-      ? Math.max(...existingClips.map(c => c.order))
-      : 0;
+    try {
+      const existingClips = selectedPlaylist.clips || [];
+      const maxOrder = existingClips.length > 0 
+        ? Math.max(...existingClips.map(c => c.order))
+        : 0;
 
-    const newClips = Array.from(selectedClips).map((clipId, index) => {
-      const clip = availableClips.find(c => (c.id || c.videoUrl) === clipId);
-      return {
-        id: clip!.id || clip!.videoUrl,
-        name: clip!.name,
-        videoUrl: clip!.videoUrl,
-        order: maxOrder + index + 1
-      };
-    });
+      const newClips = Array.from(selectedClips).map((clipId, index) => {
+        const clip = availableClips.find(c => (c.id || c.videoUrl) === clipId);
+        return {
+          id: clip!.id || clip!.videoUrl,
+          name: clip!.name,
+          videoUrl: clip!.videoUrl,
+          order: maxOrder + index + 1
+        };
+      });
 
-    const updatedClips = [...existingClips, ...newClips];
+      const updatedClips = [...existingClips, ...newClips];
 
-    const { error } = await supabase
-      .from('playlists')
-      .update({ clips: updatedClips as any })
-      .eq('id', selectedPlaylist.id);
+      // Use edge function to update playlist (bypasses RLS)
+      const { data, error } = await supabase.functions.invoke('update-playlist', {
+        body: {
+          playerEmail: playerData.email,
+          playlistId: selectedPlaylist.id,
+          clips: updatedClips
+        }
+      });
 
-    if (error) {
-      toast.error("Failed to add clips");
-      return;
+      if (error) {
+        console.error('Add clips error:', error);
+        toast.error(`Failed to add clips: ${error.message}`);
+        return;
+      }
+
+      if (data?.error) {
+        console.error('Add clips data error:', data.error);
+        toast.error(`Failed to add clips: ${data.error}`);
+        return;
+      }
+
+      setSelectedPlaylist({ ...selectedPlaylist, clips: updatedClips });
+      setPlaylists(playlists.map(p => 
+        p.id === selectedPlaylist.id ? { ...p, clips: updatedClips } : p
+      ));
+      setSelectedClips(new Set());
+      toast.success("Clips added to playlist");
+    } catch (err: any) {
+      console.error('Unexpected error adding clips:', err);
+      toast.error(`Error: ${err.message || 'Unknown error'}`);
     }
-
-    setSelectedPlaylist({ ...selectedPlaylist, clips: updatedClips });
-    setPlaylists(playlists.map(p => 
-      p.id === selectedPlaylist.id ? { ...p, clips: updatedClips } : p
-    ));
-    setSelectedClips(new Set());
-    toast.success("Clips added to playlist");
   };
 
   const removeClipFromPlaylist = async (clipId: string, clipName: string) => {
-    if (!selectedPlaylist) return;
+    if (!selectedPlaylist || !playerData?.email) return;
 
-    const updatedClips = selectedPlaylist.clips
-      .filter(c => (c.id || c.name) !== clipId)
-      .map((c, index) => ({ ...c, order: index + 1 }));
+    try {
+      const updatedClips = selectedPlaylist.clips
+        .filter(c => (c.id || c.name) !== clipId)
+        .map((c, index) => ({ ...c, order: index + 1 }));
 
-    const { error } = await supabase
-      .from('playlists')
-      .update({ clips: updatedClips as any })
-      .eq('id', selectedPlaylist.id);
+      // Use edge function to update playlist (bypasses RLS)
+      const { data, error } = await supabase.functions.invoke('update-playlist', {
+        body: {
+          playerEmail: playerData.email,
+          playlistId: selectedPlaylist.id,
+          clips: updatedClips
+        }
+      });
 
-    if (error) {
-      toast.error("Failed to remove clip");
-      return;
+      if (error) {
+        console.error('Remove clip error:', error);
+        toast.error(`Failed to remove clip: ${error.message}`);
+        return;
+      }
+
+      if (data?.error) {
+        console.error('Remove clip data error:', data.error);
+        toast.error(`Failed to remove clip: ${data.error}`);
+        return;
+      }
+
+      setSelectedPlaylist({ ...selectedPlaylist, clips: updatedClips });
+      setPlaylists(playlists.map(p => 
+        p.id === selectedPlaylist.id ? { ...p, clips: updatedClips } : p
+      ));
+      toast.success("Clip removed");
+    } catch (err: any) {
+      console.error('Unexpected error removing clip:', err);
+      toast.error(`Error: ${err.message || 'Unknown error'}`);
     }
-
-    setSelectedPlaylist({ ...selectedPlaylist, clips: updatedClips });
-    setPlaylists(playlists.map(p => 
-      p.id === selectedPlaylist.id ? { ...p, clips: updatedClips } : p
-    ));
-    toast.success("Clip removed");
   };
 
   const reorderClip = async (index: number, direction: 'up' | 'down') => {
-    if (!selectedPlaylist) return;
+    if (!selectedPlaylist || !playerData?.email) return;
 
-    const clips = [...selectedPlaylist.clips];
-    const newIndex = direction === 'up' ? index - 1 : index + 1;
+    try {
+      const clips = [...selectedPlaylist.clips];
+      const newIndex = direction === 'up' ? index - 1 : index + 1;
 
-    if (newIndex < 0 || newIndex >= clips.length) return;
+      if (newIndex < 0 || newIndex >= clips.length) return;
 
-    [clips[index], clips[newIndex]] = [clips[newIndex], clips[index]];
-    
-    const reorderedClips = clips.map((c, i) => ({ ...c, order: i + 1 }));
+      [clips[index], clips[newIndex]] = [clips[newIndex], clips[index]];
+      
+      const reorderedClips = clips.map((c, i) => ({ ...c, order: i + 1 }));
 
-    const { error } = await supabase
-      .from('playlists')
-      .update({ clips: reorderedClips as any })
-      .eq('id', selectedPlaylist.id);
+      // Use edge function to update playlist (bypasses RLS)
+      const { data, error } = await supabase.functions.invoke('update-playlist', {
+        body: {
+          playerEmail: playerData.email,
+          playlistId: selectedPlaylist.id,
+          clips: reorderedClips
+        }
+      });
 
-    if (error) {
-      toast.error("Failed to reorder clips");
-      return;
+      if (error) {
+        console.error('Reorder clips error:', error);
+        toast.error(`Failed to reorder clips: ${error.message}`);
+        return;
+      }
+
+      if (data?.error) {
+        console.error('Reorder clips data error:', data.error);
+        toast.error(`Failed to reorder clips: ${data.error}`);
+        return;
+      }
+
+      setSelectedPlaylist({ ...selectedPlaylist, clips: reorderedClips });
+      setPlaylists(playlists.map(p => 
+        p.id === selectedPlaylist.id ? { ...p, clips: reorderedClips } : p
+      ));
+    } catch (err: any) {
+      console.error('Unexpected error reordering clips:', err);
+      toast.error(`Error: ${err.message || 'Unknown error'}`);
     }
-
-    setSelectedPlaylist({ ...selectedPlaylist, clips: reorderedClips });
-    setPlaylists(playlists.map(p => 
-      p.id === selectedPlaylist.id ? { ...p, clips: reorderedClips } : p
-    ));
   };
 
   const savePlaylist = async () => {
