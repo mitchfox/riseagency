@@ -2483,9 +2483,7 @@ const Dashboard = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-6">
-                    <PWAInstallPrompt />
-                    
+                  <div className="space-y-8">
                     {updates.length === 0 ? (
                       <div className="py-8 text-center text-muted-foreground">
                         No updates available yet.
@@ -2512,6 +2510,13 @@ const Dashboard = () => {
                         ))}
                       </div>
                     )}
+
+                    <div className="border-t pt-6">
+                      <h3 className="text-xl font-bebas uppercase tracking-wider mb-4">
+                        Latest App Update
+                      </h3>
+                      <PWAInstallPrompt />
+                    </div>
                   </div>
                 </CardContent>
               </Card>
