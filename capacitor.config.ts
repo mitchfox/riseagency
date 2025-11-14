@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'app.lovable.3f4a1ae959194d5ba1711795b6399352',
+  appId: 'com.rise.riseapp',
   appName: 'riseagency',
   webDir: 'dist',
   server: {
