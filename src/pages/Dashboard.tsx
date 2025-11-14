@@ -193,9 +193,26 @@ const Dashboard = () => {
     const uploadPromises = Array.from(files).map(async (file, index) => {
       const clipName = file.name.replace(/\.[^/.]+$/, '');
       const uploadId = `${Date.now()}_${index}_${file.name}`;
+      let progressInterval: NodeJS.Timeout | undefined;
       
       try {
+        // Initialize progress to 0
         setFileUploadProgress(prev => ({ ...prev, [uploadId]: 0 }));
+
+        // Fallback progress simulation if no real progress events
+        let lastProgressUpdate = Date.now();
+        let hasReceivedProgress = false;
+        progressInterval = setInterval(() => {
+          if (!hasReceivedProgress && Date.now() - lastProgressUpdate > 1000) {
+            setFileUploadProgress(prev => {
+              const current = prev[uploadId] || 0;
+              if (current < 85) {
+                return { ...prev, [uploadId]: Math.min(current + Math.random() * 15, 85) };
+              }
+              return prev;
+            });
+          }
+        }, 800);
 
         const formData = new FormData();
         formData.append('file', file);
@@ -206,16 +223,26 @@ const Dashboard = () => {
           const xhr = new XMLHttpRequest();
 
           xhr.upload.addEventListener('progress', (e) => {
+            hasReceivedProgress = true;
+            lastProgressUpdate = Date.now();
             if (e.lengthComputable) {
               const progress = Math.round((e.loaded / e.total) * 100);
               setFileUploadProgress(prev => ({ ...prev, [uploadId]: progress }));
+            } else {
+              // Even without lengthComputable, show some progress
+              setFileUploadProgress(prev => {
+                const current = prev[uploadId] || 0;
+                return { ...prev, [uploadId]: Math.min(current + 5, 90) };
+              });
             }
           });
 
           xhr.addEventListener('load', () => {
+            clearInterval(progressInterval);
             if (xhr.status === 200) {
               const data = JSON.parse(xhr.responseText);
               if (data.success) {
+                setFileUploadProgress(prev => ({ ...prev, [uploadId]: 100 }));
                 resolve();
               } else {
                 reject(new Error(data.error || 'Upload failed'));
@@ -225,7 +252,10 @@ const Dashboard = () => {
             }
           });
 
-          xhr.addEventListener('error', () => reject(new Error('Network error')));
+          xhr.addEventListener('error', () => {
+            clearInterval(progressInterval);
+            reject(new Error('Network error'));
+          });
 
           const anonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF3ZXRoaW1idGFhbWxoYmFqbWFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA3ODQzNDMsImV4cCI6MjA3NjM2MDM0M30.FNM354bgxhdtM4F_KGbQQnJwX7-WngaX58kPvPYnUEY';
           xhr.open('POST', 'https://qwethimbtaamlhbajmal.supabase.co/functions/v1/upload-player-highlight');
@@ -269,6 +299,11 @@ const Dashboard = () => {
           delete newProgress[uploadId];
           return newProgress;
         });
+
+        // Clear any lingering interval
+        if (progressInterval) {
+          clearInterval(progressInterval);
+        }
 
         failCount++;
       }
