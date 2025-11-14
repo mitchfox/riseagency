@@ -47,3 +47,9 @@ verify_jwt = true
 
 [functions.parse-opposition-analysis]
 verify_jwt = true
+
+[functions.init-web-push]
+verify_jwt = false
+
+[functions.send-web-push]
+verify_jwt = true
