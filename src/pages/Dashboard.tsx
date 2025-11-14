@@ -886,7 +886,14 @@ const Dashboard = () => {
   };
 
   const handleLogout = async () => {
+    // Clear from BOTH storages to ensure complete logout
     localStorage.removeItem("player_email");
+    localStorage.removeItem("player_login_timestamp");
+    sessionStorage.removeItem("player_email");
+    
+    // Also sign out from Supabase auth if there's a session
+    await supabase.auth.signOut();
+    
     toast.success("Logged out successfully");
     navigate("/login");
   };
