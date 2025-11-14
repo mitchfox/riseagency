@@ -614,7 +614,7 @@ const Dashboard = () => {
       await fetchAnalyses(playerEmail);
       await fetchPrograms(playerEmail);
       await fetchInvoices(playerEmail);
-      await fetchUpdates();
+      await fetchUpdates(player.id);
     } catch (error) {
       console.error("Error loading data:", error);
       navigate("/login");
@@ -930,12 +930,13 @@ const Dashboard = () => {
     }
   };
 
-  const fetchUpdates = async () => {
+  const fetchUpdates = async (playerId: string) => {
     try {
       const { data, error } = await supabase
         .from("updates")
         .select("*")
         .eq("visible", true)
+        .or(`visible_to_player_ids.cs.{${playerId}},visible_to_player_ids.is.null`)
         .order("date", { ascending: false });
 
       if (error) throw error;
