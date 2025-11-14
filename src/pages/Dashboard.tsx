@@ -1,8 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Header } from "@/components/Header";
-import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -982,8 +980,7 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header />
-      <main className="pt-24 md:pt-20 pb-12 px-0 md:px-4">
+      <main className="pt-12 pb-12 px-0 md:px-4">
         <div className="container mx-auto max-w-6xl px-0 md:px-6">
           {/* Player Header */}
           <div className="relative mb-12">
@@ -2552,7 +2549,6 @@ const Dashboard = () => {
           )}
         </div>
       </main>
-      <Footer />
 
       {/* Exercise Details Dialog */}
       <Dialog open={exerciseDialogOpen} onOpenChange={setExerciseDialogOpen}>
