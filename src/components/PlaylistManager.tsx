@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { Plus, X, Save, ChevronUp, ChevronDown, List, Play, Trash2 } from "lucide-react";
+import { Plus, X, Save, ChevronUp, ChevronDown, List, Play, Trash2, Hash } from "lucide-react";
 import { Label } from "@/components/ui/label";
 
 interface Clip {
@@ -35,6 +35,8 @@ export const PlaylistManager = ({ playerData, availableClips, onClose }: Playlis
   const [selectedClips, setSelectedClips] = useState<Set<string>>(new Set());
   const [saving, setSaving] = useState(false);
   const [playingVideo, setPlayingVideo] = useState<{ url: string; name: string } | null>(null);
+  const [movingClipId, setMovingClipId] = useState<string | null>(null);
+  const [targetPosition, setTargetPosition] = useState("");
 
   useEffect(() => {
     fetchPlaylists();
@@ -271,6 +273,55 @@ export const PlaylistManager = ({ playerData, availableClips, onClose }: Playlis
     }
   };
 
+  const moveClipToPosition = async (currentIndex: number, targetPos: number) => {
+    if (!selectedPlaylist || !playerData?.email) return;
+    
+    const newPosition = targetPos - 1; // Convert to 0-indexed
+    if (newPosition < 0 || newPosition >= selectedPlaylist.clips.length || newPosition === currentIndex) {
+      toast.error("Invalid position");
+      return;
+    }
+
+    try {
+      const clips = [...selectedPlaylist.clips];
+      const [movedClip] = clips.splice(currentIndex, 1);
+      clips.splice(newPosition, 0, movedClip);
+      
+      const reorderedClips = clips.map((c, i) => ({ ...c, order: i + 1 }));
+
+      const { data, error } = await supabase.functions.invoke('update-playlist', {
+        body: {
+          playerEmail: playerData.email,
+          playlistId: selectedPlaylist.id,
+          clips: reorderedClips
+        }
+      });
+
+      if (error) {
+        console.error('Move clip error:', error);
+        toast.error(`Failed to move clip: ${error.message}`);
+        return;
+      }
+
+      if (data?.error) {
+        console.error('Move clip data error:', data.error);
+        toast.error(`Failed to move clip: ${data.error}`);
+        return;
+      }
+
+      setSelectedPlaylist({ ...selectedPlaylist, clips: reorderedClips });
+      setPlaylists(playlists.map(p => 
+        p.id === selectedPlaylist.id ? { ...p, clips: reorderedClips } : p
+      ));
+      setMovingClipId(null);
+      setTargetPosition("");
+      toast.success(`Moved to position ${targetPos}`);
+    } catch (err: any) {
+      console.error('Unexpected error moving clip:', err);
+      toast.error(`Error: ${err.message || 'Unknown error'}`);
+    }
+  };
+
   const savePlaylist = async () => {
     if (!selectedPlaylist || !playerData?.email) return;
 
@@ -481,26 +532,87 @@ export const PlaylistManager = ({ playerData, availableClips, onClose }: Playlis
                     >
                       <Play className="w-3.5 h-3.5" />
                     </Button>
-                    <div className="flex flex-col gap-0.5 flex-shrink-0">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => reorderClip(index, 'up')}
-                        disabled={index === 0}
-                        className="h-5 w-5 md:h-6 md:w-6 p-0 hover:bg-muted"
-                      >
-                        <ChevronUp className="w-3 h-3" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => reorderClip(index, 'down')}
-                        disabled={index === selectedPlaylist.clips.length - 1}
-                        className="h-5 w-5 md:h-6 md:w-6 p-0 hover:bg-muted"
-                      >
-                        <ChevronDown className="w-3 h-3" />
-                      </Button>
-                    </div>
+                    
+                    {movingClipId === (clip.id || clip.videoUrl || clip.name) ? (
+                      <div className="flex items-center gap-1 flex-shrink-0">
+                        <Input
+                          type="number"
+                          min="1"
+                          max={selectedPlaylist.clips.length}
+                          value={targetPosition}
+                          onChange={(e) => setTargetPosition(e.target.value)}
+                          placeholder="#"
+                          className="h-7 w-12 text-xs p-1 text-center"
+                          autoFocus
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && targetPosition) {
+                              moveClipToPosition(index, parseInt(targetPosition));
+                            }
+                            if (e.key === 'Escape') {
+                              setMovingClipId(null);
+                              setTargetPosition("");
+                            }
+                          }}
+                        />
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => {
+                            if (targetPosition) moveClipToPosition(index, parseInt(targetPosition));
+                          }}
+                          className="h-7 w-7 p-0 hover:bg-primary/10"
+                        >
+                          <Save className="w-3.5 h-3.5" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => {
+                            setMovingClipId(null);
+                            setTargetPosition("");
+                          }}
+                          className="h-7 w-7 p-0 hover:bg-muted"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => {
+                            setMovingClipId(clip.id || clip.videoUrl || clip.name);
+                            setTargetPosition("");
+                          }}
+                          className="h-7 w-7 p-0 hover:bg-muted flex-shrink-0"
+                          title="Move to position"
+                        >
+                          <Hash className="w-3.5 h-3.5" />
+                        </Button>
+                        <div className="flex flex-col gap-0.5 flex-shrink-0">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => reorderClip(index, 'up')}
+                            disabled={index === 0}
+                            className="h-5 w-5 md:h-6 md:w-6 p-0 hover:bg-muted"
+                          >
+                            <ChevronUp className="w-3 h-3" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => reorderClip(index, 'down')}
+                            disabled={index === selectedPlaylist.clips.length - 1}
+                            className="h-5 w-5 md:h-6 md:w-6 p-0 hover:bg-muted"
+                          >
+                            <ChevronDown className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      </>
+                    )}
+                    
                     <Button
                       size="sm"
                       variant="ghost"
