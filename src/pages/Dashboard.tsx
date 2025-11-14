@@ -173,7 +173,8 @@ const Dashboard = () => {
       videoUrl: '',
       addedAt: new Date().toISOString(),
       uploading: true,
-      uploadId: `${Date.now()}_${index}_${file.name}`
+      uploadId: `${Date.now()}_${index}_${file.name}`,
+      file // Store file for retry
     }));
 
     setHighlightsData((prev: any) => ({
@@ -181,17 +182,15 @@ const Dashboard = () => {
       bestClips: [...newClips, ...(prev.bestClips || [])]
     }));
 
-    // Upload files one at a time
+    // Upload files concurrently
     let successCount = 0;
     let failCount = 0;
 
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      const clipName = file.name.replace(/\.[^/.]+$/, ''); // Remove extension
-      const uploadId = `${Date.now()}_${i}_${file.name}`;
+    const uploadPromises = Array.from(files).map(async (file, index) => {
+      const clipName = file.name.replace(/\.[^/.]+$/, '');
+      const uploadId = `${Date.now()}_${index}_${file.name}`;
       
       try {
-        // Show this clip as uploading
         setFileUploadProgress(prev => ({ ...prev, [uploadId]: 0 }));
 
         const formData = new FormData();
@@ -231,7 +230,16 @@ const Dashboard = () => {
           xhr.send(formData);
         });
 
-        // Clear progress for this upload
+        // Mark as successfully uploaded
+        setHighlightsData((prev: any) => ({
+          ...prev,
+          bestClips: prev.bestClips.map((clip: any) => 
+            clip.uploadId === uploadId 
+              ? { ...clip, uploading: false, uploadSuccess: true }
+              : clip
+          )
+        }));
+
         setFileUploadProgress(prev => {
           const newProgress = { ...prev };
           delete newProgress[uploadId];
@@ -239,21 +247,33 @@ const Dashboard = () => {
         });
 
         successCount++;
-        
-        // Refetch data after each successful upload to show it immediately
-        await fetchAnalyses(playerEmail);
       } catch (error: any) {
         console.error(`Upload error for ${clipName}:`, error);
-        failCount++;
         
-        // Clear progress for this failed upload
+        // Mark as failed with retry option
+        setHighlightsData((prev: any) => ({
+          ...prev,
+          bestClips: prev.bestClips.map((clip: any) => 
+            clip.uploadId === uploadId 
+              ? { ...clip, uploading: false, uploadFailed: true, error: error.message }
+              : clip
+          )
+        }));
+
         setFileUploadProgress(prev => {
           const newProgress = { ...prev };
           delete newProgress[uploadId];
           return newProgress;
         });
+
+        failCount++;
       }
-    }
+    });
+
+    await Promise.all(uploadPromises);
+
+    // Refetch to get the new clips from database
+    await fetchAnalyses(playerEmail);
 
     // Show final result
     if (successCount > 0 && failCount === 0) {
@@ -262,6 +282,96 @@ const Dashboard = () => {
       toast.success(`${successCount} uploaded, ${failCount} failed`);
     } else if (failCount > 0) {
       toast.error(`Failed to upload ${failCount} clip(s)`);
+    }
+  };
+
+  const handleRetryUpload = async (uploadId: string, file: File) => {
+    const playerEmail = localStorage.getItem("player_email");
+    if (!playerEmail) {
+      toast.error("Please log in again");
+      navigate("/login");
+      return;
+    }
+
+    const clipName = file.name.replace(/\.[^/.]+$/, '');
+    
+    // Mark as uploading again
+    setHighlightsData((prev: any) => ({
+      ...prev,
+      bestClips: prev.bestClips.map((clip: any) => 
+        clip.uploadId === uploadId 
+          ? { ...clip, uploading: true, uploadFailed: false }
+          : clip
+      )
+    }));
+
+    try {
+      setFileUploadProgress(prev => ({ ...prev, [uploadId]: 0 }));
+
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('playerEmail', playerEmail);
+      formData.append('clipName', clipName);
+
+      await new Promise<void>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+
+        xhr.upload.addEventListener('progress', (e) => {
+          if (e.lengthComputable) {
+            const progress = Math.round((e.loaded / e.total) * 100);
+            setFileUploadProgress(prev => ({ ...prev, [uploadId]: progress }));
+          }
+        });
+
+        xhr.addEventListener('load', () => {
+          if (xhr.status === 200) {
+            const data = JSON.parse(xhr.responseText);
+            if (data.success) {
+              resolve();
+            } else {
+              reject(new Error(data.error || 'Upload failed'));
+            }
+          } else {
+            reject(new Error(`Upload failed with status ${xhr.status}`));
+          }
+        });
+
+        xhr.addEventListener('error', () => reject(new Error('Network error')));
+
+        const anonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF3ZXRoaW1idGFhbWxoYmFqbWFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA3ODQzNDMsImV4cCI6MjA3NjM2MDM0M30.FNM354bgxhdtM4F_KGbQQnJwX7-WngaX58kPvPYnUEY';
+        xhr.open('POST', 'https://qwethimbtaamlhbajmal.supabase.co/functions/v1/upload-player-highlight');
+        xhr.setRequestHeader('apikey', anonKey);
+        xhr.setRequestHeader('Authorization', `Bearer ${anonKey}`);
+        xhr.send(formData);
+      });
+
+      setFileUploadProgress(prev => {
+        const newProgress = { ...prev };
+        delete newProgress[uploadId];
+        return newProgress;
+      });
+
+      await fetchAnalyses(playerEmail);
+      toast.success('Clip uploaded successfully!');
+    } catch (error: any) {
+      console.error(`Retry upload error:`, error);
+      
+      setHighlightsData((prev: any) => ({
+        ...prev,
+        bestClips: prev.bestClips.map((clip: any) => 
+          clip.uploadId === uploadId 
+            ? { ...clip, uploading: false, uploadFailed: true, error: error.message }
+            : clip
+        )
+      }));
+
+      setFileUploadProgress(prev => {
+        const newProgress = { ...prev };
+        delete newProgress[uploadId];
+        return newProgress;
+      });
+
+      toast.error('Upload failed again');
     }
   };
 
@@ -491,7 +601,17 @@ const Dashboard = () => {
       const highlights = playerData.highlights 
         ? JSON.parse(typeof playerData.highlights === 'string' ? playerData.highlights : JSON.stringify(playerData.highlights))
         : { matchHighlights: [], bestClips: [] };
-      setHighlightsData(highlights);
+      
+      // Preserve uploading and failed clips when updating from database
+      setHighlightsData((prev: any) => {
+        const uploadingOrFailed = (prev.bestClips || []).filter((clip: any) => 
+          clip.uploading || clip.uploadFailed
+        );
+        return {
+          ...highlights,
+          bestClips: [...uploadingOrFailed, ...highlights.bestClips]
+        };
+      });
 
       // Then fetch their analyses
       const { data: analysisData, error: analysisError } = await supabase
@@ -2090,6 +2210,22 @@ const Dashboard = () => {
                                              </div>
                                            )}
                                          </div>
+                                       ) : highlight.uploadFailed ? (
+                                         <div className="space-y-2">
+                                           <div className="flex items-center justify-between gap-2">
+                                             <p className="font-bebas text-lg uppercase tracking-wider truncate text-destructive">{highlight.name}</p>
+                                             <Button 
+                                               variant="destructive" 
+                                               size="sm"
+                                               onClick={() => handleRetryUpload(highlight.uploadId, highlight.file)}
+                                               className="h-8 px-3"
+                                             >
+                                               <Upload className="w-4 h-4 mr-2" />
+                                               Retry
+                                             </Button>
+                                           </div>
+                                           <p className="text-sm text-destructive">Upload failed: {highlight.error || 'Unknown error'}</p>
+                                         </div>
                                        ) : (
                                          <ClipNameEditor
                                            initialName={highlight.name}
@@ -2099,7 +2235,7 @@ const Dashboard = () => {
                                         )}
                                         </div>
                                       </div>
-                                      {!highlight.uploading && (
+                                      {!highlight.uploading && !highlight.uploadFailed && (
                                         <div className="flex gap-1 md:gap-2 flex-shrink-0">
                                           <Button 
                                             variant="outline" 
