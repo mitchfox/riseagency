@@ -789,6 +789,57 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_preferences: {
+        Row: {
+          analyses: boolean
+          clips: boolean
+          created_at: string
+          highlights: boolean
+          id: string
+          performance_reports: boolean
+          player_id: string
+          programmes: boolean
+          updated_at: string
+        }
+        Insert: {
+          analyses?: boolean
+          clips?: boolean
+          created_at?: string
+          highlights?: boolean
+          id?: string
+          performance_reports?: boolean
+          player_id: string
+          programmes?: boolean
+          updated_at?: string
+        }
+        Update: {
+          analyses?: boolean
+          clips?: boolean
+          created_at?: string
+          highlights?: boolean
+          id?: string
+          performance_reports?: boolean
+          player_id?: string
+          programmes?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_notif_prefs_player"
+            columns: ["player_id"]
+            isOneToOne: true
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_notif_prefs_player"
+            columns: ["player_id"]
+            isOneToOne: true
+            referencedRelation: "players_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       performance_report_actions: {
         Row: {
           action_description: string | null
@@ -1340,6 +1391,48 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      push_notification_tokens: {
+        Row: {
+          created_at: string
+          device_type: string
+          id: string
+          player_id: string
+          token: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          device_type: string
+          id?: string
+          player_id: string
+          token: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          device_type?: string
+          id?: string
+          player_id?: string
+          token?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_push_tokens_player"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_push_tokens_player"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players_public"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       r90_ratings: {
         Row: {
