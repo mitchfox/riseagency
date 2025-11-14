@@ -2130,19 +2130,7 @@ const Dashboard = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {(() => {
-                    const hasContent = (highlightsData.matchHighlights?.length > 0) || (highlightsData.bestClips?.length > 0);
-                    
-                    if (!hasContent) {
-                      return (
-                        <div className="py-8 text-center text-muted-foreground">
-                          No highlights available yet.
-                        </div>
-                      );
-                    }
-                    
-                    return (
-                      <Tabs defaultValue="match" className="w-full">
+                  <Tabs defaultValue="best" className="w-full">
                         <TabsList className="grid w-full grid-cols-2 mb-6">
                           <TabsTrigger value="match" className="font-bebas uppercase">
                             Match Highlights
@@ -2480,8 +2468,6 @@ const Dashboard = () => {
                           )}
                         </TabsContent>
                       </Tabs>
-                    );
-                  })()}
                 </CardContent>
               </Card>
             </TabsContent>
