@@ -137,7 +137,7 @@ export const PWAInstallPrompt = () => {
   };
 
   // Always show something - either install prompt or instructions
-  if (isStandalone) {
+  if (isStandalone && !updateAvailable) {
     return (
       <Card className="bg-green-500/10 border-green-500/20 p-4">
         <div className="flex items-center gap-3">
@@ -155,7 +155,7 @@ export const PWAInstallPrompt = () => {
 
   return (
     <div className="space-y-3">
-      {/* Update Available */}
+      {/* Update Available - Show for both installed and non-installed */}
       {updateAvailable && (
         <Card className="bg-primary/10 border-primary p-4">
           <div className="flex items-center justify-between">
@@ -180,6 +180,21 @@ export const PWAInstallPrompt = () => {
               >
                 <X className="h-4 w-4" />
               </Button>
+            </div>
+          </div>
+        </Card>
+      )}
+
+      {/* Show install status if installed but no update */}
+      {isStandalone && !updateAvailable && (
+        <Card className="bg-green-500/10 border-green-500/20 p-4">
+          <div className="flex items-center gap-3">
+            <Download className="h-5 w-5 text-green-500" />
+            <div>
+              <p className="font-semibold text-foreground">App Installed ✓</p>
+              <p className="text-sm text-muted-foreground">
+                You're running RISE Portal as an installed app
+              </p>
             </div>
           </div>
         </Card>
