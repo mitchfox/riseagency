@@ -651,17 +651,24 @@ const Dashboard = () => {
           }
           
           // If the parsed bioData has a nested "bio" string field, parse that too
-          if (bioData && typeof bioData === 'object' && typeof bioData.bio === 'string') {
+          if (bioData && typeof bioData === 'object' && typeof bioData.bio === 'string' && bioData.bio.trim()) {
             try {
               const nestedBio = JSON.parse(bioData.bio);
-              bioData = { ...bioData, ...nestedBio };
+              // Only spread if nestedBio is a valid object
+              if (nestedBio && typeof nestedBio === 'object') {
+                bioData = { ...bioData, ...nestedBio };
+              }
               delete bioData.bio; // Remove the string version
             } catch (nestedError) {
               console.log('Nested bio is not JSON, keeping as string');
+              // If nested bio isn't valid JSON, just keep the outer bio data
             }
           }
           
-          parsedPlayerData = { ...playerData, ...(typeof bioData === 'object' ? bioData : {}) };
+          // Ensure bioData is an object before spreading
+          if (bioData && typeof bioData === 'object' && !Array.isArray(bioData)) {
+            parsedPlayerData = { ...playerData, ...bioData };
+          }
         } catch (e) {
           console.error('Error parsing bio data:', e);
           // Bio is not valid JSON, keep original playerData
@@ -671,9 +678,14 @@ const Dashboard = () => {
       setPlayerData(parsedPlayerData);
 
       // Extract highlights data
-      const highlights = playerData.highlights 
+      let highlights = playerData.highlights 
         ? JSON.parse(typeof playerData.highlights === 'string' ? playerData.highlights : JSON.stringify(playerData.highlights))
         : { matchHighlights: [], bestClips: [] };
+      
+      // Ensure highlights has the correct structure (handle case where it's an array instead of object)
+      if (Array.isArray(highlights)) {
+        highlights = { matchHighlights: [], bestClips: [] };
+      }
       
       // Preserve uploading, failed, and just completed clips when updating from database
       setHighlightsData((prev: any) => {
@@ -682,7 +694,7 @@ const Dashboard = () => {
         );
         return {
           ...highlights,
-          bestClips: [...uploadingOrFailedOrCompleted, ...highlights.bestClips]
+          bestClips: [...uploadingOrFailedOrCompleted, ...(highlights.bestClips || [])]
         };
       });
 
