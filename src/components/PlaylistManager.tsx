@@ -225,7 +225,13 @@ export const PlaylistManager = ({ playerData, availableClips, onClose }: Playlis
         throw new Error(data.error);
       }
 
-      toast.success(`Playlist saved! ${data.clips.length} clips exported to folder.`);
+      // Show appropriate message based on whether clips were skipped
+      if (data.skipped && data.skipped.length > 0) {
+        toast.success(data.message);
+        console.log('Skipped clips:', data.skipped);
+      } else {
+        toast.success(`Playlist saved! ${data.clips.length} clips exported to folder.`);
+      }
     } catch (error) {
       console.error('Save error:', error);
       const errorMsg = error instanceof Error ? error.message : 'Failed to save playlist';
