@@ -5,8 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Header } from "@/components/Header";
-import { Footer } from "@/components/Footer";
 import { toast } from "sonner";
 import smudgedMarbleBg from "@/assets/smudged-marble-login.png";
 
@@ -101,7 +99,6 @@ const Login = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header />
       <main className="py-20 px-4">
         <div className="max-w-md mx-auto">
           <Card 
@@ -157,7 +154,6 @@ const Login = () => {
         </Card>
         </div>
       </main>
-      <Footer />
     </div>
   );
 };
