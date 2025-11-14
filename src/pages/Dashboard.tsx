@@ -168,14 +168,18 @@ const Dashboard = () => {
     }
 
     // Add files to UI immediately with uploading status
-    const newClips = Array.from(files).map((file, index) => ({
-      name: file.name.replace(/\.[^/.]+$/, ''),
-      videoUrl: '',
-      addedAt: new Date().toISOString(),
-      uploading: true,
-      uploadId: `${Date.now()}_${index}_${file.name}`,
-      file // Store file for retry
-    }));
+    const newClips = Array.from(files).map((file, index) => {
+      const uploadId = `${Date.now()}_${index}_${file.name}`;
+      return {
+        id: uploadId,
+        name: file.name.replace(/\.[^/.]+$/, ''),
+        videoUrl: '',
+        addedAt: new Date().toISOString(),
+        uploading: true,
+        uploadId: uploadId,
+        file // Store file for retry
+      };
+    });
 
     setHighlightsData((prev: any) => ({
       ...prev,
@@ -2198,7 +2202,7 @@ const Dashboard = () => {
                               <div className="space-y-3">
                               {highlightsData.bestClips?.map((highlight: any, index: number) => (
                                 <div 
-                                   key={index}
+                                   key={highlight.id || highlight.uploadId || highlight.videoUrl || `${highlight.name}-${index}`}
                                    className="border rounded-lg p-4 bg-card"
                                  >
                                     <div className="flex items-center justify-between gap-2 md:gap-3">
