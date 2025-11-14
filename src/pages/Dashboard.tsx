@@ -167,19 +167,20 @@ const Dashboard = () => {
       return;
     }
 
+    // Create uploadIds upfront so they match between UI and upload logic
+    const timestamp = Date.now();
+    const uploadIds = Array.from(files).map((file, index) => `${timestamp}_${index}_${file.name}`);
+
     // Add files to UI immediately with uploading status
-    const newClips = Array.from(files).map((file, index) => {
-      const uploadId = `${Date.now()}_${index}_${file.name}`;
-      return {
-        id: uploadId,
-        name: file.name.replace(/\.[^/.]+$/, ''),
-        videoUrl: '',
-        addedAt: new Date().toISOString(),
-        uploading: true,
-        uploadId: uploadId,
-        file // Store file for retry
-      };
-    });
+    const newClips = Array.from(files).map((file, index) => ({
+      id: uploadIds[index],
+      name: file.name.replace(/\.[^/.]+$/, ''),
+      videoUrl: '',
+      addedAt: new Date().toISOString(),
+      uploading: true,
+      uploadId: uploadIds[index],
+      file // Store file for retry
+    }));
 
     setHighlightsData((prev: any) => ({
       ...prev,
@@ -192,7 +193,7 @@ const Dashboard = () => {
 
     const uploadPromises = Array.from(files).map(async (file, index) => {
       const clipName = file.name.replace(/\.[^/.]+$/, '');
-      const uploadId = `${Date.now()}_${index}_${file.name}`;
+      const uploadId = uploadIds[index];
       let progressInterval: NodeJS.Timeout | undefined;
       
       try {
