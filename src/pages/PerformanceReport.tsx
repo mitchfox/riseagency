@@ -150,8 +150,8 @@ const PerformanceReport = () => {
 
   const handleBackClick = () => {
     if (isAuthenticated) {
-      // Authenticated user - go back to previous page in portal
-      navigate(-1);
+      // Authenticated user - go back to dashboard
+      navigate('/dashboard');
     } else {
       // Public viewer - go back to player profile on stars page
       if (analysis?.player_name) {
@@ -174,11 +174,11 @@ const PerformanceReport = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
-        <Header />
+        {!isAuthenticated && <Header />}
         <main className="container mx-auto px-4 py-8">
           <div className="text-center">Loading...</div>
         </main>
-        <Footer />
+        {!isAuthenticated && <Footer />}
       </div>
     );
   }
@@ -186,7 +186,7 @@ const PerformanceReport = () => {
   if (!analysis) {
     return (
       <div className="min-h-screen bg-background">
-        <Header />
+        {!isAuthenticated && <Header />}
         <main className="container mx-auto px-4 py-8">
           <Card>
             <CardContent className="pt-6">
@@ -197,7 +197,7 @@ const PerformanceReport = () => {
             </CardContent>
           </Card>
         </main>
-        <Footer />
+        {!isAuthenticated && <Footer />}
       </div>
     );
   }
@@ -208,9 +208,11 @@ const PerformanceReport = () => {
         title={`${analysis.player_name} vs ${analysis.opponent} - Performance Report | RISE Football`}
         description={`Detailed performance analysis for ${analysis.player_name} in the match against ${analysis.opponent} on ${new Date(analysis.analysis_date).toLocaleDateString('en-GB')}. R90 Score: ${analysis.minutes_played ? ((calculateRScore() / analysis.minutes_played) * 90).toFixed(2) : 'N/A'}.`}
       />
-      <div className="print:hidden">
-        <Header />
-      </div>
+      {!isAuthenticated && (
+        <div className="print:hidden">
+          <Header />
+        </div>
+      )}
       <main className="container mx-auto px-4 py-8">
         <Card className="mb-6">
           <CardHeader>
@@ -377,9 +379,11 @@ const PerformanceReport = () => {
           </CardContent>
         </Card>
       </main>
-      <div className="print:hidden">
-        <Footer />
-      </div>
+      {!isAuthenticated && (
+        <div className="print:hidden">
+          <Footer />
+        </div>
+      )}
     </div>
   );
 };

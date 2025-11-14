@@ -1089,6 +1089,12 @@ const Dashboard = () => {
                   >
                     Highlights
                   </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onClick={() => navigate('/stars')}
+                    className="font-bebas uppercase text-base py-3 cursor-pointer text-gold hover:text-gold/80"
+                  >
+                    View Stars
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
