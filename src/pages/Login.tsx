@@ -16,31 +16,56 @@ const Login = () => {
 
   // Check if user is already logged in
   useEffect(() => {
-    let playerEmail = localStorage.getItem("player_email") || sessionStorage.getItem("player_email");
-    if (playerEmail) {
-      // Verify the email still exists in database
-      supabase
-        .from("players")
-        .select("id")
-        .eq("email", playerEmail)
-        .maybeSingle()
-        .then(({ data }) => {
-          if (data) {
+    const checkAuth = async () => {
+      // Check for existing Supabase auth session
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (session?.user) {
+        // User is authenticated, get their email
+        const userEmail = session.user.email;
+        if (userEmail) {
+          // Verify the email still exists in database
+          const { data: player } = await supabase
+            .from("players")
+            .select("id")
+            .eq("email", userEmail)
+            .maybeSingle();
+            
+          if (player) {
             // Restore to both storages if missing
             try {
-              localStorage.setItem("player_email", playerEmail!);
-              sessionStorage.setItem("player_email", playerEmail!);
+              localStorage.setItem("player_email", userEmail);
+              sessionStorage.setItem("player_email", userEmail);
             } catch (e) {
               console.error("Storage error:", e);
             }
             navigate("/dashboard");
-          } else {
-            // Email no longer valid, clear it
-            localStorage.removeItem("player_email");
-            sessionStorage.removeItem("player_email");
+            return;
           }
-        });
-    }
+        }
+      }
+      
+      // Fallback to old localStorage check for backwards compatibility
+      let playerEmail = localStorage.getItem("player_email") || sessionStorage.getItem("player_email");
+      if (playerEmail) {
+        // Verify the email still exists in database
+        const { data } = await supabase
+          .from("players")
+          .select("id")
+          .eq("email", playerEmail)
+          .maybeSingle();
+          
+        if (data) {
+          navigate("/dashboard");
+        } else {
+          // Email no longer valid, clear it
+          localStorage.removeItem("player_email");
+          sessionStorage.removeItem("player_email");
+        }
+      }
+    };
+
+    checkAuth();
 
     const savedEmail = localStorage.getItem("player_saved_email");
     const savedRememberMe = localStorage.getItem("player_remember_me");
@@ -66,6 +91,36 @@ const Login = () => {
         toast.error("Email not found. Please contact your coach to get access.");
         setLoading(false);
         return;
+      }
+
+      // Authenticate with Supabase using player ID as password
+      // This allows RLS policies to work properly
+      const playerPassword = `rise_player_${player.id}`;
+      
+      // Try to sign in first
+      let authResult = await supabase.auth.signInWithPassword({
+        email: email,
+        password: playerPassword,
+      });
+
+      // If sign in fails (account doesn't exist), create the account
+      if (authResult.error?.message.includes('Invalid login credentials')) {
+        const signUpResult = await supabase.auth.signUp({
+          email: email,
+          password: playerPassword,
+          options: {
+            data: {
+              player_id: player.id,
+            }
+          }
+        });
+        
+        if (signUpResult.error) throw signUpResult.error;
+        
+        // Auto sign-in is enabled, so we should be logged in now
+        authResult = signUpResult;
+      } else if (authResult.error) {
+        throw authResult.error;
       }
 
       // Save login session to BOTH localStorage and sessionStorage for maximum persistence
