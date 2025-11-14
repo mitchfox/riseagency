@@ -641,10 +641,29 @@ const Dashboard = () => {
       let parsedPlayerData = { ...playerData };
       if (playerData.bio) {
         try {
-          const bioData = JSON.parse(playerData.bio);
-          parsedPlayerData = { ...playerData, ...bioData };
+          // Handle case where bio might already be an object or a JSON string
+          let bioData: any = playerData.bio;
+          
+          // If it's a string, parse it
+          if (typeof bioData === 'string') {
+            bioData = JSON.parse(bioData);
+          }
+          
+          // If the parsed bioData has a nested "bio" string field, parse that too
+          if (bioData && typeof bioData === 'object' && typeof bioData.bio === 'string') {
+            try {
+              const nestedBio = JSON.parse(bioData.bio);
+              bioData = { ...bioData, ...nestedBio };
+              delete bioData.bio; // Remove the string version
+            } catch (nestedError) {
+              console.log('Nested bio is not JSON, keeping as string');
+            }
+          }
+          
+          parsedPlayerData = { ...playerData, ...(typeof bioData === 'object' ? bioData : {}) };
         } catch (e) {
-          // Bio is not JSON, keep as is
+          console.error('Error parsing bio data:', e);
+          // Bio is not valid JSON, keep original playerData
         }
       }
 
