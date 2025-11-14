@@ -215,12 +215,21 @@ export const PlaylistManager = ({ playerData, availableClips, onClose }: Playlis
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Save playlist error:', error);
+        throw error;
+      }
+
+      if (data?.error) {
+        console.error('Save playlist data error:', data.error);
+        throw new Error(data.error);
+      }
 
       toast.success(`Playlist saved! ${data.clips.length} clips exported to folder.`);
     } catch (error) {
       console.error('Save error:', error);
-      toast.error("Failed to save playlist");
+      const errorMsg = error instanceof Error ? error.message : 'Failed to save playlist';
+      toast.error(errorMsg);
     } finally {
       setSaving(false);
     }
