@@ -36,6 +36,17 @@ const PlayerProfileModal = ({ open, onOpenChange, playerData }: PlayerProfileMod
   const tacticalFormations = parsedBio.tacticalFormations || [];
   const schemeHistory = parsedBio.schemeHistory || [];
 
+  // Safely parse highlights - ensure it's an array
+  let highlights: any[] = [];
+  if (playerData.highlights) {
+    if (Array.isArray(playerData.highlights)) {
+      highlights = playerData.highlights;
+    } else if (typeof playerData.highlights === 'object') {
+      // If it's an object with a matchHighlights array, use that
+      highlights = (playerData.highlights as any).matchHighlights || [];
+    }
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-background/95 backdrop-blur-sm">
@@ -158,13 +169,13 @@ const PlayerProfileModal = ({ open, onOpenChange, playerData }: PlayerProfileMod
           )}
 
           {/* Highlights */}
-          {playerData.highlights && playerData.highlights.length > 0 && (
+          {highlights.length > 0 && (
             <div>
               <h3 className="font-bebas text-2xl uppercase tracking-wider text-gold mb-3">
                 Match Highlights
               </h3>
               <div className="grid gap-4">
-                {playerData.highlights.map((highlight: any, index: number) => (
+                {highlights.map((highlight: any, index: number) => (
                   <div key={index} className="bg-muted/50 p-4 rounded-lg">
                     <div className="flex items-center gap-3 mb-2">
                       {highlight.clubLogo && (
