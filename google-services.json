@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "732571656182",
+    "project_id": "rise-app-7786d",
+    "storage_bucket": "rise-app-7786d.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:732571656182:android:28a3ad66b5d6bff052f1d7",
+        "android_client_info": {
+          "package_name": "com.rise.riseapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB1m1_f7mithcfbeorITX-cuXZpddJ3uHQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
