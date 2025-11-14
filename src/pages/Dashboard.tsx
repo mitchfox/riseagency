@@ -263,6 +263,7 @@ const Dashboard = () => {
           headers: {
             'Content-Type': 'application/json',
             'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
           },
           body: JSON.stringify({
             playerEmail,
@@ -273,7 +274,8 @@ const Dashboard = () => {
       );
 
       if (!response.ok) {
-        throw new Error('Delete failed');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Delete failed');
       }
 
       toast.success("Clip deleted successfully!");
