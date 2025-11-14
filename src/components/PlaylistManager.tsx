@@ -64,27 +64,45 @@ export const PlaylistManager = ({ playerData, availableClips, onClose }: Playlis
   const createPlaylist = async () => {
     if (!newPlaylistName.trim() || !playerData?.id) return;
 
-    const { data, error } = await supabase
-      .from('playlists')
-      .insert({
-        player_id: playerData.id,
-        name: newPlaylistName.trim(),
-        clips: []
-      })
-      .select()
-      .single();
+    try {
+      // Get player email from localStorage
+      const playerEmail = localStorage.getItem("player_email") || sessionStorage.getItem("player_email");
+      
+      if (!playerEmail) {
+        toast.error("Please log in again");
+        return;
+      }
 
-    if (error) {
-      toast.error("Failed to create playlist");
-      return;
+      // Call edge function to create playlist (bypasses RLS)
+      const { data, error } = await supabase.functions.invoke('create-playlist', {
+        body: {
+          playerEmail,
+          name: newPlaylistName.trim()
+        }
+      });
+
+      if (error) {
+        console.error('Playlist creation error:', error);
+        toast.error(`Failed to create playlist: ${error.message}`);
+        return;
+      }
+
+      if (data.error) {
+        console.error('Playlist creation failed:', data.error);
+        toast.error(`Failed to create playlist: ${data.error}`);
+        return;
+      }
+
+      const newPlaylist = { ...data.playlist, clips: (data.playlist.clips as any) || [] };
+      setPlaylists([newPlaylist, ...playlists]);
+      setSelectedPlaylist(newPlaylist);
+      setNewPlaylistName("");
+      setIsCreating(false);
+      toast.success("Playlist created");
+    } catch (err: any) {
+      console.error('Unexpected error creating playlist:', err);
+      toast.error(`Error: ${err.message || 'Unknown error'}`);
     }
-
-    const newPlaylist = { ...data, clips: (data.clips as any) || [] };
-    setPlaylists([newPlaylist, ...playlists]);
-    setSelectedPlaylist(newPlaylist);
-    setNewPlaylistName("");
-    setIsCreating(false);
-    toast.success("Playlist created");
   };
 
   const deletePlaylist = async (id: string) => {
