@@ -18,6 +18,8 @@ import { addDays, format, parseISO, startOfWeek, endOfWeek, isWithinInterval } f
 import { SEO } from "@/components/SEO";
 import { createPerformanceReportSlug } from "@/lib/urlHelpers";
 import { PlaylistManager } from "@/components/PlaylistManager";
+import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
+
 
 interface Analysis {
   id: string;
@@ -2480,32 +2482,36 @@ const Dashboard = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {updates.length === 0 ? (
-                    <div className="py-8 text-center text-muted-foreground">
-                      No updates available yet.
-                    </div>
-                  ) : (
-                    <div className="space-y-6">
-                      {updates.map((update) => (
-                        <div 
-                          key={update.id}
-                          className="border rounded-lg p-6 space-y-3 bg-card hover:border-primary transition-colors"
-                        >
-                          <div className="flex items-start justify-between gap-4">
-                            <h3 className="text-xl font-bebas uppercase tracking-wider">
-                              {update.title}
-                            </h3>
-                            <span className="text-sm text-muted-foreground whitespace-nowrap">
-                              {format(new Date(update.date), 'MMMM d, yyyy')}
-                            </span>
+                  <div className="space-y-6">
+                    <PWAInstallPrompt />
+                    
+                    {updates.length === 0 ? (
+                      <div className="py-8 text-center text-muted-foreground">
+                        No updates available yet.
+                      </div>
+                    ) : (
+                      <div className="space-y-6">
+                        {updates.map((update) => (
+                          <div 
+                            key={update.id}
+                            className="border rounded-lg p-6 space-y-3 bg-card hover:border-primary transition-colors"
+                          >
+                            <div className="flex items-start justify-between gap-4">
+                              <h3 className="text-xl font-bebas uppercase tracking-wider">
+                                {update.title}
+                              </h3>
+                              <span className="text-sm text-muted-foreground whitespace-nowrap">
+                                {format(new Date(update.date), 'MMMM d, yyyy')}
+                              </span>
+                            </div>
+                            <p className="text-muted-foreground whitespace-pre-wrap">
+                              {update.content}
+                            </p>
                           </div>
-                          <p className="text-muted-foreground whitespace-pre-wrap">
-                            {update.content}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </CardContent>
               </Card>
             </TabsContent>
