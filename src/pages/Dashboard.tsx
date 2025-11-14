@@ -160,7 +160,7 @@ const Dashboard = () => {
   };
 
   const handleFileUpload = async (files: FileList) => {
-    const playerEmail = localStorage.getItem("player_email");
+    let playerEmail = localStorage.getItem("player_email") || sessionStorage.getItem("player_email");
     if (!playerEmail) {
       toast.error("Please log in again");
       navigate("/login");
@@ -286,7 +286,7 @@ const Dashboard = () => {
   };
 
   const handleRetryUpload = async (uploadId: string, file: File) => {
-    const playerEmail = localStorage.getItem("player_email");
+    let playerEmail = localStorage.getItem("player_email") || sessionStorage.getItem("player_email");
     if (!playerEmail) {
       toast.error("Please log in again");
       navigate("/login");
@@ -379,7 +379,7 @@ const Dashboard = () => {
     if (!confirm('Are you sure you want to delete this clip?')) return;
 
     try {
-      const playerEmail = localStorage.getItem("player_email");
+      let playerEmail = localStorage.getItem("player_email") || sessionStorage.getItem("player_email");
       if (!playerEmail) {
         toast.error("Please log in again");
         navigate("/login");
@@ -418,7 +418,7 @@ const Dashboard = () => {
   };
 
   const handleRenameClip = async (oldName: string, newName: string, videoUrl: string) => {
-    const playerEmail = localStorage.getItem("player_email");
+    let playerEmail = localStorage.getItem("player_email") || sessionStorage.getItem("player_email");
     if (!playerEmail || !newName.trim()) {
       if (!playerEmail) {
         toast.error("Please log in again");
@@ -458,7 +458,7 @@ const Dashboard = () => {
   };
 
   const handleReorderClip = async (index: number, direction: 'up' | 'down') => {
-    const playerEmail = localStorage.getItem("player_email");
+    let playerEmail = localStorage.getItem("player_email") || sessionStorage.getItem("player_email");
     if (!playerEmail) {
       toast.error("Please log in again");
       navigate("/login");
@@ -533,8 +533,22 @@ const Dashboard = () => {
 
   const checkAuth = async () => {
     try {
-      // Check if player is logged in via localStorage
-      const playerEmail = localStorage.getItem("player_email");
+      // Check both localStorage and sessionStorage for maximum persistence
+      let playerEmail = localStorage.getItem("player_email");
+      
+      // If not in localStorage, check sessionStorage as fallback
+      if (!playerEmail) {
+        playerEmail = sessionStorage.getItem("player_email");
+        
+        // If found in sessionStorage, restore to localStorage
+        if (playerEmail) {
+          try {
+            localStorage.setItem("player_email", playerEmail);
+          } catch (e) {
+            console.error("Could not restore to localStorage:", e);
+          }
+        }
+      }
       
       if (!playerEmail) {
         navigate("/login");
@@ -692,7 +706,7 @@ const Dashboard = () => {
 
   // Set up real-time subscription for player_analysis updates
   useEffect(() => {
-    const playerEmail = localStorage.getItem("player_email");
+    let playerEmail = localStorage.getItem("player_email") || sessionStorage.getItem("player_email");
     if (!playerEmail) return;
 
     const channel = supabase

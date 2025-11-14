@@ -18,7 +18,7 @@ const Login = () => {
 
   // Check if user is already logged in
   useEffect(() => {
-    const playerEmail = localStorage.getItem("player_email");
+    let playerEmail = localStorage.getItem("player_email") || sessionStorage.getItem("player_email");
     if (playerEmail) {
       // Verify the email still exists in database
       supabase
@@ -28,10 +28,18 @@ const Login = () => {
         .maybeSingle()
         .then(({ data }) => {
           if (data) {
+            // Restore to both storages if missing
+            try {
+              localStorage.setItem("player_email", playerEmail!);
+              sessionStorage.setItem("player_email", playerEmail!);
+            } catch (e) {
+              console.error("Storage error:", e);
+            }
             navigate("/dashboard");
           } else {
             // Email no longer valid, clear it
             localStorage.removeItem("player_email");
+            sessionStorage.removeItem("player_email");
           }
         });
     }
@@ -62,16 +70,23 @@ const Login = () => {
         return;
       }
 
-      // Save login session to localStorage (this persists across browser sessions)
-      localStorage.setItem("player_email", email);
-      
-      // Save email for auto-fill if remember me is checked
-      if (rememberMe) {
-        localStorage.setItem("player_saved_email", email);
-        localStorage.setItem("player_remember_me", "true");
-      } else {
-        localStorage.removeItem("player_saved_email");
-        localStorage.setItem("player_remember_me", "false");
+      // Save login session to BOTH localStorage and sessionStorage for maximum persistence
+      try {
+        localStorage.setItem("player_email", email);
+        sessionStorage.setItem("player_email", email);
+        localStorage.setItem("player_login_timestamp", Date.now().toString());
+        
+        // Save email for auto-fill if remember me is checked
+        if (rememberMe) {
+          localStorage.setItem("player_saved_email", email);
+          localStorage.setItem("player_remember_me", "true");
+        } else {
+          localStorage.removeItem("player_saved_email");
+          localStorage.setItem("player_remember_me", "false");
+        }
+      } catch (storageError) {
+        console.error("Storage error:", storageError);
+        // Continue anyway - the app might still work
       }
       
       toast.success("Welcome to your portal!");
