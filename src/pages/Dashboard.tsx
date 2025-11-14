@@ -168,17 +168,17 @@ const Dashboard = () => {
     }
 
     // Add files to UI immediately with uploading status
-    const newClips = Array.from(files).map(file => ({
+    const newClips = Array.from(files).map((file, index) => ({
       name: file.name.replace(/\.[^/.]+$/, ''), // Remove extension
       videoUrl: '', // Will be filled after upload
       addedAt: new Date().toISOString(),
       uploading: true,
-      uploadId: `${Date.now()}_${file.name}` // Unique ID for tracking progress
+      uploadId: `${Date.now()}_${index}_${file.name}` // Unique ID for tracking progress
     }));
 
     setHighlightsData((prev: any) => ({
       ...prev,
-      bestClips: [...(prev.bestClips || []), ...newClips]
+      bestClips: [...newClips, ...(prev.bestClips || [])]
     }));
 
     try {
