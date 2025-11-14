@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import PlayerProfileModal from "@/components/PlayerProfileModal";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -96,6 +97,7 @@ const Dashboard = () => {
   const [videoPlayerOpen, setVideoPlayerOpen] = useState(false);
   const [currentVideoUrl, setCurrentVideoUrl] = useState<string>("");
   const [currentVideoName, setCurrentVideoName] = useState<string>("");
+  const [showProfileModal, setShowProfileModal] = useState(false);
 
   // Initialize push notifications with player ID
   usePushNotifications(playerData?.id);
@@ -1090,10 +1092,10 @@ const Dashboard = () => {
                     Highlights
                   </DropdownMenuItem>
                   <DropdownMenuItem 
-                    onClick={() => navigate('/stars')}
+                    onClick={() => setShowProfileModal(true)}
                     className="font-bebas uppercase text-base py-3 cursor-pointer text-gold hover:text-gold/80"
                   >
-                    View Stars
+                    View Profile
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -2639,6 +2641,12 @@ const Dashboard = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      <PlayerProfileModal
+        open={showProfileModal}
+        onOpenChange={setShowProfileModal}
+        playerData={playerData}
+      />
     </div>
   );
 };
