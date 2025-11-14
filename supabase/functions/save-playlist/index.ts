@@ -41,11 +41,31 @@ serve(async (req) => {
       throw new Error('Playlist not found');
     }
 
-    const clips = playlist.clips as Array<{ name: string; videoUrl: string; order: number }>;
+    console.log('Playlist data:', JSON.stringify(playlist, null, 2));
+
+    // Parse clips - handle both string and object formats
+    let clips: Array<{ name: string; videoUrl: string; order: number }>;
+    
+    if (typeof playlist.clips === 'string') {
+      try {
+        clips = JSON.parse(playlist.clips);
+      } catch (e) {
+        console.error('Failed to parse clips:', e);
+        throw new Error('Invalid clips data format');
+      }
+    } else if (Array.isArray(playlist.clips)) {
+      clips = playlist.clips;
+    } else {
+      console.error('Clips data type:', typeof playlist.clips, playlist.clips);
+      throw new Error('Clips data is not in expected format');
+    }
     
     if (!clips || clips.length === 0) {
+      console.error('No clips found. Clips value:', clips);
       throw new Error('No clips in playlist');
     }
+
+    console.log('Processing', clips.length, 'clips');
 
     // Sort clips by order
     const sortedClips = [...clips].sort((a, b) => a.order - b.order);
