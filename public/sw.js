@@ -1,5 +1,5 @@
 // UPDATE THIS VERSION NUMBER WHEN YOU DEPLOY NEW CHANGES
-const CACHE_VERSION = 'rise-portal-v1.0.1';
+const CACHE_VERSION = 'rise-portal-v1.0.2';
 const CACHE_NAME = `${CACHE_VERSION}`;
 
 const urlsToCache = [
