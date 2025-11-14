@@ -13,7 +13,7 @@ import { NotificationPermission } from "@/components/NotificationPermission";
 import { NotificationSettings } from "@/components/NotificationSettings";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { toast } from "sonner";
-import { FileText, Play, Download, Upload, ChevronDown, Trash2, Lock, Calendar, Trophy, TrendingUp, Eye, EyeOff, ChevronUp, ChevronDown as ChevronDownIcon, List } from "lucide-react";
+import { FileText, Play, Download, Upload, ChevronDown, Trash2, Lock, Calendar, Trophy, TrendingUp, Eye, EyeOff, ChevronUp, ChevronDown as ChevronDownIcon, List, RefreshCw } from "lucide-react";
 import { ClipNameEditor } from "@/components/ClipNameEditor";
 import { addDays, format, parseISO, startOfWeek, endOfWeek, isWithinInterval } from "date-fns";
 import { SEO } from "@/components/SEO";
@@ -1028,11 +1028,13 @@ const Dashboard = () => {
                   <NotificationSettings playerId={playerData.id} />
                 )}
                 <Button 
-                  variant="outline" 
-                  onClick={handleLogout}
-                  className="font-bebas uppercase tracking-wider"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => window.location.reload()}
+                  className="text-gold hover:text-gold/80"
+                  title="Refresh app"
                 >
-                  Log Out
+                  <RefreshCw className="h-5 w-5" />
                 </Button>
               </div>
             </div>
@@ -2647,6 +2649,20 @@ const Dashboard = () => {
         onOpenChange={setShowProfileModal}
         playerData={playerData}
       />
+
+      {/* Logout Section */}
+      <div className="container mx-auto px-4 pb-8">
+        <div className="border-t border-border my-6" />
+        <div className="flex justify-center">
+          <Button 
+            variant="outline" 
+            onClick={handleLogout}
+            className="font-bebas uppercase tracking-wider"
+          >
+            Log Out
+          </Button>
+        </div>
+      </div>
     </div>
   );
 };
