@@ -72,6 +72,7 @@ serve(async (req) => {
 
     // Copy and rename files with numbered prefixes
     const results = [];
+    const skipped = [];
     
     for (let i = 0; i < sortedClips.length; i++) {
       const clip = sortedClips[i];
@@ -79,7 +80,11 @@ serve(async (req) => {
       
       // Extract the file path from the video URL
       const urlParts = clip.videoUrl.split('/analysis-files/');
-      if (urlParts.length < 2) continue;
+      if (urlParts.length < 2) {
+        console.log(`Skipping clip (invalid URL): ${clip.name}`);
+        skipped.push({ name: clip.name, reason: 'Invalid URL format' });
+        continue;
+      }
       
       const oldPath = urlParts[1];
       
@@ -95,7 +100,8 @@ serve(async (req) => {
         .download(oldPath);
 
       if (downloadError || !fileData) {
-        console.error(`Failed to download ${oldPath}:`, downloadError);
+        console.log(`Skipping clip (file not found): ${clip.name}`, downloadError);
+        skipped.push({ name: clip.name, reason: 'File not found or deleted' });
         continue;
       }
 
@@ -110,6 +116,7 @@ serve(async (req) => {
 
       if (uploadError) {
         console.error(`Failed to upload ${newPath}:`, uploadError);
+        skipped.push({ name: clip.name, reason: 'Upload failed' });
         continue;
       }
 
@@ -127,11 +134,19 @@ serve(async (req) => {
       });
     }
 
+    if (results.length === 0) {
+      throw new Error('No clips could be saved. All clips may have been deleted or are inaccessible.');
+    }
+
     return new Response(
       JSON.stringify({ 
         success: true, 
         clips: results,
-        folderPath: `playlists/${player.name}/${playlist.name}/`
+        skipped: skipped,
+        folderPath: `playlists/${player.name}/${playlist.name}/`,
+        message: skipped.length > 0 
+          ? `${results.length} clips saved, ${skipped.length} clips skipped (may have been deleted)`
+          : `${results.length} clips saved successfully`
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
