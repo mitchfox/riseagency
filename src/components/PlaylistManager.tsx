@@ -9,6 +9,7 @@ import { Plus, X, Save, ChevronUp, ChevronDown, List, Play, Trash2 } from "lucid
 import { Label } from "@/components/ui/label";
 
 interface Clip {
+  id?: string;
   name: string;
   videoUrl: string;
   order: number;
@@ -22,7 +23,7 @@ interface Playlist {
 
 interface PlaylistManagerProps {
   playerData: any;
-  availableClips: Array<{ name: string; videoUrl: string }>;
+  availableClips: Array<{ id?: string; name: string; videoUrl: string }>;
   onClose: () => void;
 }
 
@@ -104,12 +105,12 @@ export const PlaylistManager = ({ playerData, availableClips, onClose }: Playlis
     toast.success("Playlist deleted");
   };
 
-  const toggleClipSelection = (clipName: string) => {
+  const toggleClipSelection = (clipId: string) => {
     const newSelected = new Set(selectedClips);
-    if (newSelected.has(clipName)) {
-      newSelected.delete(clipName);
+    if (newSelected.has(clipId)) {
+      newSelected.delete(clipId);
     } else {
-      newSelected.add(clipName);
+      newSelected.add(clipId);
     }
     setSelectedClips(newSelected);
   };
@@ -122,10 +123,11 @@ export const PlaylistManager = ({ playerData, availableClips, onClose }: Playlis
       ? Math.max(...existingClips.map(c => c.order))
       : 0;
 
-    const newClips = Array.from(selectedClips).map((clipName, index) => {
-      const clip = availableClips.find(c => c.name === clipName);
+    const newClips = Array.from(selectedClips).map((clipId, index) => {
+      const clip = availableClips.find(c => (c.id || c.videoUrl) === clipId);
       return {
-        name: clipName,
+        id: clip!.id || clip!.videoUrl,
+        name: clip!.name,
         videoUrl: clip!.videoUrl,
         order: maxOrder + index + 1
       };
@@ -151,11 +153,11 @@ export const PlaylistManager = ({ playerData, availableClips, onClose }: Playlis
     toast.success("Clips added to playlist");
   };
 
-  const removeClipFromPlaylist = async (clipName: string) => {
+  const removeClipFromPlaylist = async (clipId: string, clipName: string) => {
     if (!selectedPlaylist) return;
 
     const updatedClips = selectedPlaylist.clips
-      .filter(c => c.name !== clipName)
+      .filter(c => (c.id || c.name) !== clipId)
       .map((c, index) => ({ ...c, order: index + 1 }));
 
     const { error } = await supabase
@@ -335,15 +337,15 @@ export const PlaylistManager = ({ playerData, availableClips, onClose }: Playlis
               <>
                 <div className="space-y-2 max-h-[250px] md:max-h-[400px] overflow-y-auto pr-2">
                   {availableClips
-                    .filter(clip => !selectedPlaylist.clips?.some(pc => pc.name === clip.name))
+                    .filter(clip => !selectedPlaylist.clips?.some(pc => (pc.id || pc.videoUrl) === (clip.id || clip.videoUrl)))
                     .map((clip) => (
                       <div
-                        key={clip.name}
+                        key={clip.id || clip.videoUrl || clip.name}
                         className="flex items-center gap-2 p-2 border rounded hover:bg-muted transition-colors"
                       >
                         <Checkbox
-                          checked={selectedClips.has(clip.name)}
-                          onCheckedChange={() => toggleClipSelection(clip.name)}
+                          checked={selectedClips.has(clip.id || clip.videoUrl || clip.name)}
+                          onCheckedChange={() => toggleClipSelection(clip.id || clip.videoUrl || clip.name)}
                         />
                         <Label className="flex-1 cursor-pointer text-xs md:text-sm leading-tight break-words">
                           {clip.name}
@@ -397,7 +399,7 @@ export const PlaylistManager = ({ playerData, availableClips, onClose }: Playlis
               <div className="space-y-2 max-h-[250px] md:max-h-[400px] overflow-y-auto pr-2">
                 {selectedPlaylist.clips?.sort((a, b) => a.order - b.order).map((clip, index) => (
                   <div
-                    key={clip.name}
+                    key={clip.id || clip.videoUrl || clip.name}
                     className="flex items-center gap-1.5 md:gap-2 p-2 border rounded bg-card"
                   >
                     <span className="text-xs md:text-sm font-bold text-primary w-5 md:w-6 flex-shrink-0">
@@ -436,7 +438,7 @@ export const PlaylistManager = ({ playerData, availableClips, onClose }: Playlis
                     <Button
                       size="sm"
                       variant="ghost"
-                      onClick={() => removeClipFromPlaylist(clip.name)}
+                      onClick={() => removeClipFromPlaylist(clip.id || clip.videoUrl || clip.name, clip.name)}
                       className="h-7 w-7 p-0 text-destructive hover:text-destructive hover:bg-destructive/10 flex-shrink-0"
                     >
                       <X className="w-3.5 h-3.5" />

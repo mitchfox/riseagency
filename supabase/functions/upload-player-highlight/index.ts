@@ -72,11 +72,13 @@ Deno.serve(async (req) => {
     const parsed = typeof player.highlights === 'string' 
       ? JSON.parse(player.highlights) 
       : (player.highlights || {});
+    const clipId = `${player.id}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     const updatedHighlights = {
       matchHighlights: parsed.matchHighlights || [],
       bestClips: [
         ...(parsed.bestClips || []),
         {
+          id: clipId,
           name: clipName,
           videoUrl: publicUrl,
           addedAt: new Date().toISOString()
