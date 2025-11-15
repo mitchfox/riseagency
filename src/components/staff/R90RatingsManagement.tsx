@@ -738,7 +738,7 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
                         <SelectTrigger>
                           <SelectValue placeholder="Select subcategory" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="max-h-[300px] bg-background z-50">
                           {SUBCATEGORY_OPTIONS[formData.category].map((sub) => (
                             <SelectItem key={sub} value={sub}>
                               {sub}
