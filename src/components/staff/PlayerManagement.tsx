@@ -856,45 +856,45 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
           </div>
         ) : (
           // Player Detail View
-          <div className="space-y-6">
+          <div className="space-y-4 md:space-y-6">
             {/* Player Header */}
             <Card>
-              <CardHeader>
-                <div className="flex flex-col md:flex-row items-start justify-between gap-4">
-                  <div className="flex items-start gap-4">
-                    <Avatar className="w-16 h-16 md:w-20 md:h-20">
+              <CardHeader className="p-4 md:p-6">
+                <div className="flex flex-col gap-4">
+                  <div className="flex items-start gap-3 md:gap-4">
+                    <Avatar className="w-14 h-14 md:w-20 md:h-20 flex-shrink-0">
                       <AvatarImage src={selectedPlayer?.image_url || undefined} alt={selectedPlayer?.name} />
-                      <AvatarFallback className="text-xl md:text-2xl">
+                      <AvatarFallback className="text-lg md:text-2xl">
                         {(selectedPlayer?.name || '').split(' ').filter(n => n).map(n => n[0]).join('') || '??'}
                       </AvatarFallback>
                     </Avatar>
-                    <div>
-                      <h2 className="text-2xl md:text-3xl font-bold">{selectedPlayer?.name}</h2>
-                      <p className="text-muted-foreground text-base md:text-lg">{selectedPlayer?.position}</p>
-                      <div className="flex items-center gap-3 text-xs md:text-sm text-muted-foreground mt-2">
+                    <div className="flex-1 min-w-0">
+                      <h2 className="text-xl md:text-3xl font-bold truncate">{selectedPlayer?.name}</h2>
+                      <p className="text-muted-foreground text-sm md:text-lg">{selectedPlayer?.position}</p>
+                      <div className="flex flex-wrap items-center gap-2 text-xs md:text-sm text-muted-foreground mt-1 md:mt-2">
                         <span>{selectedPlayer?.age} years</span>
                         <span>•</span>
-                        <span>{selectedPlayer?.nationality}</span>
+                        <span className="truncate">{selectedPlayer?.nationality}</span>
                         {selectedPlayer?.club && (
                           <>
-                            <span>•</span>
-                            <div className="flex items-center gap-1">
+                            <span className="hidden sm:inline">•</span>
+                            <div className="flex items-center gap-1 truncate">
                               {selectedPlayer.club_logo && (
-                                <img src={selectedPlayer.club_logo} alt="" className="w-4 h-4 object-contain" />
+                                <img src={selectedPlayer.club_logo} alt="" className="w-4 h-4 object-contain flex-shrink-0" />
                               )}
-                              <span>{selectedPlayer.club}</span>
+                              <span className="truncate">{selectedPlayer.club}</span>
                             </div>
                           </>
                         )}
                       </div>
                     </div>
                   </div>
-                  <div className="flex gap-2 w-full md:w-auto">
+                  <div className="flex gap-2">
                     <Button 
                       variant="outline" 
                       size="sm"
                       onClick={() => handleEditPlayer(selectedPlayer!)}
-                      className="flex-1 md:flex-none"
+                      className="flex-1"
                     >
                       <Edit className="w-4 h-4 mr-2" />
                       Edit
@@ -903,7 +903,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                       variant="outline" 
                       size="sm"
                       onClick={() => setSelectedPlayerId(null)}
-                      className="flex-1 md:flex-none"
+                      className="flex-1"
                     >
                       Close
                     </Button>

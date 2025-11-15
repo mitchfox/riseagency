@@ -807,21 +807,21 @@ export const ScoutingCentre = ({ open, onOpenChange }: ScoutingCentreProps) => {
 
       {/* Add/Edit Dialog */}
       <Dialog open={isAddingNew} onOpenChange={(open) => { if (!open) resetForm(); }}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-4xl max-h-[90vh] w-[95vw] sm:w-full overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>
+            <DialogTitle className="text-lg md:text-xl">
               {editingReport ? "Edit Scouting Report" : "New Scouting Report"}
             </DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-4">
-                <TabsTrigger value="basic">Basic Info</TabsTrigger>
-                <TabsTrigger value="skills" disabled={!formData.position}>
+              <TabsList className="flex flex-nowrap overflow-x-auto md:grid md:grid-cols-4 w-full gap-1 justify-start">
+                <TabsTrigger value="basic" className="flex-shrink-0 whitespace-nowrap">Basic Info</TabsTrigger>
+                <TabsTrigger value="skills" disabled={!formData.position} className="flex-shrink-0 whitespace-nowrap">
                   Skill Evaluation
                 </TabsTrigger>
-                <TabsTrigger value="review">AI Review</TabsTrigger>
-                <TabsTrigger value="contact">Contact</TabsTrigger>
+                <TabsTrigger value="review" className="flex-shrink-0 whitespace-nowrap">AI Review</TabsTrigger>
+                <TabsTrigger value="contact" className="flex-shrink-0 whitespace-nowrap">Contact</TabsTrigger>
               </TabsList>
 
               <TabsContent value="basic" className="space-y-4 mt-4">
@@ -1127,11 +1127,11 @@ export const ScoutingCentre = ({ open, onOpenChange }: ScoutingCentreProps) => {
 
       {/* View Dialog */}
       <Dialog open={!!viewingReport} onOpenChange={(open) => { if (!open) setViewingReport(null); }}>
-        <DialogContent className="max-w-4xl max-h-[90vh]">
+        <DialogContent className="max-w-4xl max-h-[90vh] w-[95vw] sm:w-full">
           <DialogHeader>
-            <DialogTitle>Scouting Report: {viewingReport?.player_name}</DialogTitle>
+            <DialogTitle className="text-lg md:text-xl">Scouting Report: {viewingReport?.player_name}</DialogTitle>
           </DialogHeader>
-          <ScrollArea className="max-h-[70vh] pr-4">
+          <ScrollArea className="max-h-[70vh] pr-2 md:pr-4">
             {viewingReport && (
               <div className="space-y-6">
                 <div className="grid grid-cols-2 gap-4">
@@ -1273,11 +1273,11 @@ export const ScoutingCentre = ({ open, onOpenChange }: ScoutingCentreProps) => {
 
       {/* Position Analysis Dialog */}
       <Dialog open={!!viewingPositionAnalysis} onOpenChange={(open) => { if (!open) setViewingPositionAnalysis(null); }}>
-        <DialogContent className="max-w-4xl max-h-[90vh]">
+        <DialogContent className="max-w-4xl max-h-[90vh] w-[95vw] sm:w-full">
           <DialogHeader>
-            <DialogTitle>{viewingPositionAnalysis} - Position Analysis</DialogTitle>
+            <DialogTitle className="text-lg md:text-xl">{viewingPositionAnalysis} - Position Analysis</DialogTitle>
           </DialogHeader>
-          <ScrollArea className="max-h-[70vh] pr-4">
+          <ScrollArea className="max-h-[70vh] pr-2 md:pr-4">
             {viewingPositionAnalysis && (
               <div className="space-y-6">
                 <p className="text-sm text-muted-foreground">
@@ -1323,7 +1323,7 @@ export const ScoutingCentre = ({ open, onOpenChange }: ScoutingCentreProps) => {
       <Dialog open={!!viewingProspectTable} onOpenChange={(open) => { if (!open) setViewingProspectTable(null); }}>
         <DialogContent className="max-w-[95vw] max-h-[90vh]">
           <DialogHeader>
-            <DialogTitle>Prospect Table: {viewingProspectTable}</DialogTitle>
+            <DialogTitle className="text-lg md:text-xl">Prospect Table: {viewingProspectTable}</DialogTitle>
           </DialogHeader>
           <ScrollArea className="max-h-[75vh]">
             {loading ? (
