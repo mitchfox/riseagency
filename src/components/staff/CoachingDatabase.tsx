@@ -56,7 +56,7 @@ interface CoachingItem {
   video_url?: string | null;
   is_own_video?: boolean | null;
   author?: string | null;
-  score?: number | null;
+  score?: number | string | null;
 }
 
 const tableConfigs = {
@@ -118,18 +118,22 @@ const tableConfigs = {
   },
 };
 
-const getScoreColor = (score: number | null) => {
+const getScoreColor = (score: number | string | null) => {
   if (score === null || score === undefined) return 'bg-muted text-muted-foreground';
   
+  // Check if it's a text value (not a number)
+  const numScore = typeof score === 'number' ? score : parseFloat(score);
+  if (isNaN(numScore)) return 'bg-[hsl(var(--gold))] text-background';
+  
   // Positive scores
-  if (score >= 0.1) return 'bg-green-600 text-white font-bold';
-  if (score > 0.01) return 'bg-green-500 text-white';
-  if (score > 0) return 'bg-green-400 text-white';
+  if (numScore >= 0.1) return 'bg-green-600 text-white font-bold';
+  if (numScore > 0.01) return 'bg-green-500 text-white';
+  if (numScore > 0) return 'bg-green-400 text-white';
   
   // Negative scores
-  if (score <= -0.1) return 'bg-red-600 text-white font-bold';
-  if (score < -0.01) return 'bg-red-500 text-white';
-  if (score < 0) return 'bg-red-400 text-white';
+  if (numScore <= -0.1) return 'bg-red-600 text-white font-bold';
+  if (numScore < -0.01) return 'bg-red-500 text-white';
+  if (numScore < 0) return 'bg-red-400 text-white';
   
   // Exactly 0
   return 'bg-muted text-muted-foreground';
@@ -1126,7 +1130,9 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
                                 )}
                                 {activeTab === 'r90_ratings' && item.score !== null && item.score !== undefined && (
                                   <Badge className={`${getScoreColor(item.score)} text-xs font-mono px-2`}>
-                                    {item.score.toFixed(4)}
+                                    {typeof item.score === 'number' || !isNaN(parseFloat(item.score.toString())) 
+                                      ? parseFloat(item.score.toString()).toFixed(4) 
+                                      : item.score}
                                   </Badge>
                                 )}
                               </div>
