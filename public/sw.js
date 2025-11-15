@@ -1,10 +1,10 @@
 // UPDATE THIS VERSION NUMBER WHEN YOU DEPLOY NEW CHANGES
-const CACHE_VERSION = 'rise-portal-v1.0.3';
+const CACHE_VERSION = 'rise-staff-v1.1.0';
 const CACHE_NAME = `${CACHE_VERSION}`;
 
+// Critical files to cache - minimal set for faster updates
 const urlsToCache = [
-  '/',
-  '/dashboard',
+  '/staff',
   '/manifest.json'
 ];
 
@@ -19,6 +19,15 @@ self.addEventListener('install', (event) => {
       })
       .then(() => {
         console.log('[Service Worker] Installation complete, skipping waiting');
+        // Notify clients that update is ready
+        self.clients.matchAll().then(clients => {
+          clients.forEach(client => {
+            client.postMessage({
+              type: 'SW_UPDATED',
+              version: CACHE_VERSION
+            });
+          });
+        });
         return self.skipWaiting();
       })
   );
@@ -51,8 +60,24 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Critical files that should always bypass cache
+  const noCacheUrls = ['/sw.js', '/manifest.json'];
+  const shouldBypassCache = noCacheUrls.some(url => event.request.url.includes(url));
+
+  if (shouldBypassCache) {
+    event.respondWith(
+      fetch(event.request, { cache: 'no-store' }).catch(() => {
+        return new Response('Offline - Service worker or manifest not available', {
+          status: 503,
+          statusText: 'Service Unavailable'
+        });
+      })
+    );
+    return;
+  }
+
   event.respondWith(
-    // Try network first with 5 second timeout
+    // Network-first strategy with timeout
     Promise.race([
       fetch(event.request).then((response) => {
         // Only cache successful responses
@@ -66,9 +91,9 @@ self.addEventListener('fetch', (event) => {
         
         return response;
       }),
-      // Timeout after 5 seconds
+      // Timeout after 3 seconds for faster fallback
       new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Network timeout')), 5000)
+        setTimeout(() => reject(new Error('Network timeout')), 3000)
       )
     ])
     .catch(() => {

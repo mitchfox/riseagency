@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Download, Check, Smartphone } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Download, Check, Smartphone, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
+import { StaffPWAUpdate } from "./StaffPWAUpdate";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -70,11 +72,26 @@ export const StaffPWAInstall = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-3xl font-bebas mb-2">PWA INSTALLATION</h2>
+        <h2 className="text-3xl font-bebas mb-2">PWA MANAGEMENT</h2>
         <p className="text-muted-foreground">
-          Install RISE Staff as a Progressive Web App for quick access and offline functionality
+          Install and manage RISE Staff as a Progressive Web App
         </p>
       </div>
+
+      <Tabs defaultValue="install" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="install" className="gap-2">
+            <Download className="h-4 w-4" />
+            Installation
+          </TabsTrigger>
+          <TabsTrigger value="updates" className="gap-2">
+            <RefreshCw className="h-4 w-4" />
+            Updates
+          </TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="install" className="space-y-6 mt-6">
+          <div className="grid gap-6 md:grid-cols-2">
 
       <div className="grid gap-6 md:grid-cols-2">
         <Card>
@@ -149,28 +166,35 @@ export const StaffPWAInstall = () => {
         </Card>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Service Worker Status</CardTitle>
-          <CardDescription>
-            Check if the service worker is registered
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="text-sm">
-            {navigator.serviceWorker?.controller ? (
-              <div className="flex items-center gap-2 text-green-600">
-                <Check className="h-4 w-4" />
-                Service Worker is active
+          <Card>
+            <CardHeader>
+              <CardTitle>Service Worker Status</CardTitle>
+              <CardDescription>
+                Check if the service worker is registered
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="text-sm">
+                {navigator.serviceWorker?.controller ? (
+                  <div className="flex items-center gap-2 text-green-600">
+                    <Check className="h-4 w-4" />
+                    Service Worker is active
+                  </div>
+                ) : (
+                  <div className="text-muted-foreground">
+                    Service Worker is not yet active
+                  </div>
+                )}
               </div>
-            ) : (
-              <div className="text-muted-foreground">
-                Service Worker is not yet active
-              </div>
-            )}
+            </CardContent>
+          </Card>
           </div>
-        </CardContent>
-      </Card>
+        </TabsContent>
+        
+        <TabsContent value="updates" className="mt-6">
+          <StaffPWAUpdate />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
