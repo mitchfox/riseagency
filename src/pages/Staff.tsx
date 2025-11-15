@@ -7,7 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
-import { Search, Menu } from "lucide-react";
+import { Search, Menu, ChevronRight, ChevronLeft } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import {
   Command,
@@ -71,6 +72,7 @@ import {
 } from "lucide-react";
 
 const Staff = () => {
+  const isMobile = useIsMobile();
   const [user, setUser] = useState<User | null>(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -80,6 +82,7 @@ const Staff = () => {
   const [isMarketeer, setIsMarketeer] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [expandedSection, setExpandedSection] = useState<'overview' | 'staffaccounts' | 'passwords' | 'pwainstall' | 'offlinemanager' | 'pushnotifications' | 'players' | 'playerlist' | 'recruitment' | 'scoutingcentre' | 'blog' | 'betweenthelines' | 'coaching' | 'analysis' | 'marketing' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'legal' | null>('overview');
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   
   // Enable staff notifications
   useStaffNotifications({
@@ -580,10 +583,10 @@ const Staff = () => {
           opacity: 0.25,
         }}
       />
-      <Header />
+      {!isMobile && <Header />}
       
       {/* Search Bar */}
-      <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-10 relative">
+      <div className={`border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 ${isMobile ? 'fixed top-0 left-0 right-0' : 'sticky top-0'} z-10 relative`}>
         <div className="container mx-auto px-3 md:px-4 py-3">
           <div className="flex items-center justify-between gap-2 md:gap-4">
             {/* Mobile menu button */}
@@ -730,8 +733,25 @@ const Staff = () => {
           </DialogContent>
         </Dialog>
 
+        {/* Sidebar Collapse Toggle Button */}
+        <button
+          onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+          className={`fixed ${isMobile ? 'top-4' : 'top-[120px] md:top-[88px]'} left-2 z-20 p-2 rounded-lg bg-background/80 backdrop-blur-sm border border-border shadow-lg hover:bg-background transition-all duration-300 ${
+            sidebarCollapsed ? 'opacity-50 hover:opacity-100' : ''
+          }`}
+          aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+        >
+          {sidebarCollapsed ? (
+            <ChevronRight className="h-4 w-4" />
+          ) : (
+            <ChevronLeft className="h-4 w-4" />
+          )}
+        </button>
+
         {/* Left Sidebar - Fixed */}
-        <div className="fixed top-[120px] md:top-[88px] left-0 bottom-0 w-14 md:w-24 border-r bg-muted/30 backdrop-blur-sm flex flex-col items-start py-4 gap-2 overflow-y-auto z-10">
+        <div className={`fixed ${isMobile ? 'top-0' : 'top-[120px] md:top-[88px]'} left-0 bottom-0 border-r bg-muted/30 backdrop-blur-sm flex flex-col items-start py-4 gap-2 overflow-y-auto z-10 transition-all duration-300 ${
+          sidebarCollapsed ? 'w-0 border-0 opacity-0 pointer-events-none' : 'w-14 md:w-24'
+        }`}>
           {/* Search Button */}
           <button
             onClick={() => setSidebarSearchOpen(true)}
@@ -826,7 +846,9 @@ const Staff = () => {
         </div>
 
         {/* Main Content Area */}
-        <main className="flex-1 overflow-y-auto relative z-10 ml-14 md:ml-24">
+        <main className={`flex-1 overflow-y-auto relative z-10 transition-all duration-300 ${
+          sidebarCollapsed ? 'ml-0' : 'ml-14 md:ml-24'
+        } ${isMobile ? 'pt-[60px]' : ''}`}>
           {expandedSection ? (
             <div className="container mx-auto px-3 md:px-6 py-4 md:py-6">
               <Card className="animate-in fade-in slide-in-from-top-4 duration-300">
