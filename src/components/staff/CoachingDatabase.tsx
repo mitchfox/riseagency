@@ -831,17 +831,15 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
               )}
               {isAdmin && (
                 <>
-                  {key === 'r90_ratings' && (
+                  {key === 'r90_ratings' ? (
                     <Button 
                       onClick={() => setIsR90ManagementOpen(true)}
-                      variant="outline"
                       className="w-full sm:w-auto"
                     >
-                      <Settings className="w-4 h-4 mr-2" />
-                      Manage All Ratings
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add R90 Rating
                     </Button>
-                  )}
-                  {key === 'coaching_analysis' ? (
+                  ) : key === 'coaching_analysis' ? (
                     <>
                       <Input
                         type="file"
