@@ -2326,11 +2326,11 @@ const Dashboard = () => {
                                    key={highlight.id || highlight.uploadId || highlight.videoUrl || `${highlight.name}-${index}`}
                                    className="border rounded-lg p-4 bg-card"
                                  >
-                                    <div className="flex items-center gap-3 md:gap-4">
+                                    <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4">
                                        {/* Video Preview Thumbnail */}
                                        {!highlight.uploading && !highlight.uploadFailed && highlight.videoUrl && (
                                          <div 
-                                           className="relative w-24 h-16 md:w-32 md:h-20 flex-shrink-0 rounded overflow-hidden bg-black cursor-pointer group"
+                                           className="relative w-full md:w-32 h-20 md:h-20 flex-shrink-0 rounded overflow-hidden bg-black cursor-pointer group"
                                            onClick={() => {
                                              setCurrentVideoUrl(highlight.videoUrl);
                                              setCurrentVideoName(highlight.name || `Clip ${index + 1}`);
@@ -2343,15 +2343,15 @@ const Dashboard = () => {
                                              preload="metadata"
                                            />
                                            <div className="absolute inset-0 bg-black/30 group-hover:bg-black/50 transition-colors flex items-center justify-center">
-                                             <Play className="w-8 h-8 text-white drop-shadow-lg" />
+                                             <Play className="w-6 md:w-8 h-6 md:h-8 text-white drop-shadow-lg" />
                                            </div>
                                          </div>
                                        )}
-                                       
-                                       <div className="flex items-center justify-between gap-2 md:gap-3 flex-1 min-w-0">
-                                         <div className="flex items-center gap-2 flex-1 min-w-0">
-                                          <span className="text-xl font-bold text-primary">{index + 1}.</span>
-                                          <div className="flex-1 min-w-0">
+                                        
+                                        <div className="flex items-center justify-between gap-2 flex-1 min-w-0">
+                                          <div className="flex items-center gap-2 flex-1 min-w-0">
+                                           <span className="text-lg md:text-xl font-bold text-primary">{index + 1}.</span>
+                                           <div className="flex-1 min-w-0">
                                        {highlight.uploading ? (
                                          <div className="space-y-2">
                                            <div className="flex items-center justify-between">
@@ -2413,19 +2413,19 @@ const Dashboard = () => {
                                        </div>
                                          {!highlight.uploading && !highlight.uploadFailed && !highlight.justCompleted && (
                                            <div className="flex gap-1 md:gap-2 flex-shrink-0">
-                                          <Button 
-                                            variant="outline" 
-                                            size="sm"
-                                            onClick={() => {
-                                              setCurrentVideoUrl(highlight.videoUrl);
-                                              setCurrentVideoName(highlight.name || `Clip ${index + 1}`);
-                                              setVideoPlayerOpen(true);
-                                            }}
-                                            className="h-8 px-2 md:px-3"
-                                          >
-                                            <Play className="w-4 h-4" />
-                                            <span className="hidden md:inline ml-2">Watch</span>
-                                          </Button>
+                                            <Button 
+                                             variant="outline" 
+                                             size="sm"
+                                             onClick={() => {
+                                               setCurrentVideoUrl(highlight.videoUrl);
+                                               setCurrentVideoName(highlight.name || `Clip ${index + 1}`);
+                                               setVideoPlayerOpen(true);
+                                             }}
+                                             className="h-8 px-2"
+                                           >
+                                             <Play className="w-4 h-4" />
+                                             <span className="hidden sm:inline ml-2">Watch</span>
+                                           </Button>
                                          <Button 
                                            variant="ghost" 
                                             size="sm"
