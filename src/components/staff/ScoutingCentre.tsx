@@ -88,16 +88,6 @@ export const ScoutingCentre = ({ open, onOpenChange }: ScoutingCentreProps) => {
     location: "",
     competition: "",
     match_context: "",
-    overall_rating: "",
-    technical_rating: "",
-    physical_rating: "",
-    tactical_rating: "",
-    mental_rating: "",
-    strengths: "",
-    weaknesses: "",
-    summary: "",
-    potential_assessment: "",
-    recommendation: "",
     video_url: "",
     profile_image_url: "",
     contact_email: "",
@@ -106,7 +96,6 @@ export const ScoutingCentre = ({ open, onOpenChange }: ScoutingCentreProps) => {
     agent_contact: "",
     status: "pending",
     priority: "",
-    notes: "",
     auto_generated_review: ""
   });
 
@@ -160,16 +149,6 @@ export const ScoutingCentre = ({ open, onOpenChange }: ScoutingCentreProps) => {
         location: formData.location || null,
         competition: formData.competition || null,
         match_context: formData.match_context || null,
-        overall_rating: formData.overall_rating ? parseFloat(formData.overall_rating) : null,
-        technical_rating: formData.technical_rating ? parseFloat(formData.technical_rating) : null,
-        physical_rating: formData.physical_rating ? parseFloat(formData.physical_rating) : null,
-        tactical_rating: formData.tactical_rating ? parseFloat(formData.tactical_rating) : null,
-        mental_rating: formData.mental_rating ? parseFloat(formData.mental_rating) : null,
-        strengths: formData.strengths || null,
-        weaknesses: formData.weaknesses || null,
-        summary: formData.summary || null,
-        potential_assessment: formData.potential_assessment || null,
-        recommendation: formData.recommendation || null,
         video_url: formData.video_url || null,
         profile_image_url: formData.profile_image_url || null,
         contact_email: formData.contact_email || null,
@@ -178,9 +157,20 @@ export const ScoutingCentre = ({ open, onOpenChange }: ScoutingCentreProps) => {
         agent_contact: formData.agent_contact || null,
         status: formData.status,
         priority: formData.priority || null,
-        notes: formData.notes || null,
         skill_evaluations: skillEvaluations as any,
-        auto_generated_review: formData.auto_generated_review || null
+        auto_generated_review: formData.auto_generated_review || null,
+        // Set legacy rating fields to null
+        overall_rating: null,
+        technical_rating: null,
+        physical_rating: null,
+        tactical_rating: null,
+        mental_rating: null,
+        strengths: null,
+        weaknesses: null,
+        summary: null,
+        potential_assessment: null,
+        recommendation: null,
+        notes: null
       };
 
       if (editingReport) {
@@ -269,16 +259,6 @@ export const ScoutingCentre = ({ open, onOpenChange }: ScoutingCentreProps) => {
       location: report.location || "",
       competition: report.competition || "",
       match_context: report.match_context || "",
-      overall_rating: report.overall_rating?.toString() || "",
-      technical_rating: report.technical_rating?.toString() || "",
-      physical_rating: report.physical_rating?.toString() || "",
-      tactical_rating: report.tactical_rating?.toString() || "",
-      mental_rating: report.mental_rating?.toString() || "",
-      strengths: report.strengths || "",
-      weaknesses: report.weaknesses || "",
-      summary: report.summary || "",
-      potential_assessment: report.potential_assessment || "",
-      recommendation: report.recommendation || "",
       video_url: report.video_url || "",
       profile_image_url: report.profile_image_url || "",
       contact_email: report.contact_email || "",
@@ -287,7 +267,6 @@ export const ScoutingCentre = ({ open, onOpenChange }: ScoutingCentreProps) => {
       agent_contact: report.agent_contact || "",
       status: report.status,
       priority: report.priority || "",
-      notes: report.notes || "",
       auto_generated_review: report.auto_generated_review || ""
     });
     setIsAddingNew(true);
@@ -366,16 +345,6 @@ export const ScoutingCentre = ({ open, onOpenChange }: ScoutingCentreProps) => {
       location: "",
       competition: "",
       match_context: "",
-      overall_rating: "",
-      technical_rating: "",
-      physical_rating: "",
-      tactical_rating: "",
-      mental_rating: "",
-      strengths: "",
-      weaknesses: "",
-      summary: "",
-      potential_assessment: "",
-      recommendation: "",
       video_url: "",
       profile_image_url: "",
       contact_email: "",
@@ -384,7 +353,6 @@ export const ScoutingCentre = ({ open, onOpenChange }: ScoutingCentreProps) => {
       agent_contact: "",
       status: "pending",
       priority: "",
-      notes: "",
       auto_generated_review: ""
     });
     setSkillEvaluations([]);
@@ -562,13 +530,12 @@ export const ScoutingCentre = ({ open, onOpenChange }: ScoutingCentreProps) => {
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-6">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-5">
+              <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="basic">Basic Info</TabsTrigger>
                 <TabsTrigger value="skills" disabled={!formData.position}>
-                  Skill Eval
+                  Skill Evaluation
                 </TabsTrigger>
-                <TabsTrigger value="ratings">Ratings</TabsTrigger>
-                <TabsTrigger value="analysis">Analysis</TabsTrigger>
+                <TabsTrigger value="review">AI Review</TabsTrigger>
                 <TabsTrigger value="contact">Contact</TabsTrigger>
               </TabsList>
 
@@ -769,157 +736,57 @@ export const ScoutingCentre = ({ open, onOpenChange }: ScoutingCentreProps) => {
                 )}
               </TabsContent>
 
-              <TabsContent value="ratings" className="space-y-4 mt-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="overall_rating">Overall Rating (0-10)</Label>
-                    <Input
-                      id="overall_rating"
-                      type="number"
-                      min="0"
-                      max="10"
-                      step="0.1"
-                      value={formData.overall_rating}
-                      onChange={(e) => setFormData({ ...formData, overall_rating: e.target.value })}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="technical_rating">Technical (0-10)</Label>
-                    <Input
-                      id="technical_rating"
-                      type="number"
-                      min="0"
-                      max="10"
-                      step="0.1"
-                      value={formData.technical_rating}
-                      onChange={(e) => setFormData({ ...formData, technical_rating: e.target.value })}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="physical_rating">Physical (0-10)</Label>
-                    <Input
-                      id="physical_rating"
-                      type="number"
-                      min="0"
-                      max="10"
-                      step="0.1"
-                      value={formData.physical_rating}
-                      onChange={(e) => setFormData({ ...formData, physical_rating: e.target.value })}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="tactical_rating">Tactical (0-10)</Label>
-                    <Input
-                      id="tactical_rating"
-                      type="number"
-                      min="0"
-                      max="10"
-                      step="0.1"
-                      value={formData.tactical_rating}
-                      onChange={(e) => setFormData({ ...formData, tactical_rating: e.target.value })}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="mental_rating">Mental (0-10)</Label>
-                    <Input
-                      id="mental_rating"
-                      type="number"
-                      min="0"
-                      max="10"
-                      step="0.1"
-                      value={formData.mental_rating}
-                      onChange={(e) => setFormData({ ...formData, mental_rating: e.target.value })}
-                    />
-                  </div>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="analysis" className="space-y-4 mt-4">
-                <div className="space-y-4">
-                  {formData.auto_generated_review && (
+              <TabsContent value="review" className="space-y-4 mt-4">
+                {formData.auto_generated_review ? (
+                  <div className="space-y-4">
                     <div className="space-y-2 p-4 rounded-lg bg-muted/50 border border-border">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Sparkles className="h-4 w-4 text-primary" />
-                        <Label className="text-sm font-semibold">AI-Generated Review</Label>
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <Sparkles className="h-4 w-4 text-primary" />
+                          <Label className="text-sm font-semibold">AI-Generated Scouting Review</Label>
+                        </div>
+                        <Button 
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={handleGenerateReview}
+                          disabled={generatingReview}
+                        >
+                          <Sparkles className="h-4 w-4 mr-2" />
+                          Regenerate
+                        </Button>
                       </div>
                       <p className="text-sm leading-relaxed whitespace-pre-wrap">
                         {formData.auto_generated_review}
                       </p>
                     </div>
-                  )}
-                  <div className="space-y-2">
-                    <Label htmlFor="strengths">Strengths</Label>
-                    <Textarea
-                      id="strengths"
-                      value={formData.strengths}
-                      onChange={(e) => setFormData({ ...formData, strengths: e.target.value })}
-                      rows={3}
-                    />
+                    <div className="space-y-2">
+                      <Label htmlFor="video_url">Match Video URL</Label>
+                      <Input
+                        id="video_url"
+                        type="url"
+                        value={formData.video_url}
+                        onChange={(e) => setFormData({ ...formData, video_url: e.target.value })}
+                        placeholder="https://..."
+                      />
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="weaknesses">Weaknesses</Label>
-                    <Textarea
-                      id="weaknesses"
-                      value={formData.weaknesses}
-                      onChange={(e) => setFormData({ ...formData, weaknesses: e.target.value })}
-                      rows={3}
-                    />
+                ) : (
+                  <div className="text-center py-12">
+                    <Sparkles className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                    <p className="text-muted-foreground mb-4">
+                      Complete the skill evaluation to generate an AI review
+                    </p>
+                    <Button 
+                      type="button"
+                      onClick={handleGenerateReview}
+                      disabled={generatingReview || !formData.position}
+                    >
+                      <Sparkles className="h-4 w-4 mr-2" />
+                      {generatingReview ? "Generating..." : "Generate Review"}
+                    </Button>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="summary">Summary</Label>
-                    <Textarea
-                      id="summary"
-                      value={formData.summary}
-                      onChange={(e) => setFormData({ ...formData, summary: e.target.value })}
-                      rows={4}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="potential_assessment">Potential Assessment</Label>
-                    <Textarea
-                      id="potential_assessment"
-                      value={formData.potential_assessment}
-                      onChange={(e) => setFormData({ ...formData, potential_assessment: e.target.value })}
-                      rows={3}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="recommendation">Recommendation</Label>
-                    <Textarea
-                      id="recommendation"
-                      value={formData.recommendation}
-                      onChange={(e) => setFormData({ ...formData, recommendation: e.target.value })}
-                      rows={2}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="notes">Additional Notes</Label>
-                    <Textarea
-                      id="notes"
-                      value={formData.notes}
-                      onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                      rows={3}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="video_url">Video URL</Label>
-                    <Input
-                      id="video_url"
-                      type="url"
-                      value={formData.video_url}
-                      onChange={(e) => setFormData({ ...formData, video_url: e.target.value })}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="profile_image_url">Profile Image URL</Label>
-                    <Input
-                      id="profile_image_url"
-                      type="url"
-                      value={formData.profile_image_url}
-                      onChange={(e) => setFormData({ ...formData, profile_image_url: e.target.value })}
-                    />
-                  </div>
-                </div>
+                )}
               </TabsContent>
 
               <TabsContent value="contact" className="space-y-4 mt-4">
