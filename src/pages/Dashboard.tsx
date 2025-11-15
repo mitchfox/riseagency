@@ -20,6 +20,7 @@ import { SEO } from "@/components/SEO";
 import { createPerformanceReportSlug } from "@/lib/urlHelpers";
 import { PlaylistManager } from "@/components/PlaylistManager";
 import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
+import { OfflineContentManager } from "@/components/OfflineContentManager";
 
 
 interface Analysis {
@@ -2556,6 +2557,21 @@ const Dashboard = () => {
                         Latest App Update
                       </h3>
                       <PWAInstallPrompt />
+                    </div>
+
+                    <div className="border-t pt-6 mt-6">
+                      <h3 className="text-xl font-bebas uppercase tracking-wider mb-4">
+                        Offline Access
+                      </h3>
+                      <OfflineContentManager 
+                        playerData={playerData}
+                        analyses={analyses}
+                        assets={[
+                          playerData?.image_url,
+                          ...highlightsData.matchHighlights.map((h: any) => h.url),
+                          ...highlightsData.bestClips.map((c: any) => c.url)
+                        ].filter(Boolean)}
+                      />
                     </div>
                   </div>
                 </CardContent>
