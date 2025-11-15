@@ -39,11 +39,11 @@ const R90_CATEGORIES = [
 ];
 
 const SUBCATEGORY_OPTIONS: Record<string, string[]> = {
-  'Pressing': ['High Press', 'Mid Block', 'Low Block'],
-  'Defensive': ['1v1 Defending', 'Positioning', 'Tackling'],
-  'Aerial Duels': ['Attacking Headers', 'Defensive Headers'],
-  'Attacking Crosses': ['Ground Delivery', 'Aerial Delivery', 'Second Balls'],
-  'On-Ball Decision-Making': ['Under Pressure', 'In Space'],
+  'Pressing': ['Counterattacks', 'Force Backwards', 'Regain Possession'],
+  'Defensive': ['Blocks', 'Clearances', 'Duels', 'Fouls', 'Interceptions', 'Positioning', 'Recovery'],
+  'Aerial Duels': ['Counterattack Start', 'Defensive', 'Force Backwards', 'General', 'Offensive', 'Regain Possession'],
+  'Attacking Crosses': ['Aerial Delivery', 'Ground Delivery', 'Second Balls'],
+  'On-Ball Decision-Making': ['In Space', 'Under Pressure'],
   'Off-Ball Movement': ['Between Lines', 'In Behind', 'In Front of Midfield', 'On Last Line']
 };
 
@@ -738,9 +738,9 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
                         <SelectTrigger>
                           <SelectValue placeholder="Select subcategory" />
                         </SelectTrigger>
-                        <SelectContent className="max-h-[300px] bg-background z-50">
+                        <SelectContent className="max-h-[400px] bg-card border-border z-[100]" position="popper" sideOffset={4}>
                           {SUBCATEGORY_OPTIONS[formData.category].map((sub) => (
-                            <SelectItem key={sub} value={sub}>
+                            <SelectItem key={sub} value={sub} className="cursor-pointer">
                               {sub}
                             </SelectItem>
                           ))}
@@ -936,12 +936,12 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
                                   <SelectTrigger>
                                     <SelectValue />
                                   </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="__none__">
+                                  <SelectContent className="max-h-[400px] bg-card border-border z-[100]" position="popper" sideOffset={4}>
+                                    <SelectItem value="__none__" className="cursor-pointer">
                                       All subcategories
                                     </SelectItem>
                                     {SUBCATEGORY_OPTIONS[newMappingCategory].map((sub) => (
-                                      <SelectItem key={sub} value={sub}>
+                                      <SelectItem key={sub} value={sub} className="cursor-pointer">
                                         {sub}
                                       </SelectItem>
                                     ))}
