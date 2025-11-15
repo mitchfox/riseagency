@@ -178,7 +178,7 @@ export const ScoutingCentre = ({ open, onOpenChange }: ScoutingCentreProps) => {
         status: formData.status,
         priority: formData.priority || null,
         notes: formData.notes || null,
-        skill_evaluations: skillEvaluations,
+        skill_evaluations: skillEvaluations as any,
         auto_generated_review: formData.auto_generated_review || null
       };
 
@@ -209,6 +209,7 @@ export const ScoutingCentre = ({ open, onOpenChange }: ScoutingCentreProps) => {
 
   const handleEdit = (report: ScoutingReport) => {
     setEditingReport(report);
+    setSkillEvaluations(Array.isArray(report.skill_evaluations) ? report.skill_evaluations : []);
     setFormData({
       player_name: report.player_name,
       age: report.age?.toString() || "",
@@ -241,7 +242,8 @@ export const ScoutingCentre = ({ open, onOpenChange }: ScoutingCentreProps) => {
       agent_contact: report.agent_contact || "",
       status: report.status,
       priority: report.priority || "",
-      notes: report.notes || ""
+      notes: report.notes || "",
+      auto_generated_review: report.auto_generated_review || ""
     });
     setIsAddingNew(true);
   };
@@ -337,7 +339,8 @@ export const ScoutingCentre = ({ open, onOpenChange }: ScoutingCentreProps) => {
       agent_contact: "",
       status: "pending",
       priority: "",
-      notes: ""
+      notes: "",
+      auto_generated_review: ""
     });
     setEditingReport(null);
     setIsAddingNew(false);
