@@ -17,14 +17,7 @@ const Login = () => {
   // Check if user is already logged in
   useEffect(() => {
     const checkAuth = async () => {
-      // Check Supabase session first
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        navigate("/dashboard");
-        return;
-      }
-      
-      // Fallback: check localStorage
+      // Check localStorage for player email
       const playerEmail = localStorage.getItem("player_email") || sessionStorage.getItem("player_email");
       if (playerEmail) {
         const { data } = await supabase
@@ -68,50 +61,6 @@ const Login = () => {
         toast.error("Email not found. Please contact your coach to get access.");
         setLoading(false);
         return;
-      }
-
-      // Use deterministic password for player auth
-      const playerPassword = `rise_player_${player.id}`;
-      
-      // Try to sign in first
-      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-        email: email,
-        password: playerPassword,
-      });
-
-      if (signInError) {
-        // If sign in fails, try to create the account
-        if (signInError.message.includes('Invalid login credentials')) {
-          const { error: signUpError } = await supabase.auth.signUp({
-            email: email,
-            password: playerPassword,
-            options: {
-              data: {
-                player_id: player.id,
-              }
-            }
-          });
-          
-          if (signUpError && !signUpError.message.includes('already registered')) {
-            throw signUpError;
-          }
-          
-          // If user already registered but credentials wrong, sign out any existing session and try again
-          if (signUpError?.message.includes('already registered')) {
-            await supabase.auth.signOut();
-            const { error: retryError } = await supabase.auth.signInWithPassword({
-              email: email,
-              password: playerPassword,
-            });
-            if (retryError) {
-              toast.error("Authentication issue. Please contact your coach.");
-              setLoading(false);
-              return;
-            }
-          }
-        } else {
-          throw signInError;
-        }
       }
 
       // Save login info
