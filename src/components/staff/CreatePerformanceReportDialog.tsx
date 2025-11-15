@@ -480,6 +480,30 @@ export const CreatePerformanceReportDialog = ({
     ]);
   };
 
+  const insertActionAt = (position: number) => {
+    const newAction = {
+      action_number: position + 1,
+      minute: "",
+      action_score: "",
+      action_type: "",
+      action_description: "",
+      notes: ""
+    };
+    
+    const newActions = [
+      ...actions.slice(0, position),
+      newAction,
+      ...actions.slice(position)
+    ];
+    
+    // Renumber all actions
+    newActions.forEach((action, i) => {
+      action.action_number = i + 1;
+    });
+    
+    setActions(newActions);
+  };
+
   const removeAction = (index: number) => {
     const newActions = actions.filter((_, i) => i !== index);
     // Renumber actions
@@ -1534,77 +1558,89 @@ export const CreatePerformanceReportDialog = ({
                       </td>
                     </tr>
                     {previousScores[index] && previousScores[index].length > 0 && (
-                      <tr className="border-t bg-muted/20">
-                        <td colSpan={7} className="p-2">
-                          <div className="text-[10px] p-2 rounded bg-muted/50 font-medium" style={{ color: 'hsl(43, 49%, 61%)' }}>
-                            <div className="flex items-center justify-between mb-1">
-                              <div className="font-semibold">R90 ratings in this category mapping:</div>
-                              {previousScores[index].length > 1 && (
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    const newExpanded = new Set(expandedScores);
-                                    if (newExpanded.has(index)) {
-                                      newExpanded.delete(index);
-                                    } else {
-                                      newExpanded.add(index);
-                                    }
-                                    setExpandedScores(newExpanded);
-                                  }}
-                                  className="text-primary hover:underline flex items-center gap-1"
-                                >
-                                  {expandedScores.has(index) ? (
-                                    <>Collapse <ChevronUp className="h-3 w-3" /></>
-                                  ) : (
-                                    <>See all ({previousScores[index].length}) <ChevronDown className="h-3 w-3" /></>
-                                  )}
-                                </button>
-                              )}
-                            </div>
-                            <div className="space-y-1">
-                              {(expandedScores.has(index) ? previousScores[index] : previousScores[index].slice(0, 1)).map((item, scoreIdx) => {
-                                const actualIdx = expandedScores.has(index) ? scoreIdx : 0;
-                                const isSelected = selectedScores[index]?.has(actualIdx) ?? false;
-                                return (
-                                  <div key={scoreIdx} className="flex items-start gap-2">
-                                    <Checkbox
-                                      checked={isSelected}
-                                      onCheckedChange={(checked) => {
-                                        const newSelected = { ...selectedScores };
-                                        if (!newSelected[index]) {
-                                          newSelected[index] = new Set();
-                                        }
-                                        if (checked) {
-                                          newSelected[index].add(actualIdx);
-                                        } else {
-                                          newSelected[index].delete(actualIdx);
-                                        }
-                                        setSelectedScores(newSelected);
-                                        
-                                        // Calculate sum of selected scores and update action
-                                        const selectedIndices = checked 
-                                          ? [...Array.from(newSelected[index] || []), actualIdx]
-                                          : Array.from(newSelected[index] || []).filter(i => i !== actualIdx);
-                                        
-                                        const totalScore = selectedIndices.reduce((sum, idx) => {
-                                          return sum + (previousScores[index][idx]?.score || 0);
-                                        }, 0);
-                                        
-                                        updateAction(index, "action_score", totalScore.toString());
-                                      }}
-                                      className="mt-0.5"
-                                    />
-                                    <label className="font-mono flex-1 cursor-pointer">
-                                      {item.title} {formatScoreWithFrequency(item.score)}
-                                    </label>
-                                  </div>
-                                );
-                              })}
-                            </div>
+                      <tr>
+                        <td colSpan={7} className="p-2 bg-muted/30">
+                          <div className="flex justify-between items-center mb-1">
+                            <Label className="text-xs text-muted-foreground">Suggested Scores from R90</Label>
+                            {previousScores[index].length > 1 && (
+                              <button
+                                onClick={() => {
+                                  const newExpanded = new Set(expandedScores);
+                                  if (expandedScores.has(index)) {
+                                    newExpanded.delete(index);
+                                  } else {
+                                    newExpanded.add(index);
+                                  }
+                                  setExpandedScores(newExpanded);
+                                }}
+                                className="text-primary hover:underline flex items-center gap-1"
+                              >
+                                {expandedScores.has(index) ? (
+                                  <>Collapse <ChevronUp className="h-3 w-3" /></>
+                                ) : (
+                                  <>See all ({previousScores[index].length}) <ChevronDown className="h-3 w-3" /></>
+                                )}
+                              </button>
+                            )}
+                          </div>
+                          <div className="space-y-1">
+                            {(expandedScores.has(index) ? previousScores[index] : previousScores[index].slice(0, 1)).map((item, scoreIdx) => {
+                              const actualIdx = expandedScores.has(index) ? scoreIdx : 0;
+                              const isSelected = selectedScores[index]?.has(actualIdx) ?? false;
+                              return (
+                                <div key={scoreIdx} className="flex items-start gap-2">
+                                  <Checkbox
+                                    checked={isSelected}
+                                    onCheckedChange={(checked) => {
+                                      const newSelected = { ...selectedScores };
+                                      if (!newSelected[index]) {
+                                        newSelected[index] = new Set();
+                                      }
+                                      if (checked) {
+                                        newSelected[index].add(actualIdx);
+                                      } else {
+                                        newSelected[index].delete(actualIdx);
+                                      }
+                                      setSelectedScores(newSelected);
+                                      
+                                      // Calculate sum of selected scores and update action
+                                      const selectedIndices = checked 
+                                        ? [...Array.from(newSelected[index] || []), actualIdx]
+                                        : Array.from(newSelected[index] || []).filter(i => i !== actualIdx);
+                                      
+                                      const totalScore = selectedIndices.reduce((sum, idx) => {
+                                        return sum + (previousScores[index][idx]?.score || 0);
+                                      }, 0);
+                                      
+                                      updateAction(index, "action_score", totalScore.toString());
+                                    }}
+                                    className="mt-0.5"
+                                  />
+                                  <label className="font-mono flex-1 cursor-pointer">
+                                    {item.title} {formatScoreWithFrequency(item.score)}
+                                  </label>
+                                </div>
+                              );
+                            })}
                           </div>
                         </td>
                       </tr>
                     )}
+                    
+                    {/* Insert Action Row (Desktop) */}
+                    <tr className="border-t border-dashed hover:bg-accent/50 transition-colors">
+                      <td colSpan={7} className="p-1 text-center">
+                        <Button
+                          onClick={() => insertActionAt(index + 1)}
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 text-xs w-full"
+                        >
+                          <Plus className="h-3 w-3 mr-1" />
+                          Insert Action Here
+                        </Button>
+                      </td>
+                    </tr>
                     </React.Fragment>
                   ))}
                 </tbody>
