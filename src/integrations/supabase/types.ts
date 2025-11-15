@@ -1463,7 +1463,7 @@ export type Database = {
           created_at: string
           description: string | null
           id: string
-          score: number | null
+          score: string | null
           subcategory: string | null
           tags: string[] | null
           title: string
@@ -1476,7 +1476,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
-          score?: number | null
+          score?: string | null
           subcategory?: string | null
           tags?: string[] | null
           title: string
@@ -1489,7 +1489,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
-          score?: number | null
+          score?: string | null
           subcategory?: string | null
           tags?: string[] | null
           title?: string

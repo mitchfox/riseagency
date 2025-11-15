@@ -20,7 +20,7 @@ interface R90Rating {
   content: string | null;
   category: string | null;
   subcategory: string | null;
-  score: number | null;
+  score: string | null; // Changed to support text values like "xG"
   created_at: string;
 }
 
@@ -195,18 +195,25 @@ export const R90RatingsViewer = ({ open, onOpenChange, initialCategory, searchTe
   };
 
   // Helper function for score colors
-  const getScoreColor = (score: number | null) => {
-    if (score === null || score === undefined) return 'bg-muted text-muted-foreground';
+  const getScoreColor = (score: string | null) => {
+    if (!score) return 'bg-muted text-muted-foreground';
+    
+    // Check if it's a text value (non-numeric)
+    const numericValue = parseFloat(score);
+    if (isNaN(numericValue)) {
+      // Text values like "xG" display in gold
+      return 'bg-[hsl(var(--gold))] text-[hsl(var(--bg-dark))] font-semibold';
+    }
     
     // Positive scores
-    if (score >= 0.1) return 'bg-green-600 text-white font-bold';
-    if (score > 0.01) return 'bg-green-500 text-white';
-    if (score > 0) return 'bg-green-400 text-white';
+    if (numericValue >= 0.1) return 'bg-green-600 text-white font-bold';
+    if (numericValue > 0.01) return 'bg-green-500 text-white';
+    if (numericValue > 0) return 'bg-green-400 text-white';
     
     // Negative scores
-    if (score <= -0.1) return 'bg-red-600 text-white font-bold';
-    if (score < -0.01) return 'bg-red-500 text-white';
-    if (score < 0) return 'bg-red-400 text-white';
+    if (numericValue <= -0.1) return 'bg-red-600 text-white font-bold';
+    if (numericValue < -0.01) return 'bg-red-500 text-white';
+    if (numericValue < 0) return 'bg-red-400 text-white';
     
     // Exactly 0
     return 'bg-muted text-muted-foreground';
@@ -499,7 +506,9 @@ export const R90RatingsViewer = ({ open, onOpenChange, initialCategory, searchTe
                                                                  <Badge 
                                                                    className={`${getScoreColor(rating.score)} text-xs font-mono px-2 shrink-0`}
                                                                  >
-                                                                   {rating.score.toFixed(4)}
+                                                                   {typeof rating.score === 'string' 
+                                                                     ? (isNaN(parseFloat(rating.score)) ? rating.score : Number(rating.score).toFixed(4))
+                                                                     : String(rating.score)}
                                                                  </Badge>
                                                                )}
                                                                <ChevronDown 

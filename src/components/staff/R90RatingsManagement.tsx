@@ -21,7 +21,7 @@ interface R90Rating {
   content: string | null;
   category: string | null;
   subcategory: string | null;
-  score: number | null;
+  score: string | null; // Changed to support text values like "xG"
   created_at: string;
 }
 
@@ -58,7 +58,7 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
   const [addingMappingFor, setAddingMappingFor] = useState<string | null>(null);
   const [newMappingCategory, setNewMappingCategory] = useState('');
   const [newMappingSubcategory, setNewMappingSubcategory] = useState('');
-  const [availableRatings, setAvailableRatings] = useState<Array<{ id: string, title: string, score: number }>>([]);
+  const [availableRatings, setAvailableRatings] = useState<Array<{ id: string, title: string, score: string | null }>>([]);
   const [selectedRatingIds, setSelectedRatingIds] = useState<string[]>([]);
   const [isAutoMapping, setIsAutoMapping] = useState(false);
   
@@ -234,7 +234,8 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
     }
 
     try {
-      const scoreValue = formData.score ? parseFloat(formData.score) : null;
+      // Keep score as text - can be numeric or text like "xG"
+      const scoreValue = formData.score && formData.score.trim() !== '' ? formData.score.trim() : null;
       
       if (isAddingNew) {
         const { error } = await supabase
@@ -307,18 +308,25 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
     });
   };
 
-  const getScoreColor = (score: number | null) => {
-    if (score === null || score === undefined) return 'bg-muted text-muted-foreground';
+  const getScoreColor = (score: string | null) => {
+    if (!score) return 'bg-muted text-muted-foreground';
+    
+    // Check if it's a text value (non-numeric)
+    const numericValue = parseFloat(score);
+    if (isNaN(numericValue)) {
+      // Text values like "xG" display in gold
+      return 'bg-[hsl(var(--gold))] text-[hsl(var(--bg-dark))] font-semibold';
+    }
     
     // Positive scores
-    if (score >= 0.1) return 'bg-green-600 text-white font-bold';
-    if (score > 0.01) return 'bg-green-500 text-white';
-    if (score > 0) return 'bg-green-400 text-white';
+    if (numericValue >= 0.1) return 'bg-green-600 text-white font-bold';
+    if (numericValue > 0.01) return 'bg-green-500 text-white';
+    if (numericValue > 0) return 'bg-green-400 text-white';
     
     // Negative scores
-    if (score <= -0.1) return 'bg-red-600 text-white font-bold';
-    if (score < -0.01) return 'bg-red-500 text-white';
-    if (score < 0) return 'bg-red-400 text-white';
+    if (numericValue <= -0.1) return 'bg-red-600 text-white font-bold';
+    if (numericValue < -0.01) return 'bg-red-500 text-white';
+    if (numericValue < 0) return 'bg-red-400 text-white';
     
     // Exactly 0
     return 'bg-muted text-muted-foreground';
@@ -657,7 +665,9 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
                                               <Badge 
                                                 className={`${getScoreColor(rating.score)} text-xs font-mono px-2 shrink-0`}
                                               >
-                                                {rating.score.toFixed(4)}
+                                                {typeof rating.score === 'string' 
+                                                  ? (isNaN(parseFloat(rating.score)) ? rating.score : Number(rating.score).toFixed(4))
+                                                  : String(rating.score)}
                                               </Badge>
                                             )}
                                           </div>
@@ -779,12 +789,14 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
                     <Label htmlFor="score">R90 Score</Label>
                     <Input
                       id="score"
-                      type="number"
-                      step="0.0001"
+                      type="text"
                       value={formData.score}
                       onChange={(e) => setFormData({ ...formData, score: e.target.value })}
-                      placeholder="e.g., 0.0025"
+                      placeholder="e.g., 0.0025 or xG"
                     />
+                    <p className="text-xs text-muted-foreground">
+                      Enter a number or text (like "xG"). Text values display in gold.
+                    </p>
                   </div>
 
                   <div className="space-y-2">

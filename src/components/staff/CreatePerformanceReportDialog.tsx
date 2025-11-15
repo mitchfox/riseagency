@@ -60,7 +60,7 @@ export const CreatePerformanceReportDialog = ({
   const [isEditMode, setIsEditMode] = useState(false);
   const [playerClub, setPlayerClub] = useState<string>("");
   const [actionTypes, setActionTypes] = useState<string[]>([]);
-  const [previousScores, setPreviousScores] = useState<Record<number, Array<{score: number, title: string, description: string}>>>({});
+  const [previousScores, setPreviousScores] = useState<Record<number, Array<{score: string | number | null, title: string, description: string}>>>({});
   const [expandedScores, setExpandedScores] = useState<Set<number>>(new Set());
   const [selectedScores, setSelectedScores] = useState<Record<number, Set<number>>>({}); // actionIndex -> Set of score indices
   const [isR90ViewerOpen, setIsR90ViewerOpen] = useState(false);
@@ -1419,7 +1419,7 @@ export const CreatePerformanceReportDialog = ({
                                   className="mt-0.5"
                                 />
                                 <label className="font-mono flex-1 cursor-pointer">
-                                  {item.description} {item.score.toFixed(4)}
+                                  {item.description} {typeof item.score === 'number' ? item.score.toFixed(4) : item.score}
                                 </label>
                               </div>
                             );
@@ -1609,7 +1609,9 @@ export const CreatePerformanceReportDialog = ({
                                         : Array.from(newSelected[index] || []).filter(i => i !== actualIdx);
                                       
                                       const totalScore = selectedIndices.reduce((sum, idx) => {
-                                        return sum + (previousScores[index][idx]?.score || 0);
+                                        const score = previousScores[index][idx]?.score;
+                                        const numScore = typeof score === 'number' ? score : (typeof score === 'string' && !isNaN(parseFloat(score)) ? parseFloat(score) : 0);
+                                        return sum + numScore;
                                       }, 0);
                                       
                                       updateAction(index, "action_score", totalScore.toString());
