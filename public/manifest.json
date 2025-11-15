@@ -1,7 +1,7 @@
 {
-  "name": "RISE Player Portal",
-  "short_name": "RISE Portal",
-  "start_url": "/dashboard",
+  "name": "RISE Staff Portal",
+  "short_name": "RISE Staff",
+  "start_url": "/staff",
   "display": "standalone",
   "background_color": "#000000",
   "theme_color": "#C8A871",

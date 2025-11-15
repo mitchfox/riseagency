@@ -36,6 +36,7 @@ import { StaffAccountManagement } from "@/components/staff/StaffAccountManagemen
 import { PlayerPasswordManagement } from "@/components/staff/PlayerPasswordManagement";
 import ClubNetworkManagement from "@/components/staff/ClubNetworkManagement";
 import LegalManagement from "@/components/staff/LegalManagement";
+import { StaffPWAInstall } from "@/components/staff/StaffPWAInstall";
 
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
@@ -58,7 +59,8 @@ import {
   Network, 
   Scale,
   Shield,
-  Lock
+  Lock,
+  Download
 } from "lucide-react";
 
 const Staff = () => {
@@ -70,7 +72,7 @@ const Staff = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [isMarketeer, setIsMarketeer] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-  const [expandedSection, setExpandedSection] = useState<'overview' | 'staffaccounts' | 'passwords' | 'players' | 'playerlist' | 'recruitment' | 'blog' | 'betweenthelines' | 'coaching' | 'analysis' | 'marketing' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'legal' | null>('overview');
+  const [expandedSection, setExpandedSection] = useState<'overview' | 'staffaccounts' | 'passwords' | 'pwainstall' | 'players' | 'playerlist' | 'recruitment' | 'blog' | 'betweenthelines' | 'coaching' | 'analysis' | 'marketing' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'legal' | null>('overview');
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
   const [sidebarSearchOpen, setSidebarSearchOpen] = useState(false);
@@ -515,7 +517,8 @@ const Staff = () => {
         { id: 'invoices', title: 'Invoices', icon: FileCheck },
         ...(isAdmin ? [
           { id: 'passwords', title: 'Player Passwords', icon: Lock },
-          { id: 'staffaccounts', title: 'Staff Accounts', icon: Shield }
+          { id: 'staffaccounts', title: 'Staff Accounts', icon: Shield },
+          { id: 'pwainstall', title: 'PWA Install', icon: Download }
         ] : []),
       ]
     }
@@ -814,6 +817,7 @@ const Staff = () => {
                   {expandedSection === 'legal' && <LegalManagement isAdmin={isAdmin} />}
                   {expandedSection === 'passwords' && isAdmin && <PlayerPasswordManagement />}
                   {expandedSection === 'staffaccounts' && isAdmin && <StaffAccountManagement />}
+                  {expandedSection === 'pwainstall' && isAdmin && <StaffPWAInstall />}
                 </CardContent>
               </Card>
             </div>
