@@ -9,6 +9,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Plus, Edit2, Save, X, ChevronDown, Trash2, Sparkles } from "lucide-react";
@@ -987,7 +988,24 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
                           {/* Show available ratings as checkboxes */}
                           {availableRatings.length > 0 && (
                             <div className="space-y-2 mt-3 pt-3 border-t">
-                              <div className="text-xs font-medium">Select R90 Ratings to Display:</div>
+                              <div className="flex items-center justify-between">
+                                <div className="text-xs font-medium">Select R90 Ratings to Display:</div>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => {
+                                    const allSelected = selectedRatingIds.length === availableRatings.length;
+                                    if (allSelected) {
+                                      setSelectedRatingIds([]);
+                                    } else {
+                                      setSelectedRatingIds(availableRatings.map(r => r.id));
+                                    }
+                                  }}
+                                  className="h-7 text-xs"
+                                >
+                                  {selectedRatingIds.length === availableRatings.length ? 'Deselect All' : 'Select All'}
+                                </Button>
+                              </div>
                               <ScrollArea className="h-48">
                                 <div className="space-y-1 pr-4">
                                   {availableRatings.map((rating) => (
@@ -995,11 +1013,10 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
                                       key={rating.id}
                                       className="flex items-start gap-2 p-2 hover:bg-accent/10 rounded cursor-pointer"
                                     >
-                                      <input
-                                        type="checkbox"
+                                      <Checkbox
                                         checked={selectedRatingIds.includes(rating.id)}
-                                        onChange={(e) => {
-                                          if (e.target.checked) {
+                                        onCheckedChange={(checked) => {
+                                          if (checked) {
                                             setSelectedRatingIds(prev => [...prev, rating.id]);
                                           } else {
                                             setSelectedRatingIds(prev => prev.filter(id => id !== rating.id));
