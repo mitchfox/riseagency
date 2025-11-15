@@ -90,7 +90,20 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
 
       if (catError) throw catError;
 
-      const uniqueCategories = [...new Set(categoryData?.map(r => r.category).filter(Boolean) || [])].sort();
+      const allCategories = [...new Set(categoryData?.map(r => r.category).filter(Boolean) || [])];
+      
+      // Sort categories: Defensive first, then Offensive
+      const defensiveCategories = allCategories.filter(cat => 
+        cat.toLowerCase().includes('defensive') || cat.toLowerCase().includes('defence')
+      ).sort();
+      const offensiveCategories = allCategories.filter(cat => 
+        cat.toLowerCase().includes('offensive') || cat.toLowerCase().includes('attack')
+      ).sort();
+      const otherCategories = allCategories.filter(cat => 
+        !defensiveCategories.includes(cat) && !offensiveCategories.includes(cat)
+      ).sort();
+      
+      const uniqueCategories = [...defensiveCategories, ...offensiveCategories, ...otherCategories];
       setCategories(uniqueCategories);
 
       // Fetch subcategories for each category
@@ -929,30 +942,42 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
                       
                       {/* Add New Mapping Form */}
                       {isAddingNew && (
-                        <div className="space-y-2 pt-2 border-t">
-                          <div className="text-xs text-muted-foreground">
-                            Select category and subcategory, then choose specific R90 ratings
-                          </div>
+                          <div className="space-y-2 pt-2 border-t">
+                            <div className="text-xs text-muted-foreground">
+                              Select category (and optionally subcategory). Leave ratings unselected to include all ratings in that category.
+                            </div>
                           <div className="flex gap-2 items-end">
                             <div className="flex-1">
                               <Select
                                 value={newMappingCategory}
-                                onValueChange={async (value) => {
+                                 onValueChange={async (value) => {
                                   setNewMappingCategory(value);
                                   setNewMappingSubcategory('');
-                                  setAvailableRatings([]);
                                   setSelectedRatingIds([]);
+                                  // Fetch all ratings for this category
+                                  await fetchAvailableRatings(value, null);
                                 }}
                               >
                                 <SelectTrigger>
                                   <SelectValue placeholder="Select category *" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                {categories.map((cat) => (
-                                  <SelectItem key={cat} value={cat}>
-                                    {cat}
-                                  </SelectItem>
-                                ))}
+                                {categories.map((cat, idx) => {
+                                  // Show divider after defensive categories, before offensive
+                                  const isDefensive = cat.toLowerCase().includes('defensive') || cat.toLowerCase().includes('defence');
+                                  const prevCat = idx > 0 ? categories[idx - 1] : null;
+                                  const prevIsDefensive = prevCat && (prevCat.toLowerCase().includes('defensive') || prevCat.toLowerCase().includes('defence'));
+                                  const showDivider = !isDefensive && prevIsDefensive;
+                                  
+                                  return (
+                                    <>
+                                      {showDivider && <div className="h-px bg-border my-1" />}
+                                      <SelectItem key={cat} value={cat}>
+                                        {cat}
+                                      </SelectItem>
+                                    </>
+                                  );
+                                })}
                                 </SelectContent>
                               </Select>
                             </div>
@@ -991,7 +1016,7 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
                             <Button 
                               onClick={() => handleAddMapping(actionType)} 
                               size="sm"
-                              disabled={!newMappingCategory || selectedRatingIds.length === 0}
+                              disabled={!newMappingCategory}
                             >
                               Add
                             </Button>
@@ -1001,7 +1026,7 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
                           {availableRatings.length > 0 && (
                             <div className="space-y-2 mt-3 pt-3 border-t">
                               <div className="flex items-center justify-between">
-                                <div className="text-xs font-medium">Select R90 Ratings to Display:</div>
+                                <div className="text-xs font-medium">Select R90 Ratings (optional - leave empty to include all):</div>
                                 <Button
                                   size="sm"
                                   variant="outline"
