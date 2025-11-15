@@ -584,62 +584,6 @@ const Staff = () => {
         }}
       />
       {!isMobile && <Header />}
-      
-      {/* Search Bar */}
-      <div className={`border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 ${isMobile ? 'fixed top-0 left-0 right-0' : 'sticky top-0'} z-10 relative`}>
-        <div className="container mx-auto px-3 md:px-4 py-3">
-          <div className="flex items-center justify-between gap-2 md:gap-4">
-            {/* Mobile menu button */}
-            <Sheet>
-              <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="md:hidden h-9 w-9">
-                  <Menu className="h-5 w-5" />
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="left" className="w-64 p-4 overflow-y-auto">
-                <div className="space-y-6">
-                  {filteredCategories.map((category) => (
-                    <div key={category.id} className="space-y-2">
-                      <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground px-2">
-                        {category.title}
-                      </h3>
-                      <div className="space-y-1">
-                        {category.sections.map((section) => {
-                          const Icon = section.icon;
-                          return (
-                            <Button
-                              key={section.id}
-                              variant={expandedSection === section.id ? "default" : "ghost"}
-                              className="w-full justify-start text-sm h-10"
-                              onClick={() => handleSectionToggle(section.id as any)}
-                            >
-                              <Icon className="w-4 h-4 mr-2 shrink-0" />
-                              <span className="truncate">{section.title}</span>
-                            </Button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </SheetContent>
-            </Sheet>
-            
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search sections..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9"
-              />
-            </div>
-            <Button onClick={handleLogout} variant="outline" size="sm" className="shrink-0">
-              Logout
-            </Button>
-          </div>
-        </div>
-      </div>
 
       {/* Main Layout with Sidebar */}
       <div className="flex flex-1 relative">
@@ -848,7 +792,7 @@ const Staff = () => {
         {/* Main Content Area */}
         <main className={`flex-1 overflow-y-auto relative z-10 transition-all duration-300 ${
           sidebarCollapsed ? 'ml-0' : 'ml-14 md:ml-24'
-        } ${isMobile ? 'pt-[60px]' : ''}`}>
+        } ${isMobile ? 'pb-[60px]' : ''}`}>
           {expandedSection ? (
             <div className="container mx-auto px-3 md:px-6 py-4 md:py-6">
               <Card className="animate-in fade-in slide-in-from-top-4 duration-300">
@@ -891,6 +835,62 @@ const Staff = () => {
             </div>
           )}
         </main>
+      </div>
+
+      {/* Search Bar - At Bottom on Mobile */}
+      <div className={`border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 ${isMobile ? 'fixed bottom-0 left-0 right-0' : 'sticky bottom-0'} z-10 relative`}>
+        <div className="container mx-auto px-3 md:px-4 py-3">
+          <div className="flex items-center justify-between gap-2 md:gap-4">
+            {/* Mobile menu button */}
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="md:hidden h-9 w-9">
+                  <Menu className="h-5 w-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="w-64 p-4 overflow-y-auto">
+                <div className="space-y-6">
+                  {filteredCategories.map((category) => (
+                    <div key={category.id} className="space-y-2">
+                      <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground px-2">
+                        {category.title}
+                      </h3>
+                      <div className="space-y-1">
+                        {category.sections.map((section) => {
+                          const Icon = section.icon;
+                          return (
+                            <Button
+                              key={section.id}
+                              variant={expandedSection === section.id ? "default" : "ghost"}
+                              className="w-full justify-start text-sm h-10"
+                              onClick={() => handleSectionToggle(section.id as any)}
+                            >
+                              <Icon className="w-4 h-4 mr-2 shrink-0" />
+                              <span className="truncate">{section.title}</span>
+                            </Button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </SheetContent>
+            </Sheet>
+            
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search sections..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            <Button onClick={handleLogout} variant="outline" size="sm" className="shrink-0">
+              Logout
+            </Button>
+          </div>
+        </div>
       </div>
     </div>
   );
