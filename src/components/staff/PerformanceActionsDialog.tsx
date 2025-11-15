@@ -41,7 +41,7 @@ export const PerformanceActionsDialog = ({
   const [strikerStats, setStrikerStats] = useState<any>(null);
   const [r90Score, setR90Score] = useState<number | null>(null);
   const [actionTypes, setActionTypes] = useState<string[]>([]);
-  const [previousScores, setPreviousScores] = useState<Array<{score: number, description: string}>>([]);
+  const [previousScores, setPreviousScores] = useState<Array<{score: string | number | null, description: string}>>([]);
   const [isScoresExpanded, setIsScoresExpanded] = useState(false);
   const [selectedScoreIndices, setSelectedScoreIndices] = useState<Set<number>>(new Set());
   const [isR90ViewerOpen, setIsR90ViewerOpen] = useState(false);
@@ -549,7 +549,7 @@ export const PerformanceActionsDialog = ({
                               className="mt-0.5"
                             />
                             <label className="font-mono flex-1 cursor-pointer">
-                              {item.description} {item.score.toFixed(4)}
+                              {item.description} {typeof item.score === 'number' ? item.score.toFixed(4) : (typeof item.score === 'string' && !isNaN(parseFloat(item.score)) ? parseFloat(item.score).toFixed(4) : item.score)}
                             </label>
                           </div>
                         );
