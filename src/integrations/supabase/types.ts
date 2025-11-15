@@ -1503,6 +1503,7 @@ export type Database = {
           age: number | null
           agent_contact: string | null
           agent_name: string | null
+          auto_generated_review: string | null
           competition: string | null
           contact_email: string | null
           contact_phone: string | null
@@ -1528,6 +1529,7 @@ export type Database = {
           recommendation: string | null
           scout_name: string | null
           scouting_date: string
+          skill_evaluations: Json | null
           status: string
           strengths: string | null
           summary: string | null
@@ -1542,6 +1544,7 @@ export type Database = {
           age?: number | null
           agent_contact?: string | null
           agent_name?: string | null
+          auto_generated_review?: string | null
           competition?: string | null
           contact_email?: string | null
           contact_phone?: string | null
@@ -1567,6 +1570,7 @@ export type Database = {
           recommendation?: string | null
           scout_name?: string | null
           scouting_date?: string
+          skill_evaluations?: Json | null
           status?: string
           strengths?: string | null
           summary?: string | null
@@ -1581,6 +1585,7 @@ export type Database = {
           age?: number | null
           agent_contact?: string | null
           agent_name?: string | null
+          auto_generated_review?: string | null
           competition?: string | null
           contact_email?: string | null
           contact_phone?: string | null
@@ -1606,6 +1611,7 @@ export type Database = {
           recommendation?: string | null
           scout_name?: string | null
           scouting_date?: string
+          skill_evaluations?: Json | null
           status?: string
           strengths?: string | null
           summary?: string | null
