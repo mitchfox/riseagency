@@ -32,6 +32,7 @@ import { StaffSchedule } from "@/components/staff/StaffSchedule";
 import { StaffOverview } from "@/components/staff/StaffOverview";
 import { MarketingManagement } from "@/components/staff/MarketingManagement";
 import { RecruitmentManagement } from "@/components/staff/RecruitmentManagement";
+import { ScoutingCentreManagement } from "@/components/staff/ScoutingCentreManagement";
 import { StaffAccountManagement } from "@/components/staff/StaffAccountManagement";
 import { PlayerPasswordManagement } from "@/components/staff/PlayerPasswordManagement";
 import ClubNetworkManagement from "@/components/staff/ClubNetworkManagement";
@@ -65,7 +66,8 @@ import {
   Lock,
   Download,
   HardDrive,
-  Bell
+  Bell,
+  ClipboardList
 } from "lucide-react";
 
 const Staff = () => {
@@ -77,7 +79,7 @@ const Staff = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [isMarketeer, setIsMarketeer] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-  const [expandedSection, setExpandedSection] = useState<'overview' | 'staffaccounts' | 'passwords' | 'pwainstall' | 'offlinemanager' | 'pushnotifications' | 'players' | 'playerlist' | 'recruitment' | 'blog' | 'betweenthelines' | 'coaching' | 'analysis' | 'marketing' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'legal' | null>('overview');
+  const [expandedSection, setExpandedSection] = useState<'overview' | 'staffaccounts' | 'passwords' | 'pwainstall' | 'offlinemanager' | 'pushnotifications' | 'players' | 'playerlist' | 'recruitment' | 'scoutingcentre' | 'blog' | 'betweenthelines' | 'coaching' | 'analysis' | 'marketing' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'legal' | null>('overview');
   
   // Enable staff notifications
   useStaffNotifications({
@@ -302,6 +304,24 @@ const Staff = () => {
         });
       });
 
+      // Search scouting reports
+      const { data: scoutingReports } = await supabase
+        .from('scouting_reports')
+        .select('id, player_name, position, current_club, status')
+        .ilike('player_name', searchTerm)
+        .limit(5);
+
+      scoutingReports?.forEach(report => {
+        results.push({
+          id: report.id,
+          title: report.player_name,
+          description: `${report.position || 'Unknown'}${report.current_club ? ` at ${report.current_club}` : ''} - ${report.status}`,
+          section: 'Scouting Centre',
+          sectionId: 'scoutingcentre',
+          type: 'scouting_report'
+        });
+      });
+
       // Search invoices
       const { data: invoices } = await supabase
         .from('invoices')
@@ -505,6 +525,7 @@ const Staff = () => {
         { id: 'clubnetwork', title: 'Club Network', icon: Network },
         { id: 'playerlist', title: 'Player List', icon: Users },
         { id: 'recruitment', title: 'Recruitment', icon: Target },
+        { id: 'scoutingcentre', title: 'Scouting Centre', icon: ClipboardList },
         { id: 'submissions', title: 'Form Submissions', icon: Mail },
       ]
     },
@@ -819,6 +840,7 @@ const Staff = () => {
                   {expandedSection === 'playerlist' && <PlayerList isAdmin={isAdmin} />}
                   {expandedSection === 'players' && <PlayerManagement isAdmin={isAdmin} />}
                   {expandedSection === 'recruitment' && <RecruitmentManagement isAdmin={isAdmin} />}
+                  {expandedSection === 'scoutingcentre' && <ScoutingCentreManagement isAdmin={isAdmin} />}
                   {expandedSection === 'coaching' && <CoachingDatabase isAdmin={isAdmin} />}
                   {expandedSection === 'analysis' && <AnalysisManagement isAdmin={isAdmin} />}
                   {expandedSection === 'marketing' && <MarketingManagement isAdmin={isAdmin} />}

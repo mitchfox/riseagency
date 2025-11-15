@@ -1497,6 +1497,134 @@ export type Database = {
         }
         Relationships: []
       }
+      scouting_reports: {
+        Row: {
+          added_to_prospects: boolean | null
+          age: number | null
+          agent_contact: string | null
+          agent_name: string | null
+          competition: string | null
+          contact_email: string | null
+          contact_phone: string | null
+          created_at: string
+          current_club: string | null
+          date_of_birth: string | null
+          height_cm: number | null
+          id: string
+          location: string | null
+          match_context: string | null
+          mental_rating: number | null
+          nationality: string | null
+          notes: string | null
+          overall_rating: number | null
+          physical_rating: number | null
+          player_name: string
+          position: string | null
+          potential_assessment: string | null
+          preferred_foot: string | null
+          priority: string | null
+          profile_image_url: string | null
+          prospect_id: string | null
+          recommendation: string | null
+          scout_name: string | null
+          scouting_date: string
+          status: string
+          strengths: string | null
+          summary: string | null
+          tactical_rating: number | null
+          technical_rating: number | null
+          updated_at: string
+          video_url: string | null
+          weaknesses: string | null
+        }
+        Insert: {
+          added_to_prospects?: boolean | null
+          age?: number | null
+          agent_contact?: string | null
+          agent_name?: string | null
+          competition?: string | null
+          contact_email?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          current_club?: string | null
+          date_of_birth?: string | null
+          height_cm?: number | null
+          id?: string
+          location?: string | null
+          match_context?: string | null
+          mental_rating?: number | null
+          nationality?: string | null
+          notes?: string | null
+          overall_rating?: number | null
+          physical_rating?: number | null
+          player_name: string
+          position?: string | null
+          potential_assessment?: string | null
+          preferred_foot?: string | null
+          priority?: string | null
+          profile_image_url?: string | null
+          prospect_id?: string | null
+          recommendation?: string | null
+          scout_name?: string | null
+          scouting_date?: string
+          status?: string
+          strengths?: string | null
+          summary?: string | null
+          tactical_rating?: number | null
+          technical_rating?: number | null
+          updated_at?: string
+          video_url?: string | null
+          weaknesses?: string | null
+        }
+        Update: {
+          added_to_prospects?: boolean | null
+          age?: number | null
+          agent_contact?: string | null
+          agent_name?: string | null
+          competition?: string | null
+          contact_email?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          current_club?: string | null
+          date_of_birth?: string | null
+          height_cm?: number | null
+          id?: string
+          location?: string | null
+          match_context?: string | null
+          mental_rating?: number | null
+          nationality?: string | null
+          notes?: string | null
+          overall_rating?: number | null
+          physical_rating?: number | null
+          player_name?: string
+          position?: string | null
+          potential_assessment?: string | null
+          preferred_foot?: string | null
+          priority?: string | null
+          profile_image_url?: string | null
+          prospect_id?: string | null
+          recommendation?: string | null
+          scout_name?: string | null
+          scouting_date?: string
+          status?: string
+          strengths?: string | null
+          summary?: string | null
+          tactical_rating?: number | null
+          technical_rating?: number | null
+          updated_at?: string
+          video_url?: string | null
+          weaknesses?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scouting_reports_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       site_visits: {
         Row: {
           created_at: string
