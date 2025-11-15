@@ -17,6 +17,22 @@ import { format } from "date-fns";
 import { SkillEvaluationForm } from "./SkillEvaluationForm";
 import { initializeSkillEvaluations, SkillEvaluation, SCOUTING_POSITIONS, POSITION_SKILLS, ScoutingPosition } from "@/data/scoutingSkills";
 
+// Import pitch background
+import pitchBg from "@/assets/scouting-pitch-bg.jpg";
+
+// Import player images
+import buffon from "@/assets/scouting-players/buffon.jpg";
+import ashleyCole from "@/assets/scouting-players/ashley-cole.jpg";
+import vanDijk from "@/assets/scouting-players/van-dijk.jpg";
+import sergioRamos from "@/assets/scouting-players/sergio-ramos.jpg";
+import trent from "@/assets/scouting-players/trent.jpg";
+import kante from "@/assets/scouting-players/kante.jpg";
+import lampard from "@/assets/scouting-players/lampard.jpg";
+import deBruyne from "@/assets/scouting-players/de-bruyne.jpg";
+import cristiano from "@/assets/scouting-players/cristiano.jpg";
+import ronaldo from "@/assets/scouting-players/ronaldo.jpg";
+import messi from "@/assets/scouting-players/messi.jpg";
+
 interface ScoutingReport {
   id: string;
   player_name: string;
@@ -474,25 +490,41 @@ export const ScoutingCentre = ({ open, onOpenChange }: ScoutingCentreProps) => {
             </div>
             
             {/* Formation Layout for Desktop */}
-            <div className="hidden lg:block space-y-8">
+            <div 
+              className="hidden lg:block space-y-8 p-8 rounded-lg relative"
+              style={{
+                backgroundImage: `url(${pitchBg})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                backgroundRepeat: 'no-repeat'
+              }}
+            >
+              <div className="absolute inset-0 bg-black/20 rounded-lg" />
+              
               {/* Forward Line */}
-              <div className="flex justify-center gap-16">
-                {["Winger / Wide Forward", "Centre Forward / Striker", "Winger / Wide Forward"].map((pos, idx) => (
-                  <Card key={`fw-${idx}`} className="w-48 bg-card hover:bg-accent/5 transition-all">
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-sm text-center">
-                        {idx === 0 ? "LW" : idx === 1 ? "CF" : "RW"}
-                      </CardTitle>
-                      <p className="text-xs text-muted-foreground text-center">{pos}</p>
+              <div className="flex justify-center gap-16 relative z-10">
+                {[
+                  { pos: "Winger / Wide Forward", label: "LW", player: "Cristiano Ronaldo", img: cristiano },
+                  { pos: "Centre Forward / Striker", label: "CF", player: "Ronaldo Nazario", img: ronaldo },
+                  { pos: "Winger / Wide Forward", label: "RW", player: "Messi", img: messi }
+                ].map((item, idx) => (
+                  <Card key={`fw-${idx}`} className="w-48 bg-card/95 backdrop-blur hover:bg-card transition-all border-2 border-white/20">
+                    <CardHeader className="pb-2">
+                      <div className="w-16 h-16 mx-auto mb-2 rounded-lg overflow-hidden border-2 border-primary">
+                        <img src={item.img} alt={item.player} className="w-full h-full object-cover" />
+                      </div>
+                      <CardTitle className="text-sm text-center font-bold">{item.label}</CardTitle>
+                      <p className="text-xs text-muted-foreground text-center">{item.pos}</p>
+                      <p className="text-xs text-primary font-semibold text-center mt-1">{item.player}</p>
                     </CardHeader>
-                    <CardContent className="space-y-2">
-                      <Button variant="outline" size="sm" className="w-full" onClick={() => handleViewPositionAnalysis(pos as ScoutingPosition)}>
+                    <CardContent className="space-y-1.5 pt-0">
+                      <Button variant="outline" size="sm" className="w-full h-7 text-xs" onClick={() => handleViewPositionAnalysis(item.pos as ScoutingPosition)}>
                         <Eye className="h-3 w-3 mr-1" />Analysis
                       </Button>
-                      <Button variant="outline" size="sm" className="w-full" onClick={() => handleViewProspectTable(pos as ScoutingPosition)}>
+                      <Button variant="outline" size="sm" className="w-full h-7 text-xs" onClick={() => handleViewProspectTable(item.pos as ScoutingPosition)}>
                         <Users className="h-3 w-3 mr-1" />Prospects
                       </Button>
-                      <Button size="sm" className="w-full" onClick={() => handleCreateReportForPosition(pos as ScoutingPosition)}>
+                      <Button size="sm" className="w-full h-7 text-xs" onClick={() => handleCreateReportForPosition(item.pos as ScoutingPosition)}>
                         <Plus className="h-3 w-3 mr-1" />Report
                       </Button>
                     </CardContent>
@@ -501,23 +533,28 @@ export const ScoutingCentre = ({ open, onOpenChange }: ScoutingCentreProps) => {
               </div>
 
               {/* Midfield Line */}
-              <div className="flex justify-center gap-16">
-                {["Central Midfielder", "Central Midfielder"].map((pos, idx) => (
-                  <Card key={`mid-${idx}`} className="w-48 bg-card hover:bg-accent/5 transition-all">
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-sm text-center">
-                        {idx === 0 ? "RCM" : "LCM"}
-                      </CardTitle>
-                      <p className="text-xs text-muted-foreground text-center">{pos}</p>
+              <div className="flex justify-center gap-16 relative z-10">
+                {[
+                  { pos: "Central Midfielder", label: "RCM", player: "Kevin de Bruyne", img: deBruyne },
+                  { pos: "Central Midfielder", label: "LCM", player: "Lampard", img: lampard }
+                ].map((item, idx) => (
+                  <Card key={`mid-${idx}`} className="w-48 bg-card/95 backdrop-blur hover:bg-card transition-all border-2 border-white/20">
+                    <CardHeader className="pb-2">
+                      <div className="w-16 h-16 mx-auto mb-2 rounded-lg overflow-hidden border-2 border-primary">
+                        <img src={item.img} alt={item.player} className="w-full h-full object-cover" />
+                      </div>
+                      <CardTitle className="text-sm text-center font-bold">{item.label}</CardTitle>
+                      <p className="text-xs text-muted-foreground text-center">{item.pos}</p>
+                      <p className="text-xs text-primary font-semibold text-center mt-1">{item.player}</p>
                     </CardHeader>
-                    <CardContent className="space-y-2">
-                      <Button variant="outline" size="sm" className="w-full" onClick={() => handleViewPositionAnalysis(pos as ScoutingPosition)}>
+                    <CardContent className="space-y-1.5 pt-0">
+                      <Button variant="outline" size="sm" className="w-full h-7 text-xs" onClick={() => handleViewPositionAnalysis(item.pos as ScoutingPosition)}>
                         <Eye className="h-3 w-3 mr-1" />Analysis
                       </Button>
-                      <Button variant="outline" size="sm" className="w-full" onClick={() => handleViewProspectTable(pos as ScoutingPosition)}>
+                      <Button variant="outline" size="sm" className="w-full h-7 text-xs" onClick={() => handleViewProspectTable(item.pos as ScoutingPosition)}>
                         <Users className="h-3 w-3 mr-1" />Prospects
                       </Button>
-                      <Button size="sm" className="w-full" onClick={() => handleCreateReportForPosition(pos as ScoutingPosition)}>
+                      <Button size="sm" className="w-full h-7 text-xs" onClick={() => handleCreateReportForPosition(item.pos as ScoutingPosition)}>
                         <Plus className="h-3 w-3 mr-1" />Report
                       </Button>
                     </CardContent>
@@ -526,20 +563,24 @@ export const ScoutingCentre = ({ open, onOpenChange }: ScoutingCentreProps) => {
               </div>
 
               {/* CDM Line */}
-              <div className="flex justify-center">
-                <Card className="w-48 bg-card hover:bg-accent/5 transition-all">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-sm text-center">CDM</CardTitle>
+              <div className="flex justify-center relative z-10">
+                <Card className="w-48 bg-card/95 backdrop-blur hover:bg-card transition-all border-2 border-white/20">
+                  <CardHeader className="pb-2">
+                    <div className="w-16 h-16 mx-auto mb-2 rounded-lg overflow-hidden border-2 border-primary">
+                      <img src={kante} alt="Kanté" className="w-full h-full object-cover" />
+                    </div>
+                    <CardTitle className="text-sm text-center font-bold">CDM</CardTitle>
                     <p className="text-xs text-muted-foreground text-center">Central Defensive Midfielder</p>
+                    <p className="text-xs text-primary font-semibold text-center mt-1">Kanté</p>
                   </CardHeader>
-                  <CardContent className="space-y-2">
-                    <Button variant="outline" size="sm" className="w-full" onClick={() => handleViewPositionAnalysis("Central Defensive Midfielder")}>
+                  <CardContent className="space-y-1.5 pt-0">
+                    <Button variant="outline" size="sm" className="w-full h-7 text-xs" onClick={() => handleViewPositionAnalysis("Central Defensive Midfielder")}>
                       <Eye className="h-3 w-3 mr-1" />Analysis
                     </Button>
-                    <Button variant="outline" size="sm" className="w-full" onClick={() => handleViewProspectTable("Central Defensive Midfielder")}>
+                    <Button variant="outline" size="sm" className="w-full h-7 text-xs" onClick={() => handleViewProspectTable("Central Defensive Midfielder")}>
                       <Users className="h-3 w-3 mr-1" />Prospects
                     </Button>
-                    <Button size="sm" className="w-full" onClick={() => handleCreateReportForPosition("Central Defensive Midfielder")}>
+                    <Button size="sm" className="w-full h-7 text-xs" onClick={() => handleCreateReportForPosition("Central Defensive Midfielder")}>
                       <Plus className="h-3 w-3 mr-1" />Report
                     </Button>
                   </CardContent>
@@ -547,26 +588,30 @@ export const ScoutingCentre = ({ open, onOpenChange }: ScoutingCentreProps) => {
               </div>
 
               {/* Defense Line */}
-              <div className="flex justify-center gap-8">
+              <div className="flex justify-center gap-8 relative z-10">
                 {[
-                  { label: "LB", pos: "Full-Back" },
-                  { label: "LCB", pos: "Centre-Back" },
-                  { label: "RCB", pos: "Centre-Back" },
-                  { label: "RB", pos: "Full-Back" }
+                  { label: "LB", pos: "Full-Back", player: "Ashley Cole", img: ashleyCole },
+                  { label: "LCB", pos: "Centre-Back", player: "Virgil van Dijk", img: vanDijk },
+                  { label: "RCB", pos: "Centre-Back", player: "Sergio Ramos", img: sergioRamos },
+                  { label: "RB", pos: "Full-Back", player: "Trent Alexander-Arnold", img: trent }
                 ].map((item, idx) => (
-                  <Card key={`def-${idx}`} className="w-44 bg-card hover:bg-accent/5 transition-all">
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-sm text-center">{item.label}</CardTitle>
-                      <p className="text-xs text-muted-foreground text-center">{item.pos}</p>
+                  <Card key={`def-${idx}`} className="w-44 bg-card/95 backdrop-blur hover:bg-card transition-all border-2 border-white/20">
+                    <CardHeader className="pb-2">
+                      <div className="w-14 h-14 mx-auto mb-2 rounded-lg overflow-hidden border-2 border-primary">
+                        <img src={item.img} alt={item.player} className="w-full h-full object-cover" />
+                      </div>
+                      <CardTitle className="text-xs text-center font-bold">{item.label}</CardTitle>
+                      <p className="text-[10px] text-muted-foreground text-center">{item.pos}</p>
+                      <p className="text-[10px] text-primary font-semibold text-center mt-1">{item.player}</p>
                     </CardHeader>
-                    <CardContent className="space-y-2">
-                      <Button variant="outline" size="sm" className="w-full" onClick={() => handleViewPositionAnalysis(item.pos as ScoutingPosition)}>
+                    <CardContent className="space-y-1.5 pt-0">
+                      <Button variant="outline" size="sm" className="w-full h-7 text-xs" onClick={() => handleViewPositionAnalysis(item.pos as ScoutingPosition)}>
                         <Eye className="h-3 w-3 mr-1" />Analysis
                       </Button>
-                      <Button variant="outline" size="sm" className="w-full" onClick={() => handleViewProspectTable(item.pos as ScoutingPosition)}>
+                      <Button variant="outline" size="sm" className="w-full h-7 text-xs" onClick={() => handleViewProspectTable(item.pos as ScoutingPosition)}>
                         <Users className="h-3 w-3 mr-1" />Prospects
                       </Button>
-                      <Button size="sm" className="w-full" onClick={() => handleCreateReportForPosition(item.pos as ScoutingPosition)}>
+                      <Button size="sm" className="w-full h-7 text-xs" onClick={() => handleCreateReportForPosition(item.pos as ScoutingPosition)}>
                         <Plus className="h-3 w-3 mr-1" />Report
                       </Button>
                     </CardContent>
@@ -575,20 +620,24 @@ export const ScoutingCentre = ({ open, onOpenChange }: ScoutingCentreProps) => {
               </div>
 
               {/* Goalkeeper */}
-              <div className="flex justify-center">
-                <Card className="w-48 bg-card hover:bg-accent/5 transition-all">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-sm text-center">GK</CardTitle>
+              <div className="flex justify-center relative z-10">
+                <Card className="w-48 bg-card/95 backdrop-blur hover:bg-card transition-all border-2 border-white/20">
+                  <CardHeader className="pb-2">
+                    <div className="w-16 h-16 mx-auto mb-2 rounded-lg overflow-hidden border-2 border-primary">
+                      <img src={buffon} alt="Buffon" className="w-full h-full object-cover" />
+                    </div>
+                    <CardTitle className="text-sm text-center font-bold">GK</CardTitle>
                     <p className="text-xs text-muted-foreground text-center">Goalkeeper</p>
+                    <p className="text-xs text-primary font-semibold text-center mt-1">Buffon</p>
                   </CardHeader>
-                  <CardContent className="space-y-2">
-                    <Button variant="outline" size="sm" className="w-full" onClick={() => handleViewPositionAnalysis("Goalkeeper")}>
+                  <CardContent className="space-y-1.5 pt-0">
+                    <Button variant="outline" size="sm" className="w-full h-7 text-xs" onClick={() => handleViewPositionAnalysis("Goalkeeper")}>
                       <Eye className="h-3 w-3 mr-1" />Analysis
                     </Button>
-                    <Button variant="outline" size="sm" className="w-full" onClick={() => handleViewProspectTable("Goalkeeper")}>
+                    <Button variant="outline" size="sm" className="w-full h-7 text-xs" onClick={() => handleViewProspectTable("Goalkeeper")}>
                       <Users className="h-3 w-3 mr-1" />Prospects
                     </Button>
-                    <Button size="sm" className="w-full" onClick={() => handleCreateReportForPosition("Goalkeeper")}>
+                    <Button size="sm" className="w-full h-7 text-xs" onClick={() => handleCreateReportForPosition("Goalkeeper")}>
                       <Plus className="h-3 w-3 mr-1" />Report
                     </Button>
                   </CardContent>
