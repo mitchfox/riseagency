@@ -29,24 +29,6 @@ interface R90RatingsManagementProps {
   onOpenChange: (open: boolean) => void;
 }
 
-const R90_CATEGORIES = [
-  'Pressing',
-  'Defensive',
-  'Aerial Duels',
-  'Attacking Crosses',
-  'On-Ball Decision-Making',
-  'Off-Ball Movement'
-];
-
-const SUBCATEGORY_OPTIONS: Record<string, string[]> = {
-  'Pressing': ['Counterattacks', 'Force Backwards', 'Regain Possession'],
-  'Defensive': ['Blocks', 'Clearances', 'Duels', 'Fouls', 'Interceptions', 'Positioning', 'Recovery'],
-  'Aerial Duels': ['Counterattack Start', 'Defensive', 'Force Backwards', 'General', 'Offensive', 'Regain Possession'],
-  'Attacking Crosses': ['Aerial Delivery', 'Ground Delivery', 'Second Balls'],
-  'On-Ball Decision-Making': ['In Space', 'Under Pressure'],
-  'Off-Ball Movement': ['Between Lines', 'In Behind', 'In Front of Midfield', 'On Last Line']
-};
-
 export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagementProps) => {
   const [ratings, setRatings] = useState<R90Rating[]>([]);
   const [loading, setLoading] = useState(false);
@@ -55,6 +37,10 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
   const [expandedSubcategories, setExpandedSubcategories] = useState<Set<string>>(new Set());
   const [isSplitting, setIsSplitting] = useState(false);
+  
+  // Dynamic categories and subcategories from database
+  const [categories, setCategories] = useState<string[]>([]);
+  const [subcategoryOptions, setSubcategoryOptions] = useState<Record<string, string[]>>({});
   
   // Action type mapping state
   const [actionTypes, setActionTypes] = useState<string[]>([]);
@@ -86,10 +72,49 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
 
   useEffect(() => {
     if (open) {
+      fetchCategoriesAndSubcategories();
       fetchRatings();
       fetchActionTypesAndMappings();
     }
   }, [open]);
+
+  const fetchCategoriesAndSubcategories = async () => {
+    try {
+      // Fetch all unique categories
+      const { data: categoryData, error: catError } = await supabase
+        .from('r90_ratings')
+        .select('category')
+        .not('category', 'is', null)
+        .order('category');
+
+      if (catError) throw catError;
+
+      const uniqueCategories = [...new Set(categoryData?.map(r => r.category).filter(Boolean) || [])].sort();
+      setCategories(uniqueCategories);
+
+      // Fetch subcategories for each category
+      const subcatMap: Record<string, string[]> = {};
+      for (const category of uniqueCategories) {
+        const { data: subcatData, error: subcatError } = await supabase
+          .from('r90_ratings')
+          .select('subcategory')
+          .eq('category', category)
+          .not('subcategory', 'is', null)
+          .order('subcategory');
+
+        if (subcatError) throw subcatError;
+
+        const uniqueSubcats = [...new Set(subcatData?.map(r => r.subcategory).filter(Boolean) || [])].sort();
+        if (uniqueSubcats.length > 0) {
+          subcatMap[category] = uniqueSubcats;
+        }
+      }
+      setSubcategoryOptions(subcatMap);
+    } catch (error) {
+      console.error('Error fetching categories and subcategories:', error);
+      toast.error('Failed to load categories');
+    }
+  };
 
   const fetchRatings = async () => {
     setLoading(true);
@@ -719,7 +744,7 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
                         <SelectValue placeholder="Select category" />
                       </SelectTrigger>
                       <SelectContent>
-                        {R90_CATEGORIES.map((cat) => (
+                        {categories.map((cat) => (
                           <SelectItem key={cat} value={cat}>
                             {cat}
                           </SelectItem>
@@ -728,7 +753,7 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
                     </Select>
                   </div>
 
-                  {formData.category && SUBCATEGORY_OPTIONS[formData.category] && (
+                  {formData.category && subcategoryOptions[formData.category] && subcategoryOptions[formData.category].length > 0 && (
                     <div className="space-y-2">
                       <Label htmlFor="subcategory">Subcategory</Label>
                       <Select
@@ -739,7 +764,7 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
                           <SelectValue placeholder="Select subcategory" />
                         </SelectTrigger>
                         <SelectContent className="max-h-[400px] bg-card border-border z-[100]" position="popper" sideOffset={4}>
-                          {SUBCATEGORY_OPTIONS[formData.category].map((sub) => (
+                          {subcategoryOptions[formData.category].map((sub) => (
                             <SelectItem key={sub} value={sub} className="cursor-pointer">
                               {sub}
                             </SelectItem>
@@ -910,16 +935,16 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
                                   <SelectValue placeholder="Select category *" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  {R90_CATEGORIES.map((cat) => (
-                                    <SelectItem key={cat} value={cat}>
-                                      {cat}
-                                    </SelectItem>
-                                  ))}
+                                {categories.map((cat) => (
+                                  <SelectItem key={cat} value={cat}>
+                                    {cat}
+                                  </SelectItem>
+                                ))}
                                 </SelectContent>
                               </Select>
                             </div>
                             
-                            {newMappingCategory && SUBCATEGORY_OPTIONS[newMappingCategory] && (
+                            {newMappingCategory && subcategoryOptions[newMappingCategory] && subcategoryOptions[newMappingCategory].length > 0 && (
                               <div className="flex-1">
                                 <Select
                                   value={newMappingSubcategory || '__none__'}
@@ -940,7 +965,7 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
                                     <SelectItem value="__none__" className="cursor-pointer">
                                       All subcategories
                                     </SelectItem>
-                                    {SUBCATEGORY_OPTIONS[newMappingCategory].map((sub) => (
+                                    {subcategoryOptions[newMappingCategory].map((sub) => (
                                       <SelectItem key={sub} value={sub} className="cursor-pointer">
                                         {sub}
                                       </SelectItem>
