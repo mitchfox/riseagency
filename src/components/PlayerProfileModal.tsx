@@ -38,13 +38,13 @@ const PlayerProfileModal = ({ open, onOpenChange, playerData }: PlayerProfileMod
           variant="ghost"
           size="icon"
           onClick={() => onOpenChange(false)}
-          className="absolute top-2 right-2 z-50 bg-background/80 backdrop-blur-sm text-foreground hover:text-foreground/80"
+          className="absolute top-4 right-4 z-50 bg-[hsl(var(--gold))] text-background hover:bg-[hsl(var(--gold))]/90 hover:text-background shadow-lg rounded-sm"
         >
           <X className="h-6 w-6" />
         </Button>
         
         <iframe
-          src={`/stars/${playerSlug}`}
+          src={`/stars/${playerSlug}?modal=true`}
           className="w-full h-full border-0"
           title={`${playerData.name} Profile`}
         />

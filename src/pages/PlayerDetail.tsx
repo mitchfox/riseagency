@@ -22,6 +22,9 @@ const PlayerDetail = () => {
   const [bioDialogOpen, setBioDialogOpen] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   
+  // Check if opened in modal
+  const isModal = new URLSearchParams(window.location.search).get('modal') === 'true';
+  
   // Fetch player from database
   useEffect(() => {
     if (playername) {
@@ -203,7 +206,7 @@ const PlayerDetail = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex flex-col">
-        <Header />
+        {!isModal && <Header />}
         <div className="flex-shrink-0 text-center py-16">
           <h1 className="text-2xl font-bold text-foreground">Loading player...</h1>
         </div>
@@ -234,21 +237,23 @@ const PlayerDetail = () => {
         )}
       </Helmet>
       
-      <Header />
-      <div className="min-h-screen bg-background pt-16 overflow-x-hidden">
+      {!isModal && <Header />}
+      <div className={`min-h-screen bg-background ${!isModal ? 'pt-16' : ''} overflow-x-hidden`}>
         <main className="container mx-auto px-4 py-2 touch-pan-y">
           {/* Back Button */}
-          <div className="mb-2">
-            <Button
-              onClick={() => navigate("/stars")}
-              variant="outline"
-              size="sm"
-              className="group font-bebas uppercase tracking-wider border-primary/30 bg-background/80 backdrop-blur-sm hover:bg-primary hover:text-primary-foreground"
-            >
-              <ArrowLeft className="mr-2 h-4 w-4 group-hover:-translate-x-1 transition-transform" />
-              Back to Stars
-            </Button>
-          </div>
+          {!isModal && (
+            <div className="mb-2">
+              <Button
+                onClick={() => navigate("/stars")}
+                variant="outline"
+                size="sm"
+                className="group font-bebas uppercase tracking-wider border-primary/30 bg-background/80 backdrop-blur-sm hover:bg-primary hover:text-primary-foreground"
+              >
+                <ArrowLeft className="mr-2 h-4 w-4 group-hover:-translate-x-1 transition-transform" />
+                Back to Stars
+              </Button>
+            </div>
+          )}
 
           {/* Player Name, Info, and Contact - Full width */}
           <div className="mb-1 relative border-2 border-[hsl(var(--gold))] bg-secondary/20 backdrop-blur-sm rounded-lg overflow-hidden">
