@@ -73,6 +73,7 @@ export const ScoutingCentre = ({ open, onOpenChange }: ScoutingCentreProps) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [skillEvaluations, setSkillEvaluations] = useState<SkillEvaluation[]>([]);
   const [generatingReview, setGeneratingReview] = useState(false);
+  const [activeTab, setActiveTab] = useState("basic");
   const [formData, setFormData] = useState({
     player_name: "",
     age: "",
@@ -207,9 +208,53 @@ export const ScoutingCentre = ({ open, onOpenChange }: ScoutingCentreProps) => {
     }
   };
 
+  const handlePositionChange = (position: string) => {
+    setFormData({ ...formData, position });
+    // Initialize skill evaluations for the selected position
+    const newEvaluations = initializeSkillEvaluations(position);
+    setSkillEvaluations(newEvaluations);
+  };
+
+  const handleGenerateReview = async () => {
+    if (!skillEvaluations || skillEvaluations.length === 0) {
+      toast.error("Please select a position and evaluate skills first");
+      return;
+    }
+
+    setGeneratingReview(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-scouting-review', {
+        body: {
+          skill_evaluations: skillEvaluations,
+          player_name: formData.player_name || "the player"
+        }
+      });
+
+      if (error) throw error;
+
+      if (data?.review) {
+        setFormData({ ...formData, auto_generated_review: data.review });
+        toast.success("Review generated successfully");
+      }
+    } catch (error) {
+      console.error("Error generating review:", error);
+      toast.error("Failed to generate review");
+    } finally {
+      setGeneratingReview(false);
+    }
+  };
+
   const handleEdit = (report: ScoutingReport) => {
     setEditingReport(report);
-    setSkillEvaluations(Array.isArray(report.skill_evaluations) ? report.skill_evaluations : []);
+    // Parse skill_evaluations from Json to SkillEvaluation[]
+    let evaluations: SkillEvaluation[] = [];
+    if (Array.isArray(report.skill_evaluations) && report.skill_evaluations.length > 0) {
+      evaluations = report.skill_evaluations as SkillEvaluation[];
+    } else if (report.position) {
+      // Initialize skill evaluations if position is set but no evaluations exist
+      evaluations = initializeSkillEvaluations(report.position);
+    }
+    setSkillEvaluations(evaluations);
     setFormData({
       player_name: report.player_name,
       age: report.age?.toString() || "",
@@ -342,8 +387,10 @@ export const ScoutingCentre = ({ open, onOpenChange }: ScoutingCentreProps) => {
       notes: "",
       auto_generated_review: ""
     });
+    setSkillEvaluations([]);
     setEditingReport(null);
     setIsAddingNew(false);
+    setActiveTab("basic");
   };
 
   const getStatusColor = (status: string) => {
@@ -514,9 +561,12 @@ export const ScoutingCentre = ({ open, onOpenChange }: ScoutingCentreProps) => {
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-6">
-            <Tabs defaultValue="basic" className="w-full">
-              <TabsList className="grid w-full grid-cols-4">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <TabsList className="grid w-full grid-cols-5">
                 <TabsTrigger value="basic">Basic Info</TabsTrigger>
+                <TabsTrigger value="skills" disabled={!formData.position}>
+                  Skill Eval
+                </TabsTrigger>
                 <TabsTrigger value="ratings">Ratings</TabsTrigger>
                 <TabsTrigger value="analysis">Analysis</TabsTrigger>
                 <TabsTrigger value="contact">Contact</TabsTrigger>
@@ -543,12 +593,20 @@ export const ScoutingCentre = ({ open, onOpenChange }: ScoutingCentreProps) => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="position">Position</Label>
-                    <Input
-                      id="position"
+                    <Label htmlFor="position">Position *</Label>
+                    <Select
                       value={formData.position}
-                      onChange={(e) => setFormData({ ...formData, position: e.target.value })}
-                    />
+                      onValueChange={handlePositionChange}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select position..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {SCOUTING_POSITIONS.map((pos) => (
+                          <SelectItem key={pos} value={pos}>{pos}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="current_club">Current Club</Label>
@@ -680,6 +738,37 @@ export const ScoutingCentre = ({ open, onOpenChange }: ScoutingCentreProps) => {
                 </div>
               </TabsContent>
 
+              <TabsContent value="skills" className="space-y-4 mt-4">
+                {formData.position ? (
+                  <>
+                    <div className="flex items-center justify-between mb-4">
+                      <div>
+                        <h3 className="text-lg font-semibold">Skill Evaluation - {formData.position}</h3>
+                        <p className="text-sm text-muted-foreground">
+                          Grade each skill and add specific observations from the match
+                        </p>
+                      </div>
+                      <Button 
+                        type="button"
+                        onClick={handleGenerateReview}
+                        disabled={generatingReview || skillEvaluations.length === 0}
+                      >
+                        <Sparkles className="h-4 w-4 mr-2" />
+                        {generatingReview ? "Generating..." : "Generate Review"}
+                      </Button>
+                    </div>
+                    <SkillEvaluationForm
+                      skillEvaluations={skillEvaluations}
+                      onChange={setSkillEvaluations}
+                    />
+                  </>
+                ) : (
+                  <div className="text-center py-12 text-muted-foreground">
+                    Please select a position in Basic Info to evaluate skills
+                  </div>
+                )}
+              </TabsContent>
+
               <TabsContent value="ratings" className="space-y-4 mt-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
@@ -747,6 +836,17 @@ export const ScoutingCentre = ({ open, onOpenChange }: ScoutingCentreProps) => {
 
               <TabsContent value="analysis" className="space-y-4 mt-4">
                 <div className="space-y-4">
+                  {formData.auto_generated_review && (
+                    <div className="space-y-2 p-4 rounded-lg bg-muted/50 border border-border">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Sparkles className="h-4 w-4 text-primary" />
+                        <Label className="text-sm font-semibold">AI-Generated Review</Label>
+                      </div>
+                      <p className="text-sm leading-relaxed whitespace-pre-wrap">
+                        {formData.auto_generated_review}
+                      </p>
+                    </div>
+                  )}
                   <div className="space-y-2">
                     <Label htmlFor="strengths">Strengths</Label>
                     <Textarea
