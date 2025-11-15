@@ -11,8 +11,10 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Plus, Edit2, Trash2, UserPlus, Eye, Filter, Search } from "lucide-react";
+import { Plus, Edit2, Trash2, UserPlus, Eye, Filter, Search, Sparkles } from "lucide-react";
 import { format } from "date-fns";
+import { SkillEvaluationForm } from "./SkillEvaluationForm";
+import { initializeSkillEvaluations, SkillEvaluation, SCOUTING_POSITIONS } from "@/data/scoutingSkills";
 
 interface ScoutingReport {
   id: string;
@@ -50,6 +52,8 @@ interface ScoutingReport {
   added_to_prospects: boolean;
   prospect_id: string | null;
   notes: string | null;
+  skill_evaluations: any; // Json type from database
+  auto_generated_review: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -67,6 +71,8 @@ export const ScoutingCentre = ({ open, onOpenChange }: ScoutingCentreProps) => {
   const [viewingReport, setViewingReport] = useState<ScoutingReport | null>(null);
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
+  const [skillEvaluations, setSkillEvaluations] = useState<SkillEvaluation[]>([]);
+  const [generatingReview, setGeneratingReview] = useState(false);
   const [formData, setFormData] = useState({
     player_name: "",
     age: "",
@@ -99,7 +105,8 @@ export const ScoutingCentre = ({ open, onOpenChange }: ScoutingCentreProps) => {
     agent_contact: "",
     status: "pending",
     priority: "",
-    notes: ""
+    notes: "",
+    auto_generated_review: ""
   });
 
   useEffect(() => {
@@ -117,7 +124,10 @@ export const ScoutingCentre = ({ open, onOpenChange }: ScoutingCentreProps) => {
         .order("scouting_date", { ascending: false });
 
       if (error) throw error;
-      setReports(data || []);
+      setReports((data || []).map(r => ({
+        ...r,
+        skill_evaluations: r.skill_evaluations || []
+      })));
     } catch (error) {
       console.error("Error fetching scouting reports:", error);
       toast.error("Failed to load scouting reports");
@@ -167,7 +177,9 @@ export const ScoutingCentre = ({ open, onOpenChange }: ScoutingCentreProps) => {
         agent_contact: formData.agent_contact || null,
         status: formData.status,
         priority: formData.priority || null,
-        notes: formData.notes || null
+        notes: formData.notes || null,
+        skill_evaluations: skillEvaluations,
+        auto_generated_review: formData.auto_generated_review || null
       };
 
       if (editingReport) {
