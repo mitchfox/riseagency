@@ -1001,15 +1001,15 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                 </TabsTrigger>
               </TabsList>
 
-              <TabsContent value="analysis" className="mt-0 space-y-4">
+              <TabsContent value="analysis" className="mt-0">
                 <Tabs defaultValue="performance" className="w-full">
-                  <TabsList className="flex flex-col md:grid md:grid-cols-3 w-full gap-1 bg-muted/20 rounded-lg p-1 mb-4">
+                  <TabsList className="flex flex-col md:grid md:grid-cols-3 w-full gap-1 bg-muted/20 rounded-lg p-1 mb-6 md:mb-4">
                     <TabsTrigger value="performance" className="w-full justify-center px-3 py-2.5 text-xs md:text-sm">Performance Reports</TabsTrigger>
                     <TabsTrigger value="tactical" className="w-full justify-center px-3 py-2.5 text-xs md:text-sm">Tactical Analysis</TabsTrigger>
                     <TabsTrigger value="other" className="w-full justify-center px-3 py-2.5 text-xs md:text-sm">Other Analysis</TabsTrigger>
                   </TabsList>
 
-                  <TabsContent value="performance" className="mt-4">
+                  <TabsContent value="performance" className="mt-0">
                     <Card>
                       <CardHeader className="px-3 md:px-6 py-3 md:py-4">
                         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
@@ -1170,7 +1170,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                     </Card>
                   </TabsContent>
 
-                  <TabsContent value="tactical" className="mt-4">
+                  <TabsContent value="tactical" className="mt-0">
                     <Card>
                       <CardHeader className="px-3 md:px-6 py-3 md:py-4">
                         <CardTitle className="hidden md:block text-lg">Tactical Analysis</CardTitle>
@@ -1228,7 +1228,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                     </Card>
                   </TabsContent>
 
-                  <TabsContent value="other" className="mt-4">
+                  <TabsContent value="other" className="mt-0">
                     <Card>
                       <CardHeader className="px-3 md:px-6 py-3 md:py-4">
                         <div className="flex items-center justify-between">

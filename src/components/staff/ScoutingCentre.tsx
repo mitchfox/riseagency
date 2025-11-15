@@ -825,7 +825,7 @@ export const ScoutingCentre = ({ open, onOpenChange }: ScoutingCentreProps) => {
               </TabsList>
 
               <TabsContent value="basic" className="space-y-4 mt-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="player_name">Player Name *</Label>
                     <Input
@@ -1075,7 +1075,7 @@ export const ScoutingCentre = ({ open, onOpenChange }: ScoutingCentreProps) => {
               </TabsContent>
 
               <TabsContent value="contact" className="space-y-4 mt-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="contact_email">Player Email</Label>
                     <Input
@@ -1134,7 +1134,7 @@ export const ScoutingCentre = ({ open, onOpenChange }: ScoutingCentreProps) => {
           <ScrollArea className="max-h-[70vh] pr-2 md:pr-4">
             {viewingReport && (
               <div className="space-y-6">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <h3 className="font-semibold mb-2">Player Info</h3>
                     <div className="space-y-1 text-sm">
