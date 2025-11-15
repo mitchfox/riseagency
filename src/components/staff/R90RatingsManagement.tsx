@@ -395,7 +395,13 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
       if (checkError) throw checkError;
 
       if (existingMapping) {
-        toast.error('This mapping already exists');
+        toast.info('This mapping already exists - skipping', {
+          description: `${actionType} → ${newMappingCategory}${subcategoryValue ? ' > ' + subcategoryValue : ''}`
+        });
+        // Reset form
+        setNewMappingCategory('');
+        setNewMappingSubcategory('');
+        setSelectedRatingIds([]);
         return;
       }
 
