@@ -23,26 +23,26 @@ export const SKILL_GRADES = ["A+", "A", "A-", "B+", "B", "B-", "C+", "C", "C-", 
 
 export const POSITION_SKILLS: Record<ScoutingPosition, SkillDefinition[]> = {
   "Goalkeeper": [
-    // Physical
-    { domain: "Physical", skill_name: "Strength, Power & Speed", description: "Explosive power for diving saves, strength in physical duels, and speed off the line. Must combine athleticism with timing to dominate the penalty area." },
-    { domain: "Physical", skill_name: "Use of Body", description: "Effective use of body positioning to claim crosses, protect the ball, and shield in physical confrontations. Balance and core strength are essential." },
-    { domain: "Physical", skill_name: "Anaerobic Endurance", description: "Ability to maintain sharp reflexes and explosive movements throughout the game, especially during periods of sustained defensive pressure." },
-    { domain: "Physical", skill_name: "Size & Reach", description: "How effectively height and reach are utilized to command the box, claim crosses, and cover the goal. Smaller keepers must compensate with positioning and timing." },
-    // Psychological
-    { domain: "Psychological", skill_name: "Composure", description: "Calm under pressure, making sound decisions in high-stakes moments. Never rushed or panicked, always in control of their actions and tempo." },
-    { domain: "Psychological", skill_name: "Command & Communication", description: "Vocal leadership to organize the defense, claim crosses decisively, and take charge of the penalty area. Must inspire confidence in teammates." },
-    { domain: "Psychological", skill_name: "Consistency", description: "Reliable performance game after game. Makes the right decisions regardless of score or pressure, maintaining focus throughout the match." },
-    { domain: "Psychological", skill_name: "Confidence", description: "Self-assured in all situations, never hesitant to claim crosses, sweep, or make aggressive decisions. Confidence remains strong after mistakes." },
-    // Technical
-    { domain: "Technical", skill_name: "Shot Stopping", description: "Reflexes, positioning, and technique to make saves from all ranges and angles. Must be comfortable with feet, hands, and reaction saves." },
-    { domain: "Technical", skill_name: "Handling & Catching", description: "Secure catching technique on crosses and shots. Clean handling to maintain possession and quickly transition to distribution." },
-    { domain: "Technical", skill_name: "Distribution", description: "Accurate and varied distribution by hand and foot. Can launch attacks quickly and find teammates under pressure with quality passing." },
-    { domain: "Technical", skill_name: "Footwork & Technique", description: "Comfortable with the ball at feet, able to play out from the back under pressure and act as an additional outfield player when needed." },
-    // Tactical
-    { domain: "Tactical", skill_name: "Positioning", description: "Optimal positioning in goal, narrowing angles and being ready to react. Understands when to come off the line and when to hold position." },
-    { domain: "Tactical", skill_name: "Sweeping & Claiming", description: "Reading the game to sweep behind the defense and claim crosses at the right moments. Timing and decision-making in 1v1 situations." },
-    { domain: "Tactical", skill_name: "Decision-Making", description: "Knows when to come for crosses, when to stay, when to distribute quickly or hold. Makes correct split-second choices under pressure." },
-    { domain: "Tactical", skill_name: "Reading the Game", description: "Anticipates danger before it develops, organizes the defense proactively, and positions optimally based on game state and opponent tendencies." }
+    // Physical Domain (4 skills)
+    { domain: "Physical", skill_name: "Reflexes", description: "Excellent reflexes to make quick reaction saves in one-on-one situations or during close-range shots. Agility is critical for diving across the goal quickly and changing direction when needed." },
+    { domain: "Physical", skill_name: "Reach", description: "How well they cover the dimensions of the goal. Best seen from their saves and goals conceded. Which shots beat them? The greater area of the goal they effectively protect consistently, the better." },
+    { domain: "Physical", skill_name: "Footwork", description: "Lateral power to cover the goal swiftly, launch themselves for diving saves, or quickly spring into action when rushing out to smother the ball. Most importantly this extends to their saves, pushing the ball effectively away from danger." },
+    { domain: "Physical", skill_name: "Explosiveness", description: "Constantly on their toes, bouncing at the right times to gain the extra energy for pushing off in any direction. The best will apply this perfectly to cover more of the goal." },
+    // Psychological Domain (4 skills)
+    { domain: "Psychological", skill_name: "Authority", description: "Command their box with authority, inspiring confidence in their defenders. Lead the line with assertive direction, take charge of aerial situations and make decisions quickly without hesitation for the entire team." },
+    { domain: "Psychological", skill_name: "Composure", description: "Makes the right decisions in the most pivotal moments. When attacking, do they attack gaps and execute the best shot, cross or pass? Are they willing to try the unorthodox and stay on the ball to create chances." },
+    { domain: "Psychological", skill_name: "Focus", description: "The best keepers make fewest mistakes. Although everyone has one in them, this should not result from a loss of concentration. Did they close space and angles consistently through the game?" },
+    { domain: "Psychological", skill_name: "Response to Scenarios", description: "Whether or not a goal is conceded, how do they rally their team and collect themselves in important moments such as after a mistake, goal conceded or even goal scored by their team?" },
+    // Tactical Domain (4 skills)
+    { domain: "Tactical", skill_name: "Positioning", description: "Anticipation of play before it happens, positioning themselves optimally to cover angles and make saves easier. Must be aware of the situation to cut down space and anticipate the attackers' intentions to intercept their shots." },
+    { domain: "Tactical", skill_name: "Timing", description: "Timing their approach, when to bounce, shift position and set their feet is vital to setting themselves up to make saves. The best will consistently read triggers in a split second to cover their goal and react correctly to the shot." },
+    { domain: "Tactical", skill_name: "Reading Play Offensively", description: "Can they spot weaknesses in the opposition defensive shape to exploit them quickly with their distribution? Important to this are key principles like finding players with space to open forwards or overloaded areas of the pitch." },
+    { domain: "Tactical", skill_name: "Game Management", description: "Managing the game by controlling the tempo. This includes slowing things down when under pressure or speeding up transitions with quick distributions. Should also manage their defensive setup well to ensure organisation." },
+    // Technical Domain (4 skills)
+    { domain: "Technical", skill_name: "Shot Stopping", description: "The primary technical skill requires strong hands and quick reactions. Should be able to deal with a variety of shots: low, high, powerful, or curling - ensuring they get an adequate hand behind the ball to avoid conceding." },
+    { domain: "Technical", skill_name: "Handling & Catching", description: "Clean handling, ensuring that they securely catch crosses, long shots and set-pieces. Should avoid spilling the ball into dangerous areas and command their box by catching or punching crosses while stepping out aggressively." },
+    { domain: "Technical", skill_name: "Footwork", description: "The best will be intelligent in how they step and where they place their body weight to quickly travel in any direction. Watch for the knee that bends, as this is where their weight distributes towards and gives an advantage pushing off." },
+    { domain: "Technical", skill_name: "Distribution", description: "Good set-up touches to quickly play powerful passes. Should be comfortable passing short or long, most importantly under pressure, playing as a 'sweeper' when needed and keeping possession for the team." }
   ],
   "Full-Back": [
     // Physical
