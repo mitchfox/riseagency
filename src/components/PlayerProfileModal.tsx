@@ -36,11 +36,11 @@ const PlayerProfileModal = ({ open, onOpenChange, playerData }: PlayerProfileMod
       <DialogContent className="w-screen h-screen max-w-none p-0 gap-0 border-0 rounded-none">
         <Button
           variant="ghost"
-          size="icon"
           onClick={() => onOpenChange(false)}
-          className="absolute top-4 right-4 z-50 bg-[hsl(var(--gold))] text-background hover:bg-[hsl(var(--gold))]/90 hover:text-background shadow-lg rounded-sm"
+          className="absolute top-6 right-6 z-50 bg-[hsl(var(--gold))] text-background hover:bg-[hsl(var(--gold))]/90 hover:text-background shadow-lg rounded-sm px-3 py-2 flex items-center gap-2 font-bebas tracking-wider"
         >
-          <X className="h-6 w-6" />
+          <X className="h-5 w-5" />
+          <span>CLOSE</span>
         </Button>
         
         <iframe

@@ -64,16 +64,18 @@ const PlayerDetail = () => {
                   // Get tactical formations from schemeHistory or tacticalFormations
                   if (parsed.schemeHistory && Array.isArray(parsed.schemeHistory)) {
                     // Convert schemeHistory to tacticalFormations format
-                    tacticalFormations = parsed.schemeHistory.map((scheme: any) => ({
-                      formation: scheme.formation,
-                      role: scheme.positions?.[0] || '', // Use first position as role for display
-                      positions: scheme.positions || [], // Store all positions
-                      club: scheme.teamName,
-                      clubLogo: scheme.clubLogo,
-                      playerImage: scheme.playerImage,
-                      appearances: scheme.matches,
-                      matches: scheme.matches
-                    }));
+                    tacticalFormations = parsed.schemeHistory
+                      .filter((scheme: any) => scheme.formation && scheme.teamName) // Only include valid entries
+                      .map((scheme: any) => ({
+                        formation: scheme.formation,
+                        role: scheme.positions?.[0] || '', // Use first position as role for display
+                        positions: (scheme.positions && scheme.positions.length > 0) ? scheme.positions : [], // Only use if not empty
+                        club: scheme.teamName,
+                        clubLogo: scheme.clubLogo,
+                        playerImage: scheme.playerImage,
+                        appearances: scheme.matches,
+                        matches: scheme.matches
+                      }));
                   } else if (parsed.tacticalFormations) {
                     tacticalFormations = parsed.tacticalFormations;
                   }
@@ -648,7 +650,12 @@ const PlayerDetail = () => {
                   
                   {/* Formation Visual Below */}
                   <FormationDisplay 
-                    selectedPositions={player.tacticalFormations[currentFormationIndex].positions || [player.tacticalFormations[currentFormationIndex].role]} 
+                    selectedPositions={
+                      (player.tacticalFormations[currentFormationIndex].positions && 
+                       player.tacticalFormations[currentFormationIndex].positions.length > 0)
+                        ? player.tacticalFormations[currentFormationIndex].positions 
+                        : [player.tacticalFormations[currentFormationIndex].role]
+                    } 
                     playerName={player.name} 
                     playerImage={player.tacticalFormations[currentFormationIndex].playerImage || player.image_url}
                     formation={player.tacticalFormations[currentFormationIndex].formation}
