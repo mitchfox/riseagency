@@ -33,7 +33,7 @@ const PlayerProfileModal = ({ open, onOpenChange, playerData }: PlayerProfileMod
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[95vw] max-h-[95vh] h-[95vh] p-0 overflow-hidden">
+      <DialogContent className="p-0 overflow-hidden w-full h-[100dvh] max-w-full md:max-w-[90vw] md:h-[90vh] lg:max-w-[85vw] lg:h-[85vh]">
         <Button
           variant="ghost"
           size="icon"
