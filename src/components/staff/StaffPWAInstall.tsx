@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Download, Check, Smartphone, RefreshCw } from "lucide-react";
+import { Download, Check, Smartphone, RefreshCw, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { StaffPWAUpdate } from "./StaffPWAUpdate";
 
@@ -15,6 +15,16 @@ export const StaffPWAInstall = () => {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showInstallButton, setShowInstallButton] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [updateAvailable, setUpdateAvailable] = useState(false);
+
+  const handleManualRefresh = useCallback(() => {
+    setIsRefreshing(true);
+    toast.success("Refreshing application...");
+    setTimeout(() => {
+      window.location.reload();
+    }, 500);
+  }, []);
 
   useEffect(() => {
     // Check if already installed
@@ -40,10 +50,26 @@ export const StaffPWAInstall = () => {
       toast.success("RISE Staff app installed successfully!");
     });
 
+    // Check for service worker updates
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.addEventListener('message', (event) => {
+        if (event.data && event.data.type === 'SW_UPDATED') {
+          setUpdateAvailable(true);
+          toast.info("Update available! Please refresh to get the latest version.", {
+            duration: 10000,
+            action: {
+              label: "Refresh",
+              onClick: handleManualRefresh,
+            },
+          });
+        }
+      });
+    }
+
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     };
-  }, []);
+  }, [handleManualRefresh]);
 
   const handleInstallClick = async () => {
     if (!deferredPrompt) {
@@ -77,6 +103,40 @@ export const StaffPWAInstall = () => {
           Install and manage RISE Staff as a Progressive Web App
         </p>
       </div>
+
+      {/* Quick Refresh Button - Always Visible */}
+      <Card className={updateAvailable ? "border-primary bg-primary/5" : ""}>
+        <CardContent className="pt-6">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              {updateAvailable ? (
+                <AlertCircle className="h-5 w-5 text-primary" />
+              ) : (
+                <RefreshCw className="h-5 w-5" />
+              )}
+              <div>
+                <p className="font-semibold">
+                  {updateAvailable ? "Update Available" : "Manual Refresh"}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {updateAvailable 
+                    ? "A new version is ready to install" 
+                    : "Force refresh to get the latest version"}
+                </p>
+              </div>
+            </div>
+            <Button 
+              onClick={handleManualRefresh}
+              disabled={isRefreshing}
+              variant={updateAvailable ? "default" : "outline"}
+              className="shrink-0"
+            >
+              <RefreshCw className={`mr-2 h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+              {isRefreshing ? 'Refreshing...' : 'Refresh Now'}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       <Tabs defaultValue="install" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
