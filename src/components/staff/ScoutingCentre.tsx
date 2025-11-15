@@ -11,7 +11,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Plus, Edit2, Trash2, UserPlus, Eye, Filter, Search, Sparkles, FileText, Target } from "lucide-react";
+import { Plus, Edit2, Trash2, UserPlus, Eye, Filter, Search, Sparkles, FileText, Target, Users } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { format } from "date-fns";
 import { SkillEvaluationForm } from "./SkillEvaluationForm";
 import { initializeSkillEvaluations, SkillEvaluation, SCOUTING_POSITIONS, POSITION_SKILLS, ScoutingPosition } from "@/data/scoutingSkills";
@@ -76,6 +77,9 @@ export const ScoutingCentre = ({ open, onOpenChange }: ScoutingCentreProps) => {
   const [activeTab, setActiveTab] = useState("basic");
   const [viewMode, setViewMode] = useState<"positions" | "reports">("positions");
   const [viewingPositionAnalysis, setViewingPositionAnalysis] = useState<ScoutingPosition | null>(null);
+  const [viewingProspectTable, setViewingProspectTable] = useState<ScoutingPosition | null>(null);
+  const [prospectReports, setProspectReports] = useState<ScoutingReport[]>([]);
+  const [sortField, setSortField] = useState<string>("overall_rating");
   const [formData, setFormData] = useState({
     player_name: "",
     age: "",
@@ -377,6 +381,50 @@ export const ScoutingCentre = ({ open, onOpenChange }: ScoutingCentreProps) => {
     setViewingPositionAnalysis(position);
   };
 
+  const handleViewProspectTable = async (position: ScoutingPosition) => {
+    setViewingProspectTable(position);
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('scouting_reports')
+        .select('*')
+        .eq('position', position)
+        .order('overall_rating', { ascending: false });
+
+      if (error) throw error;
+      setProspectReports(data || []);
+    } catch (error) {
+      console.error('Error fetching prospect reports:', error);
+      toast.error('Failed to load prospect reports');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const sortProspectReports = (field: string) => {
+    setSortField(field);
+    const sorted = [...prospectReports].sort((a, b) => {
+      if (field === "overall_rating") {
+        return (b.overall_rating || 0) - (a.overall_rating || 0);
+      }
+      // Handle skill-based sorting
+      const aSkills = a.skill_evaluations as SkillEvaluation[] || [];
+      const bSkills = b.skill_evaluations as SkillEvaluation[] || [];
+      const aSkill = aSkills.find(s => s.skill_name === field);
+      const bSkill = bSkills.find(s => s.skill_name === field);
+      
+      const gradeValues: Record<string, number> = { 
+        "A+": 11, "A": 10, "A-": 9, "B+": 8, "B": 7, "B-": 6, 
+        "C+": 5, "C": 4, "C-": 3, "D": 2, "F": 1 
+      };
+      
+      const aValue = gradeValues[aSkill?.grade || "F"] || 0;
+      const bValue = gradeValues[bSkill?.grade || "F"] || 0;
+      return bValue - aValue;
+    });
+    setProspectReports(sorted);
+  };
+
   const handleCreateReportForPosition = (position: ScoutingPosition) => {
     handleAddNew(position);
   };
@@ -425,27 +473,145 @@ export const ScoutingCentre = ({ open, onOpenChange }: ScoutingCentreProps) => {
               </Button>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Formation Layout for Desktop */}
+            <div className="hidden lg:block space-y-8">
+              {/* Forward Line */}
+              <div className="flex justify-center gap-16">
+                {["Winger / Wide Forward", "Centre Forward / Striker", "Winger / Wide Forward"].map((pos, idx) => (
+                  <Card key={`fw-${idx}`} className="w-48 bg-card hover:bg-accent/5 transition-all">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-sm text-center">
+                        {idx === 0 ? "LW" : idx === 1 ? "CF" : "RW"}
+                      </CardTitle>
+                      <p className="text-xs text-muted-foreground text-center">{pos}</p>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                      <Button variant="outline" size="sm" className="w-full" onClick={() => handleViewPositionAnalysis(pos as ScoutingPosition)}>
+                        <Eye className="h-3 w-3 mr-1" />Analysis
+                      </Button>
+                      <Button variant="outline" size="sm" className="w-full" onClick={() => handleViewProspectTable(pos as ScoutingPosition)}>
+                        <Users className="h-3 w-3 mr-1" />Prospects
+                      </Button>
+                      <Button size="sm" className="w-full" onClick={() => handleCreateReportForPosition(pos as ScoutingPosition)}>
+                        <Plus className="h-3 w-3 mr-1" />Report
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+
+              {/* Midfield Line */}
+              <div className="flex justify-center gap-16">
+                {["Central Midfielder", "Central Midfielder"].map((pos, idx) => (
+                  <Card key={`mid-${idx}`} className="w-48 bg-card hover:bg-accent/5 transition-all">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-sm text-center">
+                        {idx === 0 ? "RCM" : "LCM"}
+                      </CardTitle>
+                      <p className="text-xs text-muted-foreground text-center">{pos}</p>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                      <Button variant="outline" size="sm" className="w-full" onClick={() => handleViewPositionAnalysis(pos as ScoutingPosition)}>
+                        <Eye className="h-3 w-3 mr-1" />Analysis
+                      </Button>
+                      <Button variant="outline" size="sm" className="w-full" onClick={() => handleViewProspectTable(pos as ScoutingPosition)}>
+                        <Users className="h-3 w-3 mr-1" />Prospects
+                      </Button>
+                      <Button size="sm" className="w-full" onClick={() => handleCreateReportForPosition(pos as ScoutingPosition)}>
+                        <Plus className="h-3 w-3 mr-1" />Report
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+
+              {/* CDM Line */}
+              <div className="flex justify-center">
+                <Card className="w-48 bg-card hover:bg-accent/5 transition-all">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm text-center">CDM</CardTitle>
+                    <p className="text-xs text-muted-foreground text-center">Central Defensive Midfielder</p>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    <Button variant="outline" size="sm" className="w-full" onClick={() => handleViewPositionAnalysis("Central Defensive Midfielder")}>
+                      <Eye className="h-3 w-3 mr-1" />Analysis
+                    </Button>
+                    <Button variant="outline" size="sm" className="w-full" onClick={() => handleViewProspectTable("Central Defensive Midfielder")}>
+                      <Users className="h-3 w-3 mr-1" />Prospects
+                    </Button>
+                    <Button size="sm" className="w-full" onClick={() => handleCreateReportForPosition("Central Defensive Midfielder")}>
+                      <Plus className="h-3 w-3 mr-1" />Report
+                    </Button>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Defense Line */}
+              <div className="flex justify-center gap-8">
+                {[
+                  { label: "LB", pos: "Full-Back" },
+                  { label: "LCB", pos: "Centre-Back" },
+                  { label: "RCB", pos: "Centre-Back" },
+                  { label: "RB", pos: "Full-Back" }
+                ].map((item, idx) => (
+                  <Card key={`def-${idx}`} className="w-44 bg-card hover:bg-accent/5 transition-all">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-sm text-center">{item.label}</CardTitle>
+                      <p className="text-xs text-muted-foreground text-center">{item.pos}</p>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                      <Button variant="outline" size="sm" className="w-full" onClick={() => handleViewPositionAnalysis(item.pos as ScoutingPosition)}>
+                        <Eye className="h-3 w-3 mr-1" />Analysis
+                      </Button>
+                      <Button variant="outline" size="sm" className="w-full" onClick={() => handleViewProspectTable(item.pos as ScoutingPosition)}>
+                        <Users className="h-3 w-3 mr-1" />Prospects
+                      </Button>
+                      <Button size="sm" className="w-full" onClick={() => handleCreateReportForPosition(item.pos as ScoutingPosition)}>
+                        <Plus className="h-3 w-3 mr-1" />Report
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+
+              {/* Goalkeeper */}
+              <div className="flex justify-center">
+                <Card className="w-48 bg-card hover:bg-accent/5 transition-all">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm text-center">GK</CardTitle>
+                    <p className="text-xs text-muted-foreground text-center">Goalkeeper</p>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    <Button variant="outline" size="sm" className="w-full" onClick={() => handleViewPositionAnalysis("Goalkeeper")}>
+                      <Eye className="h-3 w-3 mr-1" />Analysis
+                    </Button>
+                    <Button variant="outline" size="sm" className="w-full" onClick={() => handleViewProspectTable("Goalkeeper")}>
+                      <Users className="h-3 w-3 mr-1" />Prospects
+                    </Button>
+                    <Button size="sm" className="w-full" onClick={() => handleCreateReportForPosition("Goalkeeper")}>
+                      <Plus className="h-3 w-3 mr-1" />Report
+                    </Button>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+
+            {/* Mobile Grid Layout */}
+            <div className="lg:hidden grid grid-cols-1 sm:grid-cols-2 gap-4">
               {SCOUTING_POSITIONS.map((position) => (
                 <Card key={position} className="bg-card hover:bg-accent/5 transition-all">
                   <CardHeader>
                     <CardTitle className="text-lg">{position}</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-2">
-                    <Button
-                      variant="outline"
-                      className="w-full"
-                      onClick={() => handleViewPositionAnalysis(position)}
-                    >
-                      <Eye className="h-4 w-4 mr-2" />
-                      View Analysis
+                    <Button variant="outline" className="w-full" onClick={() => handleViewPositionAnalysis(position)}>
+                      <Eye className="h-4 w-4 mr-2" />View Analysis
                     </Button>
-                    <Button
-                      className="w-full"
-                      onClick={() => handleCreateReportForPosition(position)}
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      Create Report
+                    <Button variant="outline" className="w-full" onClick={() => handleViewProspectTable(position)}>
+                      <Users className="h-4 w-4 mr-2" />Prospect Table
+                    </Button>
+                    <Button className="w-full" onClick={() => handleCreateReportForPosition(position)}>
+                      <Plus className="h-4 w-4 mr-2" />Create Report
                     </Button>
                   </CardContent>
                 </Card>
@@ -1098,6 +1264,97 @@ export const ScoutingCentre = ({ open, onOpenChange }: ScoutingCentreProps) => {
                     Create Report for {viewingPositionAnalysis}
                   </Button>
                 </div>
+              </div>
+            )}
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
+
+      {/* Prospect Table Dialog */}
+      <Dialog open={!!viewingProspectTable} onOpenChange={(open) => { if (!open) setViewingProspectTable(null); }}>
+        <DialogContent className="max-w-[95vw] max-h-[90vh]">
+          <DialogHeader>
+            <DialogTitle>Prospect Table: {viewingProspectTable}</DialogTitle>
+          </DialogHeader>
+          <ScrollArea className="max-h-[75vh]">
+            {loading ? (
+              <div className="text-center py-8">Loading prospects...</div>
+            ) : prospectReports.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                No scouting reports found for this position
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="min-w-[150px]">Player</TableHead>
+                      <TableHead className="min-w-[120px]">Club</TableHead>
+                      <TableHead>Age</TableHead>
+                      <TableHead 
+                        className="cursor-pointer hover:text-foreground"
+                        onClick={() => sortProspectReports("overall_rating")}
+                      >
+                        Overall {sortField === "overall_rating" && "↓"}
+                      </TableHead>
+                      {viewingProspectTable && POSITION_SKILLS[viewingProspectTable].map((skill) => (
+                        <TableHead 
+                          key={skill.skill_name}
+                          className="cursor-pointer hover:text-foreground min-w-[100px]"
+                          onClick={() => sortProspectReports(skill.skill_name)}
+                        >
+                          {skill.skill_name} {sortField === skill.skill_name && "↓"}
+                        </TableHead>
+                      ))}
+                      <TableHead>Status</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {prospectReports.map((report) => {
+                      const skills = report.skill_evaluations as SkillEvaluation[] || [];
+                      return (
+                        <TableRow 
+                          key={report.id} 
+                          className="cursor-pointer hover:bg-muted/50" 
+                          onClick={() => setViewingReport(report)}
+                        >
+                          <TableCell className="font-medium">{report.player_name}</TableCell>
+                          <TableCell className="text-muted-foreground">{report.current_club || "-"}</TableCell>
+                          <TableCell>{report.age || "-"}</TableCell>
+                          <TableCell>
+                            <Badge variant="outline">{report.overall_rating?.toFixed(1) || "-"}</Badge>
+                          </TableCell>
+                          {viewingProspectTable && POSITION_SKILLS[viewingProspectTable].map((skill) => {
+                            const evaluation = skills.find(s => s.skill_name === skill.skill_name);
+                            return (
+                              <TableCell key={skill.skill_name}>
+                                <Badge 
+                                  variant={
+                                    evaluation?.grade.startsWith('A') ? 'default' : 
+                                    evaluation?.grade.startsWith('B') ? 'secondary' : 
+                                    'outline'
+                                  }
+                                >
+                                  {evaluation?.grade || "-"}
+                                </Badge>
+                              </TableCell>
+                            );
+                          })}
+                          <TableCell>
+                            <Badge variant={
+                              report.status === 'recommended' ? 'default' :
+                              report.status === 'monitoring' ? 'secondary' :
+                              report.status === 'rejected' ? 'destructive' : 
+                              'outline'
+                            }>
+                              {report.status}
+                            </Badge>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
               </div>
             )}
           </ScrollArea>
