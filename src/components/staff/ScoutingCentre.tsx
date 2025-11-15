@@ -11,10 +11,10 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Plus, Edit2, Trash2, UserPlus, Eye, Filter, Search, Sparkles } from "lucide-react";
+import { Plus, Edit2, Trash2, UserPlus, Eye, Filter, Search, Sparkles, FileText, Target } from "lucide-react";
 import { format } from "date-fns";
 import { SkillEvaluationForm } from "./SkillEvaluationForm";
-import { initializeSkillEvaluations, SkillEvaluation, SCOUTING_POSITIONS } from "@/data/scoutingSkills";
+import { initializeSkillEvaluations, SkillEvaluation, SCOUTING_POSITIONS, POSITION_SKILLS, ScoutingPosition } from "@/data/scoutingSkills";
 
 interface ScoutingReport {
   id: string;
@@ -74,6 +74,8 @@ export const ScoutingCentre = ({ open, onOpenChange }: ScoutingCentreProps) => {
   const [skillEvaluations, setSkillEvaluations] = useState<SkillEvaluation[]>([]);
   const [generatingReview, setGeneratingReview] = useState(false);
   const [activeTab, setActiveTab] = useState("basic");
+  const [viewMode, setViewMode] = useState<"positions" | "reports">("positions");
+  const [viewingPositionAnalysis, setViewingPositionAnalysis] = useState<ScoutingPosition | null>(null);
   const [formData, setFormData] = useState({
     player_name: "",
     age: "",
@@ -361,6 +363,24 @@ export const ScoutingCentre = ({ open, onOpenChange }: ScoutingCentreProps) => {
     setActiveTab("basic");
   };
 
+  const handleAddNew = (preSelectedPosition?: string) => {
+    setIsAddingNew(true);
+    setEditingReport(null);
+    setActiveTab("basic");
+    if (preSelectedPosition) {
+      setFormData(prev => ({ ...prev, position: preSelectedPosition }));
+      setSkillEvaluations(initializeSkillEvaluations(preSelectedPosition as ScoutingPosition));
+    }
+  };
+
+  const handleViewPositionAnalysis = (position: ScoutingPosition) => {
+    setViewingPositionAnalysis(position);
+  };
+
+  const handleCreateReportForPosition = (position: ScoutingPosition) => {
+    handleAddNew(position);
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "recommended": return "bg-green-500/10 text-green-500 border-green-500/20";
@@ -391,36 +411,84 @@ export const ScoutingCentre = ({ open, onOpenChange }: ScoutingCentreProps) => {
   return (
     <>
       <div className="space-y-6">
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-4 flex-1">
-            <div className="relative flex-1 max-w-sm">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search players..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-9"
-              />
+        {viewMode === "positions" ? (
+          <>
+            {/* Position Tiles View */}
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-bold">Scouting Centre</h2>
+                <p className="text-muted-foreground">Select a position to view requirements or create a report</p>
+              </div>
+              <Button onClick={() => setViewMode("reports")} variant="outline">
+                <FileText className="h-4 w-4 mr-2" />
+                View All Reports
+              </Button>
             </div>
-            <Select value={filterStatus} onValueChange={setFilterStatus}>
-              <SelectTrigger className="w-[180px]">
-                <Filter className="h-4 w-4 mr-2" />
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="recommended">Recommended</SelectItem>
-                <SelectItem value="monitoring">Monitoring</SelectItem>
-                <SelectItem value="rejected">Rejected</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <Button onClick={() => setIsAddingNew(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            New Report
-          </Button>
-        </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {SCOUTING_POSITIONS.map((position) => (
+                <Card key={position} className="bg-card hover:bg-accent/5 transition-all">
+                  <CardHeader>
+                    <CardTitle className="text-lg">{position}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => handleViewPositionAnalysis(position)}
+                    >
+                      <Eye className="h-4 w-4 mr-2" />
+                      View Analysis
+                    </Button>
+                    <Button
+                      className="w-full"
+                      onClick={() => handleCreateReportForPosition(position)}
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Create Report
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </>
+        ) : (
+          <>
+            {/* Reports List View */}
+            <div className="flex items-center justify-between gap-4">
+              <Button onClick={() => setViewMode("positions")} variant="outline">
+                <Target className="h-4 w-4 mr-2" />
+                Position Analysis
+              </Button>
+              <div className="flex items-center gap-4 flex-1">
+                <div className="relative flex-1 max-w-sm">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search players..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-9"
+                  />
+                </div>
+                <Select value={filterStatus} onValueChange={setFilterStatus}>
+                  <SelectTrigger className="w-[180px]">
+                    <Filter className="h-4 w-4 mr-2" />
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="recommended">Recommended</SelectItem>
+                    <SelectItem value="monitoring">Monitoring</SelectItem>
+                    <SelectItem value="rejected">Rejected</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button onClick={() => handleAddNew()}>
+                <Plus className="h-4 w-4 mr-2" />
+                New Report
+              </Button>
+            </div>
 
         {loading ? (
           <div className="text-center py-12">Loading reports...</div>
@@ -517,6 +585,8 @@ export const ScoutingCentre = ({ open, onOpenChange }: ScoutingCentreProps) => {
           <div className="text-center py-12 text-muted-foreground">
             No scouting reports found
           </div>
+        )}
+          </>
         )}
       </div>
 
@@ -980,6 +1050,54 @@ export const ScoutingCentre = ({ open, onOpenChange }: ScoutingCentreProps) => {
                     </div>
                   </div>
                 )}
+              </div>
+            )}
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
+
+      {/* Position Analysis Dialog */}
+      <Dialog open={!!viewingPositionAnalysis} onOpenChange={(open) => { if (!open) setViewingPositionAnalysis(null); }}>
+        <DialogContent className="max-w-4xl max-h-[90vh]">
+          <DialogHeader>
+            <DialogTitle>{viewingPositionAnalysis} - Position Analysis</DialogTitle>
+          </DialogHeader>
+          <ScrollArea className="max-h-[70vh] pr-4">
+            {viewingPositionAnalysis && (
+              <div className="space-y-6">
+                <p className="text-sm text-muted-foreground">
+                  What we're looking for in a {viewingPositionAnalysis}
+                </p>
+                
+                {["Physical", "Psychological", "Tactical", "Technical"].map((domain) => {
+                  const domainSkills = POSITION_SKILLS[viewingPositionAnalysis].filter(
+                    (skill) => skill.domain === domain
+                  );
+                  
+                  return (
+                    <div key={domain} className="space-y-3">
+                      <h3 className="text-lg font-semibold border-b pb-2">{domain}</h3>
+                      <div className="grid gap-4">
+                        {domainSkills.map((skill, idx) => (
+                          <div key={idx} className="space-y-2">
+                            <h4 className="font-medium text-sm">{skill.skill_name}</h4>
+                            <p className="text-sm text-muted-foreground">{skill.description}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+                
+                <div className="flex justify-end pt-4 border-t">
+                  <Button onClick={() => {
+                    setViewingPositionAnalysis(null);
+                    handleCreateReportForPosition(viewingPositionAnalysis);
+                  }}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create Report for {viewingPositionAnalysis}
+                  </Button>
+                </div>
               </div>
             )}
           </ScrollArea>
