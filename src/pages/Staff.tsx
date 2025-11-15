@@ -37,6 +37,7 @@ import { PlayerPasswordManagement } from "@/components/staff/PlayerPasswordManag
 import ClubNetworkManagement from "@/components/staff/ClubNetworkManagement";
 import LegalManagement from "@/components/staff/LegalManagement";
 import { StaffPWAInstall } from "@/components/staff/StaffPWAInstall";
+import { StaffOfflineManager } from "@/components/staff/StaffOfflineManager";
 
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
@@ -60,7 +61,8 @@ import {
   Scale,
   Shield,
   Lock,
-  Download
+  Download,
+  HardDrive
 } from "lucide-react";
 
 const Staff = () => {
@@ -72,7 +74,7 @@ const Staff = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [isMarketeer, setIsMarketeer] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-  const [expandedSection, setExpandedSection] = useState<'overview' | 'staffaccounts' | 'passwords' | 'pwainstall' | 'players' | 'playerlist' | 'recruitment' | 'blog' | 'betweenthelines' | 'coaching' | 'analysis' | 'marketing' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'legal' | null>('overview');
+  const [expandedSection, setExpandedSection] = useState<'overview' | 'staffaccounts' | 'passwords' | 'pwainstall' | 'offlinemanager' | 'players' | 'playerlist' | 'recruitment' | 'blog' | 'betweenthelines' | 'coaching' | 'analysis' | 'marketing' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'legal' | null>('overview');
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
   const [sidebarSearchOpen, setSidebarSearchOpen] = useState(false);
@@ -518,7 +520,8 @@ const Staff = () => {
         ...(isAdmin ? [
           { id: 'passwords', title: 'Player Passwords', icon: Lock },
           { id: 'staffaccounts', title: 'Staff Accounts', icon: Shield },
-          { id: 'pwainstall', title: 'PWA Install', icon: Download }
+          { id: 'pwainstall', title: 'PWA Install', icon: Download },
+          { id: 'offlinemanager', title: 'Offline Content', icon: HardDrive }
         ] : []),
       ]
     }
@@ -818,6 +821,7 @@ const Staff = () => {
                   {expandedSection === 'passwords' && isAdmin && <PlayerPasswordManagement />}
                   {expandedSection === 'staffaccounts' && isAdmin && <StaffAccountManagement />}
                   {expandedSection === 'pwainstall' && isAdmin && <StaffPWAInstall />}
+                  {expandedSection === 'offlinemanager' && isAdmin && <StaffOfflineManager />}
                 </CardContent>
               </Card>
             </div>

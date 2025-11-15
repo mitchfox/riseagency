@@ -1,11 +1,15 @@
 // UPDATE THIS VERSION NUMBER WHEN YOU DEPLOY NEW CHANGES
-const CACHE_VERSION = 'rise-staff-v1.1.0';
+const CACHE_VERSION = 'rise-v1.2.0';
 const CACHE_NAME = `${CACHE_VERSION}`;
 
 // Critical files to cache - minimal set for faster updates
 const urlsToCache = [
+  '/',
   '/staff',
-  '/manifest.json'
+  '/dashboard',
+  '/manifest.json',
+  '/lovable-uploads/icon-192x192.png',
+  '/lovable-uploads/icon-512x512.png'
 ];
 
 // Install event - cache essential resources
