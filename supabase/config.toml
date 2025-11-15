@@ -1,5 +1,8 @@
 project_id = "qwethimbtaamlhbajmal"
 
+[functions.reset-player-password]
+verify_jwt = true
+
 [functions.parse-program-excel]
 verify_jwt = true
 
