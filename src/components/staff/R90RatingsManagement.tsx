@@ -369,13 +369,35 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
       return;
     }
 
-    if (selectedRatingIds.length === 0) {
-      toast.error('Please select at least one R90 rating');
-      return;
-    }
-
     try {
       const subcategoryValue = newMappingSubcategory?.trim() ? newMappingSubcategory : null;
+      
+      // Determine which rating IDs to use
+      let ratingIdsToUse = selectedRatingIds;
+      
+      // If no individual ratings selected, use all ratings in the subcategory (or category if no subcategory)
+      if (selectedRatingIds.length === 0) {
+        let query = supabase
+          .from('r90_ratings')
+          .select('id')
+          .eq('category', newMappingCategory)
+          .not('score', 'is', null);
+        
+        if (subcategoryValue) {
+          query = query.eq('subcategory', subcategoryValue);
+        }
+        
+        const { data: allRatings, error: ratingsError } = await query;
+        
+        if (ratingsError) throw ratingsError;
+        
+        if (!allRatings || allRatings.length === 0) {
+          toast.error('No ratings found for this category/subcategory');
+          return;
+        }
+        
+        ratingIdsToUse = allRatings.map(r => r.id);
+      }
       
       // Check if a mapping with same category/subcategory already exists
       let query = supabase
@@ -411,7 +433,7 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
           action_type: actionType,
           r90_category: newMappingCategory,
           r90_subcategory: subcategoryValue,
-          selected_rating_ids: selectedRatingIds
+          selected_rating_ids: ratingIdsToUse
         })
         .select()
         .single();
@@ -426,7 +448,7 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
             id: data.id,
             category: newMappingCategory,
             subcategory: subcategoryValue || undefined,
-            selected_rating_ids: selectedRatingIds
+            selected_rating_ids: ratingIdsToUse
           }
         ]
       }));
