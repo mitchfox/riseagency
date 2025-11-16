@@ -942,7 +942,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
             {/* Tabbed Sections */}
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               {/* Mobile Dropdown */}
-              <div className="md:hidden mb-4">
+              <div className="md:hidden mb-6">
                 <Select value={activeTab} onValueChange={setActiveTab}>
                   <SelectTrigger className="w-full bg-background border-border z-50">
                     <SelectValue />
@@ -1006,8 +1006,8 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                 </TabsTrigger>
               </TabsList>
 
-              <TabsContent value="analysis" className="mt-0">
-                <Tabs defaultValue="performance" className="w-full mt-4 md:mt-0">
+              <TabsContent value="analysis" className="mt-6 md:mt-0">
+                <Tabs defaultValue="performance" className="w-full">
                   <TabsList className="flex flex-col md:grid md:grid-cols-3 w-full gap-1 bg-muted/20 rounded-lg p-1 mb-6 md:mb-4">
                     <TabsTrigger value="performance" className="w-full justify-center px-3 py-2.5 text-xs md:text-sm">Performance Reports</TabsTrigger>
                     <TabsTrigger value="tactical" className="w-full justify-center px-3 py-2.5 text-xs md:text-sm">Tactical Analysis</TabsTrigger>
@@ -1306,7 +1306,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                 </Tabs>
               </TabsContent>
 
-              <TabsContent value="programming" className="mt-0">
+              <TabsContent value="programming" className="mt-6 md:mt-0">
                 <Card>
                   <CardHeader className="px-3 md:px-6 py-3 md:py-4">
                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
@@ -1372,7 +1372,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                 </Card>
               </TabsContent>
 
-              <TabsContent value="highlights" className="mt-0">
+              <TabsContent value="highlights" className="mt-6 md:mt-0">
                 <Card>
                   <CardHeader className="px-3 md:px-6 py-3 md:py-4">
                     <CardTitle>Video Content & Images</CardTitle>
@@ -1681,7 +1681,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                 </Card>
               </TabsContent>
 
-              <TabsContent value="fixtures" className="mt-0">
+              <TabsContent value="fixtures" className="mt-6 md:mt-0">
                 <Card>
                   <CardHeader className="px-3 md:px-6 py-3 md:py-4">
                     <CardTitle>Fixtures</CardTitle>
@@ -1696,7 +1696,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                 </Card>
               </TabsContent>
 
-              <TabsContent value="invoices" className="mt-0">
+              <TabsContent value="invoices" className="mt-6 md:mt-0">
                 <Card>
                   <CardHeader className="px-3 md:px-6 py-3 md:py-4">
                     <CardTitle>Invoices</CardTitle>
