@@ -1007,7 +1007,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
               </TabsList>
 
               {/* Analysis with nested tabs */}
-              <TabsContent value="analysis" className="mt-8 md:mt-0">
+              <TabsContent value="analysis" className="mt-0 pt-12 md:mt-0 md:pt-0">
                 <Tabs defaultValue="performance" className="w-full">
                   <TabsList className="flex flex-col md:grid md:grid-cols-3 w-full gap-2 bg-muted/20 rounded-lg p-2 mb-4">
                     <TabsTrigger value="performance" className="w-full justify-center px-3 py-2.5 text-xs md:text-sm">Performance Reports</TabsTrigger>
