@@ -1387,7 +1387,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                           <TabsTrigger value="images" className="w-full justify-start px-4 py-3 text-sm">Images</TabsTrigger>
                         </TabsList>
                         
-                        <TabsContent value="match-highlights" className="mt-4">
+                        <TabsContent value="match-highlights" className="mt-0">
                           {(() => {
                             try {
                               const highlights = typeof selectedPlayer.highlights === 'string'
@@ -1501,7 +1501,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                           })()}
                         </TabsContent>
 
-                        <TabsContent value="best-clips" className="mt-4">
+                        <TabsContent value="best-clips" className="mt-0">
                           {(() => {
                             try {
                               const highlights = typeof selectedPlayer.highlights === 'string'
@@ -1615,7 +1615,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                           })()}
                         </TabsContent>
                         
-                        <TabsContent value="images" className="mt-4">
+                        <TabsContent value="images" className="mt-0">
                           <div className="space-y-4">
                             <Button 
                               onClick={() => {
