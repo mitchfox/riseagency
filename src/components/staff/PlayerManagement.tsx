@@ -11,6 +11,7 @@ import { CreatePerformanceReportDialog } from "./CreatePerformanceReportDialog";
 import { ProgrammingManagement } from "./ProgrammingManagement";
 import { PlayerFixtures } from "./PlayerFixtures";
 import { PlayerImages } from "./PlayerImages";
+import { PlaylistManager } from "@/components/PlaylistManager";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -116,6 +117,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   const [availableAnalyses, setAvailableAnalyses] = useState<any[]>([]);
   const [selectedAnalysesToAssign, setSelectedAnalysesToAssign] = useState<string[]>([]);
   const [analysisSearchQuery, setAnalysisSearchQuery] = useState("");
+  const [showPlaylistManager, setShowPlaylistManager] = useState(false);
 
   useEffect(() => {
     fetchPlayers();
@@ -1512,51 +1514,62 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
 
                               return (
                                 <div className="space-y-4">
-                                  <Button 
-                                    onClick={() => {
-                                      const input = document.createElement('input');
-                                      input.type = 'file';
-                                      input.multiple = true;
-                                      input.accept = 'video/mp4,video/quicktime,video/x-msvideo,video/*';
-                                      input.onchange = async (e: any) => {
-                                        const files = e.target.files;
-                                        if (files && files.length > 0) {
-                                          try {
-                                            for (const file of files) {
-                                              const formData = new FormData();
-                                              formData.append('file', file);
-                                              formData.append('playerEmail', selectedPlayer.email || '');
-                                              formData.append('clipName', file.name.replace(/\.[^/.]+$/, ''));
-                                              
-                                              const response = await fetch(
-                                                `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/upload-player-highlight`,
-                                                {
-                                                  method: 'POST',
-                                                  headers: {
-                                                    'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-                                                    'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-                                                  },
-                                                  body: formData,
-                                                }
-                                              );
+                                  <div className="flex gap-2">
+                                    <Button 
+                                      onClick={() => {
+                                        const input = document.createElement('input');
+                                        input.type = 'file';
+                                        input.multiple = true;
+                                        input.accept = 'video/mp4,video/quicktime,video/x-msvideo,video/*';
+                                        input.onchange = async (e: any) => {
+                                          const files = e.target.files;
+                                          if (files && files.length > 0) {
+                                            try {
+                                              for (const file of files) {
+                                                const formData = new FormData();
+                                                formData.append('file', file);
+                                                formData.append('playerEmail', selectedPlayer.email || '');
+                                                formData.append('clipName', file.name.replace(/\.[^/.]+$/, ''));
+                                                
+                                                const response = await fetch(
+                                                  `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/upload-player-highlight`,
+                                                  {
+                                                    method: 'POST',
+                                                    headers: {
+                                                      'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+                                                      'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+                                                    },
+                                                    body: formData,
+                                                  }
+                                                );
 
-                                              if (!response.ok) throw new Error('Upload failed');
+                                                if (!response.ok) throw new Error('Upload failed');
+                                              }
+                                              toast.success('Clips uploaded successfully!');
+                                              fetchPlayers();
+                                            } catch (error: any) {
+                                              toast.error('Failed to upload: ' + error.message);
                                             }
-                                            toast.success('Clips uploaded successfully!');
-                                            fetchPlayers();
-                                          } catch (error: any) {
-                                            toast.error('Failed to upload: ' + error.message);
                                           }
-                                        }
-                                      };
-                                      input.click();
-                                    }}
-                                    variant="outline"
-                                    size="sm"
-                                  >
-                                    <Plus className="w-4 h-4 mr-2" />
-                                    Upload Clip
-                                  </Button>
+                                        };
+                                        input.click();
+                                      }}
+                                      variant="outline"
+                                      size="sm"
+                                    >
+                                      <Plus className="w-4 h-4 mr-2" />
+                                      Upload Clip
+                                    </Button>
+                                    
+                                    <Button 
+                                      onClick={() => setShowPlaylistManager(true)}
+                                      variant="outline"
+                                      size="sm"
+                                    >
+                                      <Video className="w-4 h-4 mr-2" />
+                                      Manage Playlists
+                                    </Button>
+                                  </div>
                                   
                                   {bestClips.length > 0 ? (
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -2441,6 +2454,36 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Playlist Manager Dialog */}
+      {showPlaylistManager && selectedPlayer && (
+        <Dialog open={showPlaylistManager} onOpenChange={setShowPlaylistManager}>
+          <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Manage Playlists - {selectedPlayer.name}</DialogTitle>
+            </DialogHeader>
+            <PlaylistManager
+              playerData={{ id: selectedPlayer.id, email: selectedPlayer.email || '', name: selectedPlayer.name }}
+              availableClips={(() => {
+                try {
+                  const highlights = typeof selectedPlayer.highlights === 'string'
+                    ? JSON.parse(selectedPlayer.highlights)
+                    : selectedPlayer.highlights;
+                  return (highlights.bestClips || []).map((clip: any, idx: number) => ({
+                    id: clip.clipId || `clip-${idx}`,
+                    name: clip.clipName || `Clip ${idx + 1}`,
+                    videoUrl: clip.videoUrl,
+                    thumbnailUrl: clip.thumbnailUrl
+                  }));
+                } catch (e) {
+                  return [];
+                }
+              })()}
+              onClose={() => setShowPlaylistManager(false)}
+            />
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 };
