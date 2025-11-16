@@ -739,7 +739,7 @@ const Staff = () => {
                   }`}
                 >
                   <CategoryIcon className={`w-5 h-5 md:w-6 md:h-6 mb-0.5 md:mb-1 ${hasActiveSection || isExpanded ? 'text-primary-foreground' : ''}`} />
-                  <span className={`hidden md:block text-[6px] leading-tight text-center px-0.5 font-medium uppercase tracking-tight ${hasActiveSection || isExpanded ? 'text-primary-foreground' : 'text-muted-foreground'}`}>
+                  <span className={`text-[6px] sm:text-[7px] leading-tight text-center px-0.5 font-medium uppercase tracking-tight ${hasActiveSection || isExpanded ? 'text-primary-foreground' : 'text-muted-foreground'}`}>
                     {category.title.split(' ').map((word, i) => (
                       <span key={i} className="block">{word}</span>
                     ))}
@@ -767,7 +767,7 @@ const Staff = () => {
                           }`}
                         >
                           <SectionIcon className={`w-4 h-4 md:w-5 md:h-5 mb-0.5 md:mb-1 ${isActive ? 'text-primary-foreground' : ''}`} />
-                          <span className={`hidden md:block text-[5px] leading-tight text-center px-0.5 font-medium uppercase tracking-tight ${isActive ? 'text-primary-foreground' : 'text-muted-foreground'}`}>
+                          <span className={`text-[5px] sm:text-[6px] leading-tight text-center px-0.5 font-medium uppercase tracking-tight ${isActive ? 'text-primary-foreground' : 'text-muted-foreground'}`}>
                             {section.title.split(' ').map((word, i) => (
                               <span key={i} className="block">{word}</span>
                             ))}
