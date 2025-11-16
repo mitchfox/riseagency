@@ -37,30 +37,42 @@ export const PlaylistManager = ({ playerData, availableClips, onClose }: Playlis
   const [playingVideo, setPlayingVideo] = useState<{ url: string; name: string } | null>(null);
   const [movingClipId, setMovingClipId] = useState<string | null>(null);
   const [targetPosition, setTargetPosition] = useState("");
+  const [isLoadingPlaylists, setIsLoadingPlaylists] = useState(true);
 
   useEffect(() => {
-    fetchPlaylists();
-  }, [playerData]);
+    if (playerData?.id) {
+      setIsLoadingPlaylists(true);
+      fetchPlaylists();
+    }
+  }, [playerData?.id]);
 
   const fetchPlaylists = async () => {
-    if (!playerData?.id) return;
-
-    const { data, error } = await supabase
-      .from('playlists')
-      .select('*')
-      .eq('player_id', playerData.id)
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Error fetching playlists:', error);
-      toast.error("Failed to load playlists");
+    if (!playerData?.id) {
+      setIsLoadingPlaylists(false);
       return;
     }
 
-    setPlaylists((data || []).map(p => ({
-      ...p,
-      clips: (p.clips as any) || []
-    })));
+    try {
+      const { data, error } = await supabase
+        .from('playlists')
+        .select('*')
+        .eq('player_id', playerData.id)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching playlists:', error);
+        toast.error("Failed to load playlists");
+        setIsLoadingPlaylists(false);
+        return;
+      }
+
+      setPlaylists((data || []).map(p => ({
+        ...p,
+        clips: (p.clips as any) || []
+      })));
+    } finally {
+      setIsLoadingPlaylists(false);
+    }
   };
 
   const createPlaylist = async () => {
@@ -406,7 +418,11 @@ export const PlaylistManager = ({ playerData, availableClips, onClose }: Playlis
             )}
 
             <div className="space-y-2 max-h-[300px] md:max-h-[400px] overflow-y-auto">
-              {playlists.length === 0 ? (
+              {isLoadingPlaylists ? (
+                <div className="text-sm text-muted-foreground text-center py-8">
+                  <div className="animate-pulse">Loading playlists...</div>
+                </div>
+              ) : playlists.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-4">No playlists yet. Create one to get started!</p>
               ) : (
                 playlists.map((playlist) => (

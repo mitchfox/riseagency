@@ -2342,6 +2342,17 @@ const Dashboard = () => {
                                              src={highlight.videoUrl}
                                              className="w-full h-full object-cover"
                                              preload="metadata"
+                                             playsInline
+                                             muted
+                                             onLoadStart={(e) => {
+                                               const video = e.target as HTMLVideoElement;
+                                               video.currentTime = 0.1; // Seek to show first frame
+                                             }}
+                                             onError={(e) => {
+                                               console.error('Video thumbnail error:', e);
+                                               const video = e.target as HTMLVideoElement;
+                                               video.style.display = 'none';
+                                             }}
                                            />
                                            <div className="absolute inset-0 bg-black/30 group-hover:bg-black/50 transition-colors flex items-center justify-center">
                                              <Play className="w-6 md:w-8 h-6 md:h-8 text-white drop-shadow-lg" />
