@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import PlayerProfileModal from "@/components/PlayerProfileModal";
+import { IntroModal } from "@/components/IntroModal";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -98,6 +99,7 @@ const Dashboard = () => {
   const [videoPlayerOpen, setVideoPlayerOpen] = useState(false);
   const [currentVideoUrl, setCurrentVideoUrl] = useState<string>("");
   const [currentVideoName, setCurrentVideoName] = useState<string>("");
+  const [showIntroModal, setShowIntroModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
 
   // Initialize push notifications with player ID
@@ -575,6 +577,10 @@ const Dashboard = () => {
   };
 
   useEffect(() => {
+    const hasSeenIntro = localStorage.getItem("intro-modal-seen");
+    if (!hasSeenIntro) {
+      setShowIntroModal(true);
+    }
     checkAuth();
     fetchDailyAphorism();
   }, [navigate]);
@@ -988,6 +994,7 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <IntroModal open={showIntroModal} onOpenChange={setShowIntroModal} />
       <main className="pt-12 pb-12 px-0 md:px-4">
         <div className="container mx-auto max-w-6xl px-0 md:px-6">
           {/* Player Header */}
