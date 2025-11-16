@@ -1234,8 +1234,8 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                     </Card>
                   </TabsContent>
 
-                  <TabsContent value="other" className="mt-0">
-                    <Card className="mt-6 md:mt-0">
+                  <TabsContent value="other" className="mt-0 pt-6 md:pt-0">
+                    <Card className="md:mt-0">
                       <CardHeader className="px-3 md:px-6 py-3 md:py-4">
                         <div className="flex items-center justify-between">
                           <CardTitle className="hidden md:block text-lg">Other Analysis</CardTitle>
