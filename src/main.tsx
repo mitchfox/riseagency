@@ -24,8 +24,20 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-createRoot(document.getElementById("root")!).render(
+const root = createRoot(document.getElementById("root")!);
+
+// Hide loading splash once React is mounted and ready
+root.render(
   <HelmetProvider>
     <App />
   </HelmetProvider>
 );
+
+// Remove loading splash after React has rendered
+setTimeout(() => {
+  const splash = document.getElementById('loading-splash');
+  if (splash) {
+    splash.classList.add('hidden');
+    setTimeout(() => splash.remove(), 500);
+  }
+}, 100);

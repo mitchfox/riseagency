@@ -64,6 +64,45 @@
 
   <body>
     <div id="root"></div>
+    <!-- Loading splash screen -->
+    <style>
+      #loading-splash {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: linear-gradient(135deg, #0A0A0A 0%, #1A1A1A 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        transition: opacity 0.5s ease-out;
+      }
+      #loading-splash.hidden {
+        opacity: 0;
+        pointer-events: none;
+      }
+      .loading-text {
+        font-family: 'Bebas Neue', sans-serif;
+        font-size: 4rem;
+        color: #C8A871;
+        letter-spacing: 0.3em;
+        animation: pulse 2s ease-in-out infinite;
+      }
+      @keyframes pulse {
+        0%, 100% { opacity: 0.6; transform: scale(1); }
+        50% { opacity: 1; transform: scale(1.05); }
+      }
+      @media (max-width: 768px) {
+        .loading-text {
+          font-size: 3rem;
+        }
+      }
+    </style>
+    <div id="loading-splash">
+      <div class="loading-text">RISING</div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
