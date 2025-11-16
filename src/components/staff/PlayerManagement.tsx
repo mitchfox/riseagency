@@ -1381,7 +1381,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                   <CardContent className="px-3 md:px-6 py-4">
                     {selectedPlayer?.highlights ? (
                       <Tabs defaultValue="match-highlights" className="w-full">
-                        <TabsList className="flex flex-col md:grid md:w-full md:grid-cols-3 gap-2 p-2 mb-[45px] md:mb-4">
+                        <TabsList className="flex flex-col md:grid md:w-full md:grid-cols-3 gap-2 p-2 mb-20 md:mb-4">
                           <TabsTrigger value="match-highlights" className="w-full justify-start px-4 py-3 text-sm">Match Highlights</TabsTrigger>
                           <TabsTrigger value="best-clips" className="w-full justify-start px-4 py-3 text-sm">Best Clips</TabsTrigger>
                           <TabsTrigger value="images" className="w-full justify-start px-4 py-3 text-sm">Images</TabsTrigger>
