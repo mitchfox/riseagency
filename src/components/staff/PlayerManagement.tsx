@@ -940,18 +940,30 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
             </Card>
 
             {/* Tabbed Sections */}
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              {/* Mobile Dropdown */}
-              <div className="md:hidden mb-6">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full mt-4">
+              {/* Mobile Dropdown - Flattened structure */}
+              <div className="md:hidden">
                 <Select value={activeTab} onValueChange={setActiveTab}>
-                  <SelectTrigger className="w-full bg-background border-border z-50">
+                  <SelectTrigger className="w-full bg-background border-border">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-background border-border z-50">
-                    <SelectItem value="analysis">
+                  <SelectContent className="bg-background border-border">
+                    <SelectItem value="performance">
                       <div className="flex items-center gap-2">
                         <LineChart className="w-4 h-4" />
-                        <span>Analysis</span>
+                        <span>Performance Reports</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="tactical">
+                      <div className="flex items-center gap-2">
+                        <LineChart className="w-4 h-4" />
+                        <span>Tactical Analysis</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="other">
+                      <div className="flex items-center gap-2">
+                        <LineChart className="w-4 h-4" />
+                        <span>Other Analysis</span>
                       </div>
                     </SelectItem>
                     <SelectItem value="programming">
@@ -1006,12 +1018,13 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                 </TabsTrigger>
               </TabsList>
 
-              <TabsContent value="analysis" className="mt-6 md:mt-0">
+              {/* Desktop: Analysis with nested tabs */}
+              <TabsContent value="analysis" className="mt-0 hidden md:block">
                 <Tabs defaultValue="performance" className="w-full">
-                  <TabsList className="flex flex-col md:grid md:grid-cols-3 w-full gap-1 bg-muted/20 rounded-lg p-1 mb-6 md:mb-4 mt-4 md:mt-0">
-                    <TabsTrigger value="performance" className="w-full justify-center px-3 py-2.5 text-xs md:text-sm">Performance Reports</TabsTrigger>
-                    <TabsTrigger value="tactical" className="w-full justify-center px-3 py-2.5 text-xs md:text-sm">Tactical Analysis</TabsTrigger>
-                    <TabsTrigger value="other" className="w-full justify-center px-3 py-2.5 text-xs md:text-sm">Other Analysis</TabsTrigger>
+                  <TabsList className="grid grid-cols-3 w-full gap-1 bg-muted/20 rounded-lg p-1 mb-4">
+                    <TabsTrigger value="performance" className="w-full justify-center px-3 py-2.5 text-sm">Performance Reports</TabsTrigger>
+                    <TabsTrigger value="tactical" className="w-full justify-center px-3 py-2.5 text-sm">Tactical Analysis</TabsTrigger>
+                    <TabsTrigger value="other" className="w-full justify-center px-3 py-2.5 text-sm">Other Analysis</TabsTrigger>
                   </TabsList>
 
                   <TabsContent value="performance" className="mt-0">
@@ -1306,7 +1319,218 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                 </Tabs>
               </TabsContent>
 
-              <TabsContent value="programming" className="mt-6 md:mt-0">
+              {/* Mobile-only: Direct Performance Reports tab */}
+              <TabsContent value="performance" className="mt-4 md:hidden">
+                <Card>
+                  <CardHeader className="px-3 py-3">
+                    <div className="flex flex-col items-start justify-between gap-3">
+                      <Button
+                        size="sm"
+                        className="w-full"
+                        onClick={() => {
+                          setCreateReportPlayerId(selectedPlayerId!);
+                          setCreateReportPlayerName(selectedPlayer!.name);
+                          setIsCreateReportDialogOpen(true);
+                        }}
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
+                        New Report
+                      </Button>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="px-3 py-4">
+                    {playerAnalyses[selectedPlayerId]?.length > 0 ? (
+                      <div className="space-y-3">
+                        {playerAnalyses[selectedPlayerId].map((analysis) => {
+                          const getR90ColorClass = (score: number) => {
+                            if (score < 0) return "bg-red-950";
+                            if (score >= 0 && score < 0.2) return "bg-red-600";
+                            if (score >= 0.2 && score < 0.4) return "bg-red-400";
+                            if (score >= 0.4 && score < 0.6) return "bg-orange-700";
+                            if (score >= 0.6 && score < 0.8) return "bg-orange-500";
+                            if (score >= 0.8 && score < 1.0) return "bg-yellow-400";
+                            if (score >= 1.0 && score < 1.4) return "bg-lime-400";
+                            if (score >= 1.4 && score < 1.8) return "bg-green-500";
+                            if (score >= 1.8 && score < 2.5) return "bg-green-700";
+                            return "bg-gold";
+                          };
+
+                          return (
+                            <div
+                              key={analysis.id}
+                              className="rounded-lg overflow-hidden text-white"
+                            >
+                              {analysis.r90_score !== null && analysis.r90_score !== undefined && (
+                                <div className={`${getR90ColorClass(analysis.r90_score)} p-3`}>
+                                  <div className="flex items-center justify-center gap-2 mb-2">
+                                    <div className="text-3xl font-bold">
+                                      {analysis.r90_score.toFixed(2)}
+                                    </div>
+                                    <div className={`w-8 h-8 ${getR90ColorClass(analysis.r90_score)} rounded border-2 border-white/50`}></div>
+                                  </div>
+                                  <div className="text-xs text-center font-medium">R90 SCORE</div>
+                                </div>
+                              )}
+                              <div className="bg-card/10 backdrop-blur p-3 flex flex-col gap-2">
+                                <div className="text-xs text-muted-foreground">
+                                  {analysis.opponent} • {new Date(analysis.analysis_date).toLocaleDateString()}
+                                </div>
+                                {analysis.result && (
+                                  <div className="text-xs text-muted-foreground">{analysis.result}</div>
+                                )}
+                                <div className="flex gap-2 mt-2">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => {
+                                      setSelectedAnalysisId(analysis.id);
+                                      setSelectedPlayerName(selectedPlayer!.name);
+                                      setIsPerformanceActionsDialogOpen(true);
+                                    }}
+                                    className="flex-1"
+                                  >
+                                    <Eye className="w-3 h-3 mr-1" />
+                                    View
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <p className="text-center text-muted-foreground py-8 text-sm">
+                        No performance reports yet. Create one to get started.
+                      </p>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* Mobile-only: Direct Tactical Analysis tab */}
+              <TabsContent value="tactical" className="mt-4 md:hidden">
+                <Card>
+                  <CardContent className="px-3 py-4">
+                    {tacticalAnalyses[selectedPlayerId]?.length > 0 ? (
+                      <div className="space-y-3">
+                        {tacticalAnalyses[selectedPlayerId].map((analysis) => (
+                          <div
+                            key={analysis.id}
+                            className="p-3 border rounded-lg"
+                          >
+                            <div className="flex flex-col gap-3">
+                              <div className="flex-1 min-w-0">
+                                <div className="flex flex-wrap items-center gap-2 mb-2">
+                                  <span className="text-[10px] px-2 py-1 rounded bg-primary/20 text-primary font-medium">
+                                    {analysis.analysis_type}
+                                  </span>
+                                  {analysis.match_date && (
+                                    <span className="text-xs text-muted-foreground">
+                                      {new Date(analysis.match_date).toLocaleDateString()}
+                                    </span>
+                                  )}
+                                </div>
+                                <h4 className="font-medium mb-1 text-sm">{analysis.title || 'Untitled'}</h4>
+                                {analysis.home_team && analysis.away_team && (
+                                  <p className="text-xs text-muted-foreground">
+                                    {analysis.home_team} vs {analysis.away_team}
+                                    {analysis.home_score !== null && analysis.away_score !== null && (
+                                      <span className="ml-2 font-medium">
+                                        ({analysis.home_score} - {analysis.away_score})
+                                      </span>
+                                    )}
+                                  </p>
+                                )}
+                              </div>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => window.open(`/analysis/${analysis.id}`, '_blank')}
+                                className="w-full"
+                              >
+                                <Eye className="w-3 h-3 mr-2" />
+                                View Analysis
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-center text-muted-foreground py-8 text-sm">
+                        No tactical analysis available yet.
+                      </p>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* Mobile-only: Direct Other Analysis tab */}
+              <TabsContent value="other" className="mt-4 md:hidden">
+                <Card>
+                  <CardHeader className="px-3 py-3">
+                    <Button
+                      size="sm"
+                      onClick={() => setIsAssignAnalysisDialogOpen(true)}
+                      className="w-full"
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Assign Analysis
+                    </Button>
+                  </CardHeader>
+                  <CardContent className="px-3 py-4">
+                    {otherAnalyses[selectedPlayerId]?.length > 0 ? (
+                      <div className="space-y-3">
+                        {otherAnalyses[selectedPlayerId].map((item: any) => (
+                          <div
+                            key={item.id}
+                            className="p-3 border rounded-lg"
+                          >
+                            <div className="flex flex-col gap-3">
+                              <div className="flex-1 min-w-0">
+                                <h4 className="font-medium mb-1 text-sm">{item.analysis.title}</h4>
+                                {item.analysis.description && (
+                                  <p className="text-xs text-muted-foreground mb-2">{item.analysis.description}</p>
+                                )}
+                                <div className="flex flex-wrap items-center gap-2">
+                                  {item.analysis.category && (
+                                    <span className="text-[10px] px-2 py-1 rounded bg-primary/20 text-primary">
+                                      {item.analysis.category}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="flex gap-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => window.open(`/coaching-analysis/${item.analysis.id}`, '_blank')}
+                                  className="flex-1"
+                                >
+                                  <Eye className="w-3 h-3 mr-1" />
+                                  View
+                                </Button>
+                                <Button
+                                  variant="destructive"
+                                  size="sm"
+                                  onClick={() => handleUnassignAnalysis(item.id)}
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-center text-muted-foreground py-8 text-sm">
+                        No other analysis assigned yet.
+                      </p>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="programming" className="mt-4 md:mt-0">
                 <Card>
                   <CardHeader className="px-3 md:px-6 py-3 md:py-4">
                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
@@ -1372,7 +1596,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                 </Card>
               </TabsContent>
 
-              <TabsContent value="highlights" className="mt-6 md:mt-0">
+              <TabsContent value="highlights" className="mt-4 md:mt-0">
                 <Card>
                   <CardHeader className="px-3 md:px-6 py-3 md:py-4">
                     <CardTitle>Video Content & Images</CardTitle>
@@ -1681,7 +1905,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                 </Card>
               </TabsContent>
 
-              <TabsContent value="fixtures" className="mt-6 md:mt-0">
+              <TabsContent value="fixtures" className="mt-4 md:mt-0">
                 <Card>
                   <CardHeader className="px-3 md:px-6 py-3 md:py-4">
                     <CardTitle>Fixtures</CardTitle>
@@ -1696,7 +1920,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                 </Card>
               </TabsContent>
 
-              <TabsContent value="invoices" className="mt-6 md:mt-0">
+              <TabsContent value="invoices" className="mt-4 md:mt-0">
                 <Card>
                   <CardHeader className="px-3 md:px-6 py-3 md:py-4">
                     <CardTitle>Invoices</CardTitle>
