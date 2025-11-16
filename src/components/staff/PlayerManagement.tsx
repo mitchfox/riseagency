@@ -508,7 +508,14 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   };
 
   const selectedPlayer = players.find(p => p.id === selectedPlayerId);
-  const selectedPlayerStats = selectedPlayerId ? stats[selectedPlayerId] : null;
+  const selectedPlayerStats = selectedPlayerId ? (stats[selectedPlayerId] || {
+    goals: 0,
+    assists: 0,
+    matches: 0,
+    minutes: 0,
+    clean_sheets: 0,
+    saves: 0
+  }) : null;
 
   // Group players by representation status in order: represented, mandated, other
   const groupedPlayers = {
@@ -910,28 +917,26 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                   </div>
                 </div>
               </CardHeader>
-              {selectedPlayerStats && (
-                <CardContent className="p-3 sm:p-6">
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4 text-center">
-                    <div className="p-2 sm:p-4 bg-secondary/30 rounded-lg">
-                      <div className="text-xl sm:text-2xl md:text-3xl font-bold text-primary">{selectedPlayerStats.goals}</div>
-                      <div className="text-[10px] sm:text-xs md:text-sm text-muted-foreground mt-1">Goals</div>
-                    </div>
-                    <div className="p-2 sm:p-4 bg-secondary/30 rounded-lg">
-                      <div className="text-xl sm:text-2xl md:text-3xl font-bold text-primary">{selectedPlayerStats.assists}</div>
-                      <div className="text-[10px] sm:text-xs md:text-sm text-muted-foreground mt-1">Assists</div>
-                    </div>
-                    <div className="p-2 sm:p-4 bg-secondary/30 rounded-lg">
-                      <div className="text-xl sm:text-2xl md:text-3xl font-bold text-primary">{selectedPlayerStats.matches}</div>
-                      <div className="text-[10px] sm:text-xs md:text-sm text-muted-foreground mt-1">Matches</div>
-                    </div>
-                    <div className="p-2 sm:p-4 bg-secondary/30 rounded-lg">
-                      <div className="text-xl sm:text-2xl md:text-3xl font-bold text-primary">{selectedPlayerStats.minutes}</div>
-                      <div className="text-[10px] sm:text-xs md:text-sm text-muted-foreground mt-1">Minutes</div>
-                    </div>
+              <CardContent className="p-3 sm:p-6">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4 text-center">
+                  <div className="p-2 sm:p-4 bg-secondary/30 rounded-lg">
+                    <div className="text-xl sm:text-2xl md:text-3xl font-bold text-primary">{selectedPlayerStats?.goals ?? 0}</div>
+                    <div className="text-[10px] sm:text-xs md:text-sm text-muted-foreground mt-1">Goals</div>
                   </div>
-                </CardContent>
-              )}
+                  <div className="p-2 sm:p-4 bg-secondary/30 rounded-lg">
+                    <div className="text-xl sm:text-2xl md:text-3xl font-bold text-primary">{selectedPlayerStats?.assists ?? 0}</div>
+                    <div className="text-[10px] sm:text-xs md:text-sm text-muted-foreground mt-1">Assists</div>
+                  </div>
+                  <div className="p-2 sm:p-4 bg-secondary/30 rounded-lg">
+                    <div className="text-xl sm:text-2xl md:text-3xl font-bold text-primary">{selectedPlayerStats?.matches ?? 0}</div>
+                    <div className="text-[10px] sm:text-xs md:text-sm text-muted-foreground mt-1">Matches</div>
+                  </div>
+                  <div className="p-2 sm:p-4 bg-secondary/30 rounded-lg">
+                    <div className="text-xl sm:text-2xl md:text-3xl font-bold text-primary">{selectedPlayerStats?.minutes ?? 0}</div>
+                    <div className="text-[10px] sm:text-xs md:text-sm text-muted-foreground mt-1">Minutes</div>
+                  </div>
+                </div>
+              </CardContent>
             </Card>
 
             {/* Tabbed Sections */}
