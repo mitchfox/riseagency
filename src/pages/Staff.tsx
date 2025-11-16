@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import { IntroModal } from "@/components/IntroModal";
 import { Search, Menu, ChevronRight, ChevronLeft } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -83,6 +84,7 @@ const Staff = () => {
   const [rememberMe, setRememberMe] = useState(false);
   const [expandedSection, setExpandedSection] = useState<'overview' | 'staffaccounts' | 'passwords' | 'pwainstall' | 'offlinemanager' | 'pushnotifications' | 'players' | 'playerlist' | 'recruitment' | 'scoutingcentre' | 'blog' | 'betweenthelines' | 'coaching' | 'analysis' | 'marketing' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'legal' | null>('overview');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [showIntroModal, setShowIntroModal] = useState(false);
   
   // Enable staff notifications
   useStaffNotifications({
@@ -133,6 +135,10 @@ const Staff = () => {
 
   // Load saved email and remember me preference on mount
   useEffect(() => {
+    const hasSeenIntro = localStorage.getItem("intro-modal-seen");
+    if (!hasSeenIntro) {
+      setShowIntroModal(true);
+    }
     const savedEmail = localStorage.getItem("staff_saved_email");
     const savedRememberMe = localStorage.getItem("staff_remember_me");
     if (savedEmail) setEmail(savedEmail);
@@ -572,6 +578,7 @@ const Staff = () => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col relative overflow-hidden">
+      <IntroModal open={showIntroModal} onOpenChange={setShowIntroModal} />
       {/* Marble background with more visible overlay */}
       <div 
         className="fixed inset-0 pointer-events-none z-0"
