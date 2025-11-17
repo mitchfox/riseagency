@@ -5,6 +5,8 @@ import { Calendar, TrendingUp, ArrowRight } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, LabelList } from "recharts";
 import { format, parseISO, startOfWeek, endOfWeek, isWithinInterval, addDays } from "date-fns";
 import { Link } from "react-router-dom";
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
+import Autoplay from "embla-carousel-autoplay";
 
 interface PlayerProgram {
   id: string;
@@ -130,17 +132,73 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
     .sort((a, b) => new Date(b.analysis_date).getTime() - new Date(a.analysis_date).getTime())
     .slice(0, 3);
 
+  // Extract video thumbnails from highlights
+  const videoThumbnails = React.useMemo(() => {
+    const thumbnails: string[] = [];
+    
+    if (playerData?.highlights) {
+      Object.values(playerData.highlights).forEach((highlight: any) => {
+        if (highlight?.clips && Array.isArray(highlight.clips)) {
+          highlight.clips.forEach((clip: any) => {
+            if (clip?.videoUrl) {
+              // Generate thumbnail URL from video URL
+              const videoUrl = clip.videoUrl;
+              // If it's a Supabase storage URL, we can try to get a frame
+              thumbnails.push(videoUrl);
+            }
+          });
+        }
+      });
+    }
+    
+    // Fallback to player image if no video thumbnails
+    if (thumbnails.length === 0 && playerData?.image_url) {
+      thumbnails.push(playerData.image_url);
+    }
+    
+    return thumbnails;
+  }, [playerData]);
+
+  const autoplayPlugin = React.useRef(
+    Autoplay({ delay: 4000, stopOnInteraction: true })
+  );
+
   return (
     <div className="space-y-6 mb-8">
-      {/* Player Image - Full Width */}
-      {playerData?.image_url && (
+      {/* Video Highlights Slider - Full Width */}
+      {videoThumbnails.length > 0 && (
         <Card className="bg-card/90 backdrop-blur-sm border-gold/30 overflow-hidden">
-          <div className="w-full aspect-[21/9] overflow-hidden">
-            <img
-              src={playerData.image_url}
-              alt={playerData.name}
-              className="w-full h-full object-cover object-top"
-            />
+          <div className="w-full">
+            <Carousel
+              opts={{
+                align: "center",
+                loop: true,
+              }}
+              plugins={[autoplayPlugin.current]}
+              className="w-full"
+            >
+              <CarouselContent>
+                {videoThumbnails.map((thumbnail, index) => (
+                  <CarouselItem key={index}>
+                    <div className="w-full aspect-[21/9] overflow-hidden relative bg-black">
+                      <video
+                        src={thumbnail}
+                        className="w-full h-full object-cover"
+                        muted
+                        playsInline
+                        onMouseEnter={(e) => e.currentTarget.play()}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.pause();
+                          e.currentTarget.currentTime = 0;
+                        }}
+                      />
+                    </div>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <CarouselPrevious className="left-4" />
+              <CarouselNext className="right-4" />
+            </Carousel>
           </div>
         </Card>
       )}
