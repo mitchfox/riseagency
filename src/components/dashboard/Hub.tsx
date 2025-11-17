@@ -327,7 +327,7 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
                 <CarouselContent>
                   {videoThumbnails.map((thumbnail, index) => (
                     <CarouselItem key={index}>
-                      <div className="relative w-full" style={{ aspectRatio: '21/9' }}>
+                      <div className="relative w-full -mt-2" style={{ aspectRatio: '21/9' }}>
                         {thumbnail.includes('supabase') && thumbnail.includes('videos') ? (
                           <video
                             src={thumbnail}
