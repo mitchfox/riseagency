@@ -21,6 +21,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 
 interface Player {
   id: string;
@@ -119,6 +121,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   const [selectedAnalysesToAssign, setSelectedAnalysesToAssign] = useState<string[]>([]);
   const [analysisSearchQuery, setAnalysisSearchQuery] = useState("");
   const [showPlaylistManager, setShowPlaylistManager] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<Record<string, { status: 'uploading' | 'success' | 'error', progress: number, error?: string }>>({});
 
   useEffect(() => {
     fetchPlayers();
@@ -1421,10 +1424,23 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                       input.multiple = true;
                                       input.accept = 'video/mp4,video/quicktime,video/x-msvideo,video/*';
                                       input.onchange = async (e: any) => {
-                                        const files = e.target.files;
-                                        if (files && files.length > 0) {
-                                          try {
-                                            for (const file of files) {
+                                        const files = Array.from(e.target.files || []) as File[];
+                                        if (files.length > 0) {
+                                          // Initialize progress for all files
+                                          const initialProgress: Record<string, any> = {};
+                                          files.forEach(file => {
+                                            initialProgress[file.name] = { status: 'uploading', progress: 0 };
+                                          });
+                                          setUploadProgress(initialProgress);
+
+                                          // Process all files
+                                          const uploadPromises = files.map(async (file) => {
+                                            try {
+                                              setUploadProgress(prev => ({
+                                                ...prev,
+                                                [file.name]: { status: 'uploading', progress: 50 }
+                                              }));
+
                                               const formData = new FormData();
                                               formData.append('file', file);
                                               formData.append('playerEmail', selectedPlayer.email || '');
@@ -1443,12 +1459,30 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                               );
 
                                               if (!response.ok) throw new Error('Upload failed');
+
+                                              setUploadProgress(prev => ({
+                                                ...prev,
+                                                [file.name]: { status: 'success', progress: 100 }
+                                              }));
+
+                                              toast.success(`Successfully uploaded ${file.name}`);
+                                            } catch (error) {
+                                              console.error(`Error uploading ${file.name}:`, error);
+                                              setUploadProgress(prev => ({
+                                                ...prev,
+                                                [file.name]: { status: 'error', progress: 0, error: error instanceof Error ? error.message : 'Upload failed' }
+                                              }));
+                                              toast.error(`Failed to upload ${file.name}`);
                                             }
-                                            toast.success('Clips uploaded successfully!');
-                                            fetchPlayers();
-                                          } catch (error: any) {
-                                            toast.error('Failed to upload: ' + error.message);
-                                          }
+                                          });
+
+                                          await Promise.all(uploadPromises);
+                                          fetchPlayers();
+                                          
+                                          // Clear progress after 3 seconds
+                                          setTimeout(() => {
+                                            setUploadProgress({});
+                                          }, 3000);
                                         }
                                       };
                                       input.click();
@@ -1459,6 +1493,44 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                     <Plus className="w-4 h-4 mr-2" />
                                     Upload Highlight
                                   </Button>
+                                  
+                                  {/* Upload Progress */}
+                                  {Object.keys(uploadProgress).length > 0 && (
+                                    <div className="space-y-3 mb-6">
+                                      <div className="flex items-center justify-between">
+                                        <h3 className="text-sm font-semibold">Upload Progress</h3>
+                                        <Button 
+                                          variant="ghost" 
+                                          size="sm"
+                                          onClick={() => setUploadProgress({})}
+                                        >
+                                          Clear
+                                        </Button>
+                                      </div>
+                                      {Object.entries(uploadProgress).map(([filename, status]) => (
+                                        <Card key={filename} className="overflow-hidden">
+                                          <CardContent className="p-4">
+                                            <div className="flex items-center justify-between mb-2">
+                                              <span className="text-sm font-medium truncate flex-1">{filename}</span>
+                                              <Badge variant={
+                                                status.status === 'success' ? 'default' :
+                                                status.status === 'error' ? 'destructive' :
+                                                'secondary'
+                                              }>
+                                                {status.status === 'uploading' ? 'Uploading' :
+                                                 status.status === 'success' ? 'Uploaded' :
+                                                 'Failed'}
+                                              </Badge>
+                                            </div>
+                                            <Progress value={status.progress} className="h-2" />
+                                            {status.error && (
+                                              <p className="text-xs text-destructive mt-2">{status.error}</p>
+                                            )}
+                                          </CardContent>
+                                        </Card>
+                                      ))}
+                                    </div>
+                                  )}
                                   
                                    {matchHighlights.length > 0 ? (
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -1535,37 +1607,68 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                         input.type = 'file';
                                         input.multiple = true;
                                         input.accept = 'video/mp4,video/quicktime,video/x-msvideo,video/*';
-                                        input.onchange = async (e: any) => {
-                                          const files = e.target.files;
-                                          if (files && files.length > 0) {
-                                            try {
-                                              for (const file of files) {
-                                                const formData = new FormData();
-                                                formData.append('file', file);
-                                                formData.append('playerEmail', selectedPlayer.email || '');
-                                                formData.append('clipName', file.name.replace(/\.[^/.]+$/, ''));
-                                                
-                                                const response = await fetch(
-                                                  `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/upload-player-highlight`,
-                                                  {
-                                                    method: 'POST',
-                                                    headers: {
-                                                      'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-                                                      'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-                                                    },
-                                                    body: formData,
-                                                  }
-                                                );
+                                input.onchange = async (e: any) => {
+                                  const files = Array.from(e.target.files || []) as File[];
+                                  if (files.length > 0) {
+                                    // Initialize progress for all files
+                                    const initialProgress: Record<string, any> = {};
+                                    files.forEach(file => {
+                                      initialProgress[file.name] = { status: 'uploading', progress: 0 };
+                                    });
+                                    setUploadProgress(initialProgress);
 
-                                                if (!response.ok) throw new Error('Upload failed');
-                                              }
-                                              toast.success('Clips uploaded successfully!');
-                                              fetchPlayers();
-                                            } catch (error: any) {
-                                              toast.error('Failed to upload: ' + error.message);
-                                            }
+                                    // Process all files
+                                    const uploadPromises = files.map(async (file) => {
+                                      try {
+                                        setUploadProgress(prev => ({
+                                          ...prev,
+                                          [file.name]: { status: 'uploading', progress: 50 }
+                                        }));
+
+                                        const formData = new FormData();
+                                        formData.append('file', file);
+                                        formData.append('playerEmail', selectedPlayer.email || '');
+                                        formData.append('clipName', file.name.replace(/\.[^/.]+$/, ''));
+                                        
+                                        const response = await fetch(
+                                          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/upload-player-highlight`,
+                                          {
+                                            method: 'POST',
+                                            headers: {
+                                              'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+                                              'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+                                            },
+                                            body: formData,
                                           }
-                                        };
+                                        );
+
+                                        if (!response.ok) throw new Error('Upload failed');
+
+                                        setUploadProgress(prev => ({
+                                          ...prev,
+                                          [file.name]: { status: 'success', progress: 100 }
+                                        }));
+
+                                        toast.success(`Successfully uploaded ${file.name}`);
+                                      } catch (error) {
+                                        console.error(`Error uploading ${file.name}:`, error);
+                                        setUploadProgress(prev => ({
+                                          ...prev,
+                                          [file.name]: { status: 'error', progress: 0, error: error instanceof Error ? error.message : 'Upload failed' }
+                                        }));
+                                        toast.error(`Failed to upload ${file.name}`);
+                                      }
+                                    });
+
+                                    await Promise.all(uploadPromises);
+                                    fetchPlayers();
+                                    
+                                    // Clear progress after 3 seconds
+                                    setTimeout(() => {
+                                      setUploadProgress({});
+                                    }, 3000);
+                                  }
+                                };
                                         input.click();
                                       }}
                                       variant="outline"
@@ -1584,6 +1687,44 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                       Manage Playlists
                                     </Button>
                                   </div>
+                                  
+                                  {/* Upload Progress */}
+                                  {Object.keys(uploadProgress).length > 0 && (
+                                    <div className="space-y-3 mb-6">
+                                      <div className="flex items-center justify-between">
+                                        <h3 className="text-sm font-semibold">Upload Progress</h3>
+                                        <Button 
+                                          variant="ghost" 
+                                          size="sm"
+                                          onClick={() => setUploadProgress({})}
+                                        >
+                                          Clear
+                                        </Button>
+                                      </div>
+                                      {Object.entries(uploadProgress).map(([filename, status]) => (
+                                        <Card key={filename} className="overflow-hidden">
+                                          <CardContent className="p-4">
+                                            <div className="flex items-center justify-between mb-2">
+                                              <span className="text-sm font-medium truncate flex-1">{filename}</span>
+                                              <Badge variant={
+                                                status.status === 'success' ? 'default' :
+                                                status.status === 'error' ? 'destructive' :
+                                                'secondary'
+                                              }>
+                                                {status.status === 'uploading' ? 'Uploading' :
+                                                 status.status === 'success' ? 'Uploaded' :
+                                                 'Failed'}
+                                              </Badge>
+                                            </div>
+                                            <Progress value={status.progress} className="h-2" />
+                                            {status.error && (
+                                              <p className="text-xs text-destructive mt-2">{status.error}</p>
+                                            )}
+                                          </CardContent>
+                                        </Card>
+                                      ))}
+                                    </div>
+                                  )}
                                   
                                   {bestClips.length > 0 ? (
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -1651,10 +1792,23 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                 input.multiple = true;
                                 input.accept = 'image/jpeg,image/png,image/gif,image/webp,image/*';
                                 input.onchange = async (e: any) => {
-                                  const files = e.target.files;
-                                  if (files && files.length > 0) {
-                                    try {
-                                      for (const file of files) {
+                                  const files = Array.from(e.target.files || []) as File[];
+                                  if (files.length > 0) {
+                                    // Initialize progress for all files
+                                    const initialProgress: Record<string, any> = {};
+                                    files.forEach(file => {
+                                      initialProgress[file.name] = { status: 'uploading', progress: 0 };
+                                    });
+                                    setUploadProgress(initialProgress);
+
+                                    // Process all files
+                                    const uploadPromises = files.map(async (file) => {
+                                      try {
+                                        setUploadProgress(prev => ({
+                                          ...prev,
+                                          [file.name]: { status: 'uploading', progress: 33 }
+                                        }));
+
                                         const fileExt = file.name.split('.').pop();
                                         const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
                                         const filePath = `${fileName}`;
@@ -1664,6 +1818,11 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                           .upload(filePath, file);
                                         
                                         if (uploadError) throw uploadError;
+
+                                        setUploadProgress(prev => ({
+                                          ...prev,
+                                          [file.name]: { status: 'uploading', progress: 66 }
+                                        }));
                                         
                                         const { data: { publicUrl } } = supabase.storage
                                           .from('marketing-gallery')
@@ -1680,11 +1839,29 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                           }]);
                                         
                                         if (dbError) throw dbError;
+
+                                        setUploadProgress(prev => ({
+                                          ...prev,
+                                          [file.name]: { status: 'success', progress: 100 }
+                                        }));
+
+                                        toast.success(`Successfully uploaded ${file.name}`);
+                                      } catch (error) {
+                                        console.error(`Error uploading ${file.name}:`, error);
+                                        setUploadProgress(prev => ({
+                                          ...prev,
+                                          [file.name]: { status: 'error', progress: 0, error: error instanceof Error ? error.message : 'Upload failed' }
+                                        }));
+                                        toast.error(`Failed to upload ${file.name}`);
                                       }
-                                      toast.success('Images uploaded successfully!');
-                                    } catch (error: any) {
-                                      toast.error('Failed to upload: ' + error.message);
-                                    }
+                                    });
+
+                                    await Promise.all(uploadPromises);
+                                    
+                                    // Clear progress after 3 seconds
+                                    setTimeout(() => {
+                                      setUploadProgress({});
+                                    }, 3000);
                                   }
                                 };
                                 input.click();
@@ -1695,6 +1872,44 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                               <Plus className="w-4 h-4 mr-2" />
                               Upload Images
                             </Button>
+                            
+                            {/* Upload Progress */}
+                            {Object.keys(uploadProgress).length > 0 && (
+                              <div className="space-y-3 mb-6">
+                                <div className="flex items-center justify-between">
+                                  <h3 className="text-sm font-semibold">Upload Progress</h3>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm"
+                                    onClick={() => setUploadProgress({})}
+                                  >
+                                    Clear
+                                  </Button>
+                                </div>
+                                {Object.entries(uploadProgress).map(([filename, status]) => (
+                                  <Card key={filename} className="overflow-hidden">
+                                    <CardContent className="p-4">
+                                      <div className="flex items-center justify-between mb-2">
+                                        <span className="text-sm font-medium truncate flex-1">{filename}</span>
+                                        <Badge variant={
+                                          status.status === 'success' ? 'default' :
+                                          status.status === 'error' ? 'destructive' :
+                                          'secondary'
+                                        }>
+                                          {status.status === 'uploading' ? 'Uploading' :
+                                           status.status === 'success' ? 'Uploaded' :
+                                           'Failed'}
+                                        </Badge>
+                                      </div>
+                                      <Progress value={status.progress} className="h-2" />
+                                      {status.error && (
+                                        <p className="text-xs text-destructive mt-2">{status.error}</p>
+                                      )}
+                                    </CardContent>
+                                  </Card>
+                                ))}
+                              </div>
+                            )}
                             
                             <PlayerImages playerName={selectedPlayer.name} isAdmin={isAdmin} />
                           </div>
