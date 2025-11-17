@@ -2025,97 +2025,105 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       />
 
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] w-[95vw] sm:w-full">
-          <DialogHeader>
-            <DialogTitle>Edit Player - {editingPlayer?.name}</DialogTitle>
+        <DialogContent className="max-w-4xl max-h-[95vh] w-[98vw] sm:w-[95vw] p-3 sm:p-6">
+          <DialogHeader className="pb-2 sm:pb-4">
+            <DialogTitle className="text-base sm:text-lg">Edit Player - {editingPlayer?.name}</DialogTitle>
           </DialogHeader>
-          <ScrollArea className="h-[calc(90vh-120px)] pr-4">
-            <form onSubmit={handleUpdatePlayer} className="space-y-6">
+          <ScrollArea className="h-[calc(95vh-100px)] sm:h-[calc(90vh-120px)] pr-2 sm:pr-4">
+            <form onSubmit={handleUpdatePlayer} className="space-y-4 sm:space-y-6">
               <Tabs defaultValue="basic" className="w-full">
-                <TabsList className="flex flex-nowrap overflow-x-auto md:grid md:grid-cols-6 w-full gap-1">
-                  <TabsTrigger value="basic" className="flex-shrink-0 whitespace-nowrap">Basic</TabsTrigger>
-                  <TabsTrigger value="career" className="flex-shrink-0 whitespace-nowrap">Career</TabsTrigger>
-                  <TabsTrigger value="bio" className="flex-shrink-0 whitespace-nowrap">Bio</TabsTrigger>
-                  <TabsTrigger value="tactical" className="flex-shrink-0 whitespace-nowrap">Schemes</TabsTrigger>
-                  <TabsTrigger value="stats" className="flex-shrink-0 whitespace-nowrap">Stats</TabsTrigger>
-                  <TabsTrigger value="links" className="flex-shrink-0 whitespace-nowrap">Links</TabsTrigger>
+                <TabsList className="flex w-full overflow-x-auto overflow-y-hidden scrollbar-hide gap-1 h-auto p-1 bg-muted rounded-md mb-4">
+                  <TabsTrigger value="basic" className="flex-shrink-0 whitespace-nowrap text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2">Basic</TabsTrigger>
+                  <TabsTrigger value="career" className="flex-shrink-0 whitespace-nowrap text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2">Career</TabsTrigger>
+                  <TabsTrigger value="bio" className="flex-shrink-0 whitespace-nowrap text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2">Bio</TabsTrigger>
+                  <TabsTrigger value="tactical" className="flex-shrink-0 whitespace-nowrap text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2">Schemes</TabsTrigger>
+                  <TabsTrigger value="stats" className="flex-shrink-0 whitespace-nowrap text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2">Stats</TabsTrigger>
+                  <TabsTrigger value="links" className="flex-shrink-0 whitespace-nowrap text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2">Links</TabsTrigger>
                 </TabsList>
 
                 {/* Basic Info Tab */}
-                <TabsContent value="basic" className="space-y-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="name">Name *</Label>
+                <TabsContent value="basic" className="space-y-3 sm:space-y-4 pt-2">
+                  <div className="grid grid-cols-1 gap-3 sm:gap-4">
+                    <div className="space-y-1.5 sm:space-y-2">
+                      <Label htmlFor="name" className="text-sm">Name *</Label>
                       <Input
                         id="name"
                         value={formData.name}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                         required
+                        className="h-10 sm:h-11"
                       />
                     </div>
                     
-                    <div className="space-y-2">
-                      <Label htmlFor="email">Email</Label>
+                    <div className="space-y-1.5 sm:space-y-2">
+                      <Label htmlFor="email" className="text-sm">Email</Label>
                       <Input
                         id="email"
                         type="email"
                         value={formData.email}
                         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        className="h-10 sm:h-11"
                       />
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="position">Position *</Label>
+                  <div className="grid grid-cols-1 gap-3 sm:gap-4">
+                    <div className="space-y-1.5 sm:space-y-2">
+                      <Label htmlFor="position" className="text-sm">Position *</Label>
                       <Input
                         id="position"
                         value={formData.position}
                         onChange={(e) => setFormData({ ...formData, position: e.target.value })}
                         required
+                        className="h-10 sm:h-11"
                       />
                     </div>
                     
-                    <div className="space-y-2">
-                      <Label htmlFor="age">Age *</Label>
-                      <Input
-                        id="age"
-                        type="number"
-                        value={formData.age}
-                        onChange={(e) => setFormData({ ...formData, age: parseInt(e.target.value) || 0 })}
-                        required
-                      />
-                    </div>
+                    <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                      <div className="space-y-1.5 sm:space-y-2">
+                        <Label htmlFor="age" className="text-sm">Age *</Label>
+                        <Input
+                          id="age"
+                          type="number"
+                          value={formData.age}
+                          onChange={(e) => setFormData({ ...formData, age: parseInt(e.target.value) || 0 })}
+                          required
+                          className="h-10 sm:h-11"
+                        />
+                      </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="nationality">Nationality *</Label>
-                      <Input
-                        id="nationality"
-                        value={formData.nationality}
-                        onChange={(e) => setFormData({ ...formData, nationality: e.target.value })}
-                        required
-                      />
+                      <div className="space-y-1.5 sm:space-y-2">
+                        <Label htmlFor="nationality" className="text-sm">Nationality *</Label>
+                        <Input
+                          id="nationality"
+                          value={formData.nationality}
+                          onChange={(e) => setFormData({ ...formData, nationality: e.target.value })}
+                          required
+                          className="h-10 sm:h-11"
+                        />
+                      </div>
                     </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="image_url">Player Image URL</Label>
+                  <div className="space-y-1.5 sm:space-y-2">
+                    <Label htmlFor="image_url" className="text-sm">Player Image URL</Label>
                     <Input
                       id="image_url"
                       value={formData.image_url}
                       onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
                       placeholder="https://example.com/player.png"
+                      className="h-10 sm:h-11 text-sm"
                     />
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="category">Category</Label>
+                  <div className="grid grid-cols-1 gap-3 sm:gap-4">
+                    <div className="space-y-1.5 sm:space-y-2">
+                      <Label htmlFor="category" className="text-sm">Category</Label>
                       <Select
                         value={formData.category}
                         onValueChange={(value) => setFormData({ ...formData, category: value })}
                       >
-                        <SelectTrigger>
+                        <SelectTrigger className="h-10 sm:h-11">
                           <SelectValue placeholder="Select category" />
                         </SelectTrigger>
                         <SelectContent>
@@ -2127,13 +2135,13 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                       </Select>
                     </div>
                     
-                    <div className="space-y-2">
-                      <Label htmlFor="representation_status">Representation Status</Label>
+                    <div className="space-y-1.5 sm:space-y-2">
+                      <Label htmlFor="representation_status" className="text-sm">Representation Status</Label>
                       <Select
                         value={formData.representation_status}
                         onValueChange={(value) => setFormData({ ...formData, representation_status: value })}
                       >
-                        <SelectTrigger>
+                        <SelectTrigger className="h-10 sm:h-11">
                           <SelectValue placeholder="Select status" />
                         </SelectTrigger>
                         <SelectContent>
@@ -2145,15 +2153,15 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 pt-2">
+                  <div className="flex items-center gap-3 pt-2">
                     <input
                       type="checkbox"
                       id="visible_on_stars_page"
                       checked={formData.visible_on_stars_page}
                       onChange={(e) => setFormData({ ...formData, visible_on_stars_page: e.target.checked })}
-                      className="h-4 w-4"
+                      className="h-5 w-5 sm:h-4 sm:w-4"
                     />
-                    <Label htmlFor="visible_on_stars_page">Visible on Stars Page</Label>
+                    <Label htmlFor="visible_on_stars_page" className="text-sm cursor-pointer">Visible on Stars Page</Label>
                   </div>
                 </TabsContent>
 
@@ -2609,11 +2617,19 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                 </TabsContent>
               </Tabs>
 
-              <div className="flex justify-end gap-2 pt-4 border-t">
-                <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+              <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-2 pt-4 border-t sticky bottom-0 bg-background pb-2">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => setIsEditDialogOpen(false)}
+                  className="w-full sm:w-auto h-11 sm:h-10"
+                >
                   Cancel
                 </Button>
-                <Button type="submit">
+                <Button 
+                  type="submit"
+                  className="w-full sm:w-auto h-11 sm:h-10"
+                >
                   Save Changes
                 </Button>
               </div>
