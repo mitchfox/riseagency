@@ -3081,16 +3081,9 @@ const Dashboard = () => {
               </Card>
             </TabsContent>
 
-            <TabsContent value="updates" className="space-y-6">
-              <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 border-t-[2px] border-t-[hsl(43,49%,61%)] border-b-0">
-                <CardHeader marble>
-                  <div className="container mx-auto px-4">
-                    <CardTitle className="font-heading tracking-tight">
-                      Updates
-                    </CardTitle>
-                  </div>
-                </CardHeader>
-                <CardContent className="container mx-auto px-4">
+            <TabsContent value="updates">
+              <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-0">
+                <CardContent className="container mx-auto px-4 pt-2">
                   <Tabs defaultValue="general" className="w-full">
                     <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 gap-2 mb-6 bg-muted h-auto p-2">
                       <TabsTrigger value="general" className="font-bebas uppercase text-sm">
