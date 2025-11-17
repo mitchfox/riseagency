@@ -21,6 +21,7 @@ import { SEO } from "@/components/SEO";
 import { createPerformanceReportSlug } from "@/lib/urlHelpers";
 import { PlaylistContent } from "@/components/PlaylistContent";
 import { CoachAvailability } from "@/components/CoachAvailability";
+import { PlayerScoutingReports } from "@/components/PlayerScoutingReports";
 import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
 import { OfflineContentManager } from "@/components/OfflineContentManager";
 
@@ -1269,6 +1270,15 @@ const Dashboard = () => {
                       )}
                     </CardContent>
                   </Card>
+                </TabsContent>
+
+                <TabsContent value="scouting">
+                  {playerData && (
+                    <PlayerScoutingReports 
+                      playerId={playerData.id}
+                      playerName={playerData.name}
+                    />
+                  )}
                 </TabsContent>
 
                 <TabsContent value="concepts">
