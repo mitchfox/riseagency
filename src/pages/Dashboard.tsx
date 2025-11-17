@@ -1174,7 +1174,6 @@ const Dashboard = () => {
         <div className="container mx-auto max-w-6xl px-4 md:px-6 mb-0">
           <NotificationPermission />
         </div>
-
         {/* Navigation Menu - Full width, no spacing */}
         <div className="w-full">
           <DropdownMenu>
