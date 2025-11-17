@@ -2772,7 +2772,7 @@ const Dashboard = () => {
           </Tabs>
 
           {dailyAphorism && (
-            <div className="mt-8 mb-6 px-4 md:px-0">
+            <div className="mt-8 px-4 md:px-0">
               <Card className="relative overflow-hidden border-gold bg-gold/30">
                 <CardContent className="relative py-5 px-3 text-center space-y-3">
                   <div className="bg-black/90 backdrop-blur-sm p-3 rounded-lg inline-block">
