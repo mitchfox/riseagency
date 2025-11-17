@@ -50,7 +50,10 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
         .order('created_at', { ascending: false });
       
       if (!error && data) {
+        console.log('Marketing images fetched:', data);
         setMarketingImages(data.map(img => img.file_url));
+      } else if (error) {
+        console.error('Error fetching marketing images:', error);
       }
     };
     
@@ -185,6 +188,7 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
       thumbnails.push(playerData.image_url);
     }
     
+    console.log('Video thumbnails generated:', thumbnails.length, thumbnails);
     return thumbnails;
   }, [playerData, marketingImages]);
 
@@ -246,7 +250,7 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
         {/* Schedule Card - Full Width */}
         <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 border-t-2 border-t-gold z-20">
           <CardHeader marble>
-            <div className="flex items-center justify-between container mx-auto px-4">
+            <div className="flex items-center justify-between container mx-auto px-4 pr-6">
               <div className="flex items-center gap-2">
                 <Calendar className="h-5 w-5" />
                 <CardTitle className="font-heading tracking-tight">This Week's Schedule</CardTitle>
@@ -261,7 +265,7 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
               </Button>
             </div>
           </CardHeader>
-          <CardContent className="container mx-auto px-4 pt-[30px] pb-6">
+          <CardContent className="container mx-auto px-4 pt-3 pb-4">
             {currentSchedule ? (
               <div className="grid grid-cols-8 gap-1 md:gap-2">
                 {/* Week Cell */}
@@ -352,7 +356,7 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
         {/* R90 Performance Chart & Recent Analysis Combined - Full Width */}
         <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 border-t-2 border-t-gold z-20">
           <CardHeader marble>
-            <div className="flex items-center justify-between container mx-auto px-4">
+            <div className="flex items-center justify-between container mx-auto px-4 pr-6">
               <div className="flex items-center gap-2">
                 <TrendingUp className="h-5 w-5" />
                 <CardTitle className="font-heading tracking-tight">Recent Form</CardTitle>

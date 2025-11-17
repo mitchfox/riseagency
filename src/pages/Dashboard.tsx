@@ -1584,13 +1584,6 @@ const Dashboard = () => {
 
                         return (
                           <div key={program.id}>
-                            {/* Program Header */}
-                            <div className="border-b pb-4 mb-6">
-                              <h3 className="text-xl md:text-2xl font-bebas uppercase tracking-wider">
-                                {program.program_name}
-                              </h3>
-                            </div>
-
                             {!hasContent ? (
                               <div className="p-6 border border-primary/20 rounded-lg bg-accent/10">
                                 <p className="text-center text-muted-foreground">
