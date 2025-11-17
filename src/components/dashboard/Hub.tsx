@@ -383,7 +383,7 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
             {/* Chart */}
             {chartData.length > 0 ? (
               <div className="w-full px-2 -ml-6 mt-[25px]">
-                <ResponsiveContainer width="100%" height={275}>
+                <ResponsiveContainer width="100%" height={305}>
                   <BarChart data={chartData} margin={{ bottom: 25, left: 10, right: 10 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                     <XAxis 
