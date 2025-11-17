@@ -197,7 +197,7 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
   }, [playerData, marketingImages]);
 
   const autoplayPlugin = React.useRef(
-    Autoplay({ delay: 10000, stopOnInteraction: false, stopOnMouseEnter: false })
+    Autoplay({ delay: 15000, stopOnInteraction: false, stopOnMouseEnter: false })
   );
   
   const fadePlugin = React.useRef(Fade());
@@ -220,7 +220,7 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
                 <CarouselContent>
                   {videoThumbnails.map((thumbnail, index) => (
                     <CarouselItem key={index}>
-                      <div className="relative w-full" style={{ height: '400px' }}>
+                      <div className="relative w-full" style={{ aspectRatio: '21/9' }}>
                         {thumbnail.includes('supabase') && thumbnail.includes('videos') ? (
                           <video
                             src={thumbnail}
@@ -241,15 +241,13 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
                     </CarouselItem>
                   ))}
                 </CarouselContent>
-                <CarouselPrevious className="left-4" />
-                <CarouselNext className="right-4" />
               </Carousel>
             </CardContent>
           </Card>
         )}
 
         {/* Schedule Card - Full Width */}
-        <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 border-t-0 z-20">
+        <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 border-t-2 border-t-gold z-20">
           <CardHeader marble>
             <div className="flex items-center justify-between container mx-auto px-4 pr-6">
               <div className="flex items-center gap-2">

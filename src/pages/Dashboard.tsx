@@ -1483,14 +1483,17 @@ const Dashboard = () => {
                   </Card>
                 </TabsContent>
 
+
                 <TabsContent value="form">
-                  <Card>
+                  <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0">
                     <CardHeader marble>
-                      <CardTitle className="text-3xl font-bebas uppercase tracking-wider">
-                        Form
-                      </CardTitle>
+                      <div className="container mx-auto px-4">
+                        <CardTitle className="text-3xl font-bebas uppercase tracking-wider">
+                          Form
+                        </CardTitle>
+                      </div>
                     </CardHeader>
-                    <CardContent className="pt-6">
+                    <CardContent className="container mx-auto px-4 pt-6">
                       {(() => {
                         // Process chart data
                         const chartData = analyses
@@ -1526,7 +1529,7 @@ const Dashboard = () => {
                         };
 
                         return chartData.length > 0 ? (
-                          <div className="w-full">
+                          <div className="w-full px-2 -ml-6">
                             <ResponsiveContainer width="100%" height={550}>
                               <BarChart data={chartData} margin={{ bottom: 25, left: 10, right: 10 }}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
