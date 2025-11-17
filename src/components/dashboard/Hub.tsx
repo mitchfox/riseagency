@@ -1,8 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Calendar, TrendingUp, ArrowRight } from "lucide-react";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { format } from "date-fns";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
+import { format, parseISO, startOfWeek, endOfWeek, isWithinInterval, addDays } from "date-fns";
 import { Link } from "react-router-dom";
 
 interface PlayerProgram {
@@ -32,15 +32,54 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis }: Hu
   const currentProgram = programs.find(p => p.is_current);
   const currentSchedule = currentProgram?.weekly_schedules?.[0] || null;
 
-  // Prepare R90 chart data
+  // Session color mapping
+  const getSessionColor = (sessionKey: string) => {
+    const key = sessionKey.toUpperCase();
+    const colorMap: Record<string, { bg: string; text: string; hover: string }> = {
+      'A': { bg: 'hsl(220, 70%, 35%)', text: 'hsl(45, 100%, 60%)', hover: 'hsl(220, 70%, 45%)' },
+      'B': { bg: 'hsl(140, 50%, 30%)', text: 'hsl(45, 100%, 60%)', hover: 'hsl(140, 50%, 40%)' },
+      'C': { bg: 'hsl(0, 50%, 35%)', text: 'hsl(45, 100%, 60%)', hover: 'hsl(0, 50%, 45%)' },
+      'D': { bg: 'hsl(45, 70%, 45%)', text: 'hsl(45, 100%, 60%)', hover: 'hsl(45, 70%, 55%)' },
+      'E': { bg: 'hsl(70, 20%, 40%)', text: 'hsl(45, 100%, 60%)', hover: 'hsl(70, 20%, 50%)' },
+      'F': { bg: 'hsl(270, 60%, 40%)', text: 'hsl(45, 100%, 60%)', hover: 'hsl(270, 60%, 50%)' },
+      'G': { bg: 'hsl(190, 70%, 45%)', text: 'hsl(45, 100%, 60%)', hover: 'hsl(190, 70%, 55%)' },
+      'H': { bg: 'hsl(30, 80%, 45%)', text: 'hsl(45, 100%, 60%)', hover: 'hsl(30, 80%, 55%)' },
+      'REST': { bg: 'hsl(0, 0%, 20%)', text: 'hsl(0, 0%, 100%)', hover: 'hsl(0, 0%, 30%)' },
+      'MATCH': { bg: 'hsl(43, 49%, 61%)', text: 'hsl(0, 0%, 0%)', hover: 'hsl(43, 49%, 71%)' },
+    };
+    return colorMap[key] || { bg: 'hsl(0, 0%, 10%)', text: 'hsl(0, 0%, 100%)', hover: 'hsl(0, 0%, 15%)' };
+  };
+
+  const getWeekDates = (weekStartDate: string | null) => {
+    if (!weekStartDate) return null;
+    
+    try {
+      const startDate = parseISO(weekStartDate);
+      return {
+        monday: startDate,
+        tuesday: addDays(startDate, 1),
+        wednesday: addDays(startDate, 2),
+        thursday: addDays(startDate, 3),
+        friday: addDays(startDate, 4),
+        saturday: addDays(startDate, 5),
+        sunday: addDays(startDate, 6),
+      };
+    } catch (error) {
+      console.error('Error parsing week start date:', error);
+      return null;
+    }
+  };
+
+  // Prepare R90 chart data - showing opponent and result
   const chartData = analyses
     .filter(a => a.r90_score != null)
     .sort((a, b) => new Date(a.analysis_date).getTime() - new Date(b.analysis_date).getTime())
     .slice(-8)
     .map(a => ({
-      date: format(new Date(a.analysis_date), "MMM dd"),
+      opponent: a.opponent || "Unknown",
       score: a.r90_score,
-      opponent: a.opponent
+      result: a.result || "",
+      displayLabel: `${a.opponent || "Unknown"}${a.result ? ` (${a.result})` : ""}`
     }));
 
   // Get latest 3 analyses
@@ -90,7 +129,6 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis }: Hu
 
       <div>
         <h2 className="text-3xl font-bold mb-2">Hub</h2>
-        <p className="text-muted-foreground">Your performance overview</p>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
@@ -104,15 +142,79 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis }: Hu
           </CardHeader>
           <CardContent>
             {currentSchedule ? (
-              <div className="space-y-3">
-                {Object.entries(currentSchedule.days || {}).map(([day, sessions]: [string, any]) => (
-                  <div key={day} className="border-l-2 border-primary pl-3 py-1">
-                    <div className="font-medium text-sm">{day}</div>
-                    <div className="text-xs text-muted-foreground">
-                      {Array.isArray(sessions) ? sessions.join(", ") : sessions}
+              <div className="grid grid-cols-8 gap-1 md:gap-2">
+                {/* Week Cell */}
+                <div 
+                  className="p-2 md:p-4 flex flex-col items-center justify-center rounded-lg"
+                  style={{ 
+                    backgroundColor: currentSchedule.week_start_date && (() => {
+                      const weekStart = parseISO(currentSchedule.week_start_date);
+                      const today = new Date();
+                      const currentWeekStart = startOfWeek(today, { weekStartsOn: 1 });
+                      const currentWeekEnd = endOfWeek(today, { weekStartsOn: 1 });
+                      const isCurrentWeek = isWithinInterval(weekStart, { start: currentWeekStart, end: currentWeekEnd });
+                      return isCurrentWeek ? 'hsl(43, 49%, 61%)' : 'hsl(0, 0%, 95%)';
+                    })() || 'hsl(0, 0%, 95%)',
+                    color: 'hsl(0, 0%, 0%)'
+                  }}
+                >
+                  {currentSchedule.week_start_date ? (() => {
+                    const date = parseISO(currentSchedule.week_start_date);
+                    const day = format(date, 'd');
+                    const suffix = day.endsWith('1') && day !== '11' ? 'st' :
+                                  day.endsWith('2') && day !== '12' ? 'nd' :
+                                  day.endsWith('3') && day !== '13' ? 'rd' : 'th';
+                    return (
+                      <div className="text-center">
+                        <div className="text-sm md:text-2xl font-bold mb-1">{day}<sup className="text-[8px] md:text-sm">{suffix}</sup></div>
+                        <div className="text-[8px] md:text-sm font-medium italic">
+                          <span className="md:hidden">{format(date, 'MMM')}</span>
+                          <span className="hidden md:inline">{format(date, 'MMMM')}</span>
+                        </div>
+                      </div>
+                    );
+                  })() : <span className="text-xs md:text-sm">{currentSchedule.week || 'W'}</span>}
+                </div>
+              
+                {/* Day Cells */}
+                {['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map((day) => {
+                  const sessionValue = currentSchedule[day] || '';
+                  const colors = sessionValue ? getSessionColor(sessionValue) : { bg: 'hsl(0, 0%, 10%)', text: 'hsl(0, 0%, 100%)', hover: 'hsl(0, 0%, 15%)' };
+                  const weekDates = getWeekDates(currentSchedule.week_start_date);
+                  const dayDate = weekDates ? weekDates[day as keyof typeof weekDates] : null;
+                  const dayImageKey = `${day}Image`;
+                  const clubLogoUrl = currentSchedule[dayImageKey];
+                  
+                  return (
+                    <div
+                      key={day}
+                      className="relative p-2 md:p-4 rounded-lg transition-all flex flex-col items-center justify-center min-h-[60px] md:min-h-[80px]"
+                      style={{
+                        backgroundColor: colors.bg,
+                        color: colors.text,
+                      }}
+                    >
+                      <div className="text-[8px] md:text-xs font-medium mb-1 opacity-70 uppercase">
+                        {day.slice(0, 3)}
+                      </div>
+                      {dayDate && (
+                        <div className="text-[10px] md:text-sm font-bold mb-1">
+                          {format(dayDate, 'd')}
+                        </div>
+                      )}
+                      {clubLogoUrl && (
+                        <img 
+                          src={clubLogoUrl} 
+                          alt={`${day} opponent`}
+                          className="w-4 h-4 md:w-6 md:h-6 object-contain mb-1"
+                        />
+                      )}
+                      <div className="text-[10px] md:text-sm font-bold text-center">
+                        {sessionValue || '-'}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <p className="text-sm text-muted-foreground">No active program schedule</p>
@@ -131,17 +233,21 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis }: Hu
           <CardContent>
             {chartData.length > 0 ? (
               <ResponsiveContainer width="100%" height={200}>
-                <LineChart data={chartData}>
+                <BarChart data={chartData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                   <XAxis 
-                    dataKey="date" 
+                    dataKey="displayLabel" 
                     stroke="hsl(var(--muted-foreground))"
-                    fontSize={12}
+                    fontSize={10}
+                    angle={-45}
+                    textAnchor="end"
+                    height={80}
                   />
                   <YAxis 
                     stroke="hsl(var(--muted-foreground))"
                     fontSize={12}
-                    domain={[50, 100]}
+                    domain={[0, 4]}
+                    ticks={[0, 1, 2, 3, 4]}
                   />
                   <Tooltip 
                     contentStyle={{
@@ -149,19 +255,14 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis }: Hu
                       border: "1px solid hsl(var(--border))",
                       borderRadius: "8px"
                     }}
-                    formatter={(value: any, name: string, props: any) => [
-                      `R90: ${value}`,
-                      props.payload.opponent
-                    ]}
+                    formatter={(value: any) => [`R90: ${value}`, "Score"]}
                   />
-                  <Line 
-                    type="monotone" 
-                    dataKey="score" 
-                    stroke="hsl(var(--primary))" 
-                    strokeWidth={2}
-                    dot={{ fill: "hsl(var(--primary))", r: 4 }}
-                  />
-                </LineChart>
+                  <Bar dataKey="score" radius={[8, 8, 0, 0]}>
+                    {chartData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill="hsl(var(--primary))" />
+                    ))}
+                  </Bar>
+                </BarChart>
               </ResponsiveContainer>
             ) : (
               <p className="text-sm text-muted-foreground">No performance data yet</p>
