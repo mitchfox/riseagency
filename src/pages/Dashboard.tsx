@@ -2561,10 +2561,10 @@ const Dashboard = () => {
 
                                 {/* Testing Section */}
                                 <AccordionItem value="testing">
-                                  <AccordionTrigger className="text-xl font-bebas uppercase hover:no-underline">
+                                  <AccordionTrigger className="text-xl font-bebas uppercase hover:no-underline pl-6">
                                     Testing
                                   </AccordionTrigger>
-                                  <AccordionContent>
+                                  <AccordionContent className="pl-6 pr-6">
                                     <p className="text-muted-foreground">
                                       Testing protocols and benchmarks will be added here by your coach.
                                     </p>
