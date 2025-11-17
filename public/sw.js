@@ -1,12 +1,11 @@
 // UPDATE THIS VERSION NUMBER WHEN YOU DEPLOY NEW CHANGES
-const CACHE_VERSION = 'rise-v1.3.0';
+const CACHE_VERSION = 'rise-v1.3.1';
 const CACHE_NAME = `${CACHE_VERSION}`;
+const ASSETS_CACHE = `${CACHE_VERSION}-assets`;
 
 // Critical files to cache - minimal set for faster updates
 const urlsToCache = [
   '/',
-  '/staff',
-  '/dashboard',
   '/manifest.json',
   '/lovable-uploads/icon-192x192.png',
   '/lovable-uploads/icon-512x512.png',
@@ -45,7 +44,7 @@ self.addEventListener('activate', (event) => {
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME) {
+          if (cacheName !== CACHE_NAME && cacheName !== ASSETS_CACHE && !cacheName.startsWith('rise-offline-')) {
             console.log('[Service Worker] Deleting old cache:', cacheName);
             return caches.delete(cacheName);
           }
@@ -58,65 +57,77 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Fetch event - network-first strategy with timeout
+// Fetch event - cache-first for assets, network-first for API
 self.addEventListener('fetch', (event) => {
   // Skip cross-origin requests and browser extensions
   if (!event.request.url.startsWith(self.location.origin)) {
     return;
   }
 
-  // Critical files that should always bypass cache
-  const noCacheUrls = ['/sw.js', '/manifest.json'];
-  const shouldBypassCache = noCacheUrls.some(url => event.request.url.includes(url));
+  const url = new URL(event.request.url);
+  
+  // Skip service worker and manifest
+  if (url.pathname === '/sw.js' || url.pathname === '/manifest.json') {
+    event.respondWith(fetch(event.request, { cache: 'no-store' }));
+    return;
+  }
 
-  if (shouldBypassCache) {
+  // Cache-first strategy for static assets (JS, CSS, images, fonts)
+  const isStaticAsset = /\.(js|css|png|jpg|jpeg|gif|svg|webp|woff|woff2|ttf|otf)$/.test(url.pathname);
+  
+  if (isStaticAsset) {
     event.respondWith(
-      fetch(event.request, { cache: 'no-store' }).catch(() => {
-        return new Response('Offline - Service worker or manifest not available', {
-          status: 503,
-          statusText: 'Service Unavailable'
+      caches.match(event.request).then((cachedResponse) => {
+        if (cachedResponse) {
+          // Return cached version immediately
+          console.log('[Service Worker] Serving asset from cache:', url.pathname);
+          return cachedResponse;
+        }
+        
+        // If not in cache, fetch and cache it
+        return fetch(event.request).then((response) => {
+          if (response && response.status === 200) {
+            const responseToCache = response.clone();
+            caches.open(ASSETS_CACHE).then((cache) => {
+              cache.put(event.request, responseToCache);
+            });
+          }
+          return response;
+        }).catch(() => {
+          console.log('[Service Worker] Asset not available offline:', url.pathname);
+          return new Response('Asset not available offline', { status: 503 });
         });
       })
     );
     return;
   }
 
-  event.respondWith(
-    // Network-first strategy with timeout
-    Promise.race([
-      fetch(event.request).then((response) => {
-        // Only cache successful responses
-        if (response && response.status === 200) {
-          const responseToCache = response.clone();
-          
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, responseToCache);
-          });
-        }
-        
-        return response;
-      }),
-      // Timeout after 3 seconds for faster fallback
-      new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Network timeout')), 3000)
-      )
-    ])
-    .catch(() => {
-      // If network fails, try cache
-      return caches.match(event.request).then((cachedResponse) => {
+  // For navigation requests (HTML pages), try cache first to enable offline
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      caches.match('/').then((cachedResponse) => {
         if (cachedResponse) {
-          console.log('[Service Worker] Serving from cache:', event.request.url);
+          console.log('[Service Worker] Serving index from cache for navigation');
           return cachedResponse;
         }
         
-        // Return offline page for navigation requests
-        if (event.request.mode === 'navigate') {
+        // If not cached, try network
+        return fetch(event.request).then((response) => {
+          if (response && response.status === 200) {
+            const responseToCache = response.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put('/', responseToCache);
+            });
+          }
+          return response;
+        }).catch(() => {
           return new Response(
             `<!DOCTYPE html>
             <html>
               <head>
                 <meta charset="utf-8">
                 <title>Offline - RISE Portal</title>
+                <meta name="viewport" content="width=device-width, initial-scale=1">
                 <style>
                   body { 
                     font-family: system-ui; 
@@ -148,14 +159,33 @@ self.addEventListener('fetch', (event) => {
               })
             }
           );
+        });
+      })
+    );
+    return;
+  }
+
+  // For API requests, network-first with cache fallback
+  event.respondWith(
+    fetch(event.request).then((response) => {
+      // Cache successful GET requests
+      if (response && response.status === 200 && event.request.method === 'GET') {
+        const responseToCache = response.clone();
+        caches.open(CACHE_NAME).then((cache) => {
+          cache.put(event.request, responseToCache);
+        });
+      }
+      return response;
+    }).catch(() => {
+      // Try cache if network fails
+      return caches.match(event.request).then((cachedResponse) => {
+        if (cachedResponse) {
+          console.log('[Service Worker] Serving API from cache:', url.pathname);
+          return cachedResponse;
         }
-        
         return new Response('Offline - Content not available', {
           status: 503,
-          statusText: 'Service Unavailable',
-          headers: new Headers({
-            'Content-Type': 'text/plain'
-          })
+          statusText: 'Service Unavailable'
         });
       });
     })
