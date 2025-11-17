@@ -1481,25 +1481,25 @@ const Dashboard = () => {
                 <TabsContent value="other">
                   <Card>
                     <CardHeader marble>
-                      <CardTitle className="text-3xl font-bebas uppercase tracking-wider">
+                      <CardTitle className="text-2xl md:text-3xl font-bebas uppercase tracking-wider">
                         Other Analysis
                       </CardTitle>
                     </CardHeader>
-                    <CardContent className="space-y-4">
+                    <CardContent className="space-y-3 md:space-y-4">
                       {otherAnalyses.length === 0 ? (
                         <div className="py-8">
-                          <p className="text-center text-muted-foreground">No other analysis available yet.</p>
+                          <p className="text-center text-muted-foreground text-sm md:text-base">No other analysis available yet.</p>
                         </div>
                       ) : (
                         <div className="space-y-3">
                           {otherAnalyses.map((item: any) => (
                             <div 
                               key={item.id} 
-                              className="border rounded-lg p-4 hover:border-primary transition-colors bg-card"
+                              className="border rounded-lg p-3 md:p-4 hover:border-primary transition-colors bg-card"
                             >
-                              <div className="flex items-start justify-between gap-4">
-                                <div className="flex-1">
-                                  <h3 className="font-semibold text-lg mb-2">{item.analysis.title}</h3>
+                              <div className="flex flex-col sm:flex-row items-start justify-between gap-3 sm:gap-4">
+                                <div className="flex-1 w-full">
+                                  <h3 className="font-semibold text-base md:text-lg mb-2">{item.analysis.title}</h3>
                                   {item.analysis.category && (
                                     <span className="inline-block px-2 py-1 text-xs rounded bg-primary/10 text-primary">
                                       {item.analysis.category}
@@ -1528,10 +1528,10 @@ const Dashboard = () => {
                                         toast.error("Failed to download PDF");
                                       }
                                     }}
-                                    className="flex-shrink-0"
+                                    className="w-full sm:w-auto flex-shrink-0"
                                   >
                                     <FileText className="w-4 h-4 mr-2" />
-                                    Download PDF
+                                    <span className="text-xs md:text-sm">Download PDF</span>
                                   </Button>
                                 )}
                               </div>
