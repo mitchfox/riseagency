@@ -25,6 +25,7 @@ import { PlayerScoutingReports } from "@/components/PlayerScoutingReports";
 import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
 import { OfflineContentManager } from "@/components/OfflineContentManager";
 import { CacheManager } from "@/lib/cacheManager";
+import { Hub } from "@/components/dashboard/Hub";
 
 
 interface Analysis {
@@ -1170,6 +1171,9 @@ const Dashboard = () => {
           <div className="mb-6">
             <NotificationPermission />
           </div>
+
+          {/* Hub Section */}
+          <Hub programs={programs} analyses={analyses} />
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <div className="mb-8">
