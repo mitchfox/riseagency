@@ -543,22 +543,52 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
                       <LabelList 
                         dataKey="score" 
                         position="center"
-                        style={{ 
-                          fontSize: '16px', 
-                          fill: '#ffffff', 
-                          fontWeight: '700'
+                        content={(props: any) => {
+                          const { x, y, width, height, value, index } = props;
+                          const delay = index * 0.25;
+                          return (
+                            <text
+                              x={x + width / 2}
+                              y={y + height / 2}
+                              fill="#ffffff"
+                              textAnchor="middle"
+                              dominantBaseline="middle"
+                              fontSize="16"
+                              fontWeight="700"
+                              style={{
+                                animation: chartInView ? `labelFadeIn 0.6s ease-out ${delay + 0.8}s both` : 'none'
+                              }}
+                            >
+                              {value}
+                            </text>
+                          );
                         }}
                       />
                       <LabelList 
                         dataKey="score" 
                         position="top" 
                         offset={10}
-                        style={{ 
-                          fontSize: '16px', 
-                          fill: 'hsl(43, 49%, 61%)', 
-                          fontWeight: '700'
+                        content={(props: any) => {
+                          const { x, y, width, value, index } = props;
+                          const delay = index * 0.25;
+                          const grade = getR90Grade(value).grade;
+                          return (
+                            <text
+                              x={x + width / 2}
+                              y={y - 10}
+                              fill="hsl(43, 49%, 61%)"
+                              textAnchor="middle"
+                              dominantBaseline="bottom"
+                              fontSize="16"
+                              fontWeight="700"
+                              style={{
+                                animation: chartInView ? `labelFadeIn 0.6s ease-out ${delay + 0.8}s both` : 'none'
+                              }}
+                            >
+                              {grade}
+                            </text>
+                          );
                         }}
-                        formatter={(value: number) => getR90Grade(value).grade}
                       />
                     </Bar>
                   </BarChart>
