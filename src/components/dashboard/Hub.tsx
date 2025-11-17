@@ -382,7 +382,7 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
             <div className="pt-4 pb-4">
             {/* Chart */}
             {chartData.length > 0 ? (
-              <div className="w-full mt-4" style={{ height: '305px' }}>
+              <div className="w-full mt-4" style={{ height: '152px' }}>
                   <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={chartData} margin={{ top: 25, bottom: 25, left: -30, right: 30 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
