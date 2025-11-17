@@ -377,7 +377,7 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
             {/* Chart */}
             {chartData.length > 0 ? (
               <div className="w-full px-2 -ml-6">
-                <ResponsiveContainer width="100%" height={550}>
+                <ResponsiveContainer width="100%" height={275}>
                   <BarChart data={chartData} margin={{ bottom: 25, left: 10, right: 10 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                     <XAxis 
@@ -401,17 +401,6 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
                               fontWeight="bold"
                             >
                               {data?.result || ''}
-                            </text>
-                            <text 
-                              x={0} 
-                              y={30} 
-                              dy={16} 
-                              textAnchor="end"
-                              fill="hsl(var(--muted-foreground))"
-                              fontSize={10}
-                              transform={`rotate(-90, 0, 46)`}
-                            >
-                              {payload.value}
                             </text>
                           </g>
                         );
