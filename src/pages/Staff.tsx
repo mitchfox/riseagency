@@ -589,11 +589,11 @@ const Staff = () => {
       {/* Header with Logo - always visible */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
         <div className="container mx-auto px-4">
-          <div className="flex items-center justify-center h-16 py-4">
+          <div className="flex items-center justify-center h-16">
             <img 
               src="/RISEWhite.png"
               alt="RISE"
-              className="h-8 w-auto"
+              className="h-10 w-auto"
             />
           </div>
         </div>
