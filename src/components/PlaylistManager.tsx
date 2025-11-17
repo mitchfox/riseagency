@@ -546,24 +546,24 @@ export const PlaylistManager = ({ playerData, availableClips, onClose }: Playlis
                 {selectedPlaylist.clips?.sort((a, b) => a.order - b.order).map((clip, index) => (
                   <div
                     key={clip.id || clip.videoUrl || clip.name}
-                    className="flex items-center gap-1.5 md:gap-2 p-2 border rounded bg-card"
+                    className="flex items-center gap-2 md:gap-3 p-2.5 md:p-3 border rounded bg-card hover:border-primary/30 transition-colors"
                   >
-                    <span className="text-xs md:text-sm font-bold text-primary w-5 md:w-6 flex-shrink-0">
+                    <span className="text-sm md:text-base font-bold text-primary w-8 md:w-10 flex-shrink-0 text-center">
                       {index + 1}.
                     </span>
-                    <span className="flex-1 text-xs md:text-sm leading-tight break-words min-w-0">{clip.name}</span>
+                    <span className="flex-1 text-sm md:text-base leading-tight break-words min-w-0">{clip.name}</span>
                     <Button
                       size="sm"
                       variant="ghost"
                       onClick={() => setPlayingVideo({ url: clip.videoUrl, name: clip.name })}
-                      className="h-7 w-7 p-0 hover:bg-primary/10 text-primary flex-shrink-0"
+                      className="h-8 w-8 p-0 hover:bg-primary/10 text-primary flex-shrink-0"
                       title="Watch clip"
                     >
-                      <Play className="w-3.5 h-3.5" />
+                      <Play className="w-4 h-4" />
                     </Button>
                     
                     {movingClipId === (clip.id || clip.videoUrl || clip.name) ? (
-                      <div className="flex items-center gap-1 flex-shrink-0">
+                      <div className="flex items-center gap-1.5 flex-shrink-0">
                         <Input
                           type="number"
                           min="1"
@@ -571,7 +571,7 @@ export const PlaylistManager = ({ playerData, availableClips, onClose }: Playlis
                           value={targetPosition}
                           onChange={(e) => setTargetPosition(e.target.value)}
                           placeholder="#"
-                          className="h-7 w-12 text-xs p-1 text-center"
+                          className="h-8 w-14 text-sm p-1 text-center"
                           autoFocus
                           onKeyDown={(e) => {
                             if (e.key === 'Enter' && targetPosition) {
@@ -589,9 +589,9 @@ export const PlaylistManager = ({ playerData, availableClips, onClose }: Playlis
                           onClick={() => {
                             if (targetPosition) moveClipToPosition(index, parseInt(targetPosition));
                           }}
-                          className="h-7 w-7 p-0 hover:bg-primary/10"
+                          className="h-8 w-8 p-0 hover:bg-primary/10"
                         >
-                          <Save className="w-3.5 h-3.5" />
+                          <Save className="w-4 h-4" />
                         </Button>
                         <Button
                           size="sm"
@@ -600,9 +600,9 @@ export const PlaylistManager = ({ playerData, availableClips, onClose }: Playlis
                             setMovingClipId(null);
                             setTargetPosition("");
                           }}
-                          className="h-7 w-7 p-0 hover:bg-muted"
+                          className="h-8 w-8 p-0 hover:bg-muted"
                         >
-                          <X className="w-3.5 h-3.5" />
+                          <X className="w-4 h-4" />
                         </Button>
                       </div>
                     ) : (
@@ -614,10 +614,10 @@ export const PlaylistManager = ({ playerData, availableClips, onClose }: Playlis
                             setMovingClipId(clip.id || clip.videoUrl || clip.name);
                             setTargetPosition("");
                           }}
-                          className="h-7 w-7 p-0 hover:bg-muted flex-shrink-0"
+                          className="h-8 w-8 p-0 hover:bg-muted flex-shrink-0"
                           title="Move to position"
                         >
-                          <Hash className="w-3.5 h-3.5" />
+                          <Hash className="w-4 h-4" />
                         </Button>
                         <div className="flex flex-col gap-0.5 flex-shrink-0">
                           <Button
@@ -625,18 +625,18 @@ export const PlaylistManager = ({ playerData, availableClips, onClose }: Playlis
                             variant="ghost"
                             onClick={() => reorderClip(index, 'up')}
                             disabled={index === 0}
-                            className="h-5 w-5 md:h-6 md:w-6 p-0 hover:bg-muted"
+                            className="h-6 w-6 md:h-7 md:w-7 p-0 hover:bg-muted"
                           >
-                            <ChevronUp className="w-3 h-3" />
+                            <ChevronUp className="w-3.5 h-3.5" />
                           </Button>
                           <Button
                             size="sm"
                             variant="ghost"
                             onClick={() => reorderClip(index, 'down')}
                             disabled={index === selectedPlaylist.clips.length - 1}
-                            className="h-5 w-5 md:h-6 md:w-6 p-0 hover:bg-muted"
+                            className="h-6 w-6 md:h-7 md:w-7 p-0 hover:bg-muted"
                           >
-                            <ChevronDown className="w-3 h-3" />
+                            <ChevronDown className="w-3.5 h-3.5" />
                           </Button>
                         </div>
                       </>
@@ -646,9 +646,9 @@ export const PlaylistManager = ({ playerData, availableClips, onClose }: Playlis
                       size="sm"
                       variant="ghost"
                       onClick={() => removeClipFromPlaylist(clip.id || clip.videoUrl || clip.name, clip.name)}
-                      className="h-7 w-7 p-0 text-destructive hover:text-destructive hover:bg-destructive/10 flex-shrink-0"
+                      className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10 flex-shrink-0"
                     >
-                      <X className="w-3.5 h-3.5" />
+                      <X className="w-4 h-4" />
                     </Button>
                   </div>
                 ))}
