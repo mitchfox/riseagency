@@ -122,10 +122,6 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
         </Card>
       )}
 
-      <div>
-        <h2 className="text-3xl font-bold mb-2">Hub</h2>
-      </div>
-
       <div className="grid gap-6 md:grid-cols-2">
         {/* Schedule Card */}
         <Card>
