@@ -39,6 +39,8 @@ interface HubProps {
 
 export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNavigateToForm, onNavigateToSession }: HubProps) => {
   const [marketingImages, setMarketingImages] = React.useState<string[]>([]);
+  const [chartInView, setChartInView] = React.useState(false);
+  const chartRef = React.useRef<HTMLDivElement>(null);
   
   // Fetch marketing gallery images for this player
   React.useEffect(() => {
@@ -63,6 +65,30 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
     
     fetchMarketingImages();
   }, [playerData?.name]);
+  
+  // Intersection observer for chart animation
+  React.useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && !chartInView) {
+            setChartInView(true);
+          }
+        });
+      },
+      { threshold: 0.2 }
+    );
+
+    if (chartRef.current) {
+      observer.observe(chartRef.current);
+    }
+
+    return () => {
+      if (chartRef.current) {
+        observer.unobserve(chartRef.current);
+      }
+    };
+  }, [chartInView]);
   
   // Get current program schedule
   const currentProgram = programs.find(p => p.is_current);
@@ -380,11 +406,11 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
           </CardHeader>
           <CardContent className="p-0 pb-0">
             {chartData.length > 0 ? (
-              <div className="w-full" style={{ height: '260px' }}>
+              <div ref={chartRef} className="w-full" style={{ height: '260px' }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={chartData} margin={{ top: 40, bottom: 0, left: 0, right: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                    <XAxis 
+                    <XAxis
                       dataKey="opponent"
                       stroke="hsl(var(--muted-foreground))"
                       fontSize={10}
@@ -471,11 +497,18 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
                     <Bar 
                       dataKey="score" 
                       radius={[8, 8, 0, 0]}
+                      isAnimationActive={chartInView}
+                      animationBegin={0}
+                      animationDuration={800}
+                      animationEasing="ease-out"
                     >
                       {chartData.map((entry, index) => (
                         <Cell 
                           key={`cell-${index}`} 
                           fill={getR90Color(entry.score)}
+                          style={{
+                            animation: chartInView ? `barSlideUp 0.6s ease-out ${index * 0.15}s both` : 'none'
+                          }}
                         />
                       ))}
                       <LabelList 
