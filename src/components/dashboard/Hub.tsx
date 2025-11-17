@@ -130,7 +130,7 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
       opponent: a.opponent || "Unknown",
       score: a.r90_score,
       result: a.result || "",
-      displayLabel: `${a.opponent || "Unknown"}${a.result ? ` (${a.result})` : ""}`,
+      resultLabel: a.result ? `${a.result}` : "N/A",
       analysisId: a.id
     }));
 
