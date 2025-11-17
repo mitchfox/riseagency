@@ -2433,44 +2433,50 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                 </TabsContent>
 
                 {/* Stats Tab */}
-                <TabsContent value="stats" className="space-y-4">
-                  <div className="space-y-2">
-                    <Label>Season Stats</Label>
-                    {formData.seasonStats.map((stat, index) => (
-                      <div key={index} className="flex gap-2">
-                        <Input
-                          value={stat.header}
-                          onChange={(e) => {
-                            const newStats = [...formData.seasonStats];
-                            newStats[index].header = e.target.value;
-                            setFormData({ ...formData, seasonStats: newStats });
-                          }}
-                          placeholder="Header (e.g., Goals)"
-                          className="flex-1"
-                        />
-                        <Input
-                          value={stat.value}
-                          onChange={(e) => {
-                            const newStats = [...formData.seasonStats];
-                            newStats[index].value = e.target.value;
-                            setFormData({ ...formData, seasonStats: newStats });
-                          }}
-                          placeholder="Value (e.g., 15)"
-                          className="flex-1"
-                        />
-                        <Button
-                          type="button"
-                          variant="destructive"
-                          size="icon"
-                          onClick={() => {
-                            const newStats = formData.seasonStats.filter((_, i) => i !== index);
-                            setFormData({ ...formData, seasonStats: newStats });
-                          }}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ))}
+                <TabsContent value="stats" className="space-y-4 sm:space-y-6 pt-2">
+                  <div className="space-y-3">
+                    <Label className="text-sm font-medium">Season Stats</Label>
+                    <div className="space-y-3">
+                      {formData.seasonStats.map((stat, index) => (
+                        <div key={index} className="flex flex-col sm:flex-row gap-2 p-3 sm:p-2 border rounded-lg sm:border-0 sm:rounded-none">
+                          <div className="flex flex-col sm:flex-row gap-2 flex-1">
+                            <Input
+                              value={stat.header}
+                              onChange={(e) => {
+                                const newStats = [...formData.seasonStats];
+                                newStats[index].header = e.target.value;
+                                setFormData({ ...formData, seasonStats: newStats });
+                              }}
+                              placeholder="Goals"
+                              className="flex-1 h-11 sm:h-10"
+                            />
+                            <Input
+                              value={stat.value}
+                              onChange={(e) => {
+                                const newStats = [...formData.seasonStats];
+                                newStats[index].value = e.target.value;
+                                setFormData({ ...formData, seasonStats: newStats });
+                              }}
+                              placeholder="15"
+                              className="flex-1 h-11 sm:h-10"
+                            />
+                          </div>
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="icon"
+                            onClick={() => {
+                              const newStats = formData.seasonStats.filter((_, i) => i !== index);
+                              setFormData({ ...formData, seasonStats: newStats });
+                            }}
+                            className="w-full sm:w-10 h-11 sm:h-10"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                            <span className="ml-2 sm:hidden">Delete</span>
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
                     <Button
                       type="button"
                       variant="outline"
@@ -2481,58 +2487,66 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                           seasonStats: [...formData.seasonStats, { header: "", value: "" }] 
                         });
                       }}
+                      className="w-full sm:w-auto h-11 sm:h-9"
                     >
                       <Plus className="h-4 w-4 mr-2" />
                       Add Season Stat
                     </Button>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label>Top Stats</Label>
-                    {formData.topStats.map((stat, index) => (
-                      <div key={index} className="space-y-2 p-3 border rounded">
-                        <div className="flex gap-2">
+                  <div className="space-y-3">
+                    <Label className="text-sm font-medium">Top Stats</Label>
+                    <div className="space-y-3">
+                      {formData.topStats.map((stat, index) => (
+                        <div key={index} className="space-y-2 p-3 border rounded-lg">
+                          <div className="flex flex-col sm:flex-row gap-2">
+                            <Input
+                              value={stat.label}
+                              onChange={(e) => {
+                                const newStats = [...formData.topStats];
+                                newStats[index].label = e.target.value;
+                                setFormData({ ...formData, topStats: newStats });
+                              }}
+                              placeholder="Pass Accuracy"
+                              className="flex-1 h-11 sm:h-10"
+                            />
+                            <Input
+                              value={stat.value}
+                              onChange={(e) => {
+                                const newStats = [...formData.topStats];
+                                newStats[index].value = e.target.value;
+                                setFormData({ ...formData, topStats: newStats });
+                              }}
+                              placeholder="89%"
+                              className="flex-1 h-11 sm:h-10"
+                            />
+                          </div>
                           <Input
-                            value={stat.label}
+                            value={stat.description || ""}
                             onChange={(e) => {
                               const newStats = [...formData.topStats];
-                              newStats[index].label = e.target.value;
+                              newStats[index].description = e.target.value;
                               setFormData({ ...formData, topStats: newStats });
                             }}
-                            placeholder="Label (e.g., Pass Accuracy)"
-                          />
-                          <Input
-                            value={stat.value}
-                            onChange={(e) => {
-                              const newStats = [...formData.topStats];
-                              newStats[index].value = e.target.value;
-                              setFormData({ ...formData, topStats: newStats });
-                            }}
-                            placeholder="Value (e.g., 89%)"
+                            placeholder="Description (optional)"
+                            className="h-11 sm:h-10"
                           />
                           <Button
                             type="button"
                             variant="destructive"
-                            size="icon"
+                            size="sm"
                             onClick={() => {
                               const newStats = formData.topStats.filter((_, i) => i !== index);
                               setFormData({ ...formData, topStats: newStats });
                             }}
+                            className="w-full h-11 sm:h-9"
                           >
-                            <Trash2 className="h-4 w-4" />
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Delete Top Stat
                           </Button>
                         </div>
-                        <Input
-                          value={stat.description || ""}
-                          onChange={(e) => {
-                            const newStats = [...formData.topStats];
-                            newStats[index].description = e.target.value;
-                            setFormData({ ...formData, topStats: newStats });
-                          }}
-                          placeholder="Description (optional)"
-                        />
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                     <Button
                       type="button"
                       variant="outline"
@@ -2543,6 +2557,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                           topStats: [...formData.topStats, { label: "", value: "", description: "" }] 
                         });
                       }}
+                      className="w-full sm:w-auto h-11 sm:h-9"
                     >
                       <Plus className="h-4 w-4 mr-2" />
                       Add Top Stat
