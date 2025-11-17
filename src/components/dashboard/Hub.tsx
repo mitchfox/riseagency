@@ -1,3 +1,4 @@
+import * as React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Calendar, TrendingUp, ArrowRight } from "lucide-react";
@@ -31,7 +32,29 @@ interface HubProps {
 export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNavigateToSession }: HubProps) => {
   // Get current program schedule
   const currentProgram = programs.find(p => p.is_current);
-  const currentSchedule = currentProgram?.weekly_schedules?.[0] || null;
+  
+  // Find the schedule for the current week
+  const currentSchedule = React.useMemo(() => {
+    if (!currentProgram?.weekly_schedules) return null;
+    
+    const today = new Date();
+    const currentWeekStart = startOfWeek(today, { weekStartsOn: 1 });
+    const currentWeekEnd = endOfWeek(today, { weekStartsOn: 1 });
+    
+    // Find schedule where week_start_date is within current week
+    const matchingSchedule = currentProgram.weekly_schedules.find((schedule: any) => {
+      if (!schedule.week_start_date) return false;
+      try {
+        const weekStart = parseISO(schedule.week_start_date);
+        return isWithinInterval(weekStart, { start: currentWeekStart, end: currentWeekEnd });
+      } catch {
+        return false;
+      }
+    });
+    
+    // Fall back to first schedule if no match found
+    return matchingSchedule || currentProgram.weekly_schedules[0] || null;
+  }, [currentProgram]);
 
   // Session color mapping
   const getSessionColor = (sessionKey: string) => {
