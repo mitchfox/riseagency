@@ -2722,16 +2722,9 @@ const Dashboard = () => {
               </Card>
             </TabsContent>
 
-            <TabsContent value="highlights" className="space-y-6">
-              <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 border-t-[2px] border-t-[hsl(43,49%,61%)] border-b-0">
-                <CardHeader marble>
-                  <div className="container mx-auto px-4">
-                    <CardTitle className="font-heading tracking-tight">
-                      Highlights
-                    </CardTitle>
-                  </div>
-                </CardHeader>
-                <CardContent className="container mx-auto px-4">
+            <TabsContent value="highlights">
+              <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-0">
+                <CardContent className="container mx-auto px-4 pt-2">
                   <Tabs defaultValue="best" className="w-full" key="highlights-tabs">
                     <TabsList className="grid w-full grid-cols-2 gap-2 mb-6 bg-muted h-auto p-2">
                       <TabsTrigger value="match" className="font-bebas uppercase">
