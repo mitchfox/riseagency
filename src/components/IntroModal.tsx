@@ -280,13 +280,6 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
                       }
                     })}
                   </div>
-                  
-                  {/* Our Stars Button */}
-                  <div className="absolute bottom-0 left-0 right-0 p-1.5 sm:p-3">
-                    <div className="bg-[#B8A574] text-black font-bebas uppercase tracking-wider text-[10px] py-1.5 px-2 text-center rounded sm:text-sm sm:py-2.5 sm:px-4">
-                      OUR STARS
-                    </div>
-                  </div>
                 </div>
               </div>
             )}
