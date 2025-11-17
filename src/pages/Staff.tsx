@@ -557,6 +557,8 @@ const Staff = () => {
         ...(isAdmin ? [
           { id: 'passwords', title: 'Player Passwords', icon: Lock },
           { id: 'staffaccounts', title: 'Staff Accounts', icon: Shield },
+        ] : []),
+        ...(isAdmin || isStaff || isMarketeer ? [
           { id: 'pwainstall', title: 'PWA Install', icon: Download },
           { id: 'offlinemanager', title: 'Offline Content', icon: HardDrive },
           { id: 'pushnotifications', title: 'Push Notifications', icon: Bell }
