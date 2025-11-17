@@ -197,7 +197,7 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
     <>
       {/* Video Highlights Slider - Full Width */}
       {videoThumbnails.length > 0 && (
-        <div className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] -mt-[2px] z-0">
+        <div className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] -mt-[2px] -z-10">
           <Card className="bg-card/90 backdrop-blur-sm border-gold/30 overflow-hidden rounded-none border-x-0">
             <div className="w-full">
               <Carousel
@@ -253,7 +253,7 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
               <Button 
                 variant="ghost" 
                 size="sm"
-                className="flex items-center gap-1 text-primary hover:text-primary/80"
+                className="flex items-center gap-1 text-sm text-primary hover:text-black hover:bg-primary"
               >
                 See All
                 <ArrowRight className="h-4 w-4" />
@@ -360,7 +360,7 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
                 variant="ghost" 
                 size="sm"
                 onClick={onNavigateToAnalysis}
-                className="flex items-center gap-1 text-primary hover:text-primary/80"
+                className="flex items-center gap-1 text-sm text-primary hover:text-black hover:bg-primary"
               >
                 See All
                 <ArrowRight className="h-4 w-4" />
@@ -393,9 +393,23 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
                       border: "1px solid hsl(var(--border))",
                       borderRadius: "8px"
                     }}
-                    formatter={(value: any) => [`R90: ${value}`, "Score"]}
+                    formatter={(value: any, name: any, props: any) => {
+                      const data = props.payload;
+                      return [
+                        <div key="tooltip" className="space-y-1">
+                          <div className="font-bold">R90: {value}</div>
+                          <div className="text-xs text-muted-foreground">{data.result}</div>
+                        </div>,
+                        ""
+                      ];
+                    }}
+                    cursor={{ fill: 'hsl(var(--accent))' }}
                   />
-                  <Bar dataKey="score" radius={[8, 8, 0, 0]}>
+                  <Bar 
+                    dataKey="score" 
+                    radius={[8, 8, 0, 0]}
+                    className="cursor-pointer"
+                  >
                     {chartData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={getR90Color(entry.score)} />
                     ))}
