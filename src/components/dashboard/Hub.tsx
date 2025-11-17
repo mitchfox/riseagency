@@ -82,6 +82,20 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis }: Hu
       displayLabel: `${a.opponent || "Unknown"}${a.result ? ` (${a.result})` : ""}`
     }));
 
+  // Calculate max Y-axis value
+  const maxScore = chartData.length > 0 
+    ? Math.ceil(Math.max(...chartData.map(d => d.score)))
+    : 4;
+
+  // Function to get R90 color based on score
+  const getR90Color = (score: number) => {
+    if (score >= 3.0) return "hsl(142, 76%, 36%)"; // Green for excellent
+    if (score >= 2.5) return "hsl(221, 83%, 53%)"; // Blue for good
+    if (score >= 2.0) return "hsl(48, 96%, 53%)"; // Yellow for average
+    if (score >= 1.5) return "hsl(25, 95%, 53%)"; // Orange for below average
+    return "hsl(0, 84%, 60%)"; // Red for poor
+  };
+
   // Get latest 3 analyses
   const recentAnalyses = analyses
     .sort((a, b) => new Date(b.analysis_date).getTime() - new Date(a.analysis_date).getTime())
@@ -89,43 +103,18 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis }: Hu
 
   return (
     <div className="space-y-6 mb-8">
-      {/* Player Header */}
-      <div className="relative">
-        <div className="flex items-center gap-6 mb-8">
-          {playerData?.image_url && (
-            <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-primary shadow-[0_0_20px_hsl(var(--primary)/0.5)]">
-              <img 
-                src={playerData.image_url} 
-                alt={playerData.name}
-                className="w-full h-full object-cover"
-              />
-            </div>
-          )}
-          <div className="flex-1 space-y-3">
-            <h1 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-foreground">
-              {playerData?.name || "Player Portal"}
-            </h1>
-
-            <div className="flex items-center gap-4 text-muted-foreground">
-              {playerData?.position && (
-                <span className="text-lg">{playerData.position}</span>
-              )}
-              {playerData?.nationality && (
-                <>
-                  <span>•</span>
-                  <span className="text-lg">{playerData.nationality}</span>
-                </>
-              )}
-              {playerData?.currentClub && (
-                <>
-                  <span>•</span>
-                  <span className="text-lg">{playerData.currentClub}</span>
-                </>
-              )}
-            </div>
+      {/* Player Image - Full Width */}
+      {playerData?.image_url && (
+        <Card className="bg-card/90 backdrop-blur-sm border-gold/30 overflow-hidden">
+          <div className="w-full aspect-[21/9] overflow-hidden">
+            <img
+              src={playerData.image_url}
+              alt={playerData.name}
+              className="w-full h-full object-cover"
+            />
           </div>
-        </div>
-      </div>
+        </Card>
+      )}
 
       <div>
         <h2 className="text-3xl font-bold mb-2">Hub</h2>
@@ -246,8 +235,8 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis }: Hu
                   <YAxis 
                     stroke="hsl(var(--muted-foreground))"
                     fontSize={12}
-                    domain={[0, 4]}
-                    ticks={[0, 1, 2, 3, 4]}
+                    domain={[0, maxScore]}
+                    ticks={Array.from({ length: maxScore + 1 }, (_, i) => i)}
                   />
                   <Tooltip 
                     contentStyle={{
@@ -259,7 +248,7 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis }: Hu
                   />
                   <Bar dataKey="score" radius={[8, 8, 0, 0]}>
                     {chartData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill="hsl(var(--primary))" />
+                      <Cell key={`cell-${index}`} fill={getR90Color(entry.score)} />
                     ))}
                   </Bar>
                 </BarChart>

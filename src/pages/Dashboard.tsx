@@ -1135,7 +1135,7 @@ const Dashboard = () => {
           </div>
 
           {/* Navigation Menu */}
-          <div className="mb-8">
+          <div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button 
