@@ -26,6 +26,8 @@ import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
 import { OfflineContentManager } from "@/components/OfflineContentManager";
 import { CacheManager } from "@/lib/cacheManager";
 import { Hub } from "@/components/dashboard/Hub";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Cell } from "recharts";
+import { Link } from "react-router-dom";
 
 
 interface Analysis {
@@ -1293,9 +1295,12 @@ const Dashboard = () => {
 
             <TabsContent value="analysis" className="space-y-6">
               <Tabs defaultValue="performance" className="w-full">
-                <TabsList className="grid w-full grid-cols-1 sm:grid-cols-4 gap-2 mb-4 bg-muted h-auto p-2">
+                <TabsList className="grid w-full grid-cols-1 sm:grid-cols-5 gap-2 mb-4 bg-muted h-auto p-2">
                   <TabsTrigger value="performance" className="font-bebas uppercase text-sm sm:text-base">
                     Performance Analysis
+                  </TabsTrigger>
+                  <TabsTrigger value="form" className="font-bebas uppercase text-sm sm:text-base">
+                    Form
                   </TabsTrigger>
                   <TabsTrigger value="other" className="font-bebas uppercase text-sm sm:text-base">
                     Other Analysis
@@ -1474,6 +1479,155 @@ const Dashboard = () => {
                           ))}
                         </div>
                       )}
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+
+                <TabsContent value="form">
+                  <Card>
+                    <CardHeader marble>
+                      <CardTitle className="text-3xl font-bebas uppercase tracking-wider">
+                        Form
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="pt-6">
+                      {(() => {
+                        // Process chart data
+                        const chartData = analyses
+                          .filter(a => a.r90_score != null)
+                          .sort((a, b) => new Date(a.analysis_date).getTime() - new Date(b.analysis_date).getTime())
+                          .slice(-8)
+                          .map(a => ({
+                            opponent: a.opponent || "Unknown",
+                            score: a.r90_score,
+                            result: a.result || "",
+                            displayLabel: `${a.opponent || "Unknown"}${a.result ? ` (${a.result})` : ""}`,
+                            analysisId: a.id,
+                            minutesPlayed: a.minutes_played
+                          }));
+
+                        // Calculate max Y-axis value
+                        const maxScore = chartData.length > 0 
+                          ? Math.ceil(Math.max(...chartData.map(d => d.score)))
+                          : 4;
+
+                        // Function to get R90 color based on score
+                        const getR90Color = (score: number) => {
+                          if (score < 0) return "hsl(0, 93%, 12%)";
+                          if (score >= 0 && score < 0.2) return "hsl(0, 84%, 60%)";
+                          if (score >= 0.2 && score < 0.4) return "hsl(0, 91%, 71%)";
+                          if (score >= 0.4 && score < 0.6) return "hsl(25, 95%, 37%)";
+                          if (score >= 0.6 && score < 0.8) return "hsl(25, 95%, 53%)";
+                          if (score >= 0.8 && score < 1.0) return "hsl(48, 96%, 53%)";
+                          if (score >= 1.0 && score < 1.4) return "hsl(82, 84%, 67%)";
+                          if (score >= 1.4 && score < 1.8) return "hsl(142, 76%, 36%)";
+                          if (score >= 1.8 && score < 2.5) return "hsl(142, 72%, 29%)";
+                          return "hsl(43, 49%, 61%)";
+                        };
+
+                        return chartData.length > 0 ? (
+                          <div className="w-full">
+                            <ResponsiveContainer width="100%" height={550}>
+                              <BarChart data={chartData} margin={{ bottom: 25, left: 10, right: 10 }}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                                <XAxis 
+                                  dataKey="opponent"
+                                  stroke="hsl(var(--muted-foreground))"
+                                  fontSize={10}
+                                  height={160}
+                                  interval={0}
+                                  tick={(props) => {
+                                    const { x, y, payload } = props;
+                                    const data = chartData.find(d => d.opponent === payload.value);
+                                    return (
+                                      <g transform={`translate(${x},${y})`}>
+                                        <text 
+                                          x={0} 
+                                          y={0} 
+                                          dy={16} 
+                                          textAnchor="middle" 
+                                          fill="white"
+                                          fontSize={12}
+                                          fontWeight="bold"
+                                        >
+                                          {data?.result || ''}
+                                        </text>
+                                        <text 
+                                          x={0} 
+                                          y={30} 
+                                          dy={16} 
+                                          textAnchor="end"
+                                          fill="hsl(var(--muted-foreground))"
+                                          fontSize={10}
+                                          transform={`rotate(-90, 0, 46)`}
+                                        >
+                                          {payload.value}
+                                        </text>
+                                      </g>
+                                    );
+                                  }}
+                                />
+                                <YAxis 
+                                  stroke="hsl(var(--muted-foreground))"
+                                  fontSize={12}
+                                  domain={[0, maxScore]}
+                                  ticks={Array.from({ length: maxScore + 1 }, (_, i) => i)}
+                                />
+                                <RechartsTooltip 
+                                  labelFormatter={() => ""}
+                                  separator=""
+                                  contentStyle={{
+                                    backgroundColor: "#000000",
+                                    border: "2px solid hsl(43, 49%, 61%)",
+                                    borderRadius: "8px",
+                                    padding: "12px",
+                                    color: "#ffffff"
+                                  }}
+                                  itemStyle={{
+                                    color: "#ffffff"
+                                  }}
+                                  formatter={(value: any, name: any, props: any) => {
+                                    const data = props.payload;
+                                    return [
+                                      <div key="tooltip" className="space-y-2 min-w-[200px]">
+                                        <div className="font-bold text-white text-base mb-1">{data.result} {data.opponent}</div>
+                                        {data.minutesPlayed && (
+                                          <div className="text-xs text-white/60">Minutes Played: {data.minutesPlayed}</div>
+                                        )}
+                                      </div>,
+                                      ""
+                                    ];
+                                  }}
+                                  cursor={{ fill: 'hsl(var(--accent))', opacity: 0.3 }}
+                                />
+                                <Bar 
+                                  dataKey="score" 
+                                  radius={[8, 8, 0, 0]}
+                                  className="cursor-pointer"
+                                  onClick={(data: any) => {
+                                    if (data && data.analysisId) {
+                                      const url = createPerformanceReportSlug(
+                                        playerData?.name || 'player',
+                                        data.opponent || 'opponent',
+                                        data.analysisId
+                                      );
+                                      navigate(url);
+                                    }
+                                  }}
+                                >
+                                  {chartData.map((entry, index) => (
+                                    <Cell key={`cell-${index}`} fill={getR90Color(entry.score)} />
+                                  ))}
+                                </Bar>
+                              </BarChart>
+                            </ResponsiveContainer>
+                          </div>
+                        ) : (
+                          <div className="py-8 text-center text-muted-foreground">
+                            No performance data available yet.
+                          </div>
+                        );
+                      })()}
                     </CardContent>
                   </Card>
                 </TabsContent>
