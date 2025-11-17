@@ -542,9 +542,9 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
                       })}
                       <LabelList 
                         dataKey="score" 
-                        position="center"
                         content={(props: any) => {
                           const { x, y, width, height, value, index } = props;
+                          if (!x || !y || !width || !height || value === undefined) return null;
                           const delay = index * 0.25;
                           return (
                             <text
@@ -566,18 +566,18 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
                       />
                       <LabelList 
                         dataKey="score" 
-                        position="top" 
                         content={(props: any) => {
                           const { x, y, width, value, index } = props;
+                          if (!x || y === undefined || !width || value === undefined) return null;
                           const delay = index * 0.25;
                           const grade = getR90Grade(value).grade;
                           return (
                             <text
                               x={x + width / 2}
-                              y={y - 8}
+                              y={y - 5}
                               fill="hsl(43, 49%, 61%)"
                               textAnchor="middle"
-                              dominantBaseline="auto"
+                              dominantBaseline="baseline"
                               fontSize="18"
                               fontWeight="700"
                               style={{
