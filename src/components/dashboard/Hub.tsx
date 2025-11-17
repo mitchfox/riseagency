@@ -212,7 +212,7 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
             <div className="flex items-center justify-between container mx-auto px-4 pr-6">
               <div className="flex items-center gap-2">
                 <Calendar className="h-5 w-5" />
-                <CardTitle className="font-heading tracking-tight">Schedule</CardTitle>
+                <CardTitle className="font-heading tracking-tight ml-[9px] mt-[1px]">Schedule</CardTitle>
               </div>
               <Button 
                 variant="ghost" 
@@ -359,7 +359,7 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
             <div className="flex items-center justify-between container mx-auto px-4 pr-6">
               <div className="flex items-center gap-2">
                 <TrendingUp className="h-5 w-5" />
-                <CardTitle className="font-heading tracking-tight">Form</CardTitle>
+                <CardTitle className="font-heading tracking-tight ml-[9px] mt-[1px]">Form</CardTitle>
               </div>
               <Button 
                 variant="ghost" 
@@ -514,7 +514,7 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
               <div className="flex items-center justify-between container mx-auto px-4 pr-6">
                 <div className="flex items-center gap-2">
                   <Trophy className="h-5 w-5" />
-                  <CardTitle className="font-heading tracking-tight">Performance</CardTitle>
+                  <CardTitle className="font-heading tracking-tight ml-[9px] mt-[1px]">Performance</CardTitle>
                 </div>
                 <Button 
                   variant="ghost" 
