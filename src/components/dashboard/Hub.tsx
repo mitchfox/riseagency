@@ -583,7 +583,7 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
                   <Link
                     key={analysis.id}
                     to={`/performance-report/match-${analysis.id}`}
-                    className="block border-l-2 border-primary pl-3 py-2 hover:bg-accent/5 transition-colors bg-[url('/smudged-marble-header.png')] bg-cover bg-center bg-no-repeat rounded"
+                    className="block border-l-2 border-primary pl-3 py-2 hover:bg-accent/5 transition-colors rounded"
                   >
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1">
@@ -594,7 +594,7 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
                       </div>
                       {analysis.r90_score != null && (
                         <div 
-                          className="px-3 py-1 rounded text-black text-sm font-bold mt-[3px] -ml-1 mr-2"
+                          className="px-3 py-1 rounded text-white text-sm font-bold mt-[3px] -ml-1 mr-2"
                           style={{ backgroundColor: getR90Color(analysis.r90_score) }}
                         >
                           R90: {analysis.r90_score}
