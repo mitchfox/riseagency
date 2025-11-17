@@ -360,7 +360,7 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
         )}
 
         {/* R90 Performance Chart & Recent Analysis Combined - Full Width */}
-        <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 border-t-[2px] border-t-[hsl(43,49%,61%)] z-20">
+        <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 border-t-[2px] border-t-[hsl(43,49%,61%)] z-20 overflow-visible">
           <CardHeader marble className="py-2">
             <div className="flex items-center justify-between container mx-auto px-4 pr-6">
               <div className="flex items-center gap-2">
@@ -378,11 +378,11 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
               </Button>
             </div>
           </CardHeader>
-          <CardContent className="container mx-auto px-4 pb-0">
-            <div className="pt-[5px] -mb-[60px]">
+          <CardContent className="container mx-auto px-4 pb-0 overflow-visible">
+            <div className="pt-[5px] -mb-[60px] overflow-visible">
             {/* Chart */}
             {chartData.length > 0 ? (
-              <div className="w-full px-2 -ml-6 mt-[25px]">
+              <div className="w-full px-2 -ml-6 mt-[25px] overflow-visible">
                 <ResponsiveContainer width="100%" height={305}>
                   <BarChart data={chartData} margin={{ bottom: 25, left: 10, right: 10 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
