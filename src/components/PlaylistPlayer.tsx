@@ -109,7 +109,7 @@ export const PlaylistPlayer = ({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-6xl h-[90vh] p-0">
         <div className="relative w-full h-full bg-black flex flex-col">
-          {/* Top Bar with Position Number and Reorder Button */}
+          {/* Top Bar with Position Number, Reorder Button, and Close */}
           <div className="absolute top-0 left-0 right-0 z-10 flex items-start justify-between p-4">
             {/* Position Number - Top Left */}
             <div className="bg-background/90 backdrop-blur-sm rounded-lg px-6 py-3 shadow-lg">
@@ -119,43 +119,55 @@ export const PlaylistPlayer = ({
               </div>
             </div>
 
-            {/* Reorder Button - Top Right */}
-            {!isReordering ? (
-              <Button
-                onClick={() => setIsReordering(true)}
-                size="lg"
-                className="bg-background/90 backdrop-blur-sm hover:bg-background text-foreground shadow-lg"
-              >
-                <Hash className="w-8 h-8" />
-              </Button>
-            ) : (
-              <div className="bg-background/90 backdrop-blur-sm rounded-lg p-4 shadow-lg flex items-center gap-2">
-                <Input
-                  type="number"
-                  min="1"
-                  max={totalClips}
-                  value={newPosition}
-                  onChange={(e) => setNewPosition(e.target.value)}
-                  placeholder={`1-${totalClips}`}
-                  className="w-20 text-lg"
-                  autoFocus
-                  onKeyDown={(e) => e.key === 'Enter' && handleReorder()}
-                />
-                <Button onClick={handleReorder} size="sm">
-                  <Check className="w-4 h-4" />
-                </Button>
-                <Button 
-                  onClick={() => {
-                    setIsReordering(false);
-                    setNewPosition("");
-                  }} 
-                  variant="ghost" 
-                  size="sm"
+            {/* Reorder Button - Top Center */}
+            <div className="flex-1 flex justify-center">
+              {!isReordering ? (
+                <Button
+                  onClick={() => setIsReordering(true)}
+                  size="lg"
+                  className="bg-background/90 backdrop-blur-sm hover:bg-background text-foreground shadow-lg"
                 >
-                  <X className="w-4 h-4" />
+                  <Hash className="w-12 h-12" />
                 </Button>
-              </div>
-            )}
+              ) : (
+                <div className="bg-background/90 backdrop-blur-sm rounded-lg p-4 shadow-lg flex items-center gap-2">
+                  <Input
+                    type="number"
+                    min="1"
+                    max={totalClips}
+                    value={newPosition}
+                    onChange={(e) => setNewPosition(e.target.value)}
+                    placeholder={`1-${totalClips}`}
+                    className="w-20 text-lg"
+                    autoFocus
+                    onKeyDown={(e) => e.key === 'Enter' && handleReorder()}
+                  />
+                  <Button onClick={handleReorder} size="sm">
+                    <Check className="w-4 h-4" />
+                  </Button>
+                  <Button 
+                    onClick={() => {
+                      setIsReordering(false);
+                      setNewPosition("");
+                    }} 
+                    variant="ghost" 
+                    size="sm"
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+              )}
+            </div>
+
+            {/* Close Button - Top Right */}
+            <Button
+              onClick={onClose}
+              variant="ghost"
+              size="icon"
+              className="bg-background/90 backdrop-blur-sm hover:bg-background"
+            >
+              <X className="w-6 h-6" />
+            </Button>
           </div>
 
           {/* Video Player */}
@@ -198,16 +210,6 @@ export const PlaylistPlayer = ({
               <ChevronRight className="w-6 h-6" />
             </Button>
           </div>
-
-          {/* Close Button */}
-          <Button
-            onClick={onClose}
-            variant="ghost"
-            size="icon"
-            className="absolute top-4 right-20 bg-background/90 backdrop-blur-sm hover:bg-background"
-          >
-            <X className="w-6 h-6" />
-          </Button>
         </div>
       </DialogContent>
     </Dialog>
