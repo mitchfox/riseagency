@@ -104,14 +104,6 @@ const Index = () => {
               </div>
               
               <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
-                <Link to="/stars" className="w-full sm:w-auto">
-                  <Button 
-                    size="lg" 
-                    className="btn-shine text-lg font-bebas uppercase tracking-widest w-full sm:w-[240px] h-[60px] hover:scale-105 transition-all duration-300 shadow-xl"
-                  >
-                    View Our Stars
-                  </Button>
-                </Link>
                 <WorkWithUsDialog>
                   <Button 
                     size="lg" 
