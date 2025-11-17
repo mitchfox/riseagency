@@ -205,8 +205,51 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
   return (
     <>
       <div className="-space-y-1">
+        {/* Video/Image Carousel - Full Width with Gold Border */}
+        {videoThumbnails.length > 0 && (
+          <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 border-t-2 border-t-gold z-30">
+            <CardContent className="p-0 overflow-hidden">
+              <Carousel
+                opts={{
+                  align: "start",
+                  loop: true,
+                }}
+                plugins={[autoplayPlugin.current, fadePlugin.current]}
+                className="w-full"
+              >
+                <CarouselContent>
+                  {videoThumbnails.map((thumbnail, index) => (
+                    <CarouselItem key={index}>
+                      <div className="relative w-full" style={{ height: '400px' }}>
+                        {thumbnail.includes('supabase') && thumbnail.includes('videos') ? (
+                          <video
+                            src={thumbnail}
+                            className="w-full h-full object-cover"
+                            autoPlay
+                            muted
+                            loop
+                            playsInline
+                          />
+                        ) : (
+                          <img
+                            src={thumbnail}
+                            alt={`Player content ${index + 1}`}
+                            className="w-full h-full object-cover"
+                          />
+                        )}
+                      </div>
+                    </CarouselItem>
+                  ))}
+                </CarouselContent>
+                <CarouselPrevious className="left-4" />
+                <CarouselNext className="right-4" />
+              </Carousel>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Schedule Card - Full Width */}
-        <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 border-t-2 border-t-gold z-20">
+        <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 border-t-0 z-20">
           <CardHeader marble>
             <div className="flex items-center justify-between container mx-auto px-4 pr-6">
               <div className="flex items-center gap-2">
@@ -312,7 +355,7 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
         </Card>
 
         {/* R90 Performance Chart & Recent Analysis Combined - Full Width */}
-        <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 border-t-2 border-t-gold z-20">
+        <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 border-t-0 z-20">
           <CardHeader marble>
             <div className="flex items-center justify-between container mx-auto px-4 pr-6">
               <div className="flex items-center gap-2">
