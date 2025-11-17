@@ -1196,43 +1196,43 @@ const Dashboard = () => {
               <DropdownMenuContent align="start" className="w-[280px] bg-card border-2 border-gold shadow-lg shadow-gold/20 z-50">
                 <DropdownMenuItem 
                   onClick={() => setActiveTab("hub")}
-                  className="font-bebas uppercase text-base py-3 cursor-pointer text-gold hover:text-gold/80 hover:bg-gold/10"
+                  className="font-bebas uppercase text-xl py-3 cursor-pointer text-gold hover:text-gold/80 hover:bg-gold/10"
                 >
                   Hub
                 </DropdownMenuItem>
                 <DropdownMenuItem 
                   onClick={() => setActiveTab("analysis")}
-                  className="font-bebas uppercase text-base py-3 cursor-pointer text-gold hover:text-gold/80 hover:bg-gold/10"
+                  className="font-bebas uppercase text-xl py-3 cursor-pointer text-gold hover:text-gold/80 hover:bg-gold/10"
                 >
                   Analysis
                 </DropdownMenuItem>
                 <DropdownMenuItem 
                   onClick={() => setActiveTab("physical")}
-                  className="font-bebas uppercase text-base py-3 cursor-pointer text-gold hover:text-gold/80 hover:bg-gold/10"
+                  className="font-bebas uppercase text-xl py-3 cursor-pointer text-gold hover:text-gold/80 hover:bg-gold/10"
                 >
                   Programming
                 </DropdownMenuItem>
                 <DropdownMenuItem 
                   onClick={() => setActiveTab("invoices")}
-                  className="font-bebas uppercase text-base py-3 cursor-pointer text-gold hover:text-gold/80 hover:bg-gold/10"
+                  className="font-bebas uppercase text-xl py-3 cursor-pointer text-gold hover:text-gold/80 hover:bg-gold/10"
                 >
                   Key Documents
                 </DropdownMenuItem>
                 <DropdownMenuItem 
                   onClick={() => setActiveTab("updates")}
-                  className="font-bebas uppercase text-base py-3 cursor-pointer text-gold hover:text-gold/80 hover:bg-gold/10"
+                  className="font-bebas uppercase text-xl py-3 cursor-pointer text-gold hover:text-gold/80 hover:bg-gold/10"
                 >
                   Updates
                 </DropdownMenuItem>
                 <DropdownMenuItem 
                   onClick={() => setActiveTab("highlights")}
-                  className="font-bebas uppercase text-base py-3 cursor-pointer text-gold hover:text-gold/80 hover:bg-gold/10"
+                  className="font-bebas uppercase text-xl py-3 cursor-pointer text-gold hover:text-gold/80 hover:bg-gold/10"
                 >
                   Highlights
                 </DropdownMenuItem>
                 <DropdownMenuItem 
                   onClick={() => setShowProfileModal(true)}
-                  className="font-bebas uppercase text-base py-3 cursor-pointer text-gold hover:text-gold/80 hover:bg-gold/10"
+                  className="font-bebas uppercase text-xl py-3 cursor-pointer text-gold hover:text-gold/80 hover:bg-gold/10"
                 >
                   View Profile
                 </DropdownMenuItem>
