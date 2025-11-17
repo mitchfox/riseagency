@@ -546,6 +546,7 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
                       })}
                       <LabelList 
                         dataKey="score" 
+                        position="center"
                         content={(props: any) => {
                           const { x, y, width, height, value, index } = props;
                           if (!x || !y || !width || !height || value === undefined) return null;
@@ -560,7 +561,8 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
                               fontSize="16"
                               fontWeight="700"
                               style={{
-                                animation: chartInView ? `labelFadeIn 0.6s ease-out ${delay + 0.8}s both` : 'none'
+                                opacity: chartInView ? 1 : 0,
+                                animation: chartInView ? `labelFadeIn 0.6s ease-out ${delay + 0.8}s forwards` : 'none'
                               }}
                             >
                               {value}
@@ -570,6 +572,7 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
                       />
                       <LabelList 
                         dataKey="score" 
+                        position="top"
                         content={(props: any) => {
                           const { x, y, width, value, index } = props;
                           if (!x || y === undefined || !width || value === undefined) return null;
@@ -585,7 +588,8 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
                               fontSize="18"
                               fontWeight="700"
                               style={{
-                                animation: chartInView ? `labelFadeIn 0.6s ease-out ${delay + 0.8}s both` : 'none'
+                                opacity: chartInView ? 1 : 0,
+                                animation: chartInView ? `labelFadeIn 0.6s ease-out ${delay + 0.8}s forwards` : 'none'
                               }}
                             >
                               {grade}
