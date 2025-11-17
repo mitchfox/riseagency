@@ -546,19 +546,17 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
                         style={{ 
                           fontSize: '16px', 
                           fill: '#ffffff', 
-                          fontWeight: '700',
-                          animation: chartInView ? 'labelFadeIn 0.6s ease-out 0.6s both' : 'none'
+                          fontWeight: '700'
                         }}
                       />
                       <LabelList 
                         dataKey="score" 
                         position="top" 
-                        offset={8}
+                        offset={10}
                         style={{ 
                           fontSize: '16px', 
                           fill: 'hsl(43, 49%, 61%)', 
-                          fontWeight: '700',
-                          animation: chartInView ? 'labelFadeIn 0.6s ease-out 0.8s both' : 'none'
+                          fontWeight: '700'
                         }}
                         formatter={(value: number) => getR90Grade(value).grade}
                       />
