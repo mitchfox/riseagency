@@ -382,6 +382,7 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
                       ticks={Array.from({ length: maxScore + 1 }, (_, i) => i)}
                     />
                     <Tooltip 
+                      labelFormatter={() => ""}
                       contentStyle={{
                         backgroundColor: "#000000",
                         border: "2px solid hsl(43, 49%, 61%)",
