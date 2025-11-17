@@ -503,56 +503,60 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
             ) : (
               <p className="text-sm text-muted-foreground">No performance data yet</p>
             )}
-
-            {/* Performance Section - Recent Fixtures */}
-            {recentAnalyses.length > 0 && (
-              <div className="border-t border-border pt-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-2">
-                    <Trophy className="h-5 w-5" />
-                    <h3 className="font-heading tracking-tight text-lg">Performance</h3>
-                  </div>
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    onClick={onNavigateToAnalysis}
-                    className="flex items-center justify-center gap-1 text-sm text-primary hover:text-black hover:bg-primary h-10"
-                  >
-                    See All
-                    <ArrowRight className="h-4 w-4" />
-                  </Button>
-                </div>
-                <div className="space-y-3">
-                  {recentAnalyses.map((analysis) => (
-                    <Link
-                      key={analysis.id}
-                      to={`/performance-report/match-${analysis.id}`}
-                      className="block border-l-2 border-primary pl-3 py-2 hover:bg-accent/5 transition-colors bg-[url('/smudged-marble-header.png')] bg-cover bg-center bg-no-repeat rounded"
-                    >
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex-1">
-                          <div className="font-medium text-sm">{analysis.opponent}</div>
-                          <div className="text-xs text-muted-foreground">
-                            {format(new Date(analysis.analysis_date), "MMM dd, yyyy")}
-                          </div>
-                        </div>
-                        {analysis.r90_score != null && (
-                          <div 
-                            className="px-3 py-1 rounded text-black text-sm font-bold mt-[3px] -ml-1 mr-2"
-                            style={{ backgroundColor: getR90Color(analysis.r90_score) }}
-                          >
-                            R90: {analysis.r90_score}
-                          </div>
-                        )}
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            )}
             </div>
           </CardContent>
         </Card>
+
+        {/* Performance Section - Recent Fixtures - Full Width */}
+        {recentAnalyses.length > 0 && (
+          <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 border-t border-t-gold z-10">
+            <CardHeader marble>
+              <div className="flex items-center justify-between container mx-auto px-4 pr-6">
+                <div className="flex items-center gap-2">
+                  <Trophy className="h-5 w-5" />
+                  <CardTitle className="font-heading tracking-tight">Performance</CardTitle>
+                </div>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={onNavigateToAnalysis}
+                  className="flex items-center justify-center gap-1 text-sm text-primary hover:text-black hover:bg-primary h-10"
+                >
+                  See All
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="container mx-auto px-4 pt-3 pb-4">
+              <div className="space-y-3">
+                {recentAnalyses.map((analysis) => (
+                  <Link
+                    key={analysis.id}
+                    to={`/performance-report/match-${analysis.id}`}
+                    className="block border-l-2 border-primary pl-3 py-2 hover:bg-accent/5 transition-colors bg-[url('/smudged-marble-header.png')] bg-cover bg-center bg-no-repeat rounded"
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1">
+                        <div className="font-medium text-sm">{analysis.opponent}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {format(new Date(analysis.analysis_date), "MMM dd, yyyy")}
+                        </div>
+                      </div>
+                      {analysis.r90_score != null && (
+                        <div 
+                          className="px-3 py-1 rounded text-black text-sm font-bold mt-[3px] -ml-1 mr-2"
+                          style={{ backgroundColor: getR90Color(analysis.r90_score) }}
+                        >
+                          R90: {analysis.r90_score}
+                        </div>
+                      )}
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </>
   );
