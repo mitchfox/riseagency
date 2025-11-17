@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Edit, FileText, LineChart, Video, Calendar, Plus, DollarSign, User, Trash2, Eye } from "lucide-react";
+import { Edit, FileText, LineChart, Video, Calendar, Plus, DollarSign, User, Trash2, Eye, TrendingUp } from "lucide-react";
 import { PerformanceActionsDialog } from "./PerformanceActionsDialog";
 import { CreatePerformanceReportDialog } from "./CreatePerformanceReportDialog";
 import { ProgrammingManagement } from "./ProgrammingManagement";
@@ -1077,7 +1077,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                           <div className="text-3xl font-bold">
                                             {analysis.r90_score.toFixed(2)}
                                           </div>
-                                          <div className={`w-8 h-8 ${getR90ColorClass(analysis.r90_score)} rounded border-2 border-white/50`}></div>
+                                          <TrendingUp className="w-8 h-8 text-white" strokeWidth={2.5} />
                                         </div>
                                         <div className="text-xs opacity-90 font-medium text-center">R90 SCORE</div>
                                       </div>
@@ -1085,6 +1085,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                       {/* Desktop: Vertical R90 */}
                                       <div className={`hidden md:flex ${getR90ColorClass(analysis.r90_score)} items-center justify-center p-4 flex-shrink-0`}>
                                         <div className="text-center">
+                                          <TrendingUp className="w-8 h-8 text-white mx-auto mb-2" strokeWidth={2.5} />
                                           <div className="text-4xl font-bold">
                                             {analysis.r90_score.toFixed(2)}
                                           </div>
