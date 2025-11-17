@@ -213,7 +213,7 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
       <div className="-space-y-1">
         {/* Schedule Card - Full Width */}
         <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 border-t-2 border-t-gold z-30">
-          <CardHeader marble className="py-4">
+          <CardHeader marble className="py-2">
             <div className="flex items-center justify-between container mx-auto px-4 pr-6">
               <div className="flex items-center gap-2">
                 <Calendar className="h-5 w-5" />
@@ -360,7 +360,7 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
 
         {/* R90 Performance Chart & Recent Analysis Combined - Full Width */}
         <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 border-t-2 border-t-gold z-20">
-          <CardHeader marble className="py-4">
+          <CardHeader marble className="py-2">
             <div className="flex items-center justify-between container mx-auto px-4 pr-6">
               <div className="flex items-center gap-2">
                 <TrendingUp className="h-5 w-5" />
@@ -504,7 +504,7 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
         {/* Performance Section - Recent Fixtures - Full Width */}
         {recentAnalyses.length > 0 && (
           <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 border-t-[2px] border-t-[hsl(43,49%,61%)] z-10">
-            <CardHeader marble className="py-4">
+            <CardHeader marble className="py-2">
               <div className="flex items-center justify-between container mx-auto px-4 pr-6">
                 <div className="flex items-center gap-2">
                   <Trophy className="h-5 w-5 mt-[1px]" />
