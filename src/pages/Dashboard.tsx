@@ -1089,7 +1089,7 @@ const Dashboard = () => {
       </header>
 
       {/* Subheader with Options */}
-      <div className="bg-background/60 backdrop-blur-sm border-b border-border/50">
+      <div className="bg-[url('/smudged-marble-header.png')] bg-cover bg-center bg-no-repeat border-b border-border/50">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-center gap-2 h-12">
             <DropdownMenu>

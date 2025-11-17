@@ -207,7 +207,7 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
         <div className="grid gap-6 md:grid-cols-2">
         {/* Schedule Card */}
         <Card>
-          <CardHeader>
+          <CardHeader marble>
             <CardTitle className="flex items-center gap-2">
               <Calendar className="h-5 w-5" />
               This Week's Schedule
@@ -303,7 +303,7 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
 
         {/* R90 Performance Chart & Recent Analysis Combined */}
         <Card>
-          <CardHeader>
+          <CardHeader marble>
             <div className="flex items-center justify-between">
               <CardTitle className="flex items-center gap-2">
                 <TrendingUp className="h-5 w-5" />
