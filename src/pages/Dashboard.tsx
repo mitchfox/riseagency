@@ -1352,6 +1352,7 @@ const Dashboard = () => {
             programs={programs} 
             analyses={analyses} 
             playerData={playerData}
+            dailyAphorism={dailyAphorism}
             onNavigateToAnalysis={() => {
               setActiveTab("analysis");
               setActiveAnalysisTab("performance");
@@ -1614,7 +1615,7 @@ const Dashboard = () => {
                     </CardHeader>
                     <CardContent className="container mx-auto px-4 pt-6">
                       {/* Metric Selector */}
-                      <div className="mb-6">
+                      <div className="mb-6 container mx-auto px-4">
                         <Select value={selectedFormMetric} onValueChange={setSelectedFormMetric}>
                           <SelectTrigger className="w-[200px] bg-background/80 border-border">
                             <SelectValue />
@@ -1941,7 +1942,7 @@ const Dashboard = () => {
             </TabsContent>
 
             <TabsContent value="physical" className="space-y-6">
-              <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 border-b-0">
+              <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 border-t-[2px] border-t-[hsl(43,49%,61%)] border-b-0">
                 <CardHeader marble>
                   <div className="container mx-auto px-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                     <CardTitle className="font-heading tracking-tight">
@@ -2851,9 +2852,9 @@ const Dashboard = () => {
 
                             <TabsContent value="clips">
                               {!highlightsData.bestClips || highlightsData.bestClips.length === 0 ? (
-                                <div className="py-8 text-center space-y-4">
+                                <div className="py-8 flex flex-col items-center justify-center space-y-4">
                                   <p className="text-muted-foreground">No best clips available yet.</p>
-                                  <Button 
+                                  <Button
                                     onClick={() => {
                                       const input = document.createElement('input');
                                       input.type = 'file';
@@ -3073,10 +3074,12 @@ const Dashboard = () => {
                             </TabsContent>
 
                             <TabsContent value="playlists">
-                              <PlaylistContent
-                                playerData={playerData}
-                                availableClips={highlightsData.bestClips || []}
-                              />
+                              <div className="container mx-auto px-4">
+                                <PlaylistContent
+                                  playerData={playerData}
+                                  availableClips={highlightsData.bestClips || []}
+                                />
+                              </div>
                             </TabsContent>
                           </Tabs>
                   </TabsContent>
@@ -3182,34 +3185,6 @@ const Dashboard = () => {
               </Card>
             </TabsContent>
           </Tabs>
-
-          {dailyAphorism && (
-            <div className="mt-8 px-4 md:px-0">
-              <Card className="relative overflow-hidden border-gold bg-gold/30">
-                <CardContent className="relative py-5 px-3 text-center space-y-3">
-                  <div className="bg-black/90 backdrop-blur-sm p-3 rounded-lg inline-block">
-                    <p className="text-base md:text-xl font-bold text-gold leading-relaxed tracking-wide">
-                      {dailyAphorism.featured_text}
-                    </p>
-                  </div>
-                  {dailyAphorism.author && (
-                    <div className="bg-black/90 backdrop-blur-sm px-4 py-2 rounded-lg inline-block">
-                      <p className="text-xs md:text-sm text-gold/80 italic font-medium">
-                        — {dailyAphorism.author}
-                      </p>
-                    </div>
-                  )}
-                  {dailyAphorism.body_text && (
-                    <div className="bg-black/90 backdrop-blur-sm p-3 rounded-lg max-w-2xl mx-auto">
-                      <p className="text-sm md:text-base text-white/90 leading-relaxed">
-                        {dailyAphorism.body_text}
-                      </p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-          )}
         </div>
         )}
       </main>
