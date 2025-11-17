@@ -1,7 +1,7 @@
 import * as React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Calendar, TrendingUp, ArrowRight, Trophy, Bell } from "lucide-react";
+import { Calendar, TrendingUp, ArrowRight, Trophy } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, LabelList } from "recharts";
 import { format, parseISO, startOfWeek, endOfWeek, isWithinInterval, addDays } from "date-fns";
 import { Link } from "react-router-dom";
@@ -37,16 +37,9 @@ interface HubProps {
   onNavigateToAnalysis: () => void;
   onNavigateToForm?: () => void;
   onNavigateToSession?: (sessionKey: string) => void;
-  updates?: Array<{
-    id: string;
-    title: string;
-    content: string;
-    date: string;
-    created_at: string;
-  }>;
 }
 
-export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNavigateToForm, onNavigateToSession, updates = [] }: HubProps) => {
+export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNavigateToForm, onNavigateToSession }: HubProps) => {
   const [marketingImages, setMarketingImages] = React.useState<string[]>([]);
   const [chartInView, setChartInView] = React.useState(false);
   const chartRef = React.useRef<HTMLDivElement>(null);
@@ -629,105 +622,6 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
             </CardContent>
           </Card>
         )}
-
-        {/* Recent Notifications Section - Full Width */}
-        {(() => {
-          // Gather recent activity
-          const recentActivity: Array<{ type: string; title: string; date: Date; link?: string }> = [];
-          
-          // Add recent analyses
-          analyses.slice(0, 2).forEach(analysis => {
-            recentActivity.push({
-              type: 'performance',
-              title: `New performance report: ${analysis.opponent || 'Match'}`,
-              date: new Date(analysis.analysis_date),
-              link: `/performance-report/match-${analysis.id}`
-            });
-          });
-          
-          // Add recent programs
-          programs
-            .filter(p => p.created_at || p.updated_at)
-            .sort((a, b) => {
-              const dateA = new Date(a.created_at || a.updated_at || 0);
-              const dateB = new Date(b.created_at || b.updated_at || 0);
-              return dateB.getTime() - dateA.getTime();
-            })
-            .slice(0, 1)
-            .forEach(program => {
-              recentActivity.push({
-                type: 'program',
-                title: `New training program: ${program.program_name}`,
-                date: new Date(program.created_at || program.updated_at || new Date())
-              });
-            });
-          
-          // Add updates for this player
-          updates
-            .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-            .slice(0, 2)
-            .forEach(update => {
-              recentActivity.push({
-                type: 'update',
-                title: update.title,
-                date: new Date(update.created_at)
-              });
-            });
-          
-          // Sort by date and take the 3 most recent
-          const recentNotifications = recentActivity
-            .sort((a, b) => b.date.getTime() - a.date.getTime())
-            .slice(0, 3);
-          
-          return recentNotifications.length > 0 ? (
-            <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 border-t-[2px] border-t-[hsl(43,49%,61%)] border-b-0 z-10">
-              <CardHeader marble className="py-2">
-                <div className="flex items-center justify-between container mx-auto px-4 pr-6">
-                  <div className="flex items-center gap-2">
-                    <Bell className="h-5 w-5 mt-[1px]" />
-                    <CardTitle className="font-heading tracking-tight ml-[9px]">Recent Notifications</CardTitle>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="container mx-auto px-4 pt-3 pb-4">
-                <div className="space-y-3">
-                  {recentNotifications.map((notification, index) => (
-                    notification.link ? (
-                      <Link
-                        key={index}
-                        to={notification.link}
-                        className="block border-l-2 border-primary pl-3 py-2 hover:bg-accent/5 transition-colors rounded"
-                      >
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="flex-1">
-                            <div className="font-medium text-sm">{notification.title}</div>
-                            <div className="text-xs text-muted-foreground">
-                              {format(notification.date, "MMM dd, yyyy")}
-                            </div>
-                          </div>
-                        </div>
-                      </Link>
-                    ) : (
-                      <div
-                        key={index}
-                        className="block border-l-2 border-primary pl-3 py-2 rounded"
-                      >
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="flex-1">
-                            <div className="font-medium text-sm">{notification.title}</div>
-                            <div className="text-xs text-muted-foreground">
-                              {format(notification.date, "MMM dd, yyyy")}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    )
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          ) : null;
-        })()}
       </div>
     </>
   );
