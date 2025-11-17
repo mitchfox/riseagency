@@ -988,7 +988,20 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <main className="pt-12 pb-12 px-0 md:px-4">
+      {/* Header with Logo */}
+      <header className="fixed top-0 left-0 right-0 z-40 bg-background/80 backdrop-blur-md border-b border-border">
+        <div className="container mx-auto px-4">
+          <div className="flex items-center justify-center h-16">
+            <img 
+              src="https://storage.googleapis.com/gpt-engineer-file-uploads/blxFQX1QtlSc3qNcPxWdCZ730Tf1/uploads/1761325700904-RISEWhite-100.jpg"
+              alt="RISE"
+              className="h-10 w-auto"
+            />
+          </div>
+        </div>
+      </header>
+
+      <main className="pt-28 pb-12 px-0 md:px-4">{/* Increased pt to account for fixed header */}
         <div className="container mx-auto max-w-6xl px-0 md:px-6">
           {/* Player Header */}
           <div className="relative mb-12">
