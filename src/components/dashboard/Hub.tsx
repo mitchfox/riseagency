@@ -380,9 +380,9 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
           </CardHeader>
           <CardContent className="pb-6">
             {chartData.length > 0 ? (
-              <div className="w-full mt-4 pl-4" style={{ height: '300px' }}>
+              <div className="w-full mt-4" style={{ height: '300px' }}>
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={chartData} margin={{ top: 20, bottom: 10, left: 20, right: 10 }}>
+                  <BarChart data={chartData} margin={{ top: 30, bottom: 10, left: 0, right: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                     <XAxis 
                       dataKey="opponent"
