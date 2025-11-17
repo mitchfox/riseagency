@@ -124,20 +124,19 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
   // Get current program schedule
   const currentProgram = programs.find(p => p.is_current);
   
-  // Find the schedule for the current week
+  // Find the schedule for a rolling 7-day period starting from today
   const currentSchedule = React.useMemo(() => {
     if (!currentProgram?.weekly_schedules) return null;
     
     const today = new Date();
-    const currentWeekStart = startOfWeek(today, { weekStartsOn: 1 });
-    const currentWeekEnd = endOfWeek(today, { weekStartsOn: 1 });
     
-    // Find schedule where week_start_date is within current week
+    // Find the schedule that applies to today by checking if today falls within any week
     const matchingSchedule = currentProgram.weekly_schedules.find((schedule: any) => {
       if (!schedule.week_start_date) return false;
       try {
         const weekStart = parseISO(schedule.week_start_date);
-        return isWithinInterval(weekStart, { start: currentWeekStart, end: currentWeekEnd });
+        const weekEnd = addDays(weekStart, 6);
+        return isWithinInterval(today, { start: weekStart, end: weekEnd });
       } catch {
         return false;
       }
@@ -146,6 +145,27 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
     // Fall back to first schedule if no match found
     return matchingSchedule || currentProgram.weekly_schedules[0] || null;
   }, [currentProgram]);
+  
+  // Create a rolling 7-day array starting from today
+  const rolling7Days = React.useMemo(() => {
+    const today = new Date();
+    const days = [];
+    
+    for (let i = 0; i < 7; i++) {
+      const date = addDays(today, i);
+      // Get the day name (monday, tuesday, etc.) for mapping to schedule
+      const dayName = format(date, 'EEEE').toLowerCase();
+      days.push({
+        date,
+        dayName,
+        displayDay: format(date, 'EEE').toUpperCase(), // MON, TUE, etc.
+        displayDate: format(date, 'd'),
+        isToday: i === 0
+      });
+    }
+    
+    return days;
+  }, []);
 
   // Session color mapping
   const getSessionColor = (sessionKey: string) => {
@@ -290,46 +310,24 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
           <CardContent className="container mx-auto px-4 pt-3 pb-3">
             {currentSchedule ? (
               <div className="grid grid-cols-8 gap-1 md:gap-2">
-                {/* Week Cell */}
+                {/* Today Cell */}
                 <div 
-                  className="p-2 md:p-4 flex flex-col items-center justify-center rounded-lg"
-                  style={{ 
-                    backgroundColor: currentSchedule.week_start_date && (() => {
-                      const weekStart = parseISO(currentSchedule.week_start_date);
-                      const today = new Date();
-                      const currentWeekStart = startOfWeek(today, { weekStartsOn: 1 });
-                      const currentWeekEnd = endOfWeek(today, { weekStartsOn: 1 });
-                      const isCurrentWeek = isWithinInterval(weekStart, { start: currentWeekStart, end: currentWeekEnd });
-                      return isCurrentWeek ? 'hsl(43, 49%, 61%)' : 'hsl(0, 0%, 95%)';
-                    })() || 'hsl(0, 0%, 95%)',
-                    color: 'hsl(0, 0%, 0%)'
-                  }}
+                  className="p-2 md:p-4 flex flex-col items-center justify-center rounded-lg bg-[hsl(43,49%,61%)] text-black"
                 >
-                  {currentSchedule.week_start_date ? (() => {
-                    const date = parseISO(currentSchedule.week_start_date);
-                    const day = format(date, 'd');
-                    const suffix = day.endsWith('1') && day !== '11' ? 'st' :
-                                  day.endsWith('2') && day !== '12' ? 'nd' :
-                                  day.endsWith('3') && day !== '13' ? 'rd' : 'th';
-                    return (
-                      <div className="text-center">
-                        <div className="text-sm md:text-2xl font-bold mb-1">{day}<sup className="text-[8px] md:text-sm">{suffix}</sup></div>
-                        <div className="text-[8px] md:text-sm font-medium italic">
-                          <span className="md:hidden">{format(date, 'MMM')}</span>
-                          <span className="hidden md:inline">{format(date, 'MMMM')}</span>
-                        </div>
-                      </div>
-                    );
-                  })() : <span className="text-xs md:text-sm">{currentSchedule.week || 'W'}</span>}
+                  <div className="text-center">
+                    <div className="text-sm md:text-2xl font-bold mb-1">{format(new Date(), 'd')}<sup className="text-[8px] md:text-sm">th</sup></div>
+                    <div className="text-[8px] md:text-sm font-medium italic">
+                      <span className="md:hidden">Today</span>
+                      <span className="hidden md:inline">Today</span>
+                    </div>
+                  </div>
                 </div>
               
-                {/* Day Cells */}
-                {['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map((day) => {
-                  const sessionValue = currentSchedule[day] || '';
+                {/* Day Cells - Rolling 7 days from today */}
+                {rolling7Days.map((dayInfo, index) => {
+                  const sessionValue = currentSchedule[dayInfo.dayName] || '';
                   const colors = sessionValue ? getSessionColor(sessionValue) : { bg: 'hsl(0, 0%, 10%)', text: 'hsl(0, 0%, 100%)', hover: 'hsl(0, 0%, 15%)' };
-                  const weekDates = getWeekDates(currentSchedule.week_start_date);
-                  const dayDate = weekDates ? weekDates[day as keyof typeof weekDates] : null;
-                  const dayImageKey = `${day}Image`;
+                  const dayImageKey = `${dayInfo.dayName}Image`;
                   const clubLogoUrl = currentSchedule[dayImageKey];
                   
                   // Check if it's a clickable session (A-H)
@@ -337,7 +335,7 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
                   
                   return (
                     <button
-                      key={day}
+                      key={index}
                       onClick={() => isClickableSession && onNavigateToSession?.(sessionValue.toUpperCase())}
                       disabled={!isClickableSession}
                       className="relative p-2 md:p-4 rounded-lg transition-all flex flex-col items-center justify-center min-h-[60px] md:min-h-[80px] disabled:cursor-default"
@@ -348,17 +346,15 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
                       }}
                     >
                       <div className="text-[8px] md:text-xs font-medium mb-1 opacity-70 uppercase">
-                        {day.slice(0, 3)}
+                        {dayInfo.displayDay}
                       </div>
-                      {dayDate && (
-                        <div className="text-[10px] md:text-sm font-bold mb-1">
-                          {format(dayDate, 'd')}
-                        </div>
-                      )}
+                      <div className="text-[10px] md:text-sm font-bold mb-1">
+                        {dayInfo.displayDate}
+                      </div>
                       {clubLogoUrl && (
                         <img 
                           src={clubLogoUrl} 
-                          alt={`${day} opponent`}
+                          alt={`${dayInfo.dayName} opponent`}
                           className="w-4 h-4 md:w-6 md:h-6 object-contain mb-1"
                         />
                       )}
