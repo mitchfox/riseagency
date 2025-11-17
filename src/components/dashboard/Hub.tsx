@@ -223,15 +223,27 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
           </CardContent>
         </Card>
 
-        {/* R90 Performance Chart */}
+        {/* R90 Performance Chart & Recent Analysis Combined */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5" />
-              Recent Form
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="h-5 w-5" />
+                Recent Form
+              </CardTitle>
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={onNavigateToAnalysis}
+                className="flex items-center gap-1 text-primary hover:text-primary/80"
+              >
+                See All
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-6">
+            {/* Chart */}
             {chartData.length > 0 ? (
               <ResponsiveContainer width="100%" height={200}>
                 <BarChart data={chartData}>
@@ -268,57 +280,39 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
             ) : (
               <p className="text-sm text-muted-foreground">No performance data yet</p>
             )}
+
+            {/* Recent Fixtures List */}
+            {recentAnalyses.length > 0 && (
+              <div className="space-y-3 pt-4 border-t border-border">
+                {recentAnalyses.map((analysis) => (
+                  <Link
+                    key={analysis.id}
+                    to={`/performance-report/match-${analysis.id}`}
+                    className="block border-l-2 border-primary pl-3 py-2 hover:bg-accent/5 transition-colors"
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1">
+                        <div className="font-medium text-sm">{analysis.opponent}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {format(new Date(analysis.analysis_date), "MMM dd, yyyy")}
+                        </div>
+                      </div>
+                      {analysis.r90_score != null && (
+                        <div 
+                          className="px-3 py-1 rounded text-white text-sm font-bold"
+                          style={{ backgroundColor: getR90Color(analysis.r90_score) }}
+                        >
+                          R90: {analysis.r90_score}
+                        </div>
+                      )}
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
-
-      {/* Performance Analysis Section */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>Recent Performance Analysis</CardTitle>
-            <Button 
-              variant="ghost" 
-              size="sm"
-              onClick={onNavigateToAnalysis}
-              className="flex items-center gap-1 text-primary hover:text-primary/80"
-            >
-              See All
-              <ArrowRight className="h-4 w-4" />
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {recentAnalyses.length > 0 ? (
-            <div className="space-y-3">
-              {recentAnalyses.map((analysis) => (
-                <Link
-                  key={analysis.id}
-                  to={`/performance-report/match-${analysis.id}`}
-                  className="block border-l-2 border-primary pl-3 py-2 hover:bg-accent/5 transition-colors"
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1">
-                      <div className="font-medium text-sm">{analysis.opponent}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {format(new Date(analysis.analysis_date), "MMM dd, yyyy")}
-                      </div>
-                    </div>
-                    {analysis.r90_score && (
-                      <div className="text-right">
-                        <div className="text-sm font-bold text-primary">R90</div>
-                        <div className="text-lg font-bold">{analysis.r90_score}</div>
-                      </div>
-                    )}
-                  </div>
-                </Link>
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">No recent analysis</p>
-          )}
-        </CardContent>
-      </Card>
     </div>
   );
 };
