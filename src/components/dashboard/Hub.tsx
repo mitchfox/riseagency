@@ -7,6 +7,7 @@ import { format, parseISO, startOfWeek, endOfWeek, isWithinInterval, addDays } f
 import { Link } from "react-router-dom";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import Autoplay from "embla-carousel-autoplay";
+import Fade from "embla-carousel-fade";
 import { supabase } from "@/integrations/supabase/client";
 
 interface PlayerProgram {
@@ -189,6 +190,8 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
   const autoplayPlugin = React.useRef(
     Autoplay({ delay: 10000, stopOnInteraction: false, stopOnMouseEnter: false })
   );
+  
+  const fadePlugin = React.useRef(Fade());
 
   return (
     <>
@@ -202,7 +205,7 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
                   align: "center",
                   loop: true,
                 }}
-                plugins={[autoplayPlugin.current]}
+                plugins={[autoplayPlugin.current, fadePlugin.current]}
                 className="w-full"
               >
                 <CarouselContent>
