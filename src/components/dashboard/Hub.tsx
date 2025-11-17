@@ -41,7 +41,7 @@ interface HubProps {
 
 export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNavigateToForm, onNavigateToSession }: HubProps) => {
   const [marketingImages, setMarketingImages] = React.useState<string[]>([]);
-  const [chartInView] = React.useState(true); // Always true - animation only plays on component mount
+  const hasAnimated = React.useRef(false);
   const chartRef = React.useRef<HTMLDivElement>(null);
   const [tooltipVisible, setTooltipVisible] = React.useState(true);
   
@@ -120,6 +120,14 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
     
     fetchMarketingImages();
   }, [playerData?.name]);
+  
+  // Set hasAnimated to true after initial animation completes
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      hasAnimated.current = true;
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, []);
   
   // Get current program schedule
   const currentProgram = programs.find(p => p.is_current);
@@ -496,7 +504,7 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
                     <Bar 
                       dataKey="score" 
                       radius={[8, 8, 0, 0]}
-                      isAnimationActive={chartInView}
+                      isAnimationActive={false}
                       animationBegin={0}
                       animationDuration={1400}
                       animationEasing="ease-in-out"
@@ -510,7 +518,7 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
                             key={`cell-${index}`} 
                             fill={baseColor}
                             style={{
-                              animation: chartInView ? `barSlideUp 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) ${index * 0.25}s both` : 'none',
+                              animation: !hasAnimated.current ? `barSlideUp 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) ${index * 0.25}s both` : 'none',
                               filter: 'brightness(1.15) drop-shadow(0 6px 12px rgba(0, 0, 0, 0.4)) drop-shadow(0 0 20px rgba(255, 255, 255, 0.1))',
                               background: `linear-gradient(180deg, rgba(255,255,255,0.3) 0%, transparent 40%, rgba(0,0,0,0.3) 100%)`,
                               boxShadow: 'inset 0 2px 4px rgba(255, 255, 255, 0.3), inset 0 -2px 4px rgba(0, 0, 0, 0.3)'
@@ -535,8 +543,8 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
                               fontSize="16"
                               fontWeight="700"
                               style={{
-                                opacity: chartInView ? 1 : 0,
-                                animation: chartInView ? `labelFadeIn 0.6s ease-out ${delay + 0.8}s forwards` : 'none'
+                                opacity: 1,
+                                animation: !hasAnimated.current ? `labelFadeIn 0.6s ease-out ${delay + 0.8}s forwards` : 'none'
                               }}
                             >
                               {value}
@@ -562,8 +570,8 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
                               fontSize="18"
                               fontWeight="700"
                               style={{
-                                opacity: chartInView ? 1 : 0,
-                                animation: chartInView ? `labelFadeIn 0.6s ease-out ${delay + 0.8}s forwards` : 'none'
+                                opacity: 1,
+                                animation: !hasAnimated.current ? `labelFadeIn 0.6s ease-out ${delay + 0.8}s forwards` : 'none'
                               }}
                             >
                               {grade}
