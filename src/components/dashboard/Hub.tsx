@@ -402,6 +402,7 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
                         const stats = data.strikerStats;
                         return [
                           <div key="tooltip" className="space-y-2 min-w-[200px]">
+                            <div className="font-bold text-white text-base mb-1">{data.result} {data.opponent}</div>
                             {data.minutesPlayed && (
                               <div className="text-xs text-white/60">Minutes Played: {data.minutesPlayed}</div>
                             )}
