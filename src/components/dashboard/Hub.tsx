@@ -41,9 +41,8 @@ interface HubProps {
 
 export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNavigateToForm, onNavigateToSession }: HubProps) => {
   const [marketingImages, setMarketingImages] = React.useState<string[]>([]);
-  const [chartInView, setChartInView] = React.useState(false);
+  const [chartInView] = React.useState(true); // Always true - animation only plays on component mount
   const chartRef = React.useRef<HTMLDivElement>(null);
-  const hasAnimated = React.useRef(false);
   const [tooltipVisible, setTooltipVisible] = React.useState(true);
   
   // Custom Tooltip Component with close button
@@ -121,35 +120,6 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
     
     fetchMarketingImages();
   }, [playerData?.name]);
-  
-  // Intersection observer for chart animation - only runs once
-  React.useEffect(() => {
-    if (hasAnimated.current) return;
-    
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting && entry.intersectionRatio >= 0.8 && !hasAnimated.current) {
-            setChartInView(true);
-            hasAnimated.current = true;
-            observer.disconnect();
-          }
-        });
-      },
-      { threshold: [0.8] }
-    );
-
-    const currentRef = chartRef.current;
-    if (currentRef) {
-      observer.observe(currentRef);
-    }
-
-    return () => {
-      if (currentRef) {
-        observer.unobserve(currentRef);
-      }
-    };
-  }, []);
   
   // Get current program schedule
   const currentProgram = programs.find(p => p.is_current);
