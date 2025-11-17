@@ -31,6 +31,7 @@ import { InvoiceManagement } from "@/components/staff/InvoiceManagement";
 import { UpdatesManagement } from "@/components/staff/UpdatesManagement";
 import { StaffSchedule } from "@/components/staff/StaffSchedule";
 import { StaffOverview } from "@/components/staff/StaffOverview";
+import { StaffAvailabilityManagement } from "@/components/staff/StaffAvailabilityManagement";
 import { MarketingManagement } from "@/components/staff/MarketingManagement";
 import { RecruitmentManagement } from "@/components/staff/RecruitmentManagement";
 import { ScoutingCentreManagement } from "@/components/staff/ScoutingCentreManagement";
@@ -81,7 +82,7 @@ const Staff = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [isMarketeer, setIsMarketeer] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-  const [expandedSection, setExpandedSection] = useState<'overview' | 'staffaccounts' | 'passwords' | 'pwainstall' | 'offlinemanager' | 'pushnotifications' | 'players' | 'playerlist' | 'recruitment' | 'scoutingcentre' | 'blog' | 'betweenthelines' | 'coaching' | 'analysis' | 'marketing' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'legal' | null>('overview');
+  const [expandedSection, setExpandedSection] = useState<'overview' | 'schedule' | 'staffaccounts' | 'passwords' | 'pwainstall' | 'offlinemanager' | 'pushnotifications' | 'players' | 'playerlist' | 'recruitment' | 'scoutingcentre' | 'blog' | 'betweenthelines' | 'coaching' | 'analysis' | 'marketing' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'legal' | null>('overview');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   
   // Enable staff notifications
@@ -508,6 +509,13 @@ const Staff = () => {
       locked: false
     },
     {
+      id: 'schedule',
+      title: 'Schedule',
+      icon: Calendar,
+      sections: [{ id: 'schedule', title: 'Schedule', icon: Calendar }],
+      locked: false
+    },
+    {
       id: 'coaching',
       title: 'Coaching & Management',
       icon: Dumbbell,
@@ -815,6 +823,7 @@ const Staff = () => {
                 </CardHeader>
                 <CardContent>
                   {expandedSection === 'overview' && <StaffOverview isAdmin={isAdmin} />}
+                  {expandedSection === 'schedule' && <StaffAvailabilityManagement isAdmin={isAdmin} />}
                   {expandedSection === 'playerlist' && <PlayerList isAdmin={isAdmin} />}
                   {expandedSection === 'players' && <PlayerManagement isAdmin={isAdmin} />}
                   {expandedSection === 'recruitment' && <RecruitmentManagement isAdmin={isAdmin} />}
