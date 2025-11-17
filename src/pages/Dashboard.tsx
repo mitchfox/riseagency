@@ -2887,7 +2887,7 @@ const Dashboard = () => {
             Log Out
           </Button>
           <Button 
-            variant="ghost"
+            variant="outline"
             size="icon"
             onClick={() => window.location.reload()}
             className="text-gold hover:text-gold/80"
