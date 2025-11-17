@@ -33,11 +33,20 @@ root.render(
   </HelmetProvider>
 );
 
-// Remove loading splash after React has rendered
+// Remove loading splash after React has rendered - only show on /dashboard and /staff routes
 setTimeout(() => {
   const splash = document.getElementById('loading-splash');
-  if (splash) {
+  const currentPath = window.location.pathname;
+  
+  // Only keep splash for dashboard and staff pages
+  if (splash && !currentPath.includes('/dashboard') && !currentPath.includes('/staff')) {
     splash.classList.add('hidden');
     setTimeout(() => splash.remove(), 500);
+  } else if (splash) {
+    // For dashboard/staff, add fade out after 4 seconds
+    setTimeout(() => {
+      splash.classList.add('hidden');
+      setTimeout(() => splash.remove(), 4000);
+    }, 0);
   }
 }, 100);
