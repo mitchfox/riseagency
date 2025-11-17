@@ -1216,6 +1216,13 @@ const Dashboard = () => {
                   }
                   return prev;
                 });
+                // Scroll to the session after state updates
+                setTimeout(() => {
+                  const element = document.getElementById(`session-${sessionKey}`);
+                  if (element) {
+                    element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }
+                }, 300);
               }}
             />
           )}
@@ -1844,7 +1851,7 @@ const Dashboard = () => {
                                           if ((selectedSession || firstSessionWithData) !== mainKey) return null;
                                           
                                            return (
-                                             <div key={mainKey} className="mt-4">
+                                             <div key={mainKey} id={`session-${mainKey}`} className="mt-4">
                                                  <Tabs defaultValue={hasPreSession ? "pre" : "main"} className="w-full">
                                                     {/* Sub-tabs for Pre and Main Session */}
                                                      <TabsList className="grid w-full gap-2 grid-cols-2 mb-4 bg-transparent p-0">
