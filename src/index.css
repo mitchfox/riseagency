@@ -163,6 +163,20 @@ All colors MUST be HSL.
     }
   }
 
+  @keyframes labelFadeIn {
+    0% {
+      opacity: 0;
+      transform: scale(0.5) translateY(10px);
+    }
+    60% {
+      transform: scale(1.1) translateY(-2px);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+  }
+
   @keyframes barGloss {
     0% {
       background-position: -200% 0;
