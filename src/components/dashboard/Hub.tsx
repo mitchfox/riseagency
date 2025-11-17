@@ -1,7 +1,7 @@
 import * as React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Calendar, TrendingUp, ArrowRight, Trophy } from "lucide-react";
+import { Calendar, TrendingUp, ArrowRight, Trophy, X } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, LabelList } from "recharts";
 import { format, parseISO, startOfWeek, endOfWeek, isWithinInterval, addDays } from "date-fns";
 import { Link } from "react-router-dom";
@@ -44,6 +44,59 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
   const [chartInView, setChartInView] = React.useState(false);
   const chartRef = React.useRef<HTMLDivElement>(null);
   const hasAnimated = React.useRef(false);
+  const [tooltipVisible, setTooltipVisible] = React.useState(true);
+  
+  // Custom Tooltip Component with close button
+  const CustomTooltip = ({ active, payload }: any) => {
+    if (!active || !payload || !payload.length || !tooltipVisible) return null;
+    
+    const data = payload[0].payload;
+    const stats = data.strikerStats;
+    
+    return (
+      <div 
+        className="relative bg-black border-2 border-[hsl(43,49%,61%)] rounded-lg p-3 text-white min-w-[200px]"
+        style={{ pointerEvents: 'auto' }}
+      >
+        <button
+          onClick={() => setTooltipVisible(false)}
+          className="absolute top-2 right-2 text-white/60 hover:text-white transition-colors"
+          aria-label="Close tooltip"
+        >
+          <X className="h-4 w-4" />
+        </button>
+        <div className="space-y-2 pr-6">
+          <div className="font-bold text-white text-base mb-1">{data.result} {data.opponent}</div>
+          {data.minutesPlayed && (
+            <div className="text-xs text-white/60">Minutes Played: {data.minutesPlayed}</div>
+          )}
+          {stats && (
+            <div className="space-y-1 pt-2 border-t border-white/20">
+              <div className="text-xs font-semibold text-white/80">Advanced Stats (per 90):</div>
+              {stats.xG_adj_per90 !== undefined && (
+                <div className="text-xs text-white/70">xG (adj): {stats.xG_adj_per90.toFixed(2)}</div>
+              )}
+              {stats.xA_adj_per90 !== undefined && (
+                <div className="text-xs text-white/70">xA (adj): {stats.xA_adj_per90.toFixed(2)}</div>
+              )}
+              {stats.xGChain_per90 !== undefined && (
+                <div className="text-xs text-white/70">xGChain: {stats.xGChain_per90.toFixed(2)}</div>
+              )}
+              {stats.movement_in_behind_xC_per90 !== undefined && (
+                <div className="text-xs text-white/70">Movement In Behind xC: {stats.movement_in_behind_xC_per90.toFixed(2)}</div>
+              )}
+              {stats.movement_to_feet_xC_per90 !== undefined && (
+                <div className="text-xs text-white/70">Movement To Feet xC: {stats.movement_to_feet_xC_per90.toFixed(2)}</div>
+              )}
+              {stats.crossing_movement_xC_per90 !== undefined && (
+                <div className="text-xs text-white/70">Crossing Movement xC: {stats.crossing_movement_xC_per90.toFixed(2)}</div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
   
   // Fetch marketing gallery images for this player
   React.useEffect(() => {
@@ -452,55 +505,9 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
                       width={30}
                     />
                     <Tooltip 
-                      labelFormatter={() => ""}
-                      separator=""
-                      contentStyle={{
-                        backgroundColor: "#000000",
-                        border: "2px solid hsl(43, 49%, 61%)",
-                        borderRadius: "8px",
-                        padding: "12px",
-                        color: "#ffffff"
-                      }}
-                      itemStyle={{
-                        color: "#ffffff"
-                      }}
-                      formatter={(value: any, name: any, props: any) => {
-                        const data = props.payload;
-                        const stats = data.strikerStats;
-                        return [
-                          <div key="tooltip" className="space-y-2 min-w-[200px]">
-                            <div className="font-bold text-white text-base mb-1">{data.result} {data.opponent}</div>
-                            {data.minutesPlayed && (
-                              <div className="text-xs text-white/60">Minutes Played: {data.minutesPlayed}</div>
-                            )}
-                            {stats && (
-                              <div className="space-y-1 pt-2 border-t border-white/20">
-                                <div className="text-xs font-semibold text-white/80">Advanced Stats (per 90):</div>
-                                {stats.xG_adj_per90 !== undefined && (
-                                  <div className="text-xs text-white/70">xG (adj): {stats.xG_adj_per90.toFixed(2)}</div>
-                                )}
-                                {stats.xA_adj_per90 !== undefined && (
-                                  <div className="text-xs text-white/70">xA (adj): {stats.xA_adj_per90.toFixed(2)}</div>
-                                )}
-                                {stats.xGChain_per90 !== undefined && (
-                                  <div className="text-xs text-white/70">xGChain: {stats.xGChain_per90.toFixed(2)}</div>
-                                )}
-                                {stats.movement_in_behind_xC_per90 !== undefined && (
-                                  <div className="text-xs text-white/70">Movement In Behind xC: {stats.movement_in_behind_xC_per90.toFixed(2)}</div>
-                                )}
-                                {stats.movement_to_feet_xC_per90 !== undefined && (
-                                  <div className="text-xs text-white/70">Movement To Feet xC: {stats.movement_to_feet_xC_per90.toFixed(2)}</div>
-                                )}
-                                {stats.crossing_movement_xC_per90 !== undefined && (
-                                  <div className="text-xs text-white/70">Crossing Movement xC: {stats.crossing_movement_xC_per90.toFixed(2)}</div>
-                                )}
-                              </div>
-                            )}
-                          </div>,
-                          ""
-                        ];
-                      }}
+                      content={<CustomTooltip />}
                       cursor={{ fill: 'hsl(var(--accent))', opacity: 0.3 }}
+                      wrapperStyle={{ pointerEvents: 'auto' }}
                     />
                     <defs>
                       <linearGradient id="barGloss" x1="0" y1="0" x2="0" y2="1">
@@ -528,6 +535,7 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
                       animationDuration={1400}
                       animationEasing="ease-in-out"
                       filter="url(#barShine)"
+                      onMouseEnter={() => setTooltipVisible(true)}
                     >
                       {chartData.map((entry, index) => {
                         const baseColor = getR90Color(entry.score);
