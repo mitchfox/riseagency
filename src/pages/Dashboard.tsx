@@ -1128,19 +1128,19 @@ const Dashboard = () => {
         </div>
       )}
 
-      <main className="pt-32 pb-12 px-0">
-        <div className="container mx-auto max-w-6xl px-0">
-          <div>
-            <NotificationPermission />
-          </div>
+      <main className="pt-32 pb-12">
+        {/* Notification Permission - with padding */}
+        <div className="container mx-auto max-w-6xl px-4 md:px-6">
+          <NotificationPermission />
+        </div>
 
-          {/* Navigation Menu */}
-          <div className="-mx-4 md:mx-0">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button 
-                  variant="outline" 
-                  className="w-full justify-center font-bebas uppercase text-base px-6 py-6 bg-card hover:bg-card/80 border-2 border-gold !text-gold hover:!text-gold z-50 rounded-none"
+        {/* Navigation Menu - Full width, no spacing */}
+        <div className="w-full">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button 
+                variant="outline" 
+                className="w-full justify-center font-bebas uppercase text-base px-6 py-6 bg-card hover:bg-card/80 border-2 border-gold border-x-0 !text-gold hover:!text-gold z-50 rounded-none"
                 >
                   <span>
                     {activeTab === "hub" && "Hub"}
@@ -1198,10 +1198,10 @@ const Dashboard = () => {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-          </div>
+        </div>
 
-          {/* Content Section with Padding */}
-          <div className="px-4 md:px-6">
+        {/* Content Section with Padding */}
+        <div className="container mx-auto max-w-6xl px-4 md:px-6">
             {/* Hub Section */}
             {activeTab === "hub" && (
             <Hub 
@@ -2712,7 +2712,6 @@ const Dashboard = () => {
               </Card>
             </div>
           )}
-          </div>
         </div>
       </main>
 
