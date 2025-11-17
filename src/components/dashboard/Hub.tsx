@@ -9,6 +9,7 @@ import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious
 import Autoplay from "embla-carousel-autoplay";
 import Fade from "embla-carousel-fade";
 import { supabase } from "@/integrations/supabase/client";
+import { getR90Grade } from "@/lib/gradeCalculations";
 
 interface PlayerProgram {
   id: string;
@@ -488,7 +489,9 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
                       <LabelList 
                         dataKey="score" 
                         position="top" 
-                        style={{ fontSize: '12px', fill: 'hsl(var(--foreground))', fontWeight: 'bold' }}
+                        offset={8}
+                        style={{ fontSize: '14px', fill: 'hsl(var(--foreground))', fontWeight: '700' }}
+                        formatter={(value: number) => getR90Grade(value).grade}
                       />
                     </Bar>
                   </BarChart>
