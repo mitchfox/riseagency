@@ -88,13 +88,18 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
     ? Math.ceil(Math.max(...chartData.map(d => d.score)))
     : 4;
 
-  // Function to get R90 color based on score
+  // Function to get R90 color based on score - matches Performance Analysis colors
   const getR90Color = (score: number) => {
-    if (score >= 3.0) return "hsl(142, 76%, 36%)"; // Green for excellent
-    if (score >= 2.5) return "hsl(221, 83%, 53%)"; // Blue for good
-    if (score >= 2.0) return "hsl(48, 96%, 53%)"; // Yellow for average
-    if (score >= 1.5) return "hsl(25, 95%, 53%)"; // Orange for below average
-    return "hsl(0, 84%, 60%)"; // Red for poor
+    if (score < 0) return "hsl(0, 93%, 12%)"; // red-950: Dark red for negative
+    if (score >= 0 && score < 0.2) return "hsl(0, 84%, 60%)"; // red-600: Red
+    if (score >= 0.2 && score < 0.4) return "hsl(0, 91%, 71%)"; // red-400: Light red
+    if (score >= 0.4 && score < 0.6) return "hsl(25, 95%, 37%)"; // orange-700: Orange-brown
+    if (score >= 0.6 && score < 0.8) return "hsl(25, 95%, 53%)"; // orange-500: Yellow-orange
+    if (score >= 0.8 && score < 1.0) return "hsl(48, 96%, 53%)"; // yellow-400: Yellow
+    if (score >= 1.0 && score < 1.4) return "hsl(82, 84%, 67%)"; // lime-400: Light Green
+    if (score >= 1.4 && score < 1.8) return "hsl(142, 76%, 36%)"; // green-500: Green
+    if (score >= 1.8 && score < 2.5) return "hsl(142, 72%, 29%)"; // green-700: Dark green
+    return "hsl(43, 49%, 61%)"; // gold: RISE gold for 2.5+
   };
 
   // Get latest 3 analyses
