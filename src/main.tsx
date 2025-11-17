@@ -34,19 +34,35 @@ root.render(
 );
 
 // Remove loading splash after React has rendered - only show on /dashboard and /staff routes
+const removeSplash = () => {
+  const splash = document.getElementById('loading-splash');
+  if (splash) {
+    splash.classList.add('hidden');
+    setTimeout(() => splash.remove(), 4000);
+  }
+};
+
 setTimeout(() => {
   const splash = document.getElementById('loading-splash');
   const currentPath = window.location.pathname;
   
-  // Only show splash for dashboard and staff pages
-  if (splash && !currentPath.includes('/dashboard') && !currentPath.includes('/staff')) {
+  // Only show splash for /dashboard and /staff routes (exact match or starts with)
+  const shouldShowSplash = currentPath === '/dashboard' || currentPath.startsWith('/dashboard/') || 
+                           currentPath === '/staff' || currentPath.startsWith('/staff/');
+  
+  if (splash && !shouldShowSplash) {
+    // Immediately hide splash on other pages
     splash.classList.add('hidden');
     setTimeout(() => splash.remove(), 500);
-  } else if (splash) {
+  } else if (splash && shouldShowSplash) {
     // For dashboard/staff, show for 1 second then fade out over 4 seconds
     setTimeout(() => {
-      splash.classList.add('hidden');
-      setTimeout(() => splash.remove(), 4000);
+      removeSplash();
     }, 1000);
+    
+    // Fallback: Always remove splash after 6 seconds max (for offline scenarios)
+    setTimeout(() => {
+      removeSplash();
+    }, 6000);
   }
 }, 100);
