@@ -21,7 +21,14 @@ export class CacheManager {
       const response = new Response(JSON.stringify(data), {
         headers: { 'Content-Type': 'application/json' }
       });
+      // Cache by both ID and email for flexible retrieval
       await cache.put(`/offline/player/${playerId}`, response);
+      if (data.email) {
+        const emailResponse = new Response(JSON.stringify(data), {
+          headers: { 'Content-Type': 'application/json' }
+        });
+        await cache.put(`/offline/player/email/${data.email}`, emailResponse);
+      }
       console.log(`[Cache] Cached player data for ${playerId}`);
     } catch (error) {
       console.error('[Cache] Error caching player data:', error);
@@ -144,10 +151,18 @@ export class CacheManager {
   }
 
   // Get cached player data
-  static async getCachedPlayerData(playerId: string): Promise<any | null> {
+  static async getCachedPlayerData(playerIdOrEmail: string): Promise<any | null> {
     try {
       const cache = await caches.open(this.getCacheName('players'));
-      const response = await cache.match(`/offline/player/${playerId}`);
+      
+      // Try by ID first
+      let response = await cache.match(`/offline/player/${playerIdOrEmail}`);
+      
+      // If not found, try by email
+      if (!response) {
+        response = await cache.match(`/offline/player/email/${playerIdOrEmail}`);
+      }
+      
       if (response) {
         return await response.json();
       }
