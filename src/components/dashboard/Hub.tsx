@@ -383,6 +383,7 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
                     />
                     <Tooltip 
                       labelFormatter={() => ""}
+                      separator=""
                       contentStyle={{
                         backgroundColor: "#000000",
                         border: "2px solid hsl(43, 49%, 61%)",
