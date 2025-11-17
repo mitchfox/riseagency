@@ -187,14 +187,14 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
   }, [playerData, marketingImages]);
 
   const autoplayPlugin = React.useRef(
-    Autoplay({ delay: 10000, stopOnInteraction: false })
+    Autoplay({ delay: 10000, stopOnInteraction: false, stopOnMouseEnter: false })
   );
 
   return (
     <>
       {/* Video Highlights Slider - Full Width */}
       {videoThumbnails.length > 0 && (
-        <div className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] mb-6">
+        <div className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw]">
           <Card className="bg-card/90 backdrop-blur-sm border-gold/30 overflow-hidden rounded-none border-x-0">
             <div className="w-full">
               <Carousel
@@ -238,13 +238,23 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
         </div>
       )}
 
-      <div className="space-y-6 mb-8">
+      <div className="space-y-6">
         {/* Schedule Card - Full Width */}
         <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0">
           <CardHeader marble>
-            <div className="flex items-center gap-2 container mx-auto px-4">
-              <Calendar className="h-5 w-5" />
-              <CardTitle>This Week's Schedule</CardTitle>
+            <div className="flex items-center justify-between container mx-auto px-4">
+              <div className="flex items-center gap-2">
+                <Calendar className="h-5 w-5" />
+                <CardTitle>This Week's Schedule</CardTitle>
+              </div>
+              <Button 
+                variant="ghost" 
+                size="sm"
+                className="flex items-center gap-1 text-primary hover:text-primary/80"
+              >
+                See All
+                <ArrowRight className="h-4 w-4" />
+              </Button>
             </div>
           </CardHeader>
           <CardContent className="container mx-auto px-4">
