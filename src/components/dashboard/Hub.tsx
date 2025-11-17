@@ -567,7 +567,7 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
                       <LabelList 
                         dataKey="score" 
                         position="top" 
-                        offset={10}
+                        offset={5}
                         content={(props: any) => {
                           const { x, y, width, value, index } = props;
                           const delay = index * 0.25;
@@ -575,7 +575,7 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
                           return (
                             <text
                               x={x + width / 2}
-                              y={y - 10}
+                              y={y}
                               fill="hsl(43, 49%, 61%)"
                               textAnchor="middle"
                               dominantBaseline="bottom"
