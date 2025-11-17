@@ -2832,9 +2832,9 @@ const Dashboard = () => {
                           )}
                         </TabsContent>
                         
-                        <TabsContent value="best">
+                        <TabsContent value="best" className="space-y-0">
                           <Tabs defaultValue="clips" className="w-full">
-                            <TabsList className="grid w-full grid-cols-2 gap-2 mb-6 bg-muted h-auto p-2">
+                            <TabsList className="grid w-full grid-cols-2 gap-2 mb-6 bg-muted h-auto p-2 mt-0">
                               <TabsTrigger value="clips" className="font-bebas uppercase">
                                 All Clips
                               </TabsTrigger>
