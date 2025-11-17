@@ -1324,7 +1324,7 @@ const Dashboard = () => {
 
             <TabsContent value="analysis" className="space-y-6">
               <Tabs value={activeAnalysisTab} onValueChange={setActiveAnalysisTab} className="w-full">
-                <TabsList className="grid w-full grid-cols-1 sm:grid-cols-5 gap-2 mb-4 bg-muted h-auto p-2">
+                <TabsList className="grid w-full grid-cols-1 sm:grid-cols-5 gap-2 mb-4 bg-muted h-auto p-2 border-b-2 border-b-[hsl(43,49%,61%)]">
                   <TabsTrigger value="performance" className="font-bebas uppercase text-sm sm:text-base">
                     Performance Analysis
                   </TabsTrigger>
@@ -1359,29 +1359,31 @@ const Dashboard = () => {
                           {analyses.map((analysis) => (
                             <div 
                               key={analysis.id} 
-                              className="flex flex-col md:flex-row md:items-center md:justify-between border rounded-lg p-3 md:p-4 hover:border-primary transition-colors bg-card gap-3 md:gap-0"
+                              className="border rounded-lg p-3 hover:border-primary transition-colors bg-card"
                             >
-                              <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-6">
-                                <span className="text-xs md:text-sm text-muted-foreground md:min-w-[100px]">
-                                  {new Date(analysis.analysis_date).toLocaleDateString('en-GB')}
-                                </span>
-                                
-                                {analysis.opponent && (
-                                  <div className="flex flex-col">
-                                    <span className="text-xs md:text-sm font-medium">vs {analysis.opponent}</span>
-                                    {analysis.result && (
-                                      <span className="text-xs text-muted-foreground">{analysis.result}</span>
-                                    )}
-                                  </div>
-                                )}
-
-                                {analysis.minutes_played !== null && (
-                                  <span className="text-xs md:text-sm text-muted-foreground">
-                                    {analysis.minutes_played} min
+                              {/* Line 1: Date, Opponent, Result - all on one line on mobile */}
+                              <div className="flex items-center justify-between gap-2 mb-2">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <span className="text-xs text-muted-foreground">
+                                    {new Date(analysis.analysis_date).toLocaleDateString('en-GB')}
                                   </span>
-                                )}
+                                  {analysis.opponent && (
+                                    <>
+                                      <span className="text-xs font-medium">vs {analysis.opponent}</span>
+                                      {analysis.result && (
+                                        <span className="text-xs text-muted-foreground">({analysis.result})</span>
+                                      )}
+                                    </>
+                                  )}
+                                  {analysis.minutes_played !== null && (
+                                    <span className="text-xs text-muted-foreground">
+                                      • {analysis.minutes_played}'
+                                    </span>
+                                  )}
+                                </div>
                               </div>
 
+                              {/* Line 2: Buttons */}
                               <div className="flex items-center gap-2 flex-wrap">
                                 {analysis.r90_score !== null && analysis.r90_score !== undefined && (
                                   <button
@@ -1393,7 +1395,7 @@ const Dashboard = () => {
                                       );
                                       navigate(url);
                                     }}
-                                    className={`${getR90Color(analysis.r90_score)} text-white px-3 md:px-4 py-1.5 md:py-2 rounded text-sm md:text-base font-bold hover:opacity-80 transition-opacity cursor-pointer`}
+                                    className={`${getR90Color(analysis.r90_score)} text-white px-3 py-1.5 rounded text-sm font-bold hover:opacity-80 transition-opacity cursor-pointer`}
                                   >
                                     R90: {analysis.r90_score.toFixed(2)}
                                   </button>
@@ -1412,7 +1414,7 @@ const Dashboard = () => {
                                         : "bg-[hsl(43,49%,61%)] text-black hover:bg-[hsl(43,49%,71%)]"
                                     }`}
                                   >
-                                    <FileText className="w-3 h-3 md:w-4 md:h-4 mr-1" />
+                                    <FileText className="w-3 h-3 mr-1" />
                                     {analysis.analysis_writer_data.analysis_type === "pre-match" ? "Pre-Match" : "Post-Match"} Analysis
                                   </Button>
                                 )}
@@ -1424,7 +1426,7 @@ const Dashboard = () => {
                                     onClick={() => window.open(analysis.pdf_url!, '_blank')}
                                     className="text-xs"
                                   >
-                                    <FileText className="w-3 h-3 md:w-4 md:h-4 mr-1" />
+                                    <FileText className="w-3 h-3 mr-1" />
                                     PDF
                                   </Button>
                                 )}
@@ -2494,7 +2496,7 @@ const Dashboard = () => {
 
             <TabsContent value="invoices" className="space-y-6">
               <Tabs defaultValue="invoices" className="w-full">
-                <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3 gap-2 mb-4 bg-muted h-auto p-2">
+                <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3 gap-2 mb-4 bg-muted h-auto p-2 border-b-2 border-b-[hsl(43,49%,61%)]">
                   <TabsTrigger value="invoices" className="font-bebas uppercase text-sm sm:text-base">
                     Invoices
                   </TabsTrigger>
@@ -2640,7 +2642,7 @@ const Dashboard = () => {
                 </CardHeader>
                 <CardContent className="container mx-auto px-4">
                   <Tabs defaultValue="best" className="w-full" key="highlights-tabs">
-                    <TabsList className="grid w-full grid-cols-2 mb-6">
+                    <TabsList className="grid w-full grid-cols-2 mb-6 border-b-2 border-b-[hsl(43,49%,61%)]">
                       <TabsTrigger value="match" className="font-bebas uppercase">
                         Match Highlights
                       </TabsTrigger>
@@ -2748,7 +2750,7 @@ const Dashboard = () => {
                         
                         <TabsContent value="best">
                           <Tabs defaultValue="clips" className="w-full">
-                            <TabsList className="grid w-full grid-cols-2 mb-6">
+                            <TabsList className="grid w-full grid-cols-2 mb-6 border-b-2 border-b-[hsl(43,49%,61%)]">
                               <TabsTrigger value="clips" className="font-bebas uppercase">
                                 All Clips
                               </TabsTrigger>
@@ -2994,7 +2996,7 @@ const Dashboard = () => {
                 </CardHeader>
                 <CardContent className="container mx-auto px-4">
                   <Tabs defaultValue="general" className="w-full">
-                    <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 gap-2 mb-6 bg-muted h-auto p-2">
+                    <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 gap-2 mb-6 bg-muted h-auto p-2 border-b-2 border-b-[hsl(43,49%,61%)]">
                       <TabsTrigger value="general" className="font-bebas uppercase text-sm">
                         General Updates
                       </TabsTrigger>
