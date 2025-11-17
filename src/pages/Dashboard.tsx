@@ -1211,64 +1211,6 @@ const Dashboard = () => {
           )}
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <div className="mb-8" style={{ display: activeTab === "hub" ? "none" : "block" }}>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button 
-                    variant="outline" 
-                    className="w-full justify-center font-bebas uppercase text-base px-6 py-6 bg-muted hover:bg-muted/80 border-2 border-gold !text-gold hover:!text-gold"
-                  >
-                    <span>
-                      {activeTab === "analysis" && "Analysis"}
-                      {activeTab === "physical" && "Programming"}
-                      {activeTab === "invoices" && "Key Documents"}
-                      {activeTab === "updates" && "Updates"}
-                      {activeTab === "highlights" && "Highlights"}
-                    </span>
-                    <ChevronDown className="ml-2 h-5 w-5" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="w-[280px] bg-card/95 backdrop-blur-sm border-2 border-gold shadow-lg shadow-gold/20">
-                  <DropdownMenuItem 
-                    onClick={() => setActiveTab("analysis")}
-                    className="font-bebas uppercase text-base py-3 cursor-pointer text-gold hover:text-gold/80"
-                  >
-                    Analysis
-                  </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    onClick={() => setActiveTab("physical")}
-                    className="font-bebas uppercase text-base py-3 cursor-pointer text-gold hover:text-gold/80"
-                  >
-                    Programming
-                  </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    onClick={() => setActiveTab("invoices")}
-                    className="font-bebas uppercase text-base py-3 cursor-pointer text-gold hover:text-gold/80"
-                  >
-                    Key Documents
-                  </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    onClick={() => setActiveTab("updates")}
-                    className="font-bebas uppercase text-base py-3 cursor-pointer text-gold hover:text-gold/80"
-                  >
-                    Updates
-                  </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    onClick={() => setActiveTab("highlights")}
-                    className="font-bebas uppercase text-base py-3 cursor-pointer text-gold hover:text-gold/80"
-                  >
-                    Highlights
-                  </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    onClick={() => setShowProfileModal(true)}
-                    className="font-bebas uppercase text-base py-3 cursor-pointer text-gold hover:text-gold/80"
-                  >
-                    View Profile
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-
             {/* Upload Progress Indicator */}
             {uploadProgress !== null && (
               <Card className="mb-6 border-primary/30">
