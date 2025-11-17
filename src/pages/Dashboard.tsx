@@ -1325,9 +1325,8 @@ const Dashboard = () => {
             <TabsContent value="analysis" className="space-y-6">
               <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 border-t-[2px] border-t-[hsl(43,49%,61%)] border-b-0">
                 <CardContent className="container mx-auto px-4 pt-6">
-                  <div className="border-2 border-[hsl(43,49%,61%)] rounded-lg p-4">
-                    <Tabs value={activeAnalysisTab} onValueChange={setActiveAnalysisTab} className="w-full">
-                      <TabsList className="grid w-full grid-cols-1 sm:grid-cols-5 gap-2 mb-4 bg-muted h-auto p-2">
+                  <Tabs value={activeAnalysisTab} onValueChange={setActiveAnalysisTab} className="w-full">
+                    <TabsList className="grid w-full grid-cols-1 sm:grid-cols-5 gap-2 mb-4 bg-muted h-auto p-2">
                   <TabsTrigger value="performance" className="font-bebas uppercase text-sm sm:text-base">
                     Performance Analysis
                   </TabsTrigger>
@@ -1853,9 +1852,8 @@ const Dashboard = () => {
                       )}
                     </CardContent>
                   </Card>
-                </TabsContent>
-              </Tabs>
-                  </div>
+                  </TabsContent>
+                  </Tabs>
                 </CardContent>
               </Card>
             </TabsContent>
@@ -2503,9 +2501,8 @@ const Dashboard = () => {
             <TabsContent value="invoices" className="space-y-6">
               <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 border-t-[2px] border-t-[hsl(43,49%,61%)] border-b-0">
                 <CardContent className="container mx-auto px-4 pt-6">
-                  <div className="border-2 border-[hsl(43,49%,61%)] rounded-lg p-4">
-                    <Tabs defaultValue="invoices" className="w-full">
-                      <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3 gap-2 mb-4 bg-muted h-auto p-2">
+                  <Tabs defaultValue="invoices" className="w-full">
+                    <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3 gap-2 mb-4 bg-muted h-auto p-2">
                   <TabsTrigger value="invoices" className="font-bebas uppercase text-sm sm:text-base">
                     Invoices
                   </TabsTrigger>
@@ -2636,9 +2633,8 @@ const Dashboard = () => {
                       </div>
                     </CardContent>
                   </Card>
-                </TabsContent>
-              </Tabs>
-                  </div>
+                  </TabsContent>
+                  </Tabs>
                 </CardContent>
               </Card>
             </TabsContent>
@@ -2653,9 +2649,8 @@ const Dashboard = () => {
                   </div>
                 </CardHeader>
                 <CardContent className="container mx-auto px-4">
-                  <div className="border-2 border-[hsl(43,49%,61%)] rounded-lg p-4">
-                    <Tabs defaultValue="best" className="w-full" key="highlights-tabs">
-                      <TabsList className="grid w-full grid-cols-2 mb-6">
+                  <Tabs defaultValue="best" className="w-full" key="highlights-tabs">
+                    <TabsList className="grid w-full grid-cols-2 mb-6">
                       <TabsTrigger value="match" className="font-bebas uppercase">
                         Match Highlights
                       </TabsTrigger>
@@ -2992,9 +2987,8 @@ const Dashboard = () => {
                               />
                             </TabsContent>
                           </Tabs>
-                        </TabsContent>
-                      </Tabs>
-                  </div>
+                  </TabsContent>
+                  </Tabs>
                 </CardContent>
               </Card>
             </TabsContent>
@@ -3008,25 +3002,24 @@ const Dashboard = () => {
                     </CardTitle>
                   </div>
                 </CardHeader>
-                                <CardContent className="container mx-auto px-4">
-                                  <div className="border-2 border-[hsl(43,49%,61%)] rounded-lg p-4">
-                                    <Tabs defaultValue="general" className="w-full">
-                                      <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 gap-2 mb-6 bg-muted h-auto p-2">
-                                        <TabsTrigger value="general" className="font-bebas uppercase text-sm">
-                                          General Updates
-                                        </TabsTrigger>
-                                        <TabsTrigger value="app" className="font-bebas uppercase text-sm">
-                                          App Updates
-                                        </TabsTrigger>
-                                        <TabsTrigger value="offline" className="font-bebas uppercase text-sm">
-                                          Offline Access
-                                        </TabsTrigger>
-                                        <TabsTrigger value="club-interest" className="font-bebas uppercase text-sm">
-                                          Club Interest
-                                        </TabsTrigger>
-                                      </TabsList>
+                <CardContent className="container mx-auto px-4">
+                  <Tabs defaultValue="general" className="w-full">
+                    <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 gap-2 mb-6 bg-muted h-auto p-2">
+                      <TabsTrigger value="general" className="font-bebas uppercase text-sm">
+                        General Updates
+                      </TabsTrigger>
+                      <TabsTrigger value="app" className="font-bebas uppercase text-sm">
+                        App Updates
+                      </TabsTrigger>
+                      <TabsTrigger value="offline" className="font-bebas uppercase text-sm">
+                        Offline Access
+                      </TabsTrigger>
+                      <TabsTrigger value="club-interest" className="font-bebas uppercase text-sm">
+                        Club Interest
+                      </TabsTrigger>
+                    </TabsList>
 
-                                    <TabsContent value="general" className="space-y-6 pl-6 pr-6">
+                    <TabsContent value="general" className="space-y-6 pl-6 pr-6">
                       {updates.length === 0 ? (
                         <div className="py-8 text-center text-muted-foreground">
                           No updates available yet.
@@ -3092,9 +3085,8 @@ const Dashboard = () => {
                         No club interest updates available yet.
                       </div>
                     </TabsContent>
-                                    </Tabs>
-                                  </div>
-                                </CardContent>
+                  </Tabs>
+                </CardContent>
               </Card>
             </TabsContent>
           </Tabs>
