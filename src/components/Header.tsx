@@ -85,7 +85,7 @@ export const Header = () => {
       )}
 
       {/* Main Header */}
-      <header className={`sticky ${showTopBar ? 'top-9 md:top-10' : 'top-0'} left-0 right-0 z-[100] bg-background/95 backdrop-blur-md border-b-2 border-gold w-full`}>
+      <header className={`fixed ${showTopBar ? 'top-9 md:top-10' : 'top-0'} left-0 right-0 z-[100] bg-background/95 backdrop-blur-md border-b-2 border-gold w-full`}>
         <div className="container mx-auto px-2 md:px-4">
         <div className="flex items-center justify-between h-14 md:h-16">
           {/* Drawer Menu - Left */}
