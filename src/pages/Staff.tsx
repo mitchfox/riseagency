@@ -583,7 +583,19 @@ const Staff = () => {
           opacity: 0.25,
         }}
       />
-      {!isMobile && <Header />}
+
+      {/* Header with Logo - always visible */}
+      <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
+        <div className="container mx-auto px-4">
+          <div className="flex items-center justify-center h-16">
+            <img 
+              src="https://storage.googleapis.com/gpt-engineer-file-uploads/blxFQX1QtlSc3qNcPxWdCZ730Tf1/uploads/1761325700904-RISEWhite-100.jpg"
+              alt="RISE"
+              className="h-10 w-auto"
+            />
+          </div>
+        </div>
+      </header>
 
       {/* Main Layout with Sidebar */}
       <div className="flex flex-1 relative">
@@ -680,7 +692,7 @@ const Staff = () => {
         {/* Sidebar Collapse Toggle Button */}
         <button
           onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-          className={`fixed ${isMobile ? 'top-4' : 'top-[120px] md:top-[88px]'} left-2 z-20 p-2 rounded-lg bg-background/80 backdrop-blur-sm border border-border shadow-lg hover:bg-background transition-all duration-300 ${
+          className={`fixed ${isMobile ? 'top-20' : 'top-20'} left-2 z-20 p-2 rounded-lg bg-background/80 backdrop-blur-sm border border-border shadow-lg hover:bg-background transition-all duration-300 ${
             sidebarCollapsed ? 'opacity-50 hover:opacity-100' : ''
           }`}
           aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
@@ -693,7 +705,7 @@ const Staff = () => {
         </button>
 
         {/* Left Sidebar - Fixed */}
-        <div className={`fixed ${isMobile ? 'top-0' : 'top-[120px] md:top-[88px]'} left-0 bottom-0 border-r bg-muted/30 backdrop-blur-sm flex flex-col items-start py-4 gap-2 overflow-y-auto z-10 transition-all duration-300 ${
+        <div className={`fixed ${isMobile ? 'top-16' : 'top-16'} left-0 bottom-0 border-r bg-muted/30 backdrop-blur-sm flex flex-col items-start py-4 gap-2 overflow-y-auto z-10 transition-all duration-300 ${
           sidebarCollapsed ? 'w-0 border-0 opacity-0 pointer-events-none' : 'w-14 md:w-24'
         }`}>
           {/* Search Button */}
@@ -790,7 +802,7 @@ const Staff = () => {
         </div>
 
         {/* Main Content Area */}
-        <main className={`flex-1 overflow-y-auto relative z-10 transition-all duration-300 ${
+        <main className={`flex-1 overflow-y-auto relative z-10 transition-all duration-300 pt-20 ${
           sidebarCollapsed ? 'ml-0' : 'ml-14 md:ml-24'
         } ${isMobile ? 'pb-[60px]' : ''}`}>
           {expandedSection ? (
