@@ -1128,19 +1128,19 @@ const Dashboard = () => {
         </div>
       )}
 
-      <main className="pt-32 pb-12 px-0 md:px-4">{/* Increased pt to account for fixed header + subheader */}
-        <div className="container mx-auto max-w-6xl px-0 md:px-6">
-          <div className="mb-6">
+      <main className="pt-32 pb-12 px-0">
+        <div className="container mx-auto max-w-6xl px-0">
+          <div>
             <NotificationPermission />
           </div>
 
           {/* Navigation Menu */}
-          <div>
+          <div className="-mx-4 md:mx-0">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button 
                   variant="outline" 
-                  className="w-full justify-center font-bebas uppercase text-base px-6 py-6 bg-card hover:bg-card/80 border-2 border-gold !text-gold hover:!text-gold z-50"
+                  className="w-full justify-center font-bebas uppercase text-base px-6 py-6 bg-card hover:bg-card/80 border-2 border-gold !text-gold hover:!text-gold z-50 rounded-none"
                 >
                   <span>
                     {activeTab === "hub" && "Hub"}
@@ -1200,8 +1200,10 @@ const Dashboard = () => {
             </DropdownMenu>
           </div>
 
-          {/* Hub Section */}
-          {activeTab === "hub" && (
+          {/* Content Section with Padding */}
+          <div className="px-4 md:px-6">
+            {/* Hub Section */}
+            {activeTab === "hub" && (
             <Hub 
               programs={programs} 
               analyses={analyses} 
@@ -2710,6 +2712,7 @@ const Dashboard = () => {
               </Card>
             </div>
           )}
+          </div>
         </div>
       </main>
 
