@@ -167,8 +167,8 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
     <>
       {/* Video Highlights Slider - Full Width */}
       {videoThumbnails.length > 0 && (
-        <div className="w-full -mx-4 mb-6">
-          <Card className="bg-card/90 backdrop-blur-sm border-gold/30 overflow-hidden rounded-none">
+        <div className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] mb-6">
+          <Card className="bg-card/90 backdrop-blur-sm border-gold/30 overflow-hidden rounded-none border-x-0">
             <div className="w-full">
               <Carousel
                 opts={{

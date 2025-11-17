@@ -1310,7 +1310,7 @@ const Dashboard = () => {
 
                 <TabsContent value="performance">
                   <Card>
-                    <CardHeader>
+                    <CardHeader marble>
                       <CardTitle className="text-3xl font-bebas uppercase tracking-wider">
                         Performance Analysis
                       </CardTitle>
@@ -1421,7 +1421,7 @@ const Dashboard = () => {
 
                 <TabsContent value="concepts">
                   <Card>
-                    <CardHeader>
+                    <CardHeader marble>
                       <CardTitle className="text-3xl font-bebas uppercase tracking-wider">
                         Concepts
                       </CardTitle>
@@ -1480,7 +1480,7 @@ const Dashboard = () => {
 
                 <TabsContent value="other">
                   <Card>
-                    <CardHeader>
+                    <CardHeader marble>
                       <CardTitle className="text-3xl font-bebas uppercase tracking-wider">
                         Other Analysis
                       </CardTitle>
@@ -1547,7 +1547,7 @@ const Dashboard = () => {
 
             <TabsContent value="physical" className="space-y-6">
               <Card className="bg-card">
-                <CardHeader>
+                <CardHeader marble>
                   <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                     <CardTitle className="text-2xl md:text-3xl font-bebas uppercase tracking-wider">
                       Physical Programming
@@ -2208,7 +2208,7 @@ const Dashboard = () => {
 
                 <TabsContent value="invoices">
                   <Card>
-                    <CardHeader>
+                    <CardHeader marble>
                       <CardTitle className="text-3xl font-bebas uppercase tracking-wider">
                         Invoices
                       </CardTitle>
@@ -2293,7 +2293,7 @@ const Dashboard = () => {
 
                 <TabsContent value="contracts">
                   <Card>
-                    <CardHeader>
+                    <CardHeader marble>
                       <CardTitle className="text-3xl font-bebas uppercase tracking-wider">
                         Contracts
                       </CardTitle>
@@ -2308,7 +2308,7 @@ const Dashboard = () => {
 
                 <TabsContent value="other">
                   <Card>
-                    <CardHeader>
+                    <CardHeader marble>
                       <CardTitle className="text-3xl font-bebas uppercase tracking-wider">
                         Other Documents
                       </CardTitle>
@@ -2325,7 +2325,7 @@ const Dashboard = () => {
 
             <TabsContent value="highlights" className="space-y-6">
               <Card>
-                <CardHeader>
+                <CardHeader marble>
                   <CardTitle className="text-3xl font-bebas uppercase tracking-wider">
                     Highlights
                   </CardTitle>
@@ -2677,7 +2677,7 @@ const Dashboard = () => {
 
             <TabsContent value="updates" className="space-y-6">
               <Card>
-                <CardHeader>
+                <CardHeader marble>
                   <CardTitle className="text-3xl font-bebas uppercase tracking-wider">
                     Updates
                   </CardTitle>
