@@ -4,8 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { Plus, X, Save, ChevronUp, ChevronDown, List, Play, Trash2, Hash } from "lucide-react";
+import { Plus, X, Save, ChevronUp, ChevronDown, List, Play, Trash2, Hash, Video } from "lucide-react";
 import { Label } from "@/components/ui/label";
+import { PlaylistPlayer } from "./PlaylistPlayer";
 
 interface Clip {
   id?: string;
@@ -36,6 +37,7 @@ export const PlaylistContent = ({ playerData, availableClips }: PlaylistContentP
   const [movingClipId, setMovingClipId] = useState<string | null>(null);
   const [targetPosition, setTargetPosition] = useState("");
   const [isLoadingPlaylists, setIsLoadingPlaylists] = useState(true);
+  const [showPlayer, setShowPlayer] = useState(false);
 
   useEffect(() => {
     if (playerData?.id) {
@@ -348,7 +350,19 @@ export const PlaylistContent = ({ playerData, availableClips }: PlaylistContentP
       {/* Selected Playlist Content */}
       {selectedPlaylist && (
         <div className="space-y-4 border-t pt-4">
-          <h3 className="text-lg font-semibold">{selectedPlaylist.name}</h3>
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold">{selectedPlaylist.name}</h3>
+            {selectedPlaylist.clips.length > 0 && (
+              <Button
+                onClick={() => setShowPlayer(true)}
+                size="sm"
+                variant="outline"
+              >
+                <Video className="w-4 h-4 mr-2" />
+                Manage Playlist
+              </Button>
+            )}
+          </div>
 
           {/* Add Clips Section */}
           {availableClips.length > 0 && (
@@ -497,6 +511,18 @@ export const PlaylistContent = ({ playerData, availableClips }: PlaylistContentP
             </div>
           )}
         </div>
+      )}
+
+      {/* Playlist Player */}
+      {selectedPlaylist && showPlayer && (
+        <PlaylistPlayer
+          playlistId={selectedPlaylist.id}
+          playlistName={selectedPlaylist.name}
+          clips={selectedPlaylist.clips}
+          isOpen={showPlayer}
+          onClose={() => setShowPlayer(false)}
+          onPlaylistUpdate={fetchPlaylists}
+        />
       )}
     </div>
   );

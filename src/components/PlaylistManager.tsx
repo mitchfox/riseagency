@@ -5,8 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { Plus, X, Save, ChevronUp, ChevronDown, List, Play, Trash2, Hash } from "lucide-react";
+import { Plus, X, Save, ChevronUp, ChevronDown, List, Play, Trash2, Hash, Video } from "lucide-react";
 import { Label } from "@/components/ui/label";
+import { PlaylistPlayer } from "./PlaylistPlayer";
 
 interface Clip {
   id?: string;
@@ -38,6 +39,7 @@ export const PlaylistManager = ({ playerData, availableClips, onClose }: Playlis
   const [movingClipId, setMovingClipId] = useState<string | null>(null);
   const [targetPosition, setTargetPosition] = useState("");
   const [isLoadingPlaylists, setIsLoadingPlaylists] = useState(true);
+  const [showPlayer, setShowPlayer] = useState(false);
 
   useEffect(() => {
     if (playerData?.id) {
@@ -513,18 +515,29 @@ export const PlaylistManager = ({ playerData, availableClips, onClose }: Playlis
                 )}
               </h3>
               {selectedPlaylist && selectedPlaylist.clips?.length > 0 && (
-                <Button
-                  size="sm"
-                  onClick={savePlaylist}
-                  disabled={saving}
-                  variant="default"
-                  className="h-8 flex-shrink-0"
-                >
-                  <Save className="w-4 h-4 md:mr-2" />
-                  <span className="hidden md:inline">
-                    {saving ? 'Saving...' : 'Save'}
-                  </span>
-                </Button>
+                <>
+                  <Button
+                    size="sm"
+                    onClick={() => setShowPlayer(true)}
+                    variant="outline"
+                    className="h-8 flex-shrink-0"
+                  >
+                    <Video className="w-4 h-4 md:mr-2" />
+                    <span className="hidden md:inline">Manage</span>
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={savePlaylist}
+                    disabled={saving}
+                    variant="default"
+                    className="h-8 flex-shrink-0"
+                  >
+                    <Save className="w-4 h-4 md:mr-2" />
+                    <span className="hidden md:inline">
+                      {saving ? 'Saving...' : 'Save'}
+                    </span>
+                  </Button>
+                </>
               )}
             </div>
 
@@ -675,6 +688,18 @@ export const PlaylistManager = ({ playerData, availableClips, onClose }: Playlis
             </div>
           </DialogContent>
         </Dialog>
+      )}
+
+      {/* Playlist Player */}
+      {selectedPlaylist && showPlayer && (
+        <PlaylistPlayer
+          playlistId={selectedPlaylist.id}
+          playlistName={selectedPlaylist.name}
+          clips={selectedPlaylist.clips}
+          isOpen={showPlayer}
+          onClose={() => setShowPlayer(false)}
+          onPlaylistUpdate={fetchPlaylists}
+        />
       )}
     </Dialog>
   );
