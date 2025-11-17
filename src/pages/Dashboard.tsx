@@ -2726,7 +2726,7 @@ const Dashboard = () => {
               <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-0">
                 <CardContent className="container mx-auto px-4 pt-2">
                   <Tabs defaultValue="best" className="w-full" key="highlights-tabs">
-                    <TabsList className="grid w-full grid-cols-2 gap-2 mb-6 bg-muted h-auto p-2">
+                    <TabsList className="grid w-full grid-cols-2 gap-2 mb-2 bg-muted h-auto p-2">
                       <TabsTrigger value="match" className="font-bebas uppercase">
                         Match Highlights
                       </TabsTrigger>
@@ -2832,9 +2832,9 @@ const Dashboard = () => {
                           )}
                         </TabsContent>
                         
-                        <TabsContent value="best" className="space-y-0">
+                        <TabsContent value="best" className="mt-0">
                           <Tabs defaultValue="clips" className="w-full">
-                            <TabsList className="grid w-full grid-cols-2 gap-2 mb-6 bg-muted h-auto p-2 mt-0">
+                            <TabsList className="grid w-full grid-cols-2 gap-2 mb-6 bg-muted h-auto p-2 -mt-2">
                               <TabsTrigger value="clips" className="font-bebas uppercase">
                                 All Clips
                               </TabsTrigger>
