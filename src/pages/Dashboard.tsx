@@ -24,6 +24,7 @@ import { CoachAvailability } from "@/components/CoachAvailability";
 import { PlayerScoutingReports } from "@/components/PlayerScoutingReports";
 import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
 import { OfflineContentManager } from "@/components/OfflineContentManager";
+import { CacheManager } from "@/lib/cacheManager";
 
 
 interface Analysis {
@@ -618,7 +619,64 @@ const Dashboard = () => {
         return;
       }
 
-      // Verify this email still exists in players table
+      // Check if we're offline
+      if (!navigator.onLine) {
+        console.log('[Dashboard] Offline mode - loading cached data');
+        
+        // Try to load cached data
+        const cachedPlayerData = await CacheManager.getCachedPlayerData(playerEmail);
+        const cachedPrograms = await CacheManager.getCachedPrograms(playerEmail);
+        const cachedUpdates = await CacheManager.getCachedUpdates();
+        const cachedInvoices = await CacheManager.getCachedInvoices(playerEmail);
+        const cachedAphorisms = await CacheManager.getCachedAphorisms();
+        
+        if (cachedPlayerData) {
+          setPlayerData(cachedPlayerData);
+          if (cachedPlayerData.highlights) {
+            setHighlightsData(cachedPlayerData.highlights);
+          }
+        }
+        
+        if (cachedPrograms) {
+          setPrograms(cachedPrograms);
+          if (cachedPrograms.length > 0) {
+            const currentProgram = cachedPrograms.find(p => p.is_current);
+            setSelectedProgramId(currentProgram?.id || cachedPrograms[0].id);
+          }
+        }
+        
+        if (cachedUpdates) {
+          setUpdates(cachedUpdates);
+        }
+        
+        if (cachedInvoices) {
+          setInvoices(cachedInvoices);
+        }
+        
+        if (cachedAphorisms && cachedAphorisms.length > 0) {
+          setDailyAphorism(cachedAphorisms[0]);
+        }
+        
+        // Load cached analyses
+        const cachedAnalyses: Analysis[] = [];
+        const analysisItems = await CacheManager.getCachedItems('analyses');
+        for (const item of analysisItems) {
+          const match = item.match(/\/offline\/analysis\/(.+)$/);
+          if (match) {
+            const analysisId = match[1];
+            const analysis = await CacheManager.getCachedAnalysis(analysisId);
+            if (analysis) cachedAnalyses.push(analysis);
+          }
+        }
+        if (cachedAnalyses.length > 0) {
+          setAnalyses(cachedAnalyses);
+        }
+        
+        setLoading(false);
+        return;
+      }
+
+      // Online - verify with Supabase
       const { data: player, error: playerError } = await supabase
         .from("players")
         .select("id")
@@ -638,6 +696,19 @@ const Dashboard = () => {
       await fetchUpdates(player.id);
     } catch (error) {
       console.error("Error loading data:", error);
+      
+      // If there's an error and we have stored auth, try offline cache
+      const playerEmail = localStorage.getItem("player_email");
+      if (playerEmail && !navigator.onLine) {
+        console.log('[Dashboard] Error loading, trying cached data');
+        const cachedPlayerData = await CacheManager.getCachedPlayerData(playerEmail);
+        if (cachedPlayerData) {
+          setPlayerData(cachedPlayerData);
+          setLoading(false);
+          return;
+        }
+      }
+      
       navigate("/login");
     } finally {
       setLoading(false);
