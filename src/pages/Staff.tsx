@@ -593,7 +593,7 @@ const Staff = () => {
             <img 
               src="https://storage.googleapis.com/gpt-engineer-file-uploads/blxFQX1QtlSc3qNcPxWdCZ730Tf1/uploads/1761325700904-RISEWhite-100.jpg"
               alt="RISE"
-              className="h-14 w-auto"
+              className="h-20 w-auto"
             />
           </div>
         </div>

@@ -116,7 +116,7 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
             <img
               src={playerData.image_url}
               alt={playerData.name}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover object-top"
             />
           </div>
         </Card>
