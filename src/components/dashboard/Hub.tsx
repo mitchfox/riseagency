@@ -501,6 +501,36 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
                       cursor={{ fill: 'hsl(var(--accent))', opacity: 0.3 }}
                       wrapperStyle={{ pointerEvents: 'auto' }}
                     />
+                    <defs>
+                      <linearGradient id="barGloss" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="rgba(255, 255, 255, 0.35)" />
+                        <stop offset="30%" stopColor="rgba(255, 255, 255, 0.15)" />
+                        <stop offset="70%" stopColor="rgba(255, 255, 255, 0)" />
+                        <stop offset="100%" stopColor="rgba(0, 0, 0, 0.25)" />
+                      </linearGradient>
+                      {chartData.map((entry, index) => {
+                        const baseColor = getR90Color(entry.score);
+                        return (
+                          <linearGradient key={`gradient-${index}`} id={`barGradient-${index}`} x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor={baseColor} stopOpacity="1" />
+                            <stop offset="0%" stopColor="rgba(255, 255, 255, 0.4)" stopOpacity="0.4" />
+                            <stop offset="50%" stopColor={baseColor} stopOpacity="1" />
+                            <stop offset="100%" stopColor={baseColor} stopOpacity="0.8" />
+                          </linearGradient>
+                        );
+                      })}
+                      <filter id="barShine">
+                        <feGaussianBlur in="SourceAlpha" stdDeviation="3"/>
+                        <feOffset dx="0" dy="-2" result="offsetblur"/>
+                        <feComponentTransfer>
+                          <feFuncA type="linear" slope="0.5"/>
+                        </feComponentTransfer>
+                        <feMerge>
+                          <feMergeNode/>
+                          <feMergeNode in="SourceGraphic"/>
+                        </feMerge>
+                      </filter>
+                    </defs>
                     <ReferenceLine 
                       y={averageScore} 
                       stroke="hsl(43, 49%, 61%)"
@@ -514,25 +544,7 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
                         fontWeight: 'bold'
                       }}
                     />
-                    <defs>
-                      <linearGradient id="barGloss" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="rgba(255, 255, 255, 0.4)" />
-                        <stop offset="50%" stopColor="rgba(255, 255, 255, 0.1)" />
-                        <stop offset="100%" stopColor="rgba(0, 0, 0, 0.2)" />
-                      </linearGradient>
-                      <filter id="barShine">
-                        <feGaussianBlur in="SourceAlpha" stdDeviation="3"/>
-                        <feOffset dx="0" dy="-2" result="offsetblur"/>
-                        <feComponentTransfer>
-                          <feFuncA type="linear" slope="0.5"/>
-                        </feComponentTransfer>
-                        <feMerge>
-                          <feMergeNode/>
-                          <feMergeNode in="SourceGraphic"/>
-                        </feMerge>
-                      </filter>
-                    </defs>
-                    <Bar 
+                    <Bar
                       dataKey="score" 
                       radius={[8, 8, 0, 0]}
                       isAnimationActive={false}
@@ -543,16 +555,13 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
                       onMouseEnter={() => setTooltipVisible(true)}
                     >
                       {chartData.map((entry, index) => {
-                        const baseColor = getR90Color(entry.score);
                         return (
                           <Cell 
                             key={`cell-${index}`} 
-                            fill={baseColor}
+                            fill={`url(#barGradient-${index})`}
                             style={{
                               animation: !hasAnimated.current ? `barSlideUp 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) ${index * 0.25}s both` : 'none',
-                              filter: 'brightness(1.15) drop-shadow(0 6px 12px rgba(0, 0, 0, 0.4)) drop-shadow(0 0 20px rgba(255, 255, 255, 0.1))',
-                              background: `linear-gradient(180deg, rgba(255,255,255,0.3) 0%, transparent 40%, rgba(0,0,0,0.3) 100%)`,
-                              boxShadow: 'inset 0 2px 4px rgba(255, 255, 255, 0.3), inset 0 -2px 4px rgba(0, 0, 0, 0.3)'
+                              filter: 'brightness(1.1) drop-shadow(0 6px 12px rgba(0, 0, 0, 0.4)) drop-shadow(0 0 20px rgba(255, 255, 255, 0.1))'
                             }}
                           />
                         );
