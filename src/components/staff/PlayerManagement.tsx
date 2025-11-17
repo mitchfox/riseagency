@@ -11,6 +11,7 @@ import { CreatePerformanceReportDialog } from "./CreatePerformanceReportDialog";
 import { ProgrammingManagement } from "./ProgrammingManagement";
 import { PlayerFixtures } from "./PlayerFixtures";
 import { PlayerImages } from "./PlayerImages";
+import { PlayerScoutingManagement } from "./PlayerScoutingManagement";
 import { PlaylistManager } from "@/components/PlaylistManager";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -1011,10 +1012,11 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
               {/* Analysis with nested tabs */}
               <TabsContent value="analysis" className="mt-0 pt-6 md:mt-0 md:pt-0">
                 <Tabs defaultValue="performance" className="w-full">
-                  <TabsList className="flex flex-col md:grid md:grid-cols-3 w-full gap-2 bg-muted/20 rounded-lg p-2 mb-[45px] md:mb-4">
+                  <TabsList className="flex flex-col md:grid md:grid-cols-4 w-full gap-2 bg-muted/20 rounded-lg p-2 mb-[45px] md:mb-4">
                     <TabsTrigger value="performance" className="w-full justify-center px-3 py-2.5 text-xs md:text-sm">Performance Reports</TabsTrigger>
                     <TabsTrigger value="tactical" className="w-full justify-center px-3 py-2.5 text-xs md:text-sm">Tactical Analysis</TabsTrigger>
                     <TabsTrigger value="other" className="w-full justify-center px-3 py-2.5 text-xs md:text-sm">Other Analysis</TabsTrigger>
+                    <TabsTrigger value="scouting" className="w-full justify-center px-3 py-2.5 text-xs md:text-sm">Scouting Reports</TabsTrigger>
                   </TabsList>
 
                   <TabsContent value="performance" className="mt-0">
@@ -1305,6 +1307,13 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                         )}
                       </CardContent>
                     </Card>
+                  </TabsContent>
+
+                  <TabsContent value="scouting" className="mt-0 pt-6 md:pt-0">
+                    <PlayerScoutingManagement 
+                      playerId={selectedPlayerId!}
+                      playerName={selectedPlayer!.name}
+                    />
                   </TabsContent>
                 </Tabs>
               </TabsContent>
