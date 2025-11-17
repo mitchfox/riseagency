@@ -14,7 +14,7 @@ import { NotificationPermission } from "@/components/NotificationPermission";
 import { NotificationSettings } from "@/components/NotificationSettings";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { toast } from "sonner";
-import { FileText, Play, Download, Upload, ChevronDown, Trash2, Lock, Calendar, Trophy, TrendingUp, Eye, EyeOff, ChevronUp, ChevronDown as ChevronDownIcon, List, RefreshCw, CheckCircle2 } from "lucide-react";
+import { FileText, Play, Download, Upload, ChevronDown, Trash2, Lock, Calendar, Trophy, TrendingUp, Eye, EyeOff, ChevronUp, ChevronDown as ChevronDownIcon, List, RefreshCw, CheckCircle2, WifiOff } from "lucide-react";
 import { ClipNameEditor } from "@/components/ClipNameEditor";
 import { addDays, format, parseISO, startOfWeek, endOfWeek, isWithinInterval } from "date-fns";
 import { SEO } from "@/components/SEO";
@@ -94,6 +94,7 @@ const Dashboard = () => {
   const [updates, setUpdates] = useState<Update[]>([]);
   const [activeTab, setActiveTab] = useState("analysis");
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [highlightsData, setHighlightsData] = useState<any>({ matchHighlights: [], bestClips: [] });
   const [fileUploadProgress, setFileUploadProgress] = useState<Record<string, number>>({});
   const [otherAnalyses, setOtherAnalyses] = useState<any[]>([]);
@@ -580,6 +581,17 @@ const Dashboard = () => {
   useEffect(() => {
     checkAuth();
     fetchDailyAphorism();
+
+    // Setup online/offline listeners
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
   }, [navigate]);
 
   const checkAuth = async () => {
@@ -1003,6 +1015,16 @@ const Dashboard = () => {
           </div>
         </div>
       </header>
+
+      {/* Offline Banner */}
+      {!isOnline && (
+        <div className="fixed top-16 left-0 right-0 z-30 bg-destructive/90 backdrop-blur-sm text-destructive-foreground py-2 px-4">
+          <div className="container mx-auto text-center text-sm font-medium">
+            <WifiOff className="inline-block h-4 w-4 mr-2" />
+            You're offline. Some content may not be available.
+          </div>
+        </div>
+      )}
 
       <main className="pt-28 pb-12 px-0 md:px-4">{/* Increased pt to account for fixed header */}
         <div className="container mx-auto max-w-6xl px-0 md:px-6">
@@ -2601,10 +2623,16 @@ const Dashboard = () => {
                       <OfflineContentManager 
                         playerData={playerData}
                         analyses={analyses}
+                        programs={programs}
+                        concepts={concepts}
+                        updates={updates}
+                        invoices={invoices}
+                        aphorisms={dailyAphorism ? [dailyAphorism] : []}
                         assets={[
                           playerData?.image_url,
-                          ...highlightsData.matchHighlights.map((h: any) => h.url),
-                          ...highlightsData.bestClips.map((c: any) => c.url)
+                          ...analyses.map(a => a.pdf_url).filter(Boolean),
+                          ...programs.map(p => [p.phase_image_url, p.player_image_url]).flat().filter(Boolean),
+                          ...concepts.map(c => [c.match_image_url, c.scheme_image_url, c.player_image_url]).flat().filter(Boolean),
                         ].filter(Boolean)}
                       />
                     </div>

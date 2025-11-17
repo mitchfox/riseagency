@@ -55,6 +55,11 @@ export const StaffOfflineManager = () => {
       await CacheManager.downloadForOffline(
         players || [],
         [],
+        [],
+        [],
+        [],
+        [],
+        [],
         playerImages,
         (progress) => setDownloadProgress(progress)
       );
@@ -97,6 +102,11 @@ export const StaffOfflineManager = () => {
       await CacheManager.downloadForOffline(
         [],
         analyses || [],
+        [],
+        [],
+        [],
+        [],
+        [],
         reportAssets,
         (progress) => setDownloadProgress(progress)
       );

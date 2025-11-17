@@ -10,12 +10,22 @@ import { Badge } from "@/components/ui/badge";
 interface OfflineContentManagerProps {
   playerData?: any;
   analyses?: any[];
+  programs?: any[];
+  concepts?: any[];
+  updates?: any[];
+  invoices?: any[];
+  aphorisms?: any[];
   assets?: string[];
 }
 
 export const OfflineContentManager = ({ 
   playerData, 
-  analyses = [], 
+  analyses = [],
+  programs = [],
+  concepts = [],
+  updates = [],
+  invoices = [],
+  aphorisms = [],
   assets = [] 
 }: OfflineContentManagerProps) => {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
@@ -65,28 +75,50 @@ export const OfflineContentManager = ({
     try {
       const playersToCache = playerData ? [playerData] : [];
       const analysesToCache = analyses || [];
-      const assetsToCache = assets || [];
+      const programsToCache = programs || [];
+      const conceptsToCache = concepts || [];
+      const updatesToCache = updates || [];
+      const invoicesToCache = invoices || [];
+      const aphorismsToCache = aphorisms || [];
+      const assetsToCache = [...(assets || [])];
 
       // Add player images to assets
       if (playerData?.image_url) {
         assetsToCache.push(playerData.image_url);
       }
 
-      // Add analysis PDFs and videos to assets
+      // Add analysis PDFs (excluding videos)
       analysesToCache.forEach(analysis => {
         if (analysis.pdf_url) assetsToCache.push(analysis.pdf_url);
-        if (analysis.video_url) assetsToCache.push(analysis.video_url);
+      });
+
+      // Add program images
+      programsToCache.forEach(program => {
+        if (program.phase_image_url) assetsToCache.push(program.phase_image_url);
+        if (program.player_image_url) assetsToCache.push(program.player_image_url);
+      });
+
+      // Add concept images
+      conceptsToCache.forEach(concept => {
+        if (concept.match_image_url) assetsToCache.push(concept.match_image_url);
+        if (concept.scheme_image_url) assetsToCache.push(concept.scheme_image_url);
+        if (concept.player_image_url) assetsToCache.push(concept.player_image_url);
       });
 
       await CacheManager.downloadForOffline(
         playersToCache,
         analysesToCache,
+        programsToCache,
+        conceptsToCache,
+        updatesToCache,
+        invoicesToCache,
+        aphorismsToCache,
         assetsToCache,
         (progress) => setDownloadProgress(progress)
       );
 
       toast.success("Content downloaded for offline use", {
-        description: "Your data is now available without internet"
+        description: "Everything except videos is now available offline"
       });
 
       await loadStorageInfo();

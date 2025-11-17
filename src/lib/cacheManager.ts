@@ -42,6 +42,76 @@ export class CacheManager {
     }
   }
 
+  // Cache programs data
+  static async cachePrograms(playerId: string, data: any[]): Promise<void> {
+    try {
+      const cache = await caches.open(this.getCacheName('programs'));
+      const response = new Response(JSON.stringify(data), {
+        headers: { 'Content-Type': 'application/json' }
+      });
+      await cache.put(`/offline/programs/${playerId}`, response);
+      console.log(`[Cache] Cached programs for ${playerId}`);
+    } catch (error) {
+      console.error('[Cache] Error caching programs:', error);
+    }
+  }
+
+  // Cache concepts data
+  static async cacheConcepts(playerId: string, data: any[]): Promise<void> {
+    try {
+      const cache = await caches.open(this.getCacheName('concepts'));
+      const response = new Response(JSON.stringify(data), {
+        headers: { 'Content-Type': 'application/json' }
+      });
+      await cache.put(`/offline/concepts/${playerId}`, response);
+      console.log(`[Cache] Cached concepts for ${playerId}`);
+    } catch (error) {
+      console.error('[Cache] Error caching concepts:', error);
+    }
+  }
+
+  // Cache updates
+  static async cacheUpdates(data: any[]): Promise<void> {
+    try {
+      const cache = await caches.open(this.getCacheName('updates'));
+      const response = new Response(JSON.stringify(data), {
+        headers: { 'Content-Type': 'application/json' }
+      });
+      await cache.put(`/offline/updates`, response);
+      console.log(`[Cache] Cached updates`);
+    } catch (error) {
+      console.error('[Cache] Error caching updates:', error);
+    }
+  }
+
+  // Cache invoices
+  static async cacheInvoices(playerId: string, data: any[]): Promise<void> {
+    try {
+      const cache = await caches.open(this.getCacheName('invoices'));
+      const response = new Response(JSON.stringify(data), {
+        headers: { 'Content-Type': 'application/json' }
+      });
+      await cache.put(`/offline/invoices/${playerId}`, response);
+      console.log(`[Cache] Cached invoices for ${playerId}`);
+    } catch (error) {
+      console.error('[Cache] Error caching invoices:', error);
+    }
+  }
+
+  // Cache aphorisms
+  static async cacheAphorisms(data: any[]): Promise<void> {
+    try {
+      const cache = await caches.open(this.getCacheName('aphorisms'));
+      const response = new Response(JSON.stringify(data), {
+        headers: { 'Content-Type': 'application/json' }
+      });
+      await cache.put(`/offline/aphorisms`, response);
+      console.log(`[Cache] Cached aphorisms`);
+    } catch (error) {
+      console.error('[Cache] Error caching aphorisms:', error);
+    }
+  }
+
   // Cache image/asset
   static async cacheAsset(url: string): Promise<void> {
     try {
@@ -101,6 +171,76 @@ export class CacheManager {
     return null;
   }
 
+  // Get cached programs
+  static async getCachedPrograms(playerId: string): Promise<any[] | null> {
+    try {
+      const cache = await caches.open(this.getCacheName('programs'));
+      const response = await cache.match(`/offline/programs/${playerId}`);
+      if (response) {
+        return await response.json();
+      }
+    } catch (error) {
+      console.error('[Cache] Error getting cached programs:', error);
+    }
+    return null;
+  }
+
+  // Get cached concepts
+  static async getCachedConcepts(playerId: string): Promise<any[] | null> {
+    try {
+      const cache = await caches.open(this.getCacheName('concepts'));
+      const response = await cache.match(`/offline/concepts/${playerId}`);
+      if (response) {
+        return await response.json();
+      }
+    } catch (error) {
+      console.error('[Cache] Error getting cached concepts:', error);
+    }
+    return null;
+  }
+
+  // Get cached updates
+  static async getCachedUpdates(): Promise<any[] | null> {
+    try {
+      const cache = await caches.open(this.getCacheName('updates'));
+      const response = await cache.match(`/offline/updates`);
+      if (response) {
+        return await response.json();
+      }
+    } catch (error) {
+      console.error('[Cache] Error getting cached updates:', error);
+    }
+    return null;
+  }
+
+  // Get cached invoices
+  static async getCachedInvoices(playerId: string): Promise<any[] | null> {
+    try {
+      const cache = await caches.open(this.getCacheName('invoices'));
+      const response = await cache.match(`/offline/invoices/${playerId}`);
+      if (response) {
+        return await response.json();
+      }
+    } catch (error) {
+      console.error('[Cache] Error getting cached invoices:', error);
+    }
+    return null;
+  }
+
+  // Get cached aphorisms
+  static async getCachedAphorisms(): Promise<any[] | null> {
+    try {
+      const cache = await caches.open(this.getCacheName('aphorisms'));
+      const response = await cache.match(`/offline/aphorisms`);
+      if (response) {
+        return await response.json();
+      }
+    } catch (error) {
+      console.error('[Cache] Error getting cached aphorisms:', error);
+    }
+    return null;
+  }
+
   // Get cache storage usage
   static async getStorageUsage(): Promise<{ used: number; quota: number }> {
     if ('storage' in navigator && 'estimate' in navigator.storage) {
@@ -152,10 +292,17 @@ export class CacheManager {
   static async downloadForOffline(
     players: any[],
     analyses: any[],
+    programs: any[],
+    concepts: any[],
+    updates: any[],
+    invoices: any[],
+    aphorisms: any[],
     assets: string[],
     onProgress?: (progress: number) => void
   ): Promise<void> {
-    const totalItems = players.length + analyses.length + assets.length;
+    const totalItems = players.length + analyses.length + programs.length + 
+                       concepts.length + updates.length + invoices.length + 
+                       aphorisms.length + assets.length;
     let completed = 0;
 
     // Cache players
@@ -172,9 +319,46 @@ export class CacheManager {
       onProgress?.(Math.round((completed / totalItems) * 100));
     }
 
-    // Cache assets
+    // Cache programs
+    if (programs.length > 0 && players.length > 0) {
+      await this.cachePrograms(players[0].id, programs);
+      completed += programs.length;
+      onProgress?.(Math.round((completed / totalItems) * 100));
+    }
+
+    // Cache concepts
+    if (concepts.length > 0 && players.length > 0) {
+      await this.cacheConcepts(players[0].id, concepts);
+      completed += concepts.length;
+      onProgress?.(Math.round((completed / totalItems) * 100));
+    }
+
+    // Cache updates
+    if (updates.length > 0) {
+      await this.cacheUpdates(updates);
+      completed += updates.length;
+      onProgress?.(Math.round((completed / totalItems) * 100));
+    }
+
+    // Cache invoices
+    if (invoices.length > 0 && players.length > 0) {
+      await this.cacheInvoices(players[0].id, invoices);
+      completed += invoices.length;
+      onProgress?.(Math.round((completed / totalItems) * 100));
+    }
+
+    // Cache aphorisms
+    if (aphorisms.length > 0) {
+      await this.cacheAphorisms(aphorisms);
+      completed += aphorisms.length;
+      onProgress?.(Math.round((completed / totalItems) * 100));
+    }
+
+    // Cache assets (excluding videos)
     for (const asset of assets) {
-      await this.cacheAsset(asset);
+      if (!asset.includes('video') && !asset.includes('.mp4') && !asset.includes('.webm')) {
+        await this.cacheAsset(asset);
+      }
       completed++;
       onProgress?.(Math.round((completed / totalItems) * 100));
     }
