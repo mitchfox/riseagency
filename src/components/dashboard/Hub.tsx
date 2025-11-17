@@ -43,6 +43,7 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
   const [marketingImages, setMarketingImages] = React.useState<string[]>([]);
   const [chartInView, setChartInView] = React.useState(false);
   const chartRef = React.useRef<HTMLDivElement>(null);
+  const hasAnimated = React.useRef(false);
   
   // Fetch marketing gallery images for this player
   React.useEffect(() => {
@@ -68,31 +69,34 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
     fetchMarketingImages();
   }, [playerData?.name]);
   
-  // Intersection observer for chart animation
+  // Intersection observer for chart animation - only runs once
   React.useEffect(() => {
-    if (chartInView) return; // Only run once
+    if (hasAnimated.current) return;
     
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          if (entry.isIntersecting && entry.intersectionRatio >= 0.8) {
+          if (entry.isIntersecting && entry.intersectionRatio >= 0.8 && !hasAnimated.current) {
             setChartInView(true);
+            hasAnimated.current = true;
+            observer.disconnect();
           }
         });
       },
       { threshold: [0.8] }
     );
 
-    if (chartRef.current) {
-      observer.observe(chartRef.current);
+    const currentRef = chartRef.current;
+    if (currentRef) {
+      observer.observe(currentRef);
     }
 
     return () => {
-      if (chartRef.current) {
-        observer.unobserve(chartRef.current);
+      if (currentRef) {
+        observer.unobserve(currentRef);
       }
     };
-  }, [chartInView]);
+  }, []);
   
   // Get current program schedule
   const currentProgram = programs.find(p => p.is_current);
