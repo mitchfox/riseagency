@@ -7,6 +7,7 @@ import { format, parseISO, startOfWeek, endOfWeek, isWithinInterval, addDays } f
 import { Link } from "react-router-dom";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import Autoplay from "embla-carousel-autoplay";
+import { supabase } from "@/integrations/supabase/client";
 
 interface PlayerProgram {
   id: string;
@@ -32,6 +33,29 @@ interface HubProps {
 }
 
 export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNavigateToSession }: HubProps) => {
+  const [marketingImages, setMarketingImages] = React.useState<string[]>([]);
+  
+  // Fetch marketing gallery images for this player
+  React.useEffect(() => {
+    const fetchMarketingImages = async () => {
+      if (!playerData?.name) return;
+      
+      const { data, error } = await supabase
+        .from('marketing_gallery')
+        .select('file_url')
+        .eq('category', 'players')
+        .eq('file_type', 'image')
+        .ilike('title', `%${playerData.name}%`)
+        .order('created_at', { ascending: false });
+      
+      if (!error && data) {
+        setMarketingImages(data.map(img => img.file_url));
+      }
+    };
+    
+    fetchMarketingImages();
+  }, [playerData?.name]);
+  
   // Get current program schedule
   const currentProgram = programs.find(p => p.is_current);
   
@@ -132,9 +156,12 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
     .sort((a, b) => new Date(b.analysis_date).getTime() - new Date(a.analysis_date).getTime())
     .slice(0, 3);
 
-  // Extract video thumbnails from highlights
+  // Extract video thumbnails from highlights and marketing gallery images
   const videoThumbnails = React.useMemo(() => {
     const thumbnails: string[] = [];
+    
+    // Add marketing gallery images first
+    thumbnails.push(...marketingImages);
     
     if (playerData?.highlights) {
       Object.values(playerData.highlights).forEach((highlight: any) => {
@@ -157,7 +184,7 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
     }
     
     return thumbnails;
-  }, [playerData]);
+  }, [playerData, marketingImages]);
 
   const autoplayPlugin = React.useRef(
     Autoplay({ delay: 4000, stopOnInteraction: true })
@@ -182,17 +209,25 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
                   {videoThumbnails.map((thumbnail, index) => (
                     <CarouselItem key={index}>
                       <div className="w-full aspect-[21/9] overflow-hidden relative bg-black">
-                        <video
-                          src={thumbnail}
-                          className="w-full h-full object-cover"
-                          muted
-                          playsInline
-                          onMouseEnter={(e) => e.currentTarget.play()}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.pause();
-                            e.currentTarget.currentTime = 0;
-                          }}
-                        />
+                        {thumbnail.includes('.mp4') || thumbnail.includes('video') ? (
+                          <video
+                            src={thumbnail}
+                            className="w-full h-full object-cover"
+                            muted
+                            playsInline
+                            onMouseEnter={(e) => e.currentTarget.play()}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.pause();
+                              e.currentTarget.currentTime = 0;
+                            }}
+                          />
+                        ) : (
+                          <img
+                            src={thumbnail}
+                            alt="Player content"
+                            className="w-full h-full object-cover"
+                          />
+                        )}
                       </div>
                     </CarouselItem>
                   ))}
