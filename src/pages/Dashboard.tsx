@@ -1092,9 +1092,6 @@ const Dashboard = () => {
       <div className="bg-background/60 backdrop-blur-sm border-b border-border/50">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-center gap-2 h-12">
-            {playerData?.id && (
-              <NotificationSettings playerId={playerData.id} />
-            )}
             <Button
               variant="outline"
               size="sm"
@@ -1104,15 +1101,6 @@ const Dashboard = () => {
               <Calendar className="h-4 w-4" />
               <span className="hidden sm:inline">Coach Availability</span>
               <span className="sm:hidden">Availability</span>
-            </Button>
-            <Button 
-              variant="ghost"
-              size="icon"
-              onClick={() => window.location.reload()}
-              className="text-gold hover:text-gold/80"
-              title="Refresh app"
-            >
-              <RefreshCw className="h-5 w-5" />
             </Button>
           </div>
         </div>
@@ -1128,14 +1116,14 @@ const Dashboard = () => {
         </div>
       )}
 
-      <main className="pt-6 pb-12">
+      <main className="pb-12">
         {/* Notification Permission - with padding */}
         <div className="container mx-auto max-w-6xl px-4 md:px-6 mb-0">
           <NotificationPermission />
         </div>
 
         {/* Navigation Menu - Full width, no spacing */}
-        <div className="w-full mt-2">
+        <div className="w-full">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button 
@@ -2624,62 +2612,89 @@ const Dashboard = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-8">
-                    {updates.length === 0 ? (
-                      <div className="py-8 text-center text-muted-foreground">
-                        No updates available yet.
-                      </div>
-                    ) : (
-                      <div className="space-y-6">
-                        {updates.map((update) => (
-                          <div 
-                            key={update.id}
-                            className="border rounded-lg p-6 space-y-3 bg-card hover:border-primary transition-colors"
-                          >
-                            <div className="flex items-start justify-between gap-4">
-                              <h3 className="text-xl font-bebas uppercase tracking-wider">
-                                {update.title}
-                              </h3>
-                              <span className="text-sm text-muted-foreground whitespace-nowrap">
-                                {format(new Date(update.date), 'MMMM d, yyyy')}
-                              </span>
-                            </div>
-                            <p className="text-muted-foreground whitespace-pre-wrap">
-                              {update.content}
-                            </p>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    <div className="border-t pt-6">
-                      <h3 className="text-xl font-bebas uppercase tracking-wider mb-4">
-                        Latest App Update
-                      </h3>
-                      <PWAInstallPrompt />
-                    </div>
-
-                    <div className="border-t pt-6 mt-6">
-                      <h3 className="text-xl font-bebas uppercase tracking-wider mb-4">
+                  <Tabs defaultValue="general" className="w-full">
+                    <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 gap-2 mb-6 bg-muted h-auto p-2">
+                      <TabsTrigger value="general" className="font-bebas uppercase text-sm">
+                        General Updates
+                      </TabsTrigger>
+                      <TabsTrigger value="app" className="font-bebas uppercase text-sm">
+                        App Updates
+                      </TabsTrigger>
+                      <TabsTrigger value="offline" className="font-bebas uppercase text-sm">
                         Offline Access
-                      </h3>
-                      <OfflineContentManager 
-                        playerData={playerData}
-                        analyses={analyses}
-                        programs={programs}
-                        concepts={concepts}
-                        updates={updates}
-                        invoices={invoices}
-                        aphorisms={dailyAphorism ? [dailyAphorism] : []}
-                        assets={[
-                          playerData?.image_url,
-                          ...analyses.map(a => a.pdf_url).filter(Boolean),
-                          ...programs.map(p => [p.phase_image_url, p.player_image_url]).flat().filter(Boolean),
-                          ...concepts.map(c => [c.match_image_url, c.scheme_image_url, c.player_image_url]).flat().filter(Boolean),
-                        ].filter(Boolean)}
-                      />
-                    </div>
-                  </div>
+                      </TabsTrigger>
+                      <TabsTrigger value="club-interest" className="font-bebas uppercase text-sm">
+                        Club Interest
+                      </TabsTrigger>
+                    </TabsList>
+
+                    <TabsContent value="general" className="space-y-6">
+                      {updates.length === 0 ? (
+                        <div className="py-8 text-center text-muted-foreground">
+                          No updates available yet.
+                        </div>
+                      ) : (
+                        <div className="space-y-6">
+                          {updates.map((update) => (
+                            <div 
+                              key={update.id}
+                              className="border rounded-lg p-6 space-y-3 bg-card hover:border-primary transition-colors"
+                            >
+                              <div className="flex items-start justify-between gap-4">
+                                <h3 className="text-xl font-bebas uppercase tracking-wider">
+                                  {update.title}
+                                </h3>
+                                <span className="text-sm text-muted-foreground whitespace-nowrap">
+                                  {format(new Date(update.date), 'MMMM d, yyyy')}
+                                </span>
+                              </div>
+                              <p className="text-muted-foreground whitespace-pre-wrap">
+                                {update.content}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </TabsContent>
+
+                    <TabsContent value="app" className="space-y-6">
+                      <div>
+                        <h3 className="text-xl font-bebas uppercase tracking-wider mb-4">
+                          Latest App Update
+                        </h3>
+                        <PWAInstallPrompt />
+                      </div>
+                    </TabsContent>
+
+                    <TabsContent value="offline" className="space-y-6">
+                      <div>
+                        <h3 className="text-xl font-bebas uppercase tracking-wider mb-4">
+                          Offline Access
+                        </h3>
+                        <OfflineContentManager 
+                          playerData={playerData}
+                          analyses={analyses}
+                          programs={programs}
+                          concepts={concepts}
+                          updates={updates}
+                          invoices={invoices}
+                          aphorisms={dailyAphorism ? [dailyAphorism] : []}
+                          assets={[
+                            playerData?.image_url,
+                            ...analyses.map(a => a.pdf_url).filter(Boolean),
+                            ...programs.map(p => [p.phase_image_url, p.player_image_url]).flat().filter(Boolean),
+                            ...concepts.map(c => [c.match_image_url, c.scheme_image_url, c.player_image_url]).flat().filter(Boolean),
+                          ].filter(Boolean)}
+                        />
+                      </div>
+                    </TabsContent>
+
+                    <TabsContent value="club-interest" className="space-y-6">
+                      <div className="py-8 text-center text-muted-foreground">
+                        No club interest updates available yet.
+                      </div>
+                    </TabsContent>
+                  </Tabs>
                 </CardContent>
               </Card>
             </TabsContent>
@@ -2795,13 +2810,25 @@ const Dashboard = () => {
       {/* Logout Section */}
       <div className="container mx-auto px-4 pb-8">
         <div className="border-t border-border my-6" />
-        <div className="flex justify-center">
+        <div className="flex justify-center items-center gap-4">
+          {playerData?.id && (
+            <NotificationSettings playerId={playerData.id} />
+          )}
           <Button 
             variant="outline" 
             onClick={handleLogout}
             className="font-bebas uppercase tracking-wider"
           >
             Log Out
+          </Button>
+          <Button 
+            variant="ghost"
+            size="icon"
+            onClick={() => window.location.reload()}
+            className="text-gold hover:text-gold/80"
+            title="Refresh app"
+          >
+            <RefreshCw className="h-5 w-5" />
           </Button>
         </div>
       </div>
