@@ -22,9 +22,10 @@ interface PlayerAnalysis {
 interface HubProps {
   programs: PlayerProgram[];
   analyses: PlayerAnalysis[];
+  playerData: any;
 }
 
-export const Hub = ({ programs, analyses }: HubProps) => {
+export const Hub = ({ programs, analyses, playerData }: HubProps) => {
   // Get current program schedule
   const currentProgram = programs.find(p => p.is_current);
   const currentSchedule = currentProgram?.weekly_schedules?.[0] || null;
@@ -47,6 +48,44 @@ export const Hub = ({ programs, analyses }: HubProps) => {
 
   return (
     <div className="space-y-6 mb-8">
+      {/* Player Header */}
+      <div className="relative">
+        <div className="flex items-center gap-6 mb-8">
+          {playerData?.image_url && (
+            <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-primary shadow-[0_0_20px_hsl(var(--primary)/0.5)]">
+              <img 
+                src={playerData.image_url} 
+                alt={playerData.name}
+                className="w-full h-full object-cover"
+              />
+            </div>
+          )}
+          <div className="flex-1 space-y-3">
+            <h1 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-foreground">
+              {playerData?.name || "Player Portal"}
+            </h1>
+
+            <div className="flex items-center gap-4 text-muted-foreground">
+              {playerData?.position && (
+                <span className="text-lg">{playerData.position}</span>
+              )}
+              {playerData?.nationality && (
+                <>
+                  <span>•</span>
+                  <span className="text-lg">{playerData.nationality}</span>
+                </>
+              )}
+              {playerData?.currentClub && (
+                <>
+                  <span>•</span>
+                  <span className="text-lg">{playerData.currentClub}</span>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div>
         <h2 className="text-3xl font-bold mb-2">Hub</h2>
         <p className="text-muted-foreground">Your performance overview</p>

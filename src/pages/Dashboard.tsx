@@ -1130,50 +1130,12 @@ const Dashboard = () => {
 
       <main className="pt-32 pb-12 px-0 md:px-4">{/* Increased pt to account for fixed header + subheader */}
         <div className="container mx-auto max-w-6xl px-0 md:px-6">
-          {/* Player Header */}
-          <div className="relative mb-12">
-            <div className="flex items-center gap-6 mb-8">
-              {playerData?.image_url && (
-                <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-primary shadow-[0_0_20px_hsl(var(--primary)/0.5)]">
-                  <img 
-                    src={playerData.image_url} 
-                    alt={playerData.name}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              )}
-              <div className="flex-1 space-y-3">
-                <h1 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-foreground">
-                  {playerData?.name || "Player Portal"}
-                </h1>
-
-                <div className="flex items-center gap-4 text-muted-foreground">
-                  {playerData?.position && (
-                    <span className="text-lg">{playerData.position}</span>
-                  )}
-                  {playerData?.nationality && (
-                    <>
-                      <span>•</span>
-                      <span className="text-lg">{playerData.nationality}</span>
-                    </>
-                  )}
-                  {playerData?.currentClub && (
-                    <>
-                      <span>•</span>
-                      <span className="text-lg">{playerData.currentClub}</span>
-                    </>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-
           <div className="mb-6">
             <NotificationPermission />
           </div>
 
           {/* Hub Section */}
-          <Hub programs={programs} analyses={analyses} />
+          <Hub programs={programs} analyses={analyses} playerData={playerData} />
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <div className="mb-8">
