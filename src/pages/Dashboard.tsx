@@ -2582,7 +2582,7 @@ const Dashboard = () => {
             </TabsContent>
 
             <TabsContent value="invoices" className="space-y-6">
-              <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 border-t-[2px] border-t-[hsl(43,49%,61%)] border-b-0">
+              <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-0">
                 <CardContent className="container mx-auto px-4 pt-6">
                   <Tabs defaultValue="invoices" className="w-full">
                     <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3 gap-2 mb-6 bg-muted h-auto p-2">
