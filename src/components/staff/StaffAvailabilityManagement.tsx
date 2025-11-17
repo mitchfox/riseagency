@@ -3,11 +3,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Trash2, Plus, Clock } from "lucide-react";
+import { Trash2, Plus, Clock, ChevronDown, ChevronUp, Calendar } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { StaffSchedule } from "./StaffSchedule";
 
 interface AvailabilitySlot {
@@ -21,6 +20,8 @@ interface AvailabilitySlot {
 export const StaffAvailabilityManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   const [availabilitySlots, setAvailabilitySlots] = useState<AvailabilitySlot[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isScheduleOpen, setIsScheduleOpen] = useState(true);
+  const [isCurrentAvailabilityOpen, setIsCurrentAvailabilityOpen] = useState(true);
   
   // Get next 7 days for default date
   const getDefaultDate = () => {
@@ -116,8 +117,31 @@ export const StaffAvailabilityManagement = ({ isAdmin }: { isAdmin: boolean }) =
 
   return (
     <div className="space-y-6">
-      {/* Calendar View */}
-      <StaffSchedule isAdmin={isAdmin} />
+      {/* Calendar View - Collapsible */}
+      <Collapsible open={isScheduleOpen} onOpenChange={setIsScheduleOpen}>
+        <Card>
+          <CardHeader>
+            <CollapsibleTrigger className="w-full">
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <Calendar className="h-5 w-5" />
+                  Team Schedule
+                </CardTitle>
+                {isScheduleOpen ? (
+                  <ChevronUp className="h-5 w-5 text-muted-foreground" />
+                ) : (
+                  <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                )}
+              </div>
+            </CollapsibleTrigger>
+          </CardHeader>
+          <CollapsibleContent>
+            <CardContent>
+              <StaffSchedule isAdmin={isAdmin} />
+            </CardContent>
+          </CollapsibleContent>
+        </Card>
+      </Collapsible>
 
       {/* Availability Management */}
       <Card>
@@ -180,52 +204,66 @@ export const StaffAvailabilityManagement = ({ isAdmin }: { isAdmin: boolean }) =
             </Button>
           </div>
 
-          {/* Current Availability Slots */}
-          <div className="space-y-2">
-            <h3 className="font-semibold">Current Availability</h3>
-            {availabilitySlots.length === 0 ? (
-              <p className="text-muted-foreground text-sm">
-                No availability hours set. Add your first slot above.
-              </p>
-            ) : (
-              <div className="space-y-2">
-                {availabilitySlots.map((slot) => {
-                  const date = new Date(slot.availability_date);
-                  const formattedDate = date.toLocaleDateString('en-US', { 
-                    weekday: 'long', 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric' 
-                  });
+          {/* Current Availability Slots - Collapsible */}
+          <Collapsible open={isCurrentAvailabilityOpen} onOpenChange={setIsCurrentAvailabilityOpen}>
+            <div className="space-y-2">
+              <CollapsibleTrigger className="w-full">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold">Current Availability</h3>
+                  {isCurrentAvailabilityOpen ? (
+                    <ChevronUp className="h-5 w-5 text-muted-foreground" />
+                  ) : (
+                    <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                  )}
+                </div>
+              </CollapsibleTrigger>
+              
+              <CollapsibleContent>
+                {availabilitySlots.length === 0 ? (
+                  <p className="text-muted-foreground text-sm">
+                    No availability hours set. Add your first slot above.
+                  </p>
+                ) : (
+                  <div className="space-y-2 mt-2">
+                    {availabilitySlots.map((slot) => {
+                      const date = new Date(slot.availability_date);
+                      const formattedDate = date.toLocaleDateString('en-US', { 
+                        weekday: 'long', 
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric' 
+                      });
 
-                  return (
-                    <div key={slot.id} className="border rounded-lg p-4">
-                      <h4 className="font-semibold mb-2">{formattedDate}</h4>
-                      <div className="flex items-center justify-between p-2 bg-muted/50 rounded">
-                        <div className="flex-1">
-                          <div className="font-medium">
-                            {slot.start_time} - {slot.end_time}
-                          </div>
-                          {slot.notes && (
-                            <div className="text-sm text-muted-foreground">
-                              {slot.notes}
+                      return (
+                        <div key={slot.id} className="border rounded-lg p-4">
+                          <h4 className="font-semibold mb-2">{formattedDate}</h4>
+                          <div className="flex items-center justify-between p-2 bg-muted/50 rounded">
+                            <div className="flex-1">
+                              <div className="font-medium">
+                                {slot.start_time} - {slot.end_time}
+                              </div>
+                              {slot.notes && (
+                                <div className="text-sm text-muted-foreground">
+                                  {slot.notes}
+                                </div>
+                              )}
                             </div>
-                          )}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => deleteAvailability(slot.id)}
+                            >
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </div>
                         </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => deleteAvailability(slot.id)}
-                        >
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </CollapsibleContent>
+            </div>
+          </Collapsible>
         </CardContent>
       </Card>
     </div>
