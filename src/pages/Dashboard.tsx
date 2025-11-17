@@ -2585,7 +2585,7 @@ const Dashboard = () => {
               <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-0">
                 <CardContent className="container mx-auto px-4 pt-2">
                   <Tabs defaultValue="invoices" className="w-full">
-                    <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3 gap-2 mb-6 bg-muted h-auto p-2">
+                    <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3 gap-2 mb-0 bg-muted h-auto p-2">
                   <TabsTrigger value="invoices" className="font-bebas uppercase text-sm sm:text-base">
                     Invoices
                   </TabsTrigger>
