@@ -1126,46 +1126,127 @@ const Dashboard = () => {
                   <Bell className="h-4 w-4" />
                   <span className="hidden sm:inline">Notifications</span>
                   {/* Notification Badge */}
-                  <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                    3
-                  </span>
+                  {(() => {
+                    const recentCount = [
+                      ...analyses.slice(0, 3),
+                      ...programs.filter(p => p.is_current).slice(0, 2),
+                      ...concepts.slice(0, 2),
+                      ...updates.slice(0, 2)
+                    ].length;
+                    
+                    if (recentCount === 0) return null;
+                    
+                    return (
+                      <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                        {Math.min(recentCount, 9)}
+                      </span>
+                    );
+                  })()}
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="center" className="w-80 max-h-96 overflow-y-auto">
+              <DropdownMenuContent align="center" className="w-80 max-h-96 overflow-y-auto bg-card border-2 border-gold z-50">
                 <div className="px-4 py-3 border-b border-border">
                   <h3 className="font-semibold">Recent Notifications</h3>
                 </div>
                 <div className="py-2">
-                  <div className="px-4 py-3 hover:bg-accent cursor-pointer border-b border-border">
-                    <div className="flex items-start gap-2">
-                      <div className="w-2 h-2 rounded-full bg-primary mt-2 flex-shrink-0" />
-                      <div className="flex-1">
-                        <p className="text-sm font-medium">New Performance Report</p>
-                        <p className="text-xs text-muted-foreground mt-1">Norwich City - Jan 15</p>
-                        <p className="text-xs text-muted-foreground mt-1">2 hours ago</p>
+                  {(() => {
+                    const notifications: Array<{ type: string; title: string; subtitle: string; date: Date; onClick?: () => void }> = [];
+                    
+                    // Add recent analyses
+                    analyses.slice(0, 3).forEach(analysis => {
+                      notifications.push({
+                        type: 'analysis',
+                        title: 'New Performance Report',
+                        subtitle: `${analysis.opponent || 'Match'} - ${format(parseISO(analysis.analysis_date), 'MMM d')}`,
+                        date: parseISO(analysis.analysis_date),
+                        onClick: () => {
+                          setActiveTab('analysis');
+                          setActiveAnalysisTab('performance');
+                        }
+                      });
+                    });
+                    
+                    // Add recent programs
+                    programs.filter(p => p.is_current).slice(0, 2).forEach(program => {
+                      notifications.push({
+                        type: 'program',
+                        title: 'Training Program',
+                        subtitle: program.program_name,
+                        date: parseISO(program.created_at),
+                        onClick: () => setActiveTab('physical')
+                      });
+                    });
+                    
+                    // Add recent concepts
+                    concepts.slice(0, 2).forEach(concept => {
+                      notifications.push({
+                        type: 'concept',
+                        title: 'New Concept',
+                        subtitle: concept.title || 'Analysis',
+                        date: parseISO(concept.created_at),
+                        onClick: () => {
+                          setActiveTab('analysis');
+                          setActiveAnalysisTab('concepts');
+                        }
+                      });
+                    });
+                    
+                    // Add recent updates
+                    updates.slice(0, 2).forEach(update => {
+                      notifications.push({
+                        type: 'update',
+                        title: 'New Update',
+                        subtitle: update.title,
+                        date: parseISO(update.date),
+                        onClick: () => setActiveTab('updates')
+                      });
+                    });
+                    
+                    // Sort by date and take most recent 5
+                    const sortedNotifications = notifications
+                      .sort((a, b) => b.date.getTime() - a.date.getTime())
+                      .slice(0, 5);
+                    
+                    if (sortedNotifications.length === 0) {
+                      return (
+                        <div className="px-4 py-6 text-center text-sm text-muted-foreground">
+                          No recent notifications
+                        </div>
+                      );
+                    }
+                    
+                    return sortedNotifications.map((notif, idx) => (
+                      <div 
+                        key={idx}
+                        className="px-4 py-3 hover:bg-accent cursor-pointer border-b border-border last:border-b-0"
+                        onClick={notif.onClick}
+                      >
+                        <div className="flex items-start gap-2">
+                          <div className="w-2 h-2 rounded-full bg-primary mt-2 flex-shrink-0" />
+                          <div className="flex-1">
+                            <p className="text-sm font-medium">{notif.title}</p>
+                            <p className="text-xs text-muted-foreground mt-1">{notif.subtitle}</p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {(() => {
+                                const now = new Date();
+                                const diffMs = now.getTime() - notif.date.getTime();
+                                const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+                                const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+                                
+                                if (diffDays === 0) {
+                                  if (diffHours === 0) return 'Just now';
+                                  if (diffHours === 1) return '1 hour ago';
+                                  return `${diffHours} hours ago`;
+                                }
+                                if (diffDays === 1) return '1 day ago';
+                                return `${diffDays} days ago`;
+                              })()}
+                            </p>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                  <div className="px-4 py-3 hover:bg-accent cursor-pointer border-b border-border">
-                    <div className="flex items-start gap-2">
-                      <div className="w-2 h-2 rounded-full bg-primary mt-2 flex-shrink-0" />
-                      <div className="flex-1">
-                        <p className="text-sm font-medium">New Training Program</p>
-                        <p className="text-xs text-muted-foreground mt-1">Phase 2 - Strength Building</p>
-                        <p className="text-xs text-muted-foreground mt-1">1 day ago</p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="px-4 py-3 hover:bg-accent cursor-pointer">
-                    <div className="flex items-start gap-2">
-                      <div className="w-2 h-2 rounded-full bg-primary mt-2 flex-shrink-0" />
-                      <div className="flex-1">
-                        <p className="text-sm font-medium">New Update</p>
-                        <p className="text-xs text-muted-foreground mt-1">Training Schedule Changes</p>
-                        <p className="text-xs text-muted-foreground mt-1">2 days ago</p>
-                      </div>
-                    </div>
-                  </div>
+                    ));
+                  })()}
                 </div>
               </DropdownMenuContent>
             </DropdownMenu>
