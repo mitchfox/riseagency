@@ -1196,12 +1196,6 @@ const Dashboard = () => {
                 >
                   View Profile
                 </DropdownMenuItem>
-                <DropdownMenuItem 
-                  onClick={handleLogout}
-                  className="font-bebas uppercase text-base py-3 cursor-pointer text-gold hover:text-gold/80 hover:bg-gold/10"
-                >
-                  Sign Out
-                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
