@@ -212,7 +212,7 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
     <>
       <div className="-space-y-1">
         {/* Schedule Card - Full Width */}
-        <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 border-t-2 border-t-gold z-30">
+        <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 border-t-[2px] border-t-[hsl(43,49%,61%)] z-30">
           <CardHeader marble className="py-2">
             <div className="flex items-center justify-between container mx-auto px-4 pr-6">
               <div className="flex items-center gap-2">
@@ -319,7 +319,7 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
 
         {/* Video/Image Carousel - Full Width */}
         {videoThumbnails.length > 0 && (
-          <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 border-t-2 border-t-gold border-b-2 border-b-gold z-25 !mt-0 !mb-[17px]">
+          <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 border-t-[2px] border-t-[hsl(43,49%,61%)] border-b-[2px] border-b-[hsl(43,49%,61%)] z-25 !mt-0 !mb-[17px]">
               <CardContent className="p-0 overflow-hidden">
               <Carousel
                 opts={{
@@ -359,7 +359,7 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
         )}
 
         {/* R90 Performance Chart & Recent Analysis Combined - Full Width */}
-        <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 border-t-2 border-t-gold z-20">
+        <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 border-t-[2px] border-t-[hsl(43,49%,61%)] z-20">
           <CardHeader marble className="py-2">
             <div className="flex items-center justify-between container mx-auto px-4 pr-6">
               <div className="flex items-center gap-2">
@@ -378,10 +378,10 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
             </div>
           </CardHeader>
           <CardContent className="container mx-auto px-4">
-            <div className="pt-[5px] space-y-6 -mb-[5px]">
+            <div className="pt-[5px] -mb-[5px]">
             {/* Chart */}
             {chartData.length > 0 ? (
-              <div className="w-full px-2 -ml-6">
+              <div className="w-full px-2 -ml-6 mt-[10px]">
                 <ResponsiveContainer width="100%" height={275}>
                   <BarChart data={chartData} margin={{ bottom: 25, left: 10, right: 10 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
