@@ -208,17 +208,17 @@ export function UpdatesManagement({ isAdmin }: { isAdmin: boolean }) {
           <p className="font-medium">View Only Access - Contact admin for changes</p>
         </div>
       )}
-      <div className="flex justify-between items-center">
-        <h3 className="text-xl font-bebas uppercase tracking-wider">Updates Management</h3>
+      <div className="flex justify-between items-center flex-wrap gap-2">
+        <h3 className="text-lg md:text-xl font-bebas uppercase tracking-wider">Updates Management</h3>
         {isAdmin && (
           <Dialog open={dialogOpen} onOpenChange={(open) => {
             setDialogOpen(open);
             if (!open) resetForm();
           }}>
             <DialogTrigger asChild>
-              <Button>
-                <Plus className="w-4 h-4 mr-2" />
-                New Update
+              <Button size="sm" className="md:h-10">
+                <Plus className="w-4 h-4 md:mr-2" />
+                <span className="hidden md:inline">New Update</span>
               </Button>
             </DialogTrigger>
           <DialogContent className="max-w-2xl">
@@ -353,11 +353,11 @@ export function UpdatesManagement({ isAdmin }: { isAdmin: boolean }) {
         ) : (
           updates.map((update) => (
             <Card key={update.id} className={!update.visible ? "opacity-60" : ""}>
-              <CardContent className="py-4">
-                <div className="flex items-start justify-between gap-4">
+              <CardContent className="py-3 md:py-4">
+                <div className="flex flex-col md:flex-row md:items-start justify-between gap-3 md:gap-4">
                   <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <h4 className="font-semibold text-lg">{update.title}</h4>
+                    <div className="flex items-center gap-2 mb-2 flex-wrap">
+                      <h4 className="font-semibold text-base md:text-lg">{update.title}</h4>
                       {!update.visible && (
                         <span className="text-xs bg-muted px-2 py-1 rounded">Hidden</span>
                       )}
@@ -376,31 +376,34 @@ export function UpdatesManagement({ isAdmin }: { isAdmin: boolean }) {
                   </div>
                   
                   {isAdmin && (
-                    <div className="flex gap-2">
+                    <div className="flex gap-1 md:gap-2 self-end md:self-start">
                       <Button
                         variant="outline"
-                        size="sm"
+                        size="icon"
+                        className="h-8 w-8 md:h-9 md:w-9"
                         onClick={() => toggleVisibility(update.id, update.visible)}
                       >
                         {update.visible ? (
-                          <Eye className="w-4 h-4" />
+                          <Eye className="w-3.5 h-3.5 md:w-4 md:h-4" />
                         ) : (
-                          <EyeOff className="w-4 h-4" />
+                          <EyeOff className="w-3.5 h-3.5 md:w-4 md:h-4" />
                         )}
                       </Button>
                       <Button
                         variant="outline"
-                        size="sm"
+                        size="icon"
+                        className="h-8 w-8 md:h-9 md:w-9"
                         onClick={() => handleEdit(update)}
                       >
-                        <Edit className="w-4 h-4" />
+                        <Edit className="w-3.5 h-3.5 md:w-4 md:h-4" />
                       </Button>
                       <Button
                         variant="outline"
-                        size="sm"
+                        size="icon"
+                        className="h-8 w-8 md:h-9 md:w-9"
                         onClick={() => handleDelete(update.id)}
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 className="w-3.5 h-3.5 md:w-4 md:h-4" />
                       </Button>
                     </div>
                   )}

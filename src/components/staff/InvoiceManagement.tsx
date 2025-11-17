@@ -218,15 +218,15 @@ export const InvoiceManagement = ({ isAdmin }: { isAdmin: boolean }) => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Invoice Management</h2>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0">
+        <h2 className="text-xl md:text-2xl font-bold">Invoice Management</h2>
         {isAdmin && (
           <Dialog open={dialogOpen} onOpenChange={(open) => {
             setDialogOpen(open);
             if (!open) resetForm();
           }}>
             <DialogTrigger asChild>
-              <Button size="sm" className="md:size-default">
+              <Button size="sm" className="w-full sm:w-auto md:h-10">
                 <Plus className="w-4 h-4 mr-2" />
                 <span className="hidden sm:inline">New Invoice</span>
                 <span className="sm:hidden">New</span>
@@ -449,29 +449,32 @@ export const InvoiceManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                       <TableCell>{invoice.amount.toFixed(2)} {invoice.currency}</TableCell>
                       <TableCell>{getStatusBadge(invoice.status)}</TableCell>
                       <TableCell>
-                        <div className="flex gap-2">
+                        <div className="flex gap-1">
                           {invoice.pdf_url && (
                             <Button
-                              size="sm"
+                              size="icon"
                               variant="ghost"
+                              className="h-8 w-8"
                               onClick={() => window.open(invoice.pdf_url!, '_blank')}
                             >
-                              <FileText className="w-4 h-4" />
+                              <FileText className="w-3.5 h-3.5" />
                             </Button>
                           )}
                           <Button
-                            size="sm"
+                            size="icon"
                             variant="ghost"
+                            className="h-8 w-8"
                             onClick={() => handleEdit(invoice)}
                           >
-                            <Pencil className="w-4 h-4" />
+                            <Pencil className="w-3.5 h-3.5" />
                           </Button>
                           <Button
-                            size="sm"
+                            size="icon"
                             variant="ghost"
+                            className="h-8 w-8"
                             onClick={() => handleDelete(invoice.id)}
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <Trash2 className="w-3.5 h-3.5" />
                           </Button>
                         </div>
                       </TableCell>
