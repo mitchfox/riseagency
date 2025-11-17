@@ -1536,24 +1536,9 @@ const Dashboard = () => {
                           <div key={program.id}>
                             {/* Program Header */}
                             <div className="border-b pb-4 mb-6">
-                              <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
-                                <div>
-                                  <h3 className="text-xl md:text-2xl font-bebas uppercase tracking-wider">
-                                    {program.program_name}
-                                  </h3>
-                                  {program.phase_name && (
-                                    <p className="text-base md:text-lg text-muted-foreground">{program.phase_name}</p>
-                                  )}
-                                </div>
-                                {program.is_current && (
-                                  <span className="px-3 py-1 bg-primary text-black text-sm font-bebas uppercase rounded self-start">
-                                    Current
-                                  </span>
-                                )}
-                              </div>
-                              {program.phase_dates && (
-                                <p className="text-sm text-muted-foreground mt-2">{program.phase_dates}</p>
-                              )}
+                              <h3 className="text-xl md:text-2xl font-bebas uppercase tracking-wider">
+                                {program.program_name}
+                              </h3>
                             </div>
 
                             {!hasContent ? (
