@@ -315,7 +315,7 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
         {/* Video/Image Carousel - Full Width */}
         {videoThumbnails.length > 0 && (
           <div className="mb-2">
-            <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 border-t border-t-gold border-b border-b-gold z-25">
+            <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 border-t-2 border-t-gold border-b-2 border-b-gold z-25">
               <CardContent className="p-0 overflow-hidden">
               <Carousel
                 opts={{
