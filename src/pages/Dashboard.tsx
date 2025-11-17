@@ -1324,7 +1324,7 @@ const Dashboard = () => {
 
             <TabsContent value="analysis" className="space-y-6">
               <Tabs value={activeAnalysisTab} onValueChange={setActiveAnalysisTab} className="w-full">
-                <TabsList className="grid w-full grid-cols-1 sm:grid-cols-5 gap-2 mb-4 bg-muted h-auto p-2 border-b-2 border-b-[hsl(43,49%,61%)]">
+                <TabsList className="grid w-full grid-cols-1 sm:grid-cols-5 gap-2 mb-4 bg-muted h-auto p-2 border-2 border-[hsl(43,49%,61%)]">
                   <TabsTrigger value="performance" className="font-bebas uppercase text-sm sm:text-base">
                     Performance Analysis
                   </TabsTrigger>
@@ -2496,7 +2496,7 @@ const Dashboard = () => {
 
             <TabsContent value="invoices" className="space-y-6">
               <Tabs defaultValue="invoices" className="w-full">
-                <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3 gap-2 mb-4 bg-muted h-auto p-2 border-b-2 border-b-[hsl(43,49%,61%)]">
+                <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3 gap-2 mb-4 bg-muted h-auto p-2 border-2 border-[hsl(43,49%,61%)]">
                   <TabsTrigger value="invoices" className="font-bebas uppercase text-sm sm:text-base">
                     Invoices
                   </TabsTrigger>
@@ -2642,7 +2642,7 @@ const Dashboard = () => {
                 </CardHeader>
                 <CardContent className="container mx-auto px-4">
                   <Tabs defaultValue="best" className="w-full" key="highlights-tabs">
-                    <TabsList className="grid w-full grid-cols-2 mb-6 border-b-2 border-b-[hsl(43,49%,61%)]">
+                    <TabsList className="grid w-full grid-cols-2 mb-6 border-2 border-[hsl(43,49%,61%)]">
                       <TabsTrigger value="match" className="font-bebas uppercase">
                         Match Highlights
                       </TabsTrigger>
@@ -2750,7 +2750,7 @@ const Dashboard = () => {
                         
                         <TabsContent value="best">
                           <Tabs defaultValue="clips" className="w-full">
-                            <TabsList className="grid w-full grid-cols-2 mb-6 border-b-2 border-b-[hsl(43,49%,61%)]">
+                            <TabsList className="grid w-full grid-cols-2 mb-6 border-2 border-[hsl(43,49%,61%)]">
                               <TabsTrigger value="clips" className="font-bebas uppercase">
                                 All Clips
                               </TabsTrigger>
@@ -2996,7 +2996,7 @@ const Dashboard = () => {
                 </CardHeader>
                 <CardContent className="container mx-auto px-4">
                   <Tabs defaultValue="general" className="w-full">
-                    <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 gap-2 mb-6 bg-muted h-auto p-2 border-b-2 border-b-[hsl(43,49%,61%)]">
+                    <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 gap-2 mb-6 bg-muted h-auto p-2 border-2 border-[hsl(43,49%,61%)]">
                       <TabsTrigger value="general" className="font-bebas uppercase text-sm">
                         General Updates
                       </TabsTrigger>
