@@ -28,7 +28,7 @@ import { CacheManager } from "@/lib/cacheManager";
 import { Hub } from "@/components/dashboard/Hub";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Cell, LabelList, ReferenceLine } from "recharts";
 import { Link } from "react-router-dom";
-import { getR90Grade, getXGGrade, getXAGrade, getRegainsGrade, getInterceptionsGrade } from "@/lib/gradeCalculations";
+import { getR90Grade, getXGGrade, getXAGrade, getRegainsGrade, getInterceptionsGrade, getXGChainGrade } from "@/lib/gradeCalculations";
 
 
 interface Analysis {
@@ -1754,6 +1754,20 @@ const Dashboard = () => {
                                 { value: 4, grade: 'A', color: 'hsl(142, 70%, 50%)' },
                                 { value: 5, grade: 'A+', color: 'hsl(142, 76%, 55%)' },
                               ];
+                            case "xgchain":
+                              return [
+                                { value: 0.4, grade: 'D', color: 'hsl(0, 84%, 45%)' },
+                                { value: 0.6, grade: 'C-', color: 'hsl(0, 84%, 60%)' },
+                                { value: 0.8, grade: 'C', color: 'hsl(25, 75%, 45%)' },
+                                { value: 1.0, grade: 'C+', color: 'hsl(40, 85%, 50%)' },
+                                { value: 1.2, grade: 'B-', color: 'hsl(60, 70%, 50%)' },
+                                { value: 1.4, grade: 'B', color: 'hsl(142, 76%, 36%)' },
+                                { value: 1.6, grade: 'B+', color: 'hsl(142, 70%, 40%)' },
+                                { value: 1.8, grade: 'A-', color: 'hsl(142, 65%, 45%)' },
+                                { value: 2.2, grade: 'A', color: 'hsl(142, 70%, 50%)' },
+                                { value: 2.5, grade: 'A+', color: 'hsl(142, 76%, 55%)' },
+                                { value: 3.0, grade: 'A*', color: 'hsl(43, 96%, 56%)' },
+                              ];
                             default:
                               return [];
                           }
@@ -1772,6 +1786,8 @@ const Dashboard = () => {
                               return getRegainsGrade(score).color;
                             case "interceptions":
                               return getInterceptionsGrade(score).color;
+                            case "xgchain":
+                              return getXGChainGrade(score).color;
                             default:
                               return getR90Grade(score).color;
                           }
@@ -1790,6 +1806,8 @@ const Dashboard = () => {
                               return getRegainsGrade(score).grade;
                             case "interceptions":
                               return getInterceptionsGrade(score).grade;
+                            case "xgchain":
+                              return getXGChainGrade(score).grade;
                             default:
                               return score.toFixed(2);
                           }
