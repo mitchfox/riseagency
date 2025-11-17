@@ -204,52 +204,6 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
 
   return (
     <>
-      {/* Video Highlights Slider - Full Width */}
-      {videoThumbnails.length > 0 && (
-        <div className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] z-10">
-          <Card className="bg-card/90 backdrop-blur-sm border-gold/30 overflow-hidden rounded-none border-x-0">
-            <div className="w-full">
-              <Carousel
-                opts={{
-                  align: "center",
-                  loop: true,
-                }}
-                plugins={[autoplayPlugin.current, fadePlugin.current]}
-                className="w-full"
-              >
-                <CarouselContent>
-                  {videoThumbnails.map((thumbnail, index) => (
-                    <CarouselItem key={index}>
-                      <div className="w-full aspect-[21/9] overflow-hidden relative bg-black">
-                        {thumbnail.includes('.mp4') || thumbnail.includes('video') ? (
-                          <video
-                            src={thumbnail}
-                            className="w-full h-full object-cover"
-                            muted
-                            playsInline
-                            onMouseEnter={(e) => e.currentTarget.play()}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.pause();
-                              e.currentTarget.currentTime = 0;
-                            }}
-                          />
-                        ) : (
-                          <img
-                            src={thumbnail}
-                            alt="Player content"
-                            className="w-full h-full object-cover"
-                          />
-                        )}
-                      </div>
-                    </CarouselItem>
-                  ))}
-                </CarouselContent>
-              </Carousel>
-            </div>
-          </Card>
-        </div>
-      )}
-
       <div className="-space-y-1">
         {/* Schedule Card - Full Width */}
         <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 border-t-2 border-t-gold z-20">
