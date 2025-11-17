@@ -1022,16 +1022,21 @@ const Dashboard = () => {
                   <h1 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-foreground">
                     {playerData?.name || "Player Portal"}
                   </h1>
+                </div>
+                
+                {/* Coach Availability - Mobile Only (below name) */}
+                <div className="md:hidden">
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => setCoachAvailabilityOpen(true)}
-                    className="flex items-center gap-2"
+                    className="flex items-center gap-2 w-full"
                   >
                     <Calendar className="h-4 w-4" />
                     Coach Availability
                   </Button>
                 </div>
+
                 <div className="hidden md:flex items-center gap-4 text-muted-foreground">
                   {playerData?.position && (
                     <span className="text-lg">{playerData.position}</span>
@@ -1054,6 +1059,20 @@ const Dashboard = () => {
                 {playerData?.id && (
                   <NotificationSettings playerId={playerData.id} />
                 )}
+                
+                {/* Coach Availability - Desktop/Tablet Only (below notification bell) */}
+                <div className="hidden md:block">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCoachAvailabilityOpen(true)}
+                    className="flex items-center gap-2"
+                  >
+                    <Calendar className="h-4 w-4" />
+                    Availability
+                  </Button>
+                </div>
+
                 <Button 
                   variant="ghost"
                   size="icon"
