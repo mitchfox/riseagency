@@ -384,7 +384,7 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
             {chartData.length > 0 ? (
               <div className="w-full mt-4" style={{ height: '152px' }}>
                   <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={chartData} margin={{ top: 25, bottom: 25, left: -30, right: 30 }}>
+                  <BarChart data={chartData} margin={{ top: 20, bottom: 20, left: 40, right: 40 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                     <XAxis 
                       dataKey="opponent"
