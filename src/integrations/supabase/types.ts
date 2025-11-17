@@ -1670,6 +1670,39 @@ export type Database = {
         }
         Relationships: []
       }
+      staff_availability: {
+        Row: {
+          created_at: string
+          day_of_week: number
+          end_time: string
+          id: string
+          notes: string | null
+          staff_id: string
+          start_time: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          day_of_week: number
+          end_time: string
+          id?: string
+          notes?: string | null
+          staff_id: string
+          start_time: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          day_of_week?: number
+          end_time?: string
+          id?: string
+          notes?: string | null
+          staff_id?: string
+          start_time?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       staff_notification_events: {
         Row: {
           created_at: string | null

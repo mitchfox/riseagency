@@ -20,6 +20,7 @@ import { addDays, format, parseISO, startOfWeek, endOfWeek, isWithinInterval } f
 import { SEO } from "@/components/SEO";
 import { createPerformanceReportSlug } from "@/lib/urlHelpers";
 import { PlaylistContent } from "@/components/PlaylistContent";
+import { CoachAvailability } from "@/components/CoachAvailability";
 import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
 import { OfflineContentManager } from "@/components/OfflineContentManager";
 
@@ -99,6 +100,7 @@ const Dashboard = () => {
   const [currentVideoUrl, setCurrentVideoUrl] = useState<string>("");
   const [currentVideoName, setCurrentVideoName] = useState<string>("");
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [coachAvailabilityOpen, setCoachAvailabilityOpen] = useState(false);
 
   // Initialize push notifications with player ID
   usePushNotifications(playerData?.id);
@@ -1015,10 +1017,21 @@ const Dashboard = () => {
                   />
                 </div>
               )}
-              <div className="flex-1">
-                <h1 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-foreground mb-2">
-                  {playerData?.name || "Player Portal"}
-                </h1>
+              <div className="flex-1 space-y-3">
+                <div className="flex items-center justify-between">
+                  <h1 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-foreground">
+                    {playerData?.name || "Player Portal"}
+                  </h1>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCoachAvailabilityOpen(true)}
+                    className="flex items-center gap-2"
+                  >
+                    <Calendar className="h-4 w-4" />
+                    Coach Availability
+                  </Button>
+                </div>
                 <div className="hidden md:flex items-center gap-4 text-muted-foreground">
                   {playerData?.position && (
                     <span className="text-lg">{playerData.position}</span>
@@ -2671,6 +2684,11 @@ const Dashboard = () => {
         open={showProfileModal}
         onOpenChange={setShowProfileModal}
         playerData={playerData}
+      />
+
+      <CoachAvailability
+        open={coachAvailabilityOpen}
+        onOpenChange={setCoachAvailabilityOpen}
       />
 
       {/* Logout Section */}
