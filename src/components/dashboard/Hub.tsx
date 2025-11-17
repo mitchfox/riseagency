@@ -378,12 +378,13 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
               </Button>
             </div>
           </CardHeader>
-          <CardContent className="container mx-auto px-4 pb-0 overflow-visible">
-            <div className="pt-[5px] -mb-[60px] overflow-visible">
+          <CardContent className="container mx-auto px-4 pb-0">
+            <div className="pt-2 pb-4">
             {/* Chart */}
             {chartData.length > 0 ? (
-              <div className="w-full px-2 -ml-6 mt-[25px] overflow-visible">
-                <ResponsiveContainer width="100%" height={305}>
+              <div className="w-full mt-4">
+                <div style={{ width: '100%', height: '305px' }}>
+                  <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={chartData} margin={{ top: 25, bottom: 25, left: 10, right: 10 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                     <XAxis 
@@ -496,6 +497,7 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
+                </div>
               </div>
             ) : (
               <p className="text-sm text-muted-foreground">No performance data yet</p>
