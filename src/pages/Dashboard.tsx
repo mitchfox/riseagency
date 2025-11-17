@@ -2144,9 +2144,12 @@ const Dashboard = () => {
 
             <TabsContent value="invoices" className="space-y-6">
               <Tabs defaultValue="invoices" className="w-full">
-                <TabsList className="grid w-full grid-cols-1 sm:grid-cols-2 gap-2 mb-4 bg-muted h-auto p-2">
+                <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3 gap-2 mb-4 bg-muted h-auto p-2">
                   <TabsTrigger value="invoices" className="font-bebas uppercase text-sm sm:text-base">
                     Invoices
+                  </TabsTrigger>
+                  <TabsTrigger value="contracts" className="font-bebas uppercase text-sm sm:text-base">
+                    Contracts
                   </TabsTrigger>
                   <TabsTrigger value="other" className="font-bebas uppercase text-sm sm:text-base">
                     Other
@@ -2234,6 +2237,21 @@ const Dashboard = () => {
                           })}
                         </div>
                       )}
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+
+                <TabsContent value="contracts">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-3xl font-bebas uppercase tracking-wider">
+                        Contracts
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="py-8 text-center text-muted-foreground">
+                        No contracts available yet.
+                      </div>
                     </CardContent>
                   </Card>
                 </TabsContent>
