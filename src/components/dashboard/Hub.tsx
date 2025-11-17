@@ -242,10 +242,10 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
         {/* Schedule Card - Full Width */}
         <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0">
           <CardHeader marble>
-            <CardTitle className="flex items-center gap-2 container mx-auto px-4">
+            <div className="flex items-center gap-2 container mx-auto px-4">
               <Calendar className="h-5 w-5" />
-              This Week's Schedule
-            </CardTitle>
+              <CardTitle>This Week's Schedule</CardTitle>
+            </div>
           </CardHeader>
           <CardContent className="container mx-auto px-4">
             {currentSchedule ? (
@@ -339,10 +339,10 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
         <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0">
           <CardHeader marble>
             <div className="flex items-center justify-between container mx-auto px-4">
-              <CardTitle className="flex items-center gap-2">
+              <div className="flex items-center gap-2">
                 <TrendingUp className="h-5 w-5" />
-                Recent Form
-              </CardTitle>
+                <CardTitle>Recent Form</CardTitle>
+              </div>
               <Button 
                 variant="ghost" 
                 size="sm"
