@@ -380,15 +380,15 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
           </CardHeader>
           <CardContent className="p-0">
             {chartData.length > 0 ? (
-              <div className="w-full container mx-auto" style={{ height: '300px' }}>
+              <div className="w-full container mx-auto" style={{ height: '280px' }}>
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={chartData} margin={{ top: 30, bottom: 10, left: 0, right: 0 }}>
+                  <BarChart data={chartData} margin={{ top: 40, bottom: 0, left: -20, right: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                     <XAxis 
                       dataKey="opponent"
                       stroke="hsl(var(--muted-foreground))"
                       fontSize={10}
-                      height={80}
+                      height={60}
                       interval={0}
                       tick={(props) => {
                         const { x, y, payload } = props;
@@ -415,7 +415,7 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
                       fontSize={12}
                       domain={[0, maxScore]}
                       ticks={Array.from({ length: maxScore + 1 }, (_, i) => i)}
-                      width={40}
+                      width={30}
                     />
                     <Tooltip 
                       labelFormatter={() => ""}
