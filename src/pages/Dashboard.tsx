@@ -1207,6 +1207,16 @@ const Dashboard = () => {
               analyses={analyses} 
               playerData={playerData}
               onNavigateToAnalysis={() => setActiveTab("analysis")}
+              onNavigateToSession={(sessionKey) => {
+                setActiveTab("physical");
+                setSelectedSession(sessionKey);
+                setAccordionValue((prev) => {
+                  if (!prev.includes("sessions")) {
+                    return [...prev, "sessions"];
+                  }
+                  return prev;
+                });
+              }}
             />
           )}
 

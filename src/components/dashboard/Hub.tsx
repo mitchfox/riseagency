@@ -25,9 +25,10 @@ interface HubProps {
   analyses: PlayerAnalysis[];
   playerData: any;
   onNavigateToAnalysis: () => void;
+  onNavigateToSession?: (sessionKey: string) => void;
 }
 
-export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis }: HubProps) => {
+export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNavigateToSession }: HubProps) => {
   // Get current program schedule
   const currentProgram = programs.find(p => p.is_current);
   const currentSchedule = currentProgram?.weekly_schedules?.[0] || null;
@@ -174,13 +175,19 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis }: Hu
                   const dayImageKey = `${day}Image`;
                   const clubLogoUrl = currentSchedule[dayImageKey];
                   
+                  // Check if it's a clickable session (A-H)
+                  const isClickableSession = sessionValue && /^[A-H]$/i.test(sessionValue);
+                  
                   return (
-                    <div
+                    <button
                       key={day}
-                      className="relative p-2 md:p-4 rounded-lg transition-all flex flex-col items-center justify-center min-h-[60px] md:min-h-[80px]"
+                      onClick={() => isClickableSession && onNavigateToSession?.(sessionValue.toUpperCase())}
+                      disabled={!isClickableSession}
+                      className="relative p-2 md:p-4 rounded-lg transition-all flex flex-col items-center justify-center min-h-[60px] md:min-h-[80px] disabled:cursor-default"
                       style={{
                         backgroundColor: colors.bg,
                         color: colors.text,
+                        cursor: isClickableSession ? 'pointer' : 'default',
                       }}
                     >
                       <div className="text-[8px] md:text-xs font-medium mb-1 opacity-70 uppercase">
@@ -201,7 +208,7 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis }: Hu
                       <div className="text-[10px] md:text-sm font-bold text-center">
                         {sessionValue || '-'}
                       </div>
-                    </div>
+                    </button>
                   );
                 })}
               </div>
