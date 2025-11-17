@@ -314,8 +314,9 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
 
         {/* Video/Image Carousel - Full Width */}
         {videoThumbnails.length > 0 && (
-          <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 border-y border-y-gold z-25 mb-2">
-            <CardContent className="p-0 overflow-hidden">
+          <div className="mb-2">
+            <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 border-t border-t-gold border-b border-b-gold z-25">
+              <CardContent className="p-0 overflow-hidden">
               <Carousel
                 opts={{
                   align: "start",
@@ -351,6 +352,7 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
               </Carousel>
             </CardContent>
           </Card>
+          </div>
         )}
 
         {/* R90 Performance Chart & Recent Analysis Combined - Full Width */}
