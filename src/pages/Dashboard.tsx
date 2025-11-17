@@ -1240,35 +1240,36 @@ const Dashboard = () => {
             </DropdownMenu>
         </div>
 
-        {/* Content Section with Padding */}
-        <div className="container mx-auto max-w-6xl px-4 md:px-6">
-            {/* Hub Section */}
-            {activeTab === "hub" && (
-            <Hub 
-              programs={programs} 
-              analyses={analyses} 
-              playerData={playerData}
-              onNavigateToAnalysis={() => setActiveTab("analysis")}
-              onNavigateToSession={(sessionKey) => {
-                setActiveTab("physical");
-                setSelectedSession(sessionKey);
-                setAccordionValue((prev) => {
-                  if (!prev.includes("sessions")) {
-                    return [...prev, "sessions"];
-                  }
-                  return prev;
-                });
-                // Scroll to the session after state updates
-                setTimeout(() => {
-                  const element = document.getElementById(`session-${sessionKey}`);
-                  if (element) {
-                    element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                  }
-                }, 300);
-              }}
-            />
-          )}
+        {/* Hub Section - Full Width, No Container */}
+        {activeTab === "hub" && (
+          <Hub 
+            programs={programs} 
+            analyses={analyses} 
+            playerData={playerData}
+            onNavigateToAnalysis={() => setActiveTab("analysis")}
+            onNavigateToSession={(sessionKey) => {
+              setActiveTab("physical");
+              setSelectedSession(sessionKey);
+              setAccordionValue((prev) => {
+                if (!prev.includes("sessions")) {
+                  return [...prev, "sessions"];
+                }
+                return prev;
+              });
+              // Scroll to the session after state updates
+              setTimeout(() => {
+                const element = document.getElementById(`session-${sessionKey}`);
+                if (element) {
+                  element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+              }, 300);
+            }}
+          />
+        )}
 
+        {/* Content Section with Padding - For Other Tabs */}
+        {activeTab !== "hub" && (
+        <div className="container mx-auto max-w-6xl px-4 md:px-6">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             {/* Upload Progress Indicator */}
             {uploadProgress !== null && (
@@ -2791,6 +2792,7 @@ const Dashboard = () => {
             </div>
           )}
         </div>
+        )}
       </main>
 
       {/* Exercise Details Dialog */}
