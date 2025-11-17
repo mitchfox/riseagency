@@ -85,7 +85,7 @@ export const Header = () => {
       )}
 
       {/* Main Header */}
-      <header className={`fixed ${showTopBar ? 'top-9 md:top-10' : 'top-0'} left-0 right-0 z-50 bg-background/80 backdrop-blur-md`}>
+      <header className={`fixed ${showTopBar ? 'top-9 md:top-10' : 'top-0'} left-0 right-0 z-[100] bg-background/80 backdrop-blur-md border-b-2 border-gold`}>
         <div className="container mx-auto px-2 md:px-4">
         <div className="flex items-center justify-between h-14 md:h-16">
           {/* Drawer Menu - Left */}
@@ -99,7 +99,7 @@ export const Header = () => {
               </button>
             </DrawerTrigger>
             <DrawerContent 
-              className="h-full w-[240px] left-0 flex flex-col rounded-r-none bg-cover bg-center animate-slide-in-left transition-all duration-300 ease-out overflow-y-auto"
+              className="h-full w-[240px] left-0 flex flex-col rounded-r-none bg-cover bg-center animate-slide-in-left transition-all duration-300 ease-out overflow-y-auto z-[110]"
               style={{ 
                 backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url(${blackMarbleBg})` 
               }}
