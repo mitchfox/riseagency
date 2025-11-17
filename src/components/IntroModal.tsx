@@ -172,11 +172,7 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
             {/* Our Stars Slider - Bottom Left */}
             {starPlayers.length > 0 && (
               <div 
-                onClick={() => {
-                  handleDialogChange(false);
-                  navigate("/stars");
-                }}
-                className="absolute left-3 bottom-3 w-[180px] cursor-pointer hover:scale-[1.02] transition-transform sm:left-6 sm:bottom-6 sm:w-[220px]"
+                className="absolute left-3 bottom-3 w-[180px] sm:left-6 sm:bottom-6 sm:w-[220px]"
               >
                 <div className="relative w-full aspect-[3/4] rounded-lg overflow-hidden group border border-[#B8A574] sm:border-2">
                   {/* Player Images with Dark Overlay - All rendered with opacity transitions */}
