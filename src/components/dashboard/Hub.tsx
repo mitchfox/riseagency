@@ -206,7 +206,7 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
     <>
       {/* Video Highlights Slider - Full Width */}
       {videoThumbnails.length > 0 && (
-        <div className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] mt-[75px] z-10">
+        <div className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] z-10">
           <Card className="bg-card/90 backdrop-blur-sm border-gold/30 overflow-hidden rounded-none border-x-0">
             <div className="w-full">
               <Carousel
@@ -250,7 +250,7 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
         </div>
       )}
 
-      <div className={`-space-y-1 ${videoThumbnails.length === 0 ? 'mt-[75px]' : ''}`}>
+      <div className="-space-y-1">
         {/* Schedule Card - Full Width */}
         <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 border-t-2 border-t-gold z-20">
           <CardHeader marble>
