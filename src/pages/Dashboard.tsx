@@ -1152,15 +1152,18 @@ const Dashboard = () => {
 
             <TabsContent value="analysis" className="space-y-6">
               <Tabs defaultValue="performance" className="w-full">
-                <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3 gap-2 mb-4 bg-muted h-auto p-2">
+                <TabsList className="grid w-full grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 mb-4 bg-muted h-auto p-2">
                   <TabsTrigger value="performance" className="font-bebas uppercase text-sm sm:text-base">
                     Performance Analysis
                   </TabsTrigger>
-                  <TabsTrigger value="concepts" className="font-bebas uppercase text-sm sm:text-base">
-                    Concepts
-                  </TabsTrigger>
                   <TabsTrigger value="other" className="font-bebas uppercase text-sm sm:text-base">
                     Other Analysis
+                  </TabsTrigger>
+                  <TabsTrigger value="scouting" className="font-bebas uppercase text-sm sm:text-base">
+                    Scouting Reports
+                  </TabsTrigger>
+                  <TabsTrigger value="concepts" className="font-bebas uppercase text-sm sm:text-base">
+                    Concepts
                   </TabsTrigger>
                 </TabsList>
 
