@@ -109,6 +109,7 @@ const Dashboard = () => {
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [coachAvailabilityOpen, setCoachAvailabilityOpen] = useState(false);
   const [isSubheaderVisible, setIsSubheaderVisible] = useState(true);
+  const [selectedFormMetric, setSelectedFormMetric] = useState<string>("r90");
 
 
   // Initialize push notifications with player ID
@@ -1521,15 +1522,63 @@ const Dashboard = () => {
                       </div>
                     </CardHeader>
                     <CardContent className="container mx-auto px-4 pt-6">
+                      {/* Metric Selector */}
+                      <div className="mb-6">
+                        <Select value={selectedFormMetric} onValueChange={setSelectedFormMetric}>
+                          <SelectTrigger className="w-[200px] bg-background/80 border-border">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="bg-background border-border z-50">
+                            <SelectItem value="r90">R90 Score</SelectItem>
+                            <SelectItem value="xg">Expected Goals (xG)</SelectItem>
+                            <SelectItem value="xa">Expected Assists (xA)</SelectItem>
+                            <SelectItem value="xgchain">xG Chain</SelectItem>
+                            <SelectItem value="xgbuildup">xG Buildup</SelectItem>
+                            <SelectItem value="shots">Shots</SelectItem>
+                            <SelectItem value="shotsontarget">Shots on Target</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
                       {(() => {
+                        // Get metric value based on selected metric
+                        const getMetricValue = (analysis: any) => {
+                          if (selectedFormMetric === "r90") return analysis.r90_score;
+                          if (!analysis.striker_stats) return null;
+                          
+                          const statKey = selectedFormMetric === "xg" ? "xG_adj_per90" :
+                                          selectedFormMetric === "xa" ? "xA_adj_per90" :
+                                          selectedFormMetric === "xgchain" ? "xGChain_per90" :
+                                          selectedFormMetric === "xgbuildup" ? "xGBuildup_per90" :
+                                          selectedFormMetric === "shots" ? "Shots_per90" :
+                                          selectedFormMetric === "shotsontarget" ? "ShotsOnTarget_per90" : null;
+                          
+                          return statKey ? analysis.striker_stats[statKey] : null;
+                        };
+                        
+                        // Get metric label
+                        const getMetricLabel = () => {
+                          switch(selectedFormMetric) {
+                            case "r90": return "R90";
+                            case "xg": return "xG";
+                            case "xa": return "xA";
+                            case "xgchain": return "xGChain";
+                            case "xgbuildup": return "xGBuildup";
+                            case "shots": return "Shots";
+                            case "shotsontarget": return "Shots on Target";
+                            default: return "R90";
+                          }
+                        };
+                        
                         // Process chart data
                         const chartData = analyses
-                          .filter(a => a.r90_score != null)
+                          .map(a => ({ ...a, metricValue: getMetricValue(a) }))
+                          .filter(a => a.metricValue != null)
                           .sort((a, b) => new Date(a.analysis_date).getTime() - new Date(b.analysis_date).getTime())
                           .slice(-8)
                           .map(a => ({
                             opponent: a.opponent || "Unknown",
-                            score: a.r90_score,
+                            score: a.metricValue!,
                             result: a.result || "",
                             displayLabel: `${a.opponent || "Unknown"}${a.result ? ` (${a.result})` : ""}`,
                             analysisId: a.id,
@@ -1537,9 +1586,9 @@ const Dashboard = () => {
                             strikerStats: (a as any).striker_stats
                           }));
 
-                        // Calculate max Y-axis value
+                        // Calculate max Y-axis value - dynamic based on metric
                         const maxScore = chartData.length > 0 
-                          ? Math.ceil(Math.max(...chartData.map(d => d.score)))
+                          ? Math.ceil(Math.max(...chartData.map(d => d.score)) * 1.1) // 10% padding
                           : 4;
 
                         // Function to get R90 color based on score
@@ -1617,16 +1666,20 @@ const Dashboard = () => {
                                   itemStyle={{
                                     color: "#ffffff"
                                   }}
-                                  formatter={(value: any, name: any, props: any) => {
+                                   formatter={(value: any, name: any, props: any) => {
                                     const data = props.payload;
                                     const stats = data.strikerStats;
+                                    const metricLabel = getMetricLabel();
                                     return [
                                       <div key="tooltip" className="space-y-2 min-w-[200px]">
                                         <div className="font-bold text-white text-base mb-1">{data.result} {data.opponent}</div>
+                                        <div className="text-sm text-white font-bold" style={{ color: getR90Color(data.score) }}>
+                                          {metricLabel}: {data.score.toFixed(2)}
+                                        </div>
                                         {data.minutesPlayed && (
                                           <div className="text-xs text-white/60">Minutes Played: {data.minutesPlayed}</div>
                                         )}
-                                        {stats && (
+                                        {stats && selectedFormMetric === "r90" && (
                                           <div className="space-y-1 pt-2 border-t border-white/20">
                                             <div className="text-xs font-semibold text-white/80">Advanced Stats (per 90):</div>
                                             {stats.xG_adj_per90 !== undefined && (
