@@ -54,8 +54,8 @@ export const PlayerScoutingReports = ({ playerId, playerName }: PlayerScoutingRe
 
   if (loading) {
     return (
-      <Card>
-        <CardContent className="py-8">
+      <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 border-t-[2px] border-t-[hsl(43,49%,61%)] border-b-0">
+        <CardContent className="container mx-auto px-4 py-8">
           <p className="text-center text-muted-foreground">Loading scouting reports...</p>
         </CardContent>
       </Card>
@@ -63,13 +63,15 @@ export const PlayerScoutingReports = ({ playerId, playerName }: PlayerScoutingRe
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-3xl font-bebas uppercase tracking-wider">
-          Scouting Reports
-        </CardTitle>
+    <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 border-t-[2px] border-t-[hsl(43,49%,61%)] border-b-0">
+      <CardHeader marble>
+        <div className="container mx-auto px-4">
+          <CardTitle className="font-heading tracking-tight">
+            Scouting Reports
+          </CardTitle>
+        </div>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="container mx-auto px-4 space-y-4">
         {reports.length === 0 ? (
           <div className="py-8">
             <p className="text-center text-muted-foreground">
