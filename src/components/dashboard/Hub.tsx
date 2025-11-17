@@ -81,6 +81,18 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
               {stats.xGChain_per90 !== undefined && (
                 <div className="text-xs text-white/70">xGChain: {stats.xGChain_per90.toFixed(2)}</div>
               )}
+              {stats.regains_adj_per90 !== undefined && (
+                <div className="text-xs text-white/70">Regains (adj): {stats.regains_adj_per90.toFixed(2)}</div>
+              )}
+              {stats.interceptions_per90 !== undefined && (
+                <div className="text-xs text-white/70">Interceptions: {stats.interceptions_per90.toFixed(2)}</div>
+              )}
+              {stats.progressive_passes_adj_per90 !== undefined && (
+                <div className="text-xs text-white/70">Progressive Passes (adj): {stats.progressive_passes_adj_per90.toFixed(2)}</div>
+              )}
+              {stats.turnovers_adj_per90 !== undefined && (
+                <div className="text-xs text-white/70">Turnovers (adj): {stats.turnovers_adj_per90.toFixed(2)}</div>
+              )}
               {stats.movement_in_behind_xC_per90 !== undefined && (
                 <div className="text-xs text-white/70">Movement In Behind xC: {stats.movement_in_behind_xC_per90.toFixed(2)}</div>
               )}
