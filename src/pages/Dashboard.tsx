@@ -1270,7 +1270,6 @@ const Dashboard = () => {
             programs={programs} 
             analyses={analyses} 
             playerData={playerData}
-            updates={updates}
             onNavigateToAnalysis={() => {
               setActiveTab("analysis");
               setActiveAnalysisTab("performance");
