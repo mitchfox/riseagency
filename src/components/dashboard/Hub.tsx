@@ -380,9 +380,9 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
             <div className="pt-[5px] space-y-6">
             {/* Chart */}
             {chartData.length > 0 ? (
-              <div className="w-full px-2">
+              <div className="w-full px-2 -ml-6">
                 <ResponsiveContainer width="100%" height={550}>
-                  <BarChart data={chartData} margin={{ bottom: 40, left: 10, right: 10 }}>
+                  <BarChart data={chartData} margin={{ bottom: 25, left: 10, right: 10 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                     <XAxis 
                       dataKey="opponent"
@@ -448,10 +448,7 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
                         const stats = data.strikerStats;
                         return [
                           <div key="tooltip" className="space-y-2 min-w-[200px]">
-                            <div className="font-bold text-white text-base border-b border-white/20 pb-2">
-                              {data.opponent} - {data.result}
-                            </div>
-                            <div className="font-bold text-[hsl(43,49%,61%)] text-lg">R90: {value}</div>
+                            <div className="font-bold text-[hsl(43,49%,61%)] text-xl">{value}</div>
                             {data.minutesPlayed && (
                               <div className="text-xs text-white/60">Minutes Played: {data.minutesPlayed}</div>
                             )}
