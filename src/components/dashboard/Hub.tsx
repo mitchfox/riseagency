@@ -187,7 +187,7 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
   }, [playerData, marketingImages]);
 
   const autoplayPlugin = React.useRef(
-    Autoplay({ delay: 4000, stopOnInteraction: true })
+    Autoplay({ delay: 10000, stopOnInteraction: false })
   );
 
   return (
@@ -239,16 +239,15 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
       )}
 
       <div className="space-y-6 mb-8">
-        <div className="grid gap-6 md:grid-cols-2">
-        {/* Schedule Card */}
-        <Card>
+        {/* Schedule Card - Full Width */}
+        <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0">
           <CardHeader marble>
-            <CardTitle className="flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2 container mx-auto px-4">
               <Calendar className="h-5 w-5" />
               This Week's Schedule
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="container mx-auto px-4">
             {currentSchedule ? (
               <div className="grid grid-cols-8 gap-1 md:gap-2">
                 {/* Week Cell */}
@@ -336,10 +335,10 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
           </CardContent>
         </Card>
 
-        {/* R90 Performance Chart & Recent Analysis Combined */}
-        <Card>
+        {/* R90 Performance Chart & Recent Analysis Combined - Full Width */}
+        <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0">
           <CardHeader marble>
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between container mx-auto px-4">
               <CardTitle className="flex items-center gap-2">
                 <TrendingUp className="h-5 w-5" />
                 Recent Form
@@ -355,7 +354,7 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
               </Button>
             </div>
           </CardHeader>
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-6 container mx-auto px-4">
             {/* Chart */}
             {chartData.length > 0 ? (
               <ResponsiveContainer width="100%" height={200}>
@@ -430,7 +429,6 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
             )}
           </CardContent>
         </Card>
-      </div>
       </div>
     </>
   );
