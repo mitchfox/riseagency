@@ -1128,14 +1128,14 @@ const Dashboard = () => {
         </div>
       )}
 
-      <main className="pb-12">
+      <main className="pt-6 pb-12">
         {/* Notification Permission - with padding */}
         <div className="container mx-auto max-w-6xl px-4 md:px-6 mb-0">
           <NotificationPermission />
         </div>
 
         {/* Navigation Menu - Full width, no spacing */}
-        <div className="w-full -mt-2">
+        <div className="w-full mt-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button 
