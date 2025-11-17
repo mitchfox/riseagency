@@ -224,7 +224,7 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
               </Button>
             </div>
           </CardHeader>
-          <CardContent className="container mx-auto px-4 pt-3 pb-4">
+          <CardContent className="container mx-auto px-4 pt-3 pb-3">
             {currentSchedule ? (
               <div className="grid grid-cols-8 gap-1 md:gap-2">
                 {/* Week Cell */}
