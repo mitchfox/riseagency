@@ -26,6 +26,7 @@ import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
 import { OfflineContentManager } from "@/components/OfflineContentManager";
 import { CacheManager } from "@/lib/cacheManager";
 import { Hub } from "@/components/dashboard/Hub";
+import { R90PerformanceChart } from "@/components/dashboard/R90PerformanceChart";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Cell, LabelList } from "recharts";
 import { Link } from "react-router-dom";
 import { getR90Grade, getXGGrade, getXAGrade, getRegainsGrade, getInterceptionsGrade } from "@/lib/gradeCalculations";
@@ -1639,6 +1640,23 @@ const Dashboard = () => {
                         };
 
                         return chartData.length > 0 ? (
+                          selectedFormMetric === "r90" ? (
+                            <div className="w-full px-2">
+                              <R90PerformanceChart 
+                                data={chartData}
+                                onBarClick={(data: any) => {
+                                  if (data && data.analysisId) {
+                                    const url = createPerformanceReportSlug(
+                                      playerData?.name || 'player',
+                                      data.opponent || 'opponent',
+                                      data.analysisId
+                                    );
+                                    navigate(url);
+                                  }
+                                }}
+                              />
+                            </div>
+                          ) : (
                           <div className="w-full px-2 -ml-6">
                             <ResponsiveContainer width="100%" height={550}>
                               <BarChart data={chartData} margin={{ bottom: 25, left: 10, right: 10 }}>
@@ -1773,6 +1791,7 @@ const Dashboard = () => {
                               </BarChart>
                             </ResponsiveContainer>
                           </div>
+                          )
                         ) : (
                           <div className="py-8 text-center text-muted-foreground">
                             No performance data available yet.
