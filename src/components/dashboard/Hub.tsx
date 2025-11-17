@@ -310,7 +310,7 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
     <>
       <div className="space-y-0 mb-[28px]">
         {/* Schedule Card - Full Width */}
-        <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 border-t-[2px] border-t-[hsl(43,49%,61%)] border-b-0 z-30">
+        <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 border-t-0 border-b-0 z-30">
           <CardHeader marble className="py-2">
             <div className="flex items-center justify-between container mx-auto px-4 pr-6">
               <div className="flex items-center gap-2">
