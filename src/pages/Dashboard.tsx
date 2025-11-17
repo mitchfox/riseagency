@@ -1092,6 +1092,9 @@ const Dashboard = () => {
       <div className="bg-background/60 backdrop-blur-sm border-b border-border/50">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-center gap-2 h-12">
+            {playerData?.id && (
+              <NotificationSettings playerId={playerData.id} />
+            )}
             <Button
               variant="outline"
               size="sm"
@@ -2811,9 +2814,6 @@ const Dashboard = () => {
       <div className="container mx-auto px-4 pb-8">
         <div className="border-t border-border my-6" />
         <div className="flex justify-center items-center gap-4">
-          {playerData?.id && (
-            <NotificationSettings playerId={playerData.id} />
-          )}
           <Button 
             variant="outline" 
             onClick={handleLogout}
