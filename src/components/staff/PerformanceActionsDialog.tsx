@@ -10,6 +10,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Trash2, Plus, LineChart, Search, Loader2, Sparkles, ChevronDown, ChevronUp } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { R90RatingsViewer } from "./R90RatingsViewer";
+import { Card, CardContent } from "@/components/ui/card";
+import { getR90Grade, getXGGrade, getXAGrade, getRegainsGrade, getInterceptionsGrade } from "@/lib/gradeCalculations";
 
 interface PerformanceAction {
   id?: string;
@@ -410,32 +412,109 @@ export const PerformanceActionsDialog = ({
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* R90 Score Display */}
-          {r90Score !== null && (
-            <div className="bg-accent/20 p-4 rounded-lg">
-              <div className="text-center">
-                <p className="text-sm text-muted-foreground mb-1">R90 Score</p>
-                <p className="text-3xl font-bold">{r90Score.toFixed(2)}</p>
-              </div>
-            </div>
-          )}
-
-          {/* Additional Striker Stats */}
-          {strikerStats && (
-            <div className="border rounded-lg p-4 bg-card">
-              <h3 className="font-semibold mb-3">Additional Match Statistics</h3>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {Object.entries(strikerStats).map(([key, value]) => (
-                  <div key={key} className="text-center p-3 bg-accent/10 rounded">
-                    <p className="text-xs text-muted-foreground uppercase mb-1">
-                      {key.replace(/_/g, ' ')}
+          {/* R90 Score and Striker Stats */}
+          <div className="grid grid-cols-2 gap-4">
+            <Card className="bg-accent/50">
+              <CardContent className="pt-6">
+                <div className="text-center">
+                  <p className="text-sm text-muted-foreground mb-2">R90 Score</p>
+                  <div className="flex items-center justify-center gap-3">
+                    <p 
+                      className="text-4xl font-bold"
+                      style={{ color: getActionScoreColor(r90Score || 0) }}
+                    >
+                      {r90Score?.toFixed(2) || '0.00'}
                     </p>
-                    <p className="text-xl font-bold">{String(value)}</p>
+                    <span 
+                      className="text-2xl font-bold px-3 py-1 rounded-md"
+                      style={{ 
+                        color: getR90Grade(r90Score).color,
+                        backgroundColor: `${getR90Grade(r90Score).color}15`
+                      }}
+                    >
+                      {getR90Grade(r90Score).grade}
+                    </span>
                   </div>
-                ))}
-              </div>
-            </div>
-          )}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-accent/50">
+              <CardContent className="pt-6">
+                <div className="text-sm space-y-2">
+                  <p className="font-semibold text-foreground mb-3">Advanced Stats</p>
+                  {strikerStats?.xG !== undefined && (
+                    <div className="flex justify-between items-center">
+                      <span className="text-muted-foreground">xG:</span>
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">{strikerStats.xG.toFixed(2)}</span>
+                        <span 
+                          className="text-xs font-bold px-2 py-0.5 rounded"
+                          style={{ 
+                            color: getXGGrade(strikerStats.xG).color,
+                            backgroundColor: `${getXGGrade(strikerStats.xG).color}15`
+                          }}
+                        >
+                          {getXGGrade(strikerStats.xG).grade}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                  {strikerStats?.xA !== undefined && (
+                    <div className="flex justify-between items-center">
+                      <span className="text-muted-foreground">xA:</span>
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">{strikerStats.xA.toFixed(2)}</span>
+                        <span 
+                          className="text-xs font-bold px-2 py-0.5 rounded"
+                          style={{ 
+                            color: getXAGrade(strikerStats.xA).color,
+                            backgroundColor: `${getXAGrade(strikerStats.xA).color}15`
+                          }}
+                        >
+                          {getXAGrade(strikerStats.xA).grade}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                  {strikerStats?.regains !== undefined && (
+                    <div className="flex justify-between items-center">
+                      <span className="text-muted-foreground">Regains:</span>
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">{strikerStats.regains}</span>
+                        <span 
+                          className="text-xs font-bold px-2 py-0.5 rounded"
+                          style={{ 
+                            color: getRegainsGrade(strikerStats.regains).color,
+                            backgroundColor: `${getRegainsGrade(strikerStats.regains).color}15`
+                          }}
+                        >
+                          {getRegainsGrade(strikerStats.regains).grade}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                  {strikerStats?.interceptions !== undefined && (
+                    <div className="flex justify-between items-center">
+                      <span className="text-muted-foreground">Interceptions:</span>
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">{strikerStats.interceptions}</span>
+                        <span 
+                          className="text-xs font-bold px-2 py-0.5 rounded"
+                          style={{ 
+                            color: getInterceptionsGrade(strikerStats.interceptions).color,
+                            backgroundColor: `${getInterceptionsGrade(strikerStats.interceptions).color}15`
+                          }}
+                        >
+                          {getInterceptionsGrade(strikerStats.interceptions).grade}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
 
           {/* Current R Score from Actions */}
           <div className="bg-accent/20 p-4 rounded-lg">
