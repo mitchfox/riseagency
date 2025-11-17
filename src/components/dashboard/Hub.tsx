@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar, TrendingUp, FileText } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Calendar, TrendingUp, ArrowRight } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { format } from "date-fns";
 import { Link } from "react-router-dom";
@@ -23,9 +24,10 @@ interface HubProps {
   programs: PlayerProgram[];
   analyses: PlayerAnalysis[];
   playerData: any;
+  onNavigateToAnalysis: () => void;
 }
 
-export const Hub = ({ programs, analyses, playerData }: HubProps) => {
+export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis }: HubProps) => {
   // Get current program schedule
   const currentProgram = programs.find(p => p.is_current);
   const currentSchedule = currentProgram?.weekly_schedules?.[0] || null;
@@ -41,10 +43,10 @@ export const Hub = ({ programs, analyses, playerData }: HubProps) => {
       opponent: a.opponent
     }));
 
-  // Get latest fixtures/analyses
-  const recentFixtures = analyses
+  // Get latest 3 analyses
+  const recentAnalyses = analyses
     .sort((a, b) => new Date(b.analysis_date).getTime() - new Date(a.analysis_date).getTime())
-    .slice(0, 5);
+    .slice(0, 3);
 
   return (
     <div className="space-y-6 mb-8">
@@ -91,7 +93,7 @@ export const Hub = ({ programs, analyses, playerData }: HubProps) => {
         <p className="text-muted-foreground">Your performance overview</p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-6 md:grid-cols-2">
         {/* Schedule Card */}
         <Card>
           <CardHeader>
@@ -118,41 +120,8 @@ export const Hub = ({ programs, analyses, playerData }: HubProps) => {
           </CardContent>
         </Card>
 
-        {/* Recent Fixtures Card */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5" />
-              Recent Fixtures
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {recentFixtures.length > 0 ? (
-              <div className="space-y-3">
-                {recentFixtures.map((fixture) => (
-                  <Link
-                    key={fixture.id}
-                    to={`/performance-report/match-${fixture.id}`}
-                    className="block border-l-2 border-accent pl-3 py-1 hover:bg-accent/5 transition-colors"
-                  >
-                    <div className="font-medium text-sm">{fixture.opponent}</div>
-                    <div className="text-xs text-muted-foreground flex items-center gap-2">
-                      <span>{format(new Date(fixture.analysis_date), "MMM dd, yyyy")}</span>
-                      {fixture.r90_score && (
-                        <span className="text-primary font-medium">R90: {fixture.r90_score}</span>
-                      )}
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">No recent fixtures</p>
-            )}
-          </CardContent>
-        </Card>
-
         {/* R90 Performance Chart */}
-        <Card className="md:col-span-2 lg:col-span-1">
+        <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="h-5 w-5" />
@@ -172,7 +141,7 @@ export const Hub = ({ programs, analyses, playerData }: HubProps) => {
                   <YAxis 
                     stroke="hsl(var(--muted-foreground))"
                     fontSize={12}
-                    domain={[0, 100]}
+                    domain={[50, 100]}
                   />
                   <Tooltip 
                     contentStyle={{
@@ -200,6 +169,54 @@ export const Hub = ({ programs, analyses, playerData }: HubProps) => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Performance Analysis Section */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle>Recent Performance Analysis</CardTitle>
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={onNavigateToAnalysis}
+              className="flex items-center gap-1 text-primary hover:text-primary/80"
+            >
+              See All
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {recentAnalyses.length > 0 ? (
+            <div className="space-y-3">
+              {recentAnalyses.map((analysis) => (
+                <Link
+                  key={analysis.id}
+                  to={`/performance-report/match-${analysis.id}`}
+                  className="block border-l-2 border-primary pl-3 py-2 hover:bg-accent/5 transition-colors"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1">
+                      <div className="font-medium text-sm">{analysis.opponent}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {format(new Date(analysis.analysis_date), "MMM dd, yyyy")}
+                      </div>
+                    </div>
+                    {analysis.r90_score && (
+                      <div className="text-right">
+                        <div className="text-sm font-bold text-primary">R90</div>
+                        <div className="text-lg font-bold">{analysis.r90_score}</div>
+                      </div>
+                    )}
+                  </div>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">No recent analysis</p>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 };

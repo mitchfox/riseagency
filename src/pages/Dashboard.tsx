@@ -94,7 +94,7 @@ const Dashboard = () => {
   const [dailyAphorism, setDailyAphorism] = useState<any>(null);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [updates, setUpdates] = useState<Update[]>([]);
-  const [activeTab, setActiveTab] = useState("analysis");
+  const [activeTab, setActiveTab] = useState("hub");
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [highlightsData, setHighlightsData] = useState<any>({ matchHighlights: [], bestClips: [] });
@@ -1134,11 +1134,90 @@ const Dashboard = () => {
             <NotificationPermission />
           </div>
 
+          {/* Navigation Menu */}
+          <div className="mb-8">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-center font-bebas uppercase text-base px-6 py-6 bg-card hover:bg-card/80 border-2 border-gold !text-gold hover:!text-gold z-50"
+                >
+                  <span>
+                    {activeTab === "hub" && "Hub"}
+                    {activeTab === "analysis" && "Analysis"}
+                    {activeTab === "physical" && "Programming"}
+                    {activeTab === "invoices" && "Key Documents"}
+                    {activeTab === "updates" && "Updates"}
+                    {activeTab === "highlights" && "Highlights"}
+                  </span>
+                  <ChevronDown className="ml-2 h-5 w-5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-[280px] bg-card border-2 border-gold shadow-lg shadow-gold/20 z-50">
+                <DropdownMenuItem 
+                  onClick={() => setActiveTab("hub")}
+                  className="font-bebas uppercase text-base py-3 cursor-pointer text-gold hover:text-gold/80 hover:bg-gold/10"
+                >
+                  Hub
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => setActiveTab("analysis")}
+                  className="font-bebas uppercase text-base py-3 cursor-pointer text-gold hover:text-gold/80 hover:bg-gold/10"
+                >
+                  Analysis
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => setActiveTab("physical")}
+                  className="font-bebas uppercase text-base py-3 cursor-pointer text-gold hover:text-gold/80 hover:bg-gold/10"
+                >
+                  Programming
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => setActiveTab("invoices")}
+                  className="font-bebas uppercase text-base py-3 cursor-pointer text-gold hover:text-gold/80 hover:bg-gold/10"
+                >
+                  Key Documents
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => setActiveTab("updates")}
+                  className="font-bebas uppercase text-base py-3 cursor-pointer text-gold hover:text-gold/80 hover:bg-gold/10"
+                >
+                  Updates
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => setActiveTab("highlights")}
+                  className="font-bebas uppercase text-base py-3 cursor-pointer text-gold hover:text-gold/80 hover:bg-gold/10"
+                >
+                  Highlights
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => setShowProfileModal(true)}
+                  className="font-bebas uppercase text-base py-3 cursor-pointer text-gold hover:text-gold/80 hover:bg-gold/10"
+                >
+                  View Profile
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={handleLogout}
+                  className="font-bebas uppercase text-base py-3 cursor-pointer text-gold hover:text-gold/80 hover:bg-gold/10"
+                >
+                  Sign Out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+
           {/* Hub Section */}
-          <Hub programs={programs} analyses={analyses} playerData={playerData} />
+          {activeTab === "hub" && (
+            <Hub 
+              programs={programs} 
+              analyses={analyses} 
+              playerData={playerData}
+              onNavigateToAnalysis={() => setActiveTab("analysis")}
+            />
+          )}
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <div className="mb-8">
+            <div className="mb-8" style={{ display: activeTab === "hub" ? "none" : "block" }}>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button 
