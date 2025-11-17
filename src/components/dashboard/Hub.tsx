@@ -377,7 +377,7 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
             </div>
           </CardHeader>
           <CardContent className="container mx-auto px-4">
-            <div className="pt-[5px] space-y-6">
+            <div className="pt-[5px] space-y-6 -mb-[5px]">
             {/* Chart */}
             {chartData.length > 0 ? (
               <div className="w-full px-2 -ml-6">
