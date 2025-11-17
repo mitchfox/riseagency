@@ -1082,7 +1082,7 @@ const Dashboard = () => {
             <img 
               src="https://storage.googleapis.com/gpt-engineer-file-uploads/blxFQX1QtlSc3qNcPxWdCZ730Tf1/uploads/1761325700904-RISEWhite-100.jpg"
               alt="RISE"
-              className="h-14 w-auto"
+              className="h-20 w-auto"
             />
           </div>
         </div>
@@ -1128,14 +1128,14 @@ const Dashboard = () => {
         </div>
       )}
 
-      <main className="pt-32 pb-12">
+      <main className="pt-28 pb-12">
         {/* Notification Permission - with padding */}
-        <div className="container mx-auto max-w-6xl px-4 md:px-6">
+        <div className="container mx-auto max-w-6xl px-4 md:px-6 mb-0">
           <NotificationPermission />
         </div>
 
         {/* Navigation Menu - Full width, no spacing */}
-        <div className="w-full">
+        <div className="w-full -mt-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button 
