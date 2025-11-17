@@ -28,7 +28,7 @@ import { CacheManager } from "@/lib/cacheManager";
 import { Hub } from "@/components/dashboard/Hub";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Cell, LabelList, ReferenceLine } from "recharts";
 import { Link } from "react-router-dom";
-import { getR90Grade, getXGGrade, getXAGrade, getRegainsGrade, getInterceptionsGrade, getXGChainGrade } from "@/lib/gradeCalculations";
+import { getR90Grade, getXGGrade, getXAGrade, getRegainsGrade, getInterceptionsGrade, getXGChainGrade, getProgressivePassesGrade } from "@/lib/gradeCalculations";
 
 
 interface Analysis {
@@ -1628,6 +1628,7 @@ const Dashboard = () => {
                             <SelectItem value="interceptions">Interceptions</SelectItem>
                             <SelectItem value="xgchain">xG Chain</SelectItem>
                             <SelectItem value="xgbuildup">xG Buildup</SelectItem>
+                            <SelectItem value="progressivepasses">Progressive Passes</SelectItem>
                             <SelectItem value="shots">Shots</SelectItem>
                             <SelectItem value="shotsontarget">Shots on Target</SelectItem>
                           </SelectContent>
@@ -1646,6 +1647,7 @@ const Dashboard = () => {
                                           selectedFormMetric === "interceptions" ? "interceptions_per90" :
                                           selectedFormMetric === "xgchain" ? "xGChain_per90" :
                                           selectedFormMetric === "xgbuildup" ? "xGBuildup_per90" :
+                                          selectedFormMetric === "progressivepasses" ? "progressive_passes_adj_per90" :
                                           selectedFormMetric === "shots" ? "Shots_per90" :
                                           selectedFormMetric === "shotsontarget" ? "ShotsOnTarget_per90" : null;
                           
@@ -1662,6 +1664,7 @@ const Dashboard = () => {
                             case "interceptions": return "Interceptions";
                             case "xgchain": return "xGChain";
                             case "xgbuildup": return "xGBuildup";
+                            case "progressivepasses": return "Progressive Passes";
                             case "shots": return "Shots";
                             case "shotsontarget": return "Shots on Target";
                             default: return "R90";
@@ -1768,6 +1771,20 @@ const Dashboard = () => {
                                 { value: 2.5, grade: 'A+', color: 'hsl(142, 76%, 55%)' },
                                 { value: 3.0, grade: 'A*', color: 'hsl(43, 96%, 56%)' },
                               ];
+                            case "progressivepasses":
+                              return [
+                                { value: 0, grade: 'U', color: 'hsl(0, 84%, 30%)' },
+                                { value: 1, grade: 'D', color: 'hsl(0, 84%, 45%)' },
+                                { value: 2, grade: 'C', color: 'hsl(25, 75%, 45%)' },
+                                { value: 3, grade: 'C+', color: 'hsl(40, 85%, 50%)' },
+                                { value: 4, grade: 'B-', color: 'hsl(60, 70%, 50%)' },
+                                { value: 5, grade: 'B', color: 'hsl(142, 76%, 36%)' },
+                                { value: 7, grade: 'B+', color: 'hsl(142, 70%, 40%)' },
+                                { value: 8, grade: 'A-', color: 'hsl(142, 65%, 45%)' },
+                                { value: 9, grade: 'A', color: 'hsl(142, 70%, 50%)' },
+                                { value: 10, grade: 'A+', color: 'hsl(142, 76%, 55%)' },
+                                { value: 12, grade: 'A*', color: 'hsl(43, 96%, 56%)' },
+                              ];
                             default:
                               return [];
                           }
@@ -1788,6 +1805,8 @@ const Dashboard = () => {
                               return getInterceptionsGrade(score).color;
                             case "xgchain":
                               return getXGChainGrade(score).color;
+                            case "progressivepasses":
+                              return getProgressivePassesGrade(score).color;
                             default:
                               return getR90Grade(score).color;
                           }
@@ -1808,6 +1827,8 @@ const Dashboard = () => {
                               return getInterceptionsGrade(score).grade;
                             case "xgchain":
                               return getXGChainGrade(score).grade;
+                            case "progressivepasses":
+                              return getProgressivePassesGrade(score).grade;
                             default:
                               return score.toFixed(2);
                           }
