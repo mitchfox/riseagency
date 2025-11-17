@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Calendar, Clock } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { format } from "date-fns";
 
 interface AvailabilitySlot {
   id: string;
@@ -59,7 +60,7 @@ export const CoachAvailability = ({ open, onOpenChange }: CoachAvailabilityProps
       // Combine data
       const combinedData = availabilityData?.map(slot => ({
         ...slot,
-        staff_name: profilesData?.find(p => p.id === slot.staff_id)?.full_name || "Staff Member"
+        staff_name: profilesData?.find(p => p.id === slot.staff_id)?.full_name || "Jolon"
       })) || [];
 
       setAvailability(combinedData);
@@ -70,12 +71,21 @@ export const CoachAvailability = ({ open, onOpenChange }: CoachAvailabilityProps
     }
   };
 
+  // Format time to 12-hour format (e.g., "6pm")
+  const formatTime = (time: string) => {
+    const [hours, minutes] = time.split(':');
+    const hour = parseInt(hours);
+    const ampm = hour >= 12 ? 'pm' : 'am';
+    const displayHour = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour;
+    return minutes === '00' ? `${displayHour}${ampm}` : `${displayHour}:${minutes}${ampm}`;
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+      <DialogContent className="max-w-full max-h-screen h-screen overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Calendar className="h-5 w-5" />
+          <DialogTitle className="flex items-center gap-2 text-xl sm:text-2xl">
+            <Calendar className="h-6 w-6" />
             Coach Availability
           </DialogTitle>
         </DialogHeader>
@@ -87,35 +97,33 @@ export const CoachAvailability = ({ open, onOpenChange }: CoachAvailabilityProps
             No coach availability set yet.
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-4 sm:space-y-6">
             {/* Group by date */}
             {Array.from(new Set(availability.map(s => s.availability_date))).map((date) => {
               const dateSlots = availability.filter(slot => slot.availability_date === date);
-              const formattedDate = new Date(date).toLocaleDateString('en-US', { 
-                weekday: 'long', 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric' 
-              });
+              const dateObj = new Date(date + 'T00:00:00');
+              const formattedDate = format(dateObj, "EEEE (dd/MM)");
 
               return (
                 <Card key={date}>
                   <CardContent className="pt-6">
-                    <h3 className="font-semibold text-lg mb-3">{formattedDate}</h3>
-                    <div className="space-y-2">
+                    <h3 className="font-semibold text-lg sm:text-xl mb-4">{formattedDate}</h3>
+                    <div className="space-y-3">
                       {dateSlots.map((slot) => (
                         <div
                           key={slot.id}
-                          className="flex items-start gap-3 p-3 bg-muted/30 rounded-lg"
+                          className="p-4 bg-muted/30 rounded-lg"
                         >
-                          <Clock className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                          <div className="flex-1">
-                            <div className="font-semibold">{slot.staff_name}</div>
-                            <div className="text-sm">
-                              {slot.start_time} - {slot.end_time}
+                          <div className="flex items-center gap-3 mb-2">
+                            <Clock className="h-5 w-5 text-primary flex-shrink-0" />
+                            <div className="font-semibold text-base">{slot.staff_name}</div>
+                          </div>
+                          <div className="ml-8">
+                            <div className="text-sm sm:text-base font-medium">
+                              {formatTime(slot.start_time)} - {formatTime(slot.end_time)} GMT
                             </div>
                             {slot.notes && (
-                              <div className="text-sm text-muted-foreground mt-1">
+                              <div className="text-sm text-muted-foreground mt-2">
                                 {slot.notes}
                               </div>
                             )}
@@ -130,8 +138,8 @@ export const CoachAvailability = ({ open, onOpenChange }: CoachAvailabilityProps
           </div>
         )}
 
-        <div className="flex justify-end mt-4">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+        <div className="flex justify-end mt-6">
+          <Button variant="outline" onClick={() => onOpenChange(false)} size="lg">
             Close
           </Button>
         </div>
