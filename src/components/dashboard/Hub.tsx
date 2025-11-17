@@ -309,7 +309,7 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
 
   return (
     <>
-      <div className="space-y-0 mb-[28px]">
+      <div className="space-y-0 mb-0">
         {/* Schedule Card - Full Width */}
         <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 border-t-0 border-b-0 z-30">
           <CardHeader marble className="py-2">
@@ -622,7 +622,7 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
                 </Button>
               </div>
             </CardHeader>
-            <CardContent className="container mx-auto px-4 pt-3 pb-4">
+            <CardContent className="container mx-auto px-4 pt-3 pb-2">
               <div className="space-y-3">
                 {recentAnalyses.map((analysis) => (
                   <Link
@@ -663,9 +663,9 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
 
       {/* Daily Aphorism */}
       {dailyAphorism && (
-        <div className="mt-8 px-4 md:px-0">
+        <div className="px-4 md:px-0">
           <Card className="relative overflow-hidden border-gold bg-gold/30">
-            <CardContent className="relative py-5 px-3 text-center space-y-3">
+            <CardContent className="relative py-3 px-3 text-center space-y-3">
               <div className="bg-black/90 backdrop-blur-sm p-3 rounded-lg inline-block">
                 <p className="text-base md:text-xl font-bold text-gold leading-relaxed tracking-wide">
                   {dailyAphorism.featured_text}
