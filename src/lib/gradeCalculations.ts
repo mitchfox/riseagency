@@ -110,3 +110,25 @@ export function getInterceptionsGrade(score: number | null | undefined): GradeIn
   if (score === 5) return { grade: 'A+', color: 'hsl(142, 76%, 55%)' }; // Green 750
   return { grade: 'A*', color: 'hsl(43, 96%, 56%)' }; // Rise Gold for 6+
 }
+
+/**
+ * Calculate xGChain grade based on score ranges
+ */
+export function getXGChainGrade(score: number | null | undefined): GradeInfo {
+  if (score === null || score === undefined) {
+    return { grade: '-', color: 'hsl(var(--muted-foreground))' };
+  }
+
+  if (score < 0.4) return { grade: 'U', color: 'hsl(0, 84%, 30%)' }; // Dark Red
+  if (score < 0.6) return { grade: 'D', color: 'hsl(0, 84%, 45%)' }; // Red
+  if (score < 0.8) return { grade: 'C-', color: 'hsl(0, 84%, 60%)' }; // Light Red
+  if (score < 1.0) return { grade: 'C', color: 'hsl(25, 75%, 45%)' }; // Orange-Brown
+  if (score < 1.2) return { grade: 'C+', color: 'hsl(40, 85%, 50%)' }; // Yellow-Orange
+  if (score < 1.4) return { grade: 'B-', color: 'hsl(60, 70%, 50%)' }; // Yellow-Green
+  if (score < 1.6) return { grade: 'B', color: 'hsl(142, 76%, 36%)' }; // Green 400
+  if (score < 1.8) return { grade: 'B+', color: 'hsl(142, 70%, 40%)' }; // Green 450
+  if (score < 2.2) return { grade: 'A-', color: 'hsl(142, 65%, 45%)' }; // Green 530
+  if (score < 2.5) return { grade: 'A', color: 'hsl(142, 70%, 50%)' }; // Green 625
+  if (score < 3.0) return { grade: 'A+', color: 'hsl(142, 76%, 55%)' }; // Green 750
+  return { grade: 'A*', color: 'hsl(43, 96%, 56%)' }; // Rise Gold for 3.0+
+}
