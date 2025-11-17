@@ -1323,8 +1323,11 @@ const Dashboard = () => {
             )}
 
             <TabsContent value="analysis" className="space-y-6">
-              <Tabs value={activeAnalysisTab} onValueChange={setActiveAnalysisTab} className="w-full">
-                <TabsList className="grid w-full grid-cols-1 sm:grid-cols-5 gap-2 mb-4 bg-muted h-auto p-2 border-2 border-[hsl(43,49%,61%)]">
+              <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 border-t-[2px] border-t-[hsl(43,49%,61%)] border-b-0">
+                <CardContent className="container mx-auto px-4 pt-6">
+                  <div className="border-2 border-[hsl(43,49%,61%)] rounded-lg p-4">
+                    <Tabs value={activeAnalysisTab} onValueChange={setActiveAnalysisTab} className="w-full">
+                      <TabsList className="grid w-full grid-cols-1 sm:grid-cols-5 gap-2 mb-4 bg-muted h-auto p-2">
                   <TabsTrigger value="performance" className="font-bebas uppercase text-sm sm:text-base">
                     Performance Analysis
                   </TabsTrigger>
@@ -1852,6 +1855,9 @@ const Dashboard = () => {
                   </Card>
                 </TabsContent>
               </Tabs>
+                  </div>
+                </CardContent>
+              </Card>
             </TabsContent>
 
             <TabsContent value="physical" className="space-y-6">
@@ -1904,10 +1910,10 @@ const Dashboard = () => {
                                 {/* Overview Section */}
                                 {(program.overview_text || program.phase_image_url || program.player_image_url) && (
                                   <AccordionItem value="overview">
-                                    <AccordionTrigger className="text-xl font-bebas uppercase hover:no-underline">
+                                    <AccordionTrigger className="text-xl font-bebas uppercase hover:no-underline pl-6">
                                       Overview
                                     </AccordionTrigger>
-                                    <AccordionContent className="space-y-4">
+                                    <AccordionContent className="space-y-4 pl-6 pr-6">
                                       {program.overview_text && (
                                         <p className="text-base text-muted-foreground whitespace-pre-wrap">{program.overview_text}</p>
                                       )}
@@ -1937,10 +1943,10 @@ const Dashboard = () => {
                                 {/* Schedule Section */}
                                 {((program.weekly_schedules && Array.isArray(program.weekly_schedules) && program.weekly_schedules.length > 0) || program.schedule_notes) && (
                                   <AccordionItem value="schedule">
-                                    <AccordionTrigger className="text-xl font-bebas uppercase hover:no-underline">
+                                    <AccordionTrigger className="text-xl font-bebas uppercase hover:no-underline pl-6">
                                       Schedule
                                     </AccordionTrigger>
-                                    <AccordionContent>
+                                    <AccordionContent className="pl-6 pr-6">
                                       <div className="space-y-6">
                                         {/* Weekly Schedule Table */}
                                         {program.weekly_schedules && Array.isArray(program.weekly_schedules) && program.weekly_schedules.length > 0 && (
@@ -2122,10 +2128,10 @@ const Dashboard = () => {
                                   
                                   return (
                                     <AccordionItem value="sessions">
-                                      <AccordionTrigger className="text-xl font-bebas uppercase hover:no-underline">
+                                      <AccordionTrigger className="text-xl font-bebas uppercase hover:no-underline pl-6">
                                         Sessions
                                       </AccordionTrigger>
-                                      <AccordionContent>
+                                      <AccordionContent className="pl-6 pr-6">
                                         {/* Main Session Tabs - Two Rows */}
                                         <div className="space-y-2 mb-4">
                                           {/* First Row: A, B, C, D */}
@@ -2495,8 +2501,11 @@ const Dashboard = () => {
             </TabsContent>
 
             <TabsContent value="invoices" className="space-y-6">
-              <Tabs defaultValue="invoices" className="w-full">
-                <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3 gap-2 mb-4 bg-muted h-auto p-2 border-2 border-[hsl(43,49%,61%)]">
+              <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 border-t-[2px] border-t-[hsl(43,49%,61%)] border-b-0">
+                <CardContent className="container mx-auto px-4 pt-6">
+                  <div className="border-2 border-[hsl(43,49%,61%)] rounded-lg p-4">
+                    <Tabs defaultValue="invoices" className="w-full">
+                      <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3 gap-2 mb-4 bg-muted h-auto p-2">
                   <TabsTrigger value="invoices" className="font-bebas uppercase text-sm sm:text-base">
                     Invoices
                   </TabsTrigger>
@@ -2629,6 +2638,9 @@ const Dashboard = () => {
                   </Card>
                 </TabsContent>
               </Tabs>
+                  </div>
+                </CardContent>
+              </Card>
             </TabsContent>
 
             <TabsContent value="highlights" className="space-y-6">
@@ -2641,8 +2653,9 @@ const Dashboard = () => {
                   </div>
                 </CardHeader>
                 <CardContent className="container mx-auto px-4">
-                  <Tabs defaultValue="best" className="w-full" key="highlights-tabs">
-                    <TabsList className="grid w-full grid-cols-2 mb-6 border-2 border-[hsl(43,49%,61%)]">
+                  <div className="border-2 border-[hsl(43,49%,61%)] rounded-lg p-4">
+                    <Tabs defaultValue="best" className="w-full" key="highlights-tabs">
+                      <TabsList className="grid w-full grid-cols-2 mb-6">
                       <TabsTrigger value="match" className="font-bebas uppercase">
                         Match Highlights
                       </TabsTrigger>
@@ -2750,7 +2763,7 @@ const Dashboard = () => {
                         
                         <TabsContent value="best">
                           <Tabs defaultValue="clips" className="w-full">
-                            <TabsList className="grid w-full grid-cols-2 mb-6 border-2 border-[hsl(43,49%,61%)]">
+                            <TabsList className="grid w-full grid-cols-2 mb-6">
                               <TabsTrigger value="clips" className="font-bebas uppercase">
                                 All Clips
                               </TabsTrigger>
@@ -2981,6 +2994,7 @@ const Dashboard = () => {
                           </Tabs>
                         </TabsContent>
                       </Tabs>
+                  </div>
                 </CardContent>
               </Card>
             </TabsContent>
@@ -2994,24 +3008,25 @@ const Dashboard = () => {
                     </CardTitle>
                   </div>
                 </CardHeader>
-                <CardContent className="container mx-auto px-4">
-                  <Tabs defaultValue="general" className="w-full">
-                    <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 gap-2 mb-6 bg-muted h-auto p-2 border-2 border-[hsl(43,49%,61%)]">
-                      <TabsTrigger value="general" className="font-bebas uppercase text-sm">
-                        General Updates
-                      </TabsTrigger>
-                      <TabsTrigger value="app" className="font-bebas uppercase text-sm">
-                        App Updates
-                      </TabsTrigger>
-                      <TabsTrigger value="offline" className="font-bebas uppercase text-sm">
-                        Offline Access
-                      </TabsTrigger>
-                      <TabsTrigger value="club-interest" className="font-bebas uppercase text-sm">
-                        Club Interest
-                      </TabsTrigger>
-                    </TabsList>
+                                <CardContent className="container mx-auto px-4">
+                                  <div className="border-2 border-[hsl(43,49%,61%)] rounded-lg p-4">
+                                    <Tabs defaultValue="general" className="w-full">
+                                      <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 gap-2 mb-6 bg-muted h-auto p-2">
+                                        <TabsTrigger value="general" className="font-bebas uppercase text-sm">
+                                          General Updates
+                                        </TabsTrigger>
+                                        <TabsTrigger value="app" className="font-bebas uppercase text-sm">
+                                          App Updates
+                                        </TabsTrigger>
+                                        <TabsTrigger value="offline" className="font-bebas uppercase text-sm">
+                                          Offline Access
+                                        </TabsTrigger>
+                                        <TabsTrigger value="club-interest" className="font-bebas uppercase text-sm">
+                                          Club Interest
+                                        </TabsTrigger>
+                                      </TabsList>
 
-                    <TabsContent value="general" className="space-y-6">
+                                    <TabsContent value="general" className="space-y-6 pl-6 pr-6">
                       {updates.length === 0 ? (
                         <div className="py-8 text-center text-muted-foreground">
                           No updates available yet.
@@ -3040,7 +3055,7 @@ const Dashboard = () => {
                       )}
                     </TabsContent>
 
-                    <TabsContent value="app" className="space-y-6">
+                    <TabsContent value="app" className="space-y-6 pl-6 pr-6">
                       <div>
                         <h3 className="text-xl font-bebas uppercase tracking-wider mb-4">
                           Latest App Update
@@ -3049,7 +3064,7 @@ const Dashboard = () => {
                       </div>
                     </TabsContent>
 
-                    <TabsContent value="offline" className="space-y-6">
+                    <TabsContent value="offline" className="space-y-6 pl-6 pr-6">
                       <div>
                         <h3 className="text-xl font-bebas uppercase tracking-wider mb-4">
                           Offline Access
@@ -3072,13 +3087,14 @@ const Dashboard = () => {
                       </div>
                     </TabsContent>
 
-                    <TabsContent value="club-interest" className="space-y-6">
+                    <TabsContent value="club-interest" className="space-y-6 pl-6 pr-6">
                       <div className="py-8 text-center text-muted-foreground">
                         No club interest updates available yet.
                       </div>
                     </TabsContent>
-                  </Tabs>
-                </CardContent>
+                                    </Tabs>
+                                  </div>
+                                </CardContent>
               </Card>
             </TabsContent>
           </Tabs>
