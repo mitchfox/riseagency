@@ -1512,6 +1512,7 @@ export type Database = {
           date_of_birth: string | null
           height_cm: number | null
           id: string
+          linked_player_id: string | null
           location: string | null
           match_context: string | null
           mental_rating: number | null
@@ -1553,6 +1554,7 @@ export type Database = {
           date_of_birth?: string | null
           height_cm?: number | null
           id?: string
+          linked_player_id?: string | null
           location?: string | null
           match_context?: string | null
           mental_rating?: number | null
@@ -1594,6 +1596,7 @@ export type Database = {
           date_of_birth?: string | null
           height_cm?: number | null
           id?: string
+          linked_player_id?: string | null
           location?: string | null
           match_context?: string | null
           mental_rating?: number | null
@@ -1622,6 +1625,20 @@ export type Database = {
           weaknesses?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "scouting_reports_linked_player_id_fkey"
+            columns: ["linked_player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scouting_reports_linked_player_id_fkey"
+            columns: ["linked_player_id"]
+            isOneToOne: false
+            referencedRelation: "players_public"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "scouting_reports_prospect_id_fkey"
             columns: ["prospect_id"]
