@@ -480,7 +480,7 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
                       </div>
                       {analysis.r90_score != null && (
                         <div 
-                          className="px-3 py-1 rounded text-black text-sm font-bold mt-[3px] -ml-1"
+                          className="px-3 py-1 rounded text-black text-sm font-bold mt-[3px] -ml-1 mr-2"
                           style={{ backgroundColor: getR90Color(analysis.r90_score) }}
                         >
                           R90: {analysis.r90_score}
