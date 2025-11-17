@@ -567,7 +567,6 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
                       <LabelList 
                         dataKey="score" 
                         position="top" 
-                        offset={5}
                         content={(props: any) => {
                           const { x, y, width, value, index } = props;
                           const delay = index * 0.25;
@@ -575,11 +574,11 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
                           return (
                             <text
                               x={x + width / 2}
-                              y={y}
+                              y={y - 8}
                               fill="hsl(43, 49%, 61%)"
                               textAnchor="middle"
-                              dominantBaseline="bottom"
-                              fontSize="16"
+                              dominantBaseline="auto"
+                              fontSize="18"
                               fontWeight="700"
                               style={{
                                 animation: chartInView ? `labelFadeIn 0.6s ease-out ${delay + 0.8}s both` : 'none'
