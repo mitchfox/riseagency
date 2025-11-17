@@ -1,14 +1,15 @@
 import * as React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Calendar, TrendingUp, ArrowRight, Trophy } from "lucide-react";
+import { Calendar, TrendingUp, ArrowRight, Trophy, X } from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, LabelList } from "recharts";
 import { format, parseISO, startOfWeek, endOfWeek, isWithinInterval, addDays } from "date-fns";
 import { Link } from "react-router-dom";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import Autoplay from "embla-carousel-autoplay";
 import Fade from "embla-carousel-fade";
 import { supabase } from "@/integrations/supabase/client";
-import { R90PerformanceChart } from "./R90PerformanceChart";
+import { getR90Grade } from "@/lib/gradeCalculations";
 
 interface PlayerProgram {
   id: string;
@@ -40,7 +41,61 @@ interface HubProps {
 
 export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNavigateToForm, onNavigateToSession }: HubProps) => {
   const [marketingImages, setMarketingImages] = React.useState<string[]>([]);
+  const hasAnimated = React.useRef(false);
   const chartRef = React.useRef<HTMLDivElement>(null);
+  const [tooltipVisible, setTooltipVisible] = React.useState(true);
+  
+  // Custom Tooltip Component with close button
+  const CustomTooltip = ({ active, payload }: any) => {
+    if (!active || !payload || !payload.length || !tooltipVisible) return null;
+    
+    const data = payload[0].payload;
+    const stats = data.strikerStats;
+    
+    return (
+      <div 
+        className="relative bg-black border-2 border-[hsl(43,49%,61%)] rounded-lg p-3 text-white min-w-[200px]"
+        style={{ pointerEvents: 'auto' }}
+      >
+        <button
+          onClick={() => setTooltipVisible(false)}
+          className="absolute top-2 right-2 text-white/60 hover:text-white transition-colors"
+          aria-label="Close tooltip"
+        >
+          <X className="h-4 w-4" />
+        </button>
+        <div className="space-y-2 pr-6">
+          <div className="font-bold text-white text-base mb-1">{data.result} {data.opponent}</div>
+          {data.minutesPlayed && (
+            <div className="text-xs text-white/60">Minutes Played: {data.minutesPlayed}</div>
+          )}
+          {stats && (
+            <div className="space-y-1 pt-2 border-t border-white/20">
+              <div className="text-xs font-semibold text-white/80">Advanced Stats (per 90):</div>
+              {stats.xG_adj_per90 !== undefined && (
+                <div className="text-xs text-white/70">xG (adj): {stats.xG_adj_per90.toFixed(2)}</div>
+              )}
+              {stats.xA_adj_per90 !== undefined && (
+                <div className="text-xs text-white/70">xA (adj): {stats.xA_adj_per90.toFixed(2)}</div>
+              )}
+              {stats.xGChain_per90 !== undefined && (
+                <div className="text-xs text-white/70">xGChain: {stats.xGChain_per90.toFixed(2)}</div>
+              )}
+              {stats.movement_in_behind_xC_per90 !== undefined && (
+                <div className="text-xs text-white/70">Movement In Behind xC: {stats.movement_in_behind_xC_per90.toFixed(2)}</div>
+              )}
+              {stats.movement_to_feet_xC_per90 !== undefined && (
+                <div className="text-xs text-white/70">Movement To Feet xC: {stats.movement_to_feet_xC_per90.toFixed(2)}</div>
+              )}
+              {stats.crossing_movement_xC_per90 !== undefined && (
+                <div className="text-xs text-white/70">Crossing Movement xC: {stats.crossing_movement_xC_per90.toFixed(2)}</div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
   
   // Fetch marketing gallery images for this player
   React.useEffect(() => {
@@ -65,6 +120,14 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
     
     fetchMarketingImages();
   }, [playerData?.name]);
+  
+  // Set hasAnimated to true after initial animation completes
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      hasAnimated.current = true;
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, []);
   
   // Get current program schedule
   const currentProgram = programs.find(p => p.is_current);
@@ -172,16 +235,16 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
 
   // Function to get R90 color based on score - matches Performance Analysis colors
   const getR90Color = (score: number) => {
-    if (score < 0) return "hsl(0, 93%, 12%)";
-    if (score >= 0 && score < 0.2) return "hsl(0, 84%, 60%)";
-    if (score >= 0.2 && score < 0.4) return "hsl(0, 91%, 71%)";
-    if (score >= 0.4 && score < 0.6) return "hsl(25, 95%, 37%)";
-    if (score >= 0.6 && score < 0.8) return "hsl(25, 95%, 53%)";
-    if (score >= 0.8 && score < 1.0) return "hsl(48, 96%, 53%)";
-    if (score >= 1.0 && score < 1.4) return "hsl(82, 84%, 67%)";
-    if (score >= 1.4 && score < 1.8) return "hsl(142, 76%, 36%)";
-    if (score >= 1.8 && score < 2.5) return "hsl(142, 72%, 29%)";
-    return "hsl(43, 49%, 61%)";
+    if (score < 0) return "hsl(0, 93%, 12%)"; // red-950: Dark red for negative
+    if (score >= 0 && score < 0.2) return "hsl(0, 84%, 60%)"; // red-600: Red
+    if (score >= 0.2 && score < 0.4) return "hsl(0, 91%, 71%)"; // red-400: Light red
+    if (score >= 0.4 && score < 0.6) return "hsl(25, 95%, 37%)"; // orange-700: Orange-brown
+    if (score >= 0.6 && score < 0.8) return "hsl(25, 95%, 53%)"; // orange-500: Yellow-orange
+    if (score >= 0.8 && score < 1.0) return "hsl(48, 96%, 53%)"; // yellow-400: Yellow
+    if (score >= 1.0 && score < 1.4) return "hsl(82, 84%, 67%)"; // lime-400: Light Green
+    if (score >= 1.4 && score < 1.8) return "hsl(142, 76%, 36%)"; // green-500: Green
+    if (score >= 1.8 && score < 2.5) return "hsl(142, 72%, 29%)"; // green-700: Dark green
+    return "hsl(43, 49%, 61%)"; // gold: RISE gold for 2.5+
   };
 
   // Get latest 3 analyses
@@ -378,11 +441,150 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
           </CardHeader>
           <CardContent className="p-0 pb-0">
             {chartData.length > 0 ? (
-              <div ref={chartRef}>
-                <R90PerformanceChart data={chartData} />
+              <div ref={chartRef} className="w-full" style={{ height: '260px' }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={chartData} margin={{ top: 40, bottom: 0, left: 0, right: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis
+                      dataKey="opponent"
+                      stroke="hsl(var(--muted-foreground))"
+                      fontSize={10}
+                      height={60}
+                      interval={0}
+                      tick={(props) => {
+                        const { x, y, payload } = props;
+                        const data = chartData.find(d => d.opponent === payload.value);
+                        return (
+                          <g transform={`translate(${x},${y})`}>
+                            <text 
+                              x={0} 
+                              y={0} 
+                              dy={16} 
+                              textAnchor="middle" 
+                              fill="white"
+                              fontSize={12}
+                              fontWeight="bold"
+                            >
+                              {data?.result || ''}
+                            </text>
+                          </g>
+                        );
+                      }}
+                    />
+                    <YAxis 
+                      stroke="hsl(var(--muted-foreground))"
+                      fontSize={12}
+                      domain={[0, maxScore]}
+                      ticks={Array.from({ length: maxScore + 1 }, (_, i) => i)}
+                      width={30}
+                    />
+                    <Tooltip 
+                      content={<CustomTooltip />}
+                      cursor={{ fill: 'hsl(var(--accent))', opacity: 0.3 }}
+                      wrapperStyle={{ pointerEvents: 'auto' }}
+                    />
+                    <defs>
+                      <linearGradient id="barGloss" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="rgba(255, 255, 255, 0.4)" />
+                        <stop offset="50%" stopColor="rgba(255, 255, 255, 0.1)" />
+                        <stop offset="100%" stopColor="rgba(0, 0, 0, 0.2)" />
+                      </linearGradient>
+                      <filter id="barShine">
+                        <feGaussianBlur in="SourceAlpha" stdDeviation="3"/>
+                        <feOffset dx="0" dy="-2" result="offsetblur"/>
+                        <feComponentTransfer>
+                          <feFuncA type="linear" slope="0.5"/>
+                        </feComponentTransfer>
+                        <feMerge>
+                          <feMergeNode/>
+                          <feMergeNode in="SourceGraphic"/>
+                        </feMerge>
+                      </filter>
+                    </defs>
+                    <Bar 
+                      dataKey="score" 
+                      radius={[8, 8, 0, 0]}
+                      isAnimationActive={false}
+                      animationBegin={0}
+                      animationDuration={1400}
+                      animationEasing="ease-in-out"
+                      filter="url(#barShine)"
+                      onMouseEnter={() => setTooltipVisible(true)}
+                    >
+                      {chartData.map((entry, index) => {
+                        const baseColor = getR90Color(entry.score);
+                        return (
+                          <Cell 
+                            key={`cell-${index}`} 
+                            fill={baseColor}
+                            style={{
+                              animation: !hasAnimated.current ? `barSlideUp 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) ${index * 0.25}s both` : 'none',
+                              filter: 'brightness(1.15) drop-shadow(0 6px 12px rgba(0, 0, 0, 0.4)) drop-shadow(0 0 20px rgba(255, 255, 255, 0.1))',
+                              background: `linear-gradient(180deg, rgba(255,255,255,0.3) 0%, transparent 40%, rgba(0,0,0,0.3) 100%)`,
+                              boxShadow: 'inset 0 2px 4px rgba(255, 255, 255, 0.3), inset 0 -2px 4px rgba(0, 0, 0, 0.3)'
+                            }}
+                          />
+                        );
+                      })}
+                      <LabelList 
+                        dataKey="score" 
+                        position="center"
+                        content={(props: any) => {
+                          const { x, y, width, height, value, index } = props;
+                          if (!x || !y || !width || !height || value === undefined) return null;
+                          const delay = index * 0.25;
+                          return (
+                            <text
+                              x={x + width / 2}
+                              y={y + height / 2}
+                              fill="#ffffff"
+                              textAnchor="middle"
+                              dominantBaseline="middle"
+                              fontSize="16"
+                              fontWeight="700"
+                              style={{
+                                opacity: 1,
+                                animation: !hasAnimated.current ? `labelFadeIn 0.6s ease-out ${delay + 0.8}s forwards` : 'none'
+                              }}
+                            >
+                              {value}
+                            </text>
+                          );
+                        }}
+                      />
+                      <LabelList 
+                        dataKey="score" 
+                        position="top"
+                        content={(props: any) => {
+                          const { x, y, width, value, index } = props;
+                          if (!x || y === undefined || !width || value === undefined) return null;
+                          const delay = index * 0.25;
+                          const grade = getR90Grade(value).grade;
+                          return (
+                            <text
+                              x={x + width / 2}
+                              y={y - 5}
+                              fill="hsl(43, 49%, 61%)"
+                              textAnchor="middle"
+                              dominantBaseline="baseline"
+                              fontSize="18"
+                              fontWeight="700"
+                              style={{
+                                opacity: 1,
+                                animation: !hasAnimated.current ? `labelFadeIn 0.6s ease-out ${delay + 0.8}s forwards` : 'none'
+                              }}
+                            >
+                              {grade}
+                            </text>
+                          );
+                        }}
+                      />
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground p-4">No performance data yet</p>
+              <p className="text-sm text-muted-foreground">No performance data yet</p>
             )}
           </CardContent>
         </Card>
