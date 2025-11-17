@@ -100,6 +100,7 @@ const Dashboard = () => {
   const [activeTab, setActiveTab] = useState("hub");
   const [activeAnalysisTab, setActiveAnalysisTab] = useState("performance");
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+  const [visibleClipsCount, setVisibleClipsCount] = useState(10); // Show 10 clips initially
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [highlightsData, setHighlightsData] = useState<any>({ matchHighlights: [], bestClips: [] });
   const [fileUploadProgress, setFileUploadProgress] = useState<Record<string, number>>({});
@@ -2902,7 +2903,7 @@ const Dashboard = () => {
                                     )}
                                   </div>
                                   <div className="space-y-3">
-                                  {highlightsData.bestClips?.map((highlight: any, index: number) => (
+                                  {highlightsData.bestClips?.slice(0, visibleClipsCount).map((highlight: any, index: number) => (
                                     <div 
                                        key={highlight.id || highlight.uploadId || highlight.videoUrl || `${highlight.name}-${index}`}
                                        className="border rounded-lg p-4 bg-card"
@@ -3056,7 +3057,17 @@ const Dashboard = () => {
                                       </div>
                                      </div>
                                    ))}
-                                  </div>
+                                   </div>
+                                  {highlightsData.bestClips && highlightsData.bestClips.length > visibleClipsCount && (
+                                    <div className="flex justify-center pt-4">
+                                      <Button
+                                        onClick={() => setVisibleClipsCount(prev => prev + 10)}
+                                        variant="outline"
+                                      >
+                                        Load More Clips ({highlightsData.bestClips.length - visibleClipsCount} remaining)
+                                      </Button>
+                                    </div>
+                                  )}
                                 </div>
                               )}
                             </TabsContent>
