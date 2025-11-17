@@ -197,7 +197,7 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
     <>
       {/* Video Highlights Slider - Full Width */}
       {videoThumbnails.length > 0 && (
-        <div className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] -mt-[2px] -z-10">
+        <div className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] -mt-0.5 z-0">
           <Card className="bg-card/90 backdrop-blur-sm border-gold/30 overflow-hidden rounded-none border-x-0">
             <div className="w-full">
               <Carousel
@@ -241,9 +241,9 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
         </div>
       )}
 
-      <div className="space-y-0">
+      <div className="-space-y-1">
         {/* Schedule Card - Full Width */}
-        <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 z-10">
+        <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 z-20">
           <CardHeader marble>
             <div className="flex items-center justify-between container mx-auto px-4">
               <div className="flex items-center gap-2">
@@ -349,7 +349,7 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
         </Card>
 
         {/* R90 Performance Chart & Recent Analysis Combined - Full Width */}
-        <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 z-10">
+        <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 z-20">
           <CardHeader marble>
             <div className="flex items-center justify-between container mx-auto px-4">
               <div className="flex items-center gap-2">
@@ -367,19 +367,20 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
               </Button>
             </div>
           </CardHeader>
-          <CardContent className="space-y-6 container mx-auto px-4 pt-[5px]">
+          <CardContent className="container mx-auto px-4">
+            <div className="pt-[5px] space-y-6">
             {/* Chart */}
             {chartData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={250}>
+              <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={chartData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                   <XAxis 
                     dataKey="displayLabel" 
                     stroke="hsl(var(--muted-foreground))"
-                    fontSize={10}
+                    fontSize={11}
                     angle={-45}
                     textAnchor="end"
-                    height={100}
+                    height={120}
                   />
                   <YAxis 
                     stroke="hsl(var(--muted-foreground))"
@@ -454,6 +455,7 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
                 ))}
               </div>
             )}
+            </div>
           </CardContent>
         </Card>
       </div>
