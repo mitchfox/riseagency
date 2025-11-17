@@ -494,6 +494,24 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
                       }}
                       cursor={{ fill: 'hsl(var(--accent))', opacity: 0.3 }}
                     />
+                    <defs>
+                      <linearGradient id="barGloss" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="rgba(255, 255, 255, 0.4)" />
+                        <stop offset="50%" stopColor="rgba(255, 255, 255, 0.1)" />
+                        <stop offset="100%" stopColor="rgba(0, 0, 0, 0.2)" />
+                      </linearGradient>
+                      <filter id="barShine">
+                        <feGaussianBlur in="SourceAlpha" stdDeviation="3"/>
+                        <feOffset dx="0" dy="-2" result="offsetblur"/>
+                        <feComponentTransfer>
+                          <feFuncA type="linear" slope="0.5"/>
+                        </feComponentTransfer>
+                        <feMerge>
+                          <feMergeNode/>
+                          <feMergeNode in="SourceGraphic"/>
+                        </feMerge>
+                      </filter>
+                    </defs>
                     <Bar 
                       dataKey="score" 
                       radius={[8, 8, 0, 0]}
@@ -501,16 +519,22 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
                       animationBegin={0}
                       animationDuration={800}
                       animationEasing="ease-out"
+                      filter="url(#barShine)"
                     >
-                      {chartData.map((entry, index) => (
-                        <Cell 
-                          key={`cell-${index}`} 
-                          fill={getR90Color(entry.score)}
-                          style={{
-                            animation: chartInView ? `barSlideUp 0.6s ease-out ${index * 0.15}s both` : 'none'
-                          }}
-                        />
-                      ))}
+                      {chartData.map((entry, index) => {
+                        const baseColor = getR90Color(entry.score);
+                        return (
+                          <Cell 
+                            key={`cell-${index}`} 
+                            fill={baseColor}
+                            style={{
+                              animation: chartInView ? `barSlideUp 0.6s ease-out ${index * 0.15}s both` : 'none',
+                              filter: 'brightness(1.1) drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3))',
+                              background: `linear-gradient(180deg, rgba(255,255,255,0.2) 0%, transparent 50%, rgba(0,0,0,0.2) 100%)`
+                            }}
+                          />
+                        );
+                      })}
                       <LabelList 
                         dataKey="score" 
                         position="center" 
