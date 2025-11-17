@@ -107,6 +107,8 @@ const Dashboard = () => {
   const [currentVideoName, setCurrentVideoName] = useState<string>("");
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [coachAvailabilityOpen, setCoachAvailabilityOpen] = useState(false);
+  const [isSubheaderVisible, setIsSubheaderVisible] = useState(true);
+
 
   // Initialize push notifications with player ID
   usePushNotifications(playerData?.id);
@@ -1041,6 +1043,23 @@ const Dashboard = () => {
     }
   };
 
+  // Track subheader visibility for sticky dropdown menu
+  useEffect(() => {
+    const handleScroll = () => {
+      const subheader = document.getElementById('subheader');
+      if (subheader) {
+        const rect = subheader.getBoundingClientRect();
+        // Subheader is visible if its bottom edge is still below the top of viewport
+        setIsSubheaderVisible(rect.bottom > 64); // 64px is header height
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    handleScroll(); // Initial check
+
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   const getR90Color = (score: number) => {
     if (score < 0) return "bg-red-950"; // Dark red for negative
     if (score >= 0 && score < 0.2) return "bg-red-600"; // Red
@@ -1078,7 +1097,7 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Header with Logo */}
-      <header className="bg-background/80 backdrop-blur-md border-b border-border">
+      <header className="sticky top-0 bg-background/80 backdrop-blur-md border-b border-border z-50">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-center h-16">
             <img 
@@ -1091,7 +1110,7 @@ const Dashboard = () => {
       </header>
 
       {/* Subheader with Options */}
-      <div className="bg-[url('/smudged-marble-header.png')] bg-cover bg-center bg-no-repeat border-b border-border/50">
+      <div id="subheader" className="bg-[url('/smudged-marble-header.png')] bg-cover bg-center bg-no-repeat border-b border-border/50">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-center gap-2 h-12">
             <DropdownMenu>
@@ -1176,11 +1195,11 @@ const Dashboard = () => {
         <div className="container mx-auto max-w-6xl px-4 md:px-6 mb-0">
           <NotificationPermission />
         </div>
-        {/* Navigation Menu - Full width, no spacing */}
-        <div className="w-full">
+        {/* Navigation Menu - Full width, conditionally sticky */}
+        <div className={`w-full ${!isSubheaderVisible ? 'sticky top-16 z-40' : ''}`}>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button 
+              <Button
                 variant="outline" 
                 className="w-full justify-center font-bebas uppercase text-xl px-6 py-6 bg-card hover:bg-card/80 border-2 border-gold border-x-0 !text-gold hover:!text-gold z-50 rounded-none"
                 >
