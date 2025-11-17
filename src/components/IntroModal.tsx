@@ -238,7 +238,7 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
                   </div>
                   
                   {/* Position - Bottom Left */}
-                  <div className="absolute bottom-8 left-2 flex flex-col items-center min-w-[30px] sm:bottom-16 sm:left-4 sm:min-w-[60px]">
+                  <div className="absolute bottom-2 left-2 flex flex-col items-center min-w-[30px] sm:bottom-4 sm:left-4 sm:min-w-[60px]">
                     {starPlayers.map((player, index) => (
                       <div
                         key={`pos-${player.id}`}
@@ -256,28 +256,23 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
                   </div>
                   
                   {/* Club Logo - Bottom Right */}
-                  <div className="absolute bottom-8 right-2 flex flex-col items-center min-w-[30px] sm:bottom-16 sm:right-4 sm:min-w-[60px]">
+                  <div className="absolute bottom-2 right-2 flex flex-col items-center min-w-[30px] sm:bottom-4 sm:right-4 sm:min-w-[60px]">
                     {starPlayers.map((player, index) => {
-                      try {
-                        const bio = JSON.parse(player.bio || '{}');
-                        const clubLogo = bio.tacticalFormations?.[0]?.clubLogo;
-                        return clubLogo ? (
-                          <div
-                            key={`club-${player.id}`}
-                            className="flex flex-col items-center transition-opacity duration-1000 ease-in-out"
-                            style={{ 
-                              opacity: index === starIndex ? 1 : 0,
-                              position: index === starIndex ? 'relative' : 'absolute',
-                              visibility: index === starIndex ? 'visible' : 'hidden'
-                            }}
-                          >
-                            <img src={clubLogo} alt="Club" className="w-6 h-6 object-contain mb-0.5 sm:w-12 sm:h-12 sm:mb-1" />
-                            <div className="text-[6px] text-white/80 uppercase tracking-wider text-center sm:text-[9px]">Club</div>
-                          </div>
-                        ) : null;
-                      } catch {
-                        return null;
-                      }
+                      const clubLogo = player.club_logo;
+                      return clubLogo ? (
+                        <div
+                          key={`club-${player.id}`}
+                          className="flex flex-col items-center transition-opacity duration-1000 ease-in-out"
+                          style={{ 
+                            opacity: index === starIndex ? 1 : 0,
+                            position: index === starIndex ? 'relative' : 'absolute',
+                            visibility: index === starIndex ? 'visible' : 'hidden'
+                          }}
+                        >
+                          <img src={clubLogo} alt="Club" className="w-6 h-6 object-contain mb-0.5 sm:w-12 sm:h-12 sm:mb-1" />
+                          <div className="text-[6px] text-white/80 uppercase tracking-wider text-center sm:text-[9px]">Club</div>
+                        </div>
+                      ) : null;
                     })}
                   </div>
                 </div>
