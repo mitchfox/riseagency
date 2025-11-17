@@ -513,8 +513,8 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
             <CardHeader marble>
               <div className="flex items-center justify-between container mx-auto px-4 pr-6">
                 <div className="flex items-center gap-2">
-                  <Trophy className="h-5 w-5" />
-                  <CardTitle className="font-heading tracking-tight ml-[9px] mt-[1px]">Performance</CardTitle>
+                  <Trophy className="h-5 w-5 mt-[1px]" />
+                  <CardTitle className="font-heading tracking-tight ml-[9px]">Performance</CardTitle>
                 </div>
                 <Button 
                   variant="ghost" 
