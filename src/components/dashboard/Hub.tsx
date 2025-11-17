@@ -2,7 +2,7 @@ import * as React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Calendar, TrendingUp, ArrowRight, Trophy, X } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, LabelList } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, LabelList, ReferenceLine } from "recharts";
 import { format, parseISO, startOfWeek, endOfWeek, isWithinInterval, addDays } from "date-fns";
 import { Link } from "react-router-dom";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
@@ -245,6 +245,11 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
   const maxScore = chartData.length > 0 
     ? Math.ceil(Math.max(...chartData.map(d => d.score)))
     : 4;
+
+  // Calculate average score for reference line
+  const averageScore = chartData.length > 0
+    ? chartData.reduce((sum, d) => sum + d.score, 0) / chartData.length
+    : 0;
 
   // Function to get R90 color based on score - matches Performance Analysis colors
   const getR90Color = (score: number) => {
@@ -495,6 +500,19 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
                       content={<CustomTooltip />}
                       cursor={{ fill: 'hsl(var(--accent))', opacity: 0.3 }}
                       wrapperStyle={{ pointerEvents: 'auto' }}
+                    />
+                    <ReferenceLine 
+                      y={averageScore} 
+                      stroke="hsl(43, 49%, 61%)"
+                      strokeDasharray="4 4"
+                      strokeWidth={1.5}
+                      label={{
+                        value: `Avg: ${averageScore.toFixed(2)}`,
+                        position: 'right',
+                        fill: 'hsl(43, 49%, 61%)',
+                        fontSize: 11,
+                        fontWeight: 'bold'
+                      }}
                     />
                     <defs>
                       <linearGradient id="barGloss" x1="0" y1="0" x2="0" y2="1">
