@@ -511,14 +511,19 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   };
 
   const selectedPlayer = players.find(p => p.id === selectedPlayerId);
-  const selectedPlayerStats = selectedPlayerId ? (stats[selectedPlayerId] || {
-    goals: 0,
-    assists: 0,
-    matches: 0,
-    minutes: 0,
-    clean_sheets: 0,
-    saves: 0
-  }) : null;
+  
+  // Parse seasonStats from bio field (same as PlayerDetail does)
+  const getSeasonStats = (player: Player | undefined) => {
+    if (!player?.bio) return null;
+    try {
+      const bioData = typeof player.bio === 'string' ? JSON.parse(player.bio) : player.bio;
+      return bioData.seasonStats || null;
+    } catch {
+      return null;
+    }
+  };
+  
+  const selectedPlayerSeasonStats = selectedPlayer ? getSeasonStats(selectedPlayer) : null;
 
   // Group players by representation status in order: represented, mandated, other
   const groupedPlayers = {
@@ -921,24 +926,24 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                 </div>
               </CardHeader>
               <CardContent className="p-3 sm:p-6">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4 text-center">
-                  <div className="p-2 sm:p-4 bg-secondary/30 rounded-lg">
-                    <div className="text-xl sm:text-2xl md:text-3xl font-bold text-primary">{selectedPlayerStats?.goals ?? 0}</div>
-                    <div className="text-[10px] sm:text-xs md:text-sm text-muted-foreground mt-1">Goals</div>
+                {selectedPlayerSeasonStats && selectedPlayerSeasonStats.length > 0 ? (
+                  <div className={`grid gap-2 sm:gap-4 text-center ${
+                    selectedPlayerSeasonStats.length <= 2 ? 'grid-cols-2' : 
+                    selectedPlayerSeasonStats.length === 3 ? 'grid-cols-3' : 
+                    'grid-cols-2 md:grid-cols-4'
+                  }`}>
+                    {selectedPlayerSeasonStats.map((stat: any, idx: number) => (
+                      <div key={idx} className="p-2 sm:p-4 bg-secondary/30 rounded-lg">
+                        <div className="text-xl sm:text-2xl md:text-3xl font-bold text-primary">{stat.value || "0"}</div>
+                        <div className="text-[10px] sm:text-xs md:text-sm text-muted-foreground mt-1">{stat.header}</div>
+                      </div>
+                    ))}
                   </div>
-                  <div className="p-2 sm:p-4 bg-secondary/30 rounded-lg">
-                    <div className="text-xl sm:text-2xl md:text-3xl font-bold text-primary">{selectedPlayerStats?.assists ?? 0}</div>
-                    <div className="text-[10px] sm:text-xs md:text-sm text-muted-foreground mt-1">Assists</div>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <p>No season stats available</p>
                   </div>
-                  <div className="p-2 sm:p-4 bg-secondary/30 rounded-lg">
-                    <div className="text-xl sm:text-2xl md:text-3xl font-bold text-primary">{selectedPlayerStats?.matches ?? 0}</div>
-                    <div className="text-[10px] sm:text-xs md:text-sm text-muted-foreground mt-1">Matches</div>
-                  </div>
-                  <div className="p-2 sm:p-4 bg-secondary/30 rounded-lg">
-                    <div className="text-xl sm:text-2xl md:text-3xl font-bold text-primary">{selectedPlayerStats?.minutes ?? 0}</div>
-                    <div className="text-[10px] sm:text-xs md:text-sm text-muted-foreground mt-1">Minutes</div>
-                  </div>
-                </div>
+                )}
               </CardContent>
             </Card>
 
