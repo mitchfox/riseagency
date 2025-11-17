@@ -1689,8 +1689,8 @@ export type Database = {
       }
       staff_availability: {
         Row: {
+          availability_date: string
           created_at: string
-          day_of_week: number
           end_time: string
           id: string
           notes: string | null
@@ -1699,8 +1699,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          availability_date?: string
           created_at?: string
-          day_of_week: number
           end_time: string
           id?: string
           notes?: string | null
@@ -1709,8 +1709,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          availability_date?: string
           created_at?: string
-          day_of_week?: number
           end_time?: string
           id?: string
           notes?: string | null

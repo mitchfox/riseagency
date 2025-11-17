@@ -7,22 +7,12 @@ import { Card, CardContent } from "@/components/ui/card";
 
 interface AvailabilitySlot {
   id: string;
-  day_of_week: number;
+  availability_date: string;
   start_time: string;
   end_time: string;
   notes: string | null;
   staff_name: string | null;
 }
-
-const DAYS = [
-  { value: 0, label: "Sunday" },
-  { value: 1, label: "Monday" },
-  { value: 2, label: "Tuesday" },
-  { value: 3, label: "Wednesday" },
-  { value: 4, label: "Thursday" },
-  { value: 5, label: "Friday" },
-  { value: 6, label: "Saturday" },
-];
 
 interface CoachAvailabilityProps {
   open: boolean;
@@ -48,13 +38,13 @@ export const CoachAvailability = ({ open, onOpenChange }: CoachAvailabilityProps
         .from("staff_availability")
         .select(`
           id,
-          day_of_week,
+          availability_date,
           start_time,
           end_time,
           notes,
           staff_id
         `)
-        .order("day_of_week")
+        .order("availability_date")
         .order("start_time");
 
       if (availabilityError) throw availabilityError;
@@ -98,30 +88,31 @@ export const CoachAvailability = ({ open, onOpenChange }: CoachAvailabilityProps
           </div>
         ) : (
           <div className="space-y-4">
-            {DAYS.map((day) => {
-              const daySlots = availability.filter(
-                (slot) => slot.day_of_week === day.value
-              );
-              
-              if (daySlots.length === 0) return null;
+            {/* Group by date */}
+            {Array.from(new Set(availability.map(s => s.availability_date))).map((date) => {
+              const dateSlots = availability.filter(slot => slot.availability_date === date);
+              const formattedDate = new Date(date).toLocaleDateString('en-US', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+              });
 
               return (
-                <Card key={day.value}>
+                <Card key={date}>
                   <CardContent className="pt-6">
-                    <h3 className="font-semibold text-lg mb-3">{day.label}</h3>
+                    <h3 className="font-semibold text-lg mb-3">{formattedDate}</h3>
                     <div className="space-y-2">
-                      {daySlots.map((slot) => (
+                      {dateSlots.map((slot) => (
                         <div
                           key={slot.id}
                           className="flex items-start gap-3 p-3 bg-muted/30 rounded-lg"
                         >
                           <Clock className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
                           <div className="flex-1">
-                            <div className="font-medium">
+                            <div className="font-semibold">{slot.staff_name}</div>
+                            <div className="text-sm">
                               {slot.start_time} - {slot.end_time}
-                            </div>
-                            <div className="text-sm text-muted-foreground">
-                              {slot.staff_name}
                             </div>
                             {slot.notes && (
                               <div className="text-sm text-muted-foreground mt-1">

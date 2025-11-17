@@ -12,27 +12,25 @@ import { StaffSchedule } from "./StaffSchedule";
 
 interface AvailabilitySlot {
   id: string;
-  day_of_week: number;
+  availability_date: string;
   start_time: string;
   end_time: string;
   notes: string | null;
 }
 
-const DAYS = [
-  { value: 0, label: "Sunday" },
-  { value: 1, label: "Monday" },
-  { value: 2, label: "Tuesday" },
-  { value: 3, label: "Wednesday" },
-  { value: 4, label: "Thursday" },
-  { value: 5, label: "Friday" },
-  { value: 6, label: "Saturday" },
-];
-
 export const StaffAvailabilityManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   const [availabilitySlots, setAvailabilitySlots] = useState<AvailabilitySlot[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  // Get next 7 days for default date
+  const getDefaultDate = () => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return tomorrow.toISOString().split('T')[0];
+  };
+  
   const [newSlot, setNewSlot] = useState({
-    day_of_week: 1,
+    availability_date: getDefaultDate(),
     start_time: "09:00",
     end_time: "17:00",
     notes: "",
@@ -51,7 +49,7 @@ export const StaffAvailabilityManagement = ({ isAdmin }: { isAdmin: boolean }) =
         .from("staff_availability")
         .select("*")
         .eq("staff_id", user.id)
-        .order("day_of_week")
+        .order("availability_date")
         .order("start_time");
 
       if (error) throw error;
@@ -73,7 +71,7 @@ export const StaffAvailabilityManagement = ({ isAdmin }: { isAdmin: boolean }) =
         .from("staff_availability")
         .insert({
           staff_id: user.id,
-          day_of_week: newSlot.day_of_week,
+          availability_date: newSlot.availability_date,
           start_time: newSlot.start_time,
           end_time: newSlot.end_time,
           notes: newSlot.notes || null,
@@ -84,7 +82,7 @@ export const StaffAvailabilityManagement = ({ isAdmin }: { isAdmin: boolean }) =
       toast.success("Availability added");
       fetchAvailability();
       setNewSlot({
-        day_of_week: 1,
+        availability_date: getDefaultDate(),
         start_time: "09:00",
         end_time: "17:00",
         notes: "",
@@ -135,24 +133,15 @@ export const StaffAvailabilityManagement = ({ isAdmin }: { isAdmin: boolean }) =
             <h3 className="font-semibold">Add Availability</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="space-y-2">
-                <Label>Day</Label>
-                <Select
-                  value={newSlot.day_of_week.toString()}
-                  onValueChange={(value) =>
-                    setNewSlot({ ...newSlot, day_of_week: parseInt(value) })
+                <Label>Date</Label>
+                <Input
+                  type="date"
+                  value={newSlot.availability_date}
+                  onChange={(e) =>
+                    setNewSlot({ ...newSlot, availability_date: e.target.value })
                   }
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {DAYS.map((day) => (
-                      <SelectItem key={day.value} value={day.value.toString()}>
-                        {day.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  min={new Date().toISOString().split('T')[0]}
+                />
               </div>
               <div className="space-y-2">
                 <Label>Start Time</Label>
@@ -200,40 +189,36 @@ export const StaffAvailabilityManagement = ({ isAdmin }: { isAdmin: boolean }) =
               </p>
             ) : (
               <div className="space-y-2">
-                {DAYS.map((day) => {
-                  const daySlots = availabilitySlots.filter(
-                    (slot) => slot.day_of_week === day.value
-                  );
-                  if (daySlots.length === 0) return null;
+                {availabilitySlots.map((slot) => {
+                  const date = new Date(slot.availability_date);
+                  const formattedDate = date.toLocaleDateString('en-US', { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                  });
 
                   return (
-                    <div key={day.value} className="border rounded-lg p-4">
-                      <h4 className="font-semibold mb-2">{day.label}</h4>
-                      <div className="space-y-2">
-                        {daySlots.map((slot) => (
-                          <div
-                            key={slot.id}
-                            className="flex items-center justify-between p-2 bg-muted/50 rounded"
-                          >
-                            <div className="flex-1">
-                              <div className="font-medium">
-                                {slot.start_time} - {slot.end_time}
-                              </div>
-                              {slot.notes && (
-                                <div className="text-sm text-muted-foreground">
-                                  {slot.notes}
-                                </div>
-                              )}
-                            </div>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => deleteAvailability(slot.id)}
-                            >
-                              <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
+                    <div key={slot.id} className="border rounded-lg p-4">
+                      <h4 className="font-semibold mb-2">{formattedDate}</h4>
+                      <div className="flex items-center justify-between p-2 bg-muted/50 rounded">
+                        <div className="flex-1">
+                          <div className="font-medium">
+                            {slot.start_time} - {slot.end_time}
                           </div>
-                        ))}
+                          {slot.notes && (
+                            <div className="text-sm text-muted-foreground">
+                              {slot.notes}
+                            </div>
+                          )}
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => deleteAvailability(slot.id)}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
                       </div>
                     </div>
                   );
