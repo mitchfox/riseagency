@@ -249,19 +249,19 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
             <div className="flex items-center justify-between container mx-auto px-4">
               <div className="flex items-center gap-2">
                 <Calendar className="h-5 w-5" />
-                <CardTitle>This Week's Schedule</CardTitle>
+                <CardTitle className="font-heading tracking-tight">This Week's Schedule</CardTitle>
               </div>
               <Button 
                 variant="ghost" 
                 size="sm"
-                className="flex items-center gap-1 text-sm text-primary hover:text-black hover:bg-primary"
+                className="flex items-center justify-center gap-1 text-sm text-primary hover:text-black hover:bg-primary h-10"
               >
                 See All
                 <ArrowRight className="h-4 w-4" />
               </Button>
             </div>
           </CardHeader>
-          <CardContent className="container mx-auto px-4 py-6">
+          <CardContent className="container mx-auto px-4 pt-[30px] pb-6">
             {currentSchedule ? (
               <div className="grid grid-cols-8 gap-1 md:gap-2">
                 {/* Week Cell */}
@@ -355,13 +355,13 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
             <div className="flex items-center justify-between container mx-auto px-4">
               <div className="flex items-center gap-2">
                 <TrendingUp className="h-5 w-5" />
-                <CardTitle>Recent Form</CardTitle>
+                <CardTitle className="font-heading tracking-tight">Recent Form</CardTitle>
               </div>
               <Button 
                 variant="ghost" 
                 size="sm"
                 onClick={onNavigateToAnalysis}
-                className="flex items-center gap-1 text-sm text-primary hover:text-black hover:bg-primary"
+                className="flex items-center justify-center gap-1 text-sm text-primary hover:text-black hover:bg-primary h-10"
               >
                 See All
                 <ArrowRight className="h-4 w-4" />
@@ -373,17 +373,45 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
             {/* Chart */}
             {chartData.length > 0 ? (
               <div className="flex justify-center">
-                <ResponsiveContainer width="95%" height={320}>
+                <ResponsiveContainer width="95%" height={420}>
                   <BarChart data={chartData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                     <XAxis 
-                      dataKey="opponent" 
+                      dataKey="opponent"
                       stroke="hsl(var(--muted-foreground))"
-                      fontSize={11}
-                      angle={-90}
-                      textAnchor="end"
-                      height={100}
+                      fontSize={10}
+                      height={110}
                       interval={0}
+                      tick={(props) => {
+                        const { x, y, payload } = props;
+                        const data = chartData.find(d => d.opponent === payload.value);
+                        return (
+                          <g transform={`translate(${x},${y})`}>
+                            <text 
+                              x={0} 
+                              y={0} 
+                              dy={16} 
+                              textAnchor="middle" 
+                              fill="white"
+                              fontSize={12}
+                              fontWeight="bold"
+                            >
+                              {data?.result || ''}
+                            </text>
+                            <text 
+                              x={0} 
+                              y={30} 
+                              dy={16} 
+                              textAnchor="end"
+                              fill="hsl(var(--muted-foreground))"
+                              fontSize={11}
+                              transform={`rotate(-90, 0, 46)`}
+                            >
+                              {payload.value}
+                            </text>
+                          </g>
+                        );
+                      }}
                     />
                     <YAxis 
                       stroke="hsl(var(--muted-foreground))"
@@ -393,8 +421,8 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
                     />
                     <Tooltip 
                       contentStyle={{
-                        backgroundColor: "hsl(var(--card))",
-                        border: "1px solid hsl(var(--border))",
+                        backgroundColor: "#000000",
+                        border: "1px solid hsl(43, 49%, 61%)",
                         borderRadius: "8px"
                       }}
                       formatter={(value: any, name: any, props: any) => {
