@@ -12,8 +12,8 @@ const CardHeader = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDiv
     <div 
       ref={ref} 
       className={cn(
-        "flex flex-col space-y-1.5 p-6 rounded-t-lg",
-        marble && "bg-[url('/smudged-marble-header.png')] bg-cover bg-center bg-no-repeat border-b border-border/50",
+        "flex flex-col space-y-1.5 rounded-t-lg",
+        marble ? "bg-[url('/smudged-marble-header.png')] bg-cover bg-center bg-no-repeat border-b-2 border-[hsl(var(--accent))] p-3 min-h-[60px] flex items-center justify-start" : "p-6",
         className
       )} 
       {...props} 
