@@ -376,15 +376,15 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
             <div className="pt-[5px] space-y-6">
             {/* Chart */}
             {chartData.length > 0 ? (
-              <div className="flex justify-center">
-                <ResponsiveContainer width="95%" height={420}>
-                  <BarChart data={chartData}>
+              <div className="w-full max-w-[1200px] mx-auto">
+                <ResponsiveContainer width="100%" height={500}>
+                  <BarChart data={chartData} margin={{ bottom: 20 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                     <XAxis 
                       dataKey="opponent"
                       stroke="hsl(var(--muted-foreground))"
                       fontSize={10}
-                      height={110}
+                      height={140}
                       interval={0}
                       tick={(props) => {
                         const { x, y, payload } = props;
@@ -426,21 +426,32 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
                     <Tooltip 
                       contentStyle={{
                         backgroundColor: "#000000",
-                        border: "1px solid hsl(43, 49%, 61%)",
-                        borderRadius: "8px"
+                        border: "2px solid hsl(43, 49%, 61%)",
+                        borderRadius: "8px",
+                        padding: "12px",
+                        color: "#ffffff"
+                      }}
+                      labelStyle={{
+                        color: "#ffffff",
+                        fontWeight: "bold",
+                        marginBottom: "8px"
+                      }}
+                      itemStyle={{
+                        color: "#ffffff"
                       }}
                       formatter={(value: any, name: any, props: any) => {
                         const data = props.payload;
                         return [
-                          <div key="tooltip" className="space-y-1">
-                            <div className="font-bold">R90: {value}</div>
-                            <div className="text-xs text-muted-foreground">{data.result}</div>
-                            <div className="text-xs text-primary mt-1">Click to view full report</div>
+                          <div key="tooltip" className="space-y-2">
+                            <div className="font-bold text-white text-base">R90 Score: {value}</div>
+                            <div className="text-sm text-white/80">{data.opponent}</div>
+                            <div className="text-sm text-white/80">Result: {data.result}</div>
+                            <div className="text-xs text-[hsl(43,49%,61%)] mt-2 pt-2 border-t border-white/20">Click to view full report</div>
                           </div>,
                           ""
                         ];
                       }}
-                      cursor={{ fill: 'hsl(var(--accent))' }}
+                      cursor={{ fill: 'hsl(var(--accent))', opacity: 0.3 }}
                     />
                     <Bar 
                       dataKey="score" 
