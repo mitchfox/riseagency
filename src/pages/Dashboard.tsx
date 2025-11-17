@@ -1081,15 +1081,45 @@ const Dashboard = () => {
             <img 
               src="https://storage.googleapis.com/gpt-engineer-file-uploads/blxFQX1QtlSc3qNcPxWdCZ730Tf1/uploads/1761325700904-RISEWhite-100.jpg"
               alt="RISE"
-              className="h-10 w-auto"
+              className="h-14 w-auto"
             />
           </div>
         </div>
       </header>
 
+      {/* Subheader with Options */}
+      <div className="fixed top-16 left-0 right-0 z-30 bg-background/60 backdrop-blur-sm border-b border-border/50">
+        <div className="container mx-auto px-4">
+          <div className="flex items-center justify-center gap-2 h-12">
+            {playerData?.id && (
+              <NotificationSettings playerId={playerData.id} />
+            )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCoachAvailabilityOpen(true)}
+              className="flex items-center gap-2"
+            >
+              <Calendar className="h-4 w-4" />
+              <span className="hidden sm:inline">Coach Availability</span>
+              <span className="sm:hidden">Availability</span>
+            </Button>
+            <Button 
+              variant="ghost"
+              size="icon"
+              onClick={() => window.location.reload()}
+              className="text-gold hover:text-gold/80"
+              title="Refresh app"
+            >
+              <RefreshCw className="h-5 w-5" />
+            </Button>
+          </div>
+        </div>
+      </div>
+
       {/* Offline Banner */}
       {!isOnline && (
-        <div className="fixed top-16 left-0 right-0 z-30 bg-destructive/90 backdrop-blur-sm text-destructive-foreground py-2 px-4">
+        <div className="fixed top-28 left-0 right-0 z-20 bg-destructive/90 backdrop-blur-sm text-destructive-foreground py-2 px-4">
           <div className="container mx-auto text-center text-sm font-medium">
             <WifiOff className="inline-block h-4 w-4 mr-2" />
             You're offline. Some content may not be available.
@@ -1097,7 +1127,7 @@ const Dashboard = () => {
         </div>
       )}
 
-      <main className="pt-28 pb-12 px-0 md:px-4">{/* Increased pt to account for fixed header */}
+      <main className="pt-32 pb-12 px-0 md:px-4">{/* Increased pt to account for fixed header + subheader */}
         <div className="container mx-auto max-w-6xl px-0 md:px-6">
           {/* Player Header */}
           <div className="relative mb-12">
@@ -1112,26 +1142,11 @@ const Dashboard = () => {
                 </div>
               )}
               <div className="flex-1 space-y-3">
-                <div className="flex items-center justify-between">
-                  <h1 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-foreground">
-                    {playerData?.name || "Player Portal"}
-                  </h1>
-                </div>
-                
-                {/* Coach Availability - Mobile Only (below name) */}
-                <div className="md:hidden">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setCoachAvailabilityOpen(true)}
-                    className="flex items-center gap-2 w-full"
-                  >
-                    <Calendar className="h-4 w-4" />
-                    Coach Availability
-                  </Button>
-                </div>
+                <h1 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-foreground">
+                  {playerData?.name || "Player Portal"}
+                </h1>
 
-                <div className="hidden md:flex items-center gap-4 text-muted-foreground">
+                <div className="flex items-center gap-4 text-muted-foreground">
                   {playerData?.position && (
                     <span className="text-lg">{playerData.position}</span>
                   )}
@@ -1148,34 +1163,6 @@ const Dashboard = () => {
                     </>
                   )}
                 </div>
-              </div>
-              <div className="flex items-center gap-2">
-                {playerData?.id && (
-                  <NotificationSettings playerId={playerData.id} />
-                )}
-                
-                {/* Coach Availability - Desktop/Tablet Only (below notification bell) */}
-                <div className="hidden md:block">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setCoachAvailabilityOpen(true)}
-                    className="flex items-center gap-2"
-                  >
-                    <Calendar className="h-4 w-4" />
-                    Availability
-                  </Button>
-                </div>
-
-                <Button 
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => window.location.reload()}
-                  className="text-gold hover:text-gold/80"
-                  title="Refresh app"
-                >
-                  <RefreshCw className="h-5 w-5" />
-                </Button>
               </div>
             </div>
           </div>
