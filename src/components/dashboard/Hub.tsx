@@ -198,7 +198,12 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
   }, [playerData, marketingImages]);
 
   const autoplayPlugin = React.useRef(
-    Autoplay({ delay: 15000, stopOnInteraction: false, stopOnMouseEnter: false })
+    Autoplay({ 
+      delay: 15000, 
+      stopOnInteraction: false, 
+      stopOnMouseEnter: false,
+      stopOnFocusIn: false
+    })
   );
   
   const fadePlugin = React.useRef(Fade());
