@@ -8,17 +8,18 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Progress } from "@/components/ui/progress";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { NotificationPermission } from "@/components/NotificationPermission";
 import { NotificationSettings } from "@/components/NotificationSettings";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { toast } from "sonner";
-import { FileText, Play, Download, Upload, ChevronDown, Trash2, Lock, Calendar, Trophy, TrendingUp, Eye, EyeOff, ChevronUp, ChevronDown as ChevronDownIcon, List, RefreshCw } from "lucide-react";
+import { FileText, Play, Download, Upload, ChevronDown, Trash2, Lock, Calendar, Trophy, TrendingUp, Eye, EyeOff, ChevronUp, ChevronDown as ChevronDownIcon, List, RefreshCw, CheckCircle2 } from "lucide-react";
 import { ClipNameEditor } from "@/components/ClipNameEditor";
 import { addDays, format, parseISO, startOfWeek, endOfWeek, isWithinInterval } from "date-fns";
 import { SEO } from "@/components/SEO";
 import { createPerformanceReportSlug } from "@/lib/urlHelpers";
-import { PlaylistManager } from "@/components/PlaylistManager";
+import { PlaylistContent } from "@/components/PlaylistContent";
 import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
 import { OfflineContentManager } from "@/components/OfflineContentManager";
 
@@ -94,7 +95,6 @@ const Dashboard = () => {
   const [highlightsData, setHighlightsData] = useState<any>({ matchHighlights: [], bestClips: [] });
   const [fileUploadProgress, setFileUploadProgress] = useState<Record<string, number>>({});
   const [otherAnalyses, setOtherAnalyses] = useState<any[]>([]);
-  const [playlistManagerOpen, setPlaylistManagerOpen] = useState(false);
   const [videoPlayerOpen, setVideoPlayerOpen] = useState(false);
   const [currentVideoUrl, setCurrentVideoUrl] = useState<string>("");
   const [currentVideoName, setCurrentVideoName] = useState<string>("");
@@ -2259,33 +2259,20 @@ const Dashboard = () => {
                         </TabsContent>
                         
                         <TabsContent value="best">
-                          {!highlightsData.bestClips || highlightsData.bestClips.length === 0 ? (
-                            <div className="py-8 text-center space-y-4">
-                              <p className="text-muted-foreground">No best clips available yet.</p>
-                              <Button 
-                                onClick={() => {
-                                  const input = document.createElement('input');
-                                  input.type = 'file';
-                                  input.multiple = true;
-                                  input.accept = 'video/mp4,video/quicktime,video/x-msvideo,video/*';
-                                  input.onchange = (e: any) => {
-                                    const files = e.target.files;
-                                    if (files && files.length > 0) {
-                                      handleFileUpload(files);
-                                    }
-                                  };
-                                  input.click();
-                                }}
-                                variant="outline"
-                              >
-                                <Upload className="w-4 h-4 mr-2" />
-                                Upload Clip{uploadProgress !== null ? 'ping...' : 's'}
-                              </Button>
-                            </div>
-                          ) : (
-                            <div className="space-y-4">
-                              <div className="flex justify-between items-center gap-2">
-                                <div className="flex gap-2">
+                          <Tabs defaultValue="clips" className="w-full">
+                            <TabsList className="grid w-full grid-cols-2 mb-6">
+                              <TabsTrigger value="clips" className="font-bebas uppercase">
+                                All Clips
+                              </TabsTrigger>
+                              <TabsTrigger value="playlists" className="font-bebas uppercase">
+                                Playlists
+                              </TabsTrigger>
+                            </TabsList>
+
+                            <TabsContent value="clips">
+                              {!highlightsData.bestClips || highlightsData.bestClips.length === 0 ? (
+                                <div className="py-8 text-center space-y-4">
+                                  <p className="text-muted-foreground">No best clips available yet.</p>
                                   <Button 
                                     onClick={() => {
                                       const input = document.createElement('input');
@@ -2301,226 +2288,207 @@ const Dashboard = () => {
                                       input.click();
                                     }}
                                     variant="outline"
-                                    size="sm"
                                   >
                                     <Upload className="w-4 h-4 mr-2" />
                                     Upload Clip{uploadProgress !== null ? 'ping...' : 's'}
                                   </Button>
-                                  <Button
-                                    onClick={() => setPlaylistManagerOpen(true)}
-                                    variant="default"
-                                    size="sm"
-                                  >
-                                    <List className="w-4 h-4 mr-2" />
-                                    Playlists
-                                  </Button>
                                 </div>
-                                {uploadProgress !== null && (
-                                  <div className="text-sm text-muted-foreground">
-                                    Uploading: {uploadProgress}%
+                              ) : (
+                                <div className="space-y-4">
+                                  <div className="flex justify-between items-center gap-2">
+                                    <Button 
+                                      onClick={() => {
+                                        const input = document.createElement('input');
+                                        input.type = 'file';
+                                        input.multiple = true;
+                                        input.accept = 'video/mp4,video/quicktime,video/x-msvideo,video/*';
+                                        input.onchange = (e: any) => {
+                                          const files = e.target.files;
+                                          if (files && files.length > 0) {
+                                            handleFileUpload(files);
+                                          }
+                                        };
+                                        input.click();
+                                      }}
+                                      variant="outline"
+                                      size="sm"
+                                    >
+                                      <Upload className="w-4 h-4 mr-2" />
+                                      Upload Clip{uploadProgress !== null ? 'ping...' : 's'}
+                                    </Button>
+                                    {uploadProgress !== null && (
+                                      <div className="text-sm text-muted-foreground">
+                                        Uploading: {uploadProgress}%
+                                      </div>
+                                    )}
                                   </div>
-                                )}
-                              </div>
-                              <div className="space-y-3">
-                              {highlightsData.bestClips?.map((highlight: any, index: number) => (
-                                <div 
-                                   key={highlight.id || highlight.uploadId || highlight.videoUrl || `${highlight.name}-${index}`}
-                                   className="border rounded-lg p-4 bg-card"
-                                 >
-                                    <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4">
-                                       {/* Video Preview Thumbnail */}
-                                       {!highlight.uploading && !highlight.uploadFailed && highlight.videoUrl && (
-                                         <div 
-                                           className="relative w-full md:w-32 h-20 md:h-20 flex-shrink-0 rounded overflow-hidden bg-black cursor-pointer group"
-                                           onClick={() => {
-                                             setCurrentVideoUrl(highlight.videoUrl);
-                                             setCurrentVideoName(highlight.name || `Clip ${index + 1}`);
-                                             setVideoPlayerOpen(true);
-                                           }}
-                                         >
-                                           <video
-                                             src={highlight.videoUrl}
-                                             className="w-full h-full object-cover"
-                                             preload="metadata"
-                                             playsInline
-                                             muted
-                                             onLoadStart={(e) => {
-                                               const video = e.target as HTMLVideoElement;
-                                               video.currentTime = 0.1; // Seek to show first frame
-                                             }}
-                                             onError={(e) => {
-                                               console.error('Video thumbnail error:', e);
-                                               const video = e.target as HTMLVideoElement;
-                                               video.style.display = 'none';
-                                             }}
-                                           />
-                                           <div className="absolute inset-0 bg-black/30 group-hover:bg-black/50 transition-colors flex items-center justify-center">
-                                             <Play className="w-6 md:w-8 h-6 md:h-8 text-white drop-shadow-lg" />
-                                           </div>
-                                         </div>
-                                       )}
-                                        
-                                        <div className="flex items-center justify-between gap-2 flex-1 min-w-0">
-                                          <div className="flex items-center gap-2 flex-1 min-w-0">
-                                           <span className="text-lg md:text-xl font-bold text-primary">{index + 1}.</span>
-                                           <div className="flex-1 min-w-0">
-                                       {highlight.uploading ? (
-                                         <div className="space-y-2">
-                                           <div className="flex items-center justify-between">
-                                             <p className="font-bebas text-lg uppercase tracking-wider truncate">{highlight.name}</p>
-                                             {fileUploadProgress[highlight.uploadId] !== undefined && (
-                                               <span className="text-sm text-muted-foreground">
-                                                 {fileUploadProgress[highlight.uploadId]}%
-                                               </span>
-                                             )}
-                                           </div>
-                                           {fileUploadProgress[highlight.uploadId] !== undefined && (
-                                             <div className="w-full bg-secondary rounded-full h-2 overflow-hidden">
-                                               <div 
-                                                 className="bg-primary h-full transition-all duration-300"
-                                                 style={{ width: `${fileUploadProgress[highlight.uploadId]}%` }}
+                                  <div className="space-y-3">
+                                  {highlightsData.bestClips?.map((highlight: any, index: number) => (
+                                    <div 
+                                       key={highlight.id || highlight.uploadId || highlight.videoUrl || `${highlight.name}-${index}`}
+                                       className="border rounded-lg p-4 bg-card"
+                                     >
+                                        <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4">
+                                           {/* Video Preview Thumbnail */}
+                                           {!highlight.uploading && !highlight.uploadFailed && highlight.videoUrl && (
+                                             <div 
+                                               className="relative w-full md:w-32 h-20 md:h-20 flex-shrink-0 rounded overflow-hidden bg-black cursor-pointer group"
+                                               onClick={() => {
+                                                 setCurrentVideoUrl(highlight.videoUrl);
+                                                 setCurrentVideoName(highlight.name || `Clip ${index + 1}`);
+                                                 setVideoPlayerOpen(true);
+                                               }}
+                                             >
+                                               <video
+                                                 src={highlight.videoUrl}
+                                                 className="w-full h-full object-cover"
+                                                 preload="metadata"
+                                                 playsInline
+                                                 muted
+                                                 onLoadStart={(e) => {
+                                                   const video = e.target as HTMLVideoElement;
+                                                   video.currentTime = 0.1; // Seek to show first frame
+                                                 }}
+                                                 onError={(e) => {
+                                                   console.error('Video thumbnail error:', e);
+                                                   const video = e.target as HTMLVideoElement;
+                                                   video.style.display = 'none';
+                                                 }}
                                                />
+                                               <div className="absolute inset-0 bg-black/30 group-hover:bg-black/50 transition-colors flex items-center justify-center">
+                                                 <Play className="w-6 md:w-8 h-6 md:h-8 text-white drop-shadow-lg" />
+                                               </div>
                                              </div>
                                            )}
-                                         </div>
-                                       ) : highlight.justCompleted ? (
-                                         <div className="space-y-2">
-                                           <div className="flex items-center justify-between">
-                                             <p className="font-bebas text-lg uppercase tracking-wider truncate">{highlight.name}</p>
-                                             <span className="text-sm text-green-600 font-semibold">
-                                               Uploaded ✓
-                                             </span>
+                                            
+                                            <div className="flex items-center justify-between gap-2 flex-1 min-w-0">
+                                              <div className="flex items-center gap-2 flex-1 min-w-0">
+                                               <span className="text-lg md:text-xl font-bold text-primary">{index + 1}.</span>
+                                               <div className="flex-1 min-w-0">
+                                           {highlight.uploading ? (
+                                             <div className="space-y-2">
+                                               <div className="flex items-center justify-between">
+                                                 <p className="font-bebas text-lg uppercase tracking-wider truncate">{highlight.name}</p>
+                                                 {fileUploadProgress[highlight.uploadId] !== undefined && (
+                                                   <span className="text-sm text-muted-foreground">
+                                                     {fileUploadProgress[highlight.uploadId]}%
+                                                   </span>
+                                                 )}
+                                               </div>
+                                               {fileUploadProgress[highlight.uploadId] !== undefined && (
+                                                 <Progress value={fileUploadProgress[highlight.uploadId]} className="h-2" />
+                                               )}
+                                             </div>
+                                           ) : highlight.uploadFailed ? (
+                                             <div className="space-y-1">
+                                               <p className="font-bebas text-lg uppercase tracking-wider text-destructive truncate">{highlight.name}</p>
+                                               <p className="text-xs text-destructive">Upload failed. Please try again.</p>
+                                               <Button 
+                                                 variant="destructive" 
+                                                 size="sm"
+                                                 onClick={() => handleDeleteClip(highlight.name, highlight.videoUrl)}
+                                               >
+                                                 Remove
+                                               </Button>
+                                             </div>
+                                           ) : highlight.justCompleted ? (
+                                             <div className="flex items-center gap-2">
+                                               <p className="font-bebas text-lg uppercase tracking-wider truncate">{highlight.name}</p>
+                                               <CheckCircle2 className="w-5 h-5 text-green-500" />
+                                             </div>
+                                           ) : (
+                                             <ClipNameEditor
+                                               initialName={highlight.name || `Clip ${index + 1}`}
+                                               videoUrl={highlight.videoUrl}
+                                                onRename={(newName) => handleRenameClip(highlight.name, newName, highlight.videoUrl)}
+                                              />
+                                             )}
+                                             </div>
                                            </div>
-                                           <div className="w-full bg-secondary rounded-full h-2 overflow-hidden">
-                                             <div 
-                                               className="bg-green-600 h-full transition-all duration-300"
-                                               style={{ width: '100%' }}
-                                             />
-                                           </div>
-                                         </div>
-                                       ) : highlight.uploadFailed ? (
-                                         <div className="space-y-2">
-                                           <div className="flex items-center justify-between gap-2">
-                                             <p className="font-bebas text-lg uppercase tracking-wider truncate text-destructive">{highlight.name}</p>
+                                             {!highlight.uploading && !highlight.uploadFailed && !highlight.justCompleted && (
+                                               <div className="flex gap-1 md:gap-2 flex-shrink-0">
+                                                <Button 
+                                                 variant="outline" 
+                                                 size="sm"
+                                                 onClick={() => {
+                                                   setCurrentVideoUrl(highlight.videoUrl);
+                                                   setCurrentVideoName(highlight.name || `Clip ${index + 1}`);
+                                                   setVideoPlayerOpen(true);
+                                                 }}
+                                                 className="h-8 px-2"
+                                               >
+                                                 <Play className="w-4 h-4" />
+                                                 <span className="hidden sm:inline ml-2">Watch</span>
+                                               </Button>
                                              <Button 
-                                               variant="destructive" 
+                                               variant="ghost" 
+                                                size="sm"
+                                                onClick={async () => {
+                                                  try {
+                                                    const videoUrl = highlight.videoUrl || highlight.url;
+                                                    const fileName = highlight.name || highlight.title || `clip-${index + 1}`;
+                                                    
+                                                    // Check if mobile device
+                                                    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+                                                    
+                                                    if (isMobile) {
+                                                      // For mobile, add download parameter to force download in new tab
+                                                      toast.info("Starting download...");
+                                                      const downloadUrl = `${videoUrl}${videoUrl.includes('?') ? '&' : '?'}download=${encodeURIComponent(fileName)}`;
+                                                      window.open(downloadUrl, '_blank');
+                                                    } else {
+                                                      // For desktop, use blob download
+                                                      toast.info("Starting download...");
+                                                      
+                                                      const response = await fetch(videoUrl);
+                                                      const blob = await response.blob();
+                                                      const url = window.URL.createObjectURL(blob);
+                                                      const a = document.createElement('a');
+                                                      a.style.display = 'none';
+                                                      a.href = url;
+                                                      a.download = `${fileName}.mp4`;
+                                                      document.body.appendChild(a);
+                                                      a.click();
+                                                      window.URL.revokeObjectURL(url);
+                                                      document.body.removeChild(a);
+                                                      
+                                                      toast.success("Download started");
+                                                    }
+                                                  } catch (error) {
+                                                    console.error('Error downloading video:', error);
+                                                    toast.error("Failed to download video. Please try again.");
+                                                  }
+                                                }}
+                                                className="h-8 px-2"
+                                               >
+                                                 <Download className="w-4 h-4" />
+                                               </Button>
+                                             <Button 
+                                               variant="ghost" 
                                                size="sm"
-                                               onClick={() => handleRetryUpload(highlight.uploadId, highlight.file)}
-                                               className="h-8 px-3"
+                                               onClick={() => handleDeleteClip(highlight.name, highlight.videoUrl)}
+                                               className="text-destructive hover:text-destructive h-8 px-2"
                                              >
-                                               <Upload className="w-4 h-4 mr-2" />
-                                               Retry
+                                               <Trash2 className="w-4 h-4" />
                                              </Button>
-                                           </div>
-                                           <p className="text-sm text-destructive">Upload failed: {highlight.error || 'Unknown error'}</p>
-                                         </div>
-                                       ) : (
-                                         <ClipNameEditor
-                                           initialName={highlight.name}
-                                           videoUrl={highlight.videoUrl}
-                                            onRename={(newName) => handleRenameClip(highlight.name, newName, highlight.videoUrl)}
-                                          />
-                                         )}
-                                         </div>
-                                       </div>
-                                         {!highlight.uploading && !highlight.uploadFailed && !highlight.justCompleted && (
-                                           <div className="flex gap-1 md:gap-2 flex-shrink-0">
-                                            <Button 
-                                             variant="outline" 
-                                             size="sm"
-                                             onClick={() => {
-                                               setCurrentVideoUrl(highlight.videoUrl);
-                                               setCurrentVideoName(highlight.name || `Clip ${index + 1}`);
-                                               setVideoPlayerOpen(true);
-                                             }}
-                                             className="h-8 px-2"
-                                           >
-                                             <Play className="w-4 h-4" />
-                                             <span className="hidden sm:inline ml-2">Watch</span>
-                                           </Button>
-                                         <Button 
-                                           variant="ghost" 
-                                            size="sm"
-                                            onClick={async () => {
-                                              try {
-                                                const videoUrl = highlight.videoUrl || highlight.url;
-                                                const fileName = highlight.name || highlight.title || `clip-${index + 1}`;
-                                                
-                                                // Check if mobile device
-                                                const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-                                                
-                                                if (isMobile) {
-                                                  // For mobile, add download parameter to force download in new tab
-                                                  toast.info("Starting download...");
-                                                  const downloadUrl = `${videoUrl}${videoUrl.includes('?') ? '&' : '?'}download=${encodeURIComponent(fileName)}`;
-                                                  window.open(downloadUrl, '_blank');
-                                                } else {
-                                                  // For desktop, use blob download
-                                                  toast.info("Starting download...");
-                                                  
-                                                  const response = await fetch(videoUrl);
-                                                  const blob = await response.blob();
-                                                  
-                                                  const blobUrl = window.URL.createObjectURL(blob);
-                                                  const link = document.createElement('a');
-                                                  link.href = blobUrl;
-                                                  link.download = fileName;
-                                                  document.body.appendChild(link);
-                                                  link.click();
-                                                  document.body.removeChild(link);
-                                                  
-                                                  window.URL.revokeObjectURL(blobUrl);
-                                                  
-                                                  toast.success("Download completed");
-                                                }
-                                              } catch (error) {
-                                                console.error('Download error:', error);
-                                                toast.error("Download failed");
-                                              }
-                                            }}
-                                           className="h-8 px-2"
-                                         >
-                                           <Download className="w-4 h-4" />
-                                         </Button>
-                                         <div className="flex flex-col gap-0.5">
-                                           <Button 
-                                             variant="ghost" 
-                                             size="sm"
-                                             onClick={() => handleReorderClip(index, 'up')}
-                                             disabled={index === 0}
-                                             className="h-4 px-1 py-0 hover:bg-muted"
-                                             title="Move up"
-                                           >
-                                             <ChevronUp className="w-3 h-3" />
-                                           </Button>
-                                           <Button 
-                                             variant="ghost" 
-                                             size="sm"
-                                             onClick={() => handleReorderClip(index, 'down')}
-                                             disabled={index === highlightsData.bestClips.length - 1}
-                                             className="h-4 px-1 py-0 hover:bg-muted"
-                                             title="Move down"
-                                           >
-                                             <ChevronDownIcon className="w-3 h-3" />
-                                           </Button>
-                                         </div>
-                                         <Button 
-                                           variant="ghost" 
-                                           size="sm"
-                                           onClick={() => handleDeleteClip(highlight.name, highlight.videoUrl)}
-                                           className="text-destructive hover:text-destructive h-8 px-2"
-                                         >
-                                           <Trash2 className="w-4 h-4" />
-                                         </Button>
+                                            </div>
+                                          )}
                                         </div>
-                                      )}
-                                    </div>
+                                      </div>
+                                     </div>
+                                   ))}
                                   </div>
-                                 </div>
-                               ))}
-                              </div>
-                            </div>
-                          )}
+                                </div>
+                              )}
+                            </TabsContent>
+
+                            <TabsContent value="playlists">
+                              <PlaylistContent
+                                playerData={playerData}
+                                availableClips={highlightsData.bestClips || []}
+                              />
+                            </TabsContent>
+                          </Tabs>
                         </TabsContent>
                       </Tabs>
                 </CardContent>
@@ -2661,14 +2629,6 @@ const Dashboard = () => {
           </div>
         </DialogContent>
       </Dialog>
-
-      {playlistManagerOpen && (
-        <PlaylistManager
-          playerData={playerData}
-          availableClips={highlightsData.bestClips || []}
-          onClose={() => setPlaylistManagerOpen(false)}
-        />
-      )}
 
       {/* Video Player Dialog */}
       <Dialog open={videoPlayerOpen} onOpenChange={setVideoPlayerOpen}>
