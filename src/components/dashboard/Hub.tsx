@@ -399,36 +399,9 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
                       }}
                       formatter={(value: any, name: any, props: any) => {
                         const data = props.payload;
-                        const stats = data.strikerStats;
                         return [
                           <div key="tooltip" className="space-y-2 min-w-[200px]">
                             <div className="font-bold text-white text-base mb-1">{data.result} {data.opponent}</div>
-                            {data.minutesPlayed && (
-                              <div className="text-xs text-white/60">Minutes Played: {data.minutesPlayed}</div>
-                            )}
-                            {stats && (
-                              <div className="space-y-1 pt-2 border-t border-white/20">
-                                <div className="text-xs font-semibold text-white/80">Advanced Stats (per 90):</div>
-                                {stats.xG_adj_per90 !== undefined && (
-                                  <div className="text-xs text-white/70">xG (adj): {stats.xG_adj_per90.toFixed(2)}</div>
-                                )}
-                                {stats.xA_adj_per90 !== undefined && (
-                                  <div className="text-xs text-white/70">xA (adj): {stats.xA_adj_per90.toFixed(2)}</div>
-                                )}
-                                {stats.xGChain_per90 !== undefined && (
-                                  <div className="text-xs text-white/70">xGChain: {stats.xGChain_per90.toFixed(2)}</div>
-                                )}
-                                {stats.movement_in_behind_xC_per90 !== undefined && (
-                                  <div className="text-xs text-white/70">Movement In Behind xC: {stats.movement_in_behind_xC_per90.toFixed(2)}</div>
-                                )}
-                                {stats.movement_to_feet_xC_per90 !== undefined && (
-                                  <div className="text-xs text-white/70">Movement To Feet xC: {stats.movement_to_feet_xC_per90.toFixed(2)}</div>
-                                )}
-                                {stats.crossing_movement_xC_per90 !== undefined && (
-                                  <div className="text-xs text-white/70">Crossing Movement xC: {stats.crossing_movement_xC_per90.toFixed(2)}</div>
-                                )}
-                              </div>
-                            )}
                             <div className="text-xs text-[hsl(43,49%,61%)] mt-2 pt-2 border-t border-white/20">Click to view full report</div>
                           </div>,
                           ""
