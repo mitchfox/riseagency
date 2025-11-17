@@ -3,6 +3,7 @@ import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { WorkWithUsDialog } from "@/components/WorkWithUsDialog";
+import { IntroModal } from "@/components/IntroModal";
 import { SEO } from "@/components/SEO";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -24,10 +25,16 @@ interface NewsArticle {
 }
 
 const Index = () => {
+  const [showIntroModal, setShowIntroModal] = useState(false);
   const [newsArticles, setNewsArticles] = useState<NewsArticle[]>([]);
   const [insideAccessArticles, setInsideAccessArticles] = useState<NewsArticle[]>([]);
 
   useEffect(() => {
+    const hasSeenIntro = localStorage.getItem("intro-modal-seen");
+    if (!hasSeenIntro) {
+      setShowIntroModal(true);
+    }
+
     // Fetch regular news articles
     const fetchNews = async () => {
       const { data, error } = await supabase
@@ -70,6 +77,7 @@ const Index = () => {
         image="/og-preview-home.png"
         url="/"
       />
+      <IntroModal open={showIntroModal} onOpenChange={setShowIntroModal} />
       <Header />
       <div className="bg-background min-h-screen">
         {/* Hero Banner Section */}
