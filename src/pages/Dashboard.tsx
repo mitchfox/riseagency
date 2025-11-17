@@ -2876,8 +2876,8 @@ const Dashboard = () => {
                                 </div>
                               ) : (
                                 <div className="space-y-4">
-                                  <div className="flex justify-between items-center gap-2">
-                                    <Button 
+                                  <div className="flex justify-between items-center gap-2 container mx-auto px-4">
+                                    <Button
                                       onClick={() => {
                                         const input = document.createElement('input');
                                         input.type = 'file';

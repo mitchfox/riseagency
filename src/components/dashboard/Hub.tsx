@@ -654,6 +654,13 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
         )}
       </div>
 
+      {/* Gold Separator Line */}
+      {dailyAphorism && (
+        <div className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw]">
+          <div className="border-t-2 border-gold"></div>
+        </div>
+      )}
+
       {/* Daily Aphorism */}
       {dailyAphorism && (
         <div className="mt-8 px-4 md:px-0">
