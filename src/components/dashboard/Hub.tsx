@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Calendar, TrendingUp, ArrowRight } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, LabelList } from "recharts";
 import { format, parseISO, startOfWeek, endOfWeek, isWithinInterval, addDays } from "date-fns";
 import { Link } from "react-router-dom";
 
@@ -270,6 +270,11 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
                     {chartData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={getR90Color(entry.score)} />
                     ))}
+                    <LabelList 
+                      dataKey="score" 
+                      position="top" 
+                      style={{ fontSize: '10px', fill: 'hsl(var(--foreground))' }}
+                    />
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
