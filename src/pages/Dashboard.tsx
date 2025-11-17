@@ -1169,7 +1169,7 @@ const Dashboard = () => {
         </div>
       )}
 
-      <main className="pb-12">
+      <main className="pb-0">
         {/* Notification Permission - with padding */}
         <div className="container mx-auto max-w-6xl px-4 md:px-6 mb-0">
           <NotificationPermission />

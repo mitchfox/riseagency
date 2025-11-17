@@ -130,7 +130,8 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
       opponent: a.opponent || "Unknown",
       score: a.r90_score,
       result: a.result || "",
-      displayLabel: `${a.opponent || "Unknown"}${a.result ? ` (${a.result})` : ""}`
+      displayLabel: `${a.opponent || "Unknown"}${a.result ? ` (${a.result})` : ""}`,
+      analysisId: a.id
     }));
 
   // Calculate max Y-axis value
@@ -400,6 +401,7 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
                         <div key="tooltip" className="space-y-1">
                           <div className="font-bold">R90: {value}</div>
                           <div className="text-xs text-muted-foreground">{data.result}</div>
+                          <div className="text-xs text-primary mt-1">Click to view full report</div>
                         </div>,
                         ""
                       ];
@@ -410,9 +412,18 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
                     dataKey="score" 
                     radius={[8, 8, 0, 0]}
                     className="cursor-pointer"
+                    onClick={(data: any) => {
+                      if (data && data.analysisId) {
+                        window.location.href = `/performance-report/match-${data.analysisId}`;
+                      }
+                    }}
                   >
                     {chartData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={getR90Color(entry.score)} />
+                      <Cell 
+                        key={`cell-${index}`} 
+                        fill={getR90Color(entry.score)}
+                        className="hover:opacity-80 transition-opacity"
+                      />
                     ))}
                     <LabelList 
                       dataKey="score" 
