@@ -1343,13 +1343,15 @@ const Dashboard = () => {
                 </TabsList>
 
                 <TabsContent value="performance">
-                  <Card>
+                  <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 border-t-[2px] border-t-[hsl(43,49%,61%)] border-b-0">
                     <CardHeader marble>
-                      <CardTitle className="font-heading tracking-tight">
-                        Performance Analysis
-                      </CardTitle>
+                      <div className="container mx-auto px-4">
+                        <CardTitle className="font-heading tracking-tight">
+                          Performance Analysis
+                        </CardTitle>
+                      </div>
                     </CardHeader>
-                    <CardContent className="space-y-4">
+                    <CardContent className="container mx-auto px-4 space-y-4">
                       {analyses.length === 0 ? (
                         <div className="py-8"></div>
                       ) : (
@@ -1454,13 +1456,15 @@ const Dashboard = () => {
                 </TabsContent>
 
                 <TabsContent value="concepts">
-                  <Card>
+                  <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 border-t-[2px] border-t-[hsl(43,49%,61%)] border-b-0">
                     <CardHeader marble>
-                      <CardTitle className="font-heading tracking-tight">
-                        Concepts
-                      </CardTitle>
+                      <div className="container mx-auto px-4">
+                        <CardTitle className="font-heading tracking-tight">
+                          Concepts
+                        </CardTitle>
+                      </div>
                     </CardHeader>
-                    <CardContent className="space-y-6">
+                    <CardContent className="container mx-auto px-4 space-y-6">
                       {concepts.length === 0 ? (
                         <div className="py-8">
                           <p className="text-center text-muted-foreground">No concepts available yet.</p>
@@ -1514,7 +1518,7 @@ const Dashboard = () => {
 
 
                 <TabsContent value="form">
-                  <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0">
+                  <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 border-t-[2px] border-t-[hsl(43,49%,61%)] border-b-0">
                     <CardHeader marble>
                       <div className="container mx-auto px-4">
                         <CardTitle className="font-heading tracking-tight">
@@ -1780,13 +1784,15 @@ const Dashboard = () => {
                 </TabsContent>
 
                 <TabsContent value="other">
-                  <Card>
+                  <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 border-t-[2px] border-t-[hsl(43,49%,61%)] border-b-0">
                     <CardHeader marble>
-                      <CardTitle className="font-heading tracking-tight">
-                        Other Analysis
-                      </CardTitle>
+                      <div className="container mx-auto px-4">
+                        <CardTitle className="font-heading tracking-tight">
+                          Other Analysis
+                        </CardTitle>
+                      </div>
                     </CardHeader>
-                    <CardContent className="space-y-3 md:space-y-4">
+                    <CardContent className="container mx-auto px-4 space-y-3 md:space-y-4">
                       {otherAnalyses.length === 0 ? (
                         <div className="py-8">
                           <p className="text-center text-muted-foreground text-sm md:text-base">No other analysis available yet.</p>
@@ -1847,9 +1853,9 @@ const Dashboard = () => {
             </TabsContent>
 
             <TabsContent value="physical" className="space-y-6">
-              <Card className="bg-card">
+              <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 border-b-0">
                 <CardHeader marble>
-                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                  <div className="container mx-auto px-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                     <CardTitle className="font-heading tracking-tight">
                       Physical Programming
                     </CardTitle>
@@ -1869,7 +1875,7 @@ const Dashboard = () => {
                     )}
                   </div>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="container mx-auto px-4">
                   {programs.length === 0 ? (
                     <div className="py-8"></div>
                   ) : (
@@ -2501,13 +2507,15 @@ const Dashboard = () => {
                 </TabsList>
 
                 <TabsContent value="invoices">
-                  <Card>
+                  <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 border-t-[2px] border-t-[hsl(43,49%,61%)] border-b-0">
                     <CardHeader marble>
-                      <CardTitle className="font-heading tracking-tight">
-                        Invoices
-                      </CardTitle>
+                      <div className="container mx-auto px-4">
+                        <CardTitle className="font-heading tracking-tight">
+                          Invoices
+                        </CardTitle>
+                      </div>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="container mx-auto px-4">
                       {invoices.length === 0 ? (
                         <div className="py-8 text-center text-muted-foreground">
                           No invoices available yet.
@@ -2586,13 +2594,15 @@ const Dashboard = () => {
                 </TabsContent>
 
                 <TabsContent value="contracts">
-                  <Card>
+                  <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 border-t-[2px] border-t-[hsl(43,49%,61%)] border-b-0">
                     <CardHeader marble>
-                      <CardTitle className="font-heading tracking-tight">
-                        Contracts
-                      </CardTitle>
+                      <div className="container mx-auto px-4">
+                        <CardTitle className="font-heading tracking-tight">
+                          Contracts
+                        </CardTitle>
+                      </div>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="container mx-auto px-4">
                       <div className="py-8 text-center text-muted-foreground">
                         No contracts available yet.
                       </div>
@@ -2601,13 +2611,15 @@ const Dashboard = () => {
                 </TabsContent>
 
                 <TabsContent value="other">
-                  <Card>
+                  <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 border-t-[2px] border-t-[hsl(43,49%,61%)] border-b-0">
                     <CardHeader marble>
-                      <CardTitle className="font-heading tracking-tight">
-                        Other Documents
-                      </CardTitle>
+                      <div className="container mx-auto px-4">
+                        <CardTitle className="font-heading tracking-tight">
+                          Other Documents
+                        </CardTitle>
+                      </div>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="container mx-auto px-4">
                       <div className="py-8 text-center text-muted-foreground">
                         No other documents available yet.
                       </div>
@@ -2618,13 +2630,15 @@ const Dashboard = () => {
             </TabsContent>
 
             <TabsContent value="highlights" className="space-y-6">
-              <Card>
+              <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 border-t-[2px] border-t-[hsl(43,49%,61%)] border-b-0">
                 <CardHeader marble>
-                  <CardTitle className="font-heading tracking-tight">
-                    Highlights
-                  </CardTitle>
+                  <div className="container mx-auto px-4">
+                    <CardTitle className="font-heading tracking-tight">
+                      Highlights
+                    </CardTitle>
+                  </div>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="container mx-auto px-4">
                   <Tabs defaultValue="best" className="w-full" key="highlights-tabs">
                     <TabsList className="grid w-full grid-cols-2 mb-6">
                       <TabsTrigger value="match" className="font-bebas uppercase">
@@ -2970,13 +2984,15 @@ const Dashboard = () => {
             </TabsContent>
 
             <TabsContent value="updates" className="space-y-6">
-              <Card>
+              <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 border-t-[2px] border-t-[hsl(43,49%,61%)] border-b-0">
                 <CardHeader marble>
-                  <CardTitle className="font-heading tracking-tight">
-                    Updates
-                  </CardTitle>
+                  <div className="container mx-auto px-4">
+                    <CardTitle className="font-heading tracking-tight">
+                      Updates
+                    </CardTitle>
+                  </div>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="container mx-auto px-4">
                   <Tabs defaultValue="general" className="w-full">
                     <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 gap-2 mb-6 bg-muted h-auto p-2">
                       <TabsTrigger value="general" className="font-bebas uppercase text-sm">
