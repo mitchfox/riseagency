@@ -509,18 +509,12 @@ const Staff = () => {
       locked: false
     },
     {
-      id: 'schedule',
-      title: 'Schedule',
-      icon: Calendar,
-      sections: [{ id: 'schedule', title: 'Schedule', icon: Calendar }],
-      locked: false
-    },
-    {
       id: 'coaching',
       title: 'Coaching & Management',
       icon: Dumbbell,
       locked: isMarketeer,
       sections: [
+        { id: 'schedule', title: 'Schedule', icon: Calendar },
         { id: 'players', title: 'Player Management', icon: UserCog },
         { id: 'coaching', title: 'Coaching Database', icon: Dumbbell },
         { id: 'analysis', title: 'Analysis Writer', icon: LineChart },
@@ -823,7 +817,15 @@ const Staff = () => {
                 </CardHeader>
                 <CardContent>
                   {expandedSection === 'overview' && <StaffOverview isAdmin={isAdmin} />}
-                  {expandedSection === 'schedule' && <StaffAvailabilityManagement isAdmin={isAdmin} />}
+                  {expandedSection === 'schedule' && (
+                    <div className="space-y-6">
+                      <div className="mb-6">
+                        <h3 className="text-xl font-semibold mb-2">Staff Availability</h3>
+                        <p className="text-sm text-muted-foreground">Manage your availability hours and view the team schedule</p>
+                      </div>
+                      <StaffAvailabilityManagement isAdmin={isAdmin} />
+                    </div>
+                  )}
                   {expandedSection === 'playerlist' && <PlayerList isAdmin={isAdmin} />}
                   {expandedSection === 'players' && <PlayerManagement isAdmin={isAdmin} />}
                   {expandedSection === 'recruitment' && <RecruitmentManagement isAdmin={isAdmin} />}
