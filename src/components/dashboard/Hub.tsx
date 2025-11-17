@@ -1,7 +1,7 @@
 import * as React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Calendar, TrendingUp, ArrowRight } from "lucide-react";
+import { Calendar, TrendingUp, ArrowRight, Trophy } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, LabelList } from "recharts";
 import { format, parseISO, startOfWeek, endOfWeek, isWithinInterval, addDays } from "date-fns";
 import { Link } from "react-router-dom";
@@ -32,10 +32,11 @@ interface HubProps {
   analyses: PlayerAnalysis[];
   playerData: any;
   onNavigateToAnalysis: () => void;
+  onNavigateToForm?: () => void;
   onNavigateToSession?: (sessionKey: string) => void;
 }
 
-export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNavigateToSession }: HubProps) => {
+export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNavigateToForm, onNavigateToSession }: HubProps) => {
   const [marketingImages, setMarketingImages] = React.useState<string[]>([]);
   
   // Fetch marketing gallery images for this player
@@ -363,7 +364,7 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
               <Button 
                 variant="ghost" 
                 size="sm"
-                onClick={onNavigateToAnalysis}
+                onClick={onNavigateToForm || onNavigateToAnalysis}
                 className="flex items-center justify-center gap-1 text-sm text-primary hover:text-black hover:bg-primary h-10"
               >
                 See All
@@ -503,33 +504,50 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
               <p className="text-sm text-muted-foreground">No performance data yet</p>
             )}
 
-            {/* Recent Fixtures List */}
+            {/* Performance Section - Recent Fixtures */}
             {recentAnalyses.length > 0 && (
-              <div className="space-y-3 pt-4 border-t border-border">
-                {recentAnalyses.map((analysis) => (
-                  <Link
-                    key={analysis.id}
-                    to={`/performance-report/match-${analysis.id}`}
-                    className="block border-l-2 border-primary pl-3 py-2 hover:bg-accent/5 transition-colors bg-[url('/smudged-marble-header.png')] bg-cover bg-center bg-no-repeat rounded"
+              <div className="border-t border-border pt-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <Trophy className="h-5 w-5" />
+                    <h3 className="font-heading tracking-tight text-lg">Performance</h3>
+                  </div>
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={onNavigateToAnalysis}
+                    className="flex items-center justify-center gap-1 text-sm text-primary hover:text-black hover:bg-primary h-10"
                   >
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1">
-                        <div className="font-medium text-sm">{analysis.opponent}</div>
-                        <div className="text-xs text-muted-foreground">
-                          {format(new Date(analysis.analysis_date), "MMM dd, yyyy")}
+                    See All
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </div>
+                <div className="space-y-3">
+                  {recentAnalyses.map((analysis) => (
+                    <Link
+                      key={analysis.id}
+                      to={`/performance-report/match-${analysis.id}`}
+                      className="block border-l-2 border-primary pl-3 py-2 hover:bg-accent/5 transition-colors bg-[url('/smudged-marble-header.png')] bg-cover bg-center bg-no-repeat rounded"
+                    >
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1">
+                          <div className="font-medium text-sm">{analysis.opponent}</div>
+                          <div className="text-xs text-muted-foreground">
+                            {format(new Date(analysis.analysis_date), "MMM dd, yyyy")}
+                          </div>
                         </div>
+                        {analysis.r90_score != null && (
+                          <div 
+                            className="px-3 py-1 rounded text-black text-sm font-bold mt-[3px] -ml-1 mr-2"
+                            style={{ backgroundColor: getR90Color(analysis.r90_score) }}
+                          >
+                            R90: {analysis.r90_score}
+                          </div>
+                        )}
                       </div>
-                      {analysis.r90_score != null && (
-                        <div 
-                          className="px-3 py-1 rounded text-black text-sm font-bold mt-[3px] -ml-1 mr-2"
-                          style={{ backgroundColor: getR90Color(analysis.r90_score) }}
-                        >
-                          R90: {analysis.r90_score}
-                        </div>
-                      )}
-                    </div>
-                  </Link>
-                ))}
+                    </Link>
+                  ))}
+                </div>
               </div>
             )}
             </div>

@@ -97,6 +97,7 @@ const Dashboard = () => {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [updates, setUpdates] = useState<Update[]>([]);
   const [activeTab, setActiveTab] = useState("hub");
+  const [activeAnalysisTab, setActiveAnalysisTab] = useState("performance");
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [highlightsData, setHighlightsData] = useState<any>({ matchHighlights: [], bestClips: [] });
@@ -1267,7 +1268,14 @@ const Dashboard = () => {
             programs={programs} 
             analyses={analyses} 
             playerData={playerData}
-            onNavigateToAnalysis={() => setActiveTab("analysis")}
+            onNavigateToAnalysis={() => {
+              setActiveTab("analysis");
+              setActiveAnalysisTab("performance");
+            }}
+            onNavigateToForm={() => {
+              setActiveTab("analysis");
+              setActiveAnalysisTab("form");
+            }}
             onNavigateToSession={(sessionKey) => {
               setActiveTab("physical");
               setSelectedSession(sessionKey);
@@ -1313,7 +1321,7 @@ const Dashboard = () => {
             )}
 
             <TabsContent value="analysis" className="space-y-6">
-              <Tabs defaultValue="performance" className="w-full">
+              <Tabs value={activeAnalysisTab} onValueChange={setActiveAnalysisTab} className="w-full">
                 <TabsList className="grid w-full grid-cols-1 sm:grid-cols-5 gap-2 mb-4 bg-muted h-auto p-2">
                   <TabsTrigger value="performance" className="font-bebas uppercase text-sm sm:text-base">
                     Performance Analysis
