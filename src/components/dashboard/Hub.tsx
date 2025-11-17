@@ -9,6 +9,7 @@ import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious
 import Autoplay from "embla-carousel-autoplay";
 import Fade from "embla-carousel-fade";
 import { supabase } from "@/integrations/supabase/client";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface PlayerProgram {
   id: string;
@@ -38,6 +39,7 @@ interface HubProps {
 
 export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNavigateToForm, onNavigateToSession }: HubProps) => {
   const [marketingImages, setMarketingImages] = React.useState<string[]>([]);
+  const [selectedMetric, setSelectedMetric] = React.useState<string>("r90");
   
   // Fetch marketing gallery images for this player
   React.useEffect(() => {
@@ -127,14 +129,30 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
     }
   };
 
-  // Prepare R90 chart data - showing opponent and result
+  // Get metric value based on selected metric
+  const getMetricValue = (analysis: PlayerAnalysis) => {
+    if (selectedMetric === "r90") return analysis.r90_score;
+    if (!analysis.striker_stats) return null;
+    
+    const statKey = selectedMetric === "xg" ? "xG" :
+                    selectedMetric === "xa" ? "xA" :
+                    selectedMetric === "xgchain" ? "xGChain" :
+                    selectedMetric === "xgbuildup" ? "xGBuildup" :
+                    selectedMetric === "shots" ? "Shots" :
+                    selectedMetric === "shotsontarget" ? "ShotsOnTarget" : null;
+    
+    return statKey ? analysis.striker_stats[statKey] : null;
+  };
+
+  // Prepare chart data - showing opponent and selected metric
   const chartData = analyses
-    .filter(a => a.r90_score != null)
+    .map(a => ({ ...a, metricValue: getMetricValue(a) }))
+    .filter(a => a.metricValue != null)
     .sort((a, b) => new Date(a.analysis_date).getTime() - new Date(b.analysis_date).getTime())
     .slice(-8)
     .map(a => ({
       opponent: a.opponent || "Unknown",
-      score: a.r90_score,
+      score: a.metricValue!,
       result: a.result || "",
       displayLabel: `${a.opponent || "Unknown"}${a.result ? ` (${a.result})` : ""}`,
       analysisId: a.id,
@@ -144,8 +162,22 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
 
   // Calculate max Y-axis value
   const maxScore = chartData.length > 0 
-    ? Math.ceil(Math.max(...chartData.map(d => d.score)))
+    ? Math.ceil(Math.max(...chartData.map(d => d.score)) * 1.1) // 10% padding
     : 4;
+  
+  // Get metric label
+  const getMetricLabel = () => {
+    switch(selectedMetric) {
+      case "r90": return "R90";
+      case "xg": return "xG";
+      case "xa": return "xA";
+      case "xgchain": return "xGChain";
+      case "xgbuildup": return "xGBuildup";
+      case "shots": return "Shots";
+      case "shotsontarget": return "Shots on Target";
+      default: return "R90";
+    }
+  };
 
   // Function to get R90 color based on score - matches Performance Analysis colors
   const getR90Color = (score: number) => {
@@ -365,6 +397,20 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
               <div className="flex items-center gap-2">
                 <TrendingUp className="h-5 w-5" />
                 <CardTitle className="font-heading tracking-tight ml-[9px] mt-[1px]">Form</CardTitle>
+                <Select value={selectedMetric} onValueChange={setSelectedMetric}>
+                  <SelectTrigger className="w-[140px] h-8 ml-4 bg-background/50 border-border/50">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-background border-border z-50">
+                    <SelectItem value="r90">R90</SelectItem>
+                    <SelectItem value="xg">xG</SelectItem>
+                    <SelectItem value="xa">xA</SelectItem>
+                    <SelectItem value="xgchain">xGChain</SelectItem>
+                    <SelectItem value="xgbuildup">xGBuildup</SelectItem>
+                    <SelectItem value="shots">Shots</SelectItem>
+                    <SelectItem value="shotsontarget">Shots on Target</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <Button 
                 variant="ghost" 
@@ -433,13 +479,17 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
                       formatter={(value: any, name: any, props: any) => {
                         const data = props.payload;
                         const stats = data.strikerStats;
+                        const metricLabel = getMetricLabel();
                         return [
                           <div key="tooltip" className="space-y-2 min-w-[200px]">
                             <div className="font-bold text-white text-base mb-1">{data.result} {data.opponent}</div>
+                            <div className="text-sm text-white font-bold" style={{ color: getR90Color(data.score) }}>
+                              {metricLabel}: {data.score.toFixed(2)}
+                            </div>
                             {data.minutesPlayed && (
                               <div className="text-xs text-white/60">Minutes Played: {data.minutesPlayed}</div>
                             )}
-                            {stats && (
+                            {stats && selectedMetric === "r90" && (
                               <div className="space-y-1 pt-2 border-t border-white/20">
                                 <div className="text-xs font-semibold text-white/80">Advanced Stats (per 90):</div>
                                 {stats.xG_adj_per90 !== undefined && (
