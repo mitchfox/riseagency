@@ -105,6 +105,7 @@ const Dashboard = () => {
   const [currentVideoName, setCurrentVideoName] = useState<string>("");
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [coachAvailabilityOpen, setCoachAvailabilityOpen] = useState(false);
+  const [headerOpacity, setHeaderOpacity] = useState(1);
 
   // Initialize push notifications with player ID
   usePushNotifications(playerData?.id);
@@ -596,6 +597,27 @@ const Dashboard = () => {
     };
   }, [navigate]);
 
+  // Handle header fade on scroll
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollY = window.scrollY;
+      const fadeStart = 0;
+      const fadeEnd = 200;
+      
+      if (scrollY <= fadeStart) {
+        setHeaderOpacity(1);
+      } else if (scrollY >= fadeEnd) {
+        setHeaderOpacity(0);
+      } else {
+        const opacity = 1 - (scrollY - fadeStart) / (fadeEnd - fadeStart);
+        setHeaderOpacity(opacity);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   const checkAuth = async () => {
     try {
       // Check both localStorage and sessionStorage for maximum persistence
@@ -1076,8 +1098,11 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Header with Logo */}
-      <header className="fixed top-0 left-0 right-0 z-40 bg-background/80 backdrop-blur-md border-b border-border">
-        <div className="container mx-auto px-4">
+      <header 
+        className="fixed top-0 left-0 right-0 z-40 bg-background/80 backdrop-blur-md border-b border-border transition-opacity duration-300 pointer-events-none"
+        style={{ opacity: headerOpacity }}
+      >
+        <div className="container mx-auto px-4 pointer-events-auto">
           <div className="flex items-center justify-center h-16">
             <img 
               src="/RISEWhite.png"
@@ -1089,8 +1114,11 @@ const Dashboard = () => {
       </header>
 
       {/* Subheader with Options */}
-      <div className="fixed top-16 left-0 right-0 z-30 bg-background/60 backdrop-blur-sm border-b border-border/50">
-        <div className="container mx-auto px-4">
+      <div 
+        className="fixed top-16 left-0 right-0 z-30 bg-background/60 backdrop-blur-sm border-b border-border/50 transition-opacity duration-300 pointer-events-none"
+        style={{ opacity: headerOpacity }}
+      >
+        <div className="container mx-auto px-4 pointer-events-auto">
           <div className="flex items-center justify-center gap-2 h-12">
             {playerData?.id && (
               <NotificationSettings playerId={playerData.id} />
