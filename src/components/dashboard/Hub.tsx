@@ -23,6 +23,8 @@ interface PlayerAnalysis {
   opponent: string;
   r90_score: number;
   result: string;
+  minutes_played?: number;
+  striker_stats?: any;
 }
 
 interface HubProps {
@@ -134,7 +136,9 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
       score: a.r90_score,
       result: a.result || "",
       displayLabel: `${a.opponent || "Unknown"}${a.result ? ` (${a.result})` : ""}`,
-      analysisId: a.id
+      analysisId: a.id,
+      minutesPlayed: a.minutes_played,
+      strikerStats: a.striker_stats
     }));
 
   // Calculate max Y-axis value
@@ -376,15 +380,15 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
             <div className="pt-[5px] space-y-6">
             {/* Chart */}
             {chartData.length > 0 ? (
-              <div className="w-full max-w-[1200px] mx-auto">
-                <ResponsiveContainer width="100%" height={500}>
-                  <BarChart data={chartData} margin={{ bottom: 20 }}>
+              <div className="w-full px-2">
+                <ResponsiveContainer width="100%" height={550}>
+                  <BarChart data={chartData} margin={{ bottom: 40, left: 10, right: 10 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                     <XAxis 
                       dataKey="opponent"
                       stroke="hsl(var(--muted-foreground))"
                       fontSize={10}
-                      height={140}
+                      height={160}
                       interval={0}
                       tick={(props) => {
                         const { x, y, payload } = props;
@@ -408,7 +412,7 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
                               dy={16} 
                               textAnchor="end"
                               fill="hsl(var(--muted-foreground))"
-                              fontSize={11}
+                              fontSize={10}
                               transform={`rotate(-90, 0, 46)`}
                             >
                               {payload.value}
@@ -441,11 +445,39 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
                       }}
                       formatter={(value: any, name: any, props: any) => {
                         const data = props.payload;
+                        const stats = data.strikerStats;
                         return [
-                          <div key="tooltip" className="space-y-2">
-                            <div className="font-bold text-white text-base">R90 Score: {value}</div>
-                            <div className="text-sm text-white/80">{data.opponent}</div>
-                            <div className="text-sm text-white/80">Result: {data.result}</div>
+                          <div key="tooltip" className="space-y-2 min-w-[200px]">
+                            <div className="font-bold text-white text-base border-b border-white/20 pb-2">
+                              {data.opponent} - {data.result}
+                            </div>
+                            <div className="font-bold text-[hsl(43,49%,61%)] text-lg">R90: {value}</div>
+                            {data.minutesPlayed && (
+                              <div className="text-xs text-white/60">Minutes Played: {data.minutesPlayed}</div>
+                            )}
+                            {stats && (
+                              <div className="space-y-1 pt-2 border-t border-white/20">
+                                <div className="text-xs font-semibold text-white/80">Advanced Stats (per 90):</div>
+                                {stats.xG_adj_per90 !== undefined && (
+                                  <div className="text-xs text-white/70">xG (adj): {stats.xG_adj_per90.toFixed(2)}</div>
+                                )}
+                                {stats.xA_adj_per90 !== undefined && (
+                                  <div className="text-xs text-white/70">xA (adj): {stats.xA_adj_per90.toFixed(2)}</div>
+                                )}
+                                {stats.xGChain_per90 !== undefined && (
+                                  <div className="text-xs text-white/70">xGChain: {stats.xGChain_per90.toFixed(2)}</div>
+                                )}
+                                {stats.movement_in_behind_xC_per90 !== undefined && (
+                                  <div className="text-xs text-white/70">Movement In Behind xC: {stats.movement_in_behind_xC_per90.toFixed(2)}</div>
+                                )}
+                                {stats.movement_to_feet_xC_per90 !== undefined && (
+                                  <div className="text-xs text-white/70">Movement To Feet xC: {stats.movement_to_feet_xC_per90.toFixed(2)}</div>
+                                )}
+                                {stats.crossing_movement_xC_per90 !== undefined && (
+                                  <div className="text-xs text-white/70">Crossing Movement xC: {stats.crossing_movement_xC_per90.toFixed(2)}</div>
+                                )}
+                              </div>
+                            )}
                             <div className="text-xs text-[hsl(43,49%,61%)] mt-2 pt-2 border-t border-white/20">Click to view full report</div>
                           </div>,
                           ""
