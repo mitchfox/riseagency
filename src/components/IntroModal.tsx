@@ -20,7 +20,6 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
   const [starIndex, setStarIndex] = useState(0);
   const [starPlayers, setStarPlayers] = useState<any[]>([]);
   const [newsItems, setNewsItems] = useState<any[]>([]);
-  const [isClosing, setIsClosing] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -71,18 +70,9 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
 
   const handleDialogChange = (newOpen: boolean) => {
     if (!newOpen) {
-      // Start fade out animation
-      setIsClosing(true);
-      
-      // After 4 seconds, actually close the modal
-      setTimeout(() => {
-        localStorage.setItem("intro-modal-seen", "true");
-        onOpenChange(false);
-        setIsClosing(false);
-      }, 4000);
-    } else {
-      onOpenChange(newOpen);
+      localStorage.setItem("intro-modal-seen", "true");
     }
+    onOpenChange(newOpen);
   };
 
   const handleEnterSite = () => {
@@ -101,10 +91,6 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
         <DialogContent 
           className="max-w-lg w-full p-0 border-0 bg-transparent [&>button]:hidden overflow-hidden sm:max-w-lg max-w-[95vw]"
           aria-describedby="intro-modal-description"
-          style={{
-            transition: 'opacity 4s ease-out',
-            opacity: isClosing ? 0 : 1
-          }}
         >
           <div className="relative w-full">
             {/* Main Image - Natural size, no stretching */}

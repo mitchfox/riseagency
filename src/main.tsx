@@ -38,15 +38,15 @@ setTimeout(() => {
   const splash = document.getElementById('loading-splash');
   const currentPath = window.location.pathname;
   
-  // Only keep splash for dashboard and staff pages
+  // Only show splash for dashboard and staff pages
   if (splash && !currentPath.includes('/dashboard') && !currentPath.includes('/staff')) {
     splash.classList.add('hidden');
     setTimeout(() => splash.remove(), 500);
   } else if (splash) {
-    // For dashboard/staff, add fade out after 4 seconds
+    // For dashboard/staff, show for 1 second then fade out over 4 seconds
     setTimeout(() => {
       splash.classList.add('hidden');
       setTimeout(() => splash.remove(), 4000);
-    }, 0);
+    }, 1000);
   }
 }, 100);
