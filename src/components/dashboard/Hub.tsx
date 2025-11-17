@@ -372,69 +372,87 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
             <div className="pt-[5px] space-y-6">
             {/* Chart */}
             {chartData.length > 0 ? (
-              <div className="flex justify-center">
-                <ResponsiveContainer width="95%" height={320}>
-                  <BarChart data={chartData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                    <XAxis 
-                      dataKey="opponent" 
-                      stroke="hsl(var(--muted-foreground))"
-                      fontSize={11}
-                      angle={-90}
-                      textAnchor="end"
-                      height={100}
-                      interval={0}
-                    />
-                    <YAxis 
-                      stroke="hsl(var(--muted-foreground))"
-                      fontSize={12}
-                      domain={[0, maxScore]}
-                      ticks={Array.from({ length: maxScore + 1 }, (_, i) => i)}
-                    />
-                    <Tooltip 
-                      contentStyle={{
-                        backgroundColor: "hsl(var(--card))",
-                        border: "1px solid hsl(var(--border))",
-                        borderRadius: "8px"
-                      }}
-                      formatter={(value: any, name: any, props: any) => {
-                        const data = props.payload;
-                        return [
-                          <div key="tooltip" className="space-y-1">
-                            <div className="font-bold">R90: {value}</div>
-                            <div className="text-xs text-muted-foreground">{data.result}</div>
-                            <div className="text-xs text-primary mt-1">Click to view full report</div>
-                          </div>,
-                          ""
-                        ];
-                      }}
-                      cursor={{ fill: 'hsl(var(--accent))' }}
-                    />
-                    <Bar 
-                      dataKey="score" 
-                      radius={[8, 8, 0, 0]}
-                      className="cursor-pointer"
-                      onClick={(data: any) => {
-                        if (data && data.analysisId) {
-                          window.location.href = `/performance-report/match-${data.analysisId}`;
-                        }
-                      }}
-                    >
-                      {chartData.map((entry, index) => (
-                        <Cell 
-                          key={`cell-${index}`} 
-                          fill={getR90Color(entry.score)}
-                          className="hover:opacity-80 transition-opacity"
-                        />
-                      ))}
-                      <LabelList 
-                        dataKey="score" 
-                        position="top" 
-                        style={{ fontSize: '12px', fill: 'hsl(var(--foreground))', fontWeight: 'bold' }}
+              <div className="flex justify-center w-full">
+                <div style={{ width: '90%', maxWidth: '900px' }}>
+                  <ResponsiveContainer width="100%" height={350}>
+                    <BarChart data={chartData} margin={{ bottom: 90 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                      <XAxis 
+                        dataKey="resultLabel"
+                        stroke="#FFFFFF"
+                        fontSize={13}
+                        fontWeight="bold"
+                        height={20}
+                        tick={{ fill: '#FFFFFF' }}
+                        interval={0}
                       />
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
+                      <XAxis 
+                        dataKey="opponent"
+                        xAxisId="opponent"
+                        stroke="hsl(var(--muted-foreground))"
+                        fontSize={11}
+                        angle={-90}
+                        textAnchor="end"
+                        height={90}
+                        interval={0}
+                        axisLine={false}
+                        tickLine={false}
+                      />
+                      <YAxis 
+                        stroke="hsl(var(--muted-foreground))"
+                        fontSize={12}
+                        domain={[0, maxScore]}
+                        ticks={Array.from({ length: maxScore + 1 }, (_, i) => i)}
+                      />
+                      <Tooltip 
+                        contentStyle={{
+                          backgroundColor: "#000000",
+                          border: "1px solid hsl(43, 49%, 61%)",
+                          borderRadius: "8px",
+                          opacity: 1
+                        }}
+                        labelStyle={{ color: "#FFFFFF" }}
+                        itemStyle={{ color: "#FFFFFF" }}
+                        formatter={(value: any, name: any, props: any) => {
+                          const data = props.payload;
+                          return [
+                            <div key="tooltip" className="space-y-1 text-white">
+                              <div className="font-bold">R90: {value}</div>
+                              <div className="text-xs">{data.opponent}</div>
+                              <div className="text-xs">{data.result}</div>
+                              <div className="text-xs text-gold mt-1">Click to view full report</div>
+                            </div>,
+                            ""
+                          ];
+                        }}
+                        cursor={{ fill: 'hsl(var(--accent))' }}
+                      />
+                      <Bar 
+                        dataKey="score" 
+                        radius={[8, 8, 0, 0]}
+                        className="cursor-pointer"
+                        onClick={(data: any) => {
+                          if (data && data.analysisId) {
+                            window.location.href = `/performance-report/match-${data.analysisId}`;
+                          }
+                        }}
+                      >
+                        {chartData.map((entry, index) => (
+                          <Cell 
+                            key={`cell-${index}`} 
+                            fill={getR90Color(entry.score)}
+                            className="hover:opacity-80 transition-opacity"
+                          />
+                        ))}
+                        <LabelList 
+                          dataKey="score" 
+                          position="top" 
+                          style={{ fontSize: '12px', fill: 'hsl(var(--foreground))', fontWeight: 'bold' }}
+                        />
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
               </div>
             ) : (
               <p className="text-sm text-muted-foreground">No performance data yet</p>
