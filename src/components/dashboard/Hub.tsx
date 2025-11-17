@@ -517,8 +517,8 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
                       radius={[8, 8, 0, 0]}
                       isAnimationActive={chartInView}
                       animationBegin={0}
-                      animationDuration={800}
-                      animationEasing="ease-out"
+                      animationDuration={1400}
+                      animationEasing="ease-in-out"
                       filter="url(#barShine)"
                     >
                       {chartData.map((entry, index) => {
@@ -528,9 +528,10 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
                             key={`cell-${index}`} 
                             fill={baseColor}
                             style={{
-                              animation: chartInView ? `barSlideUp 0.6s ease-out ${index * 0.15}s both` : 'none',
-                              filter: 'brightness(1.1) drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3))',
-                              background: `linear-gradient(180deg, rgba(255,255,255,0.2) 0%, transparent 50%, rgba(0,0,0,0.2) 100%)`
+                              animation: chartInView ? `barSlideUp 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) ${index * 0.25}s both` : 'none',
+                              filter: 'brightness(1.15) drop-shadow(0 6px 12px rgba(0, 0, 0, 0.4)) drop-shadow(0 0 20px rgba(255, 255, 255, 0.1))',
+                              background: `linear-gradient(180deg, rgba(255,255,255,0.3) 0%, transparent 40%, rgba(0,0,0,0.3) 100%)`,
+                              boxShadow: 'inset 0 2px 4px rgba(255, 255, 255, 0.3), inset 0 -2px 4px rgba(0, 0, 0, 0.3)'
                             }}
                           />
                         );
