@@ -380,9 +380,9 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
           </CardHeader>
           <CardContent className="pb-6">
             {chartData.length > 0 ? (
-              <div className="w-full mt-4" style={{ height: '300px' }}>
+              <div className="w-full mt-4 pl-4" style={{ height: '300px' }}>
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={chartData} margin={{ top: 20, bottom: 10, left: 10, right: 10 }}>
+                  <BarChart data={chartData} margin={{ top: 20, bottom: 10, left: 20, right: 10 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                     <XAxis 
                       dataKey="opponent"
@@ -471,25 +471,17 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
                     <Bar 
                       dataKey="score" 
                       radius={[8, 8, 0, 0]}
-                      className="cursor-pointer"
-                      onClick={(data: any) => {
-                        if (data && data.analysisId) {
-                          window.location.href = `/performance-report/match-${data.analysisId}`;
-                        }
-                      }}
                     >
                       {chartData.map((entry, index) => (
                         <Cell 
                           key={`cell-${index}`} 
                           fill={getR90Color(entry.score)}
-                          className="hover:opacity-80 transition-opacity"
                         />
                       ))}
                       <LabelList 
                         dataKey="score" 
-                        position="top" 
-                        offset={8}
-                        style={{ fontSize: '14px', fill: 'hsl(var(--foreground))', fontWeight: '700' }}
+                        position="center" 
+                        style={{ fontSize: '16px', fill: '#ffffff', fontWeight: '700' }}
                         formatter={(value: number) => getR90Grade(value).grade}
                       />
                     </Bar>
