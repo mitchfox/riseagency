@@ -502,22 +502,22 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
                       wrapperStyle={{ pointerEvents: 'auto' }}
                     />
                     <defs>
-                      <linearGradient id="barGloss" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="rgba(255, 255, 255, 0.35)" />
-                        <stop offset="30%" stopColor="rgba(255, 255, 255, 0.15)" />
-                        <stop offset="70%" stopColor="rgba(255, 255, 255, 0)" />
-                        <stop offset="100%" stopColor="rgba(0, 0, 0, 0.25)" />
-                      </linearGradient>
                       {chartData.map((entry, index) => {
                         const baseColor = getR90Color(entry.score);
-                        return (
-                          <linearGradient key={`gradient-${index}`} id={`barGradient-${index}`} x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor={baseColor} stopOpacity="1" />
-                            <stop offset="0%" stopColor="rgba(255, 255, 255, 0.4)" stopOpacity="0.4" />
-                            <stop offset="50%" stopColor={baseColor} stopOpacity="1" />
-                            <stop offset="100%" stopColor={baseColor} stopOpacity="0.8" />
-                          </linearGradient>
-                        );
+                        // Parse HSL color to manipulate it
+                        const hslMatch = baseColor.match(/hsl\((\d+),\s*(\d+)%,\s*(\d+)%\)/);
+                        if (hslMatch) {
+                          const [, h, s, l] = hslMatch;
+                          const lightness = parseInt(l);
+                          return (
+                            <linearGradient key={`gradient-${index}`} id={`barGradient-${index}`} x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="0%" stopColor={`hsl(${h}, ${s}%, ${Math.min(lightness + 15, 95)}%)`} />
+                              <stop offset="50%" stopColor={baseColor} />
+                              <stop offset="100%" stopColor={`hsl(${h}, ${s}%, ${Math.max(lightness - 10, 10)}%)`} />
+                            </linearGradient>
+                          );
+                        }
+                        return null;
                       })}
                       <filter id="barShine">
                         <feGaussianBlur in="SourceAlpha" stdDeviation="3"/>
@@ -561,7 +561,7 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
                             fill={`url(#barGradient-${index})`}
                             style={{
                               animation: !hasAnimated.current ? `barSlideUp 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) ${index * 0.25}s both` : 'none',
-                              filter: 'brightness(1.1) drop-shadow(0 6px 12px rgba(0, 0, 0, 0.4)) drop-shadow(0 0 20px rgba(255, 255, 255, 0.1))'
+                              filter: 'drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3))'
                             }}
                           />
                         );
