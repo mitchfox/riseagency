@@ -2,7 +2,7 @@ import * as React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Calendar, TrendingUp, ArrowRight, Trophy, X } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, LabelList, ReferenceLine } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, LabelList, ReferenceLine, Rectangle } from "recharts";
 import { format, parseISO, startOfWeek, endOfWeek, isWithinInterval, addDays } from "date-fns";
 import { Link } from "react-router-dom";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
@@ -511,39 +511,16 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
                           const lightness = parseInt(l);
                           return (
                             <linearGradient key={`gradient-${index}`} id={`barGradient-${index}`} x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="0%" stopColor={`hsl(${h}, ${s}%, ${Math.min(lightness + 15, 95)}%)`} />
-                              <stop offset="50%" stopColor={baseColor} />
-                              <stop offset="100%" stopColor={`hsl(${h}, ${s}%, ${Math.max(lightness - 10, 10)}%)`} />
+                              <stop offset="0%" stopColor={`hsl(${h}, ${s}%, ${Math.min(lightness + 20, 90)}%)`} />
+                              <stop offset="25%" stopColor={`hsl(${h}, ${s}%, ${Math.min(lightness + 10, 85)}%)`} />
+                              <stop offset="75%" stopColor={baseColor} />
+                              <stop offset="100%" stopColor={`hsl(${h}, ${s}%, ${Math.max(lightness - 15, 5)}%)`} />
                             </linearGradient>
                           );
                         }
                         return null;
                       })}
-                      <filter id="barShine">
-                        <feGaussianBlur in="SourceAlpha" stdDeviation="3"/>
-                        <feOffset dx="0" dy="-2" result="offsetblur"/>
-                        <feComponentTransfer>
-                          <feFuncA type="linear" slope="0.5"/>
-                        </feComponentTransfer>
-                        <feMerge>
-                          <feMergeNode/>
-                          <feMergeNode in="SourceGraphic"/>
-                        </feMerge>
-                      </filter>
                     </defs>
-                    <ReferenceLine 
-                      y={averageScore} 
-                      stroke="hsl(43, 49%, 61%)"
-                      strokeDasharray="4 4"
-                      strokeWidth={1.5}
-                      label={{
-                        value: `Avg: ${averageScore.toFixed(2)}`,
-                        position: 'right',
-                        fill: 'hsl(43, 49%, 61%)',
-                        fontSize: 11,
-                        fontWeight: 'bold'
-                      }}
-                    />
                     <Bar
                       dataKey="score" 
                       radius={[8, 8, 0, 0]}
@@ -551,8 +528,29 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
                       animationBegin={0}
                       animationDuration={1400}
                       animationEasing="ease-in-out"
-                      filter="url(#barShine)"
                       onMouseEnter={() => setTooltipVisible(true)}
+                      background={(props: any) => {
+                        const { x, y, width, height } = props;
+                        // Calculate the Y position for the average line
+                        const chartHeight = height;
+                        const yScale = chartHeight / maxScore;
+                        const lineY = y + chartHeight - (averageScore * yScale);
+                        
+                        return (
+                          <g>
+                            <line
+                              x1={x}
+                              y1={lineY}
+                              x2={x + width}
+                              y2={lineY}
+                              stroke="hsl(43, 49%, 61%)"
+                              strokeWidth={1.5}
+                              strokeDasharray="4 4"
+                              opacity={0.6}
+                            />
+                          </g>
+                        );
+                      }}
                     >
                       {chartData.map((entry, index) => {
                         return (
@@ -561,7 +559,7 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
                             fill={`url(#barGradient-${index})`}
                             style={{
                               animation: !hasAnimated.current ? `barSlideUp 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) ${index * 0.25}s both` : 'none',
-                              filter: 'drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3))'
+                              filter: 'drop-shadow(0 4px 6px rgba(0, 0, 0, 0.2))'
                             }}
                           />
                         );
