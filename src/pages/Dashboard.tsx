@@ -26,7 +26,7 @@ import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
 import { OfflineContentManager } from "@/components/OfflineContentManager";
 import { CacheManager } from "@/lib/cacheManager";
 import { Hub } from "@/components/dashboard/Hub";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Cell, LabelList } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Cell, LabelList, ReferenceLine } from "recharts";
 import { Link } from "react-router-dom";
 import { getR90Grade, getXGGrade, getXAGrade, getRegainsGrade, getInterceptionsGrade } from "@/lib/gradeCalculations";
 
@@ -1689,6 +1689,76 @@ const Dashboard = () => {
                           ? Math.ceil(Math.max(...chartData.map(d => d.score)) * 1.1) // 10% padding
                           : 4;
 
+                        // Function to get grade boundaries for reference lines
+                        const getGradeBoundaries = () => {
+                          switch(selectedFormMetric) {
+                            case "r90":
+                              return [
+                                { value: 0, grade: 'U', color: 'hsl(0, 84%, 30%)' },
+                                { value: 0.2, grade: 'D', color: 'hsl(0, 84%, 45%)' },
+                                { value: 0.4, grade: 'C-', color: 'hsl(0, 84%, 60%)' },
+                                { value: 0.6, grade: 'C', color: 'hsl(25, 75%, 45%)' },
+                                { value: 0.8, grade: 'C+', color: 'hsl(40, 85%, 50%)' },
+                                { value: 1.0, grade: 'B-', color: 'hsl(60, 70%, 50%)' },
+                                { value: 1.2, grade: 'B', color: 'hsl(142, 76%, 36%)' },
+                                { value: 1.4, grade: 'B+', color: 'hsl(142, 70%, 40%)' },
+                                { value: 1.6, grade: 'A-', color: 'hsl(142, 65%, 45%)' },
+                                { value: 1.8, grade: 'A', color: 'hsl(142, 70%, 50%)' },
+                                { value: 2.0, grade: 'A+', color: 'hsl(142, 76%, 55%)' },
+                              ];
+                            case "xg":
+                              return [
+                                { value: 0.05, grade: 'D', color: 'hsl(0, 84%, 45%)' },
+                                { value: 0.1, grade: 'C-', color: 'hsl(0, 84%, 60%)' },
+                                { value: 0.15, grade: 'C', color: 'hsl(25, 75%, 45%)' },
+                                { value: 0.2, grade: 'C+', color: 'hsl(40, 85%, 50%)' },
+                                { value: 0.3, grade: 'B-', color: 'hsl(60, 70%, 50%)' },
+                                { value: 0.35, grade: 'B', color: 'hsl(142, 76%, 36%)' },
+                                { value: 0.4, grade: 'B+', color: 'hsl(142, 70%, 40%)' },
+                                { value: 0.5, grade: 'A-', color: 'hsl(142, 65%, 45%)' },
+                                { value: 0.75, grade: 'A', color: 'hsl(142, 70%, 50%)' },
+                                { value: 1.0, grade: 'A+', color: 'hsl(142, 76%, 55%)' },
+                              ];
+                            case "xa":
+                              return [
+                                { value: 0.04, grade: 'D', color: 'hsl(0, 84%, 45%)' },
+                                { value: 0.08, grade: 'C-', color: 'hsl(0, 84%, 60%)' },
+                                { value: 0.13, grade: 'C', color: 'hsl(25, 75%, 45%)' },
+                                { value: 0.18, grade: 'C+', color: 'hsl(40, 85%, 50%)' },
+                                { value: 0.25, grade: 'B-', color: 'hsl(60, 70%, 50%)' },
+                                { value: 0.3, grade: 'B', color: 'hsl(142, 76%, 36%)' },
+                                { value: 0.4, grade: 'B+', color: 'hsl(142, 70%, 40%)' },
+                                { value: 0.5, grade: 'A-', color: 'hsl(142, 65%, 45%)' },
+                                { value: 0.6, grade: 'A', color: 'hsl(142, 70%, 50%)' },
+                                { value: 0.75, grade: 'A+', color: 'hsl(142, 76%, 55%)' },
+                              ];
+                            case "regains":
+                              return [
+                                { value: 1, grade: 'D', color: 'hsl(0, 84%, 45%)' },
+                                { value: 2, grade: 'C-', color: 'hsl(0, 84%, 60%)' },
+                                { value: 3, grade: 'C', color: 'hsl(25, 75%, 45%)' },
+                                { value: 4, grade: 'C+', color: 'hsl(40, 85%, 50%)' },
+                                { value: 5, grade: 'B-', color: 'hsl(60, 70%, 50%)' },
+                                { value: 6, grade: 'B', color: 'hsl(142, 76%, 36%)' },
+                                { value: 7, grade: 'B+', color: 'hsl(142, 70%, 40%)' },
+                                { value: 8, grade: 'A-', color: 'hsl(142, 65%, 45%)' },
+                                { value: 9, grade: 'A', color: 'hsl(142, 70%, 50%)' },
+                                { value: 10, grade: 'A+', color: 'hsl(142, 76%, 55%)' },
+                              ];
+                            case "interceptions":
+                              return [
+                                { value: 0, grade: 'D', color: 'hsl(0, 84%, 45%)' },
+                                { value: 1, grade: 'C-', color: 'hsl(0, 84%, 60%)' },
+                                { value: 2, grade: 'C+', color: 'hsl(40, 85%, 50%)' },
+                                { value: 3, grade: 'B', color: 'hsl(142, 76%, 36%)' },
+                                { value: 4, grade: 'A', color: 'hsl(142, 70%, 50%)' },
+                                { value: 5, grade: 'A+', color: 'hsl(142, 76%, 55%)' },
+                              ];
+                            default:
+                              return [];
+                          }
+                        };
+
                         // Function to get color based on metric and score
                         const getMetricColor = (score: number) => {
                           switch(selectedFormMetric) {
@@ -1828,7 +1898,20 @@ const Dashboard = () => {
                                   }}
                                   cursor={{ fill: 'hsl(var(--accent))', opacity: 0.3 }}
                                 />
-                                <Bar 
+                                {/* Grade boundary reference lines */}
+                                {getGradeBoundaries()
+                                  .filter(boundary => boundary.value <= maxScore)
+                                  .map((boundary, index) => (
+                                    <ReferenceLine
+                                      key={`grade-${index}`}
+                                      y={boundary.value}
+                                      stroke={boundary.color}
+                                      strokeDasharray="3 3"
+                                      strokeWidth={1}
+                                      strokeOpacity={0.4}
+                                    />
+                                  ))}
+                                <Bar
                                   dataKey="score" 
                                   radius={[8, 8, 0, 0]}
                                   className="cursor-pointer"
