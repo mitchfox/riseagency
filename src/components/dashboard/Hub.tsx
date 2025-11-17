@@ -230,7 +230,7 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
   const chartData = analyses
     .filter(a => a.r90_score != null)
     .sort((a, b) => new Date(a.analysis_date).getTime() - new Date(b.analysis_date).getTime())
-    .slice(-8)
+    .slice(-5)
     .map(a => ({
       opponent: a.opponent || "Unknown",
       score: a.r90_score,
@@ -260,10 +260,10 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
     return "hsl(43, 49%, 61%)"; // gold: RISE gold for 2.5+
   };
 
-  // Get latest 3 analyses
+  // Get latest 5 analyses
   const recentAnalyses = analyses
     .sort((a, b) => new Date(b.analysis_date).getTime() - new Date(a.analysis_date).getTime())
-    .slice(0, 3);
+    .slice(0, 5);
 
   // Extract video thumbnails from highlights and marketing gallery images
   const videoThumbnails = React.useMemo(() => {
