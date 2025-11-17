@@ -71,6 +71,7 @@ interface ScoutingReport {
   notes: string | null;
   skill_evaluations: any; // Json type from database
   auto_generated_review: string | null;
+  linked_player_id: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -96,6 +97,7 @@ export const ScoutingCentre = ({ open, onOpenChange }: ScoutingCentreProps) => {
   const [viewingProspectTable, setViewingProspectTable] = useState<ScoutingPosition | null>(null);
   const [prospectReports, setProspectReports] = useState<ScoutingReport[]>([]);
   const [sortField, setSortField] = useState<string>("overall_rating");
+  const [players, setPlayers] = useState<{ id: string; name: string }[]>([]);
   const [formData, setFormData] = useState({
     player_name: "",
     age: "",
@@ -118,14 +120,30 @@ export const ScoutingCentre = ({ open, onOpenChange }: ScoutingCentreProps) => {
     agent_contact: "",
     status: "pending",
     priority: "",
-    auto_generated_review: ""
+    auto_generated_review: "",
+    linked_player_id: ""
   });
 
   useEffect(() => {
     if (open) {
       fetchReports();
+      fetchPlayers();
     }
   }, [open]);
+
+  const fetchPlayers = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("players")
+        .select("id, name")
+        .order("name");
+
+      if (error) throw error;
+      setPlayers(data || []);
+    } catch (error) {
+      console.error("Error fetching players:", error);
+    }
+  };
 
   const fetchReports = async () => {
     setLoading(true);
@@ -181,6 +199,7 @@ export const ScoutingCentre = ({ open, onOpenChange }: ScoutingCentreProps) => {
         priority: formData.priority || null,
         skill_evaluations: skillEvaluations as any,
         auto_generated_review: formData.auto_generated_review || null,
+        linked_player_id: formData.linked_player_id || null,
         // Set legacy rating fields to null
         overall_rating: null,
         technical_rating: null,
@@ -289,7 +308,8 @@ export const ScoutingCentre = ({ open, onOpenChange }: ScoutingCentreProps) => {
       agent_contact: report.agent_contact || "",
       status: report.status,
       priority: report.priority || "",
-      auto_generated_review: report.auto_generated_review || ""
+      auto_generated_review: report.auto_generated_review || "",
+      linked_player_id: report.linked_player_id || ""
     });
     setIsAddingNew(true);
   };
@@ -375,7 +395,8 @@ export const ScoutingCentre = ({ open, onOpenChange }: ScoutingCentreProps) => {
       agent_contact: "",
       status: "pending",
       priority: "",
-      auto_generated_review: ""
+      auto_generated_review: "",
+      linked_player_id: ""
     });
     setSkillEvaluations([]);
     setEditingReport(null);
@@ -834,6 +855,25 @@ export const ScoutingCentre = ({ open, onOpenChange }: ScoutingCentreProps) => {
                       onChange={(e) => setFormData({ ...formData, player_name: e.target.value })}
                       required
                     />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="linked_player">Link to Existing Player (Optional)</Label>
+                    <Select
+                      value={formData.linked_player_id}
+                      onValueChange={(value) => setFormData({ ...formData, linked_player_id: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select player to link..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">None</SelectItem>
+                        {players.map((player) => (
+                          <SelectItem key={player.id} value={player.id}>
+                            {player.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="age">Age</Label>
