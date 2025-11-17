@@ -681,7 +681,7 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
 
       {/* Daily Aphorism */}
       {dailyAphorism && (
-        <div className="px-4 md:px-0">
+        <div className="px-4 md:px-0 mt-[10px]">
           <Card className="relative overflow-hidden border-gold bg-gold/30">
             <CardContent className="relative py-3 px-3 text-center space-y-3">
               <div className="bg-black/90 backdrop-blur-sm p-3 rounded-lg inline-block">
