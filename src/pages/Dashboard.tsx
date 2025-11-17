@@ -28,6 +28,7 @@ import { CacheManager } from "@/lib/cacheManager";
 import { Hub } from "@/components/dashboard/Hub";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Cell, LabelList } from "recharts";
 import { Link } from "react-router-dom";
+import { getR90Grade, getXGGrade, getXAGrade, getRegainsGrade, getInterceptionsGrade } from "@/lib/gradeCalculations";
 
 
 interface Analysis {
@@ -1532,6 +1533,8 @@ const Dashboard = () => {
                             <SelectItem value="r90">R90 Score</SelectItem>
                             <SelectItem value="xg">Expected Goals (xG)</SelectItem>
                             <SelectItem value="xa">Expected Assists (xA)</SelectItem>
+                            <SelectItem value="regains">Regains</SelectItem>
+                            <SelectItem value="interceptions">Interceptions</SelectItem>
                             <SelectItem value="xgchain">xG Chain</SelectItem>
                             <SelectItem value="xgbuildup">xG Buildup</SelectItem>
                             <SelectItem value="shots">Shots</SelectItem>
@@ -1548,6 +1551,8 @@ const Dashboard = () => {
                           
                           const statKey = selectedFormMetric === "xg" ? "xG_adj_per90" :
                                           selectedFormMetric === "xa" ? "xA_adj_per90" :
+                                          selectedFormMetric === "regains" ? "regains_adj_per90" :
+                                          selectedFormMetric === "interceptions" ? "interceptions_per90" :
                                           selectedFormMetric === "xgchain" ? "xGChain_per90" :
                                           selectedFormMetric === "xgbuildup" ? "xGBuildup_per90" :
                                           selectedFormMetric === "shots" ? "Shots_per90" :
@@ -1562,6 +1567,8 @@ const Dashboard = () => {
                             case "r90": return "R90";
                             case "xg": return "xG";
                             case "xa": return "xA";
+                            case "regains": return "Regains";
+                            case "interceptions": return "Interceptions";
                             case "xgchain": return "xGChain";
                             case "xgbuildup": return "xGBuildup";
                             case "shots": return "Shots";
@@ -1591,18 +1598,40 @@ const Dashboard = () => {
                           ? Math.ceil(Math.max(...chartData.map(d => d.score)) * 1.1) // 10% padding
                           : 4;
 
-                        // Function to get R90 color based on score
-                        const getR90Color = (score: number) => {
-                          if (score < 0) return "hsl(0, 93%, 12%)";
-                          if (score >= 0 && score < 0.2) return "hsl(0, 84%, 60%)";
-                          if (score >= 0.2 && score < 0.4) return "hsl(0, 91%, 71%)";
-                          if (score >= 0.4 && score < 0.6) return "hsl(25, 95%, 37%)";
-                          if (score >= 0.6 && score < 0.8) return "hsl(25, 95%, 53%)";
-                          if (score >= 0.8 && score < 1.0) return "hsl(48, 96%, 53%)";
-                          if (score >= 1.0 && score < 1.4) return "hsl(82, 84%, 67%)";
-                          if (score >= 1.4 && score < 1.8) return "hsl(142, 76%, 36%)";
-                          if (score >= 1.8 && score < 2.5) return "hsl(142, 72%, 29%)";
-                          return "hsl(43, 49%, 61%)";
+                        // Function to get color based on metric and score
+                        const getMetricColor = (score: number) => {
+                          switch(selectedFormMetric) {
+                            case "r90":
+                              return getR90Grade(score).color;
+                            case "xg":
+                              return getXGGrade(score).color;
+                            case "xa":
+                              return getXAGrade(score).color;
+                            case "regains":
+                              return getRegainsGrade(score).color;
+                            case "interceptions":
+                              return getInterceptionsGrade(score).color;
+                            default:
+                              return getR90Grade(score).color;
+                          }
+                        };
+
+                        // Function to get grade based on metric and score
+                        const getMetricGrade = (score: number) => {
+                          switch(selectedFormMetric) {
+                            case "r90":
+                              return getR90Grade(score).grade;
+                            case "xg":
+                              return getXGGrade(score).grade;
+                            case "xa":
+                              return getXAGrade(score).grade;
+                            case "regains":
+                              return getRegainsGrade(score).grade;
+                            case "interceptions":
+                              return getInterceptionsGrade(score).grade;
+                            default:
+                              return score.toFixed(2);
+                          }
                         };
 
                         return chartData.length > 0 ? (
@@ -1726,14 +1755,15 @@ const Dashboard = () => {
                                   {chartData.map((entry, index) => (
                                     <Cell 
                                       key={`cell-${index}`} 
-                                      fill={getR90Color(entry.score)}
+                                      fill={getMetricColor(entry.score)}
                                       className="hover:opacity-80 transition-opacity"
                                     />
                                   ))}
                                   <LabelList 
                                     dataKey="score" 
                                     position="top" 
-                                    style={{ fontSize: '12px', fill: 'hsl(var(--foreground))', fontWeight: 'bold' }}
+                                    style={{ fontSize: '14px', fill: 'hsl(var(--foreground))', fontWeight: '700' }}
+                                    formatter={(value: number) => getMetricGrade(value)}
                                   />
                                 </Bar>
                               </BarChart>
