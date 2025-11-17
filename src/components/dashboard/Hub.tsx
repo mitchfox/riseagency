@@ -164,46 +164,47 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
   );
 
   return (
-    <div className="space-y-6 mb-8">
+    <>
       {/* Video Highlights Slider - Full Width */}
       {videoThumbnails.length > 0 && (
-        <Card className="bg-card/90 backdrop-blur-sm border-gold/30 overflow-hidden">
-          <div className="w-full">
-            <Carousel
-              opts={{
-                align: "center",
-                loop: true,
-              }}
-              plugins={[autoplayPlugin.current]}
-              className="w-full"
-            >
-              <CarouselContent>
-                {videoThumbnails.map((thumbnail, index) => (
-                  <CarouselItem key={index}>
-                    <div className="w-full aspect-[21/9] overflow-hidden relative bg-black">
-                      <video
-                        src={thumbnail}
-                        className="w-full h-full object-cover"
-                        muted
-                        playsInline
-                        onMouseEnter={(e) => e.currentTarget.play()}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.pause();
-                          e.currentTarget.currentTime = 0;
-                        }}
-                      />
-                    </div>
-                  </CarouselItem>
-                ))}
-              </CarouselContent>
-              <CarouselPrevious className="left-4" />
-              <CarouselNext className="right-4" />
-            </Carousel>
-          </div>
-        </Card>
+        <div className="w-full -mx-4 mb-6">
+          <Card className="bg-card/90 backdrop-blur-sm border-gold/30 overflow-hidden rounded-none">
+            <div className="w-full">
+              <Carousel
+                opts={{
+                  align: "center",
+                  loop: true,
+                }}
+                plugins={[autoplayPlugin.current]}
+                className="w-full"
+              >
+                <CarouselContent>
+                  {videoThumbnails.map((thumbnail, index) => (
+                    <CarouselItem key={index}>
+                      <div className="w-full aspect-[21/9] overflow-hidden relative bg-black">
+                        <video
+                          src={thumbnail}
+                          className="w-full h-full object-cover"
+                          muted
+                          playsInline
+                          onMouseEnter={(e) => e.currentTarget.play()}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.pause();
+                            e.currentTarget.currentTime = 0;
+                          }}
+                        />
+                      </div>
+                    </CarouselItem>
+                  ))}
+                </CarouselContent>
+              </Carousel>
+            </div>
+          </Card>
+        </div>
       )}
 
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="space-y-6 mb-8">
+        <div className="grid gap-6 md:grid-cols-2">
         {/* Schedule Card */}
         <Card>
           <CardHeader>
@@ -395,6 +396,7 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
           </CardContent>
         </Card>
       </div>
-    </div>
+      </div>
+    </>
   );
 };

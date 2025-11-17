@@ -14,7 +14,7 @@ import { NotificationPermission } from "@/components/NotificationPermission";
 import { NotificationSettings } from "@/components/NotificationSettings";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { toast } from "sonner";
-import { FileText, Play, Download, Upload, ChevronDown, Trash2, Lock, Calendar, Trophy, TrendingUp, Eye, EyeOff, ChevronUp, ChevronDown as ChevronDownIcon, List, RefreshCw, CheckCircle2, WifiOff } from "lucide-react";
+import { FileText, Play, Download, Upload, ChevronDown, Trash2, Lock, Calendar, Trophy, TrendingUp, Eye, EyeOff, ChevronUp, ChevronDown as ChevronDownIcon, List, RefreshCw, CheckCircle2, WifiOff, Bell } from "lucide-react";
 import { ClipNameEditor } from "@/components/ClipNameEditor";
 import { addDays, format, parseISO, startOfWeek, endOfWeek, isWithinInterval } from "date-fns";
 import { SEO } from "@/components/SEO";
@@ -1092,9 +1092,59 @@ const Dashboard = () => {
       <div className="bg-background/60 backdrop-blur-sm border-b border-border/50">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-center gap-2 h-12">
-            {playerData?.id && (
-              <NotificationSettings playerId={playerData.id} />
-            )}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center gap-2 relative"
+                >
+                  <Bell className="h-4 w-4" />
+                  <span className="hidden sm:inline">Notifications</span>
+                  {/* Notification Badge */}
+                  <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                    3
+                  </span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="center" className="w-80 max-h-96 overflow-y-auto">
+                <div className="px-4 py-3 border-b border-border">
+                  <h3 className="font-semibold">Recent Notifications</h3>
+                </div>
+                <div className="py-2">
+                  <div className="px-4 py-3 hover:bg-accent cursor-pointer border-b border-border">
+                    <div className="flex items-start gap-2">
+                      <div className="w-2 h-2 rounded-full bg-primary mt-2 flex-shrink-0" />
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">New Performance Report</p>
+                        <p className="text-xs text-muted-foreground mt-1">Norwich City - Jan 15</p>
+                        <p className="text-xs text-muted-foreground mt-1">2 hours ago</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="px-4 py-3 hover:bg-accent cursor-pointer border-b border-border">
+                    <div className="flex items-start gap-2">
+                      <div className="w-2 h-2 rounded-full bg-primary mt-2 flex-shrink-0" />
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">New Training Program</p>
+                        <p className="text-xs text-muted-foreground mt-1">Phase 2 - Strength Building</p>
+                        <p className="text-xs text-muted-foreground mt-1">1 day ago</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="px-4 py-3 hover:bg-accent cursor-pointer">
+                    <div className="flex items-start gap-2">
+                      <div className="w-2 h-2 rounded-full bg-primary mt-2 flex-shrink-0" />
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">New Update</p>
+                        <p className="text-xs text-muted-foreground mt-1">Training Schedule Changes</p>
+                        <p className="text-xs text-muted-foreground mt-1">2 days ago</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <Button
               variant="outline"
               size="sm"
@@ -2832,6 +2882,9 @@ const Dashboard = () => {
       <div className="container mx-auto px-4 pb-8">
         <div className="border-t border-border my-6" />
         <div className="flex justify-center items-center gap-4">
+          {playerData?.id && (
+            <NotificationSettings playerId={playerData.id} />
+          )}
           <Button 
             variant="outline" 
             onClick={handleLogout}
