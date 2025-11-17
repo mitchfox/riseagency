@@ -482,6 +482,12 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
                         dataKey="score" 
                         position="center" 
                         style={{ fontSize: '16px', fill: '#ffffff', fontWeight: '700' }}
+                      />
+                      <LabelList 
+                        dataKey="score" 
+                        position="top" 
+                        offset={8}
+                        style={{ fontSize: '16px', fill: 'hsl(43, 49%, 61%)', fontWeight: '700' }}
                         formatter={(value: number) => getR90Grade(value).grade}
                       />
                     </Bar>
