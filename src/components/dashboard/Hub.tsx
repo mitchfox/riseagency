@@ -390,11 +390,6 @@ export const Hub = ({ programs, analyses, playerData, onNavigateToAnalysis, onNa
                         padding: "12px",
                         color: "#ffffff"
                       }}
-                      labelStyle={{
-                        color: "#ffffff",
-                        fontWeight: "bold",
-                        marginBottom: "8px"
-                      }}
                       itemStyle={{
                         color: "#ffffff"
                       }}
