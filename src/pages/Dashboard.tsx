@@ -1919,6 +1919,12 @@ const Dashboard = () => {
 
                         // Function to get color based on metric and score
                         const getMetricColor = (score: number) => {
+                          // Striker/Winger xC metrics use grey
+                          const strikerMetrics = ["triplethreatxc", "movementtofeetxc", "movementinbehindxc", "movementdownsidexc", "crossingmovementxc"];
+                          if (strikerMetrics.includes(selectedFormMetric)) {
+                            return "hsl(var(--muted-foreground))";
+                          }
+                          
                           switch(selectedFormMetric) {
                             case "r90":
                               return getR90Grade(score).color;
@@ -1943,6 +1949,12 @@ const Dashboard = () => {
 
                         // Function to get grade based on metric and score
                         const getMetricGrade = (score: number) => {
+                          // Striker/Winger xC metrics show the score value, not a grade
+                          const strikerMetrics = ["triplethreatxc", "movementtofeetxc", "movementinbehindxc", "movementdownsidexc", "crossingmovementxc"];
+                          if (strikerMetrics.includes(selectedFormMetric)) {
+                            return score.toFixed(3);
+                          }
+                          
                           switch(selectedFormMetric) {
                             case "r90":
                               return getR90Grade(score).grade;
@@ -1964,6 +1976,13 @@ const Dashboard = () => {
                               return score.toFixed(2);
                           }
                         };
+                        
+                        // Calculate average for striker metrics
+                        const strikerMetrics = ["triplethreatxc", "movementtofeetxc", "movementinbehindxc", "movementdownsidexc", "crossingmovementxc"];
+                        const isStrikerMetric = strikerMetrics.includes(selectedFormMetric);
+                        const averageValue = isStrikerMetric && chartData.length > 0 
+                          ? chartData.reduce((sum, d) => sum + d.score, 0) / chartData.length 
+                          : null;
 
                         return chartData.length > 0 ? (
                           <div className="w-full px-2 -ml-6">
@@ -2069,7 +2088,7 @@ const Dashboard = () => {
                                   cursor={{ fill: 'hsl(var(--accent))', opacity: 0.3 }}
                                 />
                                 {/* Grade boundary reference lines */}
-                                {getGradeBoundaries()
+                                {!isStrikerMetric && getGradeBoundaries()
                                   .filter(boundary => boundary.value <= maxScore)
                                   .map((boundary, index) => (
                                     <ReferenceLine
@@ -2081,6 +2100,22 @@ const Dashboard = () => {
                                       strokeOpacity={0.4}
                                     />
                                   ))}
+                                {/* Average line for striker metrics */}
+                                {isStrikerMetric && averageValue !== null && (
+                                  <ReferenceLine
+                                    y={averageValue}
+                                    stroke="hsl(43, 96%, 56%)"
+                                    strokeDasharray="5 5"
+                                    strokeWidth={2}
+                                    label={{ 
+                                      value: `Avg: ${averageValue.toFixed(3)}`, 
+                                      position: 'right',
+                                      fill: 'hsl(43, 96%, 56%)',
+                                      fontSize: 12,
+                                      fontWeight: 'bold'
+                                    }}
+                                  />
+                                )}
                                 <Bar
                                   dataKey="score" 
                                   radius={[8, 8, 0, 0]}
