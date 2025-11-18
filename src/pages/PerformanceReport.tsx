@@ -260,24 +260,6 @@ const PerformanceReport = () => {
               <div className="mt-6 p-4 bg-accent/10 rounded-lg border-2 border-primary/20">
                 <h3 className="font-bold text-lg mb-4 text-primary">Additional Statistics</h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {/* Calculate and display Progressive Passes to Turnovers Ratio */}
-                  {(() => {
-                    // Check for progressive passes and turnovers with various possible field names
-                    const ppField = analysis.striker_stats.progressive_passes_adj || analysis.striker_stats.progressive_passes;
-                    const toField = analysis.striker_stats.turnovers_adj || analysis.striker_stats.turnovers;
-                    
-                    if (ppField != null && toField != null && Number(toField) !== 0) {
-                      return (
-                        <div className="p-3 bg-primary/10 rounded border border-primary/30">
-                          <p className="text-xs text-muted-foreground">Progressive Passes/Turnovers Ratio</p>
-                          <p className="text-lg font-bold text-primary">
-                            {(Number(ppField) / Number(toField)).toFixed(2)}
-                          </p>
-                        </div>
-                      );
-                    }
-                    return null;
-                  })()}
                   {Object.entries(analysis.striker_stats)
                     .filter(([key, value]) => value !== null && value !== undefined && !key.includes('_per90'))
                     .map(([key, value]) => {
@@ -330,6 +312,24 @@ const PerformanceReport = () => {
                         </div>
                       );
                     })}
+                  
+                  {/* Progressive Passes to Turnovers Ratio - displayed last */}
+                  {(() => {
+                    const ppField = analysis.striker_stats.progressive_passes_adj || analysis.striker_stats.progressive_passes;
+                    const toField = analysis.striker_stats.turnovers_adj || analysis.striker_stats.turnovers;
+                    
+                    if (ppField != null && toField != null && Number(toField) !== 0) {
+                      return (
+                        <div className="text-center p-3 bg-background rounded-md">
+                          <p className="text-xs text-muted-foreground mb-1">Progressive Passes/Turnovers Ratio</p>
+                          <p className="font-bold text-lg">
+                            {(Number(ppField) / Number(toField)).toFixed(2)}
+                          </p>
+                        </div>
+                      );
+                    }
+                    return null;
+                  })()}
                 </div>
               </div>
             )}
