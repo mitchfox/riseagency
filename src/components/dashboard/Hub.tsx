@@ -305,10 +305,7 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
     // Filter out videos - only keep images
     const imageOnly = thumbnails.filter(url => !(url.includes('supabase') && url.includes('videos')));
     
-    // Fallback to player profile image if no 21:9 images found
-    if (imageOnly.length === 0 && playerData?.image_url) {
-      imageOnly.push(playerData.image_url);
-    }
+    // No fallback - only show 21:9 marketing gallery images
     
     console.log('Image thumbnails generated:', imageOnly.length, imageOnly);
     return imageOnly;
