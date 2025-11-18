@@ -113,8 +113,12 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
     const fetchMarketingImages = async () => {
       if (!playerData?.name) {
         console.log('No player name available');
+        setImagesPreloaded(true); // Allow carousel to check other sources
         return;
       }
+      
+      console.log('Fetching marketing images for player:', playerData?.id, playerData?.name);
+      
       // Fetch images filtered by this specific player's ID
       const { data: images, error } = await supabase
         .from('marketing_gallery')
@@ -125,32 +129,43 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
         .order('created_at', { ascending: false });
       
       if (error) {
-        console.error('Error fetching player images:', error);
+        console.error('Error fetching player images:', error, error.message, error.details);
+        setImagesPreloaded(true); // Still allow carousel to show
         return;
       }
       
-      console.log('Player images from DB:', images?.length);
+      console.log('Player images from DB:', images?.length, 'URLs:', images?.map(i => i.file_url));
       const imageUrls = images?.map(img => img.file_url) || [];
       setMarketingImages(imageUrls);
       
-      // Preload all images
+      // Preload all images if there are any
       if (imageUrls.length > 0) {
+        console.log('Starting preload for', imageUrls.length, 'images');
         Promise.all(
           imageUrls.map(url => {
             return new Promise((resolve, reject) => {
               const img = new Image();
-              img.onload = resolve;
-              img.onerror = reject;
+              img.onload = () => {
+                console.log('Loaded:', url);
+                resolve(url);
+              };
+              img.onerror = (err) => {
+                console.error('Failed to load:', url, err);
+                reject(err);
+              };
               img.src = url;
             });
           })
         ).then(() => {
           setImagesPreloaded(true);
-          console.log('All images preloaded');
+          console.log('All images preloaded successfully');
         }).catch(err => {
           console.error('Error preloading images:', err);
           setImagesPreloaded(true); // Show anyway
         });
+      } else {
+        console.log('No images to preload');
+        setImagesPreloaded(true); // No images to load, mark as ready
       }
     };
     
