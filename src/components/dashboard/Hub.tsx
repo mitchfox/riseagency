@@ -432,6 +432,7 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
                 opts={{
                   align: "start",
                   loop: true,
+                  containScroll: false,
                 }}
                 plugins={[autoplayPlugin.current, fadePlugin.current]}
                 className="w-full"
