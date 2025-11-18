@@ -115,16 +115,18 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
     const fetchMarketingImages = async () => {
       if (!playerData?.name) return;
       
+      console.log('Fetching images for player:', playerData.name);
+      
       const { data, error } = await supabase
         .from('marketing_gallery')
-        .select('file_url')
+        .select('*')
         .eq('category', 'players')
         .eq('file_type', 'image')
         .ilike('title', `%${playerData.name}%`)
         .order('created_at', { ascending: false });
       
       if (!error && data) {
-        console.log('Marketing images fetched:', data);
+        console.log('Marketing images found:', data);
         setMarketingImages(data.map(img => img.file_url));
       } else if (error) {
         console.error('Error fetching marketing images:', error);
@@ -292,10 +294,7 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
       });
     }
     
-    // Fallback to player image if no video thumbnails
-    if (thumbnails.length === 0 && playerData?.image_url) {
-      thumbnails.push(playerData.image_url);
-    }
+    // Don't use player profile image as fallback - only use 21:9 marketing images
     
     // Filter out videos - only keep images
     const imageOnly = thumbnails.filter(url => !(url.includes('supabase') && url.includes('videos')));
