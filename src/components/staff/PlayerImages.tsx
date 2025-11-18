@@ -43,7 +43,7 @@ export const PlayerImages = ({ playerName, isAdmin }: PlayerImagesProps) => {
             <img 
               src={image.file_url}
               alt={image.title}
-              className="w-full h-full object-contain rounded"
+              className="w-full h-full object-cover rounded"
             />
           </div>
           <p className="text-sm font-medium truncate">{image.title}</p>

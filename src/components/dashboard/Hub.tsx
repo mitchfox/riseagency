@@ -434,7 +434,7 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
                         <img
                           src={thumbnail}
                           alt={`Player content ${index + 1}`}
-                          className="w-full h-full object-contain"
+                          className="w-full h-full object-cover"
                         />
                       </div>
                     </CarouselItem>
