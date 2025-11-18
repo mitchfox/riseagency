@@ -149,8 +149,8 @@ const PerformanceReport = () => {
   };
 
   const handleBackClick = () => {
-    // Always go back to previous page
-    navigate(-1);
+    // Navigate to dashboard instead of using navigate(-1) which can be unreliable
+    navigate('/dashboard');
   };
 
   console.log('PerformanceReport - Render - loading:', loading);
@@ -256,7 +256,7 @@ const PerformanceReport = () => {
               </div>
             </div>
 
-            {analysis.striker_stats && Object.keys(analysis.striker_stats).some(key => analysis.striker_stats![key] !== null && analysis.striker_stats![key] !== undefined) && (
+            {analysis.striker_stats && Object.keys(analysis.striker_stats).filter(key => !key.includes('_per90')).some(key => analysis.striker_stats![key] !== null && analysis.striker_stats![key] !== undefined && analysis.striker_stats![key] !== '') && (
               <div className="mt-6 p-4 bg-accent/10 rounded-lg border-2 border-primary/20">
                 <h3 className="font-bold text-lg mb-4 text-primary">Additional Statistics</h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
