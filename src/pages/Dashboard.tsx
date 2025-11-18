@@ -1708,6 +1708,11 @@ const Dashboard = () => {
                                 { value: "ppturnoversratio", label: "Progressive Passes/Turnovers Ratio", statKey: "progressive_passes,turnovers" },
                                 { value: "shots", label: "Shots", statKey: "Shots_per90" },
                                 { value: "shotsontarget", label: "Shots on Target", statKey: "ShotsOnTarget_per90" },
+                                { value: "triplethreatxc", label: "Triple Threat xC", statKey: "triple_threat_xC_per90" },
+                                { value: "movementtofeetxc", label: "Movement to Feet xC", statKey: "movement_to_feet_xC_per90" },
+                                { value: "movementinbehindxc", label: "Movement in Behind xC", statKey: "movement_in_behind_xC_per90" },
+                                { value: "movementdownsidexc", label: "Movement Down Side xC", statKey: "movement_down_side_xC_per90" },
+                                { value: "crossingmovementxc", label: "Crossing Movement xC", statKey: "crossing_movement_xC_per90" },
                               ];
 
                               return availableMetrics
@@ -1746,7 +1751,12 @@ const Dashboard = () => {
                                           selectedFormMetric === "xgbuildup" ? "xGBuildup_per90" :
                                           selectedFormMetric === "progressivepasses" ? "progressive_passes_adj_per90" :
                                           selectedFormMetric === "shots" ? "Shots_per90" :
-                                          selectedFormMetric === "shotsontarget" ? "ShotsOnTarget_per90" : null;
+                                          selectedFormMetric === "shotsontarget" ? "ShotsOnTarget_per90" :
+                                          selectedFormMetric === "triplethreatxc" ? "triple_threat_xC_per90" :
+                                          selectedFormMetric === "movementtofeetxc" ? "movement_to_feet_xC_per90" :
+                                          selectedFormMetric === "movementinbehindxc" ? "movement_in_behind_xC_per90" :
+                                          selectedFormMetric === "movementdownsidexc" ? "movement_down_side_xC_per90" :
+                                          selectedFormMetric === "crossingmovementxc" ? "crossing_movement_xC_per90" : null;
                           
                           return statKey ? analysis.striker_stats[statKey] : null;
                         };
@@ -1765,6 +1775,11 @@ const Dashboard = () => {
                             case "ppturnoversratio": return "PP/TO Ratio";
                             case "shots": return "Shots";
                             case "shotsontarget": return "Shots on Target";
+                            case "triplethreatxc": return "Triple Threat xC";
+                            case "movementtofeetxc": return "Movement to Feet xC";
+                            case "movementinbehindxc": return "Movement in Behind xC";
+                            case "movementdownsidexc": return "Movement Down Side xC";
+                            case "crossingmovementxc": return "Crossing Movement xC";
                             default: return "R90";
                           }
                         };
