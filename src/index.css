@@ -296,9 +296,20 @@ All colors MUST be HSL.
     scrollbar-width: none;
   }
 
-  /* Slower carousel slide transitions */
-  .embla__container {
-    transition-duration: 1.5s !important;
+  /* Continuous carousel scroll animation */
+  .infinite-scroll-container {
+    width: 100%;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+
+  .infinite-scroll-content {
+    display: inline-block;
+    animation: scroll-left 40s linear infinite;
+  }
+
+  .infinite-scroll-content:hover {
+    animation-play-state: paused;
   }
 
 }

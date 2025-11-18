@@ -5,8 +5,6 @@ import { Calendar, TrendingUp, ArrowRight, Trophy, X } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, LabelList, ReferenceLine, Rectangle } from "recharts";
 import { format, parseISO, startOfWeek, endOfWeek, isWithinInterval, addDays } from "date-fns";
 import { Link } from "react-router-dom";
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
-import Autoplay from "embla-carousel-autoplay";
 import { supabase } from "@/integrations/supabase/client";
 import { getR90Grade } from "@/lib/gradeCalculations";
 
@@ -326,14 +324,6 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
     return imageOnly;
   }, [playerData, marketingImages]);
 
-  const autoplayPlugin = React.useRef(
-    Autoplay({ 
-      delay: 5000,
-      stopOnInteraction: false, 
-      stopOnMouseEnter: true
-    })
-  );
-
   return (
     <>
       <div className="space-y-0 mb-0">
@@ -423,29 +413,21 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
         {videoThumbnails.length > 0 && imagesPreloaded && (
           <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 border-t-[2px] border-t-[hsl(43,49%,61%)] border-b-[2px] border-b-[hsl(43,49%,61%)] z-25 !mt-0 !mb-[13px]">
               <CardContent className="p-0 overflow-hidden">
-                <Carousel
-                opts={{
-                  align: "start",
-                  loop: true,
-                  containScroll: false,
-                }}
-                plugins={[autoplayPlugin.current]}
-                className="w-full"
-              >
-                <CarouselContent className="-ml-4">
-                  {videoThumbnails.map((thumbnail, index) => (
-                    <CarouselItem key={index} className="pl-4">
-                      <div className="relative w-full -mt-2" style={{ aspectRatio: '21/9' }}>
-                        <img
-                          src={thumbnail}
-                          alt={`Player content ${index + 1}`}
-                          className="w-full h-full object-cover"
-                        />
+                <div className="infinite-scroll-container">
+                  <div className="infinite-scroll-content">
+                    {[...videoThumbnails, ...videoThumbnails].map((thumbnail, index) => (
+                      <div key={index} className="inline-block px-2">
+                        <div className="relative" style={{ aspectRatio: '21/9', width: '85vw' }}>
+                          <img
+                            src={thumbnail}
+                            alt={`Player content ${index + 1}`}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
                       </div>
-                    </CarouselItem>
-                  ))}
-                </CarouselContent>
-              </Carousel>
+                    ))}
+                  </div>
+                </div>
             </CardContent>
           </Card>
         )}
