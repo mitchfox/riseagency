@@ -10,6 +10,7 @@ import { ArrowLeft, Download } from "lucide-react";
 import { toast } from "sonner";
 import { extractAnalysisIdFromSlug } from "@/lib/urlHelpers";
 import { SEO } from "@/components/SEO";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
 
 interface PerformanceAction {
   id: string;
@@ -339,6 +340,178 @@ const PerformanceReport = () => {
                   })()}
                 </div>
               </div>
+            )}
+
+            {/* Striker/Winger Specific Charts */}
+            {analysis.striker_stats && (
+              (() => {
+                const hasStrikerMetrics = analysis.striker_stats.triple_threat_xC_per90 != null ||
+                                         analysis.striker_stats.movement_to_feet_xC_per90 != null ||
+                                         analysis.striker_stats.movement_in_behind_xC_per90 != null ||
+                                         analysis.striker_stats.movement_down_side_xC_per90 != null ||
+                                         analysis.striker_stats.crossing_movement_xC_per90 != null;
+                
+                if (!hasStrikerMetrics) return null;
+
+                return (
+                  <div className="mt-6 space-y-6">
+                    {/* Triple Threat xC */}
+                    {analysis.striker_stats.triple_threat_xC_per90 != null && (
+                      <Card>
+                        <CardHeader>
+                          <CardTitle className="text-lg">Triple Threat xC</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="h-64">
+                            <ResponsiveContainer width="100%" height="100%">
+                              <BarChart data={[
+                                { 
+                                  name: 'Triple Threat xC', 
+                                  value: Number(analysis.striker_stats.triple_threat_xC_per90),
+                                  displayValue: Number(analysis.striker_stats.triple_threat_xC_per90).toFixed(3)
+                                }
+                              ]}>
+                                <CartesianGrid strokeDasharray="3 3" />
+                                <XAxis dataKey="name" />
+                                <YAxis />
+                                <Tooltip formatter={(value: number) => value.toFixed(3)} />
+                                <Bar dataKey="value" fill="hsl(var(--primary))" radius={[8, 8, 0, 0]} />
+                              </BarChart>
+                            </ResponsiveContainer>
+                          </div>
+                          <p className="text-center text-sm text-muted-foreground mt-2">
+                            Per 90: {Number(analysis.striker_stats.triple_threat_xC_per90).toFixed(3)}
+                          </p>
+                        </CardContent>
+                      </Card>
+                    )}
+
+                    {/* Movement to Feet xC */}
+                    {analysis.striker_stats.movement_to_feet_xC_per90 != null && (
+                      <Card>
+                        <CardHeader>
+                          <CardTitle className="text-lg">Movement to Feet xC</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="h-64">
+                            <ResponsiveContainer width="100%" height="100%">
+                              <BarChart data={[
+                                { 
+                                  name: 'Movement to Feet xC', 
+                                  value: Number(analysis.striker_stats.movement_to_feet_xC_per90),
+                                  displayValue: Number(analysis.striker_stats.movement_to_feet_xC_per90).toFixed(3)
+                                }
+                              ]}>
+                                <CartesianGrid strokeDasharray="3 3" />
+                                <XAxis dataKey="name" />
+                                <YAxis />
+                                <Tooltip formatter={(value: number) => value.toFixed(3)} />
+                                <Bar dataKey="value" fill="hsl(var(--primary))" radius={[8, 8, 0, 0]} />
+                              </BarChart>
+                            </ResponsiveContainer>
+                          </div>
+                          <p className="text-center text-sm text-muted-foreground mt-2">
+                            Per 90: {Number(analysis.striker_stats.movement_to_feet_xC_per90).toFixed(3)}
+                          </p>
+                        </CardContent>
+                      </Card>
+                    )}
+
+                    {/* Movement in Behind xC */}
+                    {analysis.striker_stats.movement_in_behind_xC_per90 != null && (
+                      <Card>
+                        <CardHeader>
+                          <CardTitle className="text-lg">Movement in Behind xC</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="h-64">
+                            <ResponsiveContainer width="100%" height="100%">
+                              <BarChart data={[
+                                { 
+                                  name: 'Movement in Behind xC', 
+                                  value: Number(analysis.striker_stats.movement_in_behind_xC_per90),
+                                  displayValue: Number(analysis.striker_stats.movement_in_behind_xC_per90).toFixed(3)
+                                }
+                              ]}>
+                                <CartesianGrid strokeDasharray="3 3" />
+                                <XAxis dataKey="name" />
+                                <YAxis />
+                                <Tooltip formatter={(value: number) => value.toFixed(3)} />
+                                <Bar dataKey="value" fill="hsl(var(--primary))" radius={[8, 8, 0, 0]} />
+                              </BarChart>
+                            </ResponsiveContainer>
+                          </div>
+                          <p className="text-center text-sm text-muted-foreground mt-2">
+                            Per 90: {Number(analysis.striker_stats.movement_in_behind_xC_per90).toFixed(3)}
+                          </p>
+                        </CardContent>
+                      </Card>
+                    )}
+
+                    {/* Movement Down Side xC */}
+                    {analysis.striker_stats.movement_down_side_xC_per90 != null && (
+                      <Card>
+                        <CardHeader>
+                          <CardTitle className="text-lg">Movement Down Side xC</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="h-64">
+                            <ResponsiveContainer width="100%" height="100%">
+                              <BarChart data={[
+                                { 
+                                  name: 'Movement Down Side xC', 
+                                  value: Number(analysis.striker_stats.movement_down_side_xC_per90),
+                                  displayValue: Number(analysis.striker_stats.movement_down_side_xC_per90).toFixed(3)
+                                }
+                              ]}>
+                                <CartesianGrid strokeDasharray="3 3" />
+                                <XAxis dataKey="name" />
+                                <YAxis />
+                                <Tooltip formatter={(value: number) => value.toFixed(3)} />
+                                <Bar dataKey="value" fill="hsl(var(--primary))" radius={[8, 8, 0, 0]} />
+                              </BarChart>
+                            </ResponsiveContainer>
+                          </div>
+                          <p className="text-center text-sm text-muted-foreground mt-2">
+                            Per 90: {Number(analysis.striker_stats.movement_down_side_xC_per90).toFixed(3)}
+                          </p>
+                        </CardContent>
+                      </Card>
+                    )}
+
+                    {/* Crossing Movement xC */}
+                    {analysis.striker_stats.crossing_movement_xC_per90 != null && (
+                      <Card>
+                        <CardHeader>
+                          <CardTitle className="text-lg">Crossing Movement xC</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="h-64">
+                            <ResponsiveContainer width="100%" height="100%">
+                              <BarChart data={[
+                                { 
+                                  name: 'Crossing Movement xC', 
+                                  value: Number(analysis.striker_stats.crossing_movement_xC_per90),
+                                  displayValue: Number(analysis.striker_stats.crossing_movement_xC_per90).toFixed(3)
+                                }
+                              ]}>
+                                <CartesianGrid strokeDasharray="3 3" />
+                                <XAxis dataKey="name" />
+                                <YAxis />
+                                <Tooltip formatter={(value: number) => value.toFixed(3)} />
+                                <Bar dataKey="value" fill="hsl(var(--primary))" radius={[8, 8, 0, 0]} />
+                              </BarChart>
+                            </ResponsiveContainer>
+                          </div>
+                          <p className="text-center text-sm text-muted-foreground mt-2">
+                            Per 90: {Number(analysis.striker_stats.crossing_movement_xC_per90).toFixed(3)}
+                          </p>
+                        </CardContent>
+                      </Card>
+                    )}
+                  </div>
+                );
+              })()
             )}
 
             {analysis.performance_overview && (
