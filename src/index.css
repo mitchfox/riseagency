@@ -295,4 +295,9 @@ All colors MUST be HSL.
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
+
+  /* Carousel fade transition timing */
+  .embla__slide {
+    transition: opacity 10s ease-in-out !important;
+  }
 }

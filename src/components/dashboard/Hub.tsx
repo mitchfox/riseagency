@@ -337,6 +337,8 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
     })
   );
 
+  const fadePlugin = React.useRef(Fade());
+
   return (
     <>
       <div className="space-y-0 mb-0">
@@ -426,13 +428,12 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
         {videoThumbnails.length > 0 && imagesPreloaded && (
           <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 border-t-[2px] border-t-[hsl(43,49%,61%)] border-b-[2px] border-b-[hsl(43,49%,61%)] z-25 !mt-0 !mb-[13px]">
               <CardContent className="p-0 overflow-hidden">
-              <Carousel
+                <Carousel
                 opts={{
                   align: "start",
                   loop: true,
-                  duration: 50000
                 }}
-                plugins={[autoplayPlugin.current]}
+                plugins={[autoplayPlugin.current, fadePlugin.current]}
                 className="w-full"
               >
                 <CarouselContent className="-ml-4">
