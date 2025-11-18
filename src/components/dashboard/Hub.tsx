@@ -430,7 +430,7 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
                 opts={{
                   align: "start",
                   loop: true,
-                  duration: 10000
+                  duration: 50000
                 }}
                 plugins={[autoplayPlugin.current]}
                 className="w-full"
