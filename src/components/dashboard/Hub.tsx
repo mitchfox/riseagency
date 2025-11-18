@@ -297,8 +297,11 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
       thumbnails.push(playerData.image_url);
     }
     
-    console.log('Video thumbnails generated:', thumbnails.length, thumbnails);
-    return thumbnails;
+    // Filter out videos - only keep images
+    const imageOnly = thumbnails.filter(url => !(url.includes('supabase') && url.includes('videos')));
+    
+    console.log('Image thumbnails generated:', imageOnly.length, imageOnly);
+    return imageOnly;
   }, [playerData, marketingImages]);
 
   const autoplayPlugin = React.useRef(
@@ -413,22 +416,11 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
                   {videoThumbnails.map((thumbnail, index) => (
                     <CarouselItem key={index}>
                       <div className="relative w-full -mt-2" style={{ aspectRatio: '21/9' }}>
-                        {thumbnail.includes('supabase') && thumbnail.includes('videos') ? (
-                          <video
-                            src={thumbnail}
-                            className="w-full h-full object-contain"
-                            autoPlay
-                            muted
-                            loop
-                            playsInline
-                          />
-                        ) : (
-                          <img
-                            src={thumbnail}
-                            alt={`Player content ${index + 1}`}
-                            className="w-full h-full object-contain"
-                          />
-                        )}
+                        <img
+                          src={thumbnail}
+                          alt={`Player content ${index + 1}`}
+                          className="w-full h-full object-contain"
+                        />
                       </div>
                     </CarouselItem>
                   ))}
