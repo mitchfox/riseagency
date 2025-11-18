@@ -136,37 +136,57 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
       
       console.log('Player images from DB:', images?.length, 'URLs:', images?.map(i => i.file_url));
       const imageUrls = images?.map(img => img.file_url) || [];
+      
+      if (imageUrls.length === 0) {
+        console.log('No images to preload');
+        setImagesPreloaded(true);
+        return;
+      }
+      
+      // Set images immediately so they're available
       setMarketingImages(imageUrls);
       
-      // Preload all images if there are any
-      if (imageUrls.length > 0) {
-        console.log('Starting preload for', imageUrls.length, 'images');
-        Promise.all(
-          imageUrls.map(url => {
-            return new Promise((resolve, reject) => {
-              const img = new Image();
-              img.onload = () => {
-                console.log('Loaded:', url);
-                resolve(url);
-              };
-              img.onerror = (err) => {
-                console.error('Failed to load:', url, err);
-                reject(err);
-              };
-              img.src = url;
-            });
-          })
-        ).then(() => {
-          setImagesPreloaded(true);
-          console.log('All images preloaded successfully');
-        }).catch(err => {
-          console.error('Error preloading images:', err);
-          setImagesPreloaded(true); // Show anyway
-        });
-      } else {
-        console.log('No images to preload');
-        setImagesPreloaded(true); // No images to load, mark as ready
-      }
+      // Priority load: Load first 4 images immediately, then show carousel
+      const priorityCount = Math.min(4, imageUrls.length);
+      const priorityImages = imageUrls.slice(0, priorityCount);
+      const remainingImages = imageUrls.slice(priorityCount);
+      
+      console.log('Priority loading first', priorityCount, 'images');
+      
+      // Load priority images first
+      Promise.all(
+        priorityImages.map(url => {
+          return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => {
+              console.log('Priority loaded:', url);
+              resolve(url);
+            };
+            img.onerror = (err) => {
+              console.error('Failed to load priority image:', url, err);
+              resolve(url); // Resolve anyway to not block
+            };
+            img.src = url;
+          });
+        })
+      ).then(() => {
+        console.log('Priority images loaded, showing carousel');
+        setImagesPreloaded(true); // Show carousel now
+        
+        // Load remaining images in background
+        if (remainingImages.length > 0) {
+          console.log('Background loading remaining', remainingImages.length, 'images');
+          remainingImages.forEach(url => {
+            const img = new Image();
+            img.onload = () => console.log('Background loaded:', url);
+            img.onerror = (err) => console.error('Failed to load background image:', url, err);
+            img.src = url;
+          });
+        }
+      }).catch(err => {
+        console.error('Error loading priority images:', err);
+        setImagesPreloaded(true); // Show anyway
+      });
     };
     
     fetchMarketingImages();
