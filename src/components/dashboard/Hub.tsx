@@ -329,7 +329,7 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
 
   const autoplayPlugin = React.useRef(
     Autoplay({ 
-      delay: 0,
+      delay: 10000,
       stopOnInteraction: false, 
       stopOnMouseEnter: false,
       stopOnFocusIn: false,
