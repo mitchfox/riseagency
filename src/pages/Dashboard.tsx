@@ -1885,18 +1885,17 @@ const Dashboard = () => {
                             ];
                           case "ppturnoversratio":
                             return [
-                              { value: 0, grade: 'U', color: 'hsl(0, 84%, 30%)' },
-                              { value: 0.3, grade: 'D', color: 'hsl(0, 84%, 45%)' },
-                              { value: 0.6, grade: 'C-', color: 'hsl(0, 84%, 60%)' },
-                              { value: 0.9, grade: 'C', color: 'hsl(25, 75%, 45%)' },
-                              { value: 1.2, grade: 'C+', color: 'hsl(40, 85%, 50%)' },
+                              { value: 0.5, grade: 'D', color: 'hsl(0, 84%, 45%)' },
+                              { value: 0.75, grade: 'C-', color: 'hsl(0, 84%, 60%)' },
+                              { value: 1, grade: 'C', color: 'hsl(25, 75%, 45%)' },
+                              { value: 1.25, grade: 'C+', color: 'hsl(40, 85%, 50%)' },
                               { value: 1.5, grade: 'B-', color: 'hsl(60, 70%, 50%)' },
-                              { value: 1.8, grade: 'B', color: 'hsl(142, 76%, 36%)' },
-                              { value: 2.1, grade: 'B+', color: 'hsl(142, 70%, 40%)' },
-                              { value: 2.4, grade: 'A-', color: 'hsl(142, 65%, 45%)' },
-                              { value: 2.7, grade: 'A', color: 'hsl(142, 70%, 50%)' },
-                              { value: 3.0, grade: 'A+', color: 'hsl(142, 76%, 55%)' },
-                              { value: 3.5, grade: 'A*', color: 'hsl(43, 96%, 56%)' },
+                              { value: 1.75, grade: 'B', color: 'hsl(142, 76%, 36%)' },
+                              { value: 2, grade: 'B+', color: 'hsl(142, 70%, 40%)' },
+                              { value: 2.5, grade: 'A-', color: 'hsl(142, 65%, 45%)' },
+                              { value: 3, grade: 'A', color: 'hsl(142, 70%, 50%)' },
+                              { value: 3.5, grade: 'A+', color: 'hsl(142, 76%, 55%)' },
+                              { value: 4, grade: 'A*', color: 'hsl(43, 96%, 56%)' },
                             ];
                           default:
                               return [];
