@@ -329,7 +329,7 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
 
   const autoplayPlugin = React.useRef(
     Autoplay({ 
-      delay: 50000,
+      delay: 0,
       stopOnInteraction: false, 
       stopOnMouseEnter: false,
       stopOnFocusIn: false,
@@ -430,7 +430,7 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
                 opts={{
                   align: "start",
                   loop: true,
-                  duration: 50000
+                  duration: 10000
                 }}
                 plugins={[autoplayPlugin.current]}
                 className="w-full"
