@@ -164,17 +164,16 @@ export function getPPTurnoversRatioGrade(score: number | null | undefined): Grad
     return { grade: '-', color: 'hsl(var(--muted-foreground))' };
   }
 
-  if (score === 0) return { grade: 'U', color: 'hsl(0, 84%, 30%)' }; // Dark Red
-  if (score < 0.3) return { grade: 'D', color: 'hsl(0, 84%, 45%)' }; // Red
-  if (score < 0.6) return { grade: 'C-', color: 'hsl(0, 84%, 60%)' }; // Light Red
-  if (score < 0.9) return { grade: 'C', color: 'hsl(25, 75%, 45%)' }; // Orange-Brown
-  if (score < 1.2) return { grade: 'C+', color: 'hsl(40, 85%, 50%)' }; // Yellow-Orange
-  if (score < 1.5) return { grade: 'B-', color: 'hsl(60, 70%, 50%)' }; // Yellow-Green
-  if (score < 1.8) return { grade: 'B', color: 'hsl(142, 76%, 36%)' }; // Green 400
-  if (score < 2.1) return { grade: 'B+', color: 'hsl(142, 70%, 40%)' }; // Green 450
-  if (score < 2.4) return { grade: 'A-', color: 'hsl(142, 65%, 45%)' }; // Green 530
-  if (score < 2.7) return { grade: 'A', color: 'hsl(142, 70%, 50%)' }; // Green 625
-  if (score < 3.0) return { grade: 'A+', color: 'hsl(142, 76%, 55%)' }; // Green 750
-  if (score < 3.5) return { grade: 'A*', color: 'hsl(43, 96%, 56%)' }; // Rise Gold
-  return { grade: 'A*', color: 'hsl(43, 96%, 56%)' }; // Rise Gold for 3.5+
+  if (score >= 4) return { grade: 'A*', color: 'hsl(43, 96%, 56%)' }; // Rise Gold
+  if (score >= 3.5) return { grade: 'A+', color: 'hsl(142, 76%, 55%)' }; // Green 750
+  if (score >= 3) return { grade: 'A', color: 'hsl(142, 70%, 50%)' }; // Green 625
+  if (score >= 2.5) return { grade: 'A-', color: 'hsl(142, 65%, 45%)' }; // Green 530
+  if (score >= 2) return { grade: 'B+', color: 'hsl(142, 70%, 40%)' }; // Green 450
+  if (score >= 1.75) return { grade: 'B', color: 'hsl(142, 76%, 36%)' }; // Green 400
+  if (score >= 1.5) return { grade: 'B-', color: 'hsl(60, 70%, 50%)' }; // Yellow-Green
+  if (score >= 1.25) return { grade: 'C+', color: 'hsl(40, 85%, 50%)' }; // Yellow-Orange
+  if (score >= 1) return { grade: 'C', color: 'hsl(25, 75%, 45%)' }; // Orange-Brown
+  if (score >= 0.75) return { grade: 'C-', color: 'hsl(0, 84%, 60%)' }; // Light Red
+  if (score >= 0.5) return { grade: 'D', color: 'hsl(0, 84%, 45%)' }; // Red
+  return { grade: 'U', color: 'hsl(0, 84%, 30%)' }; // Dark Red
 }
