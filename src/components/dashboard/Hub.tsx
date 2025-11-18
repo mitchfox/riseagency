@@ -444,28 +444,47 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
           </CardContent>
         </Card>
 
-        {/* Video/Image Carousel - Full Width */}
-        {videoThumbnails.length > 0 && imagesPreloaded && (
-          <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 border-t-[2px] border-t-[hsl(43,49%,61%)] border-b-[2px] border-b-[hsl(43,49%,61%)] z-25 !mt-0 !mb-[13px]">
-              <CardContent className="p-0 overflow-hidden">
-                <div className="infinite-scroll-container">
-                  <div className="infinite-scroll-content">
-                    {[...videoThumbnails, ...videoThumbnails].map((thumbnail, index) => (
-                      <div key={index} className="inline-block px-2">
-                        <div className="relative" style={{ aspectRatio: '21/9', width: '85vw' }}>
-                          <img
-                            src={thumbnail}
-                            alt={`Player content ${index + 1}`}
-                            className="w-full h-full object-cover"
-                          />
+        {/* Video/Image Carousel - Full Width - Always visible */}
+        <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 border-t-[2px] border-t-[hsl(43,49%,61%)] border-b-[2px] border-b-[hsl(43,49%,61%)] z-25 !mt-0 !mb-[13px]">
+          <CardContent className="p-0 overflow-hidden">
+            {!imagesPreloaded || videoThumbnails.length === 0 ? (
+              // Loading skeleton - shown while images load
+              <div className="infinite-scroll-container">
+                <div className="infinite-scroll-content" style={{ animationPlayState: 'paused' }}>
+                  {[1, 2, 3].map((index) => (
+                    <div key={index} className="inline-block px-2">
+                      <div 
+                        className="relative bg-muted animate-pulse" 
+                        style={{ aspectRatio: '21/9', width: '85vw' }}
+                      >
+                        <div className="absolute inset-0 flex items-center justify-center text-muted-foreground/30">
+                          Loading...
                         </div>
                       </div>
-                    ))}
-                  </div>
+                    </div>
+                  ))}
                 </div>
-            </CardContent>
-          </Card>
-        )}
+              </div>
+            ) : (
+              // Actual images - shown when loaded
+              <div className="infinite-scroll-container">
+                <div className="infinite-scroll-content">
+                  {[...videoThumbnails, ...videoThumbnails].map((thumbnail, index) => (
+                    <div key={index} className="inline-block px-2">
+                      <div className="relative" style={{ aspectRatio: '21/9', width: '85vw' }}>
+                        <img
+                          src={thumbnail}
+                          alt={`Player content ${index + 1}`}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         {/* R90 Performance Chart & Recent Analysis Combined - Full Width */}
         <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-0 border-t-[2px] border-t-[hsl(43,49%,61%)] z-20 overflow-visible">
