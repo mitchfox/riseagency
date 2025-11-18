@@ -7,7 +7,6 @@ import { format, parseISO, startOfWeek, endOfWeek, isWithinInterval, addDays } f
 import { Link } from "react-router-dom";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import Autoplay from "embla-carousel-autoplay";
-import Fade from "embla-carousel-fade";
 import { supabase } from "@/integrations/supabase/client";
 import { getR90Grade } from "@/lib/gradeCalculations";
 
@@ -42,6 +41,7 @@ interface HubProps {
 
 export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateToAnalysis, onNavigateToForm, onNavigateToSession }: HubProps) => {
   const [marketingImages, setMarketingImages] = React.useState<string[]>([]);
+  const [imagesPreloaded, setImagesPreloaded] = React.useState(false);
   const hasAnimated = React.useRef(false);
   const chartRef = React.useRef<HTMLDivElement>(null);
   const [tooltipVisible, setTooltipVisible] = React.useState(true);
@@ -117,12 +117,13 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
         console.log('No player name available');
         return;
       }
-      // RLS now handles filtering, so we just fetch directly
+      // Fetch images filtered by this specific player's ID
       const { data: images, error } = await supabase
         .from('marketing_gallery')
         .select('file_url')
         .eq('category', 'players')
         .eq('file_type', 'image')
+        .eq('player_id', playerData.id)
         .order('created_at', { ascending: false });
       
       if (error) {
@@ -130,12 +131,33 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
         return;
       }
       
-      console.log('Player images from DB (RLS filtered):', images?.length);
-      setMarketingImages(images?.map(img => img.file_url) || []);
+      console.log('Player images from DB:', images?.length);
+      const imageUrls = images?.map(img => img.file_url) || [];
+      setMarketingImages(imageUrls);
+      
+      // Preload all images
+      if (imageUrls.length > 0) {
+        Promise.all(
+          imageUrls.map(url => {
+            return new Promise((resolve, reject) => {
+              const img = new Image();
+              img.onload = resolve;
+              img.onerror = reject;
+              img.src = url;
+            });
+          })
+        ).then(() => {
+          setImagesPreloaded(true);
+          console.log('All images preloaded');
+        }).catch(err => {
+          console.error('Error preloading images:', err);
+          setImagesPreloaded(true); // Show anyway
+        });
+      }
     };
     
     fetchMarketingImages();
-  }, [playerData?.name]);
+  }, [playerData?.name, playerData?.id]);
   
   // Set hasAnimated to true after initial animation completes
   React.useEffect(() => {
@@ -306,14 +328,12 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
 
   const autoplayPlugin = React.useRef(
     Autoplay({ 
-      delay: 15000, 
+      delay: 4000, 
       stopOnInteraction: false, 
       stopOnMouseEnter: false,
       stopOnFocusIn: false
     })
   );
-  
-  const fadePlugin = React.useRef(Fade());
 
   return (
     <>
@@ -401,7 +421,7 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
         </Card>
 
         {/* Video/Image Carousel - Full Width */}
-        {videoThumbnails.length > 0 && (
+        {videoThumbnails.length > 0 && imagesPreloaded && (
           <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 border-t-[2px] border-t-[hsl(43,49%,61%)] border-b-[2px] border-b-[hsl(43,49%,61%)] z-25 !mt-0 !mb-[13px]">
               <CardContent className="p-0 overflow-hidden">
               <Carousel
@@ -409,7 +429,7 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
                   align: "start",
                   loop: true,
                 }}
-                plugins={[autoplayPlugin.current, fadePlugin.current]}
+                plugins={[autoplayPlugin.current]}
                 className="w-full"
               >
                 <CarouselContent>
