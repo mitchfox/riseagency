@@ -328,7 +328,7 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
 
   const autoplayPlugin = React.useRef(
     Autoplay({ 
-      delay: 4000, 
+      delay: 15000, 
       stopOnInteraction: false, 
       stopOnMouseEnter: false,
       stopOnFocusIn: false
@@ -432,14 +432,14 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
                 plugins={[autoplayPlugin.current]}
                 className="w-full"
               >
-                <CarouselContent>
+                <CarouselContent className="transition-transform duration-700 ease-in-out">
                   {videoThumbnails.map((thumbnail, index) => (
                     <CarouselItem key={index}>
                       <div className="relative w-full -mt-2" style={{ aspectRatio: '21/9' }}>
                         <img
                           src={thumbnail}
                           alt={`Player content ${index + 1}`}
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-cover transition-opacity duration-700 ease-in-out"
                         />
                       </div>
                     </CarouselItem>
