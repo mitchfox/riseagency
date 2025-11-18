@@ -43,6 +43,7 @@ interface Analysis {
   minutes_played: number | null;
   analysis_writer_id?: string | null;
   analysis_writer_data?: any;
+  striker_stats?: any;
 }
 
 interface PlayerProgram {
@@ -1064,6 +1065,47 @@ const Dashboard = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Auto-select first available metric with data when analyses change
+  useEffect(() => {
+    if (analyses.length === 0) return;
+    
+    // Helper function to check if any analysis has data for a metric
+    const hasMetricData = (metricKey: string, statKey?: string) => {
+      if (metricKey === "r90") {
+        return analyses.some(a => a.r90_score != null);
+      }
+      return analyses.some(a => 
+        a.striker_stats && 
+        statKey && 
+        a.striker_stats[statKey] != null && 
+        a.striker_stats[statKey] !== ''
+      );
+    };
+
+    const availableMetrics = [
+      { value: "r90", statKey: undefined },
+      { value: "xg", statKey: "xG_adj_per90" },
+      { value: "xa", statKey: "xA_adj_per90" },
+      { value: "regains", statKey: "regains_adj_per90" },
+      { value: "interceptions", statKey: "interceptions_per90" },
+      { value: "xgchain", statKey: "xGChain_per90" },
+      { value: "xgbuildup", statKey: "xGBuildup_per90" },
+      { value: "progressivepasses", statKey: "progressive_passes_adj_per90" },
+      { value: "shots", statKey: "Shots_per90" },
+      { value: "shotsontarget", statKey: "ShotsOnTarget_per90" },
+    ];
+
+    // Check if current metric has data
+    const currentMetric = availableMetrics.find(m => m.value === selectedFormMetric);
+    if (currentMetric && !hasMetricData(currentMetric.value, currentMetric.statKey)) {
+      // Find first metric with data
+      const firstValidMetric = availableMetrics.find(m => hasMetricData(m.value, m.statKey));
+      if (firstValidMetric) {
+        setSelectedFormMetric(firstValidMetric.value);
+      }
+    }
+  }, [analyses]);
+
   const getR90Color = (score: number) => {
     if (score < 0) return "bg-red-950"; // Dark red for negative
     if (score >= 0 && score < 0.2) return "bg-red-600"; // Red
@@ -1621,16 +1663,41 @@ const Dashboard = () => {
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent className="bg-background border-border z-50">
-                            <SelectItem value="r90">R90 Score</SelectItem>
-                            <SelectItem value="xg">Expected Goals (xG)</SelectItem>
-                            <SelectItem value="xa">Expected Assists (xA)</SelectItem>
-                            <SelectItem value="regains">Regains</SelectItem>
-                            <SelectItem value="interceptions">Interceptions</SelectItem>
-                            <SelectItem value="xgchain">xG Chain</SelectItem>
-                            <SelectItem value="xgbuildup">xG Buildup</SelectItem>
-                            <SelectItem value="progressivepasses">Progressive Passes</SelectItem>
-                            <SelectItem value="shots">Shots</SelectItem>
-                            <SelectItem value="shotsontarget">Shots on Target</SelectItem>
+                            {(() => {
+                              // Helper function to check if any analysis has data for a metric
+                              const hasMetricData = (metricKey: string, statKey?: string) => {
+                                if (metricKey === "r90") {
+                                  return analyses.some(a => a.r90_score != null);
+                                }
+                                return analyses.some(a => 
+                                  a.striker_stats && 
+                                  statKey && 
+                                  a.striker_stats[statKey] != null && 
+                                  a.striker_stats[statKey] !== ''
+                                );
+                              };
+
+                              const availableMetrics = [
+                                { value: "r90", label: "R90 Score", statKey: undefined },
+                                { value: "xg", label: "Expected Goals (xG)", statKey: "xG_adj_per90" },
+                                { value: "xa", label: "Expected Assists (xA)", statKey: "xA_adj_per90" },
+                                { value: "regains", label: "Regains", statKey: "regains_adj_per90" },
+                                { value: "interceptions", label: "Interceptions", statKey: "interceptions_per90" },
+                                { value: "xgchain", label: "xG Chain", statKey: "xGChain_per90" },
+                                { value: "xgbuildup", label: "xG Buildup", statKey: "xGBuildup_per90" },
+                                { value: "progressivepasses", label: "Progressive Passes", statKey: "progressive_passes_adj_per90" },
+                                { value: "shots", label: "Shots", statKey: "Shots_per90" },
+                                { value: "shotsontarget", label: "Shots on Target", statKey: "ShotsOnTarget_per90" },
+                              ];
+
+                              return availableMetrics
+                                .filter(metric => hasMetricData(metric.value, metric.statKey))
+                                .map(metric => (
+                                  <SelectItem key={metric.value} value={metric.value}>
+                                    {metric.label}
+                                  </SelectItem>
+                                ));
+                            })()}
                           </SelectContent>
                         </Select>
                       </div>
