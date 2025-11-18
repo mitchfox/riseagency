@@ -734,6 +734,7 @@ export type Database = {
           file_type: string
           file_url: string
           id: string
+          player_id: string | null
           thumbnail_url: string | null
           title: string
           updated_at: string
@@ -745,6 +746,7 @@ export type Database = {
           file_type: string
           file_url: string
           id?: string
+          player_id?: string | null
           thumbnail_url?: string | null
           title: string
           updated_at?: string
@@ -756,11 +758,27 @@ export type Database = {
           file_type?: string
           file_url?: string
           id?: string
+          player_id?: string | null
           thumbnail_url?: string | null
           title?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "marketing_gallery_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketing_gallery_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players_public"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       marketing_templates: {
         Row: {
