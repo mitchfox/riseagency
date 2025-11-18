@@ -39,11 +39,13 @@ export const PlayerImages = ({ playerName, isAdmin }: PlayerImagesProps) => {
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
       {images.map((image) => (
         <div key={image.id} className="border rounded-lg p-3 hover:bg-secondary/30 transition-colors space-y-2">
-          <img 
-            src={image.file_url}
-            alt={image.title}
-            className="w-full h-48 object-cover rounded"
-          />
+          <div className="w-full" style={{ aspectRatio: '21/9' }}>
+            <img 
+              src={image.file_url}
+              alt={image.title}
+              className="w-full h-full object-contain rounded"
+            />
+          </div>
           <p className="text-sm font-medium truncate">{image.title}</p>
           {isAdmin && (
             <Button
