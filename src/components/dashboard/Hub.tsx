@@ -416,7 +416,7 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
                         {thumbnail.includes('supabase') && thumbnail.includes('videos') ? (
                           <video
                             src={thumbnail}
-                            className="w-full h-full object-cover"
+                            className="w-full h-full object-cover object-top"
                             autoPlay
                             muted
                             loop
@@ -426,7 +426,7 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
                           <img
                             src={thumbnail}
                             alt={`Player content ${index + 1}`}
-                            className="w-full h-full object-cover"
+                            className="w-full h-full object-cover object-top"
                           />
                         )}
                       </div>
