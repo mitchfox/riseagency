@@ -296,4 +296,9 @@ All colors MUST be HSL.
     scrollbar-width: none;
   }
 
+  /* Slower carousel slide transitions */
+  .embla__container {
+    transition-duration: 1.5s !important;
+  }
+
 }
