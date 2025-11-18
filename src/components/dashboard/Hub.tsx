@@ -7,6 +7,7 @@ import { format, parseISO, startOfWeek, endOfWeek, isWithinInterval, addDays } f
 import { Link } from "react-router-dom";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import Autoplay from "embla-carousel-autoplay";
+import Fade from "embla-carousel-fade";
 import { supabase } from "@/integrations/supabase/client";
 import { getR90Grade } from "@/lib/gradeCalculations";
 
@@ -328,12 +329,15 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
 
   const autoplayPlugin = React.useRef(
     Autoplay({ 
-      delay: 15000, 
+      delay: 15000,
       stopOnInteraction: false, 
       stopOnMouseEnter: false,
-      stopOnFocusIn: false
+      stopOnFocusIn: false,
+      stopOnLastSnap: false
     })
   );
+  
+  const fadePlugin = React.useRef(Fade());
 
   return (
     <>
@@ -428,18 +432,19 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
                 opts={{
                   align: "start",
                   loop: true,
+                  duration: 20
                 }}
-                plugins={[autoplayPlugin.current]}
+                plugins={[autoplayPlugin.current, fadePlugin.current]}
                 className="w-full"
               >
-                <CarouselContent className="transition-transform duration-700 ease-in-out">
+                <CarouselContent>
                   {videoThumbnails.map((thumbnail, index) => (
                     <CarouselItem key={index}>
                       <div className="relative w-full -mt-2" style={{ aspectRatio: '21/9' }}>
                         <img
                           src={thumbnail}
                           alt={`Player content ${index + 1}`}
-                          className="w-full h-full object-cover transition-opacity duration-700 ease-in-out"
+                          className="w-full h-full object-cover"
                         />
                       </div>
                     </CarouselItem>
