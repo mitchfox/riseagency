@@ -120,6 +120,7 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
         .select('file_url')
         .eq('category', 'players')
         .eq('file_type', 'image')
+        .ilike('title', `%${playerData.name}%`)
         .order('created_at', { ascending: false });
       
       if (!error && data) {
