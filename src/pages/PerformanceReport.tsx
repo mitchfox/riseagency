@@ -5,6 +5,7 @@ import { Footer } from "@/components/Footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { getR90Grade, getXGGrade, getXAGrade, getRegainsGrade, getInterceptionsGrade, getXGChainGrade, getProgressivePassesGrade, getPPTurnoversRatioGrade } from "@/lib/gradeCalculations";
 import { ArrowLeft, Download } from "lucide-react";
 import { toast } from "sonner";
 import { extractAnalysisIdFromSlug } from "@/lib/urlHelpers";
@@ -319,11 +320,17 @@ const PerformanceReport = () => {
                     const toField = analysis.striker_stats.turnovers_adj || analysis.striker_stats.turnovers;
                     
                     if (ppField != null && toField != null && Number(toField) !== 0) {
+                      const ratio = Number(ppField) / Number(toField);
+                      const gradeInfo = getPPTurnoversRatioGrade(ratio);
+                      
                       return (
                         <div className="text-center p-3 bg-background rounded-md">
                           <p className="text-xs text-muted-foreground mb-1">Progressive Passes/Turnovers Ratio</p>
-                          <p className="font-bold text-lg">
-                            {(Number(ppField) / Number(toField)).toFixed(2)}
+                          <p className="font-bold text-lg" style={{ color: gradeInfo.color }}>
+                            {ratio.toFixed(2)}
+                          </p>
+                          <p className="text-xs font-semibold" style={{ color: gradeInfo.color }}>
+                            {gradeInfo.grade}
                           </p>
                         </div>
                       );
