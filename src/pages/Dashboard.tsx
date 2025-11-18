@@ -2119,17 +2119,6 @@ const Dashboard = () => {
                                 <Bar
                                   dataKey="score" 
                                   radius={[8, 8, 0, 0]}
-                                  className="cursor-pointer"
-                                  onClick={(data: any) => {
-                                    if (data && data.analysisId) {
-                                      const url = createPerformanceReportSlug(
-                                        playerData?.name || 'player',
-                                        data.opponent || 'opponent',
-                                        data.analysisId
-                                      );
-                                      navigate(url);
-                                    }
-                                  }}
                                 >
                                   {chartData.map((entry, index) => (
                                     <Cell 
