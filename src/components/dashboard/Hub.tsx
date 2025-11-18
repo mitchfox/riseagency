@@ -430,12 +430,12 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
                 opts={{
                   align: "start",
                   loop: true,
-                  duration: 35
+                  duration: 10000
                 }}
                 plugins={[autoplayPlugin.current]}
                 className="w-full"
               >
-                <CarouselContent className="-ml-4 transition-transform duration-[10000ms] ease-linear">
+                <CarouselContent className="-ml-4">
                   {videoThumbnails.map((thumbnail, index) => (
                     <CarouselItem key={index} className="pl-4">
                       <div className="relative w-full -mt-2" style={{ aspectRatio: '21/9' }}>
