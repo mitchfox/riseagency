@@ -299,8 +299,28 @@ All colors MUST be HSL.
   /* Continuous carousel scroll animation */
   .infinite-scroll-container {
     width: 100%;
-    overflow: hidden;
+    overflow-x: auto;
+    overflow-y: hidden;
     white-space: nowrap;
+    cursor: grab;
+    scroll-behavior: smooth;
+  }
+
+  .infinite-scroll-container:active {
+    cursor: grabbing;
+  }
+
+  .infinite-scroll-container::-webkit-scrollbar {
+    height: 8px;
+  }
+
+  .infinite-scroll-container::-webkit-scrollbar-track {
+    background: hsl(var(--background));
+  }
+
+  .infinite-scroll-container::-webkit-scrollbar-thumb {
+    background: hsl(var(--gold));
+    border-radius: 4px;
   }
 
   .infinite-scroll-content {
@@ -308,7 +328,8 @@ All colors MUST be HSL.
     animation: scroll-left 360s linear infinite;
   }
 
-  .infinite-scroll-content:hover {
+  .infinite-scroll-container:hover .infinite-scroll-content,
+  .infinite-scroll-container:active .infinite-scroll-content {
     animation-play-state: paused;
   }
 
