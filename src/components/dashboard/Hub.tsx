@@ -118,27 +118,35 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
         return;
       }
       
-      console.log('Searching for images with player name:', playerData.name);
-      console.log('Full player data:', playerData);
+      console.log('Player name from data:', playerData.name);
       
-      const { data, error } = await supabase
+      // Fetch ALL player images first
+      const { data: allImages, error: allError } = await supabase
         .from('marketing_gallery')
         .select('*')
         .eq('category', 'players')
         .eq('file_type', 'image')
         .order('created_at', { ascending: false });
       
-      if (!error && data) {
-        console.log('All player images:', data.map(img => img.title));
-        // Filter client-side to see what matches
-        const matching = data.filter(img => 
-          img.title.toLowerCase().includes(playerData.name.toLowerCase())
-        );
-        console.log('Matching images:', matching);
-        setMarketingImages(matching.map(img => img.file_url));
-      } else if (error) {
-        console.error('Error fetching marketing images:', error);
+      if (allError) {
+        console.error('Error fetching all images:', allError);
+        return;
       }
+      
+      console.log('All player images in gallery:', allImages?.length);
+      console.log('Sample titles:', allImages?.slice(0, 5).map(img => img.title));
+      
+      // Filter for this specific player
+      const playerImages = allImages?.filter(img => {
+        const titleLower = img.title.toLowerCase();
+        const nameLower = playerData.name.toLowerCase();
+        const matches = titleLower.includes(nameLower);
+        console.log(`Checking "${img.title}" against "${playerData.name}": ${matches}`);
+        return matches;
+      }) || [];
+      
+      console.log('Matched images for player:', playerImages.length);
+      setMarketingImages(playerImages.map(img => img.file_url));
     };
     
     fetchMarketingImages();
