@@ -1683,9 +1683,9 @@ const Dashboard = () => {
                                 if (metricKey === "ppturnoversratio") {
                                   return analyses.some(a => 
                                     a.striker_stats && 
-                                    a.striker_stats.progressive_passes != null && 
-                                    a.striker_stats.turnovers != null &&
-                                    Number(a.striker_stats.turnovers) !== 0
+                                    a.striker_stats.progressive_passes_adj_per90 != null && 
+                                    a.striker_stats.turnovers_adj_per90 != null &&
+                                    Number(a.striker_stats.turnovers_adj_per90) !== 0
                                   );
                                 }
                                 return analyses.some(a => 
@@ -1730,8 +1730,8 @@ const Dashboard = () => {
                           
                           // Special case for progressive passes to turnovers ratio
                           if (selectedFormMetric === "ppturnoversratio") {
-                            const pp = analysis.striker_stats.progressive_passes;
-                            const to = analysis.striker_stats.turnovers;
+                            const pp = analysis.striker_stats.progressive_passes_adj_per90;
+                            const to = analysis.striker_stats.turnovers_adj_per90;
                             if (pp != null && to != null && Number(to) !== 0) {
                               return Number(pp) / Number(to);
                             }
