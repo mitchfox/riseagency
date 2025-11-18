@@ -113,21 +113,29 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
   // Fetch marketing gallery images for this player
   React.useEffect(() => {
     const fetchMarketingImages = async () => {
-      if (!playerData?.name) return;
+      if (!playerData?.name) {
+        console.log('No player name available');
+        return;
+      }
       
-      console.log('Fetching images for player:', playerData.name);
+      console.log('Searching for images with player name:', playerData.name);
+      console.log('Full player data:', playerData);
       
       const { data, error } = await supabase
         .from('marketing_gallery')
         .select('*')
         .eq('category', 'players')
         .eq('file_type', 'image')
-        .ilike('title', `%${playerData.name}%`)
         .order('created_at', { ascending: false });
       
       if (!error && data) {
-        console.log('Marketing images found:', data);
-        setMarketingImages(data.map(img => img.file_url));
+        console.log('All player images:', data.map(img => img.title));
+        // Filter client-side to see what matches
+        const matching = data.filter(img => 
+          img.title.toLowerCase().includes(playerData.name.toLowerCase())
+        );
+        console.log('Matching images:', matching);
+        setMarketingImages(matching.map(img => img.file_url));
       } else if (error) {
         console.error('Error fetching marketing images:', error);
       }
@@ -294,10 +302,13 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
       });
     }
     
-    // Don't use player profile image as fallback - only use 21:9 marketing images
-    
     // Filter out videos - only keep images
     const imageOnly = thumbnails.filter(url => !(url.includes('supabase') && url.includes('videos')));
+    
+    // Fallback to player profile image if no 21:9 images found
+    if (imageOnly.length === 0 && playerData?.image_url) {
+      imageOnly.push(playerData.image_url);
+    }
     
     console.log('Image thumbnails generated:', imageOnly.length, imageOnly);
     return imageOnly;
