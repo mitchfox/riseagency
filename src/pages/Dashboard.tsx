@@ -28,7 +28,7 @@ import { CacheManager } from "@/lib/cacheManager";
 import { Hub } from "@/components/dashboard/Hub";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Cell, LabelList, ReferenceLine } from "recharts";
 import { Link } from "react-router-dom";
-import { getR90Grade, getXGGrade, getXAGrade, getRegainsGrade, getInterceptionsGrade, getXGChainGrade, getProgressivePassesGrade } from "@/lib/gradeCalculations";
+import { getR90Grade, getXGGrade, getXAGrade, getRegainsGrade, getInterceptionsGrade, getXGChainGrade, getProgressivePassesGrade, getPPTurnoversRatioGrade } from "@/lib/gradeCalculations";
 
 
 interface Analysis {
@@ -1074,6 +1074,15 @@ const Dashboard = () => {
       if (metricKey === "r90") {
         return analyses.some(a => a.r90_score != null);
       }
+      // Special case for ratio metrics
+      if (metricKey === "ppturnoversratio") {
+        return analyses.some(a => 
+          a.striker_stats && 
+          a.striker_stats.progressive_passes != null && 
+          a.striker_stats.turnovers != null &&
+          Number(a.striker_stats.turnovers) !== 0
+        );
+      }
       return analyses.some(a => 
         a.striker_stats && 
         statKey && 
@@ -1091,6 +1100,7 @@ const Dashboard = () => {
       { value: "xgchain", statKey: "xGChain_per90" },
       { value: "xgbuildup", statKey: "xGBuildup_per90" },
       { value: "progressivepasses", statKey: "progressive_passes_adj_per90" },
+      { value: "ppturnoversratio", statKey: "progressive_passes,turnovers" },
       { value: "shots", statKey: "Shots_per90" },
       { value: "shotsontarget", statKey: "ShotsOnTarget_per90" },
     ];
@@ -1669,6 +1679,15 @@ const Dashboard = () => {
                                 if (metricKey === "r90") {
                                   return analyses.some(a => a.r90_score != null);
                                 }
+                                // Special case for ratio metrics
+                                if (metricKey === "ppturnoversratio") {
+                                  return analyses.some(a => 
+                                    a.striker_stats && 
+                                    a.striker_stats.progressive_passes != null && 
+                                    a.striker_stats.turnovers != null &&
+                                    Number(a.striker_stats.turnovers) !== 0
+                                  );
+                                }
                                 return analyses.some(a => 
                                   a.striker_stats && 
                                   statKey && 
@@ -1686,6 +1705,7 @@ const Dashboard = () => {
                                 { value: "xgchain", label: "xG Chain", statKey: "xGChain_per90" },
                                 { value: "xgbuildup", label: "xG Buildup", statKey: "xGBuildup_per90" },
                                 { value: "progressivepasses", label: "Progressive Passes", statKey: "progressive_passes_adj_per90" },
+                                { value: "ppturnoversratio", label: "Progressive Passes/Turnovers Ratio", statKey: "progressive_passes,turnovers" },
                                 { value: "shots", label: "Shots", statKey: "Shots_per90" },
                                 { value: "shotsontarget", label: "Shots on Target", statKey: "ShotsOnTarget_per90" },
                               ];
@@ -1707,6 +1727,16 @@ const Dashboard = () => {
                         const getMetricValue = (analysis: any) => {
                           if (selectedFormMetric === "r90") return analysis.r90_score;
                           if (!analysis.striker_stats) return null;
+                          
+                          // Special case for progressive passes to turnovers ratio
+                          if (selectedFormMetric === "ppturnoversratio") {
+                            const pp = analysis.striker_stats.progressive_passes;
+                            const to = analysis.striker_stats.turnovers;
+                            if (pp != null && to != null && Number(to) !== 0) {
+                              return Number(pp) / Number(to);
+                            }
+                            return null;
+                          }
                           
                           const statKey = selectedFormMetric === "xg" ? "xG_adj_per90" :
                                           selectedFormMetric === "xa" ? "xA_adj_per90" :
@@ -1732,6 +1762,7 @@ const Dashboard = () => {
                             case "xgchain": return "xGChain";
                             case "xgbuildup": return "xGBuildup";
                             case "progressivepasses": return "Progressive Passes";
+                            case "ppturnoversratio": return "PP/TO Ratio";
                             case "shots": return "Shots";
                             case "shotsontarget": return "Shots on Target";
                             default: return "R90";
@@ -1850,9 +1881,24 @@ const Dashboard = () => {
                                 { value: 8, grade: 'A-', color: 'hsl(142, 65%, 45%)' },
                                 { value: 9, grade: 'A', color: 'hsl(142, 70%, 50%)' },
                                 { value: 10, grade: 'A+', color: 'hsl(142, 76%, 55%)' },
-                                { value: 12, grade: 'A*', color: 'hsl(43, 96%, 56%)' },
-                              ];
-                            default:
+                              { value: 12, grade: 'A*', color: 'hsl(43, 96%, 56%)' },
+                            ];
+                          case "ppturnoversratio":
+                            return [
+                              { value: 0, grade: 'U', color: 'hsl(0, 84%, 30%)' },
+                              { value: 0.3, grade: 'D', color: 'hsl(0, 84%, 45%)' },
+                              { value: 0.6, grade: 'C-', color: 'hsl(0, 84%, 60%)' },
+                              { value: 0.9, grade: 'C', color: 'hsl(25, 75%, 45%)' },
+                              { value: 1.2, grade: 'C+', color: 'hsl(40, 85%, 50%)' },
+                              { value: 1.5, grade: 'B-', color: 'hsl(60, 70%, 50%)' },
+                              { value: 1.8, grade: 'B', color: 'hsl(142, 76%, 36%)' },
+                              { value: 2.1, grade: 'B+', color: 'hsl(142, 70%, 40%)' },
+                              { value: 2.4, grade: 'A-', color: 'hsl(142, 65%, 45%)' },
+                              { value: 2.7, grade: 'A', color: 'hsl(142, 70%, 50%)' },
+                              { value: 3.0, grade: 'A+', color: 'hsl(142, 76%, 55%)' },
+                              { value: 3.5, grade: 'A*', color: 'hsl(43, 96%, 56%)' },
+                            ];
+                          default:
                               return [];
                           }
                         };
@@ -1874,6 +1920,8 @@ const Dashboard = () => {
                               return getXGChainGrade(score).color;
                             case "progressivepasses":
                               return getProgressivePassesGrade(score).color;
+                            case "ppturnoversratio":
+                              return getPPTurnoversRatioGrade(score).color;
                             default:
                               return getR90Grade(score).color;
                           }
@@ -1896,6 +1944,8 @@ const Dashboard = () => {
                               return getXGChainGrade(score).grade;
                             case "progressivepasses":
                               return getProgressivePassesGrade(score).grade;
+                            case "ppturnoversratio":
+                              return getPPTurnoversRatioGrade(score).grade;
                             default:
                               return score.toFixed(2);
                           }
