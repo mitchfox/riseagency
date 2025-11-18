@@ -2104,13 +2104,13 @@ const Dashboard = () => {
                                 {isStrikerMetric && averageValue !== null && (
                                   <ReferenceLine
                                     y={averageValue}
-                                    stroke="hsl(43, 96%, 56%)"
+                                    stroke="hsl(var(--gold))"
                                     strokeDasharray="5 5"
                                     strokeWidth={2}
                                     label={{ 
                                       value: `Avg: ${averageValue.toFixed(3)}`, 
                                       position: 'right',
-                                      fill: 'hsl(43, 96%, 56%)',
+                                      fill: 'hsl(var(--gold))',
                                       fontSize: 12,
                                       fontWeight: 'bold'
                                     }}
