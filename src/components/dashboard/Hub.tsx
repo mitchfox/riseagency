@@ -117,9 +117,9 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
       
       const { data, error } = await supabase
         .from('marketing_gallery')
-        .select('file_url')
+        .select('file_url, file_type')
         .eq('category', 'players')
-        .eq('file_type', 'image')
+        .in('file_type', ['image', 'video'])
         .ilike('title', `%${playerData.name}%`)
         .order('created_at', { ascending: false });
       
