@@ -305,7 +305,7 @@ All colors MUST be HSL.
 
   .infinite-scroll-content {
     display: inline-block;
-    animation: scroll-left 40s linear infinite;
+    animation: scroll-left 120s linear infinite;
   }
 
   .infinite-scroll-content:hover {
