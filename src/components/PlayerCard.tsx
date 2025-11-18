@@ -207,10 +207,28 @@ export const PlayerCard = ({ player, viewMode = "grid" }: PlayerCardProps) => {
         <h3 className="text-3xl font-bebas uppercase text-foreground tracking-wider">
           {player.name}
         </h3>
-        <div className="flex gap-4 mt-2 text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-          <span>Age {player.age}</span>
-          <span>•</span>
-          <span>{player.nationality}</span>
+        <div className="flex justify-between items-center gap-4 mt-2">
+          <div className="flex gap-4 text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+            <span>Age {player.age}</span>
+            <span>•</span>
+            <span>{player.nationality}</span>
+          </div>
+          {(clubLogo || currentClub) && (
+            <div className="flex items-center gap-2">
+              {clubLogo && (
+                <img 
+                  src={clubLogo} 
+                  alt={currentClub}
+                  className="h-6 w-6 object-contain"
+                />
+              )}
+              {currentClub && (
+                <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                  {currentClub}
+                </span>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </Link>
