@@ -124,49 +124,13 @@ export const PlaylistPlayer = ({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-[95vw] h-[90vh] p-0">
         <div ref={containerRef} className="relative w-full h-full bg-black flex flex-col">
-          {/* Top Bar with Position Number, Reorder Controls, and Close */}
+          {/* Top Bar with Position Number and Close */}
           <div className="absolute top-0 left-0 right-0 z-50 flex items-start justify-between p-4 gap-4">
             {/* Position Number - Top Left */}
             <div className="bg-background/95 backdrop-blur-sm rounded-lg px-6 py-3 shadow-xl border border-border/50">
               <div className="text-5xl font-bold text-foreground">
                 {currentIndex + 1}
                 <span className="text-2xl text-muted-foreground ml-2">/ {totalClips}</span>
-              </div>
-            </div>
-
-            {/* Reorder Controls - Top Center - Always Visible */}
-            <div className="flex-1 flex justify-center">
-              <div className="bg-background/95 backdrop-blur-sm rounded-lg p-4 shadow-xl border border-border/50 flex items-center gap-3">
-                <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">Move to #:</span>
-                <Input
-                  type="number"
-                  min="1"
-                  max={totalClips}
-                  value={newPosition}
-                  onChange={(e) => setNewPosition(e.target.value)}
-                  placeholder={`1-${totalClips}`}
-                  className="w-24 text-lg"
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && newPosition) handleReorder();
-                    if (e.key === 'Escape') setNewPosition("");
-                  }}
-                />
-                {newPosition && (
-                  <>
-                    <Button onClick={handleReorder} size="sm" className="h-9">
-                      <Check className="w-4 h-4 mr-1" />
-                      Move
-                    </Button>
-                    <Button 
-                      onClick={() => setNewPosition("")} 
-                      variant="ghost" 
-                      size="sm"
-                      className="h-9"
-                    >
-                      <X className="w-4 h-4" />
-                    </Button>
-                  </>
-                )}
               </div>
             </div>
 
@@ -208,8 +172,8 @@ export const PlaylistPlayer = ({
             </video>
           </div>
 
-          {/* Bottom Bar with Clip Name and Navigation */}
-          <div className="bg-background/90 backdrop-blur-sm p-4 flex items-center justify-between">
+          {/* Bottom Bar with Reorder Controls, Clip Name and Navigation */}
+          <div className="bg-background/90 backdrop-blur-sm p-4 flex items-center justify-between gap-4">
             <Button
               onClick={goToPrevious}
               disabled={currentIndex === 0}
@@ -219,6 +183,39 @@ export const PlaylistPlayer = ({
               <ChevronLeft className="w-6 h-6" />
               Previous
             </Button>
+
+            {/* Reorder Controls - Bottom Center (Always Visible) */}
+            <div className="flex items-center gap-3 bg-background/95 backdrop-blur-sm rounded-lg px-4 py-2 border border-border/50">
+              <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">#</span>
+              <Input
+                type="number"
+                min="1"
+                max={totalClips}
+                value={newPosition}
+                onChange={(e) => setNewPosition(e.target.value)}
+                placeholder={`1-${totalClips}`}
+                className="w-20 h-9 text-base"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && newPosition) handleReorder();
+                  if (e.key === 'Escape') setNewPosition("");
+                }}
+              />
+              {newPosition && (
+                <>
+                  <Button onClick={handleReorder} size="sm" className="h-8">
+                    <Check className="w-4 h-4" />
+                  </Button>
+                  <Button 
+                    onClick={() => setNewPosition("")} 
+                    variant="ghost" 
+                    size="sm"
+                    className="h-8"
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </>
+              )}
+            </div>
 
             <div className="text-center flex-1 px-4">
               <h3 className="text-xl font-semibold">{currentClip.name}</h3>
