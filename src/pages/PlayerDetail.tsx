@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { ArrowLeft, MessageCircle, ExternalLink, Video } from "lucide-react";
 import { FormationDisplay } from "@/components/FormationDisplay";
 import { getCountryFlagUrl } from "@/lib/countryFlags";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import blackMarbleBg from "@/assets/black-marble-menu.png";
 
 const PlayerDetail = () => {
@@ -20,6 +21,7 @@ const PlayerDetail = () => {
   const [player, setPlayer] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [bioDialogOpen, setBioDialogOpen] = useState(false);
+  const [visibleClipsCount, setVisibleClipsCount] = useState(30); // Limit clips shown initially
   const videoRef = useRef<HTMLVideoElement>(null);
   
   // Check if opened in modal
@@ -240,8 +242,9 @@ const PlayerDetail = () => {
       </Helmet>
       
       {!isModal && <Header />}
-      <div className={`min-h-screen bg-background ${!isModal ? 'pt-16' : ''} overflow-x-hidden`}>
-        <main className="container mx-auto px-4 py-2 touch-pan-y">
+      <ErrorBoundary>
+        <div className={`min-h-screen bg-background ${!isModal ? 'pt-16' : ''} overflow-x-hidden`}>
+          <main className="container mx-auto px-4 py-2 touch-pan-y">
           {/* Back Button */}
           {!isModal && (
             <div className="mb-2">
@@ -390,27 +393,38 @@ const PlayerDetail = () => {
                 </div>
               )}
               
-              {/* Club Logo Overlays - Bottom - Show database highlights */}
+              {/* Club Logo Overlays - Bottom - Show database highlights with pagination */}
               {dbHighlights.length > 0 && (
-                <div className="absolute bottom-2 md:bottom-4 left-1/2 -translate-x-1/2 flex flex-wrap justify-center gap-1 md:gap-2 z-10 max-w-full px-2">
-                  {dbHighlights.map((highlight, index) => (
+                <div className="absolute bottom-2 md:bottom-4 left-1/2 -translate-x-1/2 z-10 max-w-full px-2">
+                  <div className="flex flex-wrap justify-center gap-1 md:gap-2">
+                    {dbHighlights.slice(0, visibleClipsCount).map((highlight, index) => (
+                      <button
+                        key={index}
+                        onClick={() => setCurrentVideoType(index)}
+                        className={`w-6 h-6 md:w-10 md:h-10 rounded border transition-all overflow-hidden bg-black/50 ${
+                          currentVideoType === index
+                            ? 'border-[hsl(var(--gold))] scale-110'
+                            : 'border-[hsl(var(--gold))]/20 hover:border-[hsl(var(--gold))]/50'
+                        }`}
+                        title={highlight.name || `Highlight ${index + 1}`}
+                      >
+                        <img 
+                          src={highlight.clubLogo} 
+                          alt={highlight.name || `Highlight ${index + 1}`}
+                          className="w-full h-full object-contain p-0.5"
+                          loading="lazy"
+                        />
+                      </button>
+                    ))}
+                  </div>
+                  {dbHighlights.length > visibleClipsCount && (
                     <button
-                      key={index}
-                      onClick={() => setCurrentVideoType(index)}
-                      className={`w-6 h-6 md:w-10 md:h-10 rounded border transition-all overflow-hidden bg-black/50 ${
-                        currentVideoType === index
-                          ? 'border-[hsl(var(--gold))] scale-110'
-                          : 'border-[hsl(var(--gold))]/20 hover:border-[hsl(var(--gold))]/50'
-                      }`}
-                      title={highlight.name || `Highlight ${index + 1}`}
+                      onClick={() => setVisibleClipsCount(prev => Math.min(prev + 30, dbHighlights.length))}
+                      className="mt-2 px-3 py-1 text-xs bg-[hsl(var(--gold))]/20 hover:bg-[hsl(var(--gold))]/30 border border-[hsl(var(--gold))]/40 rounded text-foreground font-bebas uppercase tracking-wider transition-colors"
                     >
-                      <img 
-                        src={highlight.clubLogo} 
-                        alt={highlight.name || `Highlight ${index + 1}`}
-                        className="w-full h-full object-contain p-0.5"
-                      />
+                      Show More ({dbHighlights.length - visibleClipsCount} remaining)
                     </button>
-                  ))}
+                  )}
                 </div>
               )}
             </div>
@@ -789,6 +803,7 @@ const PlayerDetail = () => {
         </section>
       </main>
       </div>
+      </ErrorBoundary>
     </>
   );
 };
