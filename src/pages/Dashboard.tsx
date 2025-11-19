@@ -833,13 +833,18 @@ const Dashboard = () => {
       // Calculate xGChain for analyses that don't have it
       const analysesWithXGChain = await Promise.all(
         (analysisData || []).map(async (analysis) => {
-          const strikerStats = analysis.striker_stats as any;
-          
-          // If xGChain is already present, return as-is
-          if (strikerStats?.xGChain_per90 !== undefined) {
+          const strikerStats = (analysis.striker_stats || {}) as any;
+
+          // If xGChain per90 already has a real value, keep it
+          const hasXGChainPer90 =
+            strikerStats.xGChain_per90 !== undefined &&
+            strikerStats.xGChain_per90 !== null &&
+            strikerStats.xGChain_per90 !== "";
+
+          if (hasXGChainPer90) {
             return analysis;
           }
-          
+
           // Fetch performance actions and calculate xGChain
           const { data: actions } = await supabase
             .from('performance_report_actions')

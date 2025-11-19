@@ -237,6 +237,36 @@ export const CreatePerformanceReportDialog = ({
       strikerStats.crossing_movement_xC, strikerStats.interceptions, 
       strikerStats.regains_adj, strikerStats.turnovers_adj, strikerStats.progressive_passes_adj]);
 
+  // Auto-calculate xGChain and xGChain_per90 directly from actions
+  useEffect(() => {
+    // Sum only positive action scores
+    const totalXGChain = actions.reduce((sum, action) => {
+      const score = parseFloat(action.action_score || "");
+      if (isNaN(score) || score <= 0) return sum;
+      return sum + score;
+    }, 0);
+
+    const minutes = parseFloat(minutesPlayed);
+
+    setStrikerStats(prev => {
+      const updated: typeof prev = {
+        ...prev,
+        xGChain: totalXGChain ? totalXGChain.toFixed(3) : "",
+      };
+
+      if (minutes && minutes > 0 && totalXGChain) {
+        const per90 = (totalXGChain / minutes) * 90;
+        updated.xGChain_per90 = per90.toFixed(3);
+      }
+
+      if (!minutes || minutes <= 0 || !totalXGChain) {
+        updated.xGChain_per90 = "";
+      }
+
+      return updated;
+    });
+  }, [actions, minutesPlayed]);
+
   const fetchActionTypes = async () => {
     const { data, error } = await supabase
       .from("performance_report_actions")
