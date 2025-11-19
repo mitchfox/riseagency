@@ -2716,34 +2716,27 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
         </DialogContent>
       </Dialog>
 
-      {/* Playlist Manager Dialog */}
+      {/* Playlist Manager (handles its own Dialog) */}
       {showPlaylistManager && selectedPlayer && (
-        <Dialog open={showPlaylistManager} onOpenChange={setShowPlaylistManager}>
-          <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Manage Playlists - {selectedPlayer.name}</DialogTitle>
-            </DialogHeader>
-            <PlaylistManager
-              playerData={{ id: selectedPlayer.id, email: selectedPlayer.email || '', name: selectedPlayer.name }}
-              availableClips={(() => {
-                try {
-                  const highlights = typeof selectedPlayer.highlights === 'string'
-                    ? JSON.parse(selectedPlayer.highlights)
-                    : selectedPlayer.highlights;
-                  return (highlights.bestClips || []).map((clip: any, idx: number) => ({
-                    id: clip.clipId || `clip-${idx}`,
-                    name: clip.clipName || `Clip ${idx + 1}`,
-                    videoUrl: clip.videoUrl,
-                    thumbnailUrl: clip.thumbnailUrl
-                  }));
-                } catch (e) {
-                  return [];
-                }
-              })()}
-              onClose={() => setShowPlaylistManager(false)}
-            />
-          </DialogContent>
-        </Dialog>
+        <PlaylistManager
+          playerData={{ id: selectedPlayer.id, email: selectedPlayer.email || '', name: selectedPlayer.name }}
+          availableClips={(() => {
+            try {
+              const highlights = typeof selectedPlayer.highlights === 'string'
+                ? JSON.parse(selectedPlayer.highlights)
+                : (selectedPlayer.highlights || []);
+              return (highlights as any[]).map((clip: any, idx: number) => ({
+                id: clip.clipId || `clip-${idx}`,
+                name: clip.clipName || `Clip ${idx + 1}`,
+                videoUrl: clip.videoUrl,
+                thumbnailUrl: clip.thumbnailUrl
+              }));
+            } catch (e) {
+              return [];
+            }
+          })()}
+          onClose={() => setShowPlaylistManager(false)}
+        />
       )}
     </div>
   );

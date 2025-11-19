@@ -125,9 +125,9 @@ export const PlaylistPlayer = ({
       <DialogContent className="max-w-[95vw] h-[90vh] p-0">
         <div ref={containerRef} className="relative w-full h-full bg-black flex flex-col">
           {/* Top Bar with Position Number and Close */}
-          <div className="absolute top-0 left-0 right-0 z-50 flex items-start justify-between p-4 gap-4">
+          <div className="absolute top-0 left-0 right-0 z-50 flex items-start justify-between p-4 gap-4 pointer-events-none">
             {/* Position Number - Top Left */}
-            <div className="bg-background/95 backdrop-blur-sm rounded-lg px-6 py-3 shadow-xl border border-border/50">
+            <div className="bg-background/95 backdrop-blur-sm rounded-lg px-6 py-3 shadow-xl border border-border/50 pointer-events-auto">
               <div className="text-5xl font-bold text-foreground">
                 {currentIndex + 1}
                 <span className="text-2xl text-muted-foreground ml-2">/ {totalClips}</span>
@@ -135,12 +135,13 @@ export const PlaylistPlayer = ({
             </div>
 
             {/* Fullscreen & Close Buttons - Top Right */}
-            <div className="flex gap-2">
+            <div className="flex gap-2 pointer-events-auto">
               <Button
                 onClick={toggleFullscreen}
                 variant="ghost"
                 size="icon"
                 className="bg-background/95 backdrop-blur-sm hover:bg-background shadow-xl border border-border/50"
+                title={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
               >
                 {isFullscreen ? <Minimize className="w-6 h-6" /> : <Maximize className="w-6 h-6" />}
               </Button>
@@ -149,6 +150,7 @@ export const PlaylistPlayer = ({
                 variant="ghost"
                 size="icon"
                 className="bg-background/95 backdrop-blur-sm hover:bg-background shadow-xl border border-border/50"
+                title="Close player"
               >
                 <X className="w-6 h-6" />
               </Button>
@@ -159,33 +161,22 @@ export const PlaylistPlayer = ({
           <div className="flex-1 flex items-center justify-center p-4">
             <video
               key={currentClip.videoUrl}
+              src={currentClip.videoUrl}
               controls
               autoPlay
               playsInline
               preload="metadata"
               className="max-w-full max-h-full"
+              controlsList="nodownload"
               onEnded={goToNext}
             >
-              <source src={currentClip.videoUrl} type="video/mp4" />
-              <source src={currentClip.videoUrl} type="video/quicktime" />
               Your browser does not support the video tag.
             </video>
           </div>
 
-          {/* Bottom Bar with Reorder Controls, Clip Name and Navigation */}
-          <div className="bg-background/90 backdrop-blur-sm p-4 flex items-center justify-between gap-4">
-            <Button
-              onClick={goToPrevious}
-              disabled={currentIndex === 0}
-              variant="outline"
-              size="lg"
-            >
-              <ChevronLeft className="w-6 h-6" />
-              Previous
-            </Button>
-
-            {/* Reorder Controls - Bottom Center (Always Visible) */}
-            <div className="flex items-center gap-3 bg-background/95 backdrop-blur-sm rounded-lg px-4 py-2 border border-border/50">
+          {/* Floating Reorder Control - Bottom Center over Video */}
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 flex justify-center pb-20">
+            <div className="pointer-events-auto flex items-center gap-3 bg-background/95 backdrop-blur-sm rounded-lg px-4 py-2 border border-border/50 shadow-xl">
               <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">#</span>
               <Input
                 type="number"
@@ -216,10 +207,23 @@ export const PlaylistPlayer = ({
                 </>
               )}
             </div>
+          </div>
+
+          {/* Bottom Bar: Previous / Title / Next */}
+          <div className="bg-background/90 backdrop-blur-sm p-4 flex items-center justify-between gap-4">
+            <Button
+              onClick={goToPrevious}
+              disabled={currentIndex === 0}
+              variant="outline"
+              size="lg"
+            >
+              <ChevronLeft className="w-6 h-6" />
+              Previous
+            </Button>
 
             <div className="text-center flex-1 px-4">
-              <h3 className="text-xl font-semibold">{currentClip.name}</h3>
-              <p className="text-sm text-muted-foreground mt-1">{playlistName}</p>
+              <h3 className="text-xl font-semibold truncate">{currentClip.name}</h3>
+              <p className="text-sm text-muted-foreground mt-1 truncate">{playlistName}</p>
             </div>
 
             <Button
