@@ -670,8 +670,8 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
             {/* Represented Players */}
             {representedPlayers.length > 0 && (
               <div>
-                <h3 className="text-base md:text-lg font-semibold mb-4 text-primary">Represented</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <h3 className="text-base md:text-lg font-semibold mb-3 text-primary">Represented</h3>
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3 md:gap-4">
                   {representedPlayers.map((player) => {
                     const playerStats = stats[player.id];
                     return (
@@ -682,7 +682,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                       >
                         <div className="flex flex-col sm:flex-row h-full">
                           {/* Image Section - Top on mobile, Left on desktop */}
-                          <div className="w-full h-48 sm:w-32 sm:h-auto flex-shrink-0 relative">
+                          <div className="w-full h-40 sm:w-32 sm:h-auto flex-shrink-0 relative">
                             <img 
                               src={player.image_url || undefined} 
                               alt={player.name}
@@ -692,37 +692,37 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                           
                           {/* Content Section - Bottom on mobile, Right on desktop */}
                           <div className="flex-1 flex flex-col p-3 sm:p-4">
-                            <div className="flex-1">
-                              <h3 className="font-semibold text-base sm:text-lg mb-1 truncate">{player.name}</h3>
-                              <p className="text-xs sm:text-sm text-muted-foreground mb-2">{player.position}</p>
-                              <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2 sm:mb-3">
+                            <div className="flex-1 space-y-1">
+                              <h3 className="font-semibold text-sm sm:text-base md:text-lg truncate">{player.name}</h3>
+                              <p className="text-xs sm:text-sm text-muted-foreground">{player.position}</p>
+                              <div className="flex flex-wrap items-center gap-1 text-[11px] sm:text-xs text-muted-foreground">
                                 <span>{player.age}y</span>
                                 <span>•</span>
-                                <span className="truncate">{player.nationality}</span>
+                                <span className="truncate max-w-[8rem] sm:max-w-none">{player.nationality}</span>
                               </div>
                               
                               {player.club && (
-                                <div className="flex items-center gap-2 text-xs sm:text-sm mb-2 sm:mb-3">
+                                <div className="flex items-center gap-2 text-[11px] sm:text-xs">
                                   {player.club_logo && (
                                     <img src={player.club_logo} alt="" className="w-4 h-4 sm:w-5 sm:h-5 object-contain flex-shrink-0" />
                                   )}
-                                  <span className="text-muted-foreground truncate">{player.club}</span>
+                                  <span className="text-muted-foreground truncate max-w-[9rem] sm:max-w-none">{player.club}</span>
                                 </div>
                               )}
                             </div>
                             
                             {playerStats && (
-                              <div className="grid grid-cols-3 gap-2 text-center text-xs pt-2 border-t border-border/50">
+                              <div className="grid grid-cols-3 gap-1 sm:gap-2 text-center text-[10px] sm:text-xs pt-2 mt-2 border-t border-border/50">
                                 <div>
-                                  <div className="font-semibold text-base sm:text-lg">{playerStats.goals}</div>
+                                  <div className="font-semibold text-sm sm:text-base">{playerStats.goals}</div>
                                   <div className="text-muted-foreground text-[10px] sm:text-xs">Goals</div>
                                 </div>
                                 <div>
-                                  <div className="font-semibold text-base sm:text-lg">{playerStats.assists}</div>
+                                  <div className="font-semibold text-sm sm:text-base">{playerStats.assists}</div>
                                   <div className="text-muted-foreground text-[10px] sm:text-xs">Assists</div>
                                 </div>
                                 <div>
-                                  <div className="font-semibold text-base sm:text-lg">{playerStats.matches}</div>
+                                  <div className="font-semibold text-sm sm:text-base">{playerStats.matches}</div>
                                   <div className="text-muted-foreground text-[10px] sm:text-xs">Matches</div>
                                 </div>
                               </div>

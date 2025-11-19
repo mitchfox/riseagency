@@ -830,20 +830,10 @@ const Dashboard = () => {
 
       if (analysisError) throw analysisError;
       
-      // Calculate xGChain for analyses that don't have it
+      // Calculate xGChain for analyses based on actions (always derived from actions)
       const analysesWithXGChain = await Promise.all(
         (analysisData || []).map(async (analysis) => {
           const strikerStats = (analysis.striker_stats || {}) as any;
-
-          // If xGChain per90 already has a real value, keep it
-          const hasXGChainPer90 =
-            strikerStats.xGChain_per90 !== undefined &&
-            strikerStats.xGChain_per90 !== null &&
-            strikerStats.xGChain_per90 !== "";
-
-          if (hasXGChainPer90) {
-            return analysis;
-          }
 
           // Fetch performance actions and calculate xGChain
           const { data: actions } = await supabase
@@ -860,21 +850,21 @@ const Dashboard = () => {
             
             const xgChainPer90 = (xgChain / analysis.minutes_played) * 90;
             
-            // Add calculated xGChain to striker_stats
+            // Add calculated xGChain to striker_stats (override any stored values)
             return {
               ...analysis,
               striker_stats: {
-                ...(strikerStats || {}),
+                ...strikerStats,
                 xGChain: xgChain,
-                xGChain_per90: xgChainPer90
-              }
+                xGChain_per90: xgChainPer90,
+              },
             };
           }
           
           return analysis;
         })
       );
-      
+
       setAnalyses(analysesWithXGChain);
 
       // Fetch all analyses (pre-match, post-match, concepts) linked to this player
