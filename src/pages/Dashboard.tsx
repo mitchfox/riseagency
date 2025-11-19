@@ -829,7 +829,48 @@ const Dashboard = () => {
         .order("analysis_date", { ascending: false });
 
       if (analysisError) throw analysisError;
-      setAnalyses(analysisData || []);
+      
+      // Calculate xGChain for analyses that don't have it
+      const analysesWithXGChain = await Promise.all(
+        (analysisData || []).map(async (analysis) => {
+          const strikerStats = analysis.striker_stats as any;
+          
+          // If xGChain is already present, return as-is
+          if (strikerStats?.xGChain_per90 !== undefined) {
+            return analysis;
+          }
+          
+          // Fetch performance actions and calculate xGChain
+          const { data: actions } = await supabase
+            .from('performance_report_actions')
+            .select('action_score')
+            .eq('analysis_id', analysis.id);
+          
+          if (actions && actions.length > 0 && analysis.minutes_played) {
+            // Sum only positive action scores
+            const xgChain = actions.reduce((sum, action) => {
+              const score = action.action_score ?? 0;
+              return score > 0 ? sum + score : sum;
+            }, 0);
+            
+            const xgChainPer90 = (xgChain / analysis.minutes_played) * 90;
+            
+            // Add calculated xGChain to striker_stats
+            return {
+              ...analysis,
+              striker_stats: {
+                ...(strikerStats || {}),
+                xGChain: xgChain,
+                xGChain_per90: xgChainPer90
+              }
+            };
+          }
+          
+          return analysis;
+        })
+      );
+      
+      setAnalyses(analysesWithXGChain);
 
       // Fetch all analyses (pre-match, post-match, concepts) linked to this player
       const linkedAnalysisIds = (analysisData || [])
