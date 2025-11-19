@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { Plus, X, Save, ChevronUp, ChevronDown, List, Play, Trash2, Hash, Video } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { PlaylistPlayer } from "./PlaylistPlayer";
+import { ClipNameEditor } from "./ClipNameEditor";
 
 interface Clip {
   id?: string;
@@ -374,6 +375,49 @@ export const PlaylistManager = ({ playerData, availableClips, onClose }: Playlis
     }
   };
 
+  const handleRenameClip = async (oldName: string, videoUrl: string, newName: string) => {
+    if (!playerData?.email || !newName.trim() || newName === oldName) return;
+
+    try {
+      const { data, error } = await supabase.functions.invoke('rename-player-highlight', {
+        body: {
+          playerEmail: playerData.email,
+          oldName,
+          newName: newName.trim(),
+          videoUrl
+        }
+      });
+
+      if (error || data?.error) {
+        console.error('Rename error:', error || data?.error);
+        toast.error("Failed to rename clip");
+        return;
+      }
+
+      // Update all playlists with the new name
+      const updatedPlaylists = playlists.map(playlist => ({
+        ...playlist,
+        clips: playlist.clips.map(clip =>
+          clip.videoUrl === videoUrl && clip.name === oldName
+            ? { ...clip, name: newName.trim() }
+            : clip
+        )
+      }));
+
+      setPlaylists(updatedPlaylists);
+      
+      if (selectedPlaylist) {
+        const updatedSelected = updatedPlaylists.find(p => p.id === selectedPlaylist.id);
+        if (updatedSelected) setSelectedPlaylist(updatedSelected);
+      }
+
+      toast.success("Clip renamed globally");
+    } catch (err: any) {
+      console.error('Unexpected error renaming clip:', err);
+      toast.error(`Error: ${err.message || 'Unknown error'}`);
+    }
+  };
+
   return (
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="max-w-[100vw] w-[100vw] max-h-[95vh] overflow-y-auto p-4 md:p-6">
@@ -551,7 +595,13 @@ export const PlaylistManager = ({ playerData, availableClips, onClose }: Playlis
                     <span className="text-sm md:text-base font-bold text-primary w-8 md:w-10 flex-shrink-0 text-center">
                       {index + 1}.
                     </span>
-                    <span className="flex-1 text-sm md:text-base leading-tight break-words min-w-0">{clip.name}</span>
+                    <div className="flex-1 min-w-0">
+                      <ClipNameEditor
+                        initialName={clip.name}
+                        videoUrl={clip.videoUrl}
+                        onRename={(newName) => handleRenameClip(clip.name, clip.videoUrl, newName)}
+                      />
+                    </div>
                     <Button
                       size="sm"
                       variant="ghost"
