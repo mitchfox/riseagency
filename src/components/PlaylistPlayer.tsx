@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { X, ChevronLeft, ChevronRight, Check } from "lucide-react";
+import { X, ChevronLeft, ChevronRight, Check, Maximize, Minimize } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -32,6 +32,8 @@ export const PlaylistPlayer = ({
 }: PlaylistPlayerProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [newPosition, setNewPosition] = useState("");
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const currentClip = clips[currentIndex];
   const totalClips = clips.length;
@@ -45,6 +47,21 @@ export const PlaylistPlayer = ({
   const goToPrevious = () => {
     if (currentIndex > 0) {
       setCurrentIndex(currentIndex - 1);
+    }
+  };
+
+  const toggleFullscreen = () => {
+    if (!containerRef.current) return;
+    
+    if (!document.fullscreenElement) {
+      containerRef.current.requestFullscreen().catch(err => {
+        console.error('Error attempting fullscreen:', err);
+        toast.error("Fullscreen not available");
+      });
+      setIsFullscreen(true);
+    } else {
+      document.exitFullscreen();
+      setIsFullscreen(false);
     }
   };
 
@@ -106,7 +123,7 @@ export const PlaylistPlayer = ({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-[95vw] h-[90vh] p-0">
-        <div className="relative w-full h-full bg-black flex flex-col">
+        <div ref={containerRef} className="relative w-full h-full bg-black flex flex-col">
           {/* Top Bar with Position Number, Reorder Controls, and Close */}
           <div className="absolute top-0 left-0 right-0 z-50 flex items-start justify-between p-4 gap-4">
             {/* Position Number - Top Left */}
@@ -153,15 +170,25 @@ export const PlaylistPlayer = ({
               </div>
             </div>
 
-            {/* Close Button - Top Right */}
-            <Button
-              onClick={onClose}
-              variant="ghost"
-              size="icon"
-              className="bg-background/95 backdrop-blur-sm hover:bg-background shadow-xl border border-border/50"
-            >
-              <X className="w-6 h-6" />
-            </Button>
+            {/* Fullscreen & Close Buttons - Top Right */}
+            <div className="flex gap-2">
+              <Button
+                onClick={toggleFullscreen}
+                variant="ghost"
+                size="icon"
+                className="bg-background/95 backdrop-blur-sm hover:bg-background shadow-xl border border-border/50"
+              >
+                {isFullscreen ? <Minimize className="w-6 h-6" /> : <Maximize className="w-6 h-6" />}
+              </Button>
+              <Button
+                onClick={onClose}
+                variant="ghost"
+                size="icon"
+                className="bg-background/95 backdrop-blur-sm hover:bg-background shadow-xl border border-border/50"
+              >
+                <X className="w-6 h-6" />
+              </Button>
+            </div>
           </div>
 
           {/* Video Player */}
@@ -170,10 +197,14 @@ export const PlaylistPlayer = ({
               key={currentClip.videoUrl}
               controls
               autoPlay
+              playsInline
+              preload="metadata"
               className="max-w-full max-h-full"
               onEnded={goToNext}
             >
               <source src={currentClip.videoUrl} type="video/mp4" />
+              <source src={currentClip.videoUrl} type="video/quicktime" />
+              Your browser does not support the video tag.
             </video>
           </div>
 
