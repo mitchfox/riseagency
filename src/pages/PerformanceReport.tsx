@@ -355,7 +355,6 @@ const PerformanceReport = () => {
                         </div>
                       );
                     })}
-                </div>
                   
                   {/* Progressive Passes to Turnovers Ratio - displayed last */}
                   {(() => {
