@@ -246,7 +246,7 @@ const PerformanceReport = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-accent/20 rounded-lg">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 bg-accent/20 rounded-lg">
               <div className="text-center">
                 <p className="text-xs md:text-sm text-muted-foreground mb-1">Raw Score</p>
                 <p className="text-xl md:text-2xl font-bold">{calculateRScore().toFixed(5)}</p>
@@ -259,6 +259,15 @@ const PerformanceReport = () => {
                     : "N/A"
                   }
                 </p>
+              </div>
+              <div className="text-center">
+                <p className="text-xs md:text-sm text-muted-foreground mb-1">xG Chain</p>
+                <p className="text-xl md:text-2xl font-bold">{calculateXGChain().toFixed(3)}</p>
+                {analysis.minutes_played && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    per 90: {((calculateXGChain() / analysis.minutes_played) * 90).toFixed(3)}
+                  </p>
+                )}
               </div>
               <div className="text-center">
                 <p className="text-xs md:text-sm text-muted-foreground mb-1">Minutes Played</p>
@@ -341,16 +350,12 @@ const PerformanceReport = () => {
                     
                     if (ppField != null && toField != null && Number(toField) !== 0) {
                       const ratio = Number(ppField) / Number(toField);
-                      const gradeInfo = getPPTurnoversRatioGrade(ratio);
                       
                       return (
                         <div className="text-center p-3 bg-background rounded-md">
                           <p className="text-xs text-muted-foreground mb-1">Progressive Passes/Turnovers Ratio</p>
-                          <p className="font-bold text-lg" style={{ color: gradeInfo.color }}>
+                          <p className="font-bold text-lg">
                             {ratio.toFixed(2)}
-                          </p>
-                          <p className="text-xs font-semibold" style={{ color: gradeInfo.color }}>
-                            {gradeInfo.grade}
                           </p>
                         </div>
                       );
