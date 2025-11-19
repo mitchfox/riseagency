@@ -145,6 +145,15 @@ const PerformanceReport = () => {
     return totalScore;
   };
 
+  const calculateXGChain = (): number => {
+    // Sum only positive action scores, ignore negative ones
+    const xgChain = actions.reduce((sum, action) => {
+      const score = action.action_score ?? 0;
+      return score > 0 ? sum + score : sum;
+    }, 0);
+    return xgChain;
+  };
+
   const handleSaveAsPDF = () => {
     window.print();
   };
@@ -274,39 +283,50 @@ const PerformanceReport = () => {
                         .replace(/Xc/g, 'xC')
                         .replace(/Adj/g, '(adj.)');
                       
+                      // Auto-calculate xG Chain from positive action scores
+                      const isXGChain = key.toLowerCase().includes('xgchain') || key.toLowerCase().includes('xg_chain');
+                      const calculatedXGChain = calculateXGChain();
+                      const calculatedXGChainPer90 = analysis.minutes_played 
+                        ? (calculatedXGChain / analysis.minutes_played) * 90 
+                        : null;
+                      
+                      // Use calculated value for xG Chain, otherwise use stored value
+                      const displayValue = isXGChain ? calculatedXGChain : value;
+                      const displayPer90 = isXGChain ? calculatedXGChainPer90 : per90Value;
+                      
                       return (
                         <div key={key} className="text-center p-3 bg-background rounded-md">
                           <p className="text-xs text-muted-foreground mb-1">{displayName}</p>
                           <p className="font-bold text-lg">
                             {(() => {
-                              if (typeof value === 'number') {
+                              if (typeof displayValue === 'number') {
                                 if (key.includes('turnovers') || key.includes('interceptions') || key.includes('progressive_passes') || key.includes('regains')) {
-                                  return Math.round(value);
+                                  return Math.round(displayValue);
                                 }
-                                return value < 10 ? value.toFixed(3) : value;
+                                return displayValue < 10 ? displayValue.toFixed(3) : displayValue;
                               }
-                              if (Array.isArray(value)) {
-                                return value.filter(v => v != null).map(v => String(v)).join(', ') || '-';
+                              if (Array.isArray(displayValue)) {
+                                return displayValue.filter(v => v != null).map(v => String(v)).join(', ') || '-';
                               }
-                              if (value !== null && typeof value === 'object') {
-                                return JSON.stringify(value);
+                              if (displayValue !== null && typeof displayValue === 'object') {
+                                return JSON.stringify(displayValue);
                               }
-                              return String(value);
+                              return String(displayValue);
                             })()}
                           </p>
-                          {per90Value !== undefined && per90Value !== null && (
+                          {displayPer90 !== undefined && displayPer90 !== null && (
                             <p className="text-xs text-muted-foreground mt-1">
                               per 90: {(() => {
-                                if (typeof per90Value === 'number') {
-                                  return per90Value < 10 ? per90Value.toFixed(3) : per90Value;
+                                if (typeof displayPer90 === 'number') {
+                                  return displayPer90 < 10 ? displayPer90.toFixed(3) : displayPer90;
                                 }
-                                if (Array.isArray(per90Value)) {
-                                  return per90Value.filter(v => v != null).map(v => String(v)).join(', ') || '-';
+                                if (Array.isArray(displayPer90)) {
+                                  return displayPer90.filter(v => v != null).map(v => String(v)).join(', ') || '-';
                                 }
-                                if (per90Value !== null && typeof per90Value === 'object') {
-                                  return JSON.stringify(per90Value);
+                                if (displayPer90 !== null && typeof displayPer90 === 'object') {
+                                  return JSON.stringify(displayPer90);
                                 }
-                                return String(per90Value);
+                                return String(displayPer90);
                               })()}
                             </p>
                           )}
