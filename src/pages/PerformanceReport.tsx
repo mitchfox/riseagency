@@ -279,8 +279,29 @@ const PerformanceReport = () => {
               <div className="mt-6 p-4 bg-accent/10 rounded-lg border-2 border-primary/20">
                 <h3 className="font-bold text-lg mb-4 text-primary">Additional Statistics</h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {/* xG Chain - always derived from actions */}
+                  {actions.length > 0 && (
+                    <div className="text-center p-3 bg-background rounded-md">
+                      <p className="text-xs text-muted-foreground mb-1">xG Chain</p>
+                      <p className="font-bold text-lg">
+                        {calculateXGChain().toFixed(3)}
+                      </p>
+                      {analysis.minutes_played && (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          per 90: {((calculateXGChain() / analysis.minutes_played) * 90).toFixed(3)}
+                        </p>
+                      )}
+                    </div>
+                  )}
+
                   {Object.entries(analysis.striker_stats)
-                    .filter(([key, value]) => value !== null && value !== undefined && !key.includes('_per90'))
+                    .filter(([key, value]) => 
+                      value !== null && 
+                      value !== undefined && 
+                      !key.includes('_per90') &&
+                      !key.toLowerCase().includes('xgchain') &&
+                      !key.toLowerCase().includes('xg_chain')
+                    )
                     .map(([key, value]) => {
                       const per90Key = `${key}_per90`;
                       const per90Value = analysis.striker_stats![per90Key];
@@ -292,16 +313,8 @@ const PerformanceReport = () => {
                         .replace(/Xc/g, 'xC')
                         .replace(/Adj/g, '(adj.)');
                       
-                      // Auto-calculate xG Chain from positive action scores
-                      const isXGChain = key.toLowerCase().includes('xgchain') || key.toLowerCase().includes('xg_chain');
-                      const calculatedXGChain = calculateXGChain();
-                      const calculatedXGChainPer90 = analysis.minutes_played 
-                        ? (calculatedXGChain / analysis.minutes_played) * 90 
-                        : null;
-                      
-                      // Use calculated value for xG Chain, otherwise use stored value
-                      const displayValue = isXGChain ? calculatedXGChain : value;
-                      const displayPer90 = isXGChain ? calculatedXGChainPer90 : per90Value;
+                      const displayValue = value;
+                      const displayPer90 = per90Value;
                       
                       return (
                         <div key={key} className="text-center p-3 bg-background rounded-md">
@@ -342,6 +355,7 @@ const PerformanceReport = () => {
                         </div>
                       );
                     })}
+                </div>
                   
                   {/* Progressive Passes to Turnovers Ratio - displayed last */}
                   {(() => {
