@@ -21,6 +21,8 @@ Deno.serve(async (req) => {
     const file = formData.get('file') as File;
     const playerEmail = formData.get('playerEmail') as string;
     const clipName = formData.get('clipName') as string;
+    const logo = formData.get('logo') as File | null;
+    const highlightType = formData.get('highlightType') as string || 'best';
 
     if (!file || !playerEmail || !clipName) {
       return new Response(
@@ -44,7 +46,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Upload file to storage using service role
+    // Upload video file to storage using service role
     const fileName = `${player.id}_${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
     const fileBuffer = await file.arrayBuffer();
     
@@ -63,28 +65,57 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Get public URL
+    // Get public URL for video
     const { data: { publicUrl } } = supabase.storage
       .from('analysis-files')
       .getPublicUrl(`highlights/${fileName}`);
+
+    // Upload logo if provided
+    let logoUrl = null;
+    if (logo) {
+      const logoFileName = `${player.id}_${Date.now()}_logo_${logo.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+      const logoBuffer = await logo.arrayBuffer();
+      
+      const { error: logoUploadError } = await supabase.storage
+        .from('analysis-files')
+        .upload(`highlights/logos/${logoFileName}`, logoBuffer, {
+          contentType: logo.type,
+          upsert: false
+        });
+
+      if (!logoUploadError) {
+        const { data: { publicUrl: logoPublicUrl } } = supabase.storage
+          .from('analysis-files')
+          .getPublicUrl(`highlights/logos/${logoFileName}`);
+        logoUrl = logoPublicUrl;
+      } else {
+        console.error('Logo upload error:', logoUploadError);
+      }
+    }
 
     // Update player highlights (Supabase returns JSONB as objects, not strings)
     const parsed = typeof player.highlights === 'string' 
       ? JSON.parse(player.highlights) 
       : (player.highlights || {});
     const clipId = `${player.id}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    const updatedHighlights = {
-      matchHighlights: parsed.matchHighlights || [],
-      bestClips: [
-        ...(parsed.bestClips || []),
-        {
-          id: clipId,
-          name: clipName,
-          videoUrl: publicUrl,
-          addedAt: new Date().toISOString()
-        }
-      ]
+    
+    const newClip = {
+      id: clipId,
+      name: clipName,
+      videoUrl: publicUrl,
+      logoUrl: logoUrl,
+      addedAt: new Date().toISOString()
     };
+
+    const updatedHighlights = highlightType === 'match' 
+      ? {
+          matchHighlights: [...(parsed.matchHighlights || []), newClip],
+          bestClips: parsed.bestClips || []
+        }
+      : {
+          matchHighlights: parsed.matchHighlights || [],
+          bestClips: [...(parsed.bestClips || []), newClip]
+        };
 
     const { error: updateError } = await supabase
       .from('players')
