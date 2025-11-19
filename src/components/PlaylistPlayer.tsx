@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { X, ChevronLeft, ChevronRight, Hash, Check } from "lucide-react";
+import { X, ChevronLeft, ChevronRight, Check } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -31,7 +31,6 @@ export const PlaylistPlayer = ({
   onPlaylistUpdate
 }: PlaylistPlayerProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [isReordering, setIsReordering] = useState(false);
   const [newPosition, setNewPosition] = useState("");
 
   const currentClip = clips[currentIndex];
@@ -91,7 +90,6 @@ export const PlaylistPlayer = ({
       }
 
       toast.success("Clip reordered successfully");
-      setIsReordering(false);
       setNewPosition("");
       onPlaylistUpdate();
       
@@ -107,56 +105,52 @@ export const PlaylistPlayer = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-6xl h-[90vh] p-0">
+      <DialogContent className="max-w-[95vw] h-[90vh] p-0">
         <div className="relative w-full h-full bg-black flex flex-col">
-          {/* Top Bar with Position Number, Reorder Button, and Close */}
-          <div className="absolute top-0 left-0 right-0 z-10 flex items-start justify-between p-4">
+          {/* Top Bar with Position Number, Reorder Controls, and Close */}
+          <div className="absolute top-0 left-0 right-0 z-50 flex items-start justify-between p-4 gap-4">
             {/* Position Number - Top Left */}
-            <div className="bg-background/90 backdrop-blur-sm rounded-lg px-6 py-3 shadow-lg">
+            <div className="bg-background/95 backdrop-blur-sm rounded-lg px-6 py-3 shadow-xl border border-border/50">
               <div className="text-5xl font-bold text-foreground">
                 {currentIndex + 1}
                 <span className="text-2xl text-muted-foreground ml-2">/ {totalClips}</span>
               </div>
             </div>
 
-            {/* Reorder Button - Top Center */}
+            {/* Reorder Controls - Top Center - Always Visible */}
             <div className="flex-1 flex justify-center">
-              {!isReordering ? (
-                <Button
-                  onClick={() => setIsReordering(true)}
-                  size="lg"
-                  className="bg-background/90 backdrop-blur-sm hover:bg-background text-foreground shadow-lg"
-                >
-                  <Hash className="w-12 h-12" />
-                </Button>
-              ) : (
-                <div className="bg-background/90 backdrop-blur-sm rounded-lg p-4 shadow-lg flex items-center gap-2">
-                  <Input
-                    type="number"
-                    min="1"
-                    max={totalClips}
-                    value={newPosition}
-                    onChange={(e) => setNewPosition(e.target.value)}
-                    placeholder={`1-${totalClips}`}
-                    className="w-20 text-lg"
-                    autoFocus
-                    onKeyDown={(e) => e.key === 'Enter' && handleReorder()}
-                  />
-                  <Button onClick={handleReorder} size="sm">
-                    <Check className="w-4 h-4" />
-                  </Button>
-                  <Button 
-                    onClick={() => {
-                      setIsReordering(false);
-                      setNewPosition("");
-                    }} 
-                    variant="ghost" 
-                    size="sm"
-                  >
-                    <X className="w-4 h-4" />
-                  </Button>
-                </div>
-              )}
+              <div className="bg-background/95 backdrop-blur-sm rounded-lg p-4 shadow-xl border border-border/50 flex items-center gap-3">
+                <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">Move to #:</span>
+                <Input
+                  type="number"
+                  min="1"
+                  max={totalClips}
+                  value={newPosition}
+                  onChange={(e) => setNewPosition(e.target.value)}
+                  placeholder={`1-${totalClips}`}
+                  className="w-24 text-lg"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && newPosition) handleReorder();
+                    if (e.key === 'Escape') setNewPosition("");
+                  }}
+                />
+                {newPosition && (
+                  <>
+                    <Button onClick={handleReorder} size="sm" className="h-9">
+                      <Check className="w-4 h-4 mr-1" />
+                      Move
+                    </Button>
+                    <Button 
+                      onClick={() => setNewPosition("")} 
+                      variant="ghost" 
+                      size="sm"
+                      className="h-9"
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </>
+                )}
+              </div>
             </div>
 
             {/* Close Button - Top Right */}
@@ -164,7 +158,7 @@ export const PlaylistPlayer = ({
               onClick={onClose}
               variant="ghost"
               size="icon"
-              className="bg-background/90 backdrop-blur-sm hover:bg-background"
+              className="bg-background/95 backdrop-blur-sm hover:bg-background shadow-xl border border-border/50"
             >
               <X className="w-6 h-6" />
             </Button>
