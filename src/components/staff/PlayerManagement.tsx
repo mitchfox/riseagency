@@ -13,6 +13,7 @@ import { PlayerFixtures } from "./PlayerFixtures";
 import { PlayerImages } from "./PlayerImages";
 import { PlayerScoutingManagement } from "./PlayerScoutingManagement";
 import { PlaylistManager } from "@/components/PlaylistManager";
+import { UploadHighlightDialog } from "./UploadHighlightDialog";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -122,6 +123,9 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   const [analysisSearchQuery, setAnalysisSearchQuery] = useState("");
   const [showPlaylistManager, setShowPlaylistManager] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<Record<string, { status: 'uploading' | 'success' | 'error', progress: number, error?: string }>>({});
+  const [showUploadHighlightDialog, setShowUploadHighlightDialog] = useState(false);
+  const [uploadHighlightFile, setUploadHighlightFile] = useState<File | null>(null);
+  const [uploadHighlightType, setUploadHighlightType] = useState<"match" | "best">("best");
 
   useEffect(() => {
     fetchPlayers();
@@ -1422,10 +1426,23 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                     onClick={() => {
                                       const input = document.createElement('input');
                                       input.type = 'file';
-                                      input.multiple = true;
                                       input.accept = 'video/mp4,video/quicktime,video/x-msvideo,video/*';
-                                      input.onchange = async (e: any) => {
-                                        const files = Array.from(e.target.files || []) as File[];
+                                      input.onchange = (e: any) => {
+                                        const file = e.target.files?.[0];
+                                        if (file) {
+                                          setUploadHighlightFile(file);
+                                          setUploadHighlightType('match');
+                                          setShowUploadHighlightDialog(true);
+                                        }
+                                      };
+                                      input.click();
+                                    }}
+                                  >
+                                    <Plus className="w-4 h-4 mr-2" />
+                                    Upload Match Highlight
+                                  </Button>
+                                  
+                                  {matchHighlights.length > 0 ? (
                                         if (files.length > 0) {
                                           // Initialize progress for all files
                                           const initialProgress: Record<string, any> = {};
@@ -1606,9 +1623,21 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                       onClick={() => {
                                         const input = document.createElement('input');
                                         input.type = 'file';
-                                        input.multiple = true;
                                         input.accept = 'video/mp4,video/quicktime,video/x-msvideo,video/*';
-                                input.onchange = async (e: any) => {
+                                        input.onchange = (e: any) => {
+                                          const file = e.target.files?.[0];
+                                          if (file) {
+                                            setUploadHighlightFile(file);
+                                            setUploadHighlightType('best');
+                                            setShowUploadHighlightDialog(true);
+                                          }
+                                        };
+                                        input.click();
+                                      }}
+                                    >
+                                      <Plus className="w-4 h-4 mr-2" />
+                                      Upload Best Clip
+                                    </Button>
                                   const files = Array.from(e.target.files || []) as File[];
                                   if (files.length > 0) {
                                     // Initialize progress for all files
