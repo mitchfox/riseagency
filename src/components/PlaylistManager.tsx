@@ -376,7 +376,7 @@ export const PlaylistManager = ({ playerData, availableClips, onClose }: Playlis
 
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="max-w-[99vw] w-[99vw] max-h-[95vh] overflow-y-auto p-6">
+      <DialogContent className="max-w-[100vw] w-[100vw] max-h-[95vh] overflow-y-auto p-4 md:p-6">
         <DialogHeader>
           <DialogTitle className="text-xl md:text-2xl font-bebas uppercase tracking-wider">
             Manage Playlists
