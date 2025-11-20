@@ -54,7 +54,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=BBH+Sans+Bartle&display=swap" rel="stylesheet">
     <link rel="icon" type="image/x-icon" href="https://storage.googleapis.com/gpt-engineer-file-uploads/blxFQX1QtlSc3qNcPxWdCZ730Tf1/uploads/1761325700904-RISEWhite-100.jpg">
     
-    <!-- PWA Manifest - Dynamically set based on route -->
+    <!-- PWA Manifest - Set BEFORE any scripts run -->
+    <script src="/manifest-updater.js"></script>
     <link rel="manifest" href="/manifest.json" id="manifest-link">
     <meta name="theme-color" content="#C8A871">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -108,7 +109,6 @@
         style="width: 200px; height: auto; animation: pulse 2s ease-in-out infinite;"
       />
     </div>
-    <script src="/manifest-updater.js"></script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
