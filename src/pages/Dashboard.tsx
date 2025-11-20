@@ -2649,7 +2649,7 @@ const Dashboard = () => {
                                                               className="grid grid-cols-5 gap-0 text-xs md:text-base"
                                                             >
                                                               <div 
-                                                                className="p-2 md:p-4 font-bebas uppercase border-r-2 border-white text-center"
+                                                                className="p-2 md:p-4 font-bebas uppercase border-r-2 border-white text-center flex items-center justify-center"
                                                                 style={{ 
                                                                   backgroundColor: 'hsl(43, 49%, 61%)',
                                                                   color: 'hsl(0, 0%, 0%)'
@@ -2658,7 +2658,7 @@ const Dashboard = () => {
                                                                 Exercise Name
                                                               </div>
                                                               <div 
-                                                                className="p-2 md:p-4 font-bebas uppercase border-r-2 border-white text-center"
+                                                                className="p-2 md:p-4 font-bebas uppercase border-r-2 border-white text-center flex items-center justify-center"
                                                                 style={{ 
                                                                   backgroundColor: 'hsl(43, 49%, 61%)',
                                                                   color: 'hsl(0, 0%, 0%)'
@@ -2667,7 +2667,7 @@ const Dashboard = () => {
                                                                 Reps
                                                               </div>
                                                               <div 
-                                                                className="p-2 md:p-4 font-bebas uppercase border-r-2 border-white text-center"
+                                                                className="p-2 md:p-4 font-bebas uppercase border-r-2 border-white text-center flex items-center justify-center"
                                                                 style={{ 
                                                                   backgroundColor: 'hsl(43, 49%, 61%)',
                                                                   color: 'hsl(0, 0%, 0%)'
@@ -2676,7 +2676,7 @@ const Dashboard = () => {
                                                                 Sets
                                                               </div>
                                                               <div 
-                                                                className="p-2 md:p-4 font-bebas uppercase border-r-2 border-white text-center"
+                                                                className="p-2 md:p-4 font-bebas uppercase border-r-2 border-white text-center flex items-center justify-center"
                                                                 style={{ 
                                                                   backgroundColor: 'hsl(43, 49%, 61%)',
                                                                   color: 'hsl(0, 0%, 0%)'
@@ -2685,7 +2685,7 @@ const Dashboard = () => {
                                                                 Load
                                                               </div>
                                                               <div 
-                                                                className="p-2 md:p-4 font-bebas uppercase text-center"
+                                                                className="p-2 md:p-4 font-bebas uppercase text-center flex items-center justify-center"
                                                                 style={{ 
                                                                   backgroundColor: 'hsl(43, 49%, 61%)',
                                                                   color: 'hsl(0, 0%, 0%)'
@@ -2768,7 +2768,7 @@ const Dashboard = () => {
                                                               className="grid grid-cols-5 gap-0 text-xs md:text-base"
                                                             >
                                                               <div 
-                                                                className="p-2 md:p-4 font-bebas uppercase border-r-2 border-white text-center"
+                                                                className="p-2 md:p-4 font-bebas uppercase border-r-2 border-white text-center flex items-center justify-center"
                                                                 style={{ 
                                                                   backgroundColor: 'hsl(43, 49%, 61%)',
                                                                   color: 'hsl(0, 0%, 0%)'
@@ -2777,7 +2777,7 @@ const Dashboard = () => {
                                                                 Exercise Name
                                                               </div>
                                                               <div 
-                                                                className="p-2 md:p-4 font-bebas uppercase border-r-2 border-white text-center"
+                                                                className="p-2 md:p-4 font-bebas uppercase border-r-2 border-white text-center flex items-center justify-center"
                                                                 style={{ 
                                                                   backgroundColor: 'hsl(43, 49%, 61%)',
                                                                   color: 'hsl(0, 0%, 0%)'
@@ -2786,7 +2786,7 @@ const Dashboard = () => {
                                                                 Reps
                                                               </div>
                                                               <div 
-                                                                className="p-2 md:p-4 font-bebas uppercase border-r-2 border-white text-center"
+                                                                className="p-2 md:p-4 font-bebas uppercase border-r-2 border-white text-center flex items-center justify-center"
                                                                 style={{ 
                                                                   backgroundColor: 'hsl(43, 49%, 61%)',
                                                                   color: 'hsl(0, 0%, 0%)'
@@ -2795,7 +2795,7 @@ const Dashboard = () => {
                                                                 Sets
                                                               </div>
                                                               <div 
-                                                                className="p-2 md:p-4 font-bebas uppercase border-r-2 border-white text-center"
+                                                                className="p-2 md:p-4 font-bebas uppercase border-r-2 border-white text-center flex items-center justify-center"
                                                                 style={{ 
                                                                   backgroundColor: 'hsl(43, 49%, 61%)',
                                                                   color: 'hsl(0, 0%, 0%)'
@@ -2804,7 +2804,7 @@ const Dashboard = () => {
                                                                 Load
                                                               </div>
                                                               <div 
-                                                                className="p-2 md:p-4 font-bebas uppercase text-center"
+                                                                className="p-2 md:p-4 font-bebas uppercase text-center flex items-center justify-center"
                                                                 style={{ 
                                                                   backgroundColor: 'hsl(43, 49%, 61%)',
                                                                   color: 'hsl(0, 0%, 0%)'
@@ -3502,7 +3502,7 @@ const Dashboard = () => {
 
       {/* Exercise Details Dialog */}
       <Dialog open={exerciseDialogOpen} onOpenChange={setExerciseDialogOpen}>
-        <DialogContent className="w-[95vw] sm:max-w-2xl">
+        <DialogContent className="w-[98vw] max-w-none sm:max-w-2xl mx-2 sm:mx-auto">
           <DialogHeader>
             <DialogTitle className="font-bebas uppercase text-2xl">
               {selectedExercise?.name || 'Exercise Details'}
