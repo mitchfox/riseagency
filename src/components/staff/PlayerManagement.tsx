@@ -1443,157 +1443,18 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                   </Button>
                                   
                                   {matchHighlights.length > 0 ? (
-                                        if (files.length > 0) {
-                                          // Initialize progress for all files
-                                          const initialProgress: Record<string, any> = {};
-                                          files.forEach(file => {
-                                            initialProgress[file.name] = { status: 'uploading', progress: 0 };
-                                          });
-                                          setUploadProgress(initialProgress);
-
-                                          // Process all files
-                                          const uploadPromises = files.map(async (file) => {
-                                            try {
-                                              setUploadProgress(prev => ({
-                                                ...prev,
-                                                [file.name]: { status: 'uploading', progress: 50 }
-                                              }));
-
-                                              const formData = new FormData();
-                                              formData.append('file', file);
-                                              formData.append('playerEmail', selectedPlayer.email || '');
-                                              formData.append('clipName', file.name.replace(/\.[^/.]+$/, ''));
-                                              
-                                              const response = await fetch(
-                                                `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/upload-player-highlight`,
-                                                {
-                                                  method: 'POST',
-                                                  headers: {
-                                                    'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-                                                    'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-                                                  },
-                                                  body: formData,
-                                                }
-                                              );
-
-                                              if (!response.ok) throw new Error('Upload failed');
-
-                                              setUploadProgress(prev => ({
-                                                ...prev,
-                                                [file.name]: { status: 'success', progress: 100 }
-                                              }));
-
-                                              toast.success(`Successfully uploaded ${file.name}`);
-                                            } catch (error) {
-                                              console.error(`Error uploading ${file.name}:`, error);
-                                              setUploadProgress(prev => ({
-                                                ...prev,
-                                                [file.name]: { status: 'error', progress: 0, error: error instanceof Error ? error.message : 'Upload failed' }
-                                              }));
-                                              toast.error(`Failed to upload ${file.name}`);
-                                            }
-                                          });
-
-                                          await Promise.all(uploadPromises);
-                                          fetchPlayers();
-                                          
-                                          // Clear progress after 3 seconds
-                                          setTimeout(() => {
-                                            setUploadProgress({});
-                                          }, 3000);
-                                        }
-                                      };
-                                      input.click();
-                                    }}
-                                    variant="outline"
-                                    size="sm"
-                                  >
-                                    <Plus className="w-4 h-4 mr-2" />
-                                    Upload Highlight
-                                  </Button>
-                                  
-                                  {/* Upload Progress */}
-                                  {Object.keys(uploadProgress).length > 0 && (
-                                    <div className="space-y-3 mb-6">
-                                      <div className="flex items-center justify-between">
-                                        <h3 className="text-sm font-semibold">Upload Progress</h3>
-                                        <Button 
-                                          variant="ghost" 
-                                          size="sm"
-                                          onClick={() => setUploadProgress({})}
-                                        >
-                                          Clear
-                                        </Button>
-                                      </div>
-                                      {Object.entries(uploadProgress).map(([filename, status]) => (
-                                        <Card key={filename} className="overflow-hidden">
+                                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                                      {matchHighlights.map((highlight: any, idx: number) => (
+                                        <Card key={idx} className="overflow-hidden">
+                                          <video 
+                                            src={highlight.videoUrl} 
+                                            controls 
+                                            className="w-full aspect-video"
+                                          />
                                           <CardContent className="p-4">
-                                            <div className="flex items-center justify-between mb-2">
-                                              <span className="text-sm font-medium truncate flex-1">{filename}</span>
-                                              <Badge variant={
-                                                status.status === 'success' ? 'default' :
-                                                status.status === 'error' ? 'destructive' :
-                                                'secondary'
-                                              }>
-                                                {status.status === 'uploading' ? 'Uploading' :
-                                                 status.status === 'success' ? 'Uploaded' :
-                                                 'Failed'}
-                                              </Badge>
-                                            </div>
-                                            <Progress value={status.progress} className="h-2" />
-                                            {status.error && (
-                                              <p className="text-xs text-destructive mt-2">{status.error}</p>
-                                            )}
+                                            <p className="font-medium">{highlight.name || `Highlight ${idx + 1}`}</p>
                                           </CardContent>
                                         </Card>
-                                      ))}
-                                    </div>
-                                  )}
-                                  
-                                   {matchHighlights.length > 0 ? (
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                      {matchHighlights.map((highlight: any, idx: number) => (
-                                        <div key={idx} className="border rounded-lg p-3 hover:bg-secondary/30 transition-colors space-y-2">
-                                          <video 
-                                            src={highlight.videoUrl}
-                                            controls
-                                            className="w-full h-48 sm:h-40 object-cover rounded"
-                                          />
-                                          <p className="text-sm font-medium truncate">{highlight.name}</p>
-                                          <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={async () => {
-                                              if (!confirm('Delete this highlight?')) return;
-                                              try {
-                                                const response = await fetch(
-                                                  `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/delete-player-highlight`,
-                                                  {
-                                                    method: 'POST',
-                                                    headers: {
-                                                      'Content-Type': 'application/json',
-                                                      'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-                                                    },
-                                                    body: JSON.stringify({
-                                                      playerEmail: selectedPlayer.email,
-                                                      clipName: highlight.name,
-                                                      videoUrl: highlight.videoUrl,
-                                                    }),
-                                                  }
-                                                );
-                                                if (!response.ok) throw new Error('Delete failed');
-                                                toast.success('Deleted successfully!');
-                                                fetchPlayers();
-                                              } catch (error: any) {
-                                                toast.error('Failed to delete: ' + error.message);
-                                              }
-                                            }}
-                                            className="w-full text-destructive hover:text-destructive"
-                                          >
-                                            <Trash2 className="w-4 h-4 mr-2" />
-                                            Delete
-                                          </Button>
-                                        </div>
                                       ))}
                                     </div>
                                   ) : (
@@ -1638,168 +1499,27 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                       <Plus className="w-4 h-4 mr-2" />
                                       Upload Best Clip
                                     </Button>
-                                  const files = Array.from(e.target.files || []) as File[];
-                                  if (files.length > 0) {
-                                    // Initialize progress for all files
-                                    const initialProgress: Record<string, any> = {};
-                                    files.forEach(file => {
-                                      initialProgress[file.name] = { status: 'uploading', progress: 0 };
-                                    });
-                                    setUploadProgress(initialProgress);
-
-                                    // Process all files
-                                    const uploadPromises = files.map(async (file) => {
-                                      try {
-                                        setUploadProgress(prev => ({
-                                          ...prev,
-                                          [file.name]: { status: 'uploading', progress: 50 }
-                                        }));
-
-                                        const formData = new FormData();
-                                        formData.append('file', file);
-                                        formData.append('playerEmail', selectedPlayer.email || '');
-                                        formData.append('clipName', file.name.replace(/\.[^/.]+$/, ''));
-                                        
-                                        const response = await fetch(
-                                          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/upload-player-highlight`,
-                                          {
-                                            method: 'POST',
-                                            headers: {
-                                              'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-                                              'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-                                            },
-                                            body: formData,
-                                          }
-                                        );
-
-                                        if (!response.ok) throw new Error('Upload failed');
-
-                                        setUploadProgress(prev => ({
-                                          ...prev,
-                                          [file.name]: { status: 'success', progress: 100 }
-                                        }));
-
-                                        toast.success(`Successfully uploaded ${file.name}`);
-                                      } catch (error) {
-                                        console.error(`Error uploading ${file.name}:`, error);
-                                        setUploadProgress(prev => ({
-                                          ...prev,
-                                          [file.name]: { status: 'error', progress: 0, error: error instanceof Error ? error.message : 'Upload failed' }
-                                        }));
-                                        toast.error(`Failed to upload ${file.name}`);
-                                      }
-                                    });
-
-                                    await Promise.all(uploadPromises);
-                                    fetchPlayers();
-                                    
-                                    // Clear progress after 3 seconds
-                                    setTimeout(() => {
-                                      setUploadProgress({});
-                                    }, 3000);
-                                  }
-                                };
-                                        input.click();
-                                      }}
-                                      variant="outline"
-                                      size="sm"
-                                    >
-                                      <Plus className="w-4 h-4 mr-2" />
-                                      Upload Clip
-                                    </Button>
-                                    
                                     <Button 
-                                      onClick={() => setShowPlaylistManager(true)}
                                       variant="outline"
-                                      size="sm"
+                                      onClick={() => setShowPlaylistManager(true)}
                                     >
-                                      <Video className="w-4 h-4 mr-2" />
                                       Manage Playlists
                                     </Button>
                                   </div>
                                   
-                                  {/* Upload Progress */}
-                                  {Object.keys(uploadProgress).length > 0 && (
-                                    <div className="space-y-3 mb-6">
-                                      <div className="flex items-center justify-between">
-                                        <h3 className="text-sm font-semibold">Upload Progress</h3>
-                                        <Button 
-                                          variant="ghost" 
-                                          size="sm"
-                                          onClick={() => setUploadProgress({})}
-                                        >
-                                          Clear
-                                        </Button>
-                                      </div>
-                                      {Object.entries(uploadProgress).map(([filename, status]) => (
-                                        <Card key={filename} className="overflow-hidden">
+                                  {bestClips.length > 0 ? (
+                                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                                      {bestClips.map((clip: any, idx: number) => (
+                                        <Card key={idx} className="overflow-hidden">
+                                          <video 
+                                            src={clip.videoUrl} 
+                                            controls 
+                                            className="w-full aspect-video"
+                                          />
                                           <CardContent className="p-4">
-                                            <div className="flex items-center justify-between mb-2">
-                                              <span className="text-sm font-medium truncate flex-1">{filename}</span>
-                                              <Badge variant={
-                                                status.status === 'success' ? 'default' :
-                                                status.status === 'error' ? 'destructive' :
-                                                'secondary'
-                                              }>
-                                                {status.status === 'uploading' ? 'Uploading' :
-                                                 status.status === 'success' ? 'Uploaded' :
-                                                 'Failed'}
-                                              </Badge>
-                                            </div>
-                                            <Progress value={status.progress} className="h-2" />
-                                            {status.error && (
-                                              <p className="text-xs text-destructive mt-2">{status.error}</p>
-                                            )}
+                                            <p className="font-medium">{clip.name || `Clip ${idx + 1}`}</p>
                                           </CardContent>
                                         </Card>
-                                      ))}
-                                    </div>
-                                  )}
-                                  
-                                  {bestClips.length > 0 ? (
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                      {bestClips.map((clip: any, idx: number) => (
-                                        <div key={idx} className="border rounded-lg p-3 hover:bg-secondary/30 transition-colors space-y-2">
-                                          <video 
-                                            src={clip.videoUrl}
-                                            controls
-                                            className="w-full h-48 sm:h-40 object-cover rounded"
-                                          />
-                                          <p className="text-sm font-medium truncate">{clip.name}</p>
-                                          <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={async () => {
-                                              if (!confirm('Delete this clip?')) return;
-                                              try {
-                                                const response = await fetch(
-                                                  `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/delete-player-highlight`,
-                                                  {
-                                                    method: 'POST',
-                                                    headers: {
-                                                      'Content-Type': 'application/json',
-                                                      'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-                                                    },
-                                                    body: JSON.stringify({
-                                                      playerEmail: selectedPlayer.email,
-                                                      clipName: clip.name,
-                                                      videoUrl: clip.videoUrl,
-                                                    }),
-                                                  }
-                                                );
-                                                if (!response.ok) throw new Error('Delete failed');
-                                                toast.success('Deleted successfully!');
-                                                fetchPlayers();
-                                              } catch (error: any) {
-                                                toast.error('Failed to delete: ' + error.message);
-                                              }
-                                            }}
-                                            className="w-full text-destructive hover:text-destructive"
-                                          >
-                                            <Trash2 className="w-4 h-4 mr-2" />
-                                            Delete
-                                          </Button>
-                                        </div>
                                       ))}
                                     </div>
                                   ) : (
@@ -2765,6 +2485,25 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
             }
           })()}
           onClose={() => setShowPlaylistManager(false)}
+        />
+      )}
+
+      {/* Upload Highlight Dialog */}
+      {uploadHighlightFile && (
+        <UploadHighlightDialog
+          open={showUploadHighlightDialog}
+          onOpenChange={(open) => {
+            setShowUploadHighlightDialog(open);
+            if (!open) setUploadHighlightFile(null);
+          }}
+          videoFile={uploadHighlightFile}
+          playerEmail={selectedPlayer?.email || ''}
+          onUploadComplete={() => {
+            setShowUploadHighlightDialog(false);
+            setUploadHighlightFile(null);
+            fetchPlayers();
+          }}
+          highlightType={uploadHighlightType}
         />
       )}
     </div>
