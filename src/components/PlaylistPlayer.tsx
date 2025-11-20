@@ -3,7 +3,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { X, ChevronLeft, ChevronRight, Check, Maximize, Minimize, List } from "lucide-react";
+import { X, ChevronLeft, ChevronRight, Check, Maximize, Minimize } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -49,14 +49,6 @@ export const PlaylistPlayer = ({
     if (currentIndex > 0) {
       setCurrentIndex(currentIndex - 1);
     }
-  };
-
-  const goToFirst = () => {
-    setCurrentIndex(0);
-  };
-
-  const goToLast = () => {
-    setCurrentIndex(clips.length - 1);
   };
 
   const goToClip = (index: number) => {
@@ -237,6 +229,18 @@ export const PlaylistPlayer = ({
             <div className="text-center flex-1 px-2 md:px-4 min-w-0">
               <h3 className="text-base md:text-xl font-semibold truncate">{currentClip.name}</h3>
               <p className="text-xs md:text-sm text-muted-foreground mt-1 truncate">{playlistName}</p>
+              <Select value={currentIndex.toString()} onValueChange={(val) => goToClip(parseInt(val))}>
+                <SelectTrigger className="w-[160px] h-7 text-xs mx-auto mt-2">
+                  <SelectValue placeholder={`Clip ${currentIndex + 1} of ${totalClips}`} />
+                </SelectTrigger>
+                <SelectContent className="bg-background max-h-[300px]">
+                  {clips.map((clip, idx) => (
+                    <SelectItem key={idx} value={idx.toString()}>
+                      {idx + 1}. {clip.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <Button
