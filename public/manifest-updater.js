@@ -7,7 +7,7 @@
   
   if (!manifestLink) return;
   
-  let newManifest = '/manifest.json';
+  let newManifest = null;
   let newTitle = 'RISE Football Agency';
   
   if (path.startsWith('/dashboard')) {
@@ -18,7 +18,13 @@
     newTitle = 'RISE Staff Portal';
   }
   
-  manifestLink.href = newManifest;
+  if (newManifest) {
+    manifestLink.href = newManifest;
+    manifestLink.rel = 'manifest';
+  } else {
+    manifestLink.removeAttribute('href');
+    manifestLink.removeAttribute('rel');
+  }
   if (appleTitle) {
     appleTitle.content = newTitle;
   }
