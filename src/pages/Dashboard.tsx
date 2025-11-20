@@ -3502,7 +3502,7 @@ const Dashboard = () => {
 
       {/* Exercise Details Dialog */}
       <Dialog open={exerciseDialogOpen} onOpenChange={setExerciseDialogOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="w-[95vw] sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle className="font-bebas uppercase text-2xl">
               {selectedExercise?.name || 'Exercise Details'}
