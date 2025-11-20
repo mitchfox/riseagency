@@ -1783,6 +1783,45 @@ export type Database = {
         }
         Relationships: []
       }
+      tactical_schemes: {
+        Row: {
+          created_at: string
+          defence: string | null
+          defensive_transition: string | null
+          id: string
+          offence: string | null
+          offensive_transition: string | null
+          opposition_scheme: string
+          position: string
+          team_scheme: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          defence?: string | null
+          defensive_transition?: string | null
+          id?: string
+          offence?: string | null
+          offensive_transition?: string | null
+          opposition_scheme: string
+          position: string
+          team_scheme: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          defence?: string | null
+          defensive_transition?: string | null
+          id?: string
+          offence?: string | null
+          offensive_transition?: string | null
+          opposition_scheme?: string
+          position?: string
+          team_scheme?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       updates: {
         Row: {
           content: string
