@@ -54,12 +54,31 @@
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=BBH+Sans+Bartle&display=swap" rel="stylesheet">
     <link rel="icon" type="image/x-icon" href="https://storage.googleapis.com/gpt-engineer-file-uploads/blxFQX1QtlSc3qNcPxWdCZ730Tf1/uploads/1761325700904-RISEWhite-100.jpg">
     
-    <!-- PWA Manifest -->
-    <link rel="manifest" href="/manifest.json">
+    <!-- PWA Manifest - Dynamically set based on route -->
+    <link rel="manifest" href="/manifest.json" id="manifest-link">
     <meta name="theme-color" content="#C8A871">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="RISE Portal">
+    <link rel="apple-touch-icon" href="/RISEWhite.png">
+    <script>
+      // Dynamically set manifest based on current route
+      (function() {
+        const path = window.location.pathname;
+        const manifestLink = document.getElementById('manifest-link');
+        
+        if (path.startsWith('/dashboard')) {
+          manifestLink.href = '/manifest-player.json';
+          document.querySelector('meta[name="apple-mobile-web-app-title"]').content = 'RISE Player Portal';
+        } else if (path.startsWith('/staff')) {
+          manifestLink.href = '/manifest-staff.json';
+          document.querySelector('meta[name="apple-mobile-web-app-title"]').content = 'RISE Staff Portal';
+        } else {
+          manifestLink.href = '/manifest.json';
+          document.querySelector('meta[name="apple-mobile-web-app-title"]').content = 'RISE Football Agency';
+        }
+      })();
+    </script>
   </head>
 
   <body>

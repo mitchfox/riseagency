@@ -1,10 +1,11 @@
 {
-  "name": "RISE Football Agency",
-  "short_name": "RISE",
-  "start_url": "/",
+  "name": "RISE Player Portal",
+  "short_name": "RISE Portal",
+  "start_url": "/dashboard",
   "display": "standalone",
   "background_color": "#000000",
   "theme_color": "#C8A871",
+  "scope": "/dashboard",
   "icons": [
     {
       "src": "/RISEWhite.png",

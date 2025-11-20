@@ -1,10 +1,11 @@
 {
-  "name": "RISE Football Agency",
-  "short_name": "RISE",
-  "start_url": "/",
+  "name": "RISE Staff Portal",
+  "short_name": "RISE Staff",
+  "start_url": "/staff",
   "display": "standalone",
   "background_color": "#000000",
   "theme_color": "#C8A871",
+  "scope": "/staff",
   "icons": [
     {
       "src": "/RISEWhite.png",
