@@ -59,26 +59,8 @@
     <meta name="theme-color" content="#C8A871">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="RISE Portal">
+    <meta name="apple-mobile-web-app-title" content="RISE Portal" id="apple-title">
     <link rel="apple-touch-icon" href="/RISEWhite.png">
-    <script>
-      // Dynamically set manifest based on current route
-      (function() {
-        const path = window.location.pathname;
-        const manifestLink = document.getElementById('manifest-link');
-        
-        if (path.startsWith('/dashboard')) {
-          manifestLink.href = '/manifest-player.json';
-          document.querySelector('meta[name="apple-mobile-web-app-title"]').content = 'RISE Player Portal';
-        } else if (path.startsWith('/staff')) {
-          manifestLink.href = '/manifest-staff.json';
-          document.querySelector('meta[name="apple-mobile-web-app-title"]').content = 'RISE Staff Portal';
-        } else {
-          manifestLink.href = '/manifest.json';
-          document.querySelector('meta[name="apple-mobile-web-app-title"]').content = 'RISE Football Agency';
-        }
-      })();
-    </script>
   </head>
 
   <body>
@@ -126,6 +108,7 @@
         style="width: 200px; height: auto; animation: pulse 2s ease-in-out infinite;"
       />
     </div>
+    <script src="/manifest-updater.js"></script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
