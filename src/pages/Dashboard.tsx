@@ -3577,6 +3577,9 @@ const Dashboard = () => {
         onOpenChange={setCoachAvailabilityOpen}
       />
 
+      {/* PWA Install Prompt */}
+      <PWAInstallPrompt />
+
       {/* Logout Section */}
       <div className="container mx-auto px-4 pb-8">
         <div className="border-t border-border my-6" />
