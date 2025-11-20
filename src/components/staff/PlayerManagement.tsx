@@ -675,7 +675,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
             {representedPlayers.length > 0 && (
               <div>
                 <h3 className="text-base md:text-lg font-semibold mb-3 text-primary">Represented</h3>
-                <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3 md:gap-4">
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-2 md:gap-4">
                   {representedPlayers.map((player) => {
                     const playerStats = stats[player.id];
                     return (
@@ -749,7 +749,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
             {mandatedPlayers.length > 0 && (
               <div>
                 <h3 className="text-base md:text-lg font-semibold mb-4 text-primary">Mandated</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
                   {mandatedPlayers.map((player) => {
                     const playerStats = stats[player.id];
                     return (
@@ -817,7 +817,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
             {groupedPlayers.other.length > 0 && (
               <div>
                 <h3 className="text-lg font-semibold mb-4 text-primary">Other</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
                   {groupedPlayers.other.map((player) => {
                     const playerStats = stats[player.id];
                     return (
