@@ -58,7 +58,7 @@ export function UploadHighlightDialog({
       }
 
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/upload-player-highlight`,
+        'https://qwethimbtaamlhbajmal.supabase.co/functions/v1/upload-player-highlight',
         {
           method: 'POST',
           headers: {
