@@ -50,6 +50,14 @@ export const PlaylistPlayer = ({
     }
   };
 
+  const goToFirst = () => {
+    setCurrentIndex(0);
+  };
+
+  const goToLast = () => {
+    setCurrentIndex(clips.length - 1);
+  };
+
   const toggleFullscreen = () => {
     if (!containerRef.current) return;
     
@@ -209,32 +217,54 @@ export const PlaylistPlayer = ({
             </div>
           </div>
 
-          {/* Bottom Bar: Previous / Title / Next */}
-          <div className="bg-background/90 backdrop-blur-sm p-4 flex items-center justify-between gap-4">
-            <Button
-              onClick={goToPrevious}
-              disabled={currentIndex === 0}
-              variant="outline"
-              size="lg"
-            >
-              <ChevronLeft className="w-6 h-6" />
-              Previous
-            </Button>
-
-            <div className="text-center flex-1 px-4">
-              <h3 className="text-xl font-semibold truncate">{currentClip.name}</h3>
-              <p className="text-sm text-muted-foreground mt-1 truncate">{playlistName}</p>
+          {/* Bottom Bar: First / Previous / Title / Next / Last */}
+          <div className="bg-background/90 backdrop-blur-sm p-4 flex items-center justify-between gap-2 md:gap-4">
+            <div className="flex gap-2">
+              <Button
+                onClick={goToFirst}
+                disabled={currentIndex === 0}
+                variant="outline"
+                size="sm"
+                className="hidden sm:flex"
+              >
+                First
+              </Button>
+              <Button
+                onClick={goToPrevious}
+                disabled={currentIndex === 0}
+                variant="outline"
+                size="lg"
+              >
+                <ChevronLeft className="w-6 h-6" />
+                <span className="hidden md:inline">Previous</span>
+              </Button>
             </div>
 
-            <Button
-              onClick={goToNext}
-              disabled={currentIndex === clips.length - 1}
-              variant="outline"
-              size="lg"
-            >
-              Next
-              <ChevronRight className="w-6 h-6" />
-            </Button>
+            <div className="text-center flex-1 px-2 md:px-4 min-w-0">
+              <h3 className="text-base md:text-xl font-semibold truncate">{currentClip.name}</h3>
+              <p className="text-xs md:text-sm text-muted-foreground mt-1 truncate">{playlistName}</p>
+            </div>
+
+            <div className="flex gap-2">
+              <Button
+                onClick={goToNext}
+                disabled={currentIndex === clips.length - 1}
+                variant="outline"
+                size="lg"
+              >
+                <span className="hidden md:inline">Next</span>
+                <ChevronRight className="w-6 h-6" />
+              </Button>
+              <Button
+                onClick={goToLast}
+                disabled={currentIndex === clips.length - 1}
+                variant="outline"
+                size="sm"
+                className="hidden sm:flex"
+              >
+                Last
+              </Button>
+            </div>
           </div>
         </div>
       </DialogContent>
