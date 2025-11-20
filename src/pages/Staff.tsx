@@ -809,11 +809,6 @@ const Staff = () => {
         <main className={`flex-1 overflow-y-auto relative z-10 transition-all duration-300 pt-20 ${
           sidebarCollapsed ? 'ml-0' : 'ml-14 md:ml-24'
         } ${isMobile ? 'pb-[60px]' : ''}`}>
-          {/* PWA Install Section - Always visible at top */}
-          <div className="container mx-auto px-3 md:px-6 py-4">
-            <StaffPWAInstall />
-          </div>
-          
           {expandedSection ? (
             <div className="container mx-auto px-3 md:px-6 py-4 md:py-6">
               <Card className="animate-in fade-in slide-in-from-top-4 duration-300">
