@@ -15,9 +15,10 @@ import { toast } from "sonner";
 import { Plus, Edit, Trash2, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Database, Search, Calendar, Clock, Dumbbell, Brain, Target, BookOpen, Quote, LineChart, Settings, Upload } from "lucide-react";
 import { ExerciseDatabaseSelector } from "./ExerciseDatabaseSelector";
 import { R90RatingsManagement } from "./R90RatingsManagement";
+import { TacticalSchemes } from "./TacticalSchemes";
 
 
-type TableType = 'coaching_sessions' | 'coaching_programmes' | 'coaching_drills' | 'coaching_exercises' | 'coaching_analysis' | 'psychological_sessions' | 'coaching_aphorisms' | 'r90_ratings';
+type TableType = 'coaching_sessions' | 'coaching_programmes' | 'coaching_drills' | 'coaching_exercises' | 'coaching_analysis' | 'psychological_sessions' | 'coaching_aphorisms' | 'r90_ratings' | 'tactical_schemes';
 
 interface Exercise {
   name: string;
@@ -116,6 +117,13 @@ const tableConfigs = {
     icon: LineChart,
     color: 'indigo',
   },
+  tactical_schemes: {
+    label: 'Schemes',
+    singular: 'Scheme',
+    fields: [],
+    icon: Settings,
+    color: 'emerald',
+  },
 };
 
 const getScoreColor = (score: number | string | null) => {
@@ -200,8 +208,8 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
   }, [currentPage]);
 
   const fetchCategories = async () => {
-    // Skip for aphorisms as they don't have category/tags
-    if (activeTab === 'coaching_aphorisms') {
+    // Skip for aphorisms and tactical schemes as they don't have category/tags
+    if (activeTab === 'coaching_aphorisms' || activeTab === 'tactical_schemes') {
       return;
     }
     
@@ -829,6 +837,10 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
 
         {Object.entries(tableConfigs).map(([key, config]) => (
           <TabsContent key={key} value={key} className="space-y-4">
+            {key === 'tactical_schemes' ? (
+              <TacticalSchemes isAdmin={isAdmin} />
+            ) : (
+              <>
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-end gap-4">
               {!isAdmin && (
                 <div className="text-sm text-muted-foreground">View Only</div>
@@ -931,7 +943,7 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
             </div>
 
             {/* Filters - Show based on table type */}
-            {activeTab !== 'coaching_aphorisms' && (
+            {activeTab !== 'coaching_aphorisms' && activeTab !== 'tactical_schemes' && (
               <div className="flex flex-col sm:flex-row gap-3 mb-6">
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -1238,6 +1250,8 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
                   <ChevronRight className="w-4 h-4" />
                 </Button>
               </div>
+            )}
+              </>
             )}
           </TabsContent>
         ))}
