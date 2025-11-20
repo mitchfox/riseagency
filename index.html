@@ -60,46 +60,23 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="RISE Portal">
-    <link rel="apple-touch-icon" href="/lovable-uploads/icon-192x192.png">
+    <link rel="apple-touch-icon" href="/RISEWhite.png">
     <script>
-      // Dynamically set manifest based on current route (works with SPA navigation)
+      // Dynamically set manifest based on current route
       (function() {
+        const path = window.location.pathname;
         const manifestLink = document.getElementById('manifest-link');
-        const appleTitleMeta = document.querySelector('meta[name="apple-mobile-web-app-title"]');
-        if (!manifestLink || !appleTitleMeta) return;
-
-        const updateManifest = () => {
-          const path = window.location.pathname;
-
-          if (path.startsWith('/dashboard')) {
-            manifestLink.href = '/manifest-player.json';
-            appleTitleMeta.content = 'RISE Player Portal';
-          } else if (path.startsWith('/staff')) {
-            manifestLink.href = '/manifest-staff.json';
-            appleTitleMeta.content = 'RISE Staff Portal';
-          } else {
-            manifestLink.href = '/manifest.json';
-            appleTitleMeta.content = 'RISE Football Agency';
-          }
-        };
-
-        // Patch history API so client-side navigation also updates the manifest
-        const originalPushState = history.pushState;
-        history.pushState = function (...args) {
-          originalPushState.apply(this, args);
-          updateManifest();
-        };
-
-        const originalReplaceState = history.replaceState;
-        history.replaceState = function (...args) {
-          originalReplaceState.apply(this, args);
-          updateManifest();
-        };
-
-        window.addEventListener('popstate', updateManifest);
-
-        // Initial run on first load
-        updateManifest();
+        
+        if (path.startsWith('/dashboard')) {
+          manifestLink.href = '/manifest-player.json';
+          document.querySelector('meta[name="apple-mobile-web-app-title"]').content = 'RISE Player Portal';
+        } else if (path.startsWith('/staff')) {
+          manifestLink.href = '/manifest-staff.json';
+          document.querySelector('meta[name="apple-mobile-web-app-title"]').content = 'RISE Staff Portal';
+        } else {
+          manifestLink.href = '/manifest.json';
+          document.querySelector('meta[name="apple-mobile-web-app-title"]').content = 'RISE Football Agency';
+        }
       })();
     </script>
   </head>
