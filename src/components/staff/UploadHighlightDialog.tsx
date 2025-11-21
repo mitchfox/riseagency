@@ -3,13 +3,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Upload, X, Image as ImageIcon } from "lucide-react";
+import { Upload, X, Image as ImageIcon, Video } from "lucide-react";
 import { toast } from "sonner";
 
 interface UploadHighlightDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  videoFile: File;
   playerEmail: string;
   onUploadComplete: () => void;
   highlightType: "match" | "best";
@@ -18,15 +17,26 @@ interface UploadHighlightDialogProps {
 export function UploadHighlightDialog({
   open,
   onOpenChange,
-  videoFile,
   playerEmail,
   onUploadComplete,
   highlightType
 }: UploadHighlightDialogProps) {
-  const [clipName, setClipName] = useState(videoFile.name.replace(/\.[^/.]+$/, ''));
+  const [clipName, setClipName] = useState("");
+  const [videoFile, setVideoFile] = useState<File | null>(null);
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string>("");
   const [uploading, setUploading] = useState(false);
+
+  const handleVideoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setVideoFile(file);
+      // Auto-fill clip name from video filename if empty
+      if (!clipName.trim()) {
+        setClipName(file.name.replace(/\.[^/.]+$/, ''));
+      }
+    }
+  };
 
   const handleLogoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -42,7 +52,12 @@ export function UploadHighlightDialog({
 
   const handleUpload = async () => {
     if (!clipName.trim()) {
-      toast.error("Please enter a clip name");
+      toast.error("Please enter a title");
+      return;
+    }
+
+    if (!videoFile) {
+      toast.error("Please select a video file");
       return;
     }
 
@@ -77,6 +92,11 @@ export function UploadHighlightDialog({
       toast.success(`Successfully uploaded ${clipName}`);
       onUploadComplete();
       onOpenChange(false);
+      // Reset form
+      setClipName("");
+      setVideoFile(null);
+      setLogoFile(null);
+      setLogoPreview("");
     } catch (error: any) {
       console.error('Upload error:', error);
       toast.error(error.message || 'Failed to upload highlight');
@@ -94,18 +114,18 @@ export function UploadHighlightDialog({
 
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="clipName">Clip Name *</Label>
+            <Label htmlFor="clipName">Title *</Label>
             <Input
               id="clipName"
               value={clipName}
               onChange={(e) => setClipName(e.target.value)}
-              placeholder="Enter clip name"
+              placeholder="Enter highlight title"
               disabled={uploading}
             />
           </div>
 
           <div className="space-y-2">
-            <Label>Logo (Optional)</Label>
+            <Label>Club Logo (Optional)</Label>
             <div className="flex items-center gap-4">
               {logoPreview ? (
                 <div className="relative w-24 h-24 rounded border border-border overflow-hidden bg-muted">
@@ -147,6 +167,34 @@ export function UploadHighlightDialog({
             </div>
           </div>
 
+          <div className="space-y-2">
+            <Label>Video File *</Label>
+            <div className="flex items-center gap-4">
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => document.getElementById('video-upload')?.click()}
+                disabled={uploading}
+              >
+                <Video className="w-4 h-4 mr-2" />
+                {videoFile ? videoFile.name : "Select Video"}
+              </Button>
+              <input
+                id="video-upload"
+                type="file"
+                accept="video/*"
+                className="hidden"
+                onChange={handleVideoSelect}
+                disabled={uploading}
+              />
+            </div>
+            {videoFile && (
+              <p className="text-xs text-muted-foreground">
+                Size: {(videoFile.size / (1024 * 1024)).toFixed(2)} MB
+              </p>
+            )}
+          </div>
+
           <div className="flex justify-end gap-2 pt-4">
             <Button
               variant="outline"
@@ -157,7 +205,7 @@ export function UploadHighlightDialog({
             </Button>
             <Button
               onClick={handleUpload}
-              disabled={uploading || !clipName.trim()}
+              disabled={uploading || !clipName.trim() || !videoFile}
             >
               {uploading ? (
                 <>Uploading...</>

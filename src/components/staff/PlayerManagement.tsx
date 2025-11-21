@@ -124,7 +124,6 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   const [showPlaylistManager, setShowPlaylistManager] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<Record<string, { status: 'uploading' | 'success' | 'error', progress: number, error?: string }>>({});
   const [showUploadHighlightDialog, setShowUploadHighlightDialog] = useState(false);
-  const [uploadHighlightFile, setUploadHighlightFile] = useState<File | null>(null);
   const [uploadHighlightType, setUploadHighlightType] = useState<"match" | "best">("best");
 
   useEffect(() => {
@@ -1424,18 +1423,8 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                 <div className="space-y-4">
                                   <Button 
                                     onClick={() => {
-                                      const input = document.createElement('input');
-                                      input.type = 'file';
-                                      input.accept = 'video/mp4,video/quicktime,video/x-msvideo,video/*';
-                                      input.onchange = (e: any) => {
-                                        const file = e.target.files?.[0];
-                                        if (file) {
-                                          setUploadHighlightFile(file);
-                                          setUploadHighlightType('match');
-                                          setShowUploadHighlightDialog(true);
-                                        }
-                                      };
-                                      input.click();
+                                      setUploadHighlightType('match');
+                                      setShowUploadHighlightDialog(true);
                                     }}
                                   >
                                     <Plus className="w-4 h-4 mr-2" />
@@ -1482,18 +1471,8 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                   <div className="flex gap-2">
                                     <Button 
                                       onClick={() => {
-                                        const input = document.createElement('input');
-                                        input.type = 'file';
-                                        input.accept = 'video/mp4,video/quicktime,video/x-msvideo,video/*';
-                                        input.onchange = (e: any) => {
-                                          const file = e.target.files?.[0];
-                                          if (file) {
-                                            setUploadHighlightFile(file);
-                                            setUploadHighlightType('best');
-                                            setShowUploadHighlightDialog(true);
-                                          }
-                                        };
-                                        input.click();
+                                        setUploadHighlightType('best');
+                                        setShowUploadHighlightDialog(true);
                                       }}
                                     >
                                       <Plus className="w-4 h-4 mr-2" />
@@ -2489,23 +2468,16 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       )}
 
       {/* Upload Highlight Dialog */}
-      {uploadHighlightFile && (
-        <UploadHighlightDialog
-          open={showUploadHighlightDialog}
-          onOpenChange={(open) => {
-            setShowUploadHighlightDialog(open);
-            if (!open) setUploadHighlightFile(null);
-          }}
-          videoFile={uploadHighlightFile}
-          playerEmail={selectedPlayer?.email || ''}
-          onUploadComplete={() => {
-            setShowUploadHighlightDialog(false);
-            setUploadHighlightFile(null);
-            fetchPlayers();
-          }}
-          highlightType={uploadHighlightType}
-        />
-      )}
+      <UploadHighlightDialog
+        open={showUploadHighlightDialog}
+        onOpenChange={setShowUploadHighlightDialog}
+        playerEmail={selectedPlayer?.email || ''}
+        onUploadComplete={() => {
+          setShowUploadHighlightDialog(false);
+          fetchPlayers();
+        }}
+        highlightType={uploadHighlightType}
+      />
     </div>
   );
 };
