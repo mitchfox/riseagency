@@ -1468,11 +1468,20 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                       {matchHighlights.map((highlight: any, idx: number) => (
                                         <Card 
                                           key={idx} 
-                                          className="overflow-hidden group relative cursor-move"
+                                          className={`overflow-hidden group relative transition-all ${
+                                            draggedHighlightIndex === idx ? 'opacity-50 scale-95' : ''
+                                          } ${draggedHighlightIndex !== null && draggedHighlightIndex !== idx ? 'border-2 border-primary/50' : ''}`}
                                           draggable
-                                          onDragStart={() => setDraggedHighlightIndex(idx)}
-                                          onDragOver={(e) => e.preventDefault()}
-                                          onDrop={() => {
+                                          onDragStart={(e) => {
+                                            setDraggedHighlightIndex(idx);
+                                            e.dataTransfer.effectAllowed = 'move';
+                                          }}
+                                          onDragOver={(e) => {
+                                            e.preventDefault();
+                                            e.dataTransfer.dropEffect = 'move';
+                                          }}
+                                          onDrop={(e) => {
+                                            e.preventDefault();
                                             if (draggedHighlightIndex !== null && draggedHighlightIndex !== idx) {
                                               handleReorderHighlights(selectedPlayer.id, 'match', draggedHighlightIndex, idx);
                                             }
@@ -1480,20 +1489,22 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                           }}
                                           onDragEnd={() => setDraggedHighlightIndex(null)}
                                         >
-                                          <video 
-                                            src={highlight.videoUrl} 
-                                            controls 
-                                            className="w-full aspect-video"
-                                          />
-                                          {highlight.logoUrl && (
-                                            <div className="absolute top-2 left-2 bg-background/90 p-1 rounded">
-                                              <img 
-                                                src={highlight.logoUrl} 
-                                                alt="Club logo" 
-                                                className="w-8 h-8 object-contain"
-                                              />
-                                            </div>
-                                          )}
+                                          <div className="pointer-events-none">
+                                            <video 
+                                              src={highlight.videoUrl} 
+                                              controls 
+                                              className="w-full aspect-video"
+                                            />
+                                            {highlight.logoUrl && (
+                                              <div className="absolute top-2 left-2 bg-background/90 p-1 rounded">
+                                                <img 
+                                                  src={highlight.logoUrl} 
+                                                  alt="Club logo" 
+                                                  className="w-8 h-8 object-contain"
+                                                />
+                                              </div>
+                                            )}
+                                          </div>
                                           <CardContent className="p-4">
                                             <div className="flex items-center gap-2">
                                               <GripVertical className="w-4 h-4 text-muted-foreground flex-shrink-0 cursor-grab active:cursor-grabbing" />
@@ -1506,6 +1517,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                                   setEditingHighlight({ highlight, type: 'match' });
                                                   setIsEditHighlightOpen(true);
                                                 }}
+                                                className="pointer-events-auto"
                                               >
                                                 <Edit className="w-4 h-4" />
                                               </Button>
@@ -1557,11 +1569,20 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                       {bestClips.map((clip: any, idx: number) => (
                                         <Card 
                                           key={idx} 
-                                          className="overflow-hidden group relative cursor-move"
+                                          className={`overflow-hidden group relative transition-all ${
+                                            draggedHighlightIndex === idx ? 'opacity-50 scale-95' : ''
+                                          } ${draggedHighlightIndex !== null && draggedHighlightIndex !== idx ? 'border-2 border-primary/50' : ''}`}
                                           draggable
-                                          onDragStart={() => setDraggedHighlightIndex(idx)}
-                                          onDragOver={(e) => e.preventDefault()}
-                                          onDrop={() => {
+                                          onDragStart={(e) => {
+                                            setDraggedHighlightIndex(idx);
+                                            e.dataTransfer.effectAllowed = 'move';
+                                          }}
+                                          onDragOver={(e) => {
+                                            e.preventDefault();
+                                            e.dataTransfer.dropEffect = 'move';
+                                          }}
+                                          onDrop={(e) => {
+                                            e.preventDefault();
                                             if (draggedHighlightIndex !== null && draggedHighlightIndex !== idx) {
                                               handleReorderHighlights(selectedPlayer.id, 'best', draggedHighlightIndex, idx);
                                             }
@@ -1569,20 +1590,22 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                           }}
                                           onDragEnd={() => setDraggedHighlightIndex(null)}
                                         >
-                                          <video 
-                                            src={clip.videoUrl} 
-                                            controls 
-                                            className="w-full aspect-video"
-                                          />
-                                          {clip.logoUrl && (
-                                            <div className="absolute top-2 left-2 bg-background/90 p-1 rounded">
-                                              <img 
-                                                src={clip.logoUrl} 
-                                                alt="Club logo" 
-                                                className="w-8 h-8 object-contain"
-                                              />
-                                            </div>
-                                          )}
+                                          <div className="pointer-events-none">
+                                            <video 
+                                              src={clip.videoUrl} 
+                                              controls 
+                                              className="w-full aspect-video"
+                                            />
+                                            {clip.logoUrl && (
+                                              <div className="absolute top-2 left-2 bg-background/90 p-1 rounded">
+                                                <img 
+                                                  src={clip.logoUrl} 
+                                                  alt="Club logo" 
+                                                  className="w-8 h-8 object-contain"
+                                                />
+                                              </div>
+                                            )}
+                                          </div>
                                           <CardContent className="p-4">
                                             <div className="flex items-center gap-2">
                                               <GripVertical className="w-4 h-4 text-muted-foreground flex-shrink-0 cursor-grab active:cursor-grabbing" />
@@ -1595,6 +1618,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                                   setEditingHighlight({ highlight: clip, type: 'best' });
                                                   setIsEditHighlightOpen(true);
                                                 }}
+                                                className="pointer-events-auto"
                                               >
                                                 <Edit className="w-4 h-4" />
                                               </Button>
