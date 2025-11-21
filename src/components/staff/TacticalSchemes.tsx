@@ -240,8 +240,8 @@ export const TacticalSchemes = ({ isAdmin }: { isAdmin: boolean }) => {
                 <Textarea
                   value={schemeData.defensive_transition}
                   onChange={(e) => setSchemeData({ ...schemeData, defensive_transition: e.target.value })}
-                  placeholder="Add notes about defensive transition..."
-                  className="min-h-[200px]"
+                  placeholder="Add notes about defensive transition...&#10;• Use bullet points&#10;• Press Enter for new line&#10;• Start with • for bullets"
+                  className="min-h-[200px] font-mono text-sm"
                   disabled={!isAdmin}
                 />
               </CardContent>
@@ -255,8 +255,8 @@ export const TacticalSchemes = ({ isAdmin }: { isAdmin: boolean }) => {
                 <Textarea
                   value={schemeData.defence}
                   onChange={(e) => setSchemeData({ ...schemeData, defence: e.target.value })}
-                  placeholder="Add notes about defence..."
-                  className="min-h-[200px]"
+                  placeholder="Add notes about defence...&#10;• Use bullet points&#10;• Press Enter for new line&#10;• Start with • for bullets"
+                  className="min-h-[200px] font-mono text-sm"
                   disabled={!isAdmin}
                 />
               </CardContent>
@@ -270,8 +270,8 @@ export const TacticalSchemes = ({ isAdmin }: { isAdmin: boolean }) => {
                 <Textarea
                   value={schemeData.offensive_transition}
                   onChange={(e) => setSchemeData({ ...schemeData, offensive_transition: e.target.value })}
-                  placeholder="Add notes about offensive transition..."
-                  className="min-h-[200px]"
+                  placeholder="Add notes about offensive transition...&#10;• Use bullet points&#10;• Press Enter for new line&#10;• Start with • for bullets"
+                  className="min-h-[200px] font-mono text-sm"
                   disabled={!isAdmin}
                 />
               </CardContent>
@@ -279,14 +279,14 @@ export const TacticalSchemes = ({ isAdmin }: { isAdmin: boolean }) => {
 
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Offence</CardTitle>
+                <CardTitle className="text-lg">In Possession</CardTitle>
               </CardHeader>
               <CardContent>
                 <Textarea
                   value={schemeData.offence}
                   onChange={(e) => setSchemeData({ ...schemeData, offence: e.target.value })}
-                  placeholder="Add notes about offence..."
-                  className="min-h-[200px]"
+                  placeholder="Add notes about in possession...&#10;• Use bullet points&#10;• Press Enter for new line&#10;• Start with • for bullets"
+                  className="min-h-[200px] font-mono text-sm"
                   disabled={!isAdmin}
                 />
               </CardContent>
