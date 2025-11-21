@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Lock, Unlock, Shield, AlertTriangle } from "lucide-react";
+import { Lock, Unlock, Shield, AlertTriangle, Copy, CheckCircle2, ExternalLink } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
@@ -36,6 +36,7 @@ export const SiteManagement = ({ isAdmin }: { isAdmin: boolean }) => {
     componentName: string;
     action: 'lock' | 'unlock';
   }>({ open: false, componentId: '', componentName: '', action: 'lock' });
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     fetchComponents();
@@ -101,6 +102,35 @@ export const SiteManagement = ({ isAdmin }: { isAdmin: boolean }) => {
     return isLocked ? 'destructive' : 'secondary';
   };
 
+  const generateCustomKnowledge = () => {
+    const lockedComponents = components.filter(c => c.is_locked && c.component_path);
+    const fileList = lockedComponents.map(c => `- ${c.component_path}`).join('\n');
+    
+    return `CRITICAL: The following files are LOCKED and must NEVER be edited without explicit user approval:
+
+${fileList}
+
+Before editing ANY of these files, the AI must:
+1. Check if the file is in the locked list above
+2. Ask for explicit user confirmation: "This file is locked. Do you want me to edit it anyway?"
+3. Wait for user approval before proceeding
+4. If user declines, provide alternative solutions that don't require editing locked files
+
+These locks are enforced to prevent accidental modifications to critical system components.`;
+  };
+
+  const copyCustomKnowledge = async () => {
+    try {
+      const text = generateCustomKnowledge();
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      toast.success('Custom Knowledge text copied to clipboard!');
+      setTimeout(() => setCopied(false), 3000);
+    } catch (error) {
+      toast.error('Failed to copy to clipboard');
+    }
+  };
+
   const lockedCount = components.filter(c => c.is_locked).length;
 
   if (loading) {
@@ -132,6 +162,61 @@ export const SiteManagement = ({ isAdmin }: { isAdmin: boolean }) => {
             </Badge>
           </div>
         </CardHeader>
+      </Card>
+
+      {/* AI Enforcement Warning */}
+      <Card className="border-blue-500/50 bg-blue-500/10">
+        <CardContent className="py-4 space-y-4">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
+            <div className="flex-1 space-y-2">
+              <p className="font-semibold text-blue-500 text-sm">AI Enforcement Required</p>
+              <p className="text-sm text-muted-foreground">
+                Database locks track status but cannot technically prevent AI edits. To enforce protection, you must add the locked files list to your project's <strong>Custom Knowledge</strong>.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-2 pt-2">
+                <Button
+                  onClick={copyCustomKnowledge}
+                  variant="secondary"
+                  size="sm"
+                  className="gap-2"
+                  disabled={lockedCount === 0}
+                >
+                  {copied ? (
+                    <>
+                      <CheckCircle2 className="w-4 h-4" />
+                      Copied!
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-4 h-4" />
+                      Copy Protected Files List
+                    </>
+                  )}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-2"
+                  onClick={() => window.open('/settings', '_blank')}
+                >
+                  <ExternalLink className="w-4 h-4" />
+                  Open Project Settings
+                </Button>
+              </div>
+            </div>
+          </div>
+          <div className="pl-8 text-xs text-muted-foreground space-y-1 border-l-2 border-blue-500/30">
+            <p className="font-medium">Setup Instructions:</p>
+            <ol className="list-decimal list-inside space-y-1">
+              <li>Click "Copy Protected Files List" above</li>
+              <li>Go to Settings → Manage Knowledge</li>
+              <li>Paste the copied text into Custom Knowledge</li>
+              <li>Save changes</li>
+            </ol>
+            <p className="pt-2 italic">The AI will then ask for confirmation before editing any locked files.</p>
+          </div>
+        </CardContent>
       </Card>
 
       {!isAdmin && (
