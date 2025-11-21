@@ -2678,13 +2678,26 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
               const highlights = typeof selectedPlayer.highlights === 'string'
                 ? JSON.parse(selectedPlayer.highlights)
                 : (selectedPlayer.highlights || {});
+              const matchHighlights = highlights.matchHighlights || [];
               const bestClips = highlights.bestClips || [];
-              return (bestClips as any[]).map((clip: any, idx: number) => ({
-                id: clip.clipId || `clip-${idx}`,
-                name: clip.clipName || `Clip ${idx + 1}`,
-                videoUrl: clip.videoUrl,
-                thumbnailUrl: clip.thumbnailUrl
-              }));
+              
+              // Combine both match highlights and best clips
+              const allClips = [
+                ...(matchHighlights as any[]).map((clip: any, idx: number) => ({
+                  id: clip.clipId || `match-${idx}`,
+                  name: clip.name || clip.clipName || `Match Highlight ${idx + 1}`,
+                  videoUrl: clip.videoUrl,
+                  thumbnailUrl: clip.thumbnailUrl
+                })),
+                ...(bestClips as any[]).map((clip: any, idx: number) => ({
+                  id: clip.clipId || `best-${idx}`,
+                  name: clip.name || clip.clipName || `Best Clip ${idx + 1}`,
+                  videoUrl: clip.videoUrl,
+                  thumbnailUrl: clip.thumbnailUrl
+                }))
+              ];
+              
+              return allClips;
             } catch (e) {
               return [];
             }
