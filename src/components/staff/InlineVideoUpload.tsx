@@ -35,6 +35,8 @@ export function InlineVideoUpload({
 }: InlineVideoUploadProps) {
   const [uploads, setUploads] = useState<UploadItem[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const uploadIntervalsRef = useRef<Record<string, number | undefined>>({});
+
 
   const handleFileSelect = (files: FileList | null) => {
     if (!files || files.length === 0) return;
@@ -67,7 +69,36 @@ export function InlineVideoUpload({
     reader.readAsDataURL(file);
   };
 
+  const startProgressAnimation = (uploadId: string) => {
+    const existingInterval = uploadIntervalsRef.current[uploadId];
+    if (existingInterval) {
+      clearInterval(existingInterval);
+    }
+
+    const intervalId = window.setInterval(() => {
+      setUploads(prev =>
+        prev.map(u => {
+          if (u.id !== uploadId) return u;
+          if (u.status !== 'uploading' && u.status !== 'processing') return u;
+          const nextProgress = Math.min((u.progress || 0) + 1, 95);
+          return { ...u, progress: nextProgress };
+        })
+      );
+    }, 300);
+
+    uploadIntervalsRef.current[uploadId] = intervalId;
+  };
+
+  const stopProgressAnimation = (uploadId: string) => {
+    const intervalId = uploadIntervalsRef.current[uploadId];
+    if (intervalId) {
+      clearInterval(intervalId);
+      delete uploadIntervalsRef.current[uploadId];
+    }
+  };
+  
   const removeUpload = (uploadId: string) => {
+    stopProgressAnimation(uploadId);
     setUploads(prev => prev.filter(u => u.id !== uploadId));
   };
 
@@ -75,20 +106,18 @@ export function InlineVideoUpload({
     const uploadId = uploadData.id;
     
     setUploads(prev => prev.map(u => 
-      u.id === uploadId ? { ...u, status: 'uploading' as const, error: undefined, progress: 10 } : u
+      u.id === uploadId ? { ...u, status: 'uploading' as const, error: undefined, progress: 1 } : u
     ));
+
+    startProgressAnimation(uploadId);
 
     try {
       // Get latest upload data with current clipName and logoFile
       const currentUpload = uploads.find(u => u.id === uploadId) || uploadData;
-      
+
       // Upload video file
       const fileName = `${playerId}_${Date.now()}_${currentUpload.file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
       const filePath = `highlights/${fileName}`;
-
-      setUploads(prev => prev.map(u => 
-        u.id === uploadId ? { ...u, progress: 20 } : u
-      ));
 
       const { error: uploadError } = await supabase.storage
         .from('analysis-files')
@@ -101,18 +130,10 @@ export function InlineVideoUpload({
         throw new Error(`Storage upload failed: ${uploadError.message}`);
       }
 
-      setUploads(prev => prev.map(u => 
-        u.id === uploadId ? { ...u, progress: 60 } : u
-      ));
-
       // Get public URL
       const { data: { publicUrl } } = supabase.storage
         .from('analysis-files')
         .getPublicUrl(filePath);
-
-      setUploads(prev => prev.map(u => 
-        u.id === uploadId ? { ...u, progress: 70 } : u
-      ));
 
       // Upload logo if provided
       let logoUrl = null;
@@ -134,7 +155,7 @@ export function InlineVideoUpload({
       }
 
       setUploads(prev => prev.map(u => 
-        u.id === uploadId ? { ...u, progress: 80, status: 'processing' as const } : u
+        u.id === uploadId ? { ...u, status: 'processing' as const } : u
       ));
 
       // Update player highlights
@@ -147,10 +168,6 @@ export function InlineVideoUpload({
       if (fetchError) {
         throw new Error(`Failed to fetch player data: ${fetchError.message}`);
       }
-
-      setUploads(prev => prev.map(u => 
-        u.id === uploadId ? { ...u, progress: 85 } : u
-      ));
 
       const highlights = (player?.highlights as any) || {};
       const clipId = `${playerId}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -172,10 +189,6 @@ export function InlineVideoUpload({
             matchHighlights: (highlights as any).matchHighlights || [],
             bestClips: [...((highlights as any).bestClips || []), newClip]
           };
-
-      setUploads(prev => prev.map(u => 
-        u.id === uploadId ? { ...u, progress: 90 } : u
-      ));
 
       const { error: updateError } = await supabase
         .from('players')
@@ -211,6 +224,8 @@ export function InlineVideoUpload({
           : u
       ));
       toast.error(`Failed to upload: ${errorMessage}`);
+    } finally {
+      stopProgressAnimation(uploadId);
     }
   };
 
