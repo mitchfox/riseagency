@@ -122,6 +122,7 @@ export function InlineVideoUpload({
       const { error: uploadError } = await supabase.storage
         .from('analysis-files')
         .upload(filePath, currentUpload.file, {
+          contentType: currentUpload.file.type,
           cacheControl: '3600',
           upsert: false
         });
@@ -142,6 +143,7 @@ export function InlineVideoUpload({
         const { error: logoError } = await supabase.storage
           .from('analysis-files')
           .upload(`highlights/logos/${logoFileName}`, currentUpload.logoFile, {
+            contentType: currentUpload.logoFile.type,
             cacheControl: '3600',
             upsert: false
           });
