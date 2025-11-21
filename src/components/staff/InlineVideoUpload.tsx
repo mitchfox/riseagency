@@ -46,13 +46,17 @@ export function InlineVideoUpload({
       logoFile: null,
       logoPreview: null,
       progress: 0,
-      status: 'idle' as const
+      status: 'uploading' as const
     }));
 
-    setUploads(prev => [...prev, ...newUploads]);
-    
-    // Auto-start uploads
-    newUploads.forEach(upload => startUpload(upload.id));
+    setUploads(prev => {
+      const updated = [...prev, ...newUploads];
+      // Start uploads after state is updated
+      setTimeout(() => {
+        newUploads.forEach(upload => startUpload(upload.id));
+      }, 0);
+      return updated;
+    });
   };
 
   const handleLogoSelect = (uploadId: string, file: File) => {
@@ -72,34 +76,41 @@ export function InlineVideoUpload({
   };
 
   const startUpload = async (uploadId: string) => {
-    const upload = uploads.find(u => u.id === uploadId);
-    if (!upload || upload.status === 'uploading') return;
+    setUploads(prev => {
+      const upload = prev.find(u => u.id === uploadId);
+      if (!upload) return prev;
 
-    setUploads(prev => prev.map(u => 
-      u.id === uploadId ? { ...u, status: 'uploading' as const, error: undefined } : u
-    ));
+      return prev.map(u => 
+        u.id === uploadId ? { ...u, status: 'uploading' as const, error: undefined, progress: 10 } : u
+      );
+    });
+
+    // Get the upload item from current state
+    const currentUpload = uploads.find(u => u.id === uploadId);
+    if (!currentUpload) return;
 
     try {
       // Upload video file
-      const fileName = `${playerId}_${Date.now()}_${upload.file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+      const fileName = `${playerId}_${Date.now()}_${currentUpload.file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
       const filePath = `highlights/${fileName}`;
 
-      // Simple upload without progress tracking for now
       setUploads(prev => prev.map(u => 
-        u.id === uploadId ? { ...u, progress: 50 } : u
+        u.id === uploadId ? { ...u, progress: 20 } : u
       ));
 
       const { error: uploadError } = await supabase.storage
         .from('analysis-files')
-        .upload(filePath, upload.file, {
+        .upload(filePath, currentUpload.file, {
           cacheControl: '3600',
           upsert: false
         });
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        throw new Error(`Storage upload failed: ${uploadError.message}`);
+      }
 
       setUploads(prev => prev.map(u => 
-        u.id === uploadId ? { ...u, progress: 90, status: 'processing' as const } : u
+        u.id === uploadId ? { ...u, progress: 60 } : u
       ));
 
       // Get public URL
@@ -107,13 +118,17 @@ export function InlineVideoUpload({
         .from('analysis-files')
         .getPublicUrl(filePath);
 
+      setUploads(prev => prev.map(u => 
+        u.id === uploadId ? { ...u, progress: 70 } : u
+      ));
+
       // Upload logo if provided
       let logoUrl = null;
-      if (upload.logoFile) {
-        const logoFileName = `${playerId}_${Date.now()}_logo_${upload.logoFile.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+      if (currentUpload.logoFile) {
+        const logoFileName = `${playerId}_${Date.now()}_logo_${currentUpload.logoFile.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
         const { error: logoError } = await supabase.storage
           .from('analysis-files')
-          .upload(`highlights/logos/${logoFileName}`, upload.logoFile, {
+          .upload(`highlights/logos/${logoFileName}`, currentUpload.logoFile, {
             cacheControl: '3600',
             upsert: false
           });
@@ -126,6 +141,10 @@ export function InlineVideoUpload({
         }
       }
 
+      setUploads(prev => prev.map(u => 
+        u.id === uploadId ? { ...u, progress: 80, status: 'processing' as const } : u
+      ));
+
       // Update player highlights
       const { data: player, error: fetchError } = await supabase
         .from('players')
@@ -133,14 +152,20 @@ export function InlineVideoUpload({
         .eq('id', playerId)
         .single();
 
-      if (fetchError) throw fetchError;
+      if (fetchError) {
+        throw new Error(`Failed to fetch player data: ${fetchError.message}`);
+      }
+
+      setUploads(prev => prev.map(u => 
+        u.id === uploadId ? { ...u, progress: 85 } : u
+      ));
 
       const highlights = (player?.highlights as any) || {};
       const clipId = `${playerId}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       
       const newClip = {
         id: clipId,
-        name: upload.clipName,
+        name: currentUpload.clipName,
         videoUrl: publicUrl,
         logoUrl: logoUrl,
         addedAt: new Date().toISOString()
@@ -156,18 +181,24 @@ export function InlineVideoUpload({
             bestClips: [...((highlights as any).bestClips || []), newClip]
           };
 
+      setUploads(prev => prev.map(u => 
+        u.id === uploadId ? { ...u, progress: 90 } : u
+      ));
+
       const { error: updateError } = await supabase
         .from('players')
         .update({ highlights: updatedHighlights })
         .eq('id', playerId);
 
-      if (updateError) throw updateError;
+      if (updateError) {
+        throw new Error(`Failed to update player highlights: ${updateError.message}`);
+      }
 
       setUploads(prev => prev.map(u => 
         u.id === uploadId ? { ...u, progress: 100, status: 'success' as const } : u
       ));
 
-      toast.success(`${upload.clipName} uploaded successfully`);
+      toast.success(`${currentUpload.clipName} uploaded successfully`);
       
       // Remove from list after 3 seconds
       setTimeout(() => {
@@ -177,16 +208,17 @@ export function InlineVideoUpload({
 
     } catch (error: any) {
       console.error('Upload error:', error);
+      const errorMessage = error.message || 'Upload failed';
       setUploads(prev => prev.map(u => 
         u.id === uploadId 
           ? { 
               ...u, 
               status: 'error' as const, 
-              error: error.message || 'Upload failed' 
+              error: errorMessage
             }
           : u
       ));
-      toast.error(`Failed to upload ${upload.clipName}`);
+      toast.error(`Failed to upload: ${errorMessage}`);
     }
   };
 
