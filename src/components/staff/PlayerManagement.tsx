@@ -501,6 +501,11 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       [targetArray]: items
     };
 
+    // Optimistically update local state
+    setPlayers(prev => prev.map(p => 
+      p.id === playerId ? { ...p, highlights: updatedHighlights } : p
+    ));
+
     const { error } = await supabase
       .from('players')
       .update({ highlights: updatedHighlights })
@@ -509,9 +514,10 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
     if (error) {
       toast.error('Failed to reorder highlights');
       console.error(error);
+      // Revert on error
+      fetchPlayers();
     } else {
       toast.success('Highlights reordered');
-      fetchPlayers();
     }
   };
 
