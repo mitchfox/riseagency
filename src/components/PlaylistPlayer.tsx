@@ -171,9 +171,9 @@ export const PlaylistPlayer = ({
               autoPlay
               playsInline
               preload="metadata"
+              loop
               className="max-w-full max-h-full"
               controlsList="nodownload"
-              onEnded={goToNext}
             >
               Your browser does not support the video tag.
             </video>
@@ -181,8 +181,8 @@ export const PlaylistPlayer = ({
 
           {/* Floating Reorder Control - Bottom Center over Video */}
           <div className="pointer-events-none absolute inset-x-0 bottom-0 flex justify-center pb-20">
-            <div className="pointer-events-auto flex items-center gap-3 bg-background/95 backdrop-blur-sm rounded-lg px-4 py-2 border border-border/50 shadow-xl">
-              <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">#</span>
+            <div className="pointer-events-auto flex items-center gap-3 bg-background/95 backdrop-blur-sm rounded-lg px-4 py-3 border-2 border-primary/50 shadow-xl">
+              <span className="text-lg font-bold text-primary whitespace-nowrap">#</span>
               <Input
                 type="number"
                 min="1"
@@ -190,7 +190,7 @@ export const PlaylistPlayer = ({
                 value={newPosition}
                 onChange={(e) => setNewPosition(e.target.value)}
                 placeholder={`1-${totalClips}`}
-                className="w-20 h-9 text-base"
+                className="w-24 h-10 text-lg font-semibold text-center"
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && newPosition) handleReorder();
                   if (e.key === 'Escape') setNewPosition("");
@@ -198,16 +198,16 @@ export const PlaylistPlayer = ({
               />
               {newPosition && (
                 <>
-                  <Button onClick={handleReorder} size="sm" className="h-8">
-                    <Check className="w-4 h-4" />
+                  <Button onClick={handleReorder} size="sm" className="h-9 px-3">
+                    <Check className="w-5 h-5" />
                   </Button>
                   <Button 
                     onClick={() => setNewPosition("")} 
                     variant="ghost" 
                     size="sm"
-                    className="h-8"
+                    className="h-9 px-3"
                   >
-                    <X className="w-4 h-4" />
+                    <X className="w-5 h-5" />
                   </Button>
                 </>
               )}
