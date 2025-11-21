@@ -184,6 +184,15 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
     }
   };
 
+  const handleMainTabChange = (value: string) => {
+    setActiveTab(value);
+    const currentParams = Object.fromEntries(searchParams.entries());
+    setSearchParams({
+      ...currentParams,
+      tab: value,
+    });
+  };
+
   const fetchPlayers = async (preserveSelection = false) => {
     try {
       const { data: playersData, error: playersError } = await supabase
@@ -1096,10 +1105,10 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
             </Card>
 
             {/* Tabbed Sections */}
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full mt-4">
+            <Tabs value={activeTab} onValueChange={handleMainTabChange} className="w-full mt-4">
               {/* Mobile Dropdown */}
               <div className="md:hidden mb-8">
-                <Select value={activeTab} onValueChange={setActiveTab}>
+                <Select value={activeTab} onValueChange={handleMainTabChange}>
                   <SelectTrigger className="w-full bg-background border-border">
                     <SelectValue />
                   </SelectTrigger>
