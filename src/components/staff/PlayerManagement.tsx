@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Edit, FileText, LineChart, Video, Calendar, Plus, DollarSign, User, Trash2, Eye, TrendingUp, GripVertical, ChevronLeft, ChevronRight } from "lucide-react";
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationPrevious, PaginationNext } from "@/components/ui/pagination";
 import { PerformanceActionsDialog } from "./PerformanceActionsDialog";
 import { CreatePerformanceReportDialog } from "./CreatePerformanceReportDialog";
 import { ProgrammingManagement } from "./ProgrammingManagement";
@@ -127,6 +128,8 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   const [analysisSearchQuery, setAnalysisSearchQuery] = useState("");
   const [showPlaylistManager, setShowPlaylistManager] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<Record<string, { status: 'uploading' | 'success' | 'error', progress: number, error?: string }>>({});
+  const [bestClipsPage, setBestClipsPage] = useState(1);
+  const CLIPS_PER_PAGE = 9;
 
   useEffect(() => {
     fetchPlayers();
@@ -152,6 +155,8 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       
       if (player) {
         setSelectedPlayerId(player.id);
+        // Reset pagination when player changes
+        setBestClipsPage(1);
       }
     }
     
@@ -1677,7 +1682,18 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                 ? JSON.parse(selectedPlayer.highlights)
                                 : selectedPlayer.highlights;
                               
-                              const bestClips = highlights.bestClips || [];
+                              // Sort best clips by date (newest first)
+                              const bestClips = (highlights.bestClips || []).sort((a: any, b: any) => {
+                                const dateA = new Date(a.addedAt || 0).getTime();
+                                const dateB = new Date(b.addedAt || 0).getTime();
+                                return dateB - dateA; // Newest first
+                              });
+                              
+                              // Pagination
+                              const totalPages = Math.ceil(bestClips.length / CLIPS_PER_PAGE);
+                              const startIdx = (bestClipsPage - 1) * CLIPS_PER_PAGE;
+                              const endIdx = startIdx + CLIPS_PER_PAGE;
+                              const paginatedClips = bestClips.slice(startIdx, endIdx);
 
                               return (
                                 <div className="space-y-4">
@@ -1694,16 +1710,23 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                     playerEmail={selectedPlayer.email || ''}
                                     playerId={selectedPlayer.id}
                                     highlightType="best"
-                                    onUploadComplete={() => fetchPlayers(true)}
+                                    onUploadComplete={() => {
+                                      fetchPlayers(true);
+                                      setBestClipsPage(1); // Reset to first page after upload
+                                    }}
                                   />
                                   
                                     {bestClips.length > 0 ? (
+                                    <>
                                     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                                      {bestClips.map((clip: any, idx: number) => (
+                                      {paginatedClips.map((clip: any, idx: number) => {
+                                        // Calculate the actual index in the full array
+                                        const actualIdx = startIdx + idx;
+                                        return (
                                         <Card 
-                                          key={idx} 
+                                          key={actualIdx} 
                                           className={`overflow-hidden group relative transition-all ${
-                                            draggedHighlightIndex === idx ? 'opacity-50 scale-95' : ''
+                                            draggedHighlightIndex === actualIdx ? 'opacity-50 scale-95' : ''
                                           }`}
                                           onDragOver={(e) => {
                                             e.preventDefault();
@@ -1711,8 +1734,8 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                           }}
                                           onDrop={(e) => {
                                             e.preventDefault();
-                                            if (draggedHighlightIndex !== null && draggedHighlightIndex !== idx) {
-                                              handleReorderHighlights(selectedPlayer.id, 'best', draggedHighlightIndex, idx);
+                                            if (draggedHighlightIndex !== null && draggedHighlightIndex !== actualIdx) {
+                                              handleReorderHighlights(selectedPlayer.id, 'best', draggedHighlightIndex, actualIdx);
                                             }
                                             setDraggedHighlightIndex(null);
                                           }}
@@ -1740,7 +1763,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                           )}
                                           <CardContent className="p-4">
                                             <div className="space-y-2">
-                                              <p className="font-medium truncate">{clip.name || `Clip ${idx + 1}`}</p>
+                                              <p className="font-medium truncate">{clip.name || `Clip ${actualIdx + 1}`}</p>
                                               <div 
                                                 className="flex items-center gap-2"
                                                 draggable
@@ -1751,7 +1774,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                                     e.preventDefault();
                                                     return;
                                                   }
-                                                  setDraggedHighlightIndex(idx);
+                                                  setDraggedHighlightIndex(actualIdx);
                                                   e.dataTransfer.effectAllowed = 'move';
                                                 }}
                                                 onDragEnd={() => setDraggedHighlightIndex(null)}
@@ -1763,10 +1786,10 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                                   <Button
                                                     size="icon"
                                                     variant="ghost"
-                                                    disabled={idx === 0}
+                                                    disabled={actualIdx === 0}
                                                     onClick={(e) => {
                                                       e.stopPropagation();
-                                                      if (idx > 0) handleReorderHighlights(selectedPlayer.id, 'best', idx, idx - 1);
+                                                      if (actualIdx > 0) handleReorderHighlights(selectedPlayer.id, 'best', actualIdx, actualIdx - 1);
                                                     }}
                                                   >
                                                     <ChevronLeft className="w-4 h-4" />
@@ -1774,10 +1797,10 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                                   <Button
                                                     size="icon"
                                                     variant="ghost"
-                                                    disabled={idx === bestClips.length - 1}
+                                                    disabled={actualIdx === bestClips.length - 1}
                                                     onClick={(e) => {
                                                       e.stopPropagation();
-                                                      if (idx < bestClips.length - 1) handleReorderHighlights(selectedPlayer.id, 'best', idx, idx + 1);
+                                                      if (actualIdx < bestClips.length - 1) handleReorderHighlights(selectedPlayer.id, 'best', actualIdx, actualIdx + 1);
                                                     }}
                                                   >
                                                     <ChevronRight className="w-4 h-4" />
@@ -1798,7 +1821,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                                     variant="ghost"
                                                     onClick={(e) => {
                                                       e.stopPropagation();
-                                                      handleDeleteHighlight(selectedPlayer.id, 'best', idx);
+                                                      handleDeleteHighlight(selectedPlayer.id, 'best', actualIdx);
                                                     }}
                                                   >
                                                     <Trash2 className="w-4 h-4 text-destructive" />
@@ -1808,8 +1831,41 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                             </div>
                                           </CardContent>
                                         </Card>
-                                      ))}
+                                      )})}
                                     </div>
+                                    
+                                    {totalPages > 1 && (
+                                      <Pagination className="mt-6">
+                                        <PaginationContent>
+                                          <PaginationItem>
+                                            <PaginationPrevious
+                                              onClick={() => setBestClipsPage(p => Math.max(1, p - 1))}
+                                              className={bestClipsPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                                            />
+                                          </PaginationItem>
+                                          
+                                          {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                                            <PaginationItem key={page}>
+                                              <PaginationLink
+                                                onClick={() => setBestClipsPage(page)}
+                                                isActive={page === bestClipsPage}
+                                                className="cursor-pointer"
+                                              >
+                                                {page}
+                                              </PaginationLink>
+                                            </PaginationItem>
+                                          ))}
+                                          
+                                          <PaginationItem>
+                                            <PaginationNext
+                                              onClick={() => setBestClipsPage(p => Math.min(totalPages, p + 1))}
+                                              className={bestClipsPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                                            />
+                                          </PaginationItem>
+                                        </PaginationContent>
+                                      </Pagination>
+                                    )}
+                                    </>
                                   ) : (
                                     <p className="text-center text-muted-foreground py-8">No best clips yet</p>
                                   )}
