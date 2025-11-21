@@ -521,6 +521,45 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
     }
   };
 
+  const handleDeleteHighlight = async (playerId: string, type: 'match' | 'best', index: number) => {
+    const player = players.find(p => p.id === playerId);
+    if (!player) return;
+
+    const highlights = typeof player.highlights === 'string' 
+      ? JSON.parse(player.highlights) 
+      : player.highlights || {};
+    
+    const targetArray = type === 'match' ? 'matchHighlights' : 'bestClips';
+    const items = [...(highlights[targetArray] || [])];
+    
+    // Remove the item at the specified index
+    items.splice(index, 1);
+    
+    const updatedHighlights = {
+      ...highlights,
+      [targetArray]: items
+    };
+
+    // Optimistically update local state
+    setPlayers(prev => prev.map(p => 
+      p.id === playerId ? { ...p, highlights: updatedHighlights } : p
+    ));
+
+    const { error } = await supabase
+      .from('players')
+      .update({ highlights: updatedHighlights })
+      .eq('id', playerId);
+
+    if (error) {
+      toast.error('Failed to delete highlight');
+      console.error(error);
+      // Revert on error
+      fetchPlayers();
+    } else {
+      toast.success('Highlight deleted');
+    }
+  };
+
   const handleUpdatePlayer = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingPlayer) return;
@@ -1517,17 +1556,29 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                                 <GripVertical className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                                               </div>
                                               <p className="font-medium truncate flex-1">{highlight.name || `Highlight ${idx + 1}`}</p>
-                                              <Button
-                                                size="sm"
-                                                variant="ghost"
-                                                onClick={(e) => {
-                                                  e.stopPropagation();
-                                                  setEditingHighlight({ highlight, type: 'match' });
-                                                  setIsEditHighlightOpen(true);
-                                                }}
-                                              >
-                                                <Edit className="w-4 h-4" />
-                                              </Button>
+                                              <div className="flex items-center gap-1">
+                                                <Button
+                                                  size="sm"
+                                                  variant="ghost"
+                                                  onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setEditingHighlight({ highlight, type: 'match' });
+                                                    setIsEditHighlightOpen(true);
+                                                  }}
+                                                >
+                                                  <Edit className="w-4 h-4" />
+                                                </Button>
+                                                <Button
+                                                  size="sm"
+                                                  variant="ghost"
+                                                  onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleDeleteHighlight(selectedPlayer.id, 'match', idx);
+                                                  }}
+                                                >
+                                                  <Trash2 className="w-4 h-4 text-destructive" />
+                                                </Button>
+                                              </div>
                                             </div>
                                           </CardContent>
                                         </Card>
@@ -1619,17 +1670,29 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                                 <GripVertical className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                                               </div>
                                               <p className="font-medium truncate flex-1">{clip.name || `Clip ${idx + 1}`}</p>
-                                              <Button
-                                                size="sm"
-                                                variant="ghost"
-                                                onClick={(e) => {
-                                                  e.stopPropagation();
-                                                  setEditingHighlight({ highlight: clip, type: 'best' });
-                                                  setIsEditHighlightOpen(true);
-                                                }}
-                                              >
-                                                <Edit className="w-4 h-4" />
-                                              </Button>
+                                              <div className="flex items-center gap-1">
+                                                <Button
+                                                  size="sm"
+                                                  variant="ghost"
+                                                  onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setEditingHighlight({ highlight: clip, type: 'best' });
+                                                    setIsEditHighlightOpen(true);
+                                                  }}
+                                                >
+                                                  <Edit className="w-4 h-4" />
+                                                </Button>
+                                                <Button
+                                                  size="sm"
+                                                  variant="ghost"
+                                                  onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleDeleteHighlight(selectedPlayer.id, 'best', idx);
+                                                  }}
+                                                >
+                                                  <Trash2 className="w-4 h-4 text-destructive" />
+                                                </Button>
+                                              </div>
                                             </div>
                                           </CardContent>
                                         </Card>
