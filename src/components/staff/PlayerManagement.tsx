@@ -14,6 +14,7 @@ import { PlayerImages } from "./PlayerImages";
 import { PlayerScoutingManagement } from "./PlayerScoutingManagement";
 import { PlaylistManager } from "@/components/PlaylistManager";
 import { InlineVideoUpload } from "./InlineVideoUpload";
+import { EditHighlightDialog } from "./EditHighlightDialog";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -75,6 +76,8 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   const [selectedProgrammingPlayerName, setSelectedProgrammingPlayerName] = useState<string>("");
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
+  const [isEditHighlightOpen, setIsEditHighlightOpen] = useState(false);
+  const [editingHighlight, setEditingHighlight] = useState<{ highlight: any; type: 'match' | 'best' } | null>(null);
   const [formData, setFormData] = useState({
     // Basic Info
     name: "",
@@ -1426,17 +1429,38 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                     onUploadComplete={() => fetchPlayers()}
                                   />
                                   
-                                  {matchHighlights.length > 0 ? (
+                                   {matchHighlights.length > 0 ? (
                                     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                                       {matchHighlights.map((highlight: any, idx: number) => (
-                                        <Card key={idx} className="overflow-hidden">
+                                        <Card key={idx} className="overflow-hidden group relative">
                                           <video 
                                             src={highlight.videoUrl} 
                                             controls 
                                             className="w-full aspect-video"
                                           />
+                                          {highlight.logoUrl && (
+                                            <div className="absolute top-2 left-2 bg-background/90 p-1 rounded">
+                                              <img 
+                                                src={highlight.logoUrl} 
+                                                alt="Club logo" 
+                                                className="w-8 h-8 object-contain"
+                                              />
+                                            </div>
+                                          )}
                                           <CardContent className="p-4">
-                                            <p className="font-medium">{highlight.name || `Highlight ${idx + 1}`}</p>
+                                            <div className="flex items-center justify-between gap-2">
+                                              <p className="font-medium truncate flex-1">{highlight.name || `Highlight ${idx + 1}`}</p>
+                                              <Button
+                                                size="sm"
+                                                variant="ghost"
+                                                onClick={() => {
+                                                  setEditingHighlight({ highlight, type: 'match' });
+                                                  setIsEditHighlightOpen(true);
+                                                }}
+                                              >
+                                                <Edit className="w-4 h-4" />
+                                              </Button>
+                                            </div>
                                           </CardContent>
                                         </Card>
                                       ))}
@@ -1479,17 +1503,38 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                     onUploadComplete={() => fetchPlayers()}
                                   />
                                   
-                                  {bestClips.length > 0 ? (
+                                   {bestClips.length > 0 ? (
                                     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                                       {bestClips.map((clip: any, idx: number) => (
-                                        <Card key={idx} className="overflow-hidden">
+                                        <Card key={idx} className="overflow-hidden group relative">
                                           <video 
                                             src={clip.videoUrl} 
                                             controls 
                                             className="w-full aspect-video"
                                           />
+                                          {clip.logoUrl && (
+                                            <div className="absolute top-2 left-2 bg-background/90 p-1 rounded">
+                                              <img 
+                                                src={clip.logoUrl} 
+                                                alt="Club logo" 
+                                                className="w-8 h-8 object-contain"
+                                              />
+                                            </div>
+                                          )}
                                           <CardContent className="p-4">
-                                            <p className="font-medium">{clip.name || `Clip ${idx + 1}`}</p>
+                                            <div className="flex items-center justify-between gap-2">
+                                              <p className="font-medium truncate flex-1">{clip.name || `Clip ${idx + 1}`}</p>
+                                              <Button
+                                                size="sm"
+                                                variant="ghost"
+                                                onClick={() => {
+                                                  setEditingHighlight({ highlight: clip, type: 'best' });
+                                                  setIsEditHighlightOpen(true);
+                                                }}
+                                              >
+                                                <Edit className="w-4 h-4" />
+                                              </Button>
+                                            </div>
                                           </CardContent>
                                         </Card>
                                       ))}
@@ -2457,6 +2502,20 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
             }
           })()}
           onClose={() => setShowPlaylistManager(false)}
+        />
+      )}
+
+      {isEditHighlightOpen && editingHighlight && selectedPlayer && (
+        <EditHighlightDialog
+          open={isEditHighlightOpen}
+          onOpenChange={setIsEditHighlightOpen}
+          playerId={selectedPlayer.id}
+          highlightType={editingHighlight.type}
+          highlight={editingHighlight.highlight}
+          onSave={() => {
+            fetchPlayers();
+            setEditingHighlight(null);
+          }}
         />
       )}
     </div>
