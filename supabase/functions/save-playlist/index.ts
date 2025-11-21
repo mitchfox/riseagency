@@ -102,29 +102,24 @@ serve(async (req) => {
       const newFileName = `${clipNumber}. ${safeClipName}.${fileExtension}`;
       const newPath = `playlists/${safePlayerName}/${safePlaylistName}/${newFileName}`;
 
-      // Check if file already exists at destination
-      const { data: existingFile } = await supabase
+      // Copy file to new location within the same bucket (faster than download+upload)
+      const { error: copyError } = await supabase
         .storage
         .from('analysis-files')
-        .list(newPath.substring(0, newPath.lastIndexOf('/')), {
-          search: newFileName
-        });
+        .copy(oldPath, newPath);
 
-      // If file doesn't exist, copy it
-      if (!existingFile || existingFile.length === 0) {
-        const { error: copyError } = await supabase
-          .storage
-          .from('analysis-files')
-          .copy(oldPath, newPath);
+      if (copyError) {
+        const status = (copyError as any).status ?? (copyError as any).statusCode;
+        const message = (copyError as any).message ?? '';
 
-        if (copyError) {
+        // If the file already exists at the destination, treat it as a success and reuse it
+        if (status === 409 || message.includes('resource already exists')) {
+          console.log(`File already exists at ${newPath}, reusing existing file.`);
+        } else {
           console.error(`Failed to copy to ${newPath}:`, copyError);
           skipped.push({ name: clip.name, reason: 'Copy failed' });
           continue;
         }
-        console.log(`✓ Copied: ${newFileName}`);
-      } else {
-        console.log(`✓ Already exists: ${newFileName}`);
       }
 
       // Get public URL
