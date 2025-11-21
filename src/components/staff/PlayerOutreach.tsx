@@ -1,0 +1,531 @@
+import React, { useState, useEffect } from "react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Plus, Edit, Trash2, Users } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { Switch } from "@/components/ui/switch";
+
+interface YouthOutreach {
+  id: string;
+  player_name: string;
+  ig_handle: string | null;
+  messaged: boolean;
+  response_received: boolean;
+  parents_name: string | null;
+  parent_contact: string | null;
+  parent_approval: boolean;
+  initial_message: string | null;
+  notes: string | null;
+}
+
+interface ProOutreach {
+  id: string;
+  player_name: string;
+  ig_handle: string | null;
+  messaged: boolean;
+  response_received: boolean;
+  initial_message: string | null;
+  notes: string | null;
+}
+
+export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
+  const [activeTab, setActiveTab] = useState("youth");
+  const [youthData, setYouthData] = useState<YouthOutreach[]>([]);
+  const [proData, setProData] = useState<ProOutreach[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState<YouthOutreach | ProOutreach | null>(null);
+  const [youthFormData, setYouthFormData] = useState({
+    player_name: "",
+    ig_handle: "",
+    messaged: false,
+    response_received: false,
+    parents_name: "",
+    parent_contact: "",
+    parent_approval: false,
+    initial_message: "",
+    notes: ""
+  });
+  const [proFormData, setProFormData] = useState({
+    player_name: "",
+    ig_handle: "",
+    messaged: false,
+    response_received: false,
+    initial_message: "",
+    notes: ""
+  });
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    try {
+      const [youthResult, proResult] = await Promise.all([
+        supabase.from("player_outreach_youth").select("*").order("created_at", { ascending: false }),
+        supabase.from("player_outreach_pro").select("*").order("created_at", { ascending: false })
+      ]);
+
+      if (youthResult.error) throw youthResult.error;
+      if (proResult.error) throw proResult.error;
+
+      setYouthData(youthResult.data || []);
+      setProData(proResult.data || []);
+    } catch (error: any) {
+      console.error("Error fetching outreach data:", error);
+      toast.error("Failed to load data");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleYouthSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      if (editingItem && 'parents_name' in editingItem) {
+        const { error } = await supabase
+          .from("player_outreach_youth")
+          .update(youthFormData)
+          .eq("id", editingItem.id);
+        if (error) throw error;
+        toast.success("Youth outreach updated");
+      } else {
+        const { error } = await supabase
+          .from("player_outreach_youth")
+          .insert([youthFormData]);
+        if (error) throw error;
+        toast.success("Youth outreach added");
+      }
+      setDialogOpen(false);
+      resetForms();
+      fetchData();
+    } catch (error: any) {
+      console.error("Error saving youth outreach:", error);
+      toast.error("Failed to save");
+    }
+  };
+
+  const handleProSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      if (editingItem && !('parents_name' in editingItem)) {
+        const { error } = await supabase
+          .from("player_outreach_pro")
+          .update(proFormData)
+          .eq("id", editingItem.id);
+        if (error) throw error;
+        toast.success("Pro outreach updated");
+      } else {
+        const { error } = await supabase
+          .from("player_outreach_pro")
+          .insert([proFormData]);
+        if (error) throw error;
+        toast.success("Pro outreach added");
+      }
+      setDialogOpen(false);
+      resetForms();
+      fetchData();
+    } catch (error: any) {
+      console.error("Error saving pro outreach:", error);
+      toast.error("Failed to save");
+    }
+  };
+
+  const handleDelete = async (id: string, type: 'youth' | 'pro') => {
+    if (!confirm("Are you sure you want to delete this entry?")) return;
+
+    try {
+      const table = type === 'youth' ? 'player_outreach_youth' : 'player_outreach_pro';
+      const { error } = await supabase.from(table).delete().eq("id", id);
+      if (error) throw error;
+      toast.success("Entry deleted");
+      fetchData();
+    } catch (error: any) {
+      console.error("Error deleting entry:", error);
+      toast.error("Failed to delete");
+    }
+  };
+
+  const handleEdit = (item: YouthOutreach | ProOutreach, type: 'youth' | 'pro') => {
+    setEditingItem(item);
+    if (type === 'youth' && 'parents_name' in item) {
+      setYouthFormData({
+        player_name: item.player_name,
+        ig_handle: item.ig_handle || "",
+        messaged: item.messaged,
+        response_received: item.response_received,
+        parents_name: item.parents_name || "",
+        parent_contact: item.parent_contact || "",
+        parent_approval: item.parent_approval,
+        initial_message: item.initial_message || "",
+        notes: item.notes || ""
+      });
+    } else {
+      setProFormData({
+        player_name: item.player_name,
+        ig_handle: item.ig_handle || "",
+        messaged: item.messaged,
+        response_received: item.response_received,
+        initial_message: item.initial_message || "",
+        notes: item.notes || ""
+      });
+    }
+    setDialogOpen(true);
+  };
+
+  const resetForms = () => {
+    setEditingItem(null);
+    setYouthFormData({
+      player_name: "",
+      ig_handle: "",
+      messaged: false,
+      response_received: false,
+      parents_name: "",
+      parent_contact: "",
+      parent_approval: false,
+      initial_message: "",
+      notes: ""
+    });
+    setProFormData({
+      player_name: "",
+      ig_handle: "",
+      messaged: false,
+      response_received: false,
+      initial_message: "",
+      notes: ""
+    });
+  };
+
+  const getYouthStatusGroups = (data: YouthOutreach[]) => {
+    return {
+      notMessaged: data.filter(d => !d.messaged),
+      noResponse: data.filter(d => d.messaged && !d.response_received),
+      responded: data.filter(d => d.response_received)
+    };
+  };
+
+  const getProStatusGroups = (data: ProOutreach[]) => {
+    return {
+      notMessaged: data.filter(d => !d.messaged),
+      noResponse: data.filter(d => d.messaged && !d.response_received),
+      responded: data.filter(d => d.response_received)
+    };
+  };
+
+  const youthGroups = getYouthStatusGroups(youthData);
+  const proGroups = getProStatusGroups(proData);
+
+  const renderYouthTable = (data: YouthOutreach[], title: string) => (
+    <Card className="mb-4">
+      <CardHeader>
+        <CardTitle className="text-lg">{title} ({data.length})</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Player Name</TableHead>
+              <TableHead>IG Handle</TableHead>
+              <TableHead>Parents Name</TableHead>
+              <TableHead>Parent Contact</TableHead>
+              <TableHead>Parent Approval</TableHead>
+              <TableHead>Messaged</TableHead>
+              <TableHead>Response</TableHead>
+              {isAdmin && <TableHead>Actions</TableHead>}
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {data.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={isAdmin ? 8 : 7} className="text-center text-muted-foreground">
+                  No entries
+                </TableCell>
+              </TableRow>
+            ) : (
+              data.map((item) => (
+                <TableRow key={item.id}>
+                  <TableCell className="font-medium">{item.player_name}</TableCell>
+                  <TableCell>{item.ig_handle || "-"}</TableCell>
+                  <TableCell>{item.parents_name || "-"}</TableCell>
+                  <TableCell>{item.parent_contact || "-"}</TableCell>
+                  <TableCell>{item.parent_approval ? "✓" : "-"}</TableCell>
+                  <TableCell>{item.messaged ? "✓" : "-"}</TableCell>
+                  <TableCell>{item.response_received ? "✓" : "-"}</TableCell>
+                  {isAdmin && (
+                    <TableCell>
+                      <div className="flex gap-2">
+                        <Button size="sm" variant="ghost" onClick={() => handleEdit(item, 'youth')}>
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button size="sm" variant="ghost" onClick={() => handleDelete(item.id, 'youth')}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  )}
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </CardContent>
+    </Card>
+  );
+
+  const renderProTable = (data: ProOutreach[], title: string) => (
+    <Card className="mb-4">
+      <CardHeader>
+        <CardTitle className="text-lg">{title} ({data.length})</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Player Name</TableHead>
+              <TableHead>IG Handle</TableHead>
+              <TableHead>Messaged</TableHead>
+              <TableHead>Response</TableHead>
+              {isAdmin && <TableHead>Actions</TableHead>}
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {data.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={isAdmin ? 5 : 4} className="text-center text-muted-foreground">
+                  No entries
+                </TableCell>
+              </TableRow>
+            ) : (
+              data.map((item) => (
+                <TableRow key={item.id}>
+                  <TableCell className="font-medium">{item.player_name}</TableCell>
+                  <TableCell>{item.ig_handle || "-"}</TableCell>
+                  <TableCell>{item.messaged ? "✓" : "-"}</TableCell>
+                  <TableCell>{item.response_received ? "✓" : "-"}</TableCell>
+                  {isAdmin && (
+                    <TableCell>
+                      <div className="flex gap-2">
+                        <Button size="sm" variant="ghost" onClick={() => handleEdit(item, 'pro')}>
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button size="sm" variant="ghost" onClick={() => handleDelete(item.id, 'pro')}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  )}
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </CardContent>
+    </Card>
+  );
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold flex items-center gap-2">
+          <Users className="h-6 w-6" />
+          Player Outreach
+        </h2>
+        {isAdmin && (
+          <Dialog open={dialogOpen} onOpenChange={(open) => {
+            setDialogOpen(open);
+            if (!open) resetForms();
+          }}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="w-4 h-4 mr-2" />
+                Add Entry
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>
+                  {editingItem ? "Edit Entry" : `Add ${activeTab === 'youth' ? 'Youth' : 'Pro'} Outreach`}
+                </DialogTitle>
+              </DialogHeader>
+              {activeTab === 'youth' ? (
+                <form onSubmit={handleYouthSubmit} className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="player_name">Player Name *</Label>
+                      <Input
+                        id="player_name"
+                        value={youthFormData.player_name}
+                        onChange={(e) => setYouthFormData({ ...youthFormData, player_name: e.target.value })}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="ig_handle">IG Handle</Label>
+                      <Input
+                        id="ig_handle"
+                        value={youthFormData.ig_handle}
+                        onChange={(e) => setYouthFormData({ ...youthFormData, ig_handle: e.target.value })}
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="parents_name">Parents Name</Label>
+                      <Input
+                        id="parents_name"
+                        value={youthFormData.parents_name}
+                        onChange={(e) => setYouthFormData({ ...youthFormData, parents_name: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="parent_contact">Parent Contact</Label>
+                      <Input
+                        id="parent_contact"
+                        value={youthFormData.parent_contact}
+                        onChange={(e) => setYouthFormData({ ...youthFormData, parent_contact: e.target.value })}
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="initial_message">Initial Message</Label>
+                    <Textarea
+                      id="initial_message"
+                      value={youthFormData.initial_message}
+                      onChange={(e) => setYouthFormData({ ...youthFormData, initial_message: e.target.value })}
+                      rows={4}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="notes">Notes</Label>
+                    <Textarea
+                      id="notes"
+                      value={youthFormData.notes}
+                      onChange={(e) => setYouthFormData({ ...youthFormData, notes: e.target.value })}
+                      rows={3}
+                    />
+                  </div>
+                  <div className="flex gap-4">
+                    <div className="flex items-center space-x-2">
+                      <Switch
+                        id="messaged"
+                        checked={youthFormData.messaged}
+                        onCheckedChange={(checked) => setYouthFormData({ ...youthFormData, messaged: checked })}
+                      />
+                      <Label htmlFor="messaged">Messaged</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Switch
+                        id="response_received"
+                        checked={youthFormData.response_received}
+                        onCheckedChange={(checked) => setYouthFormData({ ...youthFormData, response_received: checked })}
+                      />
+                      <Label htmlFor="response_received">Response Received</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Switch
+                        id="parent_approval"
+                        checked={youthFormData.parent_approval}
+                        onCheckedChange={(checked) => setYouthFormData({ ...youthFormData, parent_approval: checked })}
+                      />
+                      <Label htmlFor="parent_approval">Parent Approval</Label>
+                    </div>
+                  </div>
+                  <Button type="submit" className="w-full">
+                    {editingItem ? "Update" : "Add"} Youth Outreach
+                  </Button>
+                </form>
+              ) : (
+                <form onSubmit={handleProSubmit} className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="player_name">Player Name *</Label>
+                      <Input
+                        id="player_name"
+                        value={proFormData.player_name}
+                        onChange={(e) => setProFormData({ ...proFormData, player_name: e.target.value })}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="ig_handle">IG Handle</Label>
+                      <Input
+                        id="ig_handle"
+                        value={proFormData.ig_handle}
+                        onChange={(e) => setProFormData({ ...proFormData, ig_handle: e.target.value })}
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="initial_message">Initial Message</Label>
+                    <Textarea
+                      id="initial_message"
+                      value={proFormData.initial_message}
+                      onChange={(e) => setProFormData({ ...proFormData, initial_message: e.target.value })}
+                      rows={4}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="notes">Notes</Label>
+                    <Textarea
+                      id="notes"
+                      value={proFormData.notes}
+                      onChange={(e) => setProFormData({ ...proFormData, notes: e.target.value })}
+                      rows={3}
+                    />
+                  </div>
+                  <div className="flex gap-4">
+                    <div className="flex items-center space-x-2">
+                      <Switch
+                        id="messaged"
+                        checked={proFormData.messaged}
+                        onCheckedChange={(checked) => setProFormData({ ...proFormData, messaged: checked })}
+                      />
+                      <Label htmlFor="messaged">Messaged</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Switch
+                        id="response_received"
+                        checked={proFormData.response_received}
+                        onCheckedChange={(checked) => setProFormData({ ...proFormData, response_received: checked })}
+                      />
+                      <Label htmlFor="response_received">Response Received</Label>
+                    </div>
+                  </div>
+                  <Button type="submit" className="w-full">
+                    {editingItem ? "Update" : "Add"} Pro Outreach
+                  </Button>
+                </form>
+              )}
+            </DialogContent>
+          </Dialog>
+        )}
+      </div>
+
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="youth">Youth (U18)</TabsTrigger>
+          <TabsTrigger value="pro">Pro</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="youth" className="space-y-4 mt-4">
+          {renderYouthTable(youthGroups.notMessaged, "Not Messaged Yet")}
+          {renderYouthTable(youthGroups.noResponse, "No Response")}
+          {renderYouthTable(youthGroups.responded, "Response Received")}
+        </TabsContent>
+
+        <TabsContent value="pro" className="space-y-4 mt-4">
+          {renderProTable(proGroups.notMessaged, "Not Messaged Yet")}
+          {renderProTable(proGroups.noResponse, "No Response")}
+          {renderProTable(proGroups.responded, "Response Received")}
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+};

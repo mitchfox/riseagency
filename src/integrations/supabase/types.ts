@@ -1080,6 +1080,87 @@ export type Database = {
           },
         ]
       }
+      player_outreach_pro: {
+        Row: {
+          created_at: string | null
+          id: string
+          ig_handle: string | null
+          initial_message: string | null
+          messaged: boolean | null
+          notes: string | null
+          player_name: string
+          response_received: boolean | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          ig_handle?: string | null
+          initial_message?: string | null
+          messaged?: boolean | null
+          notes?: string | null
+          player_name: string
+          response_received?: boolean | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          ig_handle?: string | null
+          initial_message?: string | null
+          messaged?: boolean | null
+          notes?: string | null
+          player_name?: string
+          response_received?: boolean | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      player_outreach_youth: {
+        Row: {
+          created_at: string | null
+          id: string
+          ig_handle: string | null
+          initial_message: string | null
+          messaged: boolean | null
+          notes: string | null
+          parent_approval: boolean | null
+          parent_contact: string | null
+          parents_name: string | null
+          player_name: string
+          response_received: boolean | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          ig_handle?: string | null
+          initial_message?: string | null
+          messaged?: boolean | null
+          notes?: string | null
+          parent_approval?: boolean | null
+          parent_contact?: string | null
+          parents_name?: string | null
+          player_name: string
+          response_received?: boolean | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          ig_handle?: string | null
+          initial_message?: string | null
+          messaged?: boolean | null
+          notes?: string | null
+          parent_approval?: boolean | null
+          parent_contact?: string | null
+          parents_name?: string | null
+          player_name?: string
+          response_received?: boolean | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       player_programs: {
         Row: {
           created_at: string
