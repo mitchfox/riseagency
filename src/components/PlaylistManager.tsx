@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { Plus, X, Save, ChevronUp, ChevronDown, List, Play, Trash2, Hash, Video } from "lucide-react";
+import { Plus, X, Save, ChevronUp, ChevronDown, List, Play, Trash2, Hash, Video, Download } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { PlaylistPlayer } from "./PlaylistPlayer";
 import { ClipNameEditor } from "./ClipNameEditor";
@@ -482,6 +482,30 @@ export const PlaylistManager = ({ playerData, availableClips, onClose }: Playlis
     }
   };
 
+  const downloadClip = async (clip: Clip, index: number) => {
+    const loadingToast = toast.loading("Downloading clip...");
+
+    try {
+      const response = await fetch(clip.videoUrl);
+      const blob = await response.blob();
+      
+      const extension = clip.videoUrl.split('.').pop()?.split('?')[0] || 'mp4';
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${index + 1}. ${clip.name}.${extension}`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      toast.success("Clip downloaded", { id: loadingToast });
+    } catch (error) {
+      console.error('Error downloading clip:', error);
+      toast.error("Failed to download clip", { id: loadingToast });
+    }
+  };
+
   const loadVideoDuration = (videoUrl: string) => {
     // Skip if already loaded or loading
     if (clipDurations[videoUrl]) return;
@@ -776,21 +800,33 @@ export const PlaylistManager = ({ playerData, availableClips, onClose }: Playlis
                              </span>
                            </div>
                          </div>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => {
-                              // Load duration when play is clicked
-                              loadVideoDuration(clip.videoUrl);
-                              setPlayingVideo({ url: clip.videoUrl, name: clip.name });
-                            }}
-                            className="h-8 w-8 p-0 hover:bg-primary/10 text-primary flex-shrink-0"
-                            title="Watch clip"
-                          >
-                            <Play className="w-4 h-4" />
-                          </Button>
-                         
-                         {movingClipId === clipKey ? (
+                           <Button
+                             size="sm"
+                             variant="ghost"
+                             onClick={() => {
+                               // Load duration when play is clicked
+                               loadVideoDuration(clip.videoUrl);
+                               setPlayingVideo({ url: clip.videoUrl, name: clip.name });
+                             }}
+                             className="h-8 w-8 p-0 hover:bg-primary/10 text-primary flex-shrink-0"
+                             title="Watch clip"
+                           >
+                             <Play className="w-4 h-4" />
+                           </Button>
+                          
+                          {movingClipId !== clipKey && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => downloadClip(clip, index)}
+                              className="h-8 w-8 p-0 hover:bg-primary/10 flex-shrink-0"
+                              title="Download clip"
+                            >
+                              <Download className="w-4 h-4" />
+                            </Button>
+                          )}
+
+                          {movingClipId === clipKey ? (
                            <div className="flex items-center gap-1.5 flex-shrink-0">
                              <Input
                                type="number"
