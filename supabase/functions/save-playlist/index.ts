@@ -90,9 +90,11 @@ serve(async (req) => {
       
       // Create new filename with number prefix and safe characters
       const fileExtension = oldPath.split('.').pop();
-      const safeName = clip.name.replace(/[^a-zA-Z0-9.-]/g, '_');
-      const newFileName = `${clipNumber}. ${safeName}.${fileExtension}`;
-      const newPath = `playlists/${player.name}/${playlist.name}/${newFileName}`;
+      const safeClipName = clip.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+      const safePlayerName = player.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+      const safePlaylistName = playlist.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+      const newFileName = `${clipNumber}. ${safeClipName}.${fileExtension}`;
+      const newPath = `playlists/${safePlayerName}/${safePlaylistName}/${newFileName}`;
 
       // Download the file
       const { data: fileData, error: downloadError } = await supabase
