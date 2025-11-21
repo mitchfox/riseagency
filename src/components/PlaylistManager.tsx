@@ -861,14 +861,15 @@ export const PlaylistManager = ({ playerData, availableClips, onClose }: Playlis
                            </>
                          )}
                          
-                         <Button
-                           size="sm"
-                           variant="ghost"
-                           onClick={() => removeClipFromPlaylist(clip.videoUrl, clip.name)}
-                           className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10 flex-shrink-0"
-                         >
-                           <Trash2 className="w-4 h-4" />
-                         </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => removeClipFromPlaylist(clip.videoUrl, clip.name)}
+                            className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10 flex-shrink-0"
+                            title="Remove from playlist (clip stays available in Best Clips)"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
                        </div>
                      </div>
                    );
@@ -904,35 +905,37 @@ export const PlaylistManager = ({ playerData, availableClips, onClose }: Playlis
                 className="w-full h-full"
                 controlsList="nodownload"
                 onLoadedMetadata={(e) => {
-                  const duration = Math.round(e.currentTarget.duration || 0);
-                  if (duration && !Number.isNaN(duration) && playingVideo) {
-                    const url = playingVideo.url;
-
-                    setClipDurations((prev) => ({
-                      ...prev,
-                      [url]: duration,
-                    }));
-
-                    setSelectedPlaylist((prev) =>
-                      prev
-                        ? {
-                            ...prev,
-                            clips: prev.clips.map((clip) =>
-                              clip.videoUrl === url ? { ...clip, duration } : clip
-                            ),
-                          }
-                        : prev
-                    );
-
-                    setPlaylists((prev) =>
-                      prev.map((playlist) => ({
-                        ...playlist,
-                        clips: playlist.clips.map((clip) =>
-                          clip.videoUrl === url ? { ...clip, duration } : clip
-                        ),
-                      }))
-                    );
+                  const rawDuration = e.currentTarget.duration;
+                  if (!Number.isFinite(rawDuration) || rawDuration <= 0 || !playingVideo) {
+                    return;
                   }
+                  const duration = Math.round(rawDuration);
+                  const url = playingVideo.url;
+
+                  setClipDurations((prev) => ({
+                    ...prev,
+                    [url]: duration,
+                  }));
+
+                  setSelectedPlaylist((prev) =>
+                    prev
+                      ? {
+                          ...prev,
+                          clips: prev.clips.map((clip) =>
+                            clip.videoUrl === url ? { ...clip, duration } : clip
+                          ),
+                        }
+                      : prev
+                  );
+
+                  setPlaylists((prev) =>
+                    prev.map((playlist) => ({
+                      ...playlist,
+                      clips: playlist.clips.map((clip) =>
+                        clip.videoUrl === url ? { ...clip, duration } : clip
+                      ),
+                    }))
+                  );
                 }}
               >
                 Your browser does not support the video tag.

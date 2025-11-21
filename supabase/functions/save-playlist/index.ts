@@ -96,30 +96,15 @@ serve(async (req) => {
       const newFileName = `${clipNumber}. ${safeClipName}.${fileExtension}`;
       const newPath = `playlists/${safePlayerName}/${safePlaylistName}/${newFileName}`;
 
-      // Download the file
-      const { data: fileData, error: downloadError } = await supabase
+      // Copy file to new location within the same bucket (faster than download+upload)
+      const { error: copyError } = await supabase
         .storage
         .from('analysis-files')
-        .download(oldPath);
+        .copy(oldPath, newPath);
 
-      if (downloadError || !fileData) {
-        console.log(`Skipping clip (file not found): ${clip.name}`, downloadError);
-        skipped.push({ name: clip.name, reason: 'File not found or deleted' });
-        continue;
-      }
-
-      // Upload to new location
-      const { error: uploadError } = await supabase
-        .storage
-        .from('analysis-files')
-        .upload(newPath, fileData, {
-          contentType: fileData.type,
-          upsert: true
-        });
-
-      if (uploadError) {
-        console.error(`Failed to upload ${newPath}:`, uploadError);
-        skipped.push({ name: clip.name, reason: 'Upload failed' });
+      if (copyError) {
+        console.error(`Failed to copy to ${newPath}:`, copyError);
+        skipped.push({ name: clip.name, reason: 'Copy failed' });
         continue;
       }
 
