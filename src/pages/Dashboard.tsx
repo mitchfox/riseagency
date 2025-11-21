@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
@@ -114,6 +115,8 @@ const Dashboard = () => {
   const [isSubheaderVisible, setIsSubheaderVisible] = useState(true);
   const [selectedFormMetric, setSelectedFormMetric] = useState<string>("r90");
   const [schemes, setSchemes] = useState<any[]>([]);
+  const [selectedTeamScheme, setSelectedTeamScheme] = useState<string>('');
+  const [selectedOppositionScheme, setSelectedOppositionScheme] = useState<string>('');
 
 
   // Initialize push notifications with player ID
@@ -1776,44 +1779,124 @@ const Dashboard = () => {
                           <p className="text-center text-muted-foreground">No tactical schemes available for your position yet.</p>
                         </div>
                       ) : (
-                        <div className="space-y-8">
-                          {schemes.map((scheme) => (
-                            <div key={scheme.id} className="border rounded-lg p-6 space-y-4">
-                              <h3 className="text-2xl font-bebas uppercase tracking-wider">
-                                {scheme.team_scheme} vs {scheme.opposition_scheme}
-                              </h3>
-                              
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                {scheme.defensive_transition && (
-                                  <div className="space-y-2">
-                                    <h4 className="font-semibold text-lg">Defensive Transition</h4>
-                                    <div className="text-muted-foreground whitespace-pre-wrap">{scheme.defensive_transition}</div>
-                                  </div>
-                                )}
-                                
-                                {scheme.defence && (
-                                  <div className="space-y-2">
-                                    <h4 className="font-semibold text-lg">Defence</h4>
-                                    <div className="text-muted-foreground whitespace-pre-wrap">{scheme.defence}</div>
-                                  </div>
-                                )}
-                                
-                                {scheme.offensive_transition && (
-                                  <div className="space-y-2">
-                                    <h4 className="font-semibold text-lg">Offensive Transition</h4>
-                                    <div className="text-muted-foreground whitespace-pre-wrap">{scheme.offensive_transition}</div>
-                                  </div>
-                                )}
-                                
-                                {scheme.offence && (
-                                  <div className="space-y-2">
-                                    <h4 className="font-semibold text-lg">In Possession</h4>
-                                    <div className="text-muted-foreground whitespace-pre-wrap">{scheme.offence}</div>
-                                  </div>
-                                )}
-                              </div>
+                        <div className="space-y-6">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                              <Label>Your Team Scheme</Label>
+                              <Select value={selectedTeamScheme} onValueChange={setSelectedTeamScheme}>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select your team scheme" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {Array.from(new Set(schemes.map(s => s.team_scheme))).sort().map(scheme => (
+                                    <SelectItem key={scheme} value={scheme}>
+                                      {scheme}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
                             </div>
-                          ))}
+
+                            {selectedTeamScheme && (
+                              <div className="space-y-2">
+                                <Label>Opposition Scheme</Label>
+                                <Select value={selectedOppositionScheme} onValueChange={setSelectedOppositionScheme}>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select opposition scheme" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {Array.from(new Set(
+                                      schemes
+                                        .filter(s => s.team_scheme === selectedTeamScheme)
+                                        .map(s => s.opposition_scheme)
+                                    )).sort().map(scheme => (
+                                      <SelectItem key={scheme} value={scheme}>
+                                        {scheme}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            )}
+                          </div>
+
+                          {selectedTeamScheme && selectedOppositionScheme && (() => {
+                            const matchedScheme = schemes.find(
+                              s => s.team_scheme === selectedTeamScheme && s.opposition_scheme === selectedOppositionScheme
+                            );
+
+                            if (!matchedScheme) {
+                              return (
+                                <div className="py-8">
+                                  <p className="text-center text-muted-foreground">
+                                    No scheme data available for this combination yet.
+                                  </p>
+                                </div>
+                              );
+                            }
+
+                            return (
+                              <div className="border rounded-lg p-6">
+                                <h3 className="text-2xl font-bebas uppercase tracking-wider mb-4">
+                                  {matchedScheme.team_scheme} vs {matchedScheme.opposition_scheme}
+                                </h3>
+                                
+                                <Accordion type="multiple" className="w-full">
+                                  {matchedScheme.defensive_transition && (
+                                    <AccordionItem value="defensive-transition">
+                                      <AccordionTrigger className="text-lg font-semibold">
+                                        Defensive Transition
+                                      </AccordionTrigger>
+                                      <AccordionContent>
+                                        <div className="text-muted-foreground whitespace-pre-wrap pt-2">
+                                          {matchedScheme.defensive_transition}
+                                        </div>
+                                      </AccordionContent>
+                                    </AccordionItem>
+                                  )}
+                                  
+                                  {matchedScheme.defence && (
+                                    <AccordionItem value="defence">
+                                      <AccordionTrigger className="text-lg font-semibold">
+                                        Defence
+                                      </AccordionTrigger>
+                                      <AccordionContent>
+                                        <div className="text-muted-foreground whitespace-pre-wrap pt-2">
+                                          {matchedScheme.defence}
+                                        </div>
+                                      </AccordionContent>
+                                    </AccordionItem>
+                                  )}
+                                  
+                                  {matchedScheme.offensive_transition && (
+                                    <AccordionItem value="offensive-transition">
+                                      <AccordionTrigger className="text-lg font-semibold">
+                                        Offensive Transition
+                                      </AccordionTrigger>
+                                      <AccordionContent>
+                                        <div className="text-muted-foreground whitespace-pre-wrap pt-2">
+                                          {matchedScheme.offensive_transition}
+                                        </div>
+                                      </AccordionContent>
+                                    </AccordionItem>
+                                  )}
+                                  
+                                  {matchedScheme.offence && (
+                                    <AccordionItem value="offence">
+                                      <AccordionTrigger className="text-lg font-semibold">
+                                        In Possession
+                                      </AccordionTrigger>
+                                      <AccordionContent>
+                                        <div className="text-muted-foreground whitespace-pre-wrap pt-2">
+                                          {matchedScheme.offence}
+                                        </div>
+                                      </AccordionContent>
+                                    </AccordionItem>
+                                  )}
+                                </Accordion>
+                              </div>
+                            );
+                          })()}
                         </div>
                       )}
                     </CardContent>
