@@ -70,13 +70,19 @@ serve(async (req) => {
     // Sort clips by order
     const sortedClips = [...clips].sort((a, b) => a.order - b.order);
 
-    // Copy and rename files with numbered prefixes
+    // Copy and rename files with numbered prefixes (process in batches to avoid timeout)
     const results = [];
     const skipped = [];
+    const BATCH_SIZE = 20;
     
-    for (let i = 0; i < sortedClips.length; i++) {
-      const clip = sortedClips[i];
-      const clipNumber = i + 1;
+    for (let batchStart = 0; batchStart < sortedClips.length; batchStart += BATCH_SIZE) {
+      const batchEnd = Math.min(batchStart + BATCH_SIZE, sortedClips.length);
+      const batch = sortedClips.slice(batchStart, batchEnd);
+      
+      console.log(`Processing batch ${Math.floor(batchStart / BATCH_SIZE) + 1}/${Math.ceil(sortedClips.length / BATCH_SIZE)} (${batch.length} clips)`);
+      
+      for (const clip of batch) {
+        const clipNumber = sortedClips.indexOf(clip) + 1;
       
       // Extract the file path from the video URL
       const urlParts = clip.videoUrl.split('/analysis-files/');
@@ -120,6 +126,7 @@ serve(async (req) => {
         url: publicUrl,
         order: clipNumber
       });
+      }
     }
 
     if (results.length === 0) {
