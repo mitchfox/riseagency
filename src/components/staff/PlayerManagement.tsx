@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Edit, FileText, LineChart, Video, Calendar, Plus, DollarSign, User, Trash2, Eye, TrendingUp } from "lucide-react";
+import { Edit, FileText, LineChart, Video, Calendar, Plus, DollarSign, User, Trash2, Eye, TrendingUp, GripVertical } from "lucide-react";
 import { PerformanceActionsDialog } from "./PerformanceActionsDialog";
 import { CreatePerformanceReportDialog } from "./CreatePerformanceReportDialog";
 import { ProgrammingManagement } from "./ProgrammingManagement";
@@ -78,6 +78,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
   const [isEditHighlightOpen, setIsEditHighlightOpen] = useState(false);
   const [editingHighlight, setEditingHighlight] = useState<{ highlight: any; type: 'match' | 'best' } | null>(null);
+  const [draggedHighlightIndex, setDraggedHighlightIndex] = useState<number | null>(null);
   const [formData, setFormData] = useState({
     // Basic Info
     name: "",
@@ -479,6 +480,39 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       links: linksArray,
     });
     setIsEditDialogOpen(true);
+  };
+
+  const handleReorderHighlights = async (playerId: string, type: 'match' | 'best', fromIndex: number, toIndex: number) => {
+    const player = players.find(p => p.id === playerId);
+    if (!player) return;
+
+    const highlights = typeof player.highlights === 'string' 
+      ? JSON.parse(player.highlights) 
+      : player.highlights || {};
+    
+    const targetArray = type === 'match' ? 'matchHighlights' : 'bestClips';
+    const items = [...(highlights[targetArray] || [])];
+    
+    const [movedItem] = items.splice(fromIndex, 1);
+    items.splice(toIndex, 0, movedItem);
+    
+    const updatedHighlights = {
+      ...highlights,
+      [targetArray]: items
+    };
+
+    const { error } = await supabase
+      .from('players')
+      .update({ highlights: updatedHighlights })
+      .eq('id', playerId);
+
+    if (error) {
+      toast.error('Failed to reorder highlights');
+      console.error(error);
+    } else {
+      toast.success('Highlights reordered');
+      fetchPlayers();
+    }
   };
 
   const handleUpdatePlayer = async (e: React.FormEvent) => {
@@ -1429,10 +1463,23 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                     onUploadComplete={() => fetchPlayers()}
                                   />
                                   
-                                   {matchHighlights.length > 0 ? (
+                                    {matchHighlights.length > 0 ? (
                                     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                                       {matchHighlights.map((highlight: any, idx: number) => (
-                                        <Card key={idx} className="overflow-hidden group relative">
+                                        <Card 
+                                          key={idx} 
+                                          className="overflow-hidden group relative cursor-move"
+                                          draggable
+                                          onDragStart={() => setDraggedHighlightIndex(idx)}
+                                          onDragOver={(e) => e.preventDefault()}
+                                          onDrop={() => {
+                                            if (draggedHighlightIndex !== null && draggedHighlightIndex !== idx) {
+                                              handleReorderHighlights(selectedPlayer.id, 'match', draggedHighlightIndex, idx);
+                                            }
+                                            setDraggedHighlightIndex(null);
+                                          }}
+                                          onDragEnd={() => setDraggedHighlightIndex(null)}
+                                        >
                                           <video 
                                             src={highlight.videoUrl} 
                                             controls 
@@ -1448,12 +1495,14 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                             </div>
                                           )}
                                           <CardContent className="p-4">
-                                            <div className="flex items-center justify-between gap-2">
+                                            <div className="flex items-center gap-2">
+                                              <GripVertical className="w-4 h-4 text-muted-foreground flex-shrink-0 cursor-grab active:cursor-grabbing" />
                                               <p className="font-medium truncate flex-1">{highlight.name || `Highlight ${idx + 1}`}</p>
                                               <Button
                                                 size="sm"
                                                 variant="ghost"
-                                                onClick={() => {
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
                                                   setEditingHighlight({ highlight, type: 'match' });
                                                   setIsEditHighlightOpen(true);
                                                 }}
@@ -1503,10 +1552,23 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                     onUploadComplete={() => fetchPlayers()}
                                   />
                                   
-                                   {bestClips.length > 0 ? (
+                                    {bestClips.length > 0 ? (
                                     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                                       {bestClips.map((clip: any, idx: number) => (
-                                        <Card key={idx} className="overflow-hidden group relative">
+                                        <Card 
+                                          key={idx} 
+                                          className="overflow-hidden group relative cursor-move"
+                                          draggable
+                                          onDragStart={() => setDraggedHighlightIndex(idx)}
+                                          onDragOver={(e) => e.preventDefault()}
+                                          onDrop={() => {
+                                            if (draggedHighlightIndex !== null && draggedHighlightIndex !== idx) {
+                                              handleReorderHighlights(selectedPlayer.id, 'best', draggedHighlightIndex, idx);
+                                            }
+                                            setDraggedHighlightIndex(null);
+                                          }}
+                                          onDragEnd={() => setDraggedHighlightIndex(null)}
+                                        >
                                           <video 
                                             src={clip.videoUrl} 
                                             controls 
@@ -1522,12 +1584,14 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                             </div>
                                           )}
                                           <CardContent className="p-4">
-                                            <div className="flex items-center justify-between gap-2">
+                                            <div className="flex items-center gap-2">
+                                              <GripVertical className="w-4 h-4 text-muted-foreground flex-shrink-0 cursor-grab active:cursor-grabbing" />
                                               <p className="font-medium truncate flex-1">{clip.name || `Clip ${idx + 1}`}</p>
                                               <Button
                                                 size="sm"
                                                 variant="ghost"
-                                                onClick={() => {
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
                                                   setEditingHighlight({ highlight: clip, type: 'best' });
                                                   setIsEditHighlightOpen(true);
                                                 }}
