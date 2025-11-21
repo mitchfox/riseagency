@@ -151,7 +151,17 @@ export const PlaylistManager = ({ playerData, availableClips, onClose }: Playlis
   };
 
   const addClipsToPlaylist = async () => {
-    if (!selectedPlaylist || selectedClips.size === 0 || !playerData?.email) return;
+    if (!selectedPlaylist || selectedClips.size === 0) return;
+
+    // Get email from playerData or fallback to storage
+    const playerEmail = playerData?.email || 
+      localStorage.getItem("player_email") || 
+      sessionStorage.getItem("player_email");
+    
+    if (!playerEmail) {
+      toast.error("Unable to save: Player email not found. Please log in again.");
+      return;
+    }
 
     try {
       const existingClips = selectedPlaylist.clips || [];
@@ -174,7 +184,7 @@ export const PlaylistManager = ({ playerData, availableClips, onClose }: Playlis
       // Use edge function to update playlist (bypasses RLS)
       const { data, error } = await supabase.functions.invoke('update-playlist', {
         body: {
-          playerEmail: playerData.email,
+          playerEmail,
           playlistId: selectedPlaylist.id,
           clips: updatedClips
         }
@@ -205,7 +215,17 @@ export const PlaylistManager = ({ playerData, availableClips, onClose }: Playlis
   };
 
   const removeClipFromPlaylist = async (clipId: string, clipName: string) => {
-    if (!selectedPlaylist || !playerData?.email) return;
+    if (!selectedPlaylist) return;
+
+    // Get email from playerData or fallback to storage
+    const playerEmail = playerData?.email || 
+      localStorage.getItem("player_email") || 
+      sessionStorage.getItem("player_email");
+    
+    if (!playerEmail) {
+      toast.error("Unable to save: Player email not found. Please log in again.");
+      return;
+    }
 
     try {
       const updatedClips = selectedPlaylist.clips
@@ -215,7 +235,7 @@ export const PlaylistManager = ({ playerData, availableClips, onClose }: Playlis
       // Use edge function to update playlist (bypasses RLS)
       const { data, error } = await supabase.functions.invoke('update-playlist', {
         body: {
-          playerEmail: playerData.email,
+          playerEmail,
           playlistId: selectedPlaylist.id,
           clips: updatedClips
         }
@@ -245,7 +265,17 @@ export const PlaylistManager = ({ playerData, availableClips, onClose }: Playlis
   };
 
   const reorderClip = async (index: number, direction: 'up' | 'down') => {
-    if (!selectedPlaylist || !playerData?.email) return;
+    if (!selectedPlaylist) return;
+
+    // Get email from playerData or fallback to storage
+    const playerEmail = playerData?.email || 
+      localStorage.getItem("player_email") || 
+      sessionStorage.getItem("player_email");
+    
+    if (!playerEmail) {
+      toast.error("Unable to save: Player email not found. Please log in again.");
+      return;
+    }
 
     try {
       const clips = [...selectedPlaylist.clips];
@@ -260,7 +290,7 @@ export const PlaylistManager = ({ playerData, availableClips, onClose }: Playlis
       // Use edge function to update playlist (bypasses RLS)
       const { data, error } = await supabase.functions.invoke('update-playlist', {
         body: {
-          playerEmail: playerData.email,
+          playerEmail,
           playlistId: selectedPlaylist.id,
           clips: reorderedClips
         }
@@ -282,6 +312,7 @@ export const PlaylistManager = ({ playerData, availableClips, onClose }: Playlis
       setPlaylists(playlists.map(p => 
         p.id === selectedPlaylist.id ? { ...p, clips: reorderedClips } : p
       ));
+      toast.success("Clip reordered");
     } catch (err: any) {
       console.error('Unexpected error reordering clips:', err);
       toast.error(`Error: ${err.message || 'Unknown error'}`);
@@ -289,7 +320,17 @@ export const PlaylistManager = ({ playerData, availableClips, onClose }: Playlis
   };
 
   const moveClipToPosition = async (currentIndex: number, targetPos: number) => {
-    if (!selectedPlaylist || !playerData?.email) return;
+    if (!selectedPlaylist) return;
+    
+    // Get email from playerData or fallback to storage
+    const playerEmail = playerData?.email || 
+      localStorage.getItem("player_email") || 
+      sessionStorage.getItem("player_email");
+    
+    if (!playerEmail) {
+      toast.error("Unable to save: Player email not found. Please log in again.");
+      return;
+    }
     
     const newPosition = targetPos - 1; // Convert to 0-indexed
     if (newPosition < 0 || newPosition >= selectedPlaylist.clips.length || newPosition === currentIndex) {
@@ -306,7 +347,7 @@ export const PlaylistManager = ({ playerData, availableClips, onClose }: Playlis
 
       const { data, error } = await supabase.functions.invoke('update-playlist', {
         body: {
-          playerEmail: playerData.email,
+          playerEmail,
           playlistId: selectedPlaylist.id,
           clips: reorderedClips
         }
