@@ -88,9 +88,10 @@ serve(async (req) => {
       
       const oldPath = urlParts[1];
       
-      // Create new filename with number prefix
+      // Create new filename with number prefix and safe characters
       const fileExtension = oldPath.split('.').pop();
-      const newFileName = `${clipNumber}. ${clip.name}.${fileExtension}`;
+      const safeName = clip.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+      const newFileName = `${clipNumber}. ${safeName}.${fileExtension}`;
       const newPath = `playlists/${player.name}/${playlist.name}/${newFileName}`;
 
       // Download the file
