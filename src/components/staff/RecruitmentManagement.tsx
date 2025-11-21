@@ -433,20 +433,23 @@ export const RecruitmentManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="prospects" className="flex-1">
-            <Users className="w-4 h-4 mr-2" />
-            Prospect Board
+        <TabsList className="grid w-full grid-cols-3 h-auto sm:h-10">
+          <TabsTrigger value="prospects" className="flex-1 text-xs sm:text-sm px-2 py-2.5">
+            <Users className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+            <span className="hidden sm:inline">Prospect Board</span>
+            <span className="sm:hidden">Prospects</span>
           </TabsTrigger>
-          <TabsTrigger value="outreach" className="flex-1">
-            <UserPlus className="w-4 h-4 mr-2" />
-            Player Outreach
+          <TabsTrigger value="outreach" className="flex-1 text-xs sm:text-sm px-2 py-2.5">
+            <UserPlus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+            <span className="hidden sm:inline">Player Outreach</span>
+            <span className="sm:hidden">Outreach</span>
           </TabsTrigger>
-          <TabsTrigger value="templates" className="flex-1">
-            <MessageSquare className="w-4 h-4 mr-2" />
-            Message Templates
+          <TabsTrigger value="templates" className="flex-1 text-xs sm:text-sm px-2 py-2.5">
+            <MessageSquare className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+            <span className="hidden sm:inline">Message Templates</span>
+            <span className="sm:hidden">Templates</span>
           </TabsTrigger>
         </TabsList>
 
@@ -1004,12 +1007,13 @@ export const RecruitmentManagement = ({ isAdmin }: { isAdmin: boolean }) => {
 
             {aiGeneratedMessage && (
               <div className="space-y-3">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
                   <Label htmlFor="generated-message">Generated Message</Label>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 w-full sm:w-auto">
                     <Button
                       size="sm"
                       variant="ghost"
+                      className="flex-1 sm:flex-initial"
                       onClick={handleCopyGeneratedMessage}
                     >
                       <Copy className="w-4 h-4 mr-2" />
@@ -1017,10 +1021,12 @@ export const RecruitmentManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                     </Button>
                     <Button
                       size="sm"
+                      className="flex-1 sm:flex-initial"
                       onClick={() => setShowApplyToOutreach(!showApplyToOutreach)}
                     >
                       <UserPlus className="w-4 h-4 mr-2" />
-                      Apply to Outreach
+                      <span className="hidden sm:inline">Apply to Outreach</span>
+                      <span className="sm:hidden">Apply</span>
                     </Button>
                   </div>
                 </div>
@@ -1052,7 +1058,7 @@ export const RecruitmentManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                       </Select>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div className="space-y-2">
                         <Label htmlFor="apply-player-name">Player Name *</Label>
                         <Input
@@ -1074,7 +1080,7 @@ export const RecruitmentManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                     </div>
 
                     {applyOutreachType === 'youth' && (
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div className="space-y-2">
                           <Label htmlFor="apply-parent-name">Parent Name</Label>
                           <Input
