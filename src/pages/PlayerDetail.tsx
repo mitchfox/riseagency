@@ -394,7 +394,7 @@ const PlayerDetail = () => {
               
               {/* Club Logo Overlays - Bottom - Show database highlights with horizontal scroll */}
               {dbHighlights.length > 0 && (
-                <div className="absolute bottom-2 md:bottom-4 left-1/2 -translate-x-1/2 z-10 w-full px-2">
+                <div className="absolute bottom-2 md:bottom-4 left-1/2 -translate-x-1/2 z-10 w-full px-2 pointer-events-none">
                   <div className="relative flex items-center justify-center gap-2">
                     {dbHighlights.length > 10 && (
                       <button
@@ -404,7 +404,7 @@ const PlayerDetail = () => {
                             container.scrollBy({ left: -200, behavior: 'smooth' });
                           }
                         }}
-                        className="flex-shrink-0 w-8 h-8 rounded-full bg-[hsl(var(--gold))]/20 hover:bg-[hsl(var(--gold))]/30 border border-[hsl(var(--gold))]/40 flex items-center justify-center text-foreground transition-colors"
+                        className="pointer-events-auto flex-shrink-0 w-8 h-8 rounded-full bg-[hsl(var(--gold))]/20 hover:bg-[hsl(var(--gold))]/30 border border-[hsl(var(--gold))]/40 flex items-center justify-center text-foreground transition-colors"
                         aria-label="Scroll left"
                       >
                         <ChevronLeft className="w-5 h-5" />
@@ -412,7 +412,7 @@ const PlayerDetail = () => {
                     )}
                     <div 
                       id="club-logos-container"
-                      className="flex gap-1 md:gap-2 overflow-x-auto scrollbar-hide scroll-smooth max-w-[calc(100%-80px)]"
+                      className="flex gap-1 md:gap-2 overflow-x-auto scrollbar-hide scroll-smooth max-w-[calc(100%-80px)] pointer-events-auto"
                       style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                     >
                       {dbHighlights.map((highlight, index) => (
@@ -445,7 +445,7 @@ const PlayerDetail = () => {
                             container.scrollBy({ left: 200, behavior: 'smooth' });
                           }
                         }}
-                        className="flex-shrink-0 w-8 h-8 rounded-full bg-[hsl(var(--gold))]/20 hover:bg-[hsl(var(--gold))]/30 border border-[hsl(var(--gold))]/40 flex items-center justify-center text-foreground transition-colors"
+                        className="pointer-events-auto flex-shrink-0 w-8 h-8 rounded-full bg-[hsl(var(--gold))]/20 hover:bg-[hsl(var(--gold))]/30 border border-[hsl(var(--gold))]/40 flex items-center justify-center text-foreground transition-colors"
                         aria-label="Scroll right"
                       >
                         <ChevronRight className="w-5 h-5" />
