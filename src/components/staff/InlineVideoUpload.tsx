@@ -178,7 +178,7 @@ export function InlineVideoUpload({
         id: clipId,
         name: currentUpload.clipName,
         videoUrl: publicUrl,
-        logoUrl: logoUrl,
+        clubLogo: logoUrl,
         addedAt: new Date().toISOString()
       };
 
