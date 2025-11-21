@@ -6,6 +6,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { Plus, X, Save, ChevronUp, ChevronDown, List, Play, Trash2, Hash, Video, Download } from "lucide-react";
 import { Label } from "@/components/ui/label";
+import JSZip from "jszip";
 import { PlaylistPlayer } from "./PlaylistPlayer";
 
 interface Clip {
@@ -278,31 +279,34 @@ export const PlaylistContent = ({ playerData, availableClips }: PlaylistContentP
       return;
     }
 
+    const loadingToast = toast.loading(`Preparing ${playlist.clips.length} clips...`);
+
     try {
+      const zip = new JSZip();
+      
       for (let i = 0; i < playlist.clips.length; i++) {
         const clip = playlist.clips[i];
         const response = await fetch(clip.videoUrl);
         const blob = await response.blob();
         
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        
         const extension = clip.videoUrl.split('.').pop()?.split('?')[0] || 'mp4';
-        a.download = `${i + 1}. ${clip.name}.${extension}`;
-        
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        window.URL.revokeObjectURL(url);
-        
-        await new Promise(resolve => setTimeout(resolve, 500));
+        zip.file(`${i + 1}. ${clip.name}.${extension}`, blob);
       }
-
-      toast.success(`Downloaded ${playlist.clips.length} clips`);
+      
+      const zipBlob = await zip.generateAsync({ type: "blob" });
+      const url = window.URL.createObjectURL(zipBlob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${playlist.name}.zip`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      toast.success("Playlist downloaded", { id: loadingToast });
     } catch (error) {
       console.error('Error downloading playlist:', error);
-      toast.error("Failed to download some clips");
+      toast.error("Failed to download playlist", { id: loadingToast });
     }
   };
 
