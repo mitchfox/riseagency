@@ -180,7 +180,7 @@ export const PlaylistPlayer = ({
           </div>
 
           {/* Floating Reorder Control - Bottom Center over Video */}
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 flex justify-center pb-20">
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 flex justify-center pb-36 md:pb-32">
             <div className="pointer-events-auto flex items-center gap-3 bg-background/95 backdrop-blur-sm rounded-lg px-4 py-3 border-2 border-primary/50 shadow-xl">
               <span className="text-lg font-bold text-primary whitespace-nowrap">#</span>
               <Input
