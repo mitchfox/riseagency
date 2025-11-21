@@ -481,7 +481,7 @@ export const PlaylistContent = ({ playerData, availableClips }: PlaylistContentP
               <Label className="text-sm font-medium">Playlist clips:</Label>
               <div className="space-y-2">
                 {selectedPlaylist.clips.map((clip, index) => (
-                  <div key={`${clip.videoUrl}-${index}`} className="border rounded-lg p-3 bg-card">
+                  <div key={clip.id || clip.videoUrl} className="border rounded-lg p-3 bg-card">
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex items-start gap-2 flex-1">
                         <span className="text-sm text-muted-foreground mt-1">#{index + 1}</span>
