@@ -27,7 +27,7 @@ const Login = () => {
           .maybeSingle();
           
         if (data) {
-          navigate("/dashboard");
+          navigate("/portal");
         } else {
           localStorage.removeItem("player_email");
           sessionStorage.removeItem("player_email");
@@ -81,7 +81,7 @@ const Login = () => {
       }
       
       toast.success("Welcome to your portal!");
-      navigate("/dashboard");
+      navigate("/portal");
     } catch (error: any) {
       console.error("Login error:", error);
       toast.error(error.message || "Failed to access portal");

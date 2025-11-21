@@ -10,7 +10,7 @@
   let newManifest = null;
   let newTitle = 'RISE Football Agency';
   
-  if (path.startsWith('/dashboard')) {
+  if (path.startsWith('/portal')) {
     newManifest = '/manifest-player.json';
     newTitle = 'RISE Player Portal';
   } else if (path.startsWith('/staff')) {
