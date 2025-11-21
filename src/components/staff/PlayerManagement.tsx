@@ -160,7 +160,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
     }
   }, [players, searchParams]);
 
-  const fetchPlayers = async () => {
+  const fetchPlayers = async (preserveSelection = false) => {
     try {
       const { data: playersData, error: playersError } = await supabase
         .from("players")
@@ -170,6 +170,16 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       if (playersError) throw playersError;
 
       setPlayers(playersData || []);
+      
+      // Preserve URL parameters if requested
+      if (preserveSelection && selectedPlayerId) {
+        const currentTab = searchParams.get('tab') || activeTab;
+        setSearchParams({ 
+          section: 'players',
+          player: selectedPlayerId,
+          tab: currentTab
+        });
+      }
       
       // Parse stats from player bio field instead of player_stats table
       const statsMap: Record<string, PlayerStats> = {};
@@ -543,7 +553,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       toast.error('Failed to reorder highlights');
       console.error(error);
       // Revert on error
-      fetchPlayers();
+      fetchPlayers(true);
     } else {
       toast.success('Highlights reordered');
     }
@@ -582,7 +592,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       toast.error('Failed to delete highlight');
       console.error(error);
       // Revert on error
-      fetchPlayers();
+      fetchPlayers(true);
     } else {
       toast.success('Highlight deleted');
     }
@@ -618,7 +628,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
 
       toast.success("Player updated successfully");
       setIsEditDialogOpen(false);
-      fetchPlayers();
+      fetchPlayers(true);
     } catch (error: any) {
       toast.error("Failed to update player: " + error.message);
     }
@@ -1533,7 +1543,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                     playerEmail={selectedPlayer.email || ''}
                                     playerId={selectedPlayer.id}
                                     highlightType="match"
-                                    onUploadComplete={() => fetchPlayers()}
+                                    onUploadComplete={() => fetchPlayers(true)}
                                   />
                                   
                                     {matchHighlights.length > 0 ? (
@@ -1684,7 +1694,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                     playerEmail={selectedPlayer.email || ''}
                                     playerId={selectedPlayer.id}
                                     highlightType="best"
-                                    onUploadComplete={() => fetchPlayers()}
+                                    onUploadComplete={() => fetchPlayers(true)}
                                   />
                                   
                                     {bestClips.length > 0 ? (
@@ -2778,7 +2788,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
           highlightType={editingHighlight.type}
           highlight={editingHighlight.highlight}
           onSave={() => {
-            fetchPlayers();
+            fetchPlayers(true);
             setEditingHighlight(null);
           }}
         />
