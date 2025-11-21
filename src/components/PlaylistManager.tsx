@@ -589,22 +589,37 @@ export const PlaylistManager = ({ playerData, availableClips, onClose }: Playlis
             {selectedPlaylist ? (
               <>
                 <div className="space-y-2 max-h-[250px] md:max-h-[400px] overflow-y-auto pr-2">
-                  {availableClips
-                    .filter(clip => !selectedPlaylist.clips?.some(pc => (pc.id || pc.videoUrl) === (clip.id || clip.videoUrl)))
-                    .map((clip) => (
+                  {availableClips.map((clip) => {
+                    const clipKey = clip.id || clip.videoUrl || clip.name;
+                    const alreadyInPlaylist = selectedPlaylist.clips?.some(
+                      (pc) => (pc.id || pc.videoUrl) === (clip.id || clip.videoUrl)
+                    );
+
+                    return (
                       <div
-                        key={clip.id || clip.videoUrl || clip.name}
+                        key={clipKey}
                         className="flex items-center gap-2 p-2 border rounded hover:bg-muted transition-colors"
                       >
                         <Checkbox
-                          checked={selectedClips.has(clip.id || clip.videoUrl || clip.name)}
-                          onCheckedChange={() => toggleClipSelection(clip.id || clip.videoUrl || clip.name)}
+                          checked={selectedClips.has(clipKey)}
+                          disabled={alreadyInPlaylist}
+                          onCheckedChange={() => {
+                            if (!alreadyInPlaylist) {
+                              toggleClipSelection(clipKey);
+                            }
+                          }}
                         />
                         <Label className="flex-1 cursor-pointer text-xs md:text-sm leading-tight break-words">
                           {clip.name}
+                          {alreadyInPlaylist && (
+                            <span className="ml-2 text-[10px] md:text-xs text-muted-foreground">
+                              (already in playlist)
+                            </span>
+                          )}
                         </Label>
                       </div>
-                    ))}
+                    );
+                  })}
                 </div>
                 <Button
                   size="sm"
