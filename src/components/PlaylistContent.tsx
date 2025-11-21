@@ -67,10 +67,21 @@ export const PlaylistContent = ({ playerData, availableClips }: PlaylistContentP
         return;
       }
 
-      setPlaylists((data || []).map(p => ({
+      const mappedPlaylists = (data || []).map(p => ({
         ...p,
-        clips: (p.clips as any) || []
-      })));
+        clips: (p.clips as any) || [],
+      }));
+
+      setPlaylists(mappedPlaylists);
+
+      if (selectedPlaylist) {
+        const updatedSelected = mappedPlaylists.find(p => p.id === selectedPlaylist.id);
+        if (updatedSelected) {
+          setSelectedPlaylist(updatedSelected as Playlist);
+        } else {
+          setSelectedPlaylist(null);
+        }
+      }
     } finally {
       setIsLoadingPlaylists(false);
     }
@@ -410,7 +421,7 @@ export const PlaylistContent = ({ playerData, availableClips }: PlaylistContentP
                 variant="outline"
               >
                 <Video className="w-4 h-4 mr-2" />
-                Manage Playlist
+                Player
               </Button>
             )}
           </div>
