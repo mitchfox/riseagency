@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ArrowLeft, MessageCircle, ExternalLink, Video } from "lucide-react";
+import { ArrowLeft, MessageCircle, ExternalLink, Video, ChevronLeft, ChevronRight } from "lucide-react";
 import { FormationDisplay } from "@/components/FormationDisplay";
 import { getCountryFlagUrl } from "@/lib/countryFlags";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -21,7 +21,6 @@ const PlayerDetail = () => {
   const [player, setPlayer] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [bioDialogOpen, setBioDialogOpen] = useState(false);
-  const [visibleClipsCount, setVisibleClipsCount] = useState(30); // Limit clips shown initially
   const videoRef = useRef<HTMLVideoElement>(null);
   
   // Check if opened in modal
@@ -393,40 +392,66 @@ const PlayerDetail = () => {
                 </div>
               )}
               
-              {/* Club Logo Overlays - Bottom - Show database highlights with pagination */}
+              {/* Club Logo Overlays - Bottom - Show database highlights with horizontal scroll */}
               {dbHighlights.length > 0 && (
-                <div className="absolute bottom-2 md:bottom-4 left-1/2 -translate-x-1/2 z-10 max-w-full px-2">
-                  <div className="flex flex-wrap justify-center gap-1 md:gap-2">
-                    {dbHighlights.slice(0, visibleClipsCount).map((highlight, index) => (
+                <div className="absolute bottom-2 md:bottom-4 left-1/2 -translate-x-1/2 z-10 w-full px-2">
+                  <div className="relative flex items-center justify-center gap-2">
+                    {dbHighlights.length > 10 && (
                       <button
-                        key={index}
-                        onClick={() => setCurrentVideoType(index)}
-                        className={`w-6 h-6 md:w-10 md:h-10 rounded border transition-all overflow-hidden bg-background/90 backdrop-blur-sm ${
-                          currentVideoType === index
-                            ? 'border-[hsl(var(--gold))] scale-110'
-                            : 'border-[hsl(var(--gold))]/20 hover:border-[hsl(var(--gold))]/50'
-                        }`}
-                        title={highlight.name || `Highlight ${index + 1}`}
+                        onClick={() => {
+                          const container = document.getElementById('club-logos-container');
+                          if (container) {
+                            container.scrollBy({ left: -200, behavior: 'smooth' });
+                          }
+                        }}
+                        className="flex-shrink-0 w-8 h-8 rounded-full bg-[hsl(var(--gold))]/20 hover:bg-[hsl(var(--gold))]/30 border border-[hsl(var(--gold))]/40 flex items-center justify-center text-foreground transition-colors"
+                        aria-label="Scroll left"
                       >
-                        {(highlight.logoUrl || highlight.clubLogo) && (
-                          <img 
-                            src={highlight.logoUrl || highlight.clubLogo} 
-                            alt={highlight.name || `Highlight ${index + 1}`}
-                            className="w-full h-full object-contain p-0.5"
-                            loading="lazy"
-                          />
-                        )}
+                        <ChevronLeft className="w-5 h-5" />
                       </button>
-                    ))}
-                  </div>
-                  {dbHighlights.length > visibleClipsCount && (
-                    <button
-                      onClick={() => setVisibleClipsCount(prev => Math.min(prev + 30, dbHighlights.length))}
-                      className="mt-2 px-3 py-1 text-xs bg-[hsl(var(--gold))]/20 hover:bg-[hsl(var(--gold))]/30 border border-[hsl(var(--gold))]/40 rounded text-foreground font-bebas uppercase tracking-wider transition-colors"
+                    )}
+                    <div 
+                      id="club-logos-container"
+                      className="flex gap-1 md:gap-2 overflow-x-auto scrollbar-hide scroll-smooth max-w-[calc(100%-80px)]"
+                      style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                     >
-                      Show More ({dbHighlights.length - visibleClipsCount} remaining)
-                    </button>
-                  )}
+                      {dbHighlights.map((highlight, index) => (
+                        <button
+                          key={index}
+                          onClick={() => setCurrentVideoType(index)}
+                          className={`flex-shrink-0 w-6 h-6 md:w-10 md:h-10 rounded border transition-all overflow-hidden bg-background/90 backdrop-blur-sm ${
+                            currentVideoType === index
+                              ? 'border-[hsl(var(--gold))] scale-110'
+                              : 'border-[hsl(var(--gold))]/20 hover:border-[hsl(var(--gold))]/50'
+                          }`}
+                          title={highlight.name || `Highlight ${index + 1}`}
+                        >
+                          {(highlight.logoUrl || highlight.clubLogo) && (
+                            <img 
+                              src={highlight.logoUrl || highlight.clubLogo} 
+                              alt={highlight.name || `Highlight ${index + 1}`}
+                              className="w-full h-full object-contain p-0.5"
+                              loading="lazy"
+                            />
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                    {dbHighlights.length > 10 && (
+                      <button
+                        onClick={() => {
+                          const container = document.getElementById('club-logos-container');
+                          if (container) {
+                            container.scrollBy({ left: 200, behavior: 'smooth' });
+                          }
+                        }}
+                        className="flex-shrink-0 w-8 h-8 rounded-full bg-[hsl(var(--gold))]/20 hover:bg-[hsl(var(--gold))]/30 border border-[hsl(var(--gold))]/40 flex items-center justify-center text-foreground transition-colors"
+                        aria-label="Scroll right"
+                      >
+                        <ChevronRight className="w-5 h-5" />
+                      </button>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
