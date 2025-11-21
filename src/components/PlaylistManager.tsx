@@ -220,49 +220,61 @@ export const PlaylistManager = ({ playerData, availableClips, onClose }: Playlis
     if (!selectedPlaylist) return;
 
     // Get email from playerData or fallback to storage
-    const playerEmail = playerData?.email || 
-      localStorage.getItem("player_email") || 
+    const playerEmail = playerData?.email ||
+      localStorage.getItem("player_email") ||
       sessionStorage.getItem("player_email");
-    
+
     if (!playerEmail) {
       toast.error("Unable to save: Player email not found. Please log in again.");
       return;
     }
 
     try {
-      const updatedClips = selectedPlaylist.clips
-        .filter(c => c.videoUrl !== clipVideoUrl)
+      const originalCount = selectedPlaylist.clips?.length ?? 0;
+      const updatedClips = (selectedPlaylist.clips || [])
+        .filter((c) => c.videoUrl !== clipVideoUrl)
         .map((c, index) => ({ ...c, order: index + 1 }));
 
+      console.log("Removing clip from playlist", {
+        clipVideoUrl,
+        clipName,
+        originalCount,
+        newCount: updatedClips.length,
+      });
+
       // Use edge function to update playlist (bypasses RLS)
-      const { data, error } = await supabase.functions.invoke('update-playlist', {
+      const { data, error } = await supabase.functions.invoke("update-playlist", {
         body: {
           playerEmail,
           playlistId: selectedPlaylist.id,
-          clips: updatedClips
-        }
+          clips: updatedClips,
+        },
       });
 
       if (error) {
-        console.error('Remove clip error:', error);
+        console.error("Remove clip error:", error);
         toast.error(`Failed to remove clip: ${error.message}`);
         return;
       }
 
       if (data?.error) {
-        console.error('Remove clip data error:', data.error);
+        console.error("Remove clip data error:", data.error);
         toast.error(`Failed to remove clip: ${data.error}`);
         return;
       }
 
-      setSelectedPlaylist({ ...selectedPlaylist, clips: updatedClips });
-      setPlaylists(playlists.map(p => 
-        p.id === selectedPlaylist.id ? { ...p, clips: updatedClips } : p
-      ));
+      const serverClips = (data?.playlist?.clips as any) || updatedClips;
+      const newPlaylist = { ...selectedPlaylist, clips: serverClips };
+
+      setSelectedPlaylist(newPlaylist);
+      setPlaylists((prev) =>
+        prev.map((p) => (p.id === selectedPlaylist.id ? { ...p, clips: serverClips } : p))
+      );
+
       toast.success("Clip removed");
     } catch (err: any) {
-      console.error('Unexpected error removing clip:', err);
-      toast.error(`Error: ${err.message || 'Unknown error'}`);
+      console.error("Unexpected error removing clip:", err);
+      toast.error(`Error: ${err.message || "Unknown error"}`);
     }
   };
 
@@ -468,10 +480,18 @@ export const PlaylistManager = ({ playerData, availableClips, onClose }: Playlis
     const video = document.createElement('video');
     video.preload = 'metadata';
     video.onloadedmetadata = () => {
-      setClipDurations(prev => ({
-        ...prev,
-        [videoUrl]: Math.round(video.duration)
-      }));
+      const rawDuration = video.duration;
+      if (Number.isFinite(rawDuration) && rawDuration > 0) {
+        setClipDurations((prev) => ({
+          ...prev,
+          [videoUrl]: Math.round(rawDuration),
+        }));
+      } else {
+        console.warn('Could not read video duration for clip', videoUrl, rawDuration);
+      }
+    };
+    video.onerror = (event) => {
+      console.error('Error loading video metadata for clip', videoUrl, event);
     };
     video.src = videoUrl;
   };
@@ -840,6 +860,15 @@ export const PlaylistManager = ({ playerData, availableClips, onClose }: Playlis
                 autoPlay
                 className="w-full h-full"
                 controlsList="nodownload"
+                onLoadedMetadata={(e) => {
+                  const duration = Math.round(e.currentTarget.duration || 0);
+                  if (duration && !Number.isNaN(duration)) {
+                    setClipDurations((prev) => ({
+                      ...prev,
+                      [playingVideo.url]: duration,
+                    }));
+                  }
+                }}
               >
                 Your browser does not support the video tag.
               </video>
