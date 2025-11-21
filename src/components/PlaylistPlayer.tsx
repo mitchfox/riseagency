@@ -55,6 +55,92 @@ export const PlaylistPlayer = ({
     setCurrentIndex(index);
   };
 
+  const handleRemoveCurrentClip = async () => {
+    if (!currentClip) return;
+
+    try {
+      const playerEmail =
+        localStorage.getItem("player_email") || sessionStorage.getItem("player_email");
+
+      if (!playerEmail) {
+        toast.error("Please log in again");
+        return;
+      }
+
+      const updatedClips = clips
+        .filter((_, idx) => idx !== currentIndex)
+        .map((clip, idx) => ({ ...clip, order: idx }));
+
+      const { data, error } = await supabase.functions.invoke("update-playlist", {
+        body: {
+          playerEmail,
+          playlistId,
+          clips: updatedClips,
+        },
+      });
+
+      if (error || data?.error) {
+        console.error("Remove clip error:", error || data?.error);
+        toast.error("Failed to remove clip");
+        return;
+      }
+
+      toast.success("Clip removed from playlist");
+
+      if (updatedClips.length === 0) {
+        onClose();
+      } else if (currentIndex < updatedClips.length) {
+        // After removal, the clip at the same index becomes the next one
+        setCurrentIndex(currentIndex);
+      } else {
+        // If we removed the last clip, go to the new last clip
+        setCurrentIndex(updatedClips.length - 1);
+      }
+
+      onPlaylistUpdate();
+    } catch (err) {
+      console.error("Error removing clip:", err);
+      toast.error("Failed to remove clip");
+    }
+  };
+
+  const handleDurationLoaded = async (rawDuration: number) => {
+    if (!currentClip) return;
+    if (!Number.isFinite(rawDuration) || rawDuration <= 0) return;
+
+    const duration = Math.round(rawDuration);
+
+    try {
+      const playerEmail =
+        localStorage.getItem("player_email") || sessionStorage.getItem("player_email");
+
+      if (!playerEmail) {
+        // Don't block playback for this
+        return;
+      }
+
+      const updatedClips = clips.map((clip, idx) =>
+        idx === currentIndex ? { ...clip, duration } : clip
+      );
+
+      const { error } = await supabase.functions.invoke("update-playlist", {
+        body: {
+          playerEmail,
+          playlistId,
+          clips: updatedClips,
+        },
+      });
+
+      if (error) {
+        console.error("Failed to save clip duration:", error);
+      } else {
+        onPlaylistUpdate();
+      }
+    } catch (err) {
+      console.error("Error saving clip duration:", err);
+    }
+  };
+
   const toggleFullscreen = () => {
     if (!containerRef.current) return;
     

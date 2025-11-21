@@ -71,10 +71,19 @@ export const PlaylistManager = ({ playerData, availableClips, onClose }: Playlis
         return;
       }
 
-      setPlaylists((data || []).map(p => ({
+      const normalized = (data || []).map(p => ({
         ...p,
-        clips: (p.clips as any) || []
-      })));
+        clips: (p.clips as any) || [],
+      }));
+
+      setPlaylists(normalized);
+
+      if (selectedPlaylist) {
+        const fresh = normalized.find((p) => p.id === selectedPlaylist.id);
+        if (fresh) {
+          setSelectedPlaylist(fresh as Playlist);
+        }
+      }
     } finally {
       setIsLoadingPlaylists(false);
     }
