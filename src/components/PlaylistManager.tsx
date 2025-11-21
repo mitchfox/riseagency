@@ -9,6 +9,7 @@ import { Plus, X, Save, ChevronUp, ChevronDown, List, Play, Trash2, Hash, Video,
 import { Label } from "@/components/ui/label";
 import { PlaylistPlayer } from "./PlaylistPlayer";
 import { ClipNameEditor } from "./ClipNameEditor";
+import JSZip from "jszip";
 
 interface Clip {
   id?: string;
@@ -401,6 +402,64 @@ export const PlaylistManager = ({ playerData, availableClips, onClose }: Playlis
     }
   };
 
+  const downloadSavedPlaylist = async (
+    savedClips: Array<{ newName: string; url: string }>,
+    playlistName: string,
+    toastId: string | number,
+    totalClips: number,
+    skippedCount: number
+  ) => {
+    if (!savedClips.length) {
+      toast.error("No clips available to download", { id: toastId });
+      return;
+    }
+
+    try {
+      toast.loading(
+        `Saved ${savedClips.length} of ${totalClips} clips. Preparing ZIP download...`,
+        { id: toastId }
+      );
+
+      const zip = new JSZip();
+
+      for (let i = 0; i < savedClips.length; i++) {
+        const clip = savedClips[i];
+        const response = await fetch(clip.url);
+        if (!response.ok) {
+          throw new Error(`Failed to fetch clip: ${clip.newName || `Clip ${i + 1}`}`);
+        }
+        const blob = await response.blob();
+        zip.file(clip.newName || `${i + 1}.mp4`, blob);
+      }
+
+      const zipBlob = await zip.generateAsync({ type: "blob" });
+      const url = window.URL.createObjectURL(zipBlob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${playlistName}.zip`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      const skippedMessage = skippedCount
+        ? ` (${skippedCount} clip${skippedCount !== 1 ? "s were" : " was"} skipped, may have been deleted)`
+        : "";
+
+      toast.success(
+        `Folder downloaded with ${savedClips.length} clip${savedClips.length !== 1 ? "s" : ""}!${skippedMessage}`,
+        { id: toastId, duration: 8000 }
+      );
+    } catch (error) {
+      console.error("Error downloading saved playlist:", error);
+      const msg =
+        error instanceof Error
+          ? error.message
+          : "Failed to download folder. Clips were saved to your cloud folder.";
+      toast.error(msg, { id: toastId, duration: 8000 });
+    }
+  };
+
   const savePlaylist = async () => {
     if (!selectedPlaylist || !playerData?.email) return;
 
@@ -436,19 +495,16 @@ export const PlaylistManager = ({ playerData, availableClips, onClose }: Playlis
         throw new Error(data.error);
       }
 
-      // Show detailed success message
-      if (data.skipped && data.skipped.length > 0) {
-        toast.success(
-          `Saved ${data.clips.length} of ${totalClips} clips. ${data.skipped.length} clip${data.skipped.length !== 1 ? 's were' : ' was'} skipped (may have been deleted).`,
-          { id: loadingToast, duration: 6000 }
-        );
-        console.log('Skipped clips:', data.skipped);
-      } else {
-        toast.success(
-          `✓ All ${data.clips.length} clips saved successfully to folder!`,
-          { id: loadingToast, duration: 5000 }
-        );
-      }
+      const savedClips = data?.clips || [];
+      const skippedCount = data?.skipped?.length || 0;
+
+      await downloadSavedPlaylist(
+        savedClips,
+        selectedPlaylist.name,
+        loadingToast,
+        totalClips,
+        skippedCount
+      );
     } catch (error) {
       console.error('Save error:', error);
       const errorMsg = error instanceof Error ? error.message : 'Failed to save playlist';
