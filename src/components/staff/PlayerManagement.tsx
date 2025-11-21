@@ -169,17 +169,45 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
 
       if (playersError) throw playersError;
 
-      const { data: statsData, error: statsError } = await supabase
-        .from("player_stats")
-        .select("*");
-
-      if (statsError) throw statsError;
-
       setPlayers(playersData || []);
       
+      // Parse stats from player bio field instead of player_stats table
       const statsMap: Record<string, PlayerStats> = {};
-      statsData?.forEach(stat => {
-        statsMap[stat.player_id] = stat;
+      playersData?.forEach(player => {
+        try {
+          let bioData: any = {};
+          if (player.bio) {
+            // Try to parse bio as JSON
+            if (typeof player.bio === 'string') {
+              bioData = JSON.parse(player.bio);
+            } else {
+              bioData = player.bio;
+            }
+          }
+          
+          // Extract stats from seasonStats array in bio
+          if (bioData.seasonStats && Array.isArray(bioData.seasonStats)) {
+            const seasonStats = bioData.seasonStats;
+            const goals = seasonStats.find((s: any) => s.header?.toLowerCase() === 'goals')?.value || '0';
+            const assists = seasonStats.find((s: any) => s.header?.toLowerCase() === 'assists')?.value || '0';
+            const matches = seasonStats.find((s: any) => s.header?.toLowerCase() === 'matches')?.value || '0';
+            const minutes = seasonStats.find((s: any) => s.header?.toLowerCase() === 'minutes')?.value || '0';
+            
+            statsMap[player.id] = {
+              id: player.id,
+              player_id: player.id,
+              goals: parseInt(goals) || 0,
+              assists: parseInt(assists) || 0,
+              matches: parseInt(matches) || 0,
+              minutes: parseInt(minutes) || 0,
+              clean_sheets: null,
+              saves: null
+            };
+          }
+        } catch (e) {
+          // If bio parsing fails, skip this player's stats
+          console.warn(`Failed to parse stats for player ${player.name}:`, e);
+        }
       });
       setStats(statsMap);
     } catch (error: any) {
