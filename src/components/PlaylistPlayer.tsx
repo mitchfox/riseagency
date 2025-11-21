@@ -12,6 +12,7 @@ interface Clip {
   name: string;
   videoUrl: string;
   order: number;
+  duration?: number;
 }
 
 interface PlaylistPlayerProps {
@@ -29,7 +30,7 @@ export const PlaylistPlayer = ({
   clips,
   isOpen,
   onClose,
-  onPlaylistUpdate
+  onPlaylistUpdate,
 }: PlaylistPlayerProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [newPosition, setNewPosition] = useState("");
@@ -90,10 +91,8 @@ export const PlaylistPlayer = ({
       if (updatedClips.length === 0) {
         onClose();
       } else if (currentIndex < updatedClips.length) {
-        // After removal, the clip at the same index becomes the next one
         setCurrentIndex(currentIndex);
       } else {
-        // If we removed the last clip, go to the new last clip
         setCurrentIndex(updatedClips.length - 1);
       }
 
@@ -120,7 +119,7 @@ export const PlaylistPlayer = ({
       }
 
       const updatedClips = clips.map((clip, idx) =>
-        idx === currentIndex ? { ...clip, duration } : clip
+        idx === currentIndex ? { ...clip, duration } : clip,
       );
 
       const { error } = await supabase.functions.invoke("update-playlist", {
@@ -143,10 +142,10 @@ export const PlaylistPlayer = ({
 
   const toggleFullscreen = () => {
     if (!containerRef.current) return;
-    
+
     if (!document.fullscreenElement) {
-      containerRef.current.requestFullscreen().catch(err => {
-        console.error('Error attempting fullscreen:', err);
+      containerRef.current.requestFullscreen().catch((err) => {
+        console.error("Error attempting fullscreen:", err);
         toast.error("Fullscreen not available");
       });
       setIsFullscreen(true);
@@ -158,38 +157,36 @@ export const PlaylistPlayer = ({
 
   const handleReorder = async () => {
     const targetPos = parseInt(newPosition);
-    
+
     if (isNaN(targetPos) || targetPos < 1 || targetPos > totalClips) {
       toast.error(`Please enter a number between 1 and ${totalClips}`);
       return;
     }
 
     try {
-      const playerEmail = localStorage.getItem("player_email") || sessionStorage.getItem("player_email");
-      
+      const playerEmail =
+        localStorage.getItem("player_email") || sessionStorage.getItem("player_email");
+
       if (!playerEmail) {
         toast.error("Please log in again");
         return;
       }
 
-      // Reorder the clips array
       const newClips = [...clips];
       const [movedClip] = newClips.splice(currentIndex, 1);
       newClips.splice(targetPos - 1, 0, movedClip);
-      
-      // Update order property for all clips
+
       const updatedClips = newClips.map((clip, idx) => ({
         ...clip,
-        order: idx
+        order: idx,
       }));
 
-      // Call edge function to update playlist
-      const { data, error } = await supabase.functions.invoke('update-playlist', {
+      const { data, error } = await supabase.functions.invoke("update-playlist", {
         body: {
           playerEmail,
           playlistId,
-          clips: updatedClips
-        }
+          clips: updatedClips,
+        },
       });
 
       if (error || data?.error) {
@@ -200,11 +197,10 @@ export const PlaylistPlayer = ({
       toast.success("Clip reordered successfully");
       setNewPosition("");
       onPlaylistUpdate();
-      
-      // Update current index to follow the moved clip
+
       setCurrentIndex(targetPos - 1);
     } catch (err) {
-      console.error('Error reordering:', err);
+      console.error("Error reordering:", err);
       toast.error("Failed to reorder clip");
     }
   };
@@ -257,6 +253,7 @@ export const PlaylistPlayer = ({
               autoPlay
               playsInline
               preload="metadata"
+              onLoadedMetadata={(e) => handleDurationLoaded(e.currentTarget.duration)}
               loop
               className="max-w-full max-h-full"
               controlsList="nodownload"
@@ -278,8 +275,8 @@ export const PlaylistPlayer = ({
                 placeholder={`1-${totalClips}`}
                 className="w-24 h-10 text-lg font-semibold text-center"
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter' && newPosition) handleReorder();
-                  if (e.key === 'Escape') setNewPosition("");
+                  if (e.key === "Enter" && newPosition) handleReorder();
+                  if (e.key === "Escape") setNewPosition("");
                 }}
               />
               {newPosition && (
@@ -287,9 +284,9 @@ export const PlaylistPlayer = ({
                   <Button onClick={handleReorder} size="sm" className="h-9 px-3">
                     <Check className="w-5 h-5" />
                   </Button>
-                  <Button 
-                    onClick={() => setNewPosition("")} 
-                    variant="ghost" 
+                  <Button
+                    onClick={() => setNewPosition("")}
+                    variant="ghost"
                     size="sm"
                     className="h-9 px-3"
                   >
@@ -300,7 +297,7 @@ export const PlaylistPlayer = ({
             </div>
           </div>
 
-          {/* Bottom Bar: Previous / Title / Next */}
+          {/* Bottom Bar: Previous / Title / Remove / Next */}
           <div className="bg-background/90 backdrop-blur-sm p-4 flex items-center justify-between gap-2 md:gap-4">
             <Button
               onClick={goToPrevious}
@@ -328,6 +325,17 @@ export const PlaylistPlayer = ({
                 </SelectContent>
               </Select>
             </div>
+
+            <Button
+              onClick={handleRemoveCurrentClip}
+              variant="destructive"
+              size="lg"
+              className="hidden sm:flex items-center gap-2"
+              title="Remove from playlist (clip stays available in Best Clips)"
+            >
+              <X className="w-5 h-5" />
+              <span className="hidden md:inline">Remove</span>
+            </Button>
 
             <Button
               onClick={goToNext}
