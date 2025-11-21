@@ -33,7 +33,7 @@ root.render(
   </HelmetProvider>
 );
 
-// Remove loading splash after React has rendered - only show on /dashboard and /staff routes
+// Remove loading splash after React has rendered - only show on /portal and /staff routes
 const removeSplash = () => {
   const splash = document.getElementById('loading-splash');
   if (splash) {
@@ -46,8 +46,8 @@ setTimeout(() => {
   const splash = document.getElementById('loading-splash');
   const currentPath = window.location.pathname;
   
-  // Only show splash for /dashboard and /staff routes (exact match or starts with)
-  const shouldShowSplash = currentPath === '/dashboard' || currentPath.startsWith('/dashboard/') || 
+  // Only show splash for /portal and /staff routes (exact match or starts with)
+  const shouldShowSplash = currentPath === '/portal' || currentPath.startsWith('/portal/') || 
                            currentPath === '/staff' || currentPath.startsWith('/staff/');
   
   if (splash && !shouldShowSplash) {
@@ -55,7 +55,7 @@ setTimeout(() => {
     splash.classList.add('hidden');
     setTimeout(() => splash.remove(), 500);
   } else if (splash && shouldShowSplash) {
-    // For dashboard/staff, show for 1 second then fade out over 4 seconds
+    // For portal/staff, show for 1 second then fade out over 4 seconds
     setTimeout(() => {
       removeSplash();
     }, 1000);

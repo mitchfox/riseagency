@@ -256,7 +256,7 @@ self.addEventListener('notificationclick', (event) => {
         }
         // Otherwise open new window
         if (clients.openWindow) {
-          return clients.openWindow('/dashboard');
+          return clients.openWindow('/portal');
         }
       })
   );

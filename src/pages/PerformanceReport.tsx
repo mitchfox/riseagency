@@ -159,8 +159,8 @@ const PerformanceReport = () => {
   };
 
   const handleBackClick = () => {
-    // Navigate to dashboard instead of using navigate(-1) which can be unreliable
-    navigate('/dashboard');
+    // Navigate to portal instead of using navigate(-1) which can be unreliable
+    navigate('/portal');
   };
 
   console.log('PerformanceReport - Render - loading:', loading);

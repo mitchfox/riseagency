@@ -66,7 +66,7 @@ const App = () => {
           <Route path="/about" element={<About />} />
           <Route path="/staff" element={<Staff />} />
           <Route path="/login" element={<Login />} />
-          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/portal" element={<Dashboard />} />
           <Route path="/performance-report/:slug" element={<PerformanceReport />} />
           <Route path="/analysis/:analysisId" element={<AnalysisViewer />} />
           <Route path="/import-program" element={<ImportProgramCSV />} />
