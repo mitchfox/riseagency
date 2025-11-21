@@ -2,11 +2,11 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Save, ChevronLeft } from "lucide-react";
+import { Save, ChevronLeft, Plus, Trash2 } from "lucide-react";
 
 const POSITIONS = [
   'Goalkeeper',
@@ -33,10 +33,10 @@ const TEAM_SCHEMES = [
 ];
 
 interface SchemeData {
-  defensive_transition: string;
-  defence: string;
-  offensive_transition: string;
-  offence: string;
+  defensive_transition: string[];
+  defence: string[];
+  offensive_transition: string[];
+  offence: string[];
 }
 
 export const TacticalSchemes = ({ isAdmin }: { isAdmin: boolean }) => {
@@ -44,10 +44,10 @@ export const TacticalSchemes = ({ isAdmin }: { isAdmin: boolean }) => {
   const [selectedTeamScheme, setSelectedTeamScheme] = useState<string>('');
   const [selectedOppositionScheme, setSelectedOppositionScheme] = useState<string>('');
   const [schemeData, setSchemeData] = useState<SchemeData>({
-    defensive_transition: '',
-    defence: '',
-    offensive_transition: '',
-    offence: ''
+    defensive_transition: [],
+    defence: [],
+    offensive_transition: [],
+    offence: []
   });
   const [existingId, setExistingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -58,10 +58,10 @@ export const TacticalSchemes = ({ isAdmin }: { isAdmin: boolean }) => {
       loadSchemeData();
     } else {
       setSchemeData({
-        defensive_transition: '',
-        defence: '',
-        offensive_transition: '',
-        offence: ''
+        defensive_transition: [],
+        defence: [],
+        offensive_transition: [],
+        offence: []
       });
       setExistingId(null);
     }
@@ -80,19 +80,28 @@ export const TacticalSchemes = ({ isAdmin }: { isAdmin: boolean }) => {
       if (error) throw error;
 
       if (data) {
+        // Parse text data into bullet point arrays
+        const parseText = (text: string | null): string[] => {
+          if (!text) return [];
+          return text.split('\n')
+            .map(line => line.trim())
+            .filter(line => line.length > 0)
+            .map(line => line.replace(/^[•\-*]\s*/, '')); // Remove bullet characters
+        };
+
         setSchemeData({
-          defensive_transition: data.defensive_transition || '',
-          defence: data.defence || '',
-          offensive_transition: data.offensive_transition || '',
-          offence: data.offence || ''
+          defensive_transition: parseText(data.defensive_transition),
+          defence: parseText(data.defence),
+          offensive_transition: parseText(data.offensive_transition),
+          offence: parseText(data.offence)
         });
         setExistingId(data.id);
       } else {
         setSchemeData({
-          defensive_transition: '',
-          defence: '',
-          offensive_transition: '',
-          offence: ''
+          defensive_transition: [],
+          defence: [],
+          offensive_transition: [],
+          offence: []
         });
         setExistingId(null);
       }
@@ -110,14 +119,19 @@ export const TacticalSchemes = ({ isAdmin }: { isAdmin: boolean }) => {
 
     setSaving(true);
     try {
+      // Convert arrays back to bullet-pointed text
+      const formatBulletPoints = (points: string[]): string => {
+        return points.filter(p => p.trim()).map(p => `• ${p}`).join('\n');
+      };
+
       const payload = {
         position: selectedPosition,
         team_scheme: selectedTeamScheme,
         opposition_scheme: selectedOppositionScheme,
-        defensive_transition: schemeData.defensive_transition,
-        defence: schemeData.defence,
-        offensive_transition: schemeData.offensive_transition,
-        offence: schemeData.offence
+        defensive_transition: formatBulletPoints(schemeData.defensive_transition),
+        defence: formatBulletPoints(schemeData.defence),
+        offensive_transition: formatBulletPoints(schemeData.offensive_transition),
+        offence: formatBulletPoints(schemeData.offence)
       };
 
       if (existingId) {
@@ -152,12 +166,35 @@ export const TacticalSchemes = ({ isAdmin }: { isAdmin: boolean }) => {
     setSelectedTeamScheme('');
     setSelectedOppositionScheme('');
     setSchemeData({
-      defensive_transition: '',
-      defence: '',
-      offensive_transition: '',
-      offence: ''
+      defensive_transition: [],
+      defence: [],
+      offensive_transition: [],
+      offence: []
     });
     setExistingId(null);
+  };
+
+  const addBulletPoint = (field: keyof SchemeData) => {
+    setSchemeData({
+      ...schemeData,
+      [field]: [...schemeData[field], '']
+    });
+  };
+
+  const updateBulletPoint = (field: keyof SchemeData, index: number, value: string) => {
+    const newPoints = [...schemeData[field]];
+    newPoints[index] = value;
+    setSchemeData({
+      ...schemeData,
+      [field]: newPoints
+    });
+  };
+
+  const removeBulletPoint = (field: keyof SchemeData, index: number) => {
+    setSchemeData({
+      ...schemeData,
+      [field]: schemeData[field].filter((_, i) => i !== index)
+    });
   };
 
   return (
@@ -234,61 +271,185 @@ export const TacticalSchemes = ({ isAdmin }: { isAdmin: boolean }) => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Defensive Transition</CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg">Defensive Transition</CardTitle>
+                  {isAdmin && (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => addBulletPoint('defensive_transition')}
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add Point
+                    </Button>
+                  )}
+                </div>
               </CardHeader>
-              <CardContent>
-                <Textarea
-                  value={schemeData.defensive_transition}
-                  onChange={(e) => setSchemeData({ ...schemeData, defensive_transition: e.target.value })}
-                  placeholder="Add notes about defensive transition...&#10;• Use bullet points&#10;• Press Enter for new line&#10;• Start with • for bullets"
-                  className="min-h-[200px] font-mono text-sm"
-                  disabled={!isAdmin}
-                />
+              <CardContent className="space-y-2">
+                {schemeData.defensive_transition.length === 0 && (
+                  <p className="text-sm text-muted-foreground">No points added yet</p>
+                )}
+                {schemeData.defensive_transition.map((point, index) => (
+                  <div key={index} className="flex gap-2">
+                    <span className="text-muted-foreground mt-2">•</span>
+                    <Input
+                      value={point}
+                      onChange={(e) => updateBulletPoint('defensive_transition', index, e.target.value)}
+                      placeholder="Add point..."
+                      disabled={!isAdmin}
+                      className="flex-1"
+                    />
+                    {isAdmin && (
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => removeBulletPoint('defensive_transition', index)}
+                      >
+                        <Trash2 className="w-4 h-4 text-destructive" />
+                      </Button>
+                    )}
+                  </div>
+                ))}
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Defence</CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg">Defence</CardTitle>
+                  {isAdmin && (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => addBulletPoint('defence')}
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add Point
+                    </Button>
+                  )}
+                </div>
               </CardHeader>
-              <CardContent>
-                <Textarea
-                  value={schemeData.defence}
-                  onChange={(e) => setSchemeData({ ...schemeData, defence: e.target.value })}
-                  placeholder="Add notes about defence...&#10;• Use bullet points&#10;• Press Enter for new line&#10;• Start with • for bullets"
-                  className="min-h-[200px] font-mono text-sm"
-                  disabled={!isAdmin}
-                />
+              <CardContent className="space-y-2">
+                {schemeData.defence.length === 0 && (
+                  <p className="text-sm text-muted-foreground">No points added yet</p>
+                )}
+                {schemeData.defence.map((point, index) => (
+                  <div key={index} className="flex gap-2">
+                    <span className="text-muted-foreground mt-2">•</span>
+                    <Input
+                      value={point}
+                      onChange={(e) => updateBulletPoint('defence', index, e.target.value)}
+                      placeholder="Add point..."
+                      disabled={!isAdmin}
+                      className="flex-1"
+                    />
+                    {isAdmin && (
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => removeBulletPoint('defence', index)}
+                      >
+                        <Trash2 className="w-4 h-4 text-destructive" />
+                      </Button>
+                    )}
+                  </div>
+                ))}
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Offensive Transition</CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg">Offensive Transition</CardTitle>
+                  {isAdmin && (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => addBulletPoint('offensive_transition')}
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add Point
+                    </Button>
+                  )}
+                </div>
               </CardHeader>
-              <CardContent>
-                <Textarea
-                  value={schemeData.offensive_transition}
-                  onChange={(e) => setSchemeData({ ...schemeData, offensive_transition: e.target.value })}
-                  placeholder="Add notes about offensive transition...&#10;• Use bullet points&#10;• Press Enter for new line&#10;• Start with • for bullets"
-                  className="min-h-[200px] font-mono text-sm"
-                  disabled={!isAdmin}
-                />
+              <CardContent className="space-y-2">
+                {schemeData.offensive_transition.length === 0 && (
+                  <p className="text-sm text-muted-foreground">No points added yet</p>
+                )}
+                {schemeData.offensive_transition.map((point, index) => (
+                  <div key={index} className="flex gap-2">
+                    <span className="text-muted-foreground mt-2">•</span>
+                    <Input
+                      value={point}
+                      onChange={(e) => updateBulletPoint('offensive_transition', index, e.target.value)}
+                      placeholder="Add point..."
+                      disabled={!isAdmin}
+                      className="flex-1"
+                    />
+                    {isAdmin && (
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => removeBulletPoint('offensive_transition', index)}
+                      >
+                        <Trash2 className="w-4 h-4 text-destructive" />
+                      </Button>
+                    )}
+                  </div>
+                ))}
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">In Possession</CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg">In Possession</CardTitle>
+                  {isAdmin && (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => addBulletPoint('offence')}
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add Point
+                    </Button>
+                  )}
+                </div>
               </CardHeader>
-              <CardContent>
-                <Textarea
-                  value={schemeData.offence}
-                  onChange={(e) => setSchemeData({ ...schemeData, offence: e.target.value })}
-                  placeholder="Add notes about in possession...&#10;• Use bullet points&#10;• Press Enter for new line&#10;• Start with • for bullets"
-                  className="min-h-[200px] font-mono text-sm"
-                  disabled={!isAdmin}
-                />
+              <CardContent className="space-y-2">
+                {schemeData.offence.length === 0 && (
+                  <p className="text-sm text-muted-foreground">No points added yet</p>
+                )}
+                {schemeData.offence.map((point, index) => (
+                  <div key={index} className="flex gap-2">
+                    <span className="text-muted-foreground mt-2">•</span>
+                    <Input
+                      value={point}
+                      onChange={(e) => updateBulletPoint('offence', index, e.target.value)}
+                      placeholder="Add point..."
+                      disabled={!isAdmin}
+                      className="flex-1"
+                    />
+                    {isAdmin && (
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => removeBulletPoint('offence', index)}
+                      >
+                        <Trash2 className="w-4 h-4 text-destructive" />
+                      </Button>
+                    )}
+                  </div>
+                ))}
               </CardContent>
             </Card>
           </div>
