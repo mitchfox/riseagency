@@ -1559,7 +1559,14 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                           <video 
                                             src={highlight.videoUrl} 
                                             controls 
-                                            className="w-full aspect-video"
+                                            className="w-full aspect-video pointer-events-auto"
+                                            onPointerDown={(e) => {
+                                              // Allow drag to work even if pointer is near video
+                                              if ((e.target as HTMLElement).tagName === 'VIDEO') {
+                                                const card = (e.target as HTMLElement).closest('.group');
+                                                if (card) card.setAttribute('data-allow-drag', 'true');
+                                              }
+                                            }}
                                           />
                                           {highlight.logoUrl && (
                                             <div className="absolute top-2 left-2 bg-background/90 p-1 rounded">
@@ -1571,20 +1578,26 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                             </div>
                                           )}
                                           <CardContent className="p-4">
-                                            <div className="flex items-center gap-2">
-                                              <div
-                                                draggable
-                                                onDragStart={(e) => {
-                                                  setDraggedHighlightIndex(idx);
-                                                  e.dataTransfer.effectAllowed = 'move';
-                                                }}
-                                                onDragEnd={() => setDraggedHighlightIndex(null)}
-                                                className="cursor-grab active:cursor-grabbing"
-                                              >
+                                            <div 
+                                              className="flex items-center gap-2"
+                                              draggable
+                                              onDragStart={(e) => {
+                                                // Only allow drag from title area, not buttons
+                                                const target = e.target as HTMLElement;
+                                                if (target.closest('button')) {
+                                                  e.preventDefault();
+                                                  return;
+                                                }
+                                                setDraggedHighlightIndex(idx);
+                                                e.dataTransfer.effectAllowed = 'move';
+                                              }}
+                                              onDragEnd={() => setDraggedHighlightIndex(null)}
+                                            >
+                                              <div className="cursor-grab active:cursor-grabbing">
                                                 <GripVertical className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                                               </div>
-                                              <p className="font-medium truncate flex-1">{highlight.name || `Highlight ${idx + 1}`}</p>
-                                              <div className="flex items-center gap-1">
+                                              <p className="font-medium truncate flex-1 cursor-grab">{highlight.name || `Highlight ${idx + 1}`}</p>
+                                              <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
                                                 <Button
                                                   size="sm"
                                                   variant="ghost"
@@ -1673,7 +1686,14 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                           <video 
                                             src={clip.videoUrl} 
                                             controls 
-                                            className="w-full aspect-video"
+                                            className="w-full aspect-video pointer-events-auto"
+                                            onPointerDown={(e) => {
+                                              // Allow drag to work even if pointer is near video
+                                              if ((e.target as HTMLElement).tagName === 'VIDEO') {
+                                                const card = (e.target as HTMLElement).closest('.group');
+                                                if (card) card.setAttribute('data-allow-drag', 'true');
+                                              }
+                                            }}
                                           />
                                           {clip.logoUrl && (
                                             <div className="absolute top-2 left-2 bg-background/90 p-1 rounded">
@@ -1685,20 +1705,26 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                             </div>
                                           )}
                                           <CardContent className="p-4">
-                                            <div className="flex items-center gap-2">
-                                              <div
-                                                draggable
-                                                onDragStart={(e) => {
-                                                  setDraggedHighlightIndex(idx);
-                                                  e.dataTransfer.effectAllowed = 'move';
-                                                }}
-                                                onDragEnd={() => setDraggedHighlightIndex(null)}
-                                                className="cursor-grab active:cursor-grabbing"
-                                              >
+                                            <div 
+                                              className="flex items-center gap-2"
+                                              draggable
+                                              onDragStart={(e) => {
+                                                // Only allow drag from title area, not buttons
+                                                const target = e.target as HTMLElement;
+                                                if (target.closest('button')) {
+                                                  e.preventDefault();
+                                                  return;
+                                                }
+                                                setDraggedHighlightIndex(idx);
+                                                e.dataTransfer.effectAllowed = 'move';
+                                              }}
+                                              onDragEnd={() => setDraggedHighlightIndex(null)}
+                                            >
+                                              <div className="cursor-grab active:cursor-grabbing">
                                                 <GripVertical className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                                               </div>
-                                              <p className="font-medium truncate flex-1">{clip.name || `Clip ${idx + 1}`}</p>
-                                              <div className="flex items-center gap-1">
+                                              <p className="font-medium truncate flex-1 cursor-grab">{clip.name || `Clip ${idx + 1}`}</p>
+                                              <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
                                                 <Button
                                                   size="sm"
                                                   variant="ghost"

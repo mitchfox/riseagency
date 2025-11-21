@@ -218,11 +218,15 @@ export function InlineVideoUpload({
 
       toast.success(`${currentUpload.clipName} uploaded successfully`);
       
-      // Remove from list after 3 seconds
+      // Remove from list and refresh after brief delay to ensure DB is updated
       setTimeout(() => {
         removeUpload(uploadId);
+      }, 2000);
+      
+      // Trigger parent refresh slightly later to ensure data is consistent
+      setTimeout(() => {
         onUploadComplete();
-      }, 3000);
+      }, 2500);
 
     } catch (error: any) {
       console.error('Upload error:', error);
