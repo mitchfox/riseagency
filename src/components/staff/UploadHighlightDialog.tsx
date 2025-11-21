@@ -3,7 +3,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Upload, X, Image as ImageIcon, Video } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import { Upload, X, Image as ImageIcon, Video, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 
 interface UploadHighlightDialogProps {
@@ -26,6 +27,8 @@ export function UploadHighlightDialog({
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string>("");
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   const handleVideoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -62,6 +65,9 @@ export function UploadHighlightDialog({
     }
 
     setUploading(true);
+    setUploadProgress(0);
+    setUploadError(null);
+
     try {
       const formData = new FormData();
       formData.append('file', videoFile);
@@ -72,22 +78,43 @@ export function UploadHighlightDialog({
         formData.append('logo', logoFile);
       }
 
-      const response = await fetch(
-        'https://qwethimbtaamlhbajmal.supabase.co/functions/v1/upload-player-highlight',
-        {
-          method: 'POST',
-          headers: {
-            'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-          },
-          body: formData,
-        }
-      );
+      // Use XMLHttpRequest for upload progress tracking
+      await new Promise<void>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Upload failed');
-      }
+        xhr.upload.addEventListener('progress', (e) => {
+          if (e.lengthComputable) {
+            const percentComplete = (e.loaded / e.total) * 100;
+            setUploadProgress(percentComplete);
+          }
+        });
+
+        xhr.addEventListener('load', () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            resolve();
+          } else {
+            try {
+              const errorData = JSON.parse(xhr.responseText);
+              reject(new Error(errorData.error || 'Upload failed'));
+            } catch {
+              reject(new Error('Upload failed'));
+            }
+          }
+        });
+
+        xhr.addEventListener('error', () => {
+          reject(new Error('Network error during upload'));
+        });
+
+        xhr.addEventListener('abort', () => {
+          reject(new Error('Upload cancelled'));
+        });
+
+        xhr.open('POST', 'https://qwethimbtaamlhbajmal.supabase.co/functions/v1/upload-player-highlight');
+        xhr.setRequestHeader('apikey', import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY);
+        xhr.setRequestHeader('Authorization', `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`);
+        xhr.send(formData);
+      });
 
       toast.success(`Successfully uploaded ${clipName}`);
       onUploadComplete();
@@ -97,16 +124,25 @@ export function UploadHighlightDialog({
       setVideoFile(null);
       setLogoFile(null);
       setLogoPreview("");
+      setUploadProgress(0);
+      setUploadError(null);
     } catch (error: any) {
       console.error('Upload error:', error);
+      setUploadError(error.message || 'Failed to upload highlight');
       toast.error(error.message || 'Failed to upload highlight');
     } finally {
       setUploading(false);
     }
   };
 
+  const handleRetry = () => {
+    setUploadError(null);
+    setUploadProgress(0);
+    handleUpload();
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(newOpen) => !uploading && onOpenChange(newOpen)}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Upload {highlightType === "match" ? "Match" : "Best Clip"} Highlight</DialogTitle>
@@ -195,6 +231,22 @@ export function UploadHighlightDialog({
             )}
           </div>
 
+          {uploading && (
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Uploading...</span>
+                <span className="font-medium">{Math.round(uploadProgress)}%</span>
+              </div>
+              <Progress value={uploadProgress} className="h-2" />
+            </div>
+          )}
+
+          {uploadError && (
+            <div className="rounded-md bg-destructive/10 border border-destructive/20 p-3">
+              <p className="text-sm text-destructive">{uploadError}</p>
+            </div>
+          )}
+
           <div className="flex justify-end gap-2 pt-4">
             <Button
               variant="outline"
@@ -203,19 +255,26 @@ export function UploadHighlightDialog({
             >
               Cancel
             </Button>
-            <Button
-              onClick={handleUpload}
-              disabled={uploading || !clipName.trim() || !videoFile}
-            >
-              {uploading ? (
-                <>Uploading...</>
-              ) : (
-                <>
-                  <Upload className="w-4 h-4 mr-2" />
-                  Upload
-                </>
-              )}
-            </Button>
+            {uploadError ? (
+              <Button onClick={handleRetry}>
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Retry Upload
+              </Button>
+            ) : (
+              <Button
+                onClick={handleUpload}
+                disabled={uploading || !clipName.trim() || !videoFile}
+              >
+                {uploading ? (
+                  <>Uploading...</>
+                ) : (
+                  <>
+                    <Upload className="w-4 h-4 mr-2" />
+                    Upload
+                  </>
+                )}
+              </Button>
+            )}
           </div>
         </div>
       </DialogContent>
