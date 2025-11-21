@@ -113,6 +113,7 @@ const Dashboard = () => {
   const [coachAvailabilityOpen, setCoachAvailabilityOpen] = useState(false);
   const [isSubheaderVisible, setIsSubheaderVisible] = useState(true);
   const [selectedFormMetric, setSelectedFormMetric] = useState<string>("r90");
+  const [schemes, setSchemes] = useState<any[]>([]);
 
 
   // Initialize push notifications with player ID
@@ -782,6 +783,11 @@ const Dashboard = () => {
 
       setPlayerData(parsedPlayerData);
 
+      // Fetch tactical schemes for this player's position
+      if (parsedPlayerData.position) {
+        await fetchSchemes(parsedPlayerData.position);
+      }
+
       // Extract highlights with bulletproof fallbacks
       let highlights: any = { matchHighlights: [], bestClips: [] };
       try {
@@ -942,6 +948,32 @@ const Dashboard = () => {
     } catch (error: any) {
       console.error("Error fetching analyses:", error);
       toast.error("Failed to load analysis data");
+    }
+  };
+
+  const fetchSchemes = async (position: string | undefined) => {
+    if (!position) return;
+    
+    try {
+      // Fetch tactical schemes for the player's position that have at least one field filled
+      const { data: schemesData, error: schemesError } = await supabase
+        .from("tactical_schemes")
+        .select("*")
+        .eq("position", position);
+
+      if (schemesError) throw schemesError;
+      
+      // Filter to only include schemes that have at least one tactical field filled
+      const filledSchemes = (schemesData || []).filter(scheme => 
+        scheme.defensive_transition || 
+        scheme.defence || 
+        scheme.offensive_transition || 
+        scheme.offence
+      );
+      
+      setSchemes(filledSchemes);
+    } catch (error: any) {
+      console.error("Error fetching schemes:", error);
     }
   };
 
@@ -1497,7 +1529,7 @@ const Dashboard = () => {
               <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 border-t-0 border-b-0">
                 <CardContent className="container mx-auto px-4">
                   <Tabs value={activeAnalysisTab} onValueChange={setActiveAnalysisTab} className="w-full">
-                    <TabsList className="grid w-full grid-cols-1 sm:grid-cols-5 gap-2 mb-0 bg-muted h-auto p-2">
+                    <TabsList className="grid w-full grid-cols-1 sm:grid-cols-6 gap-2 mb-0 bg-muted h-auto p-2">
                   <TabsTrigger value="performance" className="font-bebas uppercase text-sm sm:text-base">
                     Performance Analysis
                   </TabsTrigger>
@@ -1512,6 +1544,9 @@ const Dashboard = () => {
                   </TabsTrigger>
                   <TabsTrigger value="concepts" className="font-bebas uppercase text-sm sm:text-base">
                     Concepts
+                  </TabsTrigger>
+                  <TabsTrigger value="schemes" className="font-bebas uppercase text-sm sm:text-base">
+                    Schemes
                   </TabsTrigger>
                 </TabsList>
 
@@ -1683,6 +1718,65 @@ const Dashboard = () => {
                                   <p className="text-muted-foreground whitespace-pre-wrap">{concept.explanation}</p>
                                 </div>
                               )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+
+                <TabsContent value="schemes">
+                  <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 border-t-[2px] border-t-[hsl(43,49%,61%)] border-b-0">
+                    <CardHeader marble>
+                      <div className="container mx-auto px-4">
+                        <CardTitle className="font-heading tracking-tight">
+                          Tactical Schemes
+                        </CardTitle>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="container mx-auto px-4 space-y-6">
+                      {schemes.length === 0 ? (
+                        <div className="py-8">
+                          <p className="text-center text-muted-foreground">No tactical schemes available for your position yet.</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-8">
+                          {schemes.map((scheme) => (
+                            <div key={scheme.id} className="border rounded-lg p-6 space-y-4">
+                              <h3 className="text-2xl font-bebas uppercase tracking-wider">
+                                {scheme.team_scheme} vs {scheme.opposition_scheme}
+                              </h3>
+                              
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {scheme.defensive_transition && (
+                                  <div className="space-y-2">
+                                    <h4 className="font-semibold text-lg">Defensive Transition</h4>
+                                    <div className="text-muted-foreground whitespace-pre-wrap">{scheme.defensive_transition}</div>
+                                  </div>
+                                )}
+                                
+                                {scheme.defence && (
+                                  <div className="space-y-2">
+                                    <h4 className="font-semibold text-lg">Defence</h4>
+                                    <div className="text-muted-foreground whitespace-pre-wrap">{scheme.defence}</div>
+                                  </div>
+                                )}
+                                
+                                {scheme.offensive_transition && (
+                                  <div className="space-y-2">
+                                    <h4 className="font-semibold text-lg">Offensive Transition</h4>
+                                    <div className="text-muted-foreground whitespace-pre-wrap">{scheme.offensive_transition}</div>
+                                  </div>
+                                )}
+                                
+                                {scheme.offence && (
+                                  <div className="space-y-2">
+                                    <h4 className="font-semibold text-lg">In Possession</h4>
+                                    <div className="text-muted-foreground whitespace-pre-wrap">{scheme.offence}</div>
+                                  </div>
+                                )}
+                              </div>
                             </div>
                           ))}
                         </div>
