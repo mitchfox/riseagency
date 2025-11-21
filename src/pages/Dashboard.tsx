@@ -955,11 +955,46 @@ const Dashboard = () => {
     if (!position) return;
     
     try {
+      // Normalize position to full name for matching
+      const normalizePosition = (pos: string): string => {
+        const positionMap: Record<string, string> = {
+          'GK': 'Goalkeeper',
+          'Goalkeeper': 'Goalkeeper',
+          'FB': 'Full-Back',
+          'Full-Back': 'Full-Back',
+          'Fullback': 'Full-Back',
+          'CB': 'Centre-Back',
+          'Centre-Back': 'Centre-Back',
+          'Center-Back': 'Centre-Back',
+          'CDM': 'Central Defensive-Midfielder',
+          'Central Defensive-Midfielder': 'Central Defensive-Midfielder',
+          'Central Defensive Midfielder': 'Central Defensive-Midfielder',
+          'CM': 'Central Midfielder',
+          'Central Midfielder': 'Central Midfielder',
+          'AM': 'Attacking Midfielder',
+          'Attacking Midfielder': 'Attacking Midfielder',
+          'CAM': 'Attacking Midfielder',
+          'W': 'Winger',
+          'Winger': 'Winger',
+          'LW': 'Winger',
+          'RW': 'Winger',
+          'CF': 'Centre-Forward',
+          'Centre-Forward': 'Centre-Forward',
+          'Center-Forward': 'Centre-Forward',
+          'ST': 'Centre-Forward',
+          'Striker': 'Centre-Forward',
+        };
+        
+        return positionMap[pos] || pos;
+      };
+      
+      const normalizedPosition = normalizePosition(position);
+      
       // Fetch tactical schemes for the player's position that have at least one field filled
       const { data: schemesData, error: schemesError } = await supabase
         .from("tactical_schemes")
         .select("*")
-        .eq("position", position);
+        .eq("position", normalizedPosition);
 
       if (schemesError) throw schemesError;
       
@@ -1234,7 +1269,7 @@ const Dashboard = () => {
       </header>
 
       {/* Subheader with Options */}
-      <div id="subheader" className="bg-[url('/smudged-marble-header.png')] bg-cover bg-center bg-no-repeat border-b border-border/50">
+      <div id="subheader" className="bg-background lg:bg-background bg-[url('/smudged-marble-header.png')] lg:bg-none bg-cover bg-center bg-no-repeat border-b border-border/50">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-center gap-2 h-12">
             <DropdownMenu>
