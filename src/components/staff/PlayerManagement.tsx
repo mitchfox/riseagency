@@ -1477,11 +1477,6 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                           className={`overflow-hidden group relative transition-all ${
                                             draggedHighlightIndex === idx ? 'opacity-50 scale-95' : ''
                                           } ${draggedHighlightIndex !== null && draggedHighlightIndex !== idx ? 'border-2 border-primary/50' : ''}`}
-                                          draggable
-                                          onDragStart={(e) => {
-                                            setDraggedHighlightIndex(idx);
-                                            e.dataTransfer.effectAllowed = 'move';
-                                          }}
                                           onDragOver={(e) => {
                                             e.preventDefault();
                                             e.dataTransfer.dropEffect = 'move';
@@ -1493,27 +1488,34 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                             }
                                             setDraggedHighlightIndex(null);
                                           }}
-                                          onDragEnd={() => setDraggedHighlightIndex(null)}
                                         >
-                                          <div className="pointer-events-none">
-                                            <video 
-                                              src={highlight.videoUrl} 
-                                              controls 
-                                              className="w-full aspect-video"
-                                            />
-                                            {highlight.logoUrl && (
-                                              <div className="absolute top-2 left-2 bg-background/90 p-1 rounded">
-                                                <img 
-                                                  src={highlight.logoUrl} 
-                                                  alt="Club logo" 
-                                                  className="w-8 h-8 object-contain"
-                                                />
-                                              </div>
-                                            )}
-                                          </div>
+                                          <video 
+                                            src={highlight.videoUrl} 
+                                            controls 
+                                            className="w-full aspect-video"
+                                          />
+                                          {highlight.logoUrl && (
+                                            <div className="absolute top-2 left-2 bg-background/90 p-1 rounded">
+                                              <img 
+                                                src={highlight.logoUrl} 
+                                                alt="Club logo" 
+                                                className="w-8 h-8 object-contain"
+                                              />
+                                            </div>
+                                          )}
                                           <CardContent className="p-4">
                                             <div className="flex items-center gap-2">
-                                              <GripVertical className="w-4 h-4 text-muted-foreground flex-shrink-0 cursor-grab active:cursor-grabbing" />
+                                              <div
+                                                draggable
+                                                onDragStart={(e) => {
+                                                  setDraggedHighlightIndex(idx);
+                                                  e.dataTransfer.effectAllowed = 'move';
+                                                }}
+                                                onDragEnd={() => setDraggedHighlightIndex(null)}
+                                                className="cursor-grab active:cursor-grabbing"
+                                              >
+                                                <GripVertical className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                                              </div>
                                               <p className="font-medium truncate flex-1">{highlight.name || `Highlight ${idx + 1}`}</p>
                                               <Button
                                                 size="sm"
@@ -1523,7 +1525,6 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                                   setEditingHighlight({ highlight, type: 'match' });
                                                   setIsEditHighlightOpen(true);
                                                 }}
-                                                className="pointer-events-auto"
                                               >
                                                 <Edit className="w-4 h-4" />
                                               </Button>
@@ -1578,11 +1579,6 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                           className={`overflow-hidden group relative transition-all ${
                                             draggedHighlightIndex === idx ? 'opacity-50 scale-95' : ''
                                           } ${draggedHighlightIndex !== null && draggedHighlightIndex !== idx ? 'border-2 border-primary/50' : ''}`}
-                                          draggable
-                                          onDragStart={(e) => {
-                                            setDraggedHighlightIndex(idx);
-                                            e.dataTransfer.effectAllowed = 'move';
-                                          }}
                                           onDragOver={(e) => {
                                             e.preventDefault();
                                             e.dataTransfer.dropEffect = 'move';
@@ -1594,27 +1590,34 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                             }
                                             setDraggedHighlightIndex(null);
                                           }}
-                                          onDragEnd={() => setDraggedHighlightIndex(null)}
                                         >
-                                          <div className="pointer-events-none">
-                                            <video 
-                                              src={clip.videoUrl} 
-                                              controls 
-                                              className="w-full aspect-video"
-                                            />
-                                            {clip.logoUrl && (
-                                              <div className="absolute top-2 left-2 bg-background/90 p-1 rounded">
-                                                <img 
-                                                  src={clip.logoUrl} 
-                                                  alt="Club logo" 
-                                                  className="w-8 h-8 object-contain"
-                                                />
-                                              </div>
-                                            )}
-                                          </div>
+                                          <video 
+                                            src={clip.videoUrl} 
+                                            controls 
+                                            className="w-full aspect-video"
+                                          />
+                                          {clip.logoUrl && (
+                                            <div className="absolute top-2 left-2 bg-background/90 p-1 rounded">
+                                              <img 
+                                                src={clip.logoUrl} 
+                                                alt="Club logo" 
+                                                className="w-8 h-8 object-contain"
+                                              />
+                                            </div>
+                                          )}
                                           <CardContent className="p-4">
                                             <div className="flex items-center gap-2">
-                                              <GripVertical className="w-4 h-4 text-muted-foreground flex-shrink-0 cursor-grab active:cursor-grabbing" />
+                                              <div
+                                                draggable
+                                                onDragStart={(e) => {
+                                                  setDraggedHighlightIndex(idx);
+                                                  e.dataTransfer.effectAllowed = 'move';
+                                                }}
+                                                onDragEnd={() => setDraggedHighlightIndex(null)}
+                                                className="cursor-grab active:cursor-grabbing"
+                                              >
+                                                <GripVertical className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                                              </div>
                                               <p className="font-medium truncate flex-1">{clip.name || `Clip ${idx + 1}`}</p>
                                               <Button
                                                 size="sm"
@@ -1624,7 +1627,6 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                                   setEditingHighlight({ highlight: clip, type: 'best' });
                                                   setIsEditHighlightOpen(true);
                                                 }}
-                                                className="pointer-events-auto"
                                               >
                                                 <Edit className="w-4 h-4" />
                                               </Button>
