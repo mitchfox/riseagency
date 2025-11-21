@@ -543,6 +543,42 @@ export type Database = {
         }
         Relationships: []
       }
+      component_locks: {
+        Row: {
+          component_name: string
+          component_path: string | null
+          created_at: string
+          description: string | null
+          id: string
+          is_locked: boolean
+          locked_at: string | null
+          locked_by: string | null
+          updated_at: string
+        }
+        Insert: {
+          component_name: string
+          component_path?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_locked?: boolean
+          locked_at?: string | null
+          locked_by?: string | null
+          updated_at?: string
+        }
+        Update: {
+          component_name?: string
+          component_path?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_locked?: boolean
+          locked_at?: string | null
+          locked_by?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       email_templates: {
         Row: {
           created_at: string

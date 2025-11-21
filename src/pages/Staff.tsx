@@ -39,6 +39,7 @@ import { StaffAccountManagement } from "@/components/staff/StaffAccountManagemen
 import { PlayerPasswordManagement } from "@/components/staff/PlayerPasswordManagement";
 import ClubNetworkManagement from "@/components/staff/ClubNetworkManagement";
 import LegalManagement from "@/components/staff/LegalManagement";
+import { SiteManagement } from "@/components/staff/SiteManagement";
 import { StaffPWAInstall } from "@/components/staff/StaffPWAInstall";
 import { StaffOfflineManager } from "@/components/staff/StaffOfflineManager";
 import { StaffPushNotifications } from "@/components/staff/StaffPushNotifications";
@@ -69,7 +70,8 @@ import {
   Download,
   HardDrive,
   Bell,
-  ClipboardList
+  ClipboardList,
+  Settings
 } from "lucide-react";
 
 const Staff = () => {
@@ -82,7 +84,7 @@ const Staff = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [isMarketeer, setIsMarketeer] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-  const [expandedSection, setExpandedSection] = useState<'overview' | 'schedule' | 'staffaccounts' | 'passwords' | 'pwainstall' | 'offlinemanager' | 'pushnotifications' | 'players' | 'playerlist' | 'recruitment' | 'scoutingcentre' | 'blog' | 'betweenthelines' | 'coaching' | 'analysis' | 'marketing' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'legal' | null>('overview');
+  const [expandedSection, setExpandedSection] = useState<'overview' | 'schedule' | 'staffaccounts' | 'passwords' | 'pwainstall' | 'offlinemanager' | 'pushnotifications' | 'players' | 'playerlist' | 'recruitment' | 'scoutingcentre' | 'blog' | 'betweenthelines' | 'coaching' | 'analysis' | 'marketing' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'legal' | 'sitemanagement' | null>('overview');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   
   // Enable staff notifications
@@ -555,6 +557,7 @@ const Staff = () => {
         { id: 'legal', title: 'Legal', icon: Scale },
         { id: 'invoices', title: 'Invoices', icon: FileCheck },
         ...(isAdmin ? [
+          { id: 'sitemanagement', title: 'Site Management', icon: Settings },
           { id: 'passwords', title: 'Player Passwords', icon: Lock },
           { id: 'staffaccounts', title: 'Staff Accounts', icon: Shield },
         ] : []),
@@ -843,6 +846,7 @@ const Staff = () => {
                   {expandedSection === 'updates' && <UpdatesManagement isAdmin={isAdmin} />}
                   {expandedSection === 'clubnetwork' && <ClubNetworkManagement />}
                   {expandedSection === 'legal' && <LegalManagement isAdmin={isAdmin} />}
+                  {expandedSection === 'sitemanagement' && isAdmin && <SiteManagement isAdmin={isAdmin} />}
                   {expandedSection === 'passwords' && isAdmin && <PlayerPasswordManagement />}
                   {expandedSection === 'staffaccounts' && isAdmin && <StaffAccountManagement />}
                   {expandedSection === 'pwainstall' && isAdmin && <StaffPWAInstall />}
