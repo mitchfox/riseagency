@@ -321,6 +321,30 @@ export const PlaylistContent = ({ playerData, availableClips }: PlaylistContentP
     }
   };
 
+  const downloadClip = async (clip: Clip, index: number) => {
+    const loadingToast = toast.loading("Downloading clip...");
+
+    try {
+      const response = await fetch(clip.videoUrl);
+      const blob = await response.blob();
+      
+      const extension = clip.videoUrl.split('.').pop()?.split('?')[0] || 'mp4';
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${index + 1}. ${clip.name}.${extension}`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      toast.success("Clip downloaded", { id: loadingToast });
+    } catch (error) {
+      console.error('Error downloading clip:', error);
+      toast.error("Failed to download clip", { id: loadingToast });
+    }
+  };
+
   if (isLoadingPlaylists) {
     return <div className="text-center py-8 text-muted-foreground">Loading playlists...</div>;
   }
@@ -553,13 +577,23 @@ export const PlaylistContent = ({ playerData, availableClips }: PlaylistContentP
                               )}
                               size="sm"
                               variant="ghost"
+                              title="Play clip"
                             >
                               <Play className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              onClick={() => downloadClip(clip, index)}
+                              size="sm"
+                              variant="ghost"
+                              title="Download clip"
+                            >
+                              <Download className="w-4 h-4" />
                             </Button>
                             <Button
                               onClick={() => removeClipFromPlaylist(index)}
                               size="sm"
                               variant="ghost"
+                              title="Remove from playlist"
                             >
                               <Trash2 className="w-4 h-4 text-destructive" />
                             </Button>
