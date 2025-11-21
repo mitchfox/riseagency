@@ -11,6 +11,7 @@ import { Plus, Edit, Trash2, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
 
 interface YouthOutreach {
   id: string;
@@ -228,56 +229,106 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
   const renderYouthTable = (data: YouthOutreach[], title: string) => (
     <Card className="mb-4">
       <CardHeader>
-        <CardTitle className="text-lg">{title} ({data.length})</CardTitle>
+        <CardTitle className="text-base sm:text-lg">{title} ({data.length})</CardTitle>
       </CardHeader>
       <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Player Name</TableHead>
-              <TableHead>IG Handle</TableHead>
-              <TableHead>Parents Name</TableHead>
-              <TableHead>Parent Contact</TableHead>
-              <TableHead>Parent Approval</TableHead>
-              <TableHead>Messaged</TableHead>
-              <TableHead>Response</TableHead>
-              {canEdit && <TableHead>Actions</TableHead>}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {data.length === 0 ? (
+        {/* Desktop Table */}
+        <div className="hidden lg:block overflow-x-auto">
+          <Table>
+            <TableHeader>
               <TableRow>
-                <TableCell colSpan={canEdit ? 8 : 7} className="text-center text-muted-foreground">
-                  No entries
-                </TableCell>
+                <TableHead>Player Name</TableHead>
+                <TableHead>IG Handle</TableHead>
+                <TableHead>Parents Name</TableHead>
+                <TableHead>Parent Contact</TableHead>
+                <TableHead>Parent Approval</TableHead>
+                <TableHead>Messaged</TableHead>
+                <TableHead>Response</TableHead>
+                {canEdit && <TableHead>Actions</TableHead>}
               </TableRow>
-            ) : (
-              data.map((item) => (
-                <TableRow key={item.id}>
-                  <TableCell className="font-medium">{item.player_name}</TableCell>
-                  <TableCell>{item.ig_handle || "-"}</TableCell>
-                  <TableCell>{item.parents_name || "-"}</TableCell>
-                  <TableCell>{item.parent_contact || "-"}</TableCell>
-                  <TableCell>{item.parent_approval ? "✓" : "-"}</TableCell>
-                  <TableCell>{item.messaged ? "✓" : "-"}</TableCell>
-                  <TableCell>{item.response_received ? "✓" : "-"}</TableCell>
-                  {canEdit && (
-                    <TableCell>
-                      <div className="flex gap-2">
-                        <Button size="sm" variant="ghost" onClick={() => handleEdit(item, 'youth')}>
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button size="sm" variant="ghost" onClick={() => handleDelete(item.id, 'youth')}>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  )}
+            </TableHeader>
+            <TableBody>
+              {data.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={canEdit ? 8 : 7} className="text-center text-muted-foreground">
+                    No entries
+                  </TableCell>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+              ) : (
+                data.map((item) => (
+                  <TableRow key={item.id}>
+                    <TableCell className="font-medium">{item.player_name}</TableCell>
+                    <TableCell>{item.ig_handle || "-"}</TableCell>
+                    <TableCell>{item.parents_name || "-"}</TableCell>
+                    <TableCell>{item.parent_contact || "-"}</TableCell>
+                    <TableCell>{item.parent_approval ? "✓" : "-"}</TableCell>
+                    <TableCell>{item.messaged ? "✓" : "-"}</TableCell>
+                    <TableCell>{item.response_received ? "✓" : "-"}</TableCell>
+                    {canEdit && (
+                      <TableCell>
+                        <div className="flex gap-2">
+                          <Button size="sm" variant="ghost" onClick={() => handleEdit(item, 'youth')}>
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button size="sm" variant="ghost" onClick={() => handleDelete(item.id, 'youth')}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    )}
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+
+        {/* Mobile Cards */}
+        <div className="lg:hidden space-y-3">
+          {data.length === 0 ? (
+            <p className="text-center text-muted-foreground py-8">No entries</p>
+          ) : (
+            data.map((item) => (
+              <Card key={item.id} className="p-4 space-y-3">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h3 className="font-semibold text-base">{item.player_name}</h3>
+                    {item.ig_handle && <p className="text-sm text-muted-foreground">@{item.ig_handle}</p>}
+                  </div>
+                  {canEdit && (
+                    <div className="flex gap-1">
+                      <Button size="sm" variant="ghost" onClick={() => handleEdit(item, 'youth')}>
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button size="sm" variant="ghost" onClick={() => handleDelete(item.id, 'youth')}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
+                </div>
+                <div className="space-y-1.5 text-sm">
+                  {item.parents_name && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Parent:</span>
+                      <span>{item.parents_name}</span>
+                    </div>
+                  )}
+                  {item.parent_contact && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Contact:</span>
+                      <span>{item.parent_contact}</span>
+                    </div>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {item.messaged && <Badge variant="secondary">Messaged</Badge>}
+                  {item.response_received && <Badge variant="default">Responded</Badge>}
+                  {item.parent_approval && <Badge variant="outline">Parent Approved</Badge>}
+                </div>
+              </Card>
+            ))
+          )}
+        </div>
       </CardContent>
     </Card>
   );
@@ -285,59 +336,94 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
   const renderProTable = (data: ProOutreach[], title: string) => (
     <Card className="mb-4">
       <CardHeader>
-        <CardTitle className="text-lg">{title} ({data.length})</CardTitle>
+        <CardTitle className="text-base sm:text-lg">{title} ({data.length})</CardTitle>
       </CardHeader>
       <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Player Name</TableHead>
-              <TableHead>IG Handle</TableHead>
-              <TableHead>Messaged</TableHead>
-              <TableHead>Response</TableHead>
-              {canEdit && <TableHead>Actions</TableHead>}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {data.length === 0 ? (
+        {/* Desktop Table */}
+        <div className="hidden lg:block overflow-x-auto">
+          <Table>
+            <TableHeader>
               <TableRow>
-                <TableCell colSpan={canEdit ? 5 : 4} className="text-center text-muted-foreground">
-                  No entries
-                </TableCell>
+                <TableHead>Player Name</TableHead>
+                <TableHead>IG Handle</TableHead>
+                <TableHead>Messaged</TableHead>
+                <TableHead>Response</TableHead>
+                {canEdit && <TableHead>Actions</TableHead>}
               </TableRow>
-            ) : (
-              data.map((item) => (
-                <TableRow key={item.id}>
-                  <TableCell className="font-medium">{item.player_name}</TableCell>
-                  <TableCell>{item.ig_handle || "-"}</TableCell>
-                  <TableCell>{item.messaged ? "✓" : "-"}</TableCell>
-                  <TableCell>{item.response_received ? "✓" : "-"}</TableCell>
-                  {canEdit && (
-                    <TableCell>
-                      <div className="flex gap-2">
-                        <Button size="sm" variant="ghost" onClick={() => handleEdit(item, 'pro')}>
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button size="sm" variant="ghost" onClick={() => handleDelete(item.id, 'pro')}>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  )}
+            </TableHeader>
+            <TableBody>
+              {data.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={canEdit ? 5 : 4} className="text-center text-muted-foreground">
+                    No entries
+                  </TableCell>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+              ) : (
+                data.map((item) => (
+                  <TableRow key={item.id}>
+                    <TableCell className="font-medium">{item.player_name}</TableCell>
+                    <TableCell>{item.ig_handle || "-"}</TableCell>
+                    <TableCell>{item.messaged ? "✓" : "-"}</TableCell>
+                    <TableCell>{item.response_received ? "✓" : "-"}</TableCell>
+                    {canEdit && (
+                      <TableCell>
+                        <div className="flex gap-2">
+                          <Button size="sm" variant="ghost" onClick={() => handleEdit(item, 'pro')}>
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button size="sm" variant="ghost" onClick={() => handleDelete(item.id, 'pro')}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    )}
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+
+        {/* Mobile Cards */}
+        <div className="lg:hidden space-y-3">
+          {data.length === 0 ? (
+            <p className="text-center text-muted-foreground py-8">No entries</p>
+          ) : (
+            data.map((item) => (
+              <Card key={item.id} className="p-4 space-y-3">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h3 className="font-semibold text-base">{item.player_name}</h3>
+                    {item.ig_handle && <p className="text-sm text-muted-foreground">@{item.ig_handle}</p>}
+                  </div>
+                  {canEdit && (
+                    <div className="flex gap-1">
+                      <Button size="sm" variant="ghost" onClick={() => handleEdit(item, 'pro')}>
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button size="sm" variant="ghost" onClick={() => handleDelete(item.id, 'pro')}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {item.messaged && <Badge variant="secondary">Messaged</Badge>}
+                  {item.response_received && <Badge variant="default">Responded</Badge>}
+                </div>
+              </Card>
+            ))
+          )}
+        </div>
       </CardContent>
     </Card>
   );
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold flex items-center gap-2">
-          <Users className="h-6 w-6" />
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+        <h2 className="text-xl sm:text-2xl font-bold flex items-center gap-2">
+          <Users className="h-5 w-5 sm:h-6 sm:w-6" />
           Player Outreach
         </h2>
         {canEdit && (
@@ -346,12 +432,12 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
             if (!open) resetForms();
           }}>
             <DialogTrigger asChild>
-              <Button>
+              <Button size="sm" className="w-full sm:w-auto">
                 <Plus className="w-4 h-4 mr-2" />
                 Add Entry
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full">
               <DialogHeader>
                 <DialogTitle>
                   {editingItem ? "Edit Entry" : `Add ${activeTab === 'youth' ? 'Youth' : 'Pro'} Outreach`}
@@ -359,7 +445,7 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
               </DialogHeader>
               {activeTab === 'youth' ? (
                 <form onSubmit={handleYouthSubmit} className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="player_name">Player Name *</Label>
                       <Input
@@ -378,7 +464,7 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
                       />
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="parents_name">Parents Name</Label>
                       <Input
@@ -414,7 +500,7 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
                       rows={3}
                     />
                   </div>
-                  <div className="flex gap-4">
+                  <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
                     <div className="flex items-center space-x-2">
                       <Switch
                         id="messaged"
@@ -446,7 +532,7 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
                 </form>
               ) : (
                 <form onSubmit={handleProSubmit} className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="player_name">Player Name *</Label>
                       <Input
@@ -483,7 +569,7 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
                       rows={3}
                     />
                   </div>
-                  <div className="flex gap-4">
+                  <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
                     <div className="flex items-center space-x-2">
                       <Switch
                         id="messaged"
@@ -512,9 +598,9 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="youth">Youth (U18)</TabsTrigger>
-          <TabsTrigger value="pro">Pro</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-2 h-auto sm:h-10">
+          <TabsTrigger value="youth" className="text-sm sm:text-base py-2.5">Youth (U18)</TabsTrigger>
+          <TabsTrigger value="pro" className="text-sm sm:text-base py-2.5">Pro</TabsTrigger>
         </TabsList>
 
         <TabsContent value="youth" className="space-y-4 mt-4">
