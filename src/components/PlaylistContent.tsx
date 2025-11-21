@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { Plus, X, Save, ChevronUp, ChevronDown, List, Play, Trash2, Hash, Video } from "lucide-react";
+import { Plus, X, Save, ChevronUp, ChevronDown, List, Play, Trash2, Hash, Video, Download } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { PlaylistPlayer } from "./PlaylistPlayer";
 
@@ -272,6 +272,42 @@ export const PlaylistContent = ({ playerData, availableClips }: PlaylistContentP
     }
   };
 
+  const downloadPlaylist = async (playlist: Playlist) => {
+    if (!playlist.clips.length) {
+      toast.error("No clips to download");
+      return;
+    }
+
+    toast.loading(`Downloading ${playlist.clips.length} clips...`);
+
+    try {
+      for (let i = 0; i < playlist.clips.length; i++) {
+        const clip = playlist.clips[i];
+        const response = await fetch(clip.videoUrl);
+        const blob = await response.blob();
+        
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        
+        const extension = clip.videoUrl.split('.').pop()?.split('?')[0] || 'mp4';
+        a.download = `${i + 1}. ${clip.name}.${extension}`;
+        
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+        
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+
+      toast.success(`Downloaded ${playlist.clips.length} clips`);
+    } catch (error) {
+      console.error('Error downloading playlist:', error);
+      toast.error("Failed to download some clips");
+    }
+  };
+
   if (isLoadingPlaylists) {
     return <div className="text-center py-8 text-muted-foreground">Loading playlists...</div>;
   }
@@ -330,16 +366,29 @@ export const PlaylistContent = ({ playerData, availableClips }: PlaylistContentP
                     <span className="font-medium">{playlist.name}</span>
                     <span className="text-sm text-muted-foreground">({playlist.clips.length} clips)</span>
                   </div>
-                  <Button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      deletePlaylist(playlist.id);
-                    }}
-                    variant="ghost"
-                    size="sm"
-                  >
-                    <Trash2 className="w-4 h-4 text-destructive" />
-                  </Button>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        downloadPlaylist(playlist);
+                      }}
+                      variant="ghost"
+                      size="sm"
+                      title="Download playlist"
+                    >
+                      <Download className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        deletePlaylist(playlist.id);
+                      }}
+                      variant="ghost"
+                      size="sm"
+                    >
+                      <Trash2 className="w-4 h-4 text-destructive" />
+                    </Button>
+                  </div>
                 </div>
               </div>
             ))}
