@@ -404,8 +404,19 @@ export const PlaylistManager = ({ playerData, availableClips, onClose }: Playlis
   const savePlaylist = async () => {
     if (!selectedPlaylist || !playerData?.email) return;
 
+    const totalClips = selectedPlaylist.clips.length;
+    const loadingToast = toast.loading(
+      `Preparing to save ${totalClips} clip${totalClips !== 1 ? 's' : ''}...`
+    );
+
     setSaving(true);
     try {
+      // Update toast to show processing has started
+      toast.loading(
+        `Processing ${totalClips} clip${totalClips !== 1 ? 's' : ''}... This may take a moment.`,
+        { id: loadingToast }
+      );
+
       const { data, error } = await supabase.functions.invoke('save-playlist', {
         body: { 
           playlistId: selectedPlaylist.id,
@@ -415,25 +426,33 @@ export const PlaylistManager = ({ playerData, availableClips, onClose }: Playlis
 
       if (error) {
         console.error('Save playlist error:', error);
+        toast.error('Failed to save playlist', { id: loadingToast });
         throw error;
       }
 
       if (data?.error) {
         console.error('Save playlist data error:', data.error);
+        toast.error(data.error, { id: loadingToast });
         throw new Error(data.error);
       }
 
-      // Show appropriate message based on whether clips were skipped
+      // Show detailed success message
       if (data.skipped && data.skipped.length > 0) {
-        toast.success(data.message);
+        toast.success(
+          `Saved ${data.clips.length} of ${totalClips} clips. ${data.skipped.length} clip${data.skipped.length !== 1 ? 's were' : ' was'} skipped (may have been deleted).`,
+          { id: loadingToast, duration: 6000 }
+        );
         console.log('Skipped clips:', data.skipped);
       } else {
-        toast.success(`Playlist saved! ${data.clips.length} clips exported to folder.`);
+        toast.success(
+          `✓ All ${data.clips.length} clips saved successfully to folder!`,
+          { id: loadingToast, duration: 5000 }
+        );
       }
     } catch (error) {
       console.error('Save error:', error);
       const errorMsg = error instanceof Error ? error.message : 'Failed to save playlist';
-      toast.error(errorMsg);
+      toast.error(errorMsg, { id: loadingToast });
     } finally {
       setSaving(false);
     }
