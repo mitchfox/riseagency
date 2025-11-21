@@ -474,7 +474,7 @@ export const PlaylistManager = ({ playerData, availableClips, onClose }: Playlis
   };
 
   const loadVideoDuration = (videoUrl: string) => {
-    // Skip if already loaded
+    // Skip if already loaded or loading
     if (clipDurations[videoUrl]) return;
 
     const video = document.createElement("video");
@@ -511,17 +511,20 @@ export const PlaylistManager = ({ playerData, availableClips, onClose }: Playlis
             ),
           }))
         );
-      } else {
-        console.warn("Could not read video duration for clip", videoUrl, rawDuration);
       }
     };
-    video.onerror = (event) => {
-      console.error("Error loading video metadata for clip", videoUrl, event);
+    video.onerror = () => {
+      // Set to 0 to indicate failed load
+      setClipDurations((prev) => ({
+        ...prev,
+        [videoUrl]: 0,
+      }));
     };
     video.src = videoUrl;
   };
 
   const formatDuration = (seconds: number | undefined): string => {
+    if (seconds === undefined) return '—';
     if (!seconds) return '0:00';
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -734,11 +737,7 @@ export const PlaylistManager = ({ playerData, availableClips, onClose }: Playlis
                    ?.slice()
                    .sort((a, b) => a.order - b.order)
                    .map((clip, index, sortedArray) => {
-                     // Load duration for this clip if we don't have it yet
-                     if (!clipDurations[clip.videoUrl] && !clip.duration) {
-                       loadVideoDuration(clip.videoUrl);
-                     }
-
+                     // Don't auto-load durations - only load on play
                      const clipDuration = clipDurations[clip.videoUrl] ?? clip.duration;
                      const runningTotal = calculateRunningTotal(sortedArray, index);
                      const clipKey = clip.id || clip.videoUrl || clip.name;
@@ -768,15 +767,19 @@ export const PlaylistManager = ({ playerData, availableClips, onClose }: Playlis
                              </span>
                            </div>
                          </div>
-                         <Button
-                           size="sm"
-                           variant="ghost"
-                           onClick={() => setPlayingVideo({ url: clip.videoUrl, name: clip.name })}
-                           className="h-8 w-8 p-0 hover:bg-primary/10 text-primary flex-shrink-0"
-                           title="Watch clip"
-                         >
-                           <Play className="w-4 h-4" />
-                         </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => {
+                              // Load duration when play is clicked
+                              loadVideoDuration(clip.videoUrl);
+                              setPlayingVideo({ url: clip.videoUrl, name: clip.name });
+                            }}
+                            className="h-8 w-8 p-0 hover:bg-primary/10 text-primary flex-shrink-0"
+                            title="Watch clip"
+                          >
+                            <Play className="w-4 h-4" />
+                          </Button>
                          
                          {movingClipId === clipKey ? (
                            <div className="flex items-center gap-1.5 flex-shrink-0">
