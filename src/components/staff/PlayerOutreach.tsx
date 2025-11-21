@@ -62,6 +62,9 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
     notes: ""
   });
 
+  // Staff can also edit (not just admins)
+  const canEdit = isAdmin;
+
   useEffect(() => {
     fetchData();
   }, []);
@@ -238,13 +241,13 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
               <TableHead>Parent Approval</TableHead>
               <TableHead>Messaged</TableHead>
               <TableHead>Response</TableHead>
-              {isAdmin && <TableHead>Actions</TableHead>}
+              {canEdit && <TableHead>Actions</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
             {data.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={isAdmin ? 8 : 7} className="text-center text-muted-foreground">
+                <TableCell colSpan={canEdit ? 8 : 7} className="text-center text-muted-foreground">
                   No entries
                 </TableCell>
               </TableRow>
@@ -258,7 +261,7 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
                   <TableCell>{item.parent_approval ? "✓" : "-"}</TableCell>
                   <TableCell>{item.messaged ? "✓" : "-"}</TableCell>
                   <TableCell>{item.response_received ? "✓" : "-"}</TableCell>
-                  {isAdmin && (
+                  {canEdit && (
                     <TableCell>
                       <div className="flex gap-2">
                         <Button size="sm" variant="ghost" onClick={() => handleEdit(item, 'youth')}>
@@ -292,13 +295,13 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
               <TableHead>IG Handle</TableHead>
               <TableHead>Messaged</TableHead>
               <TableHead>Response</TableHead>
-              {isAdmin && <TableHead>Actions</TableHead>}
+              {canEdit && <TableHead>Actions</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
             {data.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={isAdmin ? 5 : 4} className="text-center text-muted-foreground">
+                <TableCell colSpan={canEdit ? 5 : 4} className="text-center text-muted-foreground">
                   No entries
                 </TableCell>
               </TableRow>
@@ -309,7 +312,7 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
                   <TableCell>{item.ig_handle || "-"}</TableCell>
                   <TableCell>{item.messaged ? "✓" : "-"}</TableCell>
                   <TableCell>{item.response_received ? "✓" : "-"}</TableCell>
-                  {isAdmin && (
+                  {canEdit && (
                     <TableCell>
                       <div className="flex gap-2">
                         <Button size="sm" variant="ghost" onClick={() => handleEdit(item, 'pro')}>
@@ -337,7 +340,7 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
           <Users className="h-6 w-6" />
           Player Outreach
         </h2>
-        {isAdmin && (
+        {canEdit && (
           <Dialog open={dialogOpen} onOpenChange={(open) => {
             setDialogOpen(open);
             if (!open) resetForms();

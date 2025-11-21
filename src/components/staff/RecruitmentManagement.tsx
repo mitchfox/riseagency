@@ -84,6 +84,12 @@ export const RecruitmentManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   const [aiWriterInfo, setAiWriterInfo] = useState("");
   const [aiGeneratedMessage, setAiGeneratedMessage] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
+  const [showApplyToOutreach, setShowApplyToOutreach] = useState(false);
+  const [applyOutreachType, setApplyOutreachType] = useState<'youth' | 'pro'>('youth');
+  const [applyPlayerName, setApplyPlayerName] = useState("");
+  const [applyIgHandle, setApplyIgHandle] = useState("");
+  const [applyParentName, setApplyParentName] = useState("");
+  const [applyParentContact, setApplyParentContact] = useState("");
 
   const ageGroups = [
     { value: 'A', label: 'A - FIRST TEAM' },
@@ -370,6 +376,53 @@ export const RecruitmentManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   const handleCopyGeneratedMessage = () => {
     navigator.clipboard.writeText(aiGeneratedMessage);
     toast.success("Message copied to clipboard");
+  };
+
+  const handleApplyToOutreach = async () => {
+    if (!applyPlayerName.trim()) {
+      toast.error("Please enter a player name");
+      return;
+    }
+
+    try {
+      const outreachData: any = {
+        player_name: applyPlayerName,
+        ig_handle: applyIgHandle || null,
+        initial_message: aiGeneratedMessage,
+        messaged: false,
+        response_received: false,
+      };
+
+      if (applyOutreachType === 'youth') {
+        outreachData.parents_name = applyParentName || null;
+        outreachData.parent_contact = applyParentContact || null;
+        outreachData.parent_approval = false;
+
+        const { error } = await supabase
+          .from('player_outreach_youth')
+          .insert([outreachData]);
+        
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('player_outreach_pro')
+          .insert([outreachData]);
+        
+        if (error) throw error;
+      }
+
+      toast.success(`Added to ${applyOutreachType === 'youth' ? 'Youth' : 'Pro'} Outreach`);
+      setShowApplyToOutreach(false);
+      setApplyPlayerName("");
+      setApplyIgHandle("");
+      setApplyParentName("");
+      setApplyParentContact("");
+      setAiWriterOpen(false);
+      setAiGeneratedMessage("");
+      setAiWriterInfo("");
+    } catch (error: any) {
+      toast.error("Failed to add to outreach: " + error.message);
+    }
   };
 
   const handleOpenAiWriter = (template?: MarketingTemplate) => {
@@ -950,17 +1003,26 @@ export const RecruitmentManagement = ({ isAdmin }: { isAdmin: boolean }) => {
             </Button>
 
             {aiGeneratedMessage && (
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="generated-message">Generated Message</Label>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={handleCopyGeneratedMessage}
-                  >
-                    <Copy className="w-4 h-4 mr-2" />
-                    Copy
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={handleCopyGeneratedMessage}
+                    >
+                      <Copy className="w-4 h-4 mr-2" />
+                      Copy
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={() => setShowApplyToOutreach(!showApplyToOutreach)}
+                    >
+                      <UserPlus className="w-4 h-4 mr-2" />
+                      Apply to Outreach
+                    </Button>
+                  </div>
                 </div>
                 <Textarea
                   id="generated-message"
@@ -972,6 +1034,78 @@ export const RecruitmentManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                 <p className="text-xs text-muted-foreground">
                   You can edit the generated message above before copying or using it
                 </p>
+
+                {showApplyToOutreach && (
+                  <div className="p-4 border rounded-lg space-y-3 bg-muted/50">
+                    <h4 className="font-semibold text-sm">Add to Player Outreach</h4>
+                    
+                    <div className="space-y-2">
+                      <Label>Outreach Type</Label>
+                      <Select value={applyOutreachType} onValueChange={(value: 'youth' | 'pro') => setApplyOutreachType(value)}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="youth">Youth (U18)</SelectItem>
+                          <SelectItem value="pro">Pro</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-2">
+                        <Label htmlFor="apply-player-name">Player Name *</Label>
+                        <Input
+                          id="apply-player-name"
+                          value={applyPlayerName}
+                          onChange={(e) => setApplyPlayerName(e.target.value)}
+                          placeholder="Enter player name"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="apply-ig-handle">IG Handle</Label>
+                        <Input
+                          id="apply-ig-handle"
+                          value={applyIgHandle}
+                          onChange={(e) => setApplyIgHandle(e.target.value)}
+                          placeholder="@username"
+                        />
+                      </div>
+                    </div>
+
+                    {applyOutreachType === 'youth' && (
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-2">
+                          <Label htmlFor="apply-parent-name">Parent Name</Label>
+                          <Input
+                            id="apply-parent-name"
+                            value={applyParentName}
+                            onChange={(e) => setApplyParentName(e.target.value)}
+                            placeholder="Parent/Guardian name"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="apply-parent-contact">Parent Contact</Label>
+                          <Input
+                            id="apply-parent-contact"
+                            value={applyParentContact}
+                            onChange={(e) => setApplyParentContact(e.target.value)}
+                            placeholder="Email or phone"
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="flex gap-2 justify-end">
+                      <Button size="sm" variant="outline" onClick={() => setShowApplyToOutreach(false)}>
+                        Cancel
+                      </Button>
+                      <Button size="sm" onClick={handleApplyToOutreach}>
+                        Add to Outreach
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
