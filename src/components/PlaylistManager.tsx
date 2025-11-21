@@ -216,7 +216,7 @@ export const PlaylistManager = ({ playerData, availableClips, onClose }: Playlis
     }
   };
 
-  const removeClipFromPlaylist = async (clipId: string, clipName: string) => {
+  const removeClipFromPlaylist = async (clipVideoUrl: string, clipName: string) => {
     if (!selectedPlaylist) return;
 
     // Get email from playerData or fallback to storage
@@ -231,7 +231,7 @@ export const PlaylistManager = ({ playerData, availableClips, onClose }: Playlis
 
     try {
       const updatedClips = selectedPlaylist.clips
-        .filter(c => (c.id || c.videoUrl || c.name) !== clipId)
+        .filter(c => c.videoUrl !== clipVideoUrl)
         .map((c, index) => ({ ...c, order: index + 1 }));
 
       // Use edge function to update playlist (bypasses RLS)
@@ -801,7 +801,7 @@ export const PlaylistManager = ({ playerData, availableClips, onClose }: Playlis
                       <Button
                         size="sm"
                         variant="ghost"
-                        onClick={() => removeClipFromPlaylist(clip.id || clip.videoUrl || clip.name, clip.name)}
+                        onClick={() => removeClipFromPlaylist(clip.videoUrl, clip.name)}
                         className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10 flex-shrink-0"
                       >
                         <Trash2 className="w-4 h-4" />
