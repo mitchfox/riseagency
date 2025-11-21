@@ -182,15 +182,26 @@ export function InlineVideoUpload({
         addedAt: new Date().toISOString()
       };
 
+      console.log(`[UPLOAD] highlightType=${highlightType}, adding to ${highlightType === 'match' ? 'matchHighlights' : 'bestClips'}`);
+
+      // CRITICAL: Ensure we update the correct array based on highlightType
+      const currentMatchHighlights = (highlights as any).matchHighlights || [];
+      const currentBestClips = (highlights as any).bestClips || [];
+
       const updatedHighlights = highlightType === 'match' 
         ? {
-            matchHighlights: [...((highlights as any).matchHighlights || []), newClip],
-            bestClips: (highlights as any).bestClips || []
+            matchHighlights: [...currentMatchHighlights, newClip],
+            bestClips: currentBestClips
           }
         : {
-            matchHighlights: (highlights as any).matchHighlights || [],
-            bestClips: [...((highlights as any).bestClips || []), newClip]
+            matchHighlights: currentMatchHighlights,
+            bestClips: [...currentBestClips, newClip]
           };
+
+      console.log(`[UPLOAD] Updated highlights:`, {
+        matchHighlightsCount: updatedHighlights.matchHighlights.length,
+        bestClipsCount: updatedHighlights.bestClips.length
+      });
 
       const { error: updateError } = await supabase
         .from('players')
