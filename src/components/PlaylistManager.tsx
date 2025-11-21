@@ -477,21 +477,46 @@ export const PlaylistManager = ({ playerData, availableClips, onClose }: Playlis
     // Skip if already loaded
     if (clipDurations[videoUrl]) return;
 
-    const video = document.createElement('video');
-    video.preload = 'metadata';
+    const video = document.createElement("video");
+    video.preload = "metadata";
     video.onloadedmetadata = () => {
       const rawDuration = video.duration;
       if (Number.isFinite(rawDuration) && rawDuration > 0) {
+        const rounded = Math.round(rawDuration);
+
+        // Store in local duration map
         setClipDurations((prev) => ({
           ...prev,
-          [videoUrl]: Math.round(rawDuration),
+          [videoUrl]: rounded,
         }));
+
+        // Also persist in selectedPlaylist state
+        setSelectedPlaylist((prev) =>
+          prev
+            ? {
+                ...prev,
+                clips: prev.clips.map((clip) =>
+                  clip.videoUrl === videoUrl ? { ...clip, duration: rounded } : clip
+                ),
+              }
+            : prev
+        );
+
+        // And update playlists collection so counts stay in sync
+        setPlaylists((prev) =>
+          prev.map((playlist) => ({
+            ...playlist,
+            clips: playlist.clips.map((clip) =>
+              clip.videoUrl === videoUrl ? { ...clip, duration: rounded } : clip
+            ),
+          }))
+        );
       } else {
-        console.warn('Could not read video duration for clip', videoUrl, rawDuration);
+        console.warn("Could not read video duration for clip", videoUrl, rawDuration);
       }
     };
     video.onerror = (event) => {
-      console.error('Error loading video metadata for clip', videoUrl, event);
+      console.error("Error loading video metadata for clip", videoUrl, event);
     };
     video.src = videoUrl;
   };
@@ -506,8 +531,11 @@ export const PlaylistManager = ({ playerData, availableClips, onClose }: Playlis
   const calculateRunningTotal = (clips: Clip[], upToIndex: number): number => {
     let total = 0;
     for (let i = 0; i <= upToIndex; i++) {
-      const duration = clipDurations[clips[i].videoUrl];
-      if (duration) total += duration;
+      const durationFromState = clipDurations[clips[i].videoUrl];
+      const duration = durationFromState ?? clips[i].duration;
+      if (duration && Number.isFinite(duration)) {
+        total += duration;
+      }
     }
     return total;
   };
@@ -609,31 +637,43 @@ export const PlaylistManager = ({ playerData, availableClips, onClose }: Playlis
             {selectedPlaylist ? (
               <>
                 <div className="space-y-2 max-h-[250px] md:max-h-[400px] overflow-y-auto pr-2">
-                  {availableClips
-                    .filter((clip) => {
-                      // Filter out clips already in the playlist
-                      return !selectedPlaylist.clips?.some(
-                        (pc) => (pc.id || pc.videoUrl) === (clip.id || clip.videoUrl)
-                      );
-                    })
-                    .map((clip) => {
-                      const clipKey = clip.id || clip.videoUrl || clip.name;
+                  {availableClips.map((clip) => {
+                    const clipKey = clip.id || clip.videoUrl || clip.name;
+                    const alreadyInPlaylist = selectedPlaylist.clips?.some(
+                      (pc) => pc.videoUrl === clip.videoUrl
+                    );
 
-                      return (
-                        <div
-                          key={clipKey}
-                          className="flex items-center gap-2 p-2 border rounded hover:bg-muted transition-colors"
+                    return (
+                      <div
+                        key={clipKey}
+                        className={`flex items-center gap-2 p-2 border rounded transition-colors ${
+                          alreadyInPlaylist ? "bg-muted/60 opacity-60" : "hover:bg-muted"
+                        }`}
+                      >
+                        <Checkbox
+                          checked={selectedClips.has(clipKey)}
+                          disabled={!!alreadyInPlaylist}
+                          onCheckedChange={() => {
+                            if (!alreadyInPlaylist) {
+                              toggleClipSelection(clipKey);
+                            }
+                          }}
+                        />
+                        <Label
+                          className={`flex-1 cursor-pointer text-xs md:text-sm leading-tight break-words ${
+                            alreadyInPlaylist ? "line-through text-muted-foreground" : ""
+                          }`}
                         >
-                          <Checkbox
-                            checked={selectedClips.has(clipKey)}
-                            onCheckedChange={() => toggleClipSelection(clipKey)}
-                          />
-                          <Label className="flex-1 cursor-pointer text-xs md:text-sm leading-tight break-words">
-                            {clip.name}
-                          </Label>
-                        </div>
-                      );
-                    })}
+                          {clip.name}
+                          {alreadyInPlaylist && (
+                            <span className="ml-2 text-[10px] md:text-xs text-muted-foreground">
+                              (already in playlist)
+                            </span>
+                          )}
+                        </Label>
+                      </div>
+                    );
+                  })}
                 </div>
                 <Button
                   size="sm"
@@ -689,148 +729,154 @@ export const PlaylistManager = ({ playerData, availableClips, onClose }: Playlis
             </div>
 
             {selectedPlaylist ? (
-              <div className="space-y-2 max-h-[250px] md:max-h-[400px] overflow-y-auto pr-2">
-                {selectedPlaylist.clips?.sort((a, b) => a.order - b.order).map((clip, index) => {
-                  // Load duration for this clip
-                  if (!clipDurations[clip.videoUrl]) {
-                    loadVideoDuration(clip.videoUrl);
-                  }
-                  const runningTotal = calculateRunningTotal(selectedPlaylist.clips, index);
-                  
-                  return (
-                  <div
-                    key={clip.id || clip.videoUrl || clip.name}
-                    className="space-y-1"
-                  >
-                    <div className="flex items-center gap-2 md:gap-3 p-2.5 md:p-3 border rounded bg-card hover:border-primary/30 transition-colors">
-                      <span className="text-sm md:text-base font-bold text-primary w-8 md:w-10 flex-shrink-0 text-center">
-                        {index + 1}.
-                      </span>
-                      <div className="flex-1 min-w-0 space-y-1">
-                        <ClipNameEditor
-                          initialName={clip.name}
-                          videoUrl={clip.videoUrl}
-                          onRename={(newName) => handleRenameClip(clip.name, clip.videoUrl, newName)}
-                        />
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <span className="font-mono">
-                            {formatDuration(clipDurations[clip.videoUrl])}
-                          </span>
-                          <span className="text-primary/60">•</span>
-                          <span className="font-mono">
-                            Total: {formatDuration(runningTotal)}
-                          </span>
-                        </div>
-                      </div>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => setPlayingVideo({ url: clip.videoUrl, name: clip.name })}
-                        className="h-8 w-8 p-0 hover:bg-primary/10 text-primary flex-shrink-0"
-                        title="Watch clip"
-                      >
-                        <Play className="w-4 h-4" />
-                      </Button>
-                      
-                      {movingClipId === (clip.id || clip.videoUrl || clip.name) ? (
-                        <div className="flex items-center gap-1.5 flex-shrink-0">
-                          <Input
-                            type="number"
-                            min="1"
-                            max={selectedPlaylist.clips.length}
-                            value={targetPosition}
-                            onChange={(e) => setTargetPosition(e.target.value)}
-                            placeholder="#"
-                            className="h-8 w-14 text-sm p-1 text-center"
-                            autoFocus
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter' && targetPosition) {
-                                moveClipToPosition(index, parseInt(targetPosition));
-                              }
-                              if (e.key === 'Escape') {
-                                setMovingClipId(null);
-                                setTargetPosition("");
-                              }
-                            }}
-                          />
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => {
-                              if (targetPosition) moveClipToPosition(index, parseInt(targetPosition));
-                            }}
-                            className="h-8 w-8 p-0 hover:bg-primary/10"
-                          >
-                            <Save className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => {
-                              setMovingClipId(null);
-                              setTargetPosition("");
-                            }}
-                            className="h-8 w-8 p-0 hover:bg-muted"
-                          >
-                            <X className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      ) : (
-                        <>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => {
-                              setMovingClipId(clip.id || clip.videoUrl || clip.name);
-                              setTargetPosition("");
-                            }}
-                            className="h-8 w-8 p-0 hover:bg-muted flex-shrink-0"
-                            title="Move to position"
-                          >
-                            <Hash className="w-4 h-4" />
-                          </Button>
-                          <div className="flex flex-col gap-0.5 flex-shrink-0">
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => reorderClip(index, 'up')}
-                              disabled={index === 0}
-                              className="h-6 w-6 md:h-7 md:w-7 p-0 hover:bg-muted"
-                            >
-                              <ChevronUp className="w-3.5 h-3.5" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => reorderClip(index, 'down')}
-                              disabled={index === selectedPlaylist.clips.length - 1}
-                              className="h-6 w-6 md:h-7 md:w-7 p-0 hover:bg-muted"
-                            >
-                              <ChevronDown className="w-3.5 h-3.5" />
-                            </Button>
-                          </div>
-                        </>
-                      )}
-                      
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => removeClipFromPlaylist(clip.videoUrl, clip.name)}
-                        className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10 flex-shrink-0"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-                );
-                })}
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground text-center py-8">
-                Select a playlist to view clips
-              </p>
-            )}
-          </div>
+               <div className="space-y-2 max-h-[250px] md:max-h-[400px] overflow-y-auto pr-2">
+                 {selectedPlaylist.clips
+                   ?.slice()
+                   .sort((a, b) => a.order - b.order)
+                   .map((clip, index, sortedArray) => {
+                     // Load duration for this clip if we don't have it yet
+                     if (!clipDurations[clip.videoUrl] && !clip.duration) {
+                       loadVideoDuration(clip.videoUrl);
+                     }
+
+                     const clipDuration = clipDurations[clip.videoUrl] ?? clip.duration;
+                     const runningTotal = calculateRunningTotal(sortedArray, index);
+                     const clipKey = clip.id || clip.videoUrl || clip.name;
+                     
+                     return (
+                     <div
+                       key={clipKey}
+                       className="space-y-1"
+                     >
+                       <div className="flex items-center gap-2 md:gap-3 p-2.5 md:p-3 border rounded bg-card hover:border-primary/30 transition-colors">
+                         <span className="text-sm md:text-base font-bold text-primary w-8 md:w-10 flex-shrink-0 text-center">
+                           {index + 1}.
+                         </span>
+                         <div className="flex-1 min-w-0 space-y-1">
+                           <ClipNameEditor
+                             initialName={clip.name}
+                             videoUrl={clip.videoUrl}
+                             onRename={(newName) => handleRenameClip(clip.name, clip.videoUrl, newName)}
+                           />
+                           <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                             <span className="font-mono">
+                               {formatDuration(clipDuration)}
+                             </span>
+                             <span className="text-primary/60">•</span>
+                             <span className="font-mono">
+                               Total: {formatDuration(runningTotal)}
+                             </span>
+                           </div>
+                         </div>
+                         <Button
+                           size="sm"
+                           variant="ghost"
+                           onClick={() => setPlayingVideo({ url: clip.videoUrl, name: clip.name })}
+                           className="h-8 w-8 p-0 hover:bg-primary/10 text-primary flex-shrink-0"
+                           title="Watch clip"
+                         >
+                           <Play className="w-4 h-4" />
+                         </Button>
+                         
+                         {movingClipId === clipKey ? (
+                           <div className="flex items-center gap-1.5 flex-shrink-0">
+                             <Input
+                               type="number"
+                               min="1"
+                               max={selectedPlaylist.clips.length}
+                               value={targetPosition}
+                               onChange={(e) => setTargetPosition(e.target.value)}
+                               placeholder="#"
+                               className="h-8 w-14 text-sm p-1 text-center"
+                               autoFocus
+                               onKeyDown={(e) => {
+                                 if (e.key === 'Enter' && targetPosition) {
+                                   moveClipToPosition(index, parseInt(targetPosition));
+                                 }
+                                 if (e.key === 'Escape') {
+                                   setMovingClipId(null);
+                                   setTargetPosition("");
+                                 }
+                               }}
+                             />
+                             <Button
+                               size="sm"
+                               variant="ghost"
+                               onClick={() => {
+                                 if (targetPosition) moveClipToPosition(index, parseInt(targetPosition));
+                               }}
+                               className="h-8 w-8 p-0 hover:bg-primary/10"
+                             >
+                               <Save className="w-4 h-4" />
+                             </Button>
+                             <Button
+                               size="sm"
+                               variant="ghost"
+                               onClick={() => {
+                                 setMovingClipId(null);
+                                 setTargetPosition("");
+                               }}
+                               className="h-8 w-8 p-0 hover:bg-muted"
+                             >
+                               <X className="w-4 h-4" />
+                             </Button>
+                           </div>
+                         ) : (
+                           <>
+                             <Button
+                               size="sm"
+                               variant="ghost"
+                               onClick={() => {
+                                 setMovingClipId(clipKey);
+                                 setTargetPosition("");
+                               }}
+                               className="h-8 w-8 p-0 hover:bg-muted flex-shrink-0"
+                               title="Move to position"
+                             >
+                               <Hash className="w-4 h-4" />
+                             </Button>
+                             <div className="flex flex-col gap-0.5 flex-shrink-0">
+                               <Button
+                                 size="sm"
+                                 variant="ghost"
+                                 onClick={() => reorderClip(index, 'up')}
+                                 disabled={index === 0}
+                                 className="h-6 w-6 md:h-7 md:w-7 p-0 hover:bg-muted"
+                               >
+                                 <ChevronUp className="w-3.5 h-3.5" />
+                               </Button>
+                               <Button
+                                 size="sm"
+                                 variant="ghost"
+                                 onClick={() => reorderClip(index, 'down')}
+                                 disabled={index === selectedPlaylist.clips.length - 1}
+                                 className="h-6 w-6 md:h-7 md:w-7 p-0 hover:bg-muted"
+                               >
+                                 <ChevronDown className="w-3.5 h-3.5" />
+                               </Button>
+                             </div>
+                           </>
+                         )}
+                         
+                         <Button
+                           size="sm"
+                           variant="ghost"
+                           onClick={() => removeClipFromPlaylist(clip.videoUrl, clip.name)}
+                           className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10 flex-shrink-0"
+                         >
+                           <Trash2 className="w-4 h-4" />
+                         </Button>
+                       </div>
+                     </div>
+                   );
+                   })}
+               </div>
+             ) : (
+               <p className="text-sm text-muted-foreground text-center py-8">
+                 Select a playlist to view clips
+               </p>
+             )}
+           </div>
         </div>
 
         <DialogFooter className="mt-4">
@@ -856,11 +902,33 @@ export const PlaylistManager = ({ playerData, availableClips, onClose }: Playlis
                 controlsList="nodownload"
                 onLoadedMetadata={(e) => {
                   const duration = Math.round(e.currentTarget.duration || 0);
-                  if (duration && !Number.isNaN(duration)) {
+                  if (duration && !Number.isNaN(duration) && playingVideo) {
+                    const url = playingVideo.url;
+
                     setClipDurations((prev) => ({
                       ...prev,
-                      [playingVideo.url]: duration,
+                      [url]: duration,
                     }));
+
+                    setSelectedPlaylist((prev) =>
+                      prev
+                        ? {
+                            ...prev,
+                            clips: prev.clips.map((clip) =>
+                              clip.videoUrl === url ? { ...clip, duration } : clip
+                            ),
+                          }
+                        : prev
+                    );
+
+                    setPlaylists((prev) =>
+                      prev.map((playlist) => ({
+                        ...playlist,
+                        clips: playlist.clips.map((clip) =>
+                          clip.videoUrl === url ? { ...clip, duration } : clip
+                        ),
+                      }))
+                    );
                   }
                 }}
               >
