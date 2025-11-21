@@ -46,17 +46,13 @@ export function InlineVideoUpload({
       logoFile: null,
       logoPreview: null,
       progress: 0,
-      status: 'uploading' as const
+      status: 'idle' as const
     }));
 
-    setUploads(prev => {
-      const updated = [...prev, ...newUploads];
-      // Start uploads after state is updated
-      setTimeout(() => {
-        newUploads.forEach(upload => startUpload(upload.id));
-      }, 0);
-      return updated;
-    });
+    setUploads(prev => [...prev, ...newUploads]);
+    
+    // Start uploads with the actual upload data
+    newUploads.forEach(upload => startUpload(upload));
   };
 
   const handleLogoSelect = (uploadId: string, file: File) => {
@@ -75,21 +71,17 @@ export function InlineVideoUpload({
     setUploads(prev => prev.filter(u => u.id !== uploadId));
   };
 
-  const startUpload = async (uploadId: string) => {
-    setUploads(prev => {
-      const upload = prev.find(u => u.id === uploadId);
-      if (!upload) return prev;
-
-      return prev.map(u => 
-        u.id === uploadId ? { ...u, status: 'uploading' as const, error: undefined, progress: 10 } : u
-      );
-    });
-
-    // Get the upload item from current state
-    const currentUpload = uploads.find(u => u.id === uploadId);
-    if (!currentUpload) return;
+  const startUpload = async (uploadData: UploadItem) => {
+    const uploadId = uploadData.id;
+    
+    setUploads(prev => prev.map(u => 
+      u.id === uploadId ? { ...u, status: 'uploading' as const, error: undefined, progress: 10 } : u
+    ));
 
     try {
+      // Get latest upload data with current clipName and logoFile
+      const currentUpload = uploads.find(u => u.id === uploadId) || uploadData;
+      
       // Upload video file
       const fileName = `${playerId}_${Date.now()}_${currentUpload.file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
       const filePath = `highlights/${fileName}`;
@@ -223,7 +215,10 @@ export function InlineVideoUpload({
   };
 
   const retryUpload = (uploadId: string) => {
-    startUpload(uploadId);
+    const upload = uploads.find(u => u.id === uploadId);
+    if (upload) {
+      startUpload(upload);
+    }
   };
 
   return (
@@ -268,7 +263,7 @@ export function InlineVideoUpload({
                             u.id === upload.id ? { ...u, clipName: e.target.value } : u
                           ));
                         }}
-                        disabled={upload.status !== 'idle'}
+                        disabled={upload.status === 'success'}
                         className="h-8 text-sm"
                         placeholder="Clip title"
                       />
@@ -279,7 +274,7 @@ export function InlineVideoUpload({
                   </div>
 
                   <div className="flex items-center gap-2">
-                    {!upload.logoPreview && upload.status === 'idle' && (
+                    {!upload.logoPreview && upload.status !== 'success' && (
                       <Button
                         size="icon"
                         variant="outline"
@@ -320,7 +315,7 @@ export function InlineVideoUpload({
                       </Button>
                     )}
 
-                    {(upload.status === 'idle' || upload.status === 'error') && (
+                    {upload.status !== 'success' && (
                       <Button
                         size="icon"
                         variant="ghost"
