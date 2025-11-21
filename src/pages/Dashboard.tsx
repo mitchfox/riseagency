@@ -1835,6 +1835,15 @@ const Dashboard = () => {
                               );
                             }
 
+                            // Helper function to parse bullet points
+                            const parseBulletPoints = (text: string | null): string[] => {
+                              if (!text) return [];
+                              return text.split('\n')
+                                .map(line => line.trim())
+                                .filter(line => line.length > 0)
+                                .map(line => line.replace(/^[•\-*]\s*/, '')); // Remove bullet characters
+                            };
+
                             return (
                               <div className="border rounded-lg p-6">
                                 <h3 className="text-2xl font-bebas uppercase tracking-wider mb-4">
@@ -1848,8 +1857,15 @@ const Dashboard = () => {
                                         Defensive Transition
                                       </AccordionTrigger>
                                       <AccordionContent>
-                                        <div className="text-muted-foreground whitespace-pre-wrap pt-2">
-                                          {matchedScheme.defensive_transition}
+                                        <div className="space-y-2 pt-2">
+                                          {parseBulletPoints(matchedScheme.defensive_transition).map((point, index) => (
+                                            <div key={index} className="bg-muted/50 border border-border rounded-lg p-3 hover:bg-muted/70 transition-colors">
+                                              <div className="flex gap-2">
+                                                <span className="text-accent font-semibold mt-0.5">•</span>
+                                                <p className="text-muted-foreground flex-1">{point}</p>
+                                              </div>
+                                            </div>
+                                          ))}
                                         </div>
                                       </AccordionContent>
                                     </AccordionItem>
@@ -1861,8 +1877,15 @@ const Dashboard = () => {
                                         Defence
                                       </AccordionTrigger>
                                       <AccordionContent>
-                                        <div className="text-muted-foreground whitespace-pre-wrap pt-2">
-                                          {matchedScheme.defence}
+                                        <div className="space-y-2 pt-2">
+                                          {parseBulletPoints(matchedScheme.defence).map((point, index) => (
+                                            <div key={index} className="bg-muted/50 border border-border rounded-lg p-3 hover:bg-muted/70 transition-colors">
+                                              <div className="flex gap-2">
+                                                <span className="text-accent font-semibold mt-0.5">•</span>
+                                                <p className="text-muted-foreground flex-1">{point}</p>
+                                              </div>
+                                            </div>
+                                          ))}
                                         </div>
                                       </AccordionContent>
                                     </AccordionItem>
@@ -1874,8 +1897,15 @@ const Dashboard = () => {
                                         Offensive Transition
                                       </AccordionTrigger>
                                       <AccordionContent>
-                                        <div className="text-muted-foreground whitespace-pre-wrap pt-2">
-                                          {matchedScheme.offensive_transition}
+                                        <div className="space-y-2 pt-2">
+                                          {parseBulletPoints(matchedScheme.offensive_transition).map((point, index) => (
+                                            <div key={index} className="bg-muted/50 border border-border rounded-lg p-3 hover:bg-muted/70 transition-colors">
+                                              <div className="flex gap-2">
+                                                <span className="text-accent font-semibold mt-0.5">•</span>
+                                                <p className="text-muted-foreground flex-1">{point}</p>
+                                              </div>
+                                            </div>
+                                          ))}
                                         </div>
                                       </AccordionContent>
                                     </AccordionItem>
@@ -1887,8 +1917,15 @@ const Dashboard = () => {
                                         In Possession
                                       </AccordionTrigger>
                                       <AccordionContent>
-                                        <div className="text-muted-foreground whitespace-pre-wrap pt-2">
-                                          {matchedScheme.offence}
+                                        <div className="space-y-2 pt-2">
+                                          {parseBulletPoints(matchedScheme.offence).map((point, index) => (
+                                            <div key={index} className="bg-muted/50 border border-border rounded-lg p-3 hover:bg-muted/70 transition-colors">
+                                              <div className="flex gap-2">
+                                                <span className="text-accent font-semibold mt-0.5">•</span>
+                                                <p className="text-muted-foreground flex-1">{point}</p>
+                                              </div>
+                                            </div>
+                                          ))}
                                         </div>
                                       </AccordionContent>
                                     </AccordionItem>
