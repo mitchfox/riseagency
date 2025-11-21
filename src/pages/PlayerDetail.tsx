@@ -386,7 +386,7 @@ const PlayerDetail = () => {
               
               {/* Recent Match Highlights Overlay - Above Club Logos */}
               {dbHighlights.length > 0 && (
-                <div className="hidden lg:block absolute bottom-12 md:bottom-16 left-1/2 -translate-x-1/2 z-20 bg-[hsl(var(--gold))]/20 backdrop-blur-sm px-3 py-1.5 rounded-md border border-[hsl(var(--gold))]/40">
+                <div className="hidden lg:block absolute bottom-16 md:bottom-20 left-1/2 -translate-x-1/2 z-20 bg-[hsl(var(--gold))]/20 backdrop-blur-sm px-3 py-1.5 rounded-md border border-[hsl(var(--gold))]/40">
                   <p className="text-foreground font-bebas uppercase tracking-wider text-sm md:text-base whitespace-nowrap">
                     RECENT MATCHES
                   </p>
@@ -401,19 +401,21 @@ const PlayerDetail = () => {
                       <button
                         key={index}
                         onClick={() => setCurrentVideoType(index)}
-                        className={`w-6 h-6 md:w-10 md:h-10 rounded border transition-all overflow-hidden bg-black/50 ${
+                        className={`w-6 h-6 md:w-10 md:h-10 rounded border transition-all overflow-hidden bg-background/90 backdrop-blur-sm ${
                           currentVideoType === index
                             ? 'border-[hsl(var(--gold))] scale-110'
                             : 'border-[hsl(var(--gold))]/20 hover:border-[hsl(var(--gold))]/50'
                         }`}
                         title={highlight.name || `Highlight ${index + 1}`}
                       >
-                        <img 
-                          src={highlight.clubLogo} 
-                          alt={highlight.name || `Highlight ${index + 1}`}
-                          className="w-full h-full object-contain p-0.5"
-                          loading="lazy"
-                        />
+                        {(highlight.logoUrl || highlight.clubLogo) && (
+                          <img 
+                            src={highlight.logoUrl || highlight.clubLogo} 
+                            alt={highlight.name || `Highlight ${index + 1}`}
+                            className="w-full h-full object-contain p-0.5"
+                            loading="lazy"
+                          />
+                        )}
                       </button>
                     ))}
                   </div>
