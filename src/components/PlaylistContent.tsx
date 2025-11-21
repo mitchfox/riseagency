@@ -278,8 +278,6 @@ export const PlaylistContent = ({ playerData, availableClips }: PlaylistContentP
       return;
     }
 
-    toast.loading(`Downloading ${playlist.clips.length} clips...`);
-
     try {
       for (let i = 0; i < playlist.clips.length; i++) {
         const clip = playlist.clips[i];
