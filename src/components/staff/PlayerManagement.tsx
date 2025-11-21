@@ -165,6 +165,25 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
     }
   }, [players, searchParams]);
 
+  const refreshSelectedPlayer = async () => {
+    if (!selectedPlayerId) return;
+    
+    try {
+      const { data: playerData, error } = await supabase
+        .from("players")
+        .select("*")
+        .eq("id", selectedPlayerId)
+        .single();
+
+      if (error) throw error;
+
+      // Update only the selected player in the players array
+      setPlayers(prev => prev.map(p => p.id === selectedPlayerId ? playerData : p));
+    } catch (error: any) {
+      console.error("Failed to refresh player:", error);
+    }
+  };
+
   const fetchPlayers = async (preserveSelection = false) => {
     try {
       const { data: playersData, error: playersError } = await supabase
@@ -1548,7 +1567,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                     playerEmail={selectedPlayer.email || ''}
                                     playerId={selectedPlayer.id}
                                     highlightType="match"
-                                    onUploadComplete={() => fetchPlayers(true)}
+                                    onUploadComplete={refreshSelectedPlayer}
                                   />
                                   
                                     {matchHighlights.length > 0 ? (
@@ -1710,10 +1729,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                     playerEmail={selectedPlayer.email || ''}
                                     playerId={selectedPlayer.id}
                                     highlightType="best"
-                                    onUploadComplete={() => {
-                                      fetchPlayers(true);
-                                      setBestClipsPage(1); // Reset to first page after upload
-                                    }}
+                                    onUploadComplete={refreshSelectedPlayer}
                                   />
                                   
                                     {bestClips.length > 0 ? (
