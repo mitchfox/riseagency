@@ -2819,15 +2819,25 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                 ? JSON.parse(selectedPlayer.highlights)
                 : (selectedPlayer.highlights || {});
 
-              // BEST CLIPS ONLY – match highlights are completely separate
+              const matchHighlights = highlights.matchHighlights || [];
               const bestClips = highlights.bestClips || [];
 
-              return (bestClips as any[]).map((clip: any, idx: number) => ({
-                id: clip.clipId || `best-${idx}`,
-                name: clip.name || clip.clipName || `Best Clip ${idx + 1}`,
-                videoUrl: clip.videoUrl,
-                thumbnailUrl: clip.thumbnailUrl,
-              }));
+              const allClips = [
+                ...(matchHighlights as any[]).map((clip: any, idx: number) => ({
+                  id: clip.clipId || `match-${idx}`,
+                  name: clip.name || clip.clipName || `Match Highlight ${idx + 1}`,
+                  videoUrl: clip.videoUrl,
+                  thumbnailUrl: clip.thumbnailUrl,
+                })),
+                ...(bestClips as any[]).map((clip: any, idx: number) => ({
+                  id: clip.clipId || `best-${idx}`,
+                  name: clip.name || clip.clipName || `Best Clip ${idx + 1}`,
+                  videoUrl: clip.videoUrl,
+                  thumbnailUrl: clip.thumbnailUrl,
+                }))
+              ];
+
+              return allClips;
             } catch (e) {
               return [];
             }
