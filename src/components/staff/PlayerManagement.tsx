@@ -1543,7 +1543,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                           key={idx} 
                                           className={`overflow-hidden group relative transition-all ${
                                             draggedHighlightIndex === idx ? 'opacity-50 scale-95' : ''
-                                          } ${draggedHighlightIndex !== null && draggedHighlightIndex !== idx ? 'border-2 border-primary/50' : ''}`}
+                                          }`}
                                           onDragOver={(e) => {
                                             e.preventDefault();
                                             e.dataTransfer.dropEffect = 'move';
@@ -1578,69 +1578,71 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                             </div>
                                           )}
                                           <CardContent className="p-4">
-                                            <div 
-                                              className="flex items-center gap-2"
-                                              draggable
-                                              onDragStart={(e) => {
-                                                // Only allow drag from title area, not buttons
-                                                const target = e.target as HTMLElement;
-                                                if (target.closest('button')) {
-                                                  e.preventDefault();
-                                                  return;
-                                                }
-                                                setDraggedHighlightIndex(idx);
-                                                e.dataTransfer.effectAllowed = 'move';
-                                              }}
-                                              onDragEnd={() => setDraggedHighlightIndex(null)}
-                                            >
-                                              <div className="cursor-grab active:cursor-grabbing">
-                                                <GripVertical className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                                              </div>
-                                              <p className="font-medium truncate flex-1 cursor-grab">{highlight.name || `Highlight ${idx + 1}`}</p>
-                                              <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-                                                <Button
-                                                  size="icon"
-                                                  variant="ghost"
-                                                  disabled={idx === 0}
-                                                  onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    if (idx > 0) handleReorderHighlights(selectedPlayer.id, 'match', idx, idx - 1);
-                                                  }}
-                                                >
-                                                  <ChevronLeft className="w-4 h-4" />
-                                                </Button>
-                                                <Button
-                                                  size="icon"
-                                                  variant="ghost"
-                                                  disabled={idx === matchHighlights.length - 1}
-                                                  onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    if (idx < matchHighlights.length - 1) handleReorderHighlights(selectedPlayer.id, 'match', idx, idx + 1);
-                                                  }}
-                                                >
-                                                  <ChevronRight className="w-4 h-4" />
-                                                </Button>
-                                                <Button
-                                                  size="sm"
-                                                  variant="ghost"
-                                                  onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    setEditingHighlight({ highlight, type: 'match' });
-                                                    setIsEditHighlightOpen(true);
-                                                  }}
-                                                >
-                                                  <Edit className="w-4 h-4" />
-                                                </Button>
-                                                <Button
-                                                  size="sm"
-                                                  variant="ghost"
-                                                  onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleDeleteHighlight(selectedPlayer.id, 'match', idx);
-                                                  }}
-                                                >
-                                                  <Trash2 className="w-4 h-4 text-destructive" />
-                                                </Button>
+                                            <div className="space-y-2">
+                                              <p className="font-medium truncate">{highlight.name || `Highlight ${idx + 1}`}</p>
+                                              <div 
+                                                className="flex items-center gap-2"
+                                                draggable
+                                                onDragStart={(e) => {
+                                                  // Only allow drag from title area, not buttons
+                                                  const target = e.target as HTMLElement;
+                                                  if (target.closest('button')) {
+                                                    e.preventDefault();
+                                                    return;
+                                                  }
+                                                  setDraggedHighlightIndex(idx);
+                                                  e.dataTransfer.effectAllowed = 'move';
+                                                }}
+                                                onDragEnd={() => setDraggedHighlightIndex(null)}
+                                              >
+                                                <div className="cursor-grab active:cursor-grabbing">
+                                                  <GripVertical className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                                                </div>
+                                                <div className="flex items-center gap-1 ml-auto" onClick={(e) => e.stopPropagation()}>
+                                                  <Button
+                                                    size="icon"
+                                                    variant="ghost"
+                                                    disabled={idx === 0}
+                                                    onClick={(e) => {
+                                                      e.stopPropagation();
+                                                      if (idx > 0) handleReorderHighlights(selectedPlayer.id, 'match', idx, idx - 1);
+                                                    }}
+                                                  >
+                                                    <ChevronLeft className="w-4 h-4" />
+                                                  </Button>
+                                                  <Button
+                                                    size="icon"
+                                                    variant="ghost"
+                                                    disabled={idx === matchHighlights.length - 1}
+                                                    onClick={(e) => {
+                                                      e.stopPropagation();
+                                                      if (idx < matchHighlights.length - 1) handleReorderHighlights(selectedPlayer.id, 'match', idx, idx + 1);
+                                                    }}
+                                                  >
+                                                    <ChevronRight className="w-4 h-4" />
+                                                  </Button>
+                                                  <Button
+                                                    size="sm"
+                                                    variant="ghost"
+                                                    onClick={(e) => {
+                                                      e.stopPropagation();
+                                                      setEditingHighlight({ highlight, type: 'match' });
+                                                      setIsEditHighlightOpen(true);
+                                                    }}
+                                                  >
+                                                    <Edit className="w-4 h-4" />
+                                                  </Button>
+                                                  <Button
+                                                    size="sm"
+                                                    variant="ghost"
+                                                    onClick={(e) => {
+                                                      e.stopPropagation();
+                                                      handleDeleteHighlight(selectedPlayer.id, 'match', idx);
+                                                    }}
+                                                  >
+                                                    <Trash2 className="w-4 h-4 text-destructive" />
+                                                  </Button>
+                                                </div>
                                               </div>
                                             </div>
                                           </CardContent>
@@ -1692,7 +1694,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                           key={idx} 
                                           className={`overflow-hidden group relative transition-all ${
                                             draggedHighlightIndex === idx ? 'opacity-50 scale-95' : ''
-                                          } ${draggedHighlightIndex !== null && draggedHighlightIndex !== idx ? 'border-2 border-primary/50' : ''}`}
+                                          }`}
                                           onDragOver={(e) => {
                                             e.preventDefault();
                                             e.dataTransfer.dropEffect = 'move';
@@ -1727,69 +1729,71 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                             </div>
                                           )}
                                           <CardContent className="p-4">
-                                            <div 
-                                              className="flex items-center gap-2"
-                                              draggable
-                                              onDragStart={(e) => {
-                                                // Only allow drag from title area, not buttons
-                                                const target = e.target as HTMLElement;
-                                                if (target.closest('button')) {
-                                                  e.preventDefault();
-                                                  return;
-                                                }
-                                                setDraggedHighlightIndex(idx);
-                                                e.dataTransfer.effectAllowed = 'move';
-                                              }}
-                                              onDragEnd={() => setDraggedHighlightIndex(null)}
-                                            >
-                                              <div className="cursor-grab active:cursor-grabbing">
-                                                <GripVertical className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                                              </div>
-                                              <p className="font-medium truncate flex-1 cursor-grab">{clip.name || `Clip ${idx + 1}`}</p>
-                                              <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-                                                <Button
-                                                  size="icon"
-                                                  variant="ghost"
-                                                  disabled={idx === 0}
-                                                  onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    if (idx > 0) handleReorderHighlights(selectedPlayer.id, 'best', idx, idx - 1);
-                                                  }}
-                                                >
-                                                  <ChevronLeft className="w-4 h-4" />
-                                                </Button>
-                                                <Button
-                                                  size="icon"
-                                                  variant="ghost"
-                                                  disabled={idx === bestClips.length - 1}
-                                                  onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    if (idx < bestClips.length - 1) handleReorderHighlights(selectedPlayer.id, 'best', idx, idx + 1);
-                                                  }}
-                                                >
-                                                  <ChevronRight className="w-4 h-4" />
-                                                </Button>
-                                                <Button
-                                                  size="sm"
-                                                  variant="ghost"
-                                                  onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    setEditingHighlight({ highlight: clip, type: 'best' });
-                                                    setIsEditHighlightOpen(true);
-                                                  }}
-                                                >
-                                                  <Edit className="w-4 h-4" />
-                                                </Button>
-                                                <Button
-                                                  size="sm"
-                                                  variant="ghost"
-                                                  onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleDeleteHighlight(selectedPlayer.id, 'best', idx);
-                                                  }}
-                                                >
-                                                  <Trash2 className="w-4 h-4 text-destructive" />
-                                                </Button>
+                                            <div className="space-y-2">
+                                              <p className="font-medium truncate">{clip.name || `Clip ${idx + 1}`}</p>
+                                              <div 
+                                                className="flex items-center gap-2"
+                                                draggable
+                                                onDragStart={(e) => {
+                                                  // Only allow drag from title area, not buttons
+                                                  const target = e.target as HTMLElement;
+                                                  if (target.closest('button')) {
+                                                    e.preventDefault();
+                                                    return;
+                                                  }
+                                                  setDraggedHighlightIndex(idx);
+                                                  e.dataTransfer.effectAllowed = 'move';
+                                                }}
+                                                onDragEnd={() => setDraggedHighlightIndex(null)}
+                                              >
+                                                <div className="cursor-grab active:cursor-grabbing">
+                                                  <GripVertical className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                                                </div>
+                                                <div className="flex items-center gap-1 ml-auto" onClick={(e) => e.stopPropagation()}>
+                                                  <Button
+                                                    size="icon"
+                                                    variant="ghost"
+                                                    disabled={idx === 0}
+                                                    onClick={(e) => {
+                                                      e.stopPropagation();
+                                                      if (idx > 0) handleReorderHighlights(selectedPlayer.id, 'best', idx, idx - 1);
+                                                    }}
+                                                  >
+                                                    <ChevronLeft className="w-4 h-4" />
+                                                  </Button>
+                                                  <Button
+                                                    size="icon"
+                                                    variant="ghost"
+                                                    disabled={idx === bestClips.length - 1}
+                                                    onClick={(e) => {
+                                                      e.stopPropagation();
+                                                      if (idx < bestClips.length - 1) handleReorderHighlights(selectedPlayer.id, 'best', idx, idx + 1);
+                                                    }}
+                                                  >
+                                                    <ChevronRight className="w-4 h-4" />
+                                                  </Button>
+                                                  <Button
+                                                    size="sm"
+                                                    variant="ghost"
+                                                    onClick={(e) => {
+                                                      e.stopPropagation();
+                                                      setEditingHighlight({ highlight: clip, type: 'best' });
+                                                      setIsEditHighlightOpen(true);
+                                                    }}
+                                                  >
+                                                    <Edit className="w-4 h-4" />
+                                                  </Button>
+                                                  <Button
+                                                    size="sm"
+                                                    variant="ghost"
+                                                    onClick={(e) => {
+                                                      e.stopPropagation();
+                                                      handleDeleteHighlight(selectedPlayer.id, 'best', idx);
+                                                    }}
+                                                  >
+                                                    <Trash2 className="w-4 h-4 text-destructive" />
+                                                  </Button>
+                                                </div>
                                               </div>
                                             </div>
                                           </CardContent>
