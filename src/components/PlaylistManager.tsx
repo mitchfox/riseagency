@@ -893,9 +893,39 @@ export const PlaylistManager = ({ playerData, availableClips, onClose }: Playlis
         <Dialog open={!!playingVideo} onOpenChange={() => setPlayingVideo(null)}>
           <DialogContent className="max-w-4xl">
             <DialogHeader>
-              <DialogTitle className="font-bebas uppercase tracking-wider">
-                {playingVideo.name}
-              </DialogTitle>
+              <div className="flex items-center justify-between gap-4">
+                <DialogTitle className="font-bebas uppercase tracking-wider flex-1">
+                  {playingVideo.name}
+                </DialogTitle>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => {
+                    if (!selectedPlaylist) return;
+                    
+                    // Find current and next clip
+                    const sortedClips = [...selectedPlaylist.clips].sort((a, b) => a.order - b.order);
+                    const currentIndex = sortedClips.findIndex(c => c.videoUrl === playingVideo.url);
+                    const nextClip = sortedClips[currentIndex + 1];
+                    
+                    // Remove current clip
+                    removeClipFromPlaylist(playingVideo.url, playingVideo.name);
+                    
+                    // Skip to next or close
+                    if (nextClip) {
+                      setPlayingVideo({ url: nextClip.videoUrl, name: nextClip.name });
+                      loadVideoDuration(nextClip.videoUrl);
+                    } else {
+                      setPlayingVideo(null);
+                    }
+                  }}
+                  className="h-8 px-3 text-destructive hover:text-destructive hover:bg-destructive/10"
+                  title="Remove from playlist and skip to next"
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Remove
+                </Button>
+              </div>
             </DialogHeader>
             <div className="aspect-video w-full bg-black rounded-lg overflow-hidden">
               <video
