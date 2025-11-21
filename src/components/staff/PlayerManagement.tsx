@@ -13,7 +13,7 @@ import { PlayerFixtures } from "./PlayerFixtures";
 import { PlayerImages } from "./PlayerImages";
 import { PlayerScoutingManagement } from "./PlayerScoutingManagement";
 import { PlaylistManager } from "@/components/PlaylistManager";
-import { UploadHighlightDialog } from "./UploadHighlightDialog";
+import { InlineVideoUpload } from "./InlineVideoUpload";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -123,8 +123,6 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   const [analysisSearchQuery, setAnalysisSearchQuery] = useState("");
   const [showPlaylistManager, setShowPlaylistManager] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<Record<string, { status: 'uploading' | 'success' | 'error', progress: number, error?: string }>>({});
-  const [showUploadHighlightDialog, setShowUploadHighlightDialog] = useState(false);
-  const [uploadHighlightType, setUploadHighlightType] = useState<"match" | "best">("best");
 
   useEffect(() => {
     fetchPlayers();
@@ -1421,15 +1419,12 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
 
                               return (
                                 <div className="space-y-4">
-                                  <Button 
-                                    onClick={() => {
-                                      setUploadHighlightType('match');
-                                      setShowUploadHighlightDialog(true);
-                                    }}
-                                  >
-                                    <Plus className="w-4 h-4 mr-2" />
-                                    Upload Match Highlight
-                                  </Button>
+                                  <InlineVideoUpload
+                                    playerEmail={selectedPlayer.email || ''}
+                                    playerId={selectedPlayer.id}
+                                    highlightType="match"
+                                    onUploadComplete={() => fetchPlayers()}
+                                  />
                                   
                                   {matchHighlights.length > 0 ? (
                                     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -1470,21 +1465,19 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                 <div className="space-y-4">
                                   <div className="flex gap-2">
                                     <Button 
-                                      onClick={() => {
-                                        setUploadHighlightType('best');
-                                        setShowUploadHighlightDialog(true);
-                                      }}
-                                    >
-                                      <Plus className="w-4 h-4 mr-2" />
-                                      Upload Best Clip
-                                    </Button>
-                                    <Button 
                                       variant="outline"
                                       onClick={() => setShowPlaylistManager(true)}
                                     >
                                       Manage Playlists
                                     </Button>
                                   </div>
+
+                                  <InlineVideoUpload
+                                    playerEmail={selectedPlayer.email || ''}
+                                    playerId={selectedPlayer.id}
+                                    highlightType="best"
+                                    onUploadComplete={() => fetchPlayers()}
+                                  />
                                   
                                   {bestClips.length > 0 ? (
                                     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -2466,18 +2459,6 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
           onClose={() => setShowPlaylistManager(false)}
         />
       )}
-
-      {/* Upload Highlight Dialog */}
-      <UploadHighlightDialog
-        open={showUploadHighlightDialog}
-        onOpenChange={setShowUploadHighlightDialog}
-        playerEmail={selectedPlayer?.email || ''}
-        onUploadComplete={() => {
-          setShowUploadHighlightDialog(false);
-          fetchPlayers();
-        }}
-        highlightType={uploadHighlightType}
-      />
     </div>
   );
 };
