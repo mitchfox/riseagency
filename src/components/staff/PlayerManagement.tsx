@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Edit, FileText, LineChart, Video, Calendar, Plus, DollarSign, User, Trash2, Eye, TrendingUp, GripVertical } from "lucide-react";
+import { Edit, FileText, LineChart, Video, Calendar, Plus, DollarSign, User, Trash2, Eye, TrendingUp, GripVertical, ChevronLeft, ChevronRight } from "lucide-react";
 import { PerformanceActionsDialog } from "./PerformanceActionsDialog";
 import { CreatePerformanceReportDialog } from "./CreatePerformanceReportDialog";
 import { ProgrammingManagement } from "./ProgrammingManagement";
@@ -1599,6 +1599,28 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                               <p className="font-medium truncate flex-1 cursor-grab">{highlight.name || `Highlight ${idx + 1}`}</p>
                                               <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
                                                 <Button
+                                                  size="icon"
+                                                  variant="ghost"
+                                                  disabled={idx === 0}
+                                                  onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    if (idx > 0) handleReorderHighlights(selectedPlayer.id, 'match', idx, idx - 1);
+                                                  }}
+                                                >
+                                                  <ChevronLeft className="w-4 h-4" />
+                                                </Button>
+                                                <Button
+                                                  size="icon"
+                                                  variant="ghost"
+                                                  disabled={idx === matchHighlights.length - 1}
+                                                  onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    if (idx < matchHighlights.length - 1) handleReorderHighlights(selectedPlayer.id, 'match', idx, idx + 1);
+                                                  }}
+                                                >
+                                                  <ChevronRight className="w-4 h-4" />
+                                                </Button>
+                                                <Button
                                                   size="sm"
                                                   variant="ghost"
                                                   onClick={(e) => {
@@ -1725,6 +1747,28 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                               </div>
                                               <p className="font-medium truncate flex-1 cursor-grab">{clip.name || `Clip ${idx + 1}`}</p>
                                               <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                                                <Button
+                                                  size="icon"
+                                                  variant="ghost"
+                                                  disabled={idx === 0}
+                                                  onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    if (idx > 0) handleReorderHighlights(selectedPlayer.id, 'best', idx, idx - 1);
+                                                  }}
+                                                >
+                                                  <ChevronLeft className="w-4 h-4" />
+                                                </Button>
+                                                <Button
+                                                  size="icon"
+                                                  variant="ghost"
+                                                  disabled={idx === bestClips.length - 1}
+                                                  onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    if (idx < bestClips.length - 1) handleReorderHighlights(selectedPlayer.id, 'best', idx, idx + 1);
+                                                  }}
+                                                >
+                                                  <ChevronRight className="w-4 h-4" />
+                                                </Button>
                                                 <Button
                                                   size="sm"
                                                   variant="ghost"
