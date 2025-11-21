@@ -8,10 +8,11 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Users, MessageSquare, Plus, Trash2, Edit, Sparkles, Copy } from "lucide-react";
+import { Users, MessageSquare, Plus, Trash2, Edit, Sparkles, Copy, UserPlus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { PlayerOutreach } from "./PlayerOutreach";
 
 interface Prospect {
   id: string;
@@ -381,10 +382,14 @@ export const RecruitmentManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   return (
     <div className="space-y-6">
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="prospects" className="flex-1">
             <Users className="w-4 h-4 mr-2" />
             Prospect Board
+          </TabsTrigger>
+          <TabsTrigger value="outreach" className="flex-1">
+            <UserPlus className="w-4 h-4 mr-2" />
+            Player Outreach
           </TabsTrigger>
           <TabsTrigger value="templates" className="flex-1">
             <MessageSquare className="w-4 h-4 mr-2" />
@@ -691,6 +696,10 @@ export const RecruitmentManagement = ({ isAdmin }: { isAdmin: boolean }) => {
               </div>
             </div>
           </div>
+        </TabsContent>
+
+        <TabsContent value="outreach" className="space-y-4">
+          <PlayerOutreach isAdmin={isAdmin} />
         </TabsContent>
 
         <TabsContent value="templates" className="space-y-4">
