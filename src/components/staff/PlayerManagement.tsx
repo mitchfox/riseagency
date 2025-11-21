@@ -2677,8 +2677,9 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
             try {
               const highlights = typeof selectedPlayer.highlights === 'string'
                 ? JSON.parse(selectedPlayer.highlights)
-                : (selectedPlayer.highlights || []);
-              return (highlights as any[]).map((clip: any, idx: number) => ({
+                : (selectedPlayer.highlights || {});
+              const bestClips = highlights.bestClips || [];
+              return (bestClips as any[]).map((clip: any, idx: number) => ({
                 id: clip.clipId || `clip-${idx}`,
                 name: clip.clipName || `Clip ${idx + 1}`,
                 videoUrl: clip.videoUrl,
