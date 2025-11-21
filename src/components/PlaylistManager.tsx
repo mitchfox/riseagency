@@ -231,7 +231,7 @@ export const PlaylistManager = ({ playerData, availableClips, onClose }: Playlis
 
     try {
       const updatedClips = selectedPlaylist.clips
-        .filter(c => (c.id || c.name) !== clipId)
+        .filter(c => (c.id || c.videoUrl || c.name) !== clipId)
         .map((c, index) => ({ ...c, order: index + 1 }));
 
       // Use edge function to update playlist (bypasses RLS)
