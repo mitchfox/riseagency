@@ -132,6 +132,8 @@ const Staff = () => {
 
   const handleSectionToggle = (section: 'overview' | 'staffaccounts' | 'players' | 'playerlist' | 'recruitment' | 'blog' | 'betweenthelines' | 'coaching' | 'analysis' | 'marketing' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'legal') => {
     setExpandedSection(expandedSection === section ? null : section);
+    // Scroll to top when section changes
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   // Load saved email and remember me preference on mount
