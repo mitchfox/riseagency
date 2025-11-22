@@ -1823,6 +1823,7 @@ export const CreatePerformanceReportDialog = ({
           }))}
           onActionsUpdated={refreshActions}
           isAdmin={true}
+          analysisId={analysisId}
         />
       )}
     </Dialog>
