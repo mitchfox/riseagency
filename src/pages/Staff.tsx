@@ -640,6 +640,12 @@ const Staff = () => {
                           setExpandedCategory(
                             categories.find(c => c.sections.some(s => s.id === result.sectionId))?.id || null
                           );
+                          
+                          // Navigate with player ID if it's a player search result
+                          if (result.type === 'player') {
+                            navigate(`/staff?section=${result.sectionId}&player=${result.id}`);
+                          }
+                          
                           setSidebarSearchOpen(false);
                           toast.success(`Opening ${result.section}`);
                         }}
