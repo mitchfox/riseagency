@@ -7,7 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Trash2, Save } from "lucide-react";
+import { Trash2, Save, Search, Sparkles, LineChart, RefreshCw } from "lucide-react";
+import { R90RatingsViewer } from "./R90RatingsViewer";
 
 interface PerformanceAction {
   id?: string;
@@ -25,6 +26,7 @@ interface ActionsByTypeDialogProps {
   actions: PerformanceAction[];
   onActionsUpdated: () => void;
   isAdmin: boolean;
+  analysisId?: string;
 }
 
 export const ActionsByTypeDialog = ({
@@ -33,9 +35,15 @@ export const ActionsByTypeDialog = ({
   actions,
   onActionsUpdated,
   isAdmin,
+  analysisId,
 }: ActionsByTypeDialogProps) => {
   const [editedActions, setEditedActions] = useState<Record<string, PerformanceAction>>({});
   const [savingIds, setSavingIds] = useState<Set<string>>(new Set());
+  const [isR90ViewerOpen, setIsR90ViewerOpen] = useState(false);
+  const [r90ViewerCategory, setR90ViewerCategory] = useState<string | undefined>(undefined);
+  const [r90ViewerSearch, setR90ViewerSearch] = useState<string | undefined>(undefined);
+  const [aiSearchAction, setAiSearchAction] = useState<{ type: string; context: string } | null>(null);
+  const [updatingR90, setUpdatingR90] = useState(false);
 
   // Group actions by type
   const groupedActions = actions.reduce((acc, action) => {
@@ -136,12 +144,127 @@ export const ActionsByTypeDialog = ({
     return !!editedActions[actionId];
   };
 
+  // Function to intelligently map action type/description to R90 category
+  const getR90CategoryFromAction = (actionType: string, actionDescription: string): string => {
+    const combined = `${actionType} ${actionDescription}`.toLowerCase();
+    
+    if (combined.includes('press') || combined.includes('counter-press') || combined.includes('high press')) {
+      return 'Pressing';
+    }
+    if (combined.includes('tackle') || combined.includes('block') || combined.includes('intercept') || 
+        combined.includes('defend') || combined.includes('recovery')) {
+      return 'Defensive';
+    }
+    if (combined.includes('aerial') || combined.includes('header') || combined.includes('duel in air')) {
+      return 'Aerial Duels';
+    }
+    if (combined.includes('cross') || combined.includes('cutback') || combined.includes('delivery')) {
+      return 'Attacking Crosses';
+    }
+    if (combined.includes('dribble') || combined.includes('carry') || combined.includes('turn') || 
+        combined.includes('1v1') || combined.includes('pass') || combined.includes('shot')) {
+      return 'On-Ball Decision-Making';
+    }
+    if (combined.includes('run') || combined.includes('movement') || combined.includes('position') || 
+        combined.includes('space') || combined.includes('support')) {
+      return 'Off-Ball Movement';
+    }
+    
+    return 'all';
+  };
+
+  const openSmartR90Viewer = async (action: PerformanceAction) => {
+    if (!action.action_type) {
+      setR90ViewerCategory(undefined);
+      setR90ViewerSearch(undefined);
+      setAiSearchAction(null);
+      setIsR90ViewerOpen(true);
+      return;
+    }
+    
+    // Try to get category from database mapping
+    try {
+      const { data: mappings } = await supabase
+        .from('action_r90_category_mappings')
+        .select('r90_category, r90_subcategory, selected_rating_ids')
+        .eq('action_type', action.action_type.trim());
+      
+      const mapping = mappings?.find(m => m.r90_subcategory !== null) || mappings?.[0];
+      
+      if (mapping?.r90_category) {
+        setR90ViewerCategory(mapping.r90_category);
+        setR90ViewerSearch(action.action_type);
+        setAiSearchAction(null);
+        setIsR90ViewerOpen(true);
+        return;
+      }
+    } catch (error) {
+      console.error('Error fetching category mapping:', error);
+    }
+    
+    // Fallback to keyword-based matching
+    const category = getR90CategoryFromAction(action.action_type, action.action_description);
+    setR90ViewerCategory(category);
+    setR90ViewerSearch(action.action_type);
+    setAiSearchAction(null);
+    setIsR90ViewerOpen(true);
+  };
+
+  const openAiSearch = (action: PerformanceAction) => {
+    setAiSearchAction({
+      type: action.action_type || '',
+      context: action.action_description || ''
+    });
+    setR90ViewerCategory(undefined);
+    setR90ViewerSearch(undefined);
+    setIsR90ViewerOpen(true);
+  };
+
+  const handleUpdateR90Score = async () => {
+    if (!analysisId) return;
+    
+    setUpdatingR90(true);
+    try {
+      // Calculate total score from all actions
+      const totalScore = actions.reduce((sum, a) => sum + (a.action_score || 0), 0);
+      
+      const { error } = await supabase
+        .from("player_analysis")
+        .update({ r90_score: totalScore })
+        .eq("id", analysisId);
+
+      if (error) throw error;
+
+      toast.success(`Report R90 score updated to ${totalScore.toFixed(5)}`);
+      onActionsUpdated();
+    } catch (error: any) {
+      console.error("Error updating R90 score:", error);
+      toast.error("Failed to update R90 score");
+    } finally {
+      setUpdatingR90(false);
+    }
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Actions Grouped by Type</DialogTitle>
-        </DialogHeader>
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center justify-between">
+              <span>Actions Grouped by Type</span>
+              {analysisId && isAdmin && (
+                <Button
+                  onClick={handleUpdateR90Score}
+                  disabled={updatingR90}
+                  size="sm"
+                  variant="outline"
+                >
+                  <RefreshCw className={`w-4 h-4 mr-2 ${updatingR90 ? 'animate-spin' : ''}`} />
+                  Update Report R90
+                </Button>
+              )}
+            </DialogTitle>
+          </DialogHeader>
 
         <div className="space-y-4">
           {sortedTypes.length === 0 ? (
@@ -271,28 +394,48 @@ export const ActionsByTypeDialog = ({
                                 />
                               </div>
 
-                              {isAdmin && (
-                                <div className="flex gap-2 justify-end pt-2">
-                                  {hasChanges && (
-                                    <Button
-                                      size="sm"
-                                      onClick={() => handleSaveAction(action)}
-                                      disabled={isSaving}
-                                    >
-                                      <Save className="w-4 h-4 mr-2" />
-                                      {isSaving ? "Saving..." : "Save Changes"}
-                                    </Button>
-                                  )}
+                              <div className="flex gap-2 justify-between pt-2">
+                                <div className="flex gap-2">
                                   <Button
-                                    variant="destructive"
+                                    variant="outline"
                                     size="sm"
-                                    onClick={() => action.id && handleDeleteAction(action.id)}
+                                    onClick={() => openAiSearch(edited)}
                                   >
-                                    <Trash2 className="w-4 h-4 mr-2" />
-                                    Delete
+                                    <Sparkles className="w-4 h-4 mr-2" />
+                                    AI Search
+                                  </Button>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => openSmartR90Viewer(edited)}
+                                  >
+                                    <Search className="w-4 h-4 mr-2" />
+                                    R90 Ratings
                                   </Button>
                                 </div>
-                              )}
+                                {isAdmin && (
+                                  <div className="flex gap-2">
+                                    {hasChanges && (
+                                      <Button
+                                        size="sm"
+                                        onClick={() => handleSaveAction(action)}
+                                        disabled={isSaving}
+                                      >
+                                        <Save className="w-4 h-4 mr-2" />
+                                        {isSaving ? "Saving..." : "Save"}
+                                      </Button>
+                                    )}
+                                    <Button
+                                      variant="destructive"
+                                      size="sm"
+                                      onClick={() => action.id && handleDeleteAction(action.id)}
+                                    >
+                                      <Trash2 className="w-4 h-4 mr-2" />
+                                      Delete
+                                    </Button>
+                                  </div>
+                                )}
+                              </div>
                             </div>
                           );
                         })}
@@ -306,5 +449,14 @@ export const ActionsByTypeDialog = ({
         </div>
       </DialogContent>
     </Dialog>
+
+    <R90RatingsViewer
+      open={isR90ViewerOpen}
+      onOpenChange={setIsR90ViewerOpen}
+      initialCategory={r90ViewerCategory}
+      searchTerm={r90ViewerSearch}
+      prefilledSearch={aiSearchAction}
+    />
+    </>
   );
 };
