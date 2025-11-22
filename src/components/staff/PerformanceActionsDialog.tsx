@@ -754,6 +754,17 @@ export const PerformanceActionsDialog = ({
               <option key={type} value={type} />
             ))}
           </datalist>
+
+          {/* Footer Actions */}
+          <div className="flex items-center justify-end gap-2 pt-4 border-t mt-6">
+            <Button
+              variant="outline"
+              onClick={() => setIsByActionDialogOpen(true)}
+            >
+              <List className="w-4 h-4 mr-2" />
+              By Action Type
+            </Button>
+          </div>
         </div>
       </DialogContent>
 
