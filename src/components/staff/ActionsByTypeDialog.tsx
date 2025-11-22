@@ -1,14 +1,17 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Trash2, Save, Search, Sparkles, LineChart, RefreshCw } from "lucide-react";
+import { Trash2, Save, Search, Sparkles, LineChart, RefreshCw, ChevronDown, Loader2 } from "lucide-react";
 import { R90RatingsViewer } from "./R90RatingsViewer";
+import { formatScoreWithFrequency } from "@/lib/utils";
 
 interface PerformanceAction {
   id?: string;
@@ -44,6 +47,95 @@ export const ActionsByTypeDialog = ({
   const [r90ViewerSearch, setR90ViewerSearch] = useState<string | undefined>(undefined);
   const [aiSearchAction, setAiSearchAction] = useState<{ type: string; context: string } | null>(null);
   const [updatingR90, setUpdatingR90] = useState(false);
+  const [previousScores, setPreviousScores] = useState<Record<string, Array<{score: string | number | null, title: string, description: string}>>>({});
+  const [expandedScores, setExpandedScores] = useState<Set<string>>(new Set());
+  const [selectedScores, setSelectedScores] = useState<Record<string, Set<number>>>({}); // actionId -> Set of score indices
+  const [loadingScores, setLoadingScores] = useState<Set<string>>(new Set());
+
+  // Fetch suggested scores when actions change
+  useEffect(() => {
+    if (open && actions.length > 0) {
+      actions.forEach(action => {
+        if (action.id && action.action_type) {
+          fetchSuggestedScores(action.id, action.action_type);
+        }
+      });
+    }
+  }, [open, actions]);
+
+  const fetchSuggestedScores = async (actionId: string, actionType: string) => {
+    if (!actionType || previousScores[actionId]) return;
+
+    setLoadingScores(prev => new Set(prev).add(actionId));
+    try {
+      const { data: mappings } = await supabase
+        .from('action_r90_category_mappings')
+        .select('r90_category, selected_rating_ids')
+        .eq('action_type', actionType.trim());
+
+      if (mappings && mappings.length > 0) {
+        const mapping = mappings[0];
+        
+        let query = supabase
+          .from('r90_ratings')
+          .select('id, title, description, score');
+
+        if (mapping.selected_rating_ids && mapping.selected_rating_ids.length > 0) {
+          query = query.in('id', mapping.selected_rating_ids);
+        } else if (mapping.r90_category) {
+          query = query.eq('category', mapping.r90_category);
+        }
+
+        const { data: ratings, error } = await query;
+
+        if (!error && ratings) {
+          const scores = ratings.map(r => ({
+            score: r.score,
+            title: r.title,
+            description: r.description || ''
+          }));
+          
+          setPreviousScores(prev => ({
+            ...prev,
+            [actionId]: scores
+          }));
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching suggested scores:', error);
+    } finally {
+      setLoadingScores(prev => {
+        const next = new Set(prev);
+        next.delete(actionId);
+        return next;
+      });
+    }
+  };
+
+  const applySelectedScores = (actionId: string) => {
+    const selected = selectedScores[actionId];
+    const scores = previousScores[actionId];
+    
+    if (!selected || !scores || selected.size === 0) return;
+
+    const selectedScoreValues = Array.from(selected).map(idx => {
+      const score = scores[idx].score;
+      return typeof score === 'string' ? parseFloat(score) : (score || 0);
+    });
+
+    const averageScore = selectedScoreValues.reduce((sum, s) => sum + s, 0) / selectedScoreValues.length;
+    
+    updateEditedAction(actionId, { action_score: averageScore });
+    
+    // Clear selection after applying
+    setSelectedScores(prev => {
+      const next = { ...prev };
+      delete next[actionId];
+      return next;
+    });
+    
+    toast.success(`Applied average score: ${averageScore.toFixed(5)}`);
+  };
 
   // Group actions by type
   const groupedActions = actions.reduce((acc, action) => {
@@ -393,6 +485,85 @@ export const ActionsByTypeDialog = ({
                                   className="resize-none"
                                 />
                               </div>
+
+                              {/* Suggested Scores from R90 */}
+                              {action.id && previousScores[action.id] && previousScores[action.id].length > 0 && (
+                                <Collapsible
+                                  open={expandedScores.has(action.id)}
+                                  onOpenChange={(isOpen) => {
+                                    setExpandedScores(prev => {
+                                      const next = new Set(prev);
+                                      if (isOpen) {
+                                        next.add(action.id!);
+                                      } else {
+                                        next.delete(action.id!);
+                                      }
+                                      return next;
+                                    });
+                                  }}
+                                  className="border rounded-md p-3 bg-muted/30"
+                                >
+                                  <CollapsibleTrigger className="flex items-center justify-between w-full hover:bg-muted/50 p-2 rounded">
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-sm font-medium">Suggested Scores from R90</span>
+                                      {selectedScores[action.id] && selectedScores[action.id].size > 0 && (
+                                        <Button
+                                          size="sm"
+                                          variant="secondary"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            applySelectedScores(action.id!);
+                                          }}
+                                          className="h-6 text-xs"
+                                        >
+                                          Apply Selected ({selectedScores[action.id].size})
+                                        </Button>
+                                      )}
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-xs text-muted-foreground">
+                                        See all ({previousScores[action.id].length})
+                                      </span>
+                                      <ChevronDown className={`h-4 w-4 transition-transform ${expandedScores.has(action.id) ? 'rotate-180' : ''}`} />
+                                    </div>
+                                  </CollapsibleTrigger>
+                                  <CollapsibleContent className="space-y-2 pt-2">
+                                    {previousScores[action.id].map((score, idx) => (
+                                      <div key={idx} className="flex items-start gap-2 text-sm">
+                                        <Checkbox
+                                          checked={selectedScores[action.id]?.has(idx) || false}
+                                          onCheckedChange={(checked) => {
+                                            setSelectedScores(prev => {
+                                              const actionScores = new Set(prev[action.id!] || []);
+                                              if (checked) {
+                                                actionScores.add(idx);
+                                              } else {
+                                                actionScores.delete(idx);
+                                              }
+                                              return { ...prev, [action.id!]: actionScores };
+                                            });
+                                          }}
+                                          className="mt-1"
+                                        />
+                                        <span className="flex-1">
+                                          {score.title} - {score.description || 'No description'}{' '}
+                                          <span className="font-mono font-semibold">
+                                            {formatScoreWithFrequency(score.score)}
+                                          </span>
+                                        </span>
+                                      </div>
+                                    ))}
+                                  </CollapsibleContent>
+                                </Collapsible>
+                              )}
+
+                              {/* Loading indicator for suggested scores */}
+                              {action.id && loadingScores.has(action.id) && (
+                                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                  <span>Loading suggested scores...</span>
+                                </div>
+                              )}
 
                               <div className="flex gap-2 justify-between pt-2">
                                 <div className="flex gap-2">
