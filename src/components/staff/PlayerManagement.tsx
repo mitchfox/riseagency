@@ -2334,9 +2334,9 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                           <SelectValue placeholder="Select category" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="Professional">Professional</SelectItem>
-                          <SelectItem value="Youth">Youth</SelectItem>
-                          <SelectItem value="Academy">Academy</SelectItem>
+                          <SelectItem value="Signed">Signed</SelectItem>
+                          <SelectItem value="Mandate">Mandate</SelectItem>
+                          <SelectItem value="Fuel For Football">Fuel For Football</SelectItem>
                           <SelectItem value="Other">Other</SelectItem>
                         </SelectContent>
                       </Select>
