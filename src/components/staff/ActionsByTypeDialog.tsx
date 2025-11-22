@@ -349,10 +349,9 @@ export const ActionsByTypeDialog = ({
               <span>Actions Grouped by Type</span>
               {analysisId && isAdmin && (
                 <Button
+                  variant="outline"
                   onClick={handleUpdateR90Score}
                   disabled={updatingR90}
-                  size="sm"
-                  variant="outline"
                 >
                   <RefreshCw className={`w-4 h-4 mr-2 ${updatingR90 ? 'animate-spin' : ''}`} />
                   Update Report R90
