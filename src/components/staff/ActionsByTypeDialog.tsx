@@ -55,11 +55,14 @@ export const ActionsByTypeDialog = ({
   // Fetch suggested scores when actions change
   useEffect(() => {
     if (open && actions.length > 0) {
+      const newExpandedScores = new Set<string>();
       actions.forEach(action => {
         if (action.id && action.action_type) {
           fetchSuggestedScores(action.id, action.action_type);
+          newExpandedScores.add(action.id); // Auto-expand all scores
         }
       });
+      setExpandedScores(newExpandedScores);
     }
   }, [open, actions]);
 
