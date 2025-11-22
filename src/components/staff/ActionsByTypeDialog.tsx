@@ -416,16 +416,25 @@ export const ActionsByTypeDialog = ({
                                 <div className="space-y-1">
                                   <Label className="text-xs">Minute</Label>
                                   <Input
-                                    type="number"
-                                    step="0.01"
-                                    value={edited.minute}
-                                    onChange={(e) =>
-                                      updateEditedAction(action.id!, {
-                                        minute: parseFloat(e.target.value) || 0,
-                                      })
-                                    }
+                                    type="text"
+                                    value={(() => {
+                                      const mins = Math.floor(edited.minute);
+                                      const secs = Math.round((edited.minute - mins) * 100);
+                                      return `${mins}:${secs.toString().padStart(2, '0')}`;
+                                    })()}
+                                    onChange={(e) => {
+                                      const match = e.target.value.match(/^(\d+):(\d+)$/);
+                                      if (match) {
+                                        const mins = parseInt(match[1]);
+                                        const secs = parseInt(match[2]);
+                                        updateEditedAction(action.id!, {
+                                          minute: mins + (secs / 100),
+                                        });
+                                      }
+                                    }}
                                     disabled={!isAdmin}
                                     className="h-9"
+                                    placeholder="MM:SS"
                                   />
                                 </div>
                                 <div className="space-y-1">
