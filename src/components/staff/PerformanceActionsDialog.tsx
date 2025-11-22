@@ -7,11 +7,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Trash2, Plus, LineChart, Search, Loader2, Sparkles, ChevronDown, ChevronUp } from "lucide-react";
+import { Trash2, Plus, LineChart, Search, Loader2, Sparkles, ChevronDown, ChevronUp, List } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { R90RatingsViewer } from "./R90RatingsViewer";
 import { Card, CardContent } from "@/components/ui/card";
 import { getR90Grade, getXGGrade, getXAGrade, getRegainsGrade, getInterceptionsGrade } from "@/lib/gradeCalculations";
+import { ActionsByTypeDialog } from "./ActionsByTypeDialog";
 
 interface PerformanceAction {
   id?: string;
@@ -51,6 +52,7 @@ export const PerformanceActionsDialog = ({
   const [r90ViewerSearch, setR90ViewerSearch] = useState<string | undefined>(undefined);
   const [aiSearchAction, setAiSearchAction] = useState<{ type: string; context: string } | null>(null);
   const [fillingScores, setFillingScores] = useState(false);
+  const [isByActionDialogOpen, setIsByActionDialogOpen] = useState(false);
   const [newAction, setNewAction] = useState<PerformanceAction>({
     action_number: 1,
     minute: 0,
@@ -647,7 +649,19 @@ export const PerformanceActionsDialog = ({
 
           {/* Actions List */}
           <div className="border rounded-lg p-4">
-            <h3 className="font-semibold mb-4">Existing Actions</h3>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold">Existing Actions</h3>
+              {actions.length > 0 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsByActionDialogOpen(true)}
+                >
+                  <List className="w-4 h-4 mr-2" />
+                  By Action
+                </Button>
+              )}
+            </div>
             {actions.length === 0 ? (
               <p className="text-center text-muted-foreground py-8">No actions recorded yet</p>
             ) : (
@@ -757,6 +771,15 @@ export const PerformanceActionsDialog = ({
         initialCategory={r90ViewerCategory}
         searchTerm={r90ViewerSearch}
         prefilledSearch={aiSearchAction}
+      />
+
+      {/* Actions By Type Dialog */}
+      <ActionsByTypeDialog
+        open={isByActionDialogOpen}
+        onOpenChange={setIsByActionDialogOpen}
+        actions={actions}
+        onActionsUpdated={fetchActions}
+        isAdmin={isAdmin}
       />
     </Dialog>
   );
