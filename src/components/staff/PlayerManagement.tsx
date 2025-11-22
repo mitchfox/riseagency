@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Edit, FileText, LineChart, Video, Calendar, Plus, DollarSign, User, Trash2, Eye, TrendingUp, GripVertical, ChevronLeft, ChevronRight } from "lucide-react";
+import { Edit, FileText, LineChart, Video, Calendar, Plus, DollarSign, User, Trash2, Eye, TrendingUp, GripVertical, ChevronLeft, ChevronRight, Image as ImageIcon, X } from "lucide-react";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationPrevious, PaginationNext } from "@/components/ui/pagination";
 import { PerformanceActionsDialog } from "./PerformanceActionsDialog";
 import { CreatePerformanceReportDialog } from "./CreatePerformanceReportDialog";
@@ -80,6 +80,8 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   const [isEditHighlightOpen, setIsEditHighlightOpen] = useState(false);
   const [editingHighlight, setEditingHighlight] = useState<{ highlight: any; type: 'match' | 'best' } | null>(null);
   const [draggedHighlightIndex, setDraggedHighlightIndex] = useState<number | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     // Basic Info
     name: "",
@@ -500,6 +502,8 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
 
   const handleEditPlayer = (player: Player) => {
     setEditingPlayer(player);
+    setImageFile(null);
+    setImagePreview(null);
     
     // Parse bio JSON
     const bioData = parseBioJSON(player.bio);
@@ -631,11 +635,47 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
     }
   };
 
+  const handleImageSelect = (file: File) => {
+    setImageFile(file);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImagePreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveImage = () => {
+    setImageFile(null);
+    setImagePreview(null);
+  };
+
   const handleUpdatePlayer = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingPlayer) return;
 
     try {
+      // Upload new image if selected
+      let finalImageUrl = formData.image_url;
+      if (imageFile) {
+        const imageFileName = `${editingPlayer.id}_${Date.now()}_${imageFile.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+        const { error: imageError } = await supabase.storage
+          .from('analysis-files')
+          .upload(`player-images/${imageFileName}`, imageFile, {
+            cacheControl: '3600',
+            upsert: false
+          });
+
+        if (imageError) {
+          toast.error('Failed to upload image');
+          return;
+        }
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('analysis-files')
+          .getPublicUrl(`player-images/${imageFileName}`);
+        finalImageUrl = publicUrl;
+      }
+
       const bioJSON = reconstructBioJSON();
       
       const { error } = await supabase
@@ -649,7 +689,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
           age: formData.age,
           nationality: formData.nationality,
           bio: bioJSON,
-          image_url: formData.image_url || null,
+          image_url: finalImageUrl || null,
           category: formData.category || null,
           representation_status: formData.representation_status || null,
           visible_on_stars_page: formData.visible_on_stars_page,
@@ -661,6 +701,8 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
 
       toast.success("Player updated successfully");
       setIsEditDialogOpen(false);
+      setImageFile(null);
+      setImagePreview(null);
       fetchPlayers(true);
     } catch (error: any) {
       toast.error("Failed to update player: " + error.message);
@@ -2142,7 +2184,13 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
         isAdmin={isAdmin}
       />
 
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+      <Dialog open={isEditDialogOpen} onOpenChange={(open) => {
+        setIsEditDialogOpen(open);
+        if (!open) {
+          setImageFile(null);
+          setImagePreview(null);
+        }
+      }}>
         <DialogContent className="max-w-4xl max-h-[95vh] w-[98vw] sm:w-[95vw] p-3 sm:p-6">
           <DialogHeader className="pb-2 sm:pb-4">
             <DialogTitle className="text-base sm:text-lg">Edit Player - {editingPlayer?.name}</DialogTitle>
@@ -2224,14 +2272,55 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                   </div>
 
                   <div className="space-y-1.5 sm:space-y-2">
-                    <Label htmlFor="image_url" className="text-sm">Player Image URL</Label>
-                    <Input
-                      id="image_url"
-                      value={formData.image_url}
-                      onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-                      placeholder="https://example.com/player.png"
-                      className="h-10 sm:h-11 text-sm"
-                    />
+                    <Label htmlFor="image_url" className="text-sm">Player Image</Label>
+                    <div className="flex flex-col gap-3">
+                      <Input
+                        id="image_url"
+                        value={formData.image_url}
+                        onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
+                        placeholder="https://example.com/player.png or upload below"
+                        className="h-10 sm:h-11 text-sm"
+                      />
+                      <div className="flex items-center gap-3">
+                        <Label 
+                          htmlFor="image_upload" 
+                          className="flex items-center gap-2 px-4 py-2 bg-secondary text-secondary-foreground rounded-md cursor-pointer hover:bg-secondary/80 transition-colors text-sm"
+                        >
+                          <ImageIcon className="w-4 h-4" />
+                          Upload Image
+                        </Label>
+                        <input
+                          id="image_upload"
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) handleImageSelect(file);
+                          }}
+                          className="hidden"
+                        />
+                        {(imagePreview || formData.image_url) && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={handleRemoveImage}
+                          >
+                            <X className="w-4 h-4 mr-1" />
+                            Clear
+                          </Button>
+                        )}
+                      </div>
+                      {(imagePreview || formData.image_url) && (
+                        <div className="relative w-32 h-32 border rounded-md overflow-hidden">
+                          <img 
+                            src={imagePreview || formData.image_url} 
+                            alt="Preview" 
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-1 gap-3 sm:gap-4">
