@@ -8,12 +8,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
-import { Plus, Trash2, AlertTriangle, LineChart, Sparkles, Search, Loader2, ChevronDown, ChevronUp } from "lucide-react";
+import { Plus, Trash2, AlertTriangle, LineChart, Sparkles, Search, Loader2, ChevronDown, ChevronUp, List } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { R90RatingsViewer } from "./R90RatingsViewer";
 import { formatScoreWithFrequency } from "@/lib/utils";
+import { ActionsByTypeDialog } from "./ActionsByTypeDialog";
 
 interface CreatePerformanceReportDialogProps {
   open: boolean;
@@ -35,6 +36,7 @@ interface Fixture {
 }
 
 interface PerformanceAction {
+  id?: string;
   action_number: number;
   minute: string;
   action_score: string;
@@ -68,6 +70,7 @@ export const CreatePerformanceReportDialog = ({
   const [r90ViewerSearch, setR90ViewerSearch] = useState<string | undefined>(undefined);
   const [isFillingScores, setIsFillingScores] = useState(false);
   const [aiSearchAction, setAiSearchAction] = useState<{ type: string; context: string } | null>(null);
+  const [isByActionDialogOpen, setIsByActionDialogOpen] = useState(false);
 
   // Key stats
   const [r90Score, setR90Score] = useState("");
@@ -411,6 +414,7 @@ export const CreatePerformanceReportDialog = ({
       if (actionsData && actionsData.length > 0) {
         setActions(
           actionsData.map((action) => ({
+            id: action.id,
             action_number: action.action_number,
             minute: action.minute !== null ? Number(action.minute).toFixed(2) : "",
             action_score: action.action_score !== null ? action.action_score.toString() : "",
@@ -494,6 +498,37 @@ export const CreatePerformanceReportDialog = ({
     setActions([
       { action_number: 1, minute: "", action_score: "", action_type: "", action_description: "", notes: "" }
     ]);
+  };
+
+  const refreshActions = async () => {
+    if (!analysisId) return;
+    
+    try {
+      const { data: actionsData, error } = await supabase
+        .from("performance_report_actions")
+        .select("*")
+        .eq("analysis_id", analysisId)
+        .order("action_number", { ascending: true });
+
+      if (error) throw error;
+
+      if (actionsData && actionsData.length > 0) {
+        setActions(
+          actionsData.map((action) => ({
+            id: action.id,
+            action_number: action.action_number,
+            minute: action.minute !== null ? Number(action.minute).toFixed(2) : "",
+            action_score: action.action_score !== null ? action.action_score.toString() : "",
+            action_type: action.action_type || "",
+            action_description: action.action_description || "",
+            notes: action.notes || "",
+          }))
+        );
+      }
+    } catch (error: any) {
+      console.error("Error refreshing actions:", error);
+      toast.error("Failed to refresh actions");
+    }
   };
 
   const addAction = () => {
@@ -1736,6 +1771,17 @@ export const CreatePerformanceReportDialog = ({
                 <Sparkles className="h-4 w-4 mr-2" />
                 {isFillingScores ? "Filling Scores..." : "Fill Empty Scores"}
               </Button>
+              {isEditMode && actions.length > 0 && (
+                <Button
+                  variant="outline"
+                  onClick={() => setIsByActionDialogOpen(true)}
+                  disabled={loading || deleting || isFillingScores}
+                  className="w-full sm:w-auto"
+                >
+                  <List className="h-4 w-4 mr-2" />
+                  By Action
+                </Button>
+              )}
               <Button onClick={handleSave} disabled={loading || deleting || isFillingScores} className="w-full sm:w-auto">
                 {loading ? (analysisId ? "Updating..." : "Creating...") : (analysisId ? "Update Report" : "Create Report")}
               </Button>
@@ -1760,6 +1806,25 @@ export const CreatePerformanceReportDialog = ({
         searchTerm={r90ViewerSearch}
         prefilledSearch={aiSearchAction}
       />
+
+      {/* Actions By Type Dialog */}
+      {isEditMode && analysisId && (
+        <ActionsByTypeDialog
+          open={isByActionDialogOpen}
+          onOpenChange={setIsByActionDialogOpen}
+          actions={actions.map(a => ({
+            id: a.id,
+            action_number: a.action_number,
+            minute: parseFloat(a.minute) || 0,
+            action_score: parseFloat(a.action_score) || 0,
+            action_type: a.action_type,
+            action_description: a.action_description,
+            notes: a.notes,
+          }))}
+          onActionsUpdated={refreshActions}
+          isAdmin={true}
+        />
+      )}
     </Dialog>
   );
 };
