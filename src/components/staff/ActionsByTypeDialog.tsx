@@ -583,7 +583,12 @@ export const ActionsByTypeDialog = ({
                                   <Button
                                     variant="outline"
                                     size="sm"
-                                    onClick={() => openSmartR90Viewer(edited)}
+                                    onClick={() => {
+                                      setR90ViewerCategory(undefined);
+                                      setR90ViewerSearch(undefined);
+                                      setAiSearchAction(null);
+                                      setIsR90ViewerOpen(true);
+                                    }}
                                   >
                                     <Search className="w-4 h-4 mr-2" />
                                     R90 Ratings
