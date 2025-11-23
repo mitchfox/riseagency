@@ -32,8 +32,8 @@ export function getZoneMultiplier(
   
   const baseMultiplier = OFFENSIVE_ZONE_MULTIPLIERS[effectiveZone] || 1.0;
   
-  // For unsuccessful actions, use inverse multiplier
-  return isSuccessful ? baseMultiplier : (1 / baseMultiplier);
+  // For unsuccessful actions, use negative inverse multiplier to penalize
+  return isSuccessful ? baseMultiplier : -(1 / baseMultiplier);
 }
 
 export function calculateAdjustedScore(
