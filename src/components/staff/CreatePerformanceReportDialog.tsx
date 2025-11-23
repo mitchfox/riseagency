@@ -1771,7 +1771,7 @@ export const CreatePerformanceReportDialog = ({
                 <Sparkles className="h-4 w-4 mr-2" />
                 {isFillingScores ? "Filling Scores..." : "Fill Empty Scores"}
               </Button>
-              {isEditMode && actions.length > 0 && (
+              {analysisId && (
                 <Button
                   variant="outline"
                   onClick={() => setIsByActionDialogOpen(true)}
@@ -1808,7 +1808,7 @@ export const CreatePerformanceReportDialog = ({
       />
 
       {/* Actions By Type Dialog */}
-      {isEditMode && analysisId && (
+      {analysisId && (
         <ActionsByTypeDialog
           open={isByActionDialogOpen}
           onOpenChange={setIsByActionDialogOpen}
