@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { toast } from "sonner";
+import { calculateAdjustedScore, isDefensiveR90Category } from "@/lib/zoneMultipliers";
 
 interface R90Rating {
   id: string;
@@ -524,39 +525,92 @@ export const R90RatingsViewer = ({ open, onOpenChange, initialCategory, searchTe
                                                         )}
                                                       </CardHeader>
                                                     </CollapsibleTrigger>
-                                                    <CollapsibleContent>
-                                                      {parsedContent ? (
-                                                        <CardContent className="pt-0">
-                                                          <Table>
-                                                            <TableHeader>
-                                                              <TableRow>
-                                                                <TableHead className="w-2/3 text-xs">Action Context</TableHead>
-                                                                <TableHead className="text-xs">Score Value</TableHead>
-                                                              </TableRow>
-                                                            </TableHeader>
-                                                            <TableBody>
-                                                              {parsedContent.map((row, idx) => (
-                                                                <TableRow key={idx}>
-                                                                  <TableCell className="text-xs">{row.label}</TableCell>
-                                                                  <TableCell className={`text-xs ${
-                                                                    row.value.includes('+') ? 'text-green-600 font-bold' : 
-                                                                    row.value.includes('-') ? 'text-red-600 font-bold' : ''
-                                                                  }`}>
-                                                                    {row.value}
-                                                                  </TableCell>
-                                                                </TableRow>
-                                                              ))}
-                                                            </TableBody>
-                                                          </Table>
-                                                        </CardContent>
-                                                      ) : rating.content && (
-                                                        <CardContent className="pt-0">
-                                                          <p className="text-xs text-muted-foreground whitespace-pre-wrap">
-                                                            {rating.content}
-                                                          </p>
-                                                        </CardContent>
-                                                      )}
-                                                    </CollapsibleContent>
+                                                     <CollapsibleContent>
+                                                       <CardContent className="pt-0 space-y-4">
+                                                         {/* Original Content */}
+                                                         {parsedContent ? (
+                                                           <div>
+                                                             <h4 className="text-xs font-semibold mb-2">Action Context</h4>
+                                                             <Table>
+                                                               <TableHeader>
+                                                                 <TableRow>
+                                                                   <TableHead className="w-2/3 text-xs">Context</TableHead>
+                                                                   <TableHead className="text-xs">Score Value</TableHead>
+                                                                 </TableRow>
+                                                               </TableHeader>
+                                                               <TableBody>
+                                                                 {parsedContent.map((row, idx) => (
+                                                                   <TableRow key={idx}>
+                                                                     <TableCell className="text-xs">{row.label}</TableCell>
+                                                                     <TableCell className={`text-xs ${
+                                                                       row.value.includes('+') ? 'text-green-600 font-bold' : 
+                                                                       row.value.includes('-') ? 'text-red-600 font-bold' : ''
+                                                                     }`}>
+                                                                       {row.value}
+                                                                     </TableCell>
+                                                                   </TableRow>
+                                                                 ))}
+                                                               </TableBody>
+                                                             </Table>
+                                                           </div>
+                                                         ) : rating.content && (
+                                                           <div>
+                                                             <h4 className="text-xs font-semibold mb-2">Details</h4>
+                                                             <p className="text-xs text-muted-foreground whitespace-pre-wrap">
+                                                               {rating.content}
+                                                             </p>
+                                                           </div>
+                                                         )}
+                                                         
+                                                         {/* Zone Multiplier Breakdown */}
+                                                         {rating.score && !isNaN(parseFloat(rating.score)) && (
+                                                           <div>
+                                                             <h4 className="text-xs font-semibold mb-2">Zone Adjusted Scores</h4>
+                                                             <p className="text-xs text-muted-foreground mb-3">
+                                                               Base score: <span className="font-mono font-bold">{parseFloat(rating.score).toFixed(5)}</span>
+                                                               {rating.category && ` • ${isDefensiveR90Category(rating.category) ? 'Defensive' : 'Offensive'} action`}
+                                                             </p>
+                                                             <Table>
+                                                               <TableHeader>
+                                                                 <TableRow>
+                                                                   <TableHead className="text-xs">Zone</TableHead>
+                                                                   <TableHead className="text-xs">Successful</TableHead>
+                                                                   <TableHead className="text-xs">Unsuccessful</TableHead>
+                                                                 </TableRow>
+                                                               </TableHeader>
+                                                               <TableBody>
+                                                                 {Array.from({ length: 18 }, (_, i) => i + 1).map(zone => {
+                                                                   const baseScore = parseFloat(rating.score!);
+                                                                   const isDefensive = isDefensiveR90Category(rating.category);
+                                                                   const successScore = calculateAdjustedScore(baseScore, zone, true, isDefensive);
+                                                                   const failScore = calculateAdjustedScore(baseScore, zone, false, isDefensive);
+                                                                   
+                                                                   return (
+                                                                     <TableRow key={zone}>
+                                                                       <TableCell className="text-xs font-medium">Zone {zone}</TableCell>
+                                                                       <TableCell className={`text-xs font-mono ${
+                                                                         successScore && successScore >= 0.1 ? 'text-green-600 font-bold' :
+                                                                         successScore && successScore > 0 ? 'text-green-500' :
+                                                                         successScore && successScore < 0 ? 'text-red-500' : ''
+                                                                       }`}>
+                                                                         {successScore?.toFixed(5) || 'N/A'}
+                                                                       </TableCell>
+                                                                       <TableCell className={`text-xs font-mono ${
+                                                                         failScore && failScore >= 0.1 ? 'text-green-600 font-bold' :
+                                                                         failScore && failScore > 0 ? 'text-green-500' :
+                                                                         failScore && failScore < 0 ? 'text-red-500' : ''
+                                                                       }`}>
+                                                                         {failScore?.toFixed(5) || 'N/A'}
+                                                                       </TableCell>
+                                                                     </TableRow>
+                                                                   );
+                                                                 })}
+                                                               </TableBody>
+                                                             </Table>
+                                                           </div>
+                                                         )}
+                                                       </CardContent>
+                                                     </CollapsibleContent>
                                                   </Card>
                                                 </Collapsible>
                                               );
