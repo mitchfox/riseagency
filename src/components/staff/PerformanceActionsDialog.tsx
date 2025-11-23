@@ -13,6 +13,9 @@ import { R90RatingsViewer } from "./R90RatingsViewer";
 import { Card, CardContent } from "@/components/ui/card";
 import { getR90Grade, getXGGrade, getXAGrade, getRegainsGrade, getInterceptionsGrade } from "@/lib/gradeCalculations";
 import { ActionsByTypeDialog } from "./ActionsByTypeDialog";
+import { calculateAdjustedScore, isDefensiveR90Category } from "@/lib/zoneMultipliers";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 
 interface PerformanceAction {
   id?: string;
@@ -22,6 +25,8 @@ interface PerformanceAction {
   action_type: string;
   action_description: string;
   notes: string;
+  zone?: number | null;
+  is_successful?: boolean;
 }
 
 interface PerformanceActionsDialogProps {
@@ -60,7 +65,10 @@ export const PerformanceActionsDialog = ({
     action_type: "",
     action_description: "",
     notes: "",
+    zone: null,
+    is_successful: true,
   });
+  const [actionCategory, setActionCategory] = useState<string | null>(null);
 
   // Function to intelligently map action type/description to R90 category
   const getR90CategoryFromAction = (actionType: string, actionDescription: string): string => {
@@ -276,15 +284,19 @@ export const PerformanceActionsDialog = ({
                        mappings?.[0];
         
         if (mapping?.r90_category) {
+          setActionCategory(mapping.r90_category);
           await fetchCategoryScores(mapping.r90_category, mapping.r90_subcategory, mapping.selected_rating_ids || null);
         } else {
+          setActionCategory(null);
           setPreviousScores([]);
         }
       } catch (error) {
         console.error('Error fetching category mapping:', error);
+        setActionCategory(null);
         setPreviousScores([]);
       }
     } else {
+      setActionCategory(null);
       setPreviousScores([]);
     }
   };
@@ -307,6 +319,8 @@ export const PerformanceActionsDialog = ({
           action_type: newAction.action_type,
           action_description: newAction.action_description,
           notes: newAction.notes || null,
+          zone: newAction.zone,
+          is_successful: newAction.is_successful ?? true,
         });
 
       if (error) throw error;
@@ -321,7 +335,10 @@ export const PerformanceActionsDialog = ({
         action_type: "",
         action_description: "",
         notes: "",
+        zone: null,
+        is_successful: true,
       });
+      setActionCategory(null);
       
       // Refresh actions
       await fetchActions();
@@ -404,6 +421,17 @@ export const PerformanceActionsDialog = ({
 
   const calculateRScore = () => {
     return actions.reduce((sum, action) => sum + action.action_score, 0).toFixed(5);
+  };
+
+  const getAdjustedScore = (action: PerformanceAction) => {
+    if (!action.zone || action.action_score === null) return null;
+    const isDefensive = actionCategory ? isDefensiveR90Category(actionCategory) : false;
+    return calculateAdjustedScore(
+      action.action_score,
+      action.zone,
+      action.is_successful ?? true,
+      isDefensive
+    );
   };
 
   return (
@@ -562,6 +590,41 @@ export const PerformanceActionsDialog = ({
                   value={newAction.action_score}
                   onChange={(e) => setNewAction({ ...newAction, action_score: parseFloat(e.target.value) || 0 })}
                 />
+                {newAction.zone && (
+                  <div className="text-xs text-muted-foreground">
+                    Adjusted: {getAdjustedScore(newAction)?.toFixed(5) || 'N/A'}
+                  </div>
+                )}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="zone">Zone (1-18)</Label>
+                <Select
+                  value={newAction.zone?.toString() || ""}
+                  onValueChange={(v) => setNewAction({ ...newAction, zone: v ? parseInt(v) : null })}
+                >
+                  <SelectTrigger id="zone">
+                    <SelectValue placeholder="Select zone" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">None</SelectItem>
+                    {Array.from({ length: 18 }, (_, i) => i + 1).map(z => (
+                      <SelectItem key={z} value={z.toString()}>Zone {z}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="is_successful" className="flex items-center gap-2">
+                  <span>Successful</span>
+                  <Switch
+                    id="is_successful"
+                    checked={newAction.is_successful ?? true}
+                    onCheckedChange={(checked) => setNewAction({ ...newAction, is_successful: checked })}
+                  />
+                </Label>
+                <div className="text-xs text-muted-foreground mt-1">
+                  {newAction.is_successful ? 'Positive outcome' : 'Negative outcome'}
+                </div>
               </div>
               <div className="space-y-2 col-span-2 md:col-span-3">
                 <Label htmlFor="action_type">Action Type *</Label>
