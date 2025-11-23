@@ -903,9 +903,11 @@ export type Database = {
           analysis_id: string
           created_at: string | null
           id: string
+          is_successful: boolean | null
           minute: number | null
           notes: string | null
           updated_at: string | null
+          zone: number | null
         }
         Insert: {
           action_description?: string | null
@@ -915,9 +917,11 @@ export type Database = {
           analysis_id: string
           created_at?: string | null
           id?: string
+          is_successful?: boolean | null
           minute?: number | null
           notes?: string | null
           updated_at?: string | null
+          zone?: number | null
         }
         Update: {
           action_description?: string | null
@@ -927,9 +931,11 @@ export type Database = {
           analysis_id?: string
           created_at?: string | null
           id?: string
+          is_successful?: boolean | null
           minute?: number | null
           notes?: string | null
           updated_at?: string | null
+          zone?: number | null
         }
         Relationships: [
           {

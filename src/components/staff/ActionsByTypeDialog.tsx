@@ -12,6 +12,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { Trash2, Save, Search, Sparkles, LineChart, RefreshCw, ChevronDown, Loader2 } from "lucide-react";
 import { R90RatingsViewer } from "./R90RatingsViewer";
 import { formatScoreWithFrequency } from "@/lib/utils";
+import { calculateAdjustedScore, isDefensiveR90Category } from "@/lib/zoneMultipliers";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 
 interface PerformanceAction {
   id?: string;
@@ -21,6 +24,8 @@ interface PerformanceAction {
   action_type: string;
   action_description: string;
   notes: string;
+  zone?: number | null;
+  is_successful?: boolean;
 }
 
 interface ActionsByTypeDialogProps {
@@ -51,6 +56,38 @@ export const ActionsByTypeDialog = ({
   const [expandedScores, setExpandedScores] = useState<Set<string>>(new Set());
   const [selectedScores, setSelectedScores] = useState<Record<string, Set<number>>>({}); // actionId -> Set of score indices
   const [loadingScores, setLoadingScores] = useState<Set<string>>(new Set());
+  const [actionCategories, setActionCategories] = useState<Record<string, string>>({});
+
+  // Fetch R90 category for each action type
+  useEffect(() => {
+    const fetchCategories = async () => {
+      const uniqueTypes = Array.from(new Set(actions.map(a => a.action_type)));
+      const categories: Record<string, string> = {};
+      
+      for (const type of uniqueTypes) {
+        if (!type) continue;
+        try {
+          const { data: mappings } = await supabase
+            .from('action_r90_category_mappings')
+            .select('r90_category')
+            .eq('action_type', type.trim())
+            .limit(1);
+          
+          if (mappings && mappings[0]?.r90_category) {
+            categories[type] = mappings[0].r90_category;
+          }
+        } catch (error) {
+          console.error('Error fetching category for', type, error);
+        }
+      }
+      
+      setActionCategories(categories);
+    };
+    
+    if (open && actions.length > 0) {
+      fetchCategories();
+    }
+  }, [open, actions]);
 
   // Fetch suggested scores when actions change
   useEffect(() => {
@@ -186,6 +223,8 @@ export const ActionsByTypeDialog = ({
           action_type: edited.action_type,
           action_description: edited.action_description,
           notes: edited.notes || null,
+          zone: edited.zone,
+          is_successful: edited.is_successful ?? true,
         })
         .eq("id", action.id);
 
@@ -237,6 +276,18 @@ export const ActionsByTypeDialog = ({
 
   const hasUnsavedChanges = (actionId: string) => {
     return !!editedActions[actionId];
+  };
+
+  const getAdjustedScore = (action: PerformanceAction) => {
+    if (!action.zone || action.action_score === null) return null;
+    const category = actionCategories[action.action_type] || null;
+    const isDefensive = isDefensiveR90Category(category);
+    return calculateAdjustedScore(
+      action.action_score,
+      action.zone,
+      action.is_successful ?? true,
+      isDefensive
+    );
   };
 
   // Function to intelligently map action type/description to R90 category
@@ -445,7 +496,50 @@ export const ActionsByTypeDialog = ({
                                     disabled={!isAdmin}
                                     className={`h-9 font-mono ${getActionScoreColor(edited.action_score)}`}
                                   />
+                                  {edited.zone && (
+                                    <div className="text-xs text-muted-foreground mt-1">
+                                      Adjusted: {getAdjustedScore(edited)?.toFixed(5) || 'N/A'}
+                                    </div>
+                                  )}
                                 </div>
+                              </div>
+
+                              {/* Zone and Success Row */}
+                              <div className="grid grid-cols-2 gap-3">
+                                <div className="space-y-1">
+                                  <Label className="text-xs">Zone (1-18)</Label>
+                                  <Select
+                                    value={edited.zone?.toString() || ""}
+                                    onValueChange={(v) => updateEditedAction(action.id!, { zone: v ? parseInt(v) : null })}
+                                    disabled={!isAdmin}
+                                  >
+                                    <SelectTrigger className="h-9">
+                                      <SelectValue placeholder="Select zone" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="">None</SelectItem>
+                                      {Array.from({ length: 18 }, (_, i) => i + 1).map(z => (
+                                        <SelectItem key={z} value={z.toString()}>Zone {z}</SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                                <div className="space-y-1">
+                                  <Label className="text-xs flex items-center gap-2">
+                                    <span>Successful</span>
+                                    <Switch
+                                      checked={edited.is_successful ?? true}
+                                      onCheckedChange={(checked) => updateEditedAction(action.id!, { is_successful: checked })}
+                                      disabled={!isAdmin}
+                                    />
+                                  </Label>
+                                  <div className="text-xs text-muted-foreground">
+                                    {edited.is_successful ? 'Positive' : 'Negative'}
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                                 <div className="space-y-1">
                                   <Label className="text-xs">Type</Label>
                                   <Input
