@@ -45,7 +45,7 @@ export function calculateAdjustedScore(
   if (!zone || baseScore === null) return baseScore;
   
   const multiplier = getZoneMultiplier(zone, isSuccessful, isDefensiveAction);
-  return Number((baseScore * multiplier).toFixed(2));
+  return Number((baseScore * multiplier).toFixed(5));
 }
 
 export function isDefensiveR90Category(category: string | null): boolean {
