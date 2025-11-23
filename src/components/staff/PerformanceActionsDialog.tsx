@@ -599,14 +599,14 @@ export const PerformanceActionsDialog = ({
               <div className="space-y-2">
                 <Label htmlFor="zone">Zone (1-18)</Label>
                 <Select
-                  value={newAction.zone?.toString() || ""}
-                  onValueChange={(v) => setNewAction({ ...newAction, zone: v ? parseInt(v) : null })}
+                  value={newAction.zone?.toString() || "none"}
+                  onValueChange={(v) => setNewAction({ ...newAction, zone: v === "none" ? null : parseInt(v) })}
                 >
                   <SelectTrigger id="zone">
                     <SelectValue placeholder="Select zone" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">None</SelectItem>
+                    <SelectItem value="none">None</SelectItem>
                     {Array.from({ length: 18 }, (_, i) => i + 1).map(z => (
                       <SelectItem key={z} value={z.toString()}>Zone {z}</SelectItem>
                     ))}

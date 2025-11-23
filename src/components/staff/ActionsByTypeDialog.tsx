@@ -509,15 +509,15 @@ export const ActionsByTypeDialog = ({
                                 <div className="space-y-1">
                                   <Label className="text-xs">Zone (1-18)</Label>
                                   <Select
-                                    value={edited.zone?.toString() || ""}
-                                    onValueChange={(v) => updateEditedAction(action.id!, { zone: v ? parseInt(v) : null })}
+                                    value={edited.zone?.toString() || "none"}
+                                    onValueChange={(v) => updateEditedAction(action.id!, { zone: v === "none" ? null : parseInt(v) })}
                                     disabled={!isAdmin}
                                   >
                                     <SelectTrigger className="h-9">
                                       <SelectValue placeholder="Select zone" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                      <SelectItem value="">None</SelectItem>
+                                      <SelectItem value="none">None</SelectItem>
                                       {Array.from({ length: 18 }, (_, i) => i + 1).map(z => (
                                         <SelectItem key={z} value={z.toString()}>Zone {z}</SelectItem>
                                       ))}
