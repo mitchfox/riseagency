@@ -5,11 +5,11 @@ import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 interface PlayerImagesProps {
-  playerName: string;
+  playerId: string;
   isAdmin: boolean;
 }
 
-export const PlayerImages = ({ playerName, isAdmin }: PlayerImagesProps) => {
+export const PlayerImages = ({ playerId, isAdmin }: PlayerImagesProps) => {
   const [images, setImages] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   
@@ -20,7 +20,7 @@ export const PlayerImages = ({ playerName, isAdmin }: PlayerImagesProps) => {
         .select('*')
         .eq('category', 'players')
         .eq('file_type', 'image')
-        .ilike('title', `%${playerName}%`)
+        .eq('player_id', playerId)
         .order('created_at', { ascending: false });
       
       if (!error) {
@@ -29,7 +29,7 @@ export const PlayerImages = ({ playerName, isAdmin }: PlayerImagesProps) => {
       setLoading(false);
     };
     fetchImages();
-  }, [playerName]);
+  }, [playerId]);
   
   if (loading) {
     return <p className="text-center text-muted-foreground py-8">Loading images...</p>;
@@ -77,7 +77,7 @@ export const PlayerImages = ({ playerName, isAdmin }: PlayerImagesProps) => {
                     .select('*')
                     .eq('category', 'players')
                     .eq('file_type', 'image')
-                    .ilike('title', `%${playerName}%`)
+                    .eq('player_id', playerId)
                     .order('created_at', { ascending: false });
                   setImages(data || []);
                 } catch (error: any) {

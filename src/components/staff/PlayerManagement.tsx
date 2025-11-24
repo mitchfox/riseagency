@@ -2184,7 +2184,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                               </Button>
                             </div>
                             
-                            <PlayerImages playerName={selectedPlayer.name} isAdmin={isAdmin} />
+                            <PlayerImages playerId={selectedPlayer.id} isAdmin={isAdmin} />
                           </div>
                         </TabsContent>
                       </Tabs>
