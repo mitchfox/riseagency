@@ -270,13 +270,16 @@ export const MarketingManagement = ({ isAdmin }: { isAdmin: boolean }) => {
         <TabsContent value="gallery" className="space-y-4">
           <Card>
             <CardHeader>
-              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
                   <CardTitle>Marketing Gallery</CardTitle>
                   <CardDescription>Upload and manage images and videos for marketing</CardDescription>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
-                  <Select value={categoryFilter} onValueChange={(v) => setCategoryFilter(v as any)}>
+                  <Select value={categoryFilter} onValueChange={(v) => {
+                    setCategoryFilter(v as any);
+                    setSelectedPlayerId('all');
+                  }}>
                     <SelectTrigger className="w-full sm:w-[180px]">
                       <SelectValue />
                     </SelectTrigger>
@@ -291,7 +294,7 @@ export const MarketingManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                   {categoryFilter === 'players' && (
                     <Select value={selectedPlayerId} onValueChange={setSelectedPlayerId}>
                       <SelectTrigger className="w-full sm:w-[200px]">
-                        <SelectValue placeholder="Select player" />
+                        <SelectValue placeholder="All Players" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="all">All Players</SelectItem>
