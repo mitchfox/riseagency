@@ -18,7 +18,7 @@ import { R90RatingsManagement } from "./R90RatingsManagement";
 import { TacticalSchemes } from "./TacticalSchemes";
 
 
-type TableType = 'coaching_sessions' | 'coaching_programmes' | 'coaching_drills' | 'coaching_exercises' | 'coaching_analysis' | 'psychological_sessions' | 'coaching_aphorisms' | 'r90_ratings' | 'tactical_schemes';
+type TableType = 'coaching_sessions' | 'coaching_programmes' | 'coaching_drills' | 'coaching_exercises' | 'coaching_analysis' | 'psychological_sessions' | 'coaching_aphorisms' | 'r90_ratings' | 'tactical_schemes' | 'performance_statistics';
 
 interface Exercise {
   name: string;
@@ -58,6 +58,10 @@ interface CoachingItem {
   is_own_video?: boolean | null;
   author?: string | null;
   score?: number | string | null;
+  // Performance statistics fields
+  stat_name?: string;
+  stat_key?: string;
+  positions?: string[];
 }
 
 const tableConfigs = {
@@ -124,6 +128,13 @@ const tableConfigs = {
     icon: Settings,
     color: 'emerald',
   },
+  performance_statistics: {
+    label: 'Statistics',
+    singular: 'Statistic',
+    fields: ['stat_name', 'stat_key', 'positions', 'description'],
+    icon: LineChart,
+    color: 'rose',
+  },
 };
 
 const getScoreColor = (score: number | string | null) => {
@@ -170,6 +181,9 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
     featured_text: '',
     body_text: '',
     author: '',
+    stat_name: '',
+    stat_key: '',
+    positions: [] as string[],
   });
   
   // Pagination and filtering
@@ -208,8 +222,8 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
   }, [currentPage]);
 
   const fetchCategories = async () => {
-    // Skip for aphorisms and tactical schemes as they don't have category/tags
-    if (activeTab === 'coaching_aphorisms' || activeTab === 'tactical_schemes') {
+    // Skip for aphorisms, tactical schemes, and performance statistics as they don't have category/tags
+    if (activeTab === 'coaching_aphorisms' || activeTab === 'tactical_schemes' || activeTab === 'performance_statistics') {
       return;
     }
     
@@ -560,6 +574,12 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
         dataToSubmit.featured_text = formData.featured_text;
         if (formData.body_text) dataToSubmit.body_text = formData.body_text;
         if (formData.author) dataToSubmit.author = formData.author;
+      } else if (activeTab === 'performance_statistics') {
+        // For performance statistics
+        dataToSubmit.stat_name = formData.stat_name;
+        dataToSubmit.stat_key = formData.stat_key;
+        dataToSubmit.positions = formData.positions || [];
+        if (formData.description) dataToSubmit.description = formData.description;
       } else if (activeTab === 'coaching_sessions') {
         // For sessions, keep title, description, duration, category, exercises, tags, attachments
         dataToSubmit.title = formData.title;
@@ -618,6 +638,9 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
         featured_text: '',
         body_text: '',
         author: '',
+        stat_name: '',
+        stat_key: '',
+        positions: [],
       });
       setEditingItem(null);
       setIsDialogOpen(false);
@@ -685,6 +708,9 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
       featured_text: item.featured_text || '',
       body_text: item.body_text || '',
       author: item.author || '',
+      stat_name: item.stat_name || '',
+      stat_key: item.stat_key || '',
+      positions: item.positions || [],
     });
     setIsDialogOpen(true);
   };
@@ -774,6 +800,9 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
       featured_text: '',
       body_text: '',
       author: '',
+      stat_name: '',
+      stat_key: '',
+      positions: [] as string[],
     });
     setEditingItem(null);
   };
@@ -918,6 +947,60 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
                               onChange={(e) => setFormData({ ...formData, author: e.target.value })}
                               placeholder="Author name (optional)"
                             />
+                          </div>
+                        </>
+                       ) : activeTab === 'performance_statistics' ? (
+                        <>
+                          <div className="space-y-2">
+                            <Label htmlFor="stat_name">Statistic Name *</Label>
+                            <Input
+                              id="stat_name"
+                              value={formData.stat_name}
+                              onChange={(e) => setFormData({ ...formData, stat_name: e.target.value })}
+                              placeholder="e.g., Shots on Target"
+                              required
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="stat_key">JSON Key *</Label>
+                            <Input
+                              id="stat_key"
+                              value={formData.stat_key}
+                              onChange={(e) => setFormData({ ...formData, stat_key: e.target.value })}
+                              placeholder="e.g., shots_on_target (no spaces, lowercase)"
+                              required
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="description">Description</Label>
+                            <Textarea
+                              id="description"
+                              value={formData.description}
+                              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                              placeholder="Brief description of this statistic"
+                              rows={2}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Positions</Label>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                              {['GK', 'FB', 'CB', 'CDM', 'CM', 'CAM', 'W', 'CF'].map((position) => (
+                                <label key={position} className="flex items-center space-x-2 cursor-pointer">
+                                  <input
+                                    type="checkbox"
+                                    checked={formData.positions?.includes(position) || false}
+                                    onChange={(e) => {
+                                      const newPositions = e.target.checked
+                                        ? [...(formData.positions || []), position]
+                                        : (formData.positions || []).filter((p: string) => p !== position);
+                                      setFormData({ ...formData, positions: newPositions });
+                                    }}
+                                    className="rounded border-input"
+                                  />
+                                  <span className="text-sm">{position}</span>
+                                </label>
+                              ))}
+                            </div>
                           </div>
                         </>
                       ) : (
@@ -1090,6 +1173,8 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
                     'pink': 'border-l-pink-500',
                     'amber': 'border-l-amber-500',
                     'indigo': 'border-l-indigo-500',
+                    'emerald': 'border-l-emerald-500',
+                    'rose': 'border-l-rose-500',
                   }[config.color] || 'border-l-primary';
                   
                   const bgClass = {
@@ -1101,6 +1186,8 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
                     'pink': 'bg-pink-500/10',
                     'amber': 'bg-amber-500/10',
                     'indigo': 'bg-indigo-500/10',
+                    'emerald': 'bg-emerald-500/10',
+                    'rose': 'bg-rose-500/10',
                   }[config.color] || 'bg-primary/10';
                   
                   const iconColorClass = {
@@ -1112,6 +1199,8 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
                     'pink': 'text-pink-600',
                     'amber': 'text-amber-600',
                     'indigo': 'text-indigo-600',
+                    'emerald': 'text-emerald-600',
+                    'rose': 'text-rose-600',
                   }[config.color] || 'text-primary';
 
                   return (
@@ -1125,12 +1214,21 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
                             <div className={`p-2 rounded-lg ${bgClass} flex-shrink-0`}>
                               <config.icon className={`w-5 h-5 ${iconColorClass}`} />
                             </div>
-                            <div className="flex-1 min-w-0">
+                             <div className="flex-1 min-w-0">
                               <CardTitle className="text-base line-clamp-2 mb-1">
-                                {activeTab === 'coaching_aphorisms' ? item.featured_text : item.title}
+                                {activeTab === 'coaching_aphorisms' 
+                                  ? item.featured_text 
+                                  : activeTab === 'performance_statistics'
+                                  ? item.stat_name
+                                  : item.title}
                               </CardTitle>
                               <div className="flex flex-wrap gap-2 items-center">
-                                {item.category && (
+                                {activeTab === 'performance_statistics' && item.stat_key && (
+                                  <Badge variant="secondary" className="text-xs font-mono">
+                                    {item.stat_key}
+                                  </Badge>
+                                )}
+                                {activeTab !== 'performance_statistics' && item.category && (
                                   <Badge variant="secondary" className="text-xs">
                                     {item.category}
                                   </Badge>
@@ -1167,6 +1265,23 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
                           <p className="text-sm text-muted-foreground line-clamp-3">
                             {item.body_text}
                           </p>
+                        ) : activeTab === 'performance_statistics' ? (
+                          <>
+                            {item.description && (
+                              <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
+                                {item.description}
+                              </p>
+                            )}
+                            {item.positions && item.positions.length > 0 && (
+                              <div className="flex flex-wrap gap-1">
+                                {item.positions.map((position) => (
+                                  <Badge key={position} variant="outline" className="text-xs">
+                                    {position}
+                                  </Badge>
+                                ))}
+                              </div>
+                            )}
+                          </>
                         ) : (
                           <>
                             {item.description && (
