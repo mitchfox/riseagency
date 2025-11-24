@@ -30,6 +30,7 @@ import { Hub } from "@/components/dashboard/Hub";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Cell, LabelList, ReferenceLine } from "recharts";
 import { Link } from "react-router-dom";
 import { getR90Grade, getXGGrade, getXAGrade, getRegainsGrade, getInterceptionsGrade, getXGChainGrade, getProgressivePassesGrade, getPPTurnoversRatioGrade } from "@/lib/gradeCalculations";
+import { downloadVideo } from "@/lib/videoDownload";
 
 
 interface Analysis {
@@ -3377,42 +3378,10 @@ const Dashboard = () => {
                                           <Button 
                                             variant="default" 
                                             size="sm"
-                                            onClick={async () => {
-                                              try {
-                                                const videoUrl = highlight.videoUrl || highlight.url;
-                                                const fileName = highlight.name || highlight.title || `highlight-${index + 1}`;
-                                                
-                                                // Check if mobile device
-                                                const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-                                                
-                                                if (isMobile) {
-                                                  // For mobile, add download parameter to force download in new tab
-                                                  toast.info("Starting download...");
-                                                  const downloadUrl = `${videoUrl}${videoUrl.includes('?') ? '&' : '?'}download=${encodeURIComponent(fileName)}`;
-                                                  window.open(downloadUrl, '_blank');
-                                                } else {
-                                                  // For desktop, use blob download
-                                                  toast.info("Starting download...");
-                                                  
-                                                  const response = await fetch(videoUrl);
-                                                  const blob = await response.blob();
-                                                  
-                                                  const blobUrl = window.URL.createObjectURL(blob);
-                                                  const link = document.createElement('a');
-                                                  link.href = blobUrl;
-                                                  link.download = fileName;
-                                                  document.body.appendChild(link);
-                                                  link.click();
-                                                  document.body.removeChild(link);
-                                                  
-                                                  window.URL.revokeObjectURL(blobUrl);
-                                                  
-                                                  toast.success("Download completed");
-                                                }
-                                              } catch (error) {
-                                                console.error('Download error:', error);
-                                                toast.error("Download failed");
-                                              }
+                                            onClick={() => {
+                                              const videoUrl = highlight.videoUrl || highlight.url;
+                                              const fileName = highlight.name || highlight.title || `highlight-${index + 1}`;
+                                              downloadVideo(videoUrl, fileName);
                                             }}
                                             className="flex-1"
                                           >
@@ -3591,49 +3560,18 @@ const Dashboard = () => {
                                                  <Play className="w-4 h-4" />
                                                  <span className="hidden sm:inline ml-2">Watch</span>
                                                </Button>
-                                             <Button 
-                                               variant="ghost" 
-                                                size="sm"
-                                                onClick={async () => {
-                                                  try {
-                                                    const videoUrl = highlight.videoUrl || highlight.url;
-                                                    const fileName = highlight.name || highlight.title || `clip-${index + 1}`;
-                                                    
-                                                    // Check if mobile device
-                                                    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-                                                    
-                                                    if (isMobile) {
-                                                      // For mobile, add download parameter to force download in new tab
-                                                      toast.info("Starting download...");
-                                                      const downloadUrl = `${videoUrl}${videoUrl.includes('?') ? '&' : '?'}download=${encodeURIComponent(fileName)}`;
-                                                      window.open(downloadUrl, '_blank');
-                                                    } else {
-                                                      // For desktop, use blob download
-                                                      toast.info("Starting download...");
-                                                      
-                                                      const response = await fetch(videoUrl);
-                                                      const blob = await response.blob();
-                                                      const url = window.URL.createObjectURL(blob);
-                                                      const a = document.createElement('a');
-                                                      a.style.display = 'none';
-                                                      a.href = url;
-                                                      a.download = `${fileName}.mp4`;
-                                                      document.body.appendChild(a);
-                                                      a.click();
-                                                      window.URL.revokeObjectURL(url);
-                                                      document.body.removeChild(a);
-                                                      
-                                                      toast.success("Download started");
-                                                    }
-                                                  } catch (error) {
-                                                    console.error('Error downloading video:', error);
-                                                    toast.error("Failed to download video. Please try again.");
-                                                  }
-                                                }}
-                                                className="h-8 px-2"
-                                               >
-                                                 <Download className="w-4 h-4" />
-                                               </Button>
+                                              <Button 
+                                                variant="ghost" 
+                                                 size="sm"
+                                                 onClick={() => {
+                                                   const videoUrl = highlight.videoUrl || highlight.url;
+                                                   const fileName = highlight.name || highlight.title || `clip-${index + 1}`;
+                                                   downloadVideo(videoUrl, fileName);
+                                                 }}
+                                                 className="h-8 px-2"
+                                                >
+                                                  <Download className="w-4 h-4" />
+                                                </Button>
                                              <Button 
                                                variant="ghost" 
                                                size="sm"
