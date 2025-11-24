@@ -20,7 +20,15 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
   const [starIndex, setStarIndex] = useState(0);
   const [starPlayers, setStarPlayers] = useState<any[]>([]);
   const [newsItems, setNewsItems] = useState<any[]>([]);
+  const [imageLoaded, setImageLoaded] = useState(false);
   const navigate = useNavigate();
+
+  // Preload background image first
+  useEffect(() => {
+    const img = new Image();
+    img.src = introImage;
+    img.onload = () => setImageLoaded(true);
+  }, []);
 
   useEffect(() => {
     const fetchStarPlayers = async () => {
@@ -87,18 +95,19 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
 
   return (
     <>
-      <Dialog open={open} onOpenChange={handleDialogChange}>
-        <DialogContent 
-          className="max-w-lg w-full p-0 border-0 bg-transparent [&>button]:hidden overflow-hidden sm:max-w-lg max-w-[95vw]"
-          aria-describedby="intro-modal-description"
-        >
-          <div className="relative w-full">
-            {/* Main Image - Natural size, no stretching */}
-            <img 
-              src={introImage} 
-              alt="RISE Football - From Striving to Rising to Thriving" 
-              className="w-full h-auto object-contain"
-            />
+      {imageLoaded && (
+        <Dialog open={open} onOpenChange={handleDialogChange}>
+          <DialogContent 
+            className="max-w-lg w-full p-0 border-0 bg-transparent [&>button]:hidden overflow-hidden sm:max-w-lg max-w-[95vw]"
+            aria-describedby="intro-modal-description"
+          >
+            <div className="relative w-full">
+              {/* Main Image - Natural size, no stretching */}
+              <img 
+                src={introImage} 
+                alt="RISE Football - From Striving to Rising to Thriving" 
+                className="w-full h-auto object-contain"
+              />
             
             {/* RISE Logo - Top Right Corner */}
             <img 
@@ -281,6 +290,7 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
           </div>
         </DialogContent>
       </Dialog>
+      )}
 
       <RepresentationDialog open={showRepresentation} onOpenChange={setShowRepresentation} />
     </>
