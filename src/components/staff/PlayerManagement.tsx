@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -132,6 +132,8 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   const [uploadProgress, setUploadProgress] = useState<Record<string, { status: 'uploading' | 'success' | 'error', progress: number, error?: string }>>({});
   const [bestClipsPage, setBestClipsPage] = useState(1);
   const CLIPS_PER_PAGE = 9;
+  const [autoSelectedFromUrl, setAutoSelectedFromUrl] = useState(false);
+  const playerRefs = useRef<Record<string, HTMLButtonElement | null>>({});
 
   useEffect(() => {
     fetchPlayers();
@@ -157,6 +159,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       
       if (player) {
         setSelectedPlayerId(player.id);
+        setAutoSelectedFromUrl(true);
         // Reset pagination when player changes
         setBestClipsPage(1);
       }
@@ -166,6 +169,23 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       setActiveTab(tabParam);
     }
   }, [players, searchParams]);
+
+  // Auto-scroll to selected player when they're selected from URL
+  useEffect(() => {
+    if (selectedPlayerId && autoSelectedFromUrl && playerRefs.current[selectedPlayerId]) {
+      const element = playerRefs.current[selectedPlayerId];
+      
+      // Small delay to ensure DOM is ready
+      setTimeout(() => {
+        element?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        
+        // Reset the flag after scrolling
+        setTimeout(() => {
+          setAutoSelectedFromUrl(false);
+        }, 1000);
+      }, 100);
+    }
+  }, [selectedPlayerId, autoSelectedFromUrl]);
 
   const refreshSelectedPlayer = async () => {
     if (!selectedPlayerId) return;
@@ -794,12 +814,13 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
         {representedPlayers.map((player) => (
           <button
             key={player.id}
+            ref={(el) => (playerRefs.current[player.id] = el)}
             onClick={() => setSelectedPlayerId(player.id)}
             className={`relative group transition-all ${
               selectedPlayerId === player.id 
                 ? 'opacity-100 ring-2 ring-primary' 
                 : 'opacity-40 hover:opacity-70'
-            }`}
+            } ${autoSelectedFromUrl && selectedPlayerId === player.id ? 'animate-pulse' : ''}`}
             title={player.name}
           >
             <Avatar className="w-14 h-14">
@@ -818,12 +839,13 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
         {mandatedPlayers.map((player) => (
           <button
             key={player.id}
+            ref={(el) => (playerRefs.current[player.id] = el)}
             onClick={() => setSelectedPlayerId(player.id)}
             className={`relative group transition-all ${
               selectedPlayerId === player.id 
                 ? 'opacity-100 ring-2 ring-primary' 
                 : 'opacity-40 hover:opacity-70'
-            }`}
+            } ${autoSelectedFromUrl && selectedPlayerId === player.id ? 'animate-pulse' : ''}`}
             title={player.name}
           >
             <Avatar className="w-14 h-14">
@@ -842,12 +864,13 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
         {otherPlayers.map((player) => (
           <button
             key={player.id}
+            ref={(el) => (playerRefs.current[player.id] = el)}
             onClick={() => setSelectedPlayerId(player.id)}
             className={`relative group transition-all ${
               selectedPlayerId === player.id 
                 ? 'opacity-100 ring-2 ring-primary' 
                 : 'opacity-40 hover:opacity-70'
-            }`}
+            } ${autoSelectedFromUrl && selectedPlayerId === player.id ? 'animate-pulse' : ''}`}
             title={player.name}
           >
             <Avatar className="w-14 h-14">
