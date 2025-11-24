@@ -134,7 +134,6 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   const CLIPS_PER_PAGE = 9;
   const [autoSelectedFromUrl, setAutoSelectedFromUrl] = useState(false);
   const playerRefs = useRef<Record<string, HTMLButtonElement | null>>({});
-  const previousPlayerParam = useRef<string | null>(null);
 
   useEffect(() => {
     fetchPlayers();
@@ -153,8 +152,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
     const playerSlug = searchParams.get('player');
     const tabParam = searchParams.get('tab');
     
-    // Only update player if the player param actually changed
-    if (playerSlug && playerSlug !== previousPlayerParam.current) {
+    if (playerSlug) {
       // First try to find by ID (UUID format), then by slug (name-based)
       const player = players.find(p => p.id === playerSlug) || 
                      players.find(p => p.name?.toLowerCase().replace(/\s+/g, '-') === playerSlug);
@@ -165,17 +163,12 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
         // Reset pagination when player changes
         setBestClipsPage(1);
       }
-      previousPlayerParam.current = playerSlug;
-    } else if (!playerSlug && previousPlayerParam.current) {
-      // Player was removed from URL
-      setSelectedPlayerId(null);
-      previousPlayerParam.current = null;
     }
     
     if (tabParam) {
       setActiveTab(tabParam);
     }
-  }, [players, searchParams]);
+  }, [searchParams, players]);
 
   // Auto-scroll to selected player when they're selected from URL
   useEffect(() => {
@@ -215,20 +208,19 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
 
   const handleMainTabChange = (value: string) => {
     setActiveTab(value);
-    const currentParams = Object.fromEntries(searchParams.entries());
     
-    // Ensure player parameter is preserved
-    const newParams: Record<string, string> = {
-      ...currentParams,
-      tab: value,
-    };
+    // Get all current params
+    const params = new URLSearchParams(searchParams);
     
-    // Explicitly preserve the player ID if one is selected
+    // Update the tab param
+    params.set('tab', value);
+    
+    // Make sure player param is preserved if we have a selected player
     if (selectedPlayerId) {
-      newParams.player = selectedPlayerId;
+      params.set('player', selectedPlayerId);
     }
     
-    setSearchParams(newParams);
+    setSearchParams(params);
   };
 
   const fetchPlayers = async (preserveSelection = false) => {
