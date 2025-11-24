@@ -322,20 +322,26 @@ export const MarketingManagement = ({ isAdmin }: { isAdmin: boolean }) => {
             </CardHeader>
             <CardContent>
               {(() => {
-                let filtered = categoryFilter === 'all' 
+                // Show ALL items when "all" is selected, no filtering
+                const filtered = categoryFilter === 'all' 
                   ? galleryItems 
-                  : galleryItems.filter(item => item.category === categoryFilter);
+                  : categoryFilter === 'players' && selectedPlayerId !== 'all'
+                    ? galleryItems.filter(item => item.category === 'players' && item.player_id === selectedPlayerId)
+                    : galleryItems.filter(item => item.category === categoryFilter);
                 
-                // If players category is selected and a specific player is chosen, filter by player_id
-                if (categoryFilter === 'players' && selectedPlayerId !== 'all') {
-                  filtered = filtered.filter(item => item.player_id === selectedPlayerId);
-                }
+                console.log('Rendering gallery:', { 
+                  categoryFilter, 
+                  selectedPlayerId, 
+                  totalItems: galleryItems.length, 
+                  filteredItems: filtered.length 
+                });
                 
                 return filtered.length === 0 ? (
                 <div className="text-center py-12 text-muted-foreground">
                   <Image className="w-16 h-16 mx-auto mb-4 opacity-50" />
                   <p className="text-lg mb-2">No media in this category</p>
                   <p className="text-sm">Upload images and videos to build your marketing gallery</p>
+                  <p className="text-xs mt-2 text-destructive">Total in DB: {galleryItems.length}</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4">
