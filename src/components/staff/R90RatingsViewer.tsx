@@ -388,11 +388,6 @@ export const R90RatingsViewer = ({ open, onOpenChange, initialCategory, searchTe
             <ScrollArea className="h-full">
               <div className="pr-4 pb-4">
                 {/* Show xG Map for Shots category */}
-                {selectedCategory === 'Shots' && (
-                  <div className="mb-6">
-                    <XGPitchMap />
-                  </div>
-                )}
                 
                 {loading ? (
                   <div className="flex items-center justify-center py-12">
@@ -443,7 +438,10 @@ export const R90RatingsViewer = ({ open, onOpenChange, initialCategory, searchTe
                             </CollapsibleTrigger>
                             <CollapsibleContent>
                               <CardContent className="space-y-3 pt-0">
-                                {Object.entries(subcategories).map(([subcategory, ratingsInSubcat]) => {
+                                {category === 'SHOTS' ? (
+                                  <XGPitchMap />
+                                ) : (
+                                  Object.entries(subcategories).map(([subcategory, ratingsInSubcat]) => {
                                   const subcategoryKey = `${categoryKey}-${subcategory}`;
                                   const isSubcategoryExpanded = expandedSubcategories.has(subcategoryKey);
                                   
@@ -628,8 +626,8 @@ export const R90RatingsViewer = ({ open, onOpenChange, initialCategory, searchTe
                                         </CollapsibleContent>
                                       </Card>
                                     </Collapsible>
-                                  );
-                                })}
+                                   );
+                                }))}
                               </CardContent>
                             </CollapsibleContent>
                           </Card>
