@@ -830,9 +830,9 @@ export const PlaylistManager = ({ playerData, availableClips, onClose }: Playlis
                     variant="default"
                     className="h-8 flex-shrink-0"
                   >
-                    <Save className="w-4 h-4 md:mr-2" />
+                    <Download className="w-4 h-4 md:mr-2" />
                     <span className="hidden md:inline">
-                      {saving ? 'Saving...' : 'Save'}
+                      {saving ? 'Downloading...' : 'Download All'}
                     </span>
                   </Button>
                 </>
