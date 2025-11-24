@@ -134,6 +134,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   const CLIPS_PER_PAGE = 9;
   const [autoSelectedFromUrl, setAutoSelectedFromUrl] = useState(false);
   const playerRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const previousPlayerIdFromUrl = useRef<string | null>(null);
 
   useEffect(() => {
     fetchPlayers();
@@ -152,7 +153,8 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
     const playerSlug = searchParams.get('player');
     const tabParam = searchParams.get('tab');
     
-    if (playerSlug) {
+    // Only update player selection if the player param actually changed
+    if (playerSlug && playerSlug !== previousPlayerIdFromUrl.current) {
       // First try to find by ID (UUID format), then by slug (name-based)
       const player = players.find(p => p.id === playerSlug) || 
                      players.find(p => p.name?.toLowerCase().replace(/\s+/g, '-') === playerSlug);
@@ -163,6 +165,11 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
         // Reset pagination when player changes
         setBestClipsPage(1);
       }
+      previousPlayerIdFromUrl.current = playerSlug;
+    } else if (!playerSlug && previousPlayerIdFromUrl.current) {
+      // Player was removed from URL
+      setSelectedPlayerId(null);
+      previousPlayerIdFromUrl.current = null;
     }
     
     if (tabParam) {
