@@ -13,6 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { toast } from "sonner";
 import { calculateAdjustedScore, isDefensiveR90Category } from "@/lib/zoneMultipliers";
+import { XGPitchMap } from "./XGPitchMap";
 
 interface R90Rating {
   id: string;
@@ -40,7 +41,8 @@ const R90_CATEGORIES = [
   'Aerial Duels',
   'Attacking Crosses',
   'On-Ball Decision-Making',
-  'Off-Ball Movement'
+  'Off-Ball Movement',
+  'Shots'
 ];
 
 export const R90RatingsViewer = ({ open, onOpenChange, initialCategory, searchTerm, prefilledSearch }: R90RatingsViewerProps) => {
@@ -385,6 +387,13 @@ export const R90RatingsViewer = ({ open, onOpenChange, initialCategory, searchTe
           <div className="flex-1 min-h-0">
             <ScrollArea className="h-full">
               <div className="pr-4 pb-4">
+                {/* Show xG Map for Shots category */}
+                {selectedCategory === 'Shots' && (
+                  <div className="mb-6">
+                    <XGPitchMap />
+                  </div>
+                )}
+                
                 {loading ? (
                   <div className="flex items-center justify-center py-12">
                     <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
