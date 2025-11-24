@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { Calendar, momentLocalizer, Event as CalendarEvent } from 'react-big-calendar';
 import moment from 'moment';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
+import './marketing-calendar.css';
 
 const localizer = momentLocalizer(moment);
 
@@ -540,7 +541,7 @@ export const MarketingManagement = ({ isAdmin, isMarketeer }: { isAdmin: boolean
               </div>
             </CardHeader>
             <CardContent>
-              <div className="h-[600px]">
+              <div className="h-[600px] bg-background rounded-lg p-4">
                 <Calendar
                   localizer={localizer}
                   events={useMemo(() => campaigns.map(campaign => ({
@@ -552,6 +553,8 @@ export const MarketingManagement = ({ isAdmin, isMarketeer }: { isAdmin: boolean
                   startAccessor="start"
                   endAccessor="end"
                   style={{ height: '100%' }}
+                  views={['month', 'week', 'day', 'agenda']}
+                  defaultView="month"
                   onSelectEvent={useCallback((event: any) => {
                     const campaign = event.resource;
                     if (canManage && confirm(`Delete campaign "${campaign.title}"?`)) {
@@ -567,6 +570,9 @@ export const MarketingManagement = ({ isAdmin, isMarketeer }: { isAdmin: boolean
                           campaign.status === 'completed' ? '#3b82f6' :
                           campaign.status === 'cancelled' ? '#ef4444' :
                           '#6b7280',
+                        border: 'none',
+                        borderRadius: '4px',
+                        color: 'white',
                       }
                     };
                   }, [])}
