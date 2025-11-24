@@ -82,7 +82,8 @@ interface Campaign {
   created_at: string;
 }
 
-export const MarketingManagement = ({ isAdmin }: { isAdmin: boolean }) => {
+export const MarketingManagement = ({ isAdmin, isMarketeer }: { isAdmin: boolean; isMarketeer?: boolean }) => {
+  const canManage = isAdmin || isMarketeer;
   const [activeTab, setActiveTab] = useState("resources");
   const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([]);
   const [categoryFilter, setCategoryFilter] = useState<'all' | 'brand' | 'players' | 'other'>('all');
@@ -152,7 +153,7 @@ export const MarketingManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   const handleFileUpload = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!uploadForm.file || !isAdmin) {
+    if (!uploadForm.file || !canManage) {
       toast.error('Please select a file');
       return;
     }
@@ -206,7 +207,7 @@ export const MarketingManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   };
 
   const handleDelete = async (item: GalleryItem) => {
-    if (!isAdmin || !confirm('Are you sure you want to delete this item?')) {
+    if (!canManage || !confirm('Are you sure you want to delete this item?')) {
       return;
     }
 
@@ -255,8 +256,8 @@ export const MarketingManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   const handleCampaignSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!isAdmin) {
-      toast.error('Only admins can create campaigns');
+    if (!canManage) {
+      toast.error('Permission denied');
       return;
     }
 
@@ -302,7 +303,7 @@ export const MarketingManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   };
 
   const handleDeleteCampaign = async (id: string) => {
-    if (!isAdmin || !confirm('Are you sure you want to delete this campaign?')) {
+    if (!canManage || !confirm('Are you sure you want to delete this campaign?')) {
       return;
     }
 
@@ -426,7 +427,7 @@ export const MarketingManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                     </Select>
                   )}
                   
-                  {isAdmin && (
+                  {canManage && (
                     <Button onClick={() => setShowUploadDialog(true)} size="sm" className="md:size-default">
                       <Upload className="w-4 h-4 mr-2" />
                       <span className="hidden sm:inline">Upload Media</span>
@@ -497,7 +498,7 @@ export const MarketingManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                           >
                             View Full
                           </Button>
-                          {isAdmin && (
+                          {canManage && (
                             <Button
                               size="sm"
                               variant="destructive"
@@ -525,7 +526,7 @@ export const MarketingManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                   <CardTitle>Marketing Planner</CardTitle>
                   <CardDescription>Plan and track marketing campaigns</CardDescription>
                 </div>
-                {isAdmin && (
+                {canManage && (
                   <Button onClick={() => setShowCampaignDialog(true)}>
                     <Calendar className="w-4 h-4 mr-2" />
                     Create Campaign
@@ -592,7 +593,7 @@ export const MarketingManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                               </div>
                             )}
                           </div>
-                          {isAdmin && (
+                          {canManage && (
                             <Button
                               size="sm"
                               variant="destructive"
