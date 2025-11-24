@@ -16,6 +16,7 @@ import { PlayerScoutingManagement } from "./PlayerScoutingManagement";
 import { PlaylistManager } from "@/components/PlaylistManager";
 import { InlineVideoUpload } from "./InlineVideoUpload";
 import { EditHighlightDialog } from "./EditHighlightDialog";
+import { UploadPlayerImageDialog } from "./UploadPlayerImageDialog";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -132,6 +133,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   const [analysisSearchQuery, setAnalysisSearchQuery] = useState("");
   const [showPlaylistManager, setShowPlaylistManager] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<Record<string, { status: 'uploading' | 'success' | 'error', progress: number, error?: string }>>({});
+  const [showImageUploadDialog, setShowImageUploadDialog] = useState(false);
   const [bestClipsPage, setBestClipsPage] = useState(1);
   const CLIPS_PER_PAGE = 9;
   const [autoSelectedFromUrl, setAutoSelectedFromUrl] = useState(false);
@@ -2175,6 +2177,13 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                               </div>
                             )}
                             
+                            <div className="flex justify-end mb-4">
+                              <Button onClick={() => setShowImageUploadDialog(true)}>
+                                <ImageIcon className="w-4 h-4 mr-2" />
+                                Upload Image
+                              </Button>
+                            </div>
+                            
                             <PlayerImages playerName={selectedPlayer.name} isAdmin={isAdmin} />
                           </div>
                         </TabsContent>
@@ -3111,6 +3120,18 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
           onSave={() => {
             fetchPlayers(true);
             setEditingHighlight(null);
+          }}
+        />
+      )}
+
+      {selectedPlayer && (
+        <UploadPlayerImageDialog
+          open={showImageUploadDialog}
+          onOpenChange={setShowImageUploadDialog}
+          playerName={selectedPlayer.name}
+          playerId={selectedPlayer.id}
+          onUploadComplete={() => {
+            toast.success("Image uploaded! Refresh to see it.");
           }}
         />
       )}
