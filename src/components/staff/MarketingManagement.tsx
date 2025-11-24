@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -7,9 +7,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar, FileText, Image, Table, Folder, HardDrive, ExternalLink, Upload, Trash2, Play } from "lucide-react";
+import { Calendar as CalendarIcon, FileText, Image, Table, Folder, HardDrive, ExternalLink, Upload, Trash2, Play } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Calendar, momentLocalizer, Event as CalendarEvent } from 'react-big-calendar';
+import moment from 'moment';
+import 'react-big-calendar/lib/css/react-big-calendar.css';
+
+const localizer = momentLocalizer(moment);
 
 const marketingLinks = [
   {
@@ -523,91 +528,50 @@ export const MarketingManagement = ({ isAdmin, isMarketeer }: { isAdmin: boolean
             <CardHeader>
               <div className="flex justify-between items-center">
                 <div>
-                  <CardTitle>Marketing Planner</CardTitle>
+                  <CardTitle>Marketing Calendar</CardTitle>
                   <CardDescription>Plan and track marketing campaigns</CardDescription>
                 </div>
                 {canManage && (
                   <Button onClick={() => setShowCampaignDialog(true)}>
-                    <Calendar className="w-4 h-4 mr-2" />
+                    <CalendarIcon className="w-4 h-4 mr-2" />
                     Create Campaign
                   </Button>
                 )}
               </div>
             </CardHeader>
             <CardContent>
-              {campaigns.length === 0 ? (
-                <div className="text-center py-12 text-muted-foreground">
-                  <Calendar className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                  <p className="text-lg mb-2">No campaigns planned yet</p>
-                  <p className="text-sm mb-4">Plan and schedule your marketing campaigns</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {campaigns.map((campaign) => (
-                    <Card key={campaign.id}>
-                      <CardContent className="p-6">
-                        <div className="flex justify-between items-start">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-3 mb-2">
-                              <h3 className="font-semibold text-lg">{campaign.title}</h3>
-                              <span className={`px-2 py-1 rounded text-xs font-medium ${
-                                campaign.status === 'active' ? 'bg-green-100 text-green-700' :
-                                campaign.status === 'completed' ? 'bg-blue-100 text-blue-700' :
-                                campaign.status === 'cancelled' ? 'bg-red-100 text-red-700' :
-                                'bg-gray-100 text-gray-700'
-                              }`}>
-                                {campaign.status}
-                              </span>
-                            </div>
-                            {campaign.description && (
-                              <p className="text-sm text-muted-foreground mb-3">{campaign.description}</p>
-                            )}
-                            <div className="grid grid-cols-2 gap-4 text-sm">
-                              <div>
-                                <span className="text-muted-foreground">Start:</span>{' '}
-                                <span className="font-medium">{new Date(campaign.start_date).toLocaleDateString()}</span>
-                              </div>
-                              {campaign.end_date && (
-                                <div>
-                                  <span className="text-muted-foreground">End:</span>{' '}
-                                  <span className="font-medium">{new Date(campaign.end_date).toLocaleDateString()}</span>
-                                </div>
-                              )}
-                              {campaign.platform.length > 0 && (
-                                <div>
-                                  <span className="text-muted-foreground">Platforms:</span>{' '}
-                                  <span className="font-medium">{campaign.platform.join(', ')}</span>
-                                </div>
-                              )}
-                              {campaign.budget && (
-                                <div>
-                                  <span className="text-muted-foreground">Budget:</span>{' '}
-                                  <span className="font-medium">${campaign.budget}</span>
-                                </div>
-                              )}
-                            </div>
-                            {campaign.goals && (
-                              <div className="mt-3 text-sm">
-                                <span className="text-muted-foreground">Goals:</span>{' '}
-                                <span>{campaign.goals}</span>
-                              </div>
-                            )}
-                          </div>
-                          {canManage && (
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => handleDeleteCampaign(campaign.id)}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          )}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              )}
+              <div className="h-[600px]">
+                <Calendar
+                  localizer={localizer}
+                  events={useMemo(() => campaigns.map(campaign => ({
+                    title: campaign.title,
+                    start: new Date(campaign.start_date),
+                    end: campaign.end_date ? new Date(campaign.end_date) : new Date(campaign.start_date),
+                    resource: campaign,
+                  })), [campaigns])}
+                  startAccessor="start"
+                  endAccessor="end"
+                  style={{ height: '100%' }}
+                  onSelectEvent={useCallback((event: any) => {
+                    const campaign = event.resource;
+                    if (canManage && confirm(`Delete campaign "${campaign.title}"?`)) {
+                      handleDeleteCampaign(campaign.id);
+                    }
+                  }, [canManage])}
+                  eventPropGetter={useCallback((event: any) => {
+                    const campaign = event.resource;
+                    return {
+                      style: {
+                        backgroundColor: 
+                          campaign.status === 'active' ? '#22c55e' :
+                          campaign.status === 'completed' ? '#3b82f6' :
+                          campaign.status === 'cancelled' ? '#ef4444' :
+                          '#6b7280',
+                      }
+                    };
+                  }, [])}
+                />
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
