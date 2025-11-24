@@ -438,7 +438,10 @@ export const R90RatingsViewer = ({ open, onOpenChange, initialCategory, searchTe
                             </CollapsibleTrigger>
                             <CollapsibleContent>
                               <CardContent className="space-y-3 pt-0">
-                                {category === 'SHOTS' ? (
+                                {(() => {
+                                  console.log('Category check:', { category, upperCase: category.toUpperCase(), check: category.toUpperCase() === 'SHOTS' });
+                                  return category.toUpperCase() === 'SHOTS';
+                                })() ? (
                                   <XGPitchMap />
                                 ) : (
                                   Object.entries(subcategories).map(([subcategory, ratingsInSubcat]) => {
