@@ -83,11 +83,14 @@ export function UploadPlayerImageDialog({
       if (dbError) throw dbError;
 
       toast.success("Image uploaded successfully!");
-      onUploadComplete();
-      onOpenChange(false);
       setTitle("");
       setImageFile(null);
       setImagePreview("");
+      onOpenChange(false);
+      // Give a brief delay to ensure DB updates before triggering refresh
+      setTimeout(() => {
+        onUploadComplete();
+      }, 100);
     } catch (error: any) {
       console.error('Upload error:', error);
       toast.error(error.message || 'Failed to upload image');
