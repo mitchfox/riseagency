@@ -2467,13 +2467,6 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                   <div className="space-y-2">
                     <Label htmlFor="club_logo">Club Logo</Label>
                     <div className="flex flex-col gap-3">
-                      <Input
-                        id="club_logo"
-                        value={formData.club_logo}
-                        onChange={(e) => setFormData({ ...formData, club_logo: e.target.value })}
-                        placeholder="https://example.com/logo.png or upload below"
-                        className="h-10 sm:h-11 text-sm"
-                      />
                       <div className="flex items-center gap-3">
                         <Label 
                           htmlFor="club_logo_upload" 
