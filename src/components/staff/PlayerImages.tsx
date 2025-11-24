@@ -20,7 +20,7 @@ export const PlayerImages = ({ playerId, isAdmin }: PlayerImagesProps) => {
         .select('*')
         .eq('category', 'players')
         .eq('file_type', 'image')
-        .eq('player_id', playerId)
+        .or(`player_id.eq.${playerId},player_id.is.null`)
         .order('created_at', { ascending: false });
       
       if (!error) {
@@ -77,7 +77,7 @@ export const PlayerImages = ({ playerId, isAdmin }: PlayerImagesProps) => {
                     .select('*')
                     .eq('category', 'players')
                     .eq('file_type', 'image')
-                    .eq('player_id', playerId)
+                    .or(`player_id.eq.${playerId},player_id.is.null`)
                     .order('created_at', { ascending: false });
                   setImages(data || []);
                 } catch (error: any) {
