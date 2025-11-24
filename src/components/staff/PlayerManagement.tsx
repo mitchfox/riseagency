@@ -2701,8 +2701,9 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                             newSchemes[index].clubLogo = e.target.value;
                             setFormData({ ...formData, tacticalSchemes: newSchemes });
                           }}
-                          placeholder="Club Logo URL"
+                          placeholder="Club Logo (upload via Career tab)"
                           className="col-span-2"
+                          disabled
                         />
                         <Input
                           value={scheme.playerImage || ""}
