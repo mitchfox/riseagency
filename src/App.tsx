@@ -30,6 +30,7 @@ import TermsOfService from "./pages/TermsOfService";
 import AnalysisViewer from "./pages/AnalysisViewer";
 import Intro from "./pages/Intro";
 import PlayersList from "./pages/PlayersList";
+import PlayersDraft from "./pages/PlayersDraft";
 import ClubNetwork from "./pages/ClubNetwork";
 import PDFViewer from "./pages/PDFViewer";
 
@@ -53,6 +54,7 @@ const App = () => {
           <Route path="/stars/:playername" element={<PlayerDetail />} />
           <Route path="/players" element={<Players />} />
           <Route path="/players-list" element={<PlayersList />} />
+          <Route path="/players-draft" element={<PlayersDraft />} />
           <Route path="/clubs" element={<Clubs />} />
           <Route path="/club-network" element={<ClubNetwork />} />
           <Route path="/coaches" element={<Coaches />} />
