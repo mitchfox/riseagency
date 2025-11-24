@@ -53,6 +53,13 @@ export function UploadPlayerImageDialog({
       return;
     }
 
+    if (!playerId) {
+      toast.error("Invalid player ID");
+      console.error("Upload attempted with NULL playerId:", playerId);
+      return;
+    }
+
+    console.log("Uploading image for player:", { playerId, playerName, title: title.trim() });
     setUploading(true);
 
     try {
