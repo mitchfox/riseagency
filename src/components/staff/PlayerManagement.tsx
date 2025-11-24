@@ -82,6 +82,8 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   const [draggedHighlightIndex, setDraggedHighlightIndex] = useState<number | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [clubLogoFile, setClubLogoFile] = useState<File | null>(null);
+  const [clubLogoPreview, setClubLogoPreview] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     // Basic Info
     name: "",
@@ -684,6 +686,20 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
     setImagePreview(null);
   };
 
+  const handleClubLogoSelect = (file: File) => {
+    setClubLogoFile(file);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setClubLogoPreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveClubLogo = () => {
+    setClubLogoFile(null);
+    setClubLogoPreview(null);
+  };
+
   const handleUpdatePlayer = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingPlayer) return;
@@ -711,6 +727,28 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
         finalImageUrl = publicUrl;
       }
 
+      // Upload new club logo if selected
+      let finalClubLogoUrl = formData.club_logo;
+      if (clubLogoFile) {
+        const logoFileName = `${editingPlayer.id}_${Date.now()}_logo_${clubLogoFile.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+        const { error: logoError } = await supabase.storage
+          .from('analysis-files')
+          .upload(`club-logos/${logoFileName}`, clubLogoFile, {
+            cacheControl: '3600',
+            upsert: false
+          });
+
+        if (logoError) {
+          toast.error('Failed to upload club logo');
+          return;
+        }
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('analysis-files')
+          .getPublicUrl(`club-logos/${logoFileName}`);
+        finalClubLogoUrl = publicUrl;
+      }
+
       const bioJSON = reconstructBioJSON();
       
       const { error } = await supabase
@@ -720,7 +758,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
           email: formData.email || null,
           position: formData.position,
           club: formData.club || null,
-          club_logo: formData.club_logo || null,
+          club_logo: finalClubLogoUrl || null,
           age: formData.age,
           nationality: formData.nationality,
           bio: bioJSON,
@@ -738,6 +776,8 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       setIsEditDialogOpen(false);
       setImageFile(null);
       setImagePreview(null);
+      setClubLogoFile(null);
+      setClubLogoPreview(null);
       fetchPlayers(true);
     } catch (error: any) {
       toast.error("Failed to update player: " + error.message);
@@ -2227,6 +2267,8 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
         if (!open) {
           setImageFile(null);
           setImagePreview(null);
+          setClubLogoFile(null);
+          setClubLogoPreview(null);
         }
       }}>
         <DialogContent className="max-w-4xl max-h-[95vh] w-[98vw] sm:w-[95vw] p-3 sm:p-6">
@@ -2423,13 +2465,55 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="club_logo">Club Logo URL</Label>
-                    <Input
-                      id="club_logo"
-                      value={formData.club_logo}
-                      onChange={(e) => setFormData({ ...formData, club_logo: e.target.value })}
-                      placeholder="https://example.com/logo.png"
-                    />
+                    <Label htmlFor="club_logo">Club Logo</Label>
+                    <div className="flex flex-col gap-3">
+                      <Input
+                        id="club_logo"
+                        value={formData.club_logo}
+                        onChange={(e) => setFormData({ ...formData, club_logo: e.target.value })}
+                        placeholder="https://example.com/logo.png or upload below"
+                        className="h-10 sm:h-11 text-sm"
+                      />
+                      <div className="flex items-center gap-3">
+                        <Label 
+                          htmlFor="club_logo_upload" 
+                          className="flex items-center gap-2 px-4 py-2 bg-secondary text-secondary-foreground rounded-md cursor-pointer hover:bg-secondary/80 transition-colors text-sm"
+                        >
+                          <ImageIcon className="w-4 h-4" />
+                          Upload Logo
+                        </Label>
+                        <input
+                          id="club_logo_upload"
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) handleClubLogoSelect(file);
+                          }}
+                          className="hidden"
+                        />
+                        {(clubLogoPreview || formData.club_logo) && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={handleRemoveClubLogo}
+                          >
+                            <X className="w-4 h-4 mr-1" />
+                            Clear
+                          </Button>
+                        )}
+                      </div>
+                      {(clubLogoPreview || formData.club_logo) && (
+                        <div className="relative w-24 h-24 border rounded-md overflow-hidden bg-white p-2">
+                          <img 
+                            src={clubLogoPreview || formData.club_logo} 
+                            alt="Club Logo Preview" 
+                            className="w-full h-full object-contain"
+                          />
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
