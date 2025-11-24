@@ -68,6 +68,20 @@ interface GalleryItem {
   created_at: string;
 }
 
+interface Campaign {
+  id: string;
+  title: string;
+  description: string | null;
+  start_date: string;
+  end_date: string | null;
+  status: 'draft' | 'active' | 'completed' | 'cancelled';
+  platform: string[];
+  target_audience: string | null;
+  goals: string | null;
+  budget: number | null;
+  created_at: string;
+}
+
 export const MarketingManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   const [activeTab, setActiveTab] = useState("resources");
   const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([]);
@@ -83,11 +97,29 @@ export const MarketingManagement = ({ isAdmin }: { isAdmin: boolean }) => {
     category: 'other' as 'brand' | 'players' | 'other',
     player_id: null as string | null,
   });
+  
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [showCampaignDialog, setShowCampaignDialog] = useState(false);
+  const [savingCampaign, setSavingCampaign] = useState(false);
+  const [campaignForm, setCampaignForm] = useState({
+    title: '',
+    description: '',
+    start_date: '',
+    end_date: '',
+    status: 'draft' as 'draft' | 'active' | 'completed' | 'cancelled',
+    platform: [] as string[],
+    target_audience: '',
+    goals: '',
+    budget: '',
+  });
 
   useEffect(() => {
     if (activeTab === 'gallery') {
       fetchGalleryItems();
       fetchPlayers();
+    }
+    if (activeTab === 'planner') {
+      fetchCampaigns();
     }
   }, [activeTab]);
 
@@ -203,6 +235,90 @@ export const MarketingManagement = ({ isAdmin }: { isAdmin: boolean }) => {
     } catch (error) {
       console.error('Delete error:', error);
       toast.error('Failed to delete item');
+    }
+  };
+
+  const fetchCampaigns = async () => {
+    const { data, error } = await supabase
+      .from('marketing_campaigns')
+      .select('*')
+      .order('start_date', { ascending: false });
+
+    if (error) {
+      console.error('Failed to fetch campaigns:', error);
+      return;
+    }
+
+    setCampaigns((data || []) as Campaign[]);
+  };
+
+  const handleCampaignSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!isAdmin) {
+      toast.error('Only admins can create campaigns');
+      return;
+    }
+
+    setSavingCampaign(true);
+
+    try {
+      const { error } = await supabase
+        .from('marketing_campaigns')
+        .insert([{
+          title: campaignForm.title,
+          description: campaignForm.description || null,
+          start_date: campaignForm.start_date,
+          end_date: campaignForm.end_date || null,
+          status: campaignForm.status,
+          platform: campaignForm.platform,
+          target_audience: campaignForm.target_audience || null,
+          goals: campaignForm.goals || null,
+          budget: campaignForm.budget ? parseFloat(campaignForm.budget) : null,
+        }]);
+
+      if (error) throw error;
+
+      toast.success('Campaign created successfully');
+      setShowCampaignDialog(false);
+      setCampaignForm({
+        title: '',
+        description: '',
+        start_date: '',
+        end_date: '',
+        status: 'draft',
+        platform: [],
+        target_audience: '',
+        goals: '',
+        budget: '',
+      });
+      fetchCampaigns();
+    } catch (error) {
+      console.error('Campaign creation error:', error);
+      toast.error('Failed to create campaign');
+    } finally {
+      setSavingCampaign(false);
+    }
+  };
+
+  const handleDeleteCampaign = async (id: string) => {
+    if (!isAdmin || !confirm('Are you sure you want to delete this campaign?')) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('marketing_campaigns')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      toast.success('Campaign deleted successfully');
+      fetchCampaigns();
+    } catch (error) {
+      console.error('Delete error:', error);
+      toast.error('Failed to delete campaign');
     }
   };
 
@@ -404,15 +520,93 @@ export const MarketingManagement = ({ isAdmin }: { isAdmin: boolean }) => {
         <TabsContent value="planner" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Marketing Planner</CardTitle>
+              <div className="flex justify-between items-center">
+                <div>
+                  <CardTitle>Marketing Planner</CardTitle>
+                  <CardDescription>Plan and track marketing campaigns</CardDescription>
+                </div>
+                {isAdmin && (
+                  <Button onClick={() => setShowCampaignDialog(true)}>
+                    <Calendar className="w-4 h-4 mr-2" />
+                    Create Campaign
+                  </Button>
+                )}
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-center py-12 text-muted-foreground">
-                <Calendar className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                <p className="text-lg mb-2">No campaigns planned yet</p>
-                <p className="text-sm mb-4">Plan and schedule your marketing campaigns</p>
-                <Button>Create Campaign</Button>
-              </div>
+              {campaigns.length === 0 ? (
+                <div className="text-center py-12 text-muted-foreground">
+                  <Calendar className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                  <p className="text-lg mb-2">No campaigns planned yet</p>
+                  <p className="text-sm mb-4">Plan and schedule your marketing campaigns</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {campaigns.map((campaign) => (
+                    <Card key={campaign.id}>
+                      <CardContent className="p-6">
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3 mb-2">
+                              <h3 className="font-semibold text-lg">{campaign.title}</h3>
+                              <span className={`px-2 py-1 rounded text-xs font-medium ${
+                                campaign.status === 'active' ? 'bg-green-100 text-green-700' :
+                                campaign.status === 'completed' ? 'bg-blue-100 text-blue-700' :
+                                campaign.status === 'cancelled' ? 'bg-red-100 text-red-700' :
+                                'bg-gray-100 text-gray-700'
+                              }`}>
+                                {campaign.status}
+                              </span>
+                            </div>
+                            {campaign.description && (
+                              <p className="text-sm text-muted-foreground mb-3">{campaign.description}</p>
+                            )}
+                            <div className="grid grid-cols-2 gap-4 text-sm">
+                              <div>
+                                <span className="text-muted-foreground">Start:</span>{' '}
+                                <span className="font-medium">{new Date(campaign.start_date).toLocaleDateString()}</span>
+                              </div>
+                              {campaign.end_date && (
+                                <div>
+                                  <span className="text-muted-foreground">End:</span>{' '}
+                                  <span className="font-medium">{new Date(campaign.end_date).toLocaleDateString()}</span>
+                                </div>
+                              )}
+                              {campaign.platform.length > 0 && (
+                                <div>
+                                  <span className="text-muted-foreground">Platforms:</span>{' '}
+                                  <span className="font-medium">{campaign.platform.join(', ')}</span>
+                                </div>
+                              )}
+                              {campaign.budget && (
+                                <div>
+                                  <span className="text-muted-foreground">Budget:</span>{' '}
+                                  <span className="font-medium">${campaign.budget}</span>
+                                </div>
+                              )}
+                            </div>
+                            {campaign.goals && (
+                              <div className="mt-3 text-sm">
+                                <span className="text-muted-foreground">Goals:</span>{' '}
+                                <span>{campaign.goals}</span>
+                              </div>
+                            )}
+                          </div>
+                          {isAdmin && (
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => handleDeleteCampaign(campaign.id)}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -515,6 +709,133 @@ export const MarketingManagement = ({ isAdmin }: { isAdmin: boolean }) => {
               </Button>
               <Button type="submit" disabled={uploading}>
                 {uploading ? 'Uploading...' : 'Upload'}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Campaign Dialog */}
+      <Dialog open={showCampaignDialog} onOpenChange={setShowCampaignDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Create Campaign</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleCampaignSubmit} className="space-y-4">
+            <div>
+              <Label htmlFor="campaign-title">Title *</Label>
+              <Input
+                id="campaign-title"
+                value={campaignForm.title}
+                onChange={(e) => setCampaignForm({ ...campaignForm, title: e.target.value })}
+                required
+                placeholder="Campaign name"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="campaign-description">Description</Label>
+              <Textarea
+                id="campaign-description"
+                value={campaignForm.description}
+                onChange={(e) => setCampaignForm({ ...campaignForm, description: e.target.value })}
+                placeholder="Campaign description and objectives"
+                rows={3}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="campaign-start">Start Date *</Label>
+                <Input
+                  id="campaign-start"
+                  type="date"
+                  value={campaignForm.start_date}
+                  onChange={(e) => setCampaignForm({ ...campaignForm, start_date: e.target.value })}
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="campaign-end">End Date</Label>
+                <Input
+                  id="campaign-end"
+                  type="date"
+                  value={campaignForm.end_date}
+                  onChange={(e) => setCampaignForm({ ...campaignForm, end_date: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="campaign-status">Status</Label>
+              <Select
+                value={campaignForm.status}
+                onValueChange={(v) => setCampaignForm({ ...campaignForm, status: v as any })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="draft">Draft</SelectItem>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="completed">Completed</SelectItem>
+                  <SelectItem value="cancelled">Cancelled</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="campaign-platform">Platforms (comma-separated)</Label>
+              <Input
+                id="campaign-platform"
+                value={campaignForm.platform.join(', ')}
+                onChange={(e) => setCampaignForm({ 
+                  ...campaignForm, 
+                  platform: e.target.value.split(',').map(p => p.trim()).filter(p => p) 
+                })}
+                placeholder="Instagram, Facebook, Twitter"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="campaign-audience">Target Audience</Label>
+              <Input
+                id="campaign-audience"
+                value={campaignForm.target_audience}
+                onChange={(e) => setCampaignForm({ ...campaignForm, target_audience: e.target.value })}
+                placeholder="e.g., Youth players, Professional scouts"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="campaign-goals">Goals</Label>
+              <Textarea
+                id="campaign-goals"
+                value={campaignForm.goals}
+                onChange={(e) => setCampaignForm({ ...campaignForm, goals: e.target.value })}
+                placeholder="Campaign goals and KPIs"
+                rows={2}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="campaign-budget">Budget ($)</Label>
+              <Input
+                id="campaign-budget"
+                type="number"
+                step="0.01"
+                value={campaignForm.budget}
+                onChange={(e) => setCampaignForm({ ...campaignForm, budget: e.target.value })}
+                placeholder="0.00"
+              />
+            </div>
+
+            <div className="flex justify-end gap-2 pt-4">
+              <Button type="button" variant="outline" onClick={() => setShowCampaignDialog(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={savingCampaign}>
+                {savingCampaign ? 'Creating...' : 'Create Campaign'}
               </Button>
             </div>
           </form>
