@@ -102,12 +102,12 @@ export function getInterceptionsGrade(score: number | null | undefined): GradeIn
     return { grade: '-', color: 'hsl(var(--muted-foreground))' };
   }
 
-  if (score === 0) return { grade: 'D', color: 'hsl(0, 84%, 45%)' }; // Red
-  if (score === 1) return { grade: 'C-', color: 'hsl(0, 84%, 60%)' }; // Light Red
-  if (score === 2) return { grade: 'C+', color: 'hsl(40, 85%, 50%)' }; // Yellow-Orange
-  if (score === 3) return { grade: 'B', color: 'hsl(142, 76%, 36%)' }; // Green 400
-  if (score === 4) return { grade: 'A', color: 'hsl(142, 70%, 50%)' }; // Green 625
-  if (score === 5) return { grade: 'A+', color: 'hsl(142, 76%, 55%)' }; // Green 750
+  if (score < 1) return { grade: 'D', color: 'hsl(0, 84%, 45%)' }; // Red
+  if (score < 2) return { grade: 'C-', color: 'hsl(0, 84%, 60%)' }; // Light Red
+  if (score < 3) return { grade: 'C+', color: 'hsl(40, 85%, 50%)' }; // Yellow-Orange
+  if (score < 4) return { grade: 'B', color: 'hsl(142, 76%, 36%)' }; // Green 400
+  if (score < 5) return { grade: 'A', color: 'hsl(142, 70%, 50%)' }; // Green 625
+  if (score < 6) return { grade: 'A+', color: 'hsl(142, 76%, 55%)' }; // Green 750
   return { grade: 'A*', color: 'hsl(43, 96%, 56%)' }; // Rise Gold for 6+
 }
 
