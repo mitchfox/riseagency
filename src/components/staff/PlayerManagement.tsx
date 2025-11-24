@@ -986,18 +986,14 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                             </div>
                             
                             {playerStats && (
-                              <div className="grid grid-cols-3 gap-1 sm:gap-2 text-center text-[10px] sm:text-xs pt-2 mt-2 border-t border-border/50">
+                              <div className="grid grid-cols-2 gap-1 sm:gap-2 text-center text-[10px] sm:text-xs pt-2 mt-2 border-t border-border/50">
                                 <div>
-                                  <div className="font-semibold text-sm sm:text-base">{playerStats.goals}</div>
-                                  <div className="text-muted-foreground text-[10px] sm:text-xs">Goals</div>
-                                </div>
-                                <div>
-                                  <div className="font-semibold text-sm sm:text-base">{playerStats.assists}</div>
-                                  <div className="text-muted-foreground text-[10px] sm:text-xs">Assists</div>
-                                </div>
-                                <div>
-                                  <div className="font-semibold text-sm sm:text-base">{playerStats.matches}</div>
+                                  <div className="font-semibold text-sm sm:text-base">{playerStats.matches || 0}</div>
                                   <div className="text-muted-foreground text-[10px] sm:text-xs">Matches</div>
+                                </div>
+                                <div>
+                                  <div className="font-semibold text-sm sm:text-base">{playerStats.minutes || 0}</div>
+                                  <div className="text-muted-foreground text-[10px] sm:text-xs">Minutes</div>
                                 </div>
                               </div>
                             )}
@@ -1055,18 +1051,14 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                             </div>
                           )}
                           {playerStats && (
-                            <div className="grid grid-cols-3 gap-2 text-center text-xs">
+                            <div className="grid grid-cols-2 gap-2 text-center text-xs">
                               <div>
-                                <div className="font-semibold text-lg">{playerStats.goals}</div>
-                                <div className="text-muted-foreground">Goals</div>
-                              </div>
-                              <div>
-                                <div className="font-semibold text-lg">{playerStats.assists}</div>
-                                <div className="text-muted-foreground">Assists</div>
-                              </div>
-                              <div>
-                                <div className="font-semibold text-lg">{playerStats.matches}</div>
+                                <div className="font-semibold text-lg">{playerStats.matches || 0}</div>
                                 <div className="text-muted-foreground">Matches</div>
+                              </div>
+                              <div>
+                                <div className="font-semibold text-lg">{playerStats.minutes || 0}</div>
+                                <div className="text-muted-foreground">Minutes</div>
                               </div>
                             </div>
                           )}
@@ -1123,18 +1115,14 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                             </div>
                           )}
                           {playerStats && (
-                            <div className="grid grid-cols-3 gap-2 text-center text-xs">
+                            <div className="grid grid-cols-2 gap-2 text-center text-xs">
                               <div>
-                                <div className="font-semibold text-lg">{playerStats.goals}</div>
-                                <div className="text-muted-foreground">Goals</div>
-                              </div>
-                              <div>
-                                <div className="font-semibold text-lg">{playerStats.assists}</div>
-                                <div className="text-muted-foreground">Assists</div>
-                              </div>
-                              <div>
-                                <div className="font-semibold text-lg">{playerStats.matches}</div>
+                                <div className="font-semibold text-lg">{playerStats.matches || 0}</div>
                                 <div className="text-muted-foreground">Matches</div>
+                              </div>
+                              <div>
+                                <div className="font-semibold text-lg">{playerStats.minutes || 0}</div>
+                                <div className="text-muted-foreground">Minutes</div>
                               </div>
                             </div>
                           )}
