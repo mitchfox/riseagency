@@ -645,12 +645,12 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
                           const { x, y, width, value, index } = props;
                           if (!x || y === undefined || !width || value === undefined) return null;
                           const delay = index * 0.25;
-                          const grade = getR90Grade(value).grade;
+                          const gradeInfo = getR90Grade(value);
                           return (
                             <text
                               x={x + width / 2}
                               y={y - 5}
-                              fill="hsl(43, 49%, 61%)"
+                              fill={gradeInfo.color}
                               textAnchor="middle"
                               dominantBaseline="baseline"
                               fontSize="18"
@@ -660,7 +660,7 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
                                 animation: !hasAnimated.current ? `labelFadeIn 0.6s ease-out ${delay + 0.8}s forwards` : 'none'
                               }}
                             >
-                              {grade}
+                              {gradeInfo.grade}
                             </text>
                           );
                         }}
