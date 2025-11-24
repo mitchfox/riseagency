@@ -101,6 +101,7 @@ export const MarketingManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   };
 
   const fetchGalleryItems = async () => {
+    console.log('Fetching gallery items...');
     const { data, error } = await supabase
       .from('marketing_gallery')
       .select('*')
@@ -111,6 +112,8 @@ export const MarketingManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       return;
     }
 
+    console.log('Gallery items fetched:', data?.length || 0, 'items');
+    console.log('Sample item:', data?.[0]);
     setGalleryItems((data || []) as GalleryItem[]);
   };
 
