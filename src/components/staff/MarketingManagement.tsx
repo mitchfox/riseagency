@@ -64,6 +64,7 @@ interface GalleryItem {
   file_type: 'image' | 'video';
   thumbnail_url: string | null;
   category: 'brand' | 'players' | 'other';
+  player_id: string | null;
   created_at: string;
 }
 
@@ -71,6 +72,8 @@ export const MarketingManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   const [activeTab, setActiveTab] = useState("resources");
   const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([]);
   const [categoryFilter, setCategoryFilter] = useState<'all' | 'brand' | 'players' | 'other'>('all');
+  const [selectedPlayerId, setSelectedPlayerId] = useState<string>('all');
+  const [players, setPlayers] = useState<any[]>([]);
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadForm, setUploadForm] = useState({
@@ -78,13 +81,24 @@ export const MarketingManagement = ({ isAdmin }: { isAdmin: boolean }) => {
     description: '',
     file: null as File | null,
     category: 'other' as 'brand' | 'players' | 'other',
+    player_id: null as string | null,
   });
 
   useEffect(() => {
     if (activeTab === 'gallery') {
       fetchGalleryItems();
+      fetchPlayers();
     }
   }, [activeTab]);
+
+  const fetchPlayers = async () => {
+    const { data } = await supabase
+      .from('players')
+      .select('id, name')
+      .order('name');
+    
+    setPlayers(data || []);
+  };
 
   const fetchGalleryItems = async () => {
     const { data, error } = await supabase
@@ -139,13 +153,14 @@ export const MarketingManagement = ({ isAdmin }: { isAdmin: boolean }) => {
           file_url: publicUrl,
           file_type: fileType,
           category: uploadForm.category,
+          player_id: uploadForm.player_id,
         }]);
 
       if (dbError) throw dbError;
 
       toast.success('File uploaded successfully');
       setShowUploadDialog(false);
-      setUploadForm({ title: '', description: '', file: null, category: 'other' });
+      setUploadForm({ title: '', description: '', file: null, category: 'other', player_id: null });
       fetchGalleryItems();
     } catch (error) {
       console.error('Upload error:', error);
@@ -272,6 +287,23 @@ export const MarketingManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                       <SelectItem value="other">Other</SelectItem>
                     </SelectContent>
                   </Select>
+                  
+                  {categoryFilter === 'players' && (
+                    <Select value={selectedPlayerId} onValueChange={setSelectedPlayerId}>
+                      <SelectTrigger className="w-full sm:w-[200px]">
+                        <SelectValue placeholder="Select player" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Players</SelectItem>
+                        {players.map(player => (
+                          <SelectItem key={player.id} value={player.id}>
+                            {player.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                  
                   {isAdmin && (
                     <Button onClick={() => setShowUploadDialog(true)} size="sm" className="md:size-default">
                       <Upload className="w-4 h-4 mr-2" />
@@ -284,9 +316,14 @@ export const MarketingManagement = ({ isAdmin }: { isAdmin: boolean }) => {
             </CardHeader>
             <CardContent>
               {(() => {
-                const filtered = categoryFilter === 'all' 
+                let filtered = categoryFilter === 'all' 
                   ? galleryItems 
                   : galleryItems.filter(item => item.category === categoryFilter);
+                
+                // If players category is selected and a specific player is chosen, filter by player_id
+                if (categoryFilter === 'players' && selectedPlayerId !== 'all') {
+                  filtered = filtered.filter(item => item.player_id === selectedPlayerId);
+                }
                 
                 return filtered.length === 0 ? (
                 <div className="text-center py-12 text-muted-foreground">
@@ -387,6 +424,28 @@ export const MarketingManagement = ({ isAdmin }: { isAdmin: boolean }) => {
               />
             </div>
 
+            {uploadForm.category === 'players' && (
+              <div>
+                <Label htmlFor="upload-player">Player (Optional)</Label>
+                <Select
+                  value={uploadForm.player_id || 'none'}
+                  onValueChange={(v) => setUploadForm({ ...uploadForm, player_id: v === 'none' ? null : v })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a player" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">No specific player</SelectItem>
+                    {players.map(player => (
+                      <SelectItem key={player.id} value={player.id}>
+                        {player.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
             <div>
               <Label htmlFor="upload-description">Description</Label>
               <Textarea
@@ -436,7 +495,7 @@ export const MarketingManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                 variant="outline"
                 onClick={() => {
                   setShowUploadDialog(false);
-                  setUploadForm({ title: '', description: '', file: null, category: 'other' });
+                  setUploadForm({ title: '', description: '', file: null, category: 'other', player_id: null });
                 }}
                 disabled={uploading}
               >
