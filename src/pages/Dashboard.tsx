@@ -2427,8 +2427,31 @@ const Dashboard = () => {
                                   <LabelList 
                                     dataKey="score" 
                                     position="top" 
-                                    style={{ fontSize: '14px', fill: 'hsl(var(--foreground))', fontWeight: '700' }}
-                                    formatter={(value: number) => getMetricGrade(value)}
+                                    content={(props: any) => {
+                                      const { x, y, width, value } = props;
+                                      if (!x || y === undefined || !width || value === undefined) return null;
+                                      
+                                      // Striker/Winger xC metrics use grey
+                                      const strikerMetrics = ["triplethreatxc", "movementtofeetxc", "movementinbehindxc", "movementdownsidexc", "crossingmovementxc"];
+                                      const gradeColor = strikerMetrics.includes(selectedFormMetric)
+                                        ? "hsl(var(--muted-foreground))"
+                                        : getMetricColor(value);
+                                      const gradeText = getMetricGrade(value);
+                                      
+                                      return (
+                                        <text
+                                          x={x + width / 2}
+                                          y={y - 5}
+                                          fill={gradeColor}
+                                          textAnchor="middle"
+                                          dominantBaseline="baseline"
+                                          fontSize="14"
+                                          fontWeight="700"
+                                        >
+                                          {gradeText}
+                                        </text>
+                                      );
+                                    }}
                                   />
                                 </Bar>
                               </BarChart>
