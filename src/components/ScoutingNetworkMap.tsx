@@ -101,34 +101,19 @@ const ScoutingNetworkMap = () => {
     { country: "Croatia", x: 500, y: 475 },
   ];
 
-  const handleMapClick = (event: React.MouseEvent<SVGSVGElement>) => {
-    const svg = event.currentTarget;
-    const point = svg.createSVGPoint();
-    point.x = event.clientX;
-    point.y = event.clientY;
-    
-    const svgPoint = point.matrixTransform(svg.getScreenCTM()?.inverse());
-    
-    if (zoomLevel === 0) {
-      // First zoom: medium zoom
-      const zoom = 2.5;
-      const newWidth = 1000 / zoom;
-      const newHeight = 600 / zoom;
-      const newX = Math.max(0, Math.min(1000 - newWidth, svgPoint.x - newWidth / 2));
-      const newY = Math.max(0, Math.min(600 - newHeight, svgPoint.y - newHeight / 2));
-      setViewBox(`${newX} ${newY} ${newWidth} ${newHeight}`);
-      setZoomLevel(1);
-    } else if (zoomLevel === 1) {
-      // Second zoom: fully zoomed
-      const zoom = 5;
-      const newWidth = 1000 / zoom;
-      const newHeight = 600 / zoom;
-      const newX = Math.max(0, Math.min(1000 - newWidth, svgPoint.x - newWidth / 2));
-      const newY = Math.max(0, Math.min(600 - newHeight, svgPoint.y - newHeight / 2));
-      setViewBox(`${newX} ${newY} ${newWidth} ${newHeight}`);
-      setZoomLevel(2);
-    } else {
-      // Zoom out to original
+  const handleCountryClick = (x: number, y: number, event: React.MouseEvent) => {
+    event.stopPropagation();
+    const zoom = 3;
+    const newWidth = 1000 / zoom;
+    const newHeight = 600 / zoom;
+    const newX = Math.max(0, Math.min(1000 - newWidth, x - newWidth / 2));
+    const newY = Math.max(0, Math.min(600 - newHeight, y - newHeight / 2));
+    setViewBox(`${newX} ${newY} ${newWidth} ${newHeight}`);
+    setZoomLevel(1);
+  };
+
+  const handleMapClick = () => {
+    if (zoomLevel > 0) {
       setViewBox("0 0 1000 600");
       setZoomLevel(0);
     }
@@ -152,8 +137,21 @@ const ScoutingNetworkMap = () => {
             style={{ maxHeight: "600px" }}
             onClick={handleMapClick}
           >
-            {/* Flag Pattern Definitions - Removed, using actual flag images */}
-            <defs />
+            {/* Rotating ring animation definition */}
+            <defs>
+              <style>
+                {`
+                  @keyframes rotate-ring {
+                    from { transform: rotate(0deg); }
+                    to { transform: rotate(360deg); }
+                  }
+                  .rotating-ring {
+                    animation: rotate-ring 3s linear infinite;
+                    transform-origin: center;
+                  }
+                `}
+              </style>
+            </defs>
 
             {/* Background */}
             <rect width="1000" height="600" fill="hsl(var(--background))" />
@@ -226,40 +224,48 @@ const ScoutingNetworkMap = () => {
             {countryMarkers.map((country, idx) => {
               const flagImage = flagImages[country.country];
               return (
-                <g key={`country-${idx}`}>
-                  {/* Glow effect */}
-                  <circle
-                    cx={country.x}
-                    cy={country.y}
-                    r="10"
-                    fill="hsl(var(--primary))"
-                    className="animate-pulse opacity-10"
-                  />
+                <g 
+                  key={`country-${idx}`}
+                  onClick={(e) => handleCountryClick(country.x, country.y, e)}
+                  className="cursor-pointer"
+                >
+                  {/* Rotating gold ring border */}
+                  <g className="rotating-ring" style={{ transformOrigin: `${country.x}px ${country.y}px` }}>
+                    <circle
+                      cx={country.x}
+                      cy={country.y}
+                      r="16"
+                      fill="none"
+                      stroke="hsl(var(--primary))"
+                      strokeWidth="2"
+                      strokeDasharray="10 20"
+                      opacity="0.6"
+                    />
+                  </g>
                   {/* Circular clip path for flag */}
                   <defs>
                     <clipPath id={`flag-clip-${idx}`}>
-                      <circle cx={country.x} cy={country.y} r="6" />
+                      <circle cx={country.x} cy={country.y} r="12" />
                     </clipPath>
                   </defs>
                   {/* Country flag image in circle */}
                   <image
                     href={flagImage}
-                    x={country.x - 6}
-                    y={country.y - 6}
-                    width="12"
-                    height="12"
+                    x={country.x - 12}
+                    y={country.y - 12}
+                    width="24"
+                    height="24"
                     clipPath={`url(#flag-clip-${idx})`}
-                    className="cursor-pointer"
                   />
                   {/* Circle border */}
                   <circle
                     cx={country.x}
                     cy={country.y}
-                    r="6"
+                    r="12"
                     fill="none"
                     stroke="white"
-                    strokeWidth="1"
-                    className="cursor-pointer hover:r-7 transition-all"
+                    strokeWidth="2"
+                    className="hover:stroke-primary transition-colors"
                   >
                     <title>{country.country}</title>
                   </circle>
@@ -270,14 +276,6 @@ const ScoutingNetworkMap = () => {
             {/* Football Club Logos */}
             {footballClubs.map((club, idx) => (
               <g key={`club-${idx}`}>
-                {/* Glow effect */}
-                <circle
-                  cx={club.x}
-                  cy={club.y}
-                  r="8"
-                  fill="hsl(var(--primary))"
-                  className="animate-pulse opacity-20"
-                />
                 {/* Circular clip path for logo */}
                 <defs>
                   <clipPath id={`clip-${idx}`}>
@@ -302,7 +300,7 @@ const ScoutingNetworkMap = () => {
                   fill="none"
                   stroke="white"
                   strokeWidth="1"
-                  className="cursor-pointer hover:r-6 transition-all"
+                  className="cursor-pointer hover:stroke-primary transition-colors"
                 >
                   <title>{club.name} - {club.city}, {club.country}</title>
                 </circle>
@@ -335,7 +333,7 @@ const ScoutingNetworkMap = () => {
               <span>{showGrid ? "Hide" : "Show"} Grid</span>
             </button>
             <div className="flex items-center gap-2 text-muted-foreground">
-              <span>{zoomLevel === 0 ? "Click to zoom in" : zoomLevel === 1 ? "Click to zoom further" : "Click to zoom out"}</span>
+              <span>{zoomLevel === 0 ? "Click country to zoom in" : "Click map to zoom out"}</span>
             </div>
           </div>
         </div>
