@@ -1,11 +1,25 @@
 import { MapPin } from "lucide-react";
 import { useState } from "react";
 import europeOutline from "@/assets/europe-outline.gif";
+import norwichLogo from "@/assets/clubs/norwich-city-official.png";
+import bohemiansLogo from "@/assets/clubs/bohemians-1905-official.png";
+import jihlavaLogo from "@/assets/clubs/fc-vysocina-jihlava-official.png";
+import domazliceLogo from "@/assets/clubs/tj-jiskra-domazlice-official.png";
+import forestGreenLogo from "@/assets/clubs/forest-green-rovers.png";
 
 const ScoutingNetworkMap = () => {
   const [viewBox, setViewBox] = useState("0 0 1000 600");
-  const [isZoomed, setIsZoomed] = useState(false);
+  const [zoomLevel, setZoomLevel] = useState(0); // 0 = out, 1 = medium, 2 = fully zoomed
   // Europe outline is rendered from raster map image (europe-outline.gif)
+
+  // Football clubs with their real locations
+  const footballClubs = [
+    { name: "Norwich City FC", country: "England", city: "Norwich", x: 530, y: 270, logo: norwichLogo },
+    { name: "Bohemians 1905", country: "Czech Republic", city: "Prague", x: 680, y: 295, logo: bohemiansLogo },
+    { name: "FC Vysočina Jihlava", country: "Czech Republic", city: "Jihlava", x: 675, y: 310, logo: jihlavaLogo },
+    { name: "TJ Jiskra Domažlice", country: "Czech Republic", city: "Domažlice", x: 665, y: 315, logo: domazliceLogo },
+    { name: "Forest Green Rovers", country: "England", city: "Nailsworth", x: 510, y: 290, logo: forestGreenLogo },
+  ];
 
   // Sample scouting locations across Europe
   const scoutingLocations = [
@@ -33,20 +47,28 @@ const ScoutingNetworkMap = () => {
     
     const svgPoint = point.matrixTransform(svg.getScreenCTM()?.inverse());
     
-    if (isZoomed) {
-      // Zoom out
-      setViewBox("0 0 1000 600");
-      setIsZoomed(false);
-    } else {
-      // Zoom in to clicked location
-      const zoomLevel = 2.5;
-      const newWidth = 1000 / zoomLevel;
-      const newHeight = 600 / zoomLevel;
+    if (zoomLevel === 0) {
+      // First zoom: medium zoom
+      const zoom = 2.5;
+      const newWidth = 1000 / zoom;
+      const newHeight = 600 / zoom;
       const newX = Math.max(0, Math.min(1000 - newWidth, svgPoint.x - newWidth / 2));
       const newY = Math.max(0, Math.min(600 - newHeight, svgPoint.y - newHeight / 2));
-      
       setViewBox(`${newX} ${newY} ${newWidth} ${newHeight}`);
-      setIsZoomed(true);
+      setZoomLevel(1);
+    } else if (zoomLevel === 1) {
+      // Second zoom: fully zoomed
+      const zoom = 5;
+      const newWidth = 1000 / zoom;
+      const newHeight = 600 / zoom;
+      const newX = Math.max(0, Math.min(1000 - newWidth, svgPoint.x - newWidth / 2));
+      const newY = Math.max(0, Math.min(600 - newHeight, svgPoint.y - newHeight / 2));
+      setViewBox(`${newX} ${newY} ${newWidth} ${newHeight}`);
+      setZoomLevel(2);
+    } else {
+      // Zoom out to original
+      setViewBox("0 0 1000 600");
+      setZoomLevel(0);
     }
   };
 
@@ -242,6 +264,32 @@ const ScoutingNetworkMap = () => {
               opacity="0.7"
             />
 
+            {/* Football Club Logos */}
+            {footballClubs.map((club, idx) => (
+              <g key={`club-${idx}`}>
+                {/* Glow effect */}
+                <circle
+                  cx={club.x}
+                  cy={club.y}
+                  r="20"
+                  fill="hsl(var(--primary))"
+                  className="animate-pulse opacity-20"
+                />
+                {/* Club logo */}
+                <image
+                  href={club.logo}
+                  x={club.x - 12}
+                  y={club.y - 12}
+                  width="24"
+                  height="24"
+                  className="cursor-pointer hover:scale-110 transition-transform"
+                  style={{ filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.3))" }}
+                >
+                  <title>{club.name} - {club.city}, {club.country}</title>
+                </image>
+              </g>
+            ))}
+
             {/* Scouting Location Points */}
             {scoutingLocations.map((location, idx) => {
               const patternId = `flag-${location.country.toLowerCase().replace(/ /g, '-')}`;
@@ -281,13 +329,17 @@ const ScoutingNetworkMap = () => {
           </svg>
 
           {/* Legend */}
-          <div className="flex items-center justify-center gap-6 mt-4 text-sm">
+          <div className="flex items-center justify-center gap-6 mt-4 text-sm flex-wrap">
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 rounded-full bg-primary shadow-lg shadow-primary/50" />
-              <span>Active Scouting Location</span>
+              <span>Scouting Location</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 rounded bg-primary/20 border border-primary" />
+              <span>Partner Club</span>
             </div>
             <div className="flex items-center gap-2 text-muted-foreground">
-              <span>{isZoomed ? "Click to zoom out" : "Click anywhere to zoom in"}</span>
+              <span>{zoomLevel === 0 ? "Click to zoom in" : zoomLevel === 1 ? "Click to zoom further" : "Click to zoom out"}</span>
             </div>
           </div>
         </div>
