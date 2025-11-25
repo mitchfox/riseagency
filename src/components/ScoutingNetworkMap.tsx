@@ -116,6 +116,14 @@ const ScoutingNetworkMap = () => {
     { name: "1. FC Heidenheim 1846", country: "Germany", city: "Heidenheim", x: 420, y: 415, logo: "/clubs/1-fc-heidenheim-1846.png" },
     { name: "FC Augsburg", country: "Germany", city: "Augsburg", x: 430, y: 425, logo: "/clubs/fc-augsburg.png" },
     { name: "Bayern Munich", country: "Germany", city: "München", x: 435, y: 425, logo: "/clubs/bayern-munich.png" },
+    { name: "VfB Stuttgart", country: "Germany", city: "Stuttgart", x: 415, y: 420, logo: "/clubs/vfb-stuttgart.png" },
+    { name: "SC Freiburg", country: "Germany", city: "Freiburg", x: 405, y: 430, logo: "/clubs/sc-freiburg.png" },
+    { name: "TSG 1899 Hoffenheim", country: "Germany", city: "Hoffenheim", x: 413, y: 412, logo: "/clubs/tsg-1899-hoffenheim.png" },
+    { name: "VfL Wolfsburg", country: "Germany", city: "Wolfsburg", x: 430, y: 355, logo: "/clubs/vfl-wolfsburg.png" },
+    { name: "SV Werder Bremen", country: "Germany", city: "Bremen", x: 415, y: 345, logo: "/clubs/sv-werder-bremen.png" },
+    { name: "Hamburger SV", country: "Germany", city: "Hamburg", x: 425, y: 335, logo: "/clubs/hamburger-sv.png" },
+    { name: "FC St. Pauli", country: "Germany", city: "Hamburg", x: 426, y: 336, logo: "/clubs/fc-st-pauli.png" },
+    { name: "RB Leipzig", country: "Germany", city: "Leipzig", x: 455, y: 375, logo: "/clubs/rb-leipzig.png" },
   ];
 
   // Flag mapping
@@ -258,7 +266,7 @@ const ScoutingNetworkMap = () => {
   const handleClusterClick = (cluster: {x: number, y: number, clubs: typeof footballClubs}, event: React.MouseEvent) => {
     event.stopPropagation();
     setSelectedCluster({ x: cluster.x, y: cluster.y });
-    const zoom = 4;
+    const zoom = 8; // Much tighter zoom to focus on just the cluster area
     const newWidth = 1000 / zoom;
     const newHeight = 600 / zoom;
     const newX = Math.max(0, Math.min(1000 - newWidth, cluster.x - newWidth / 2));
