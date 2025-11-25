@@ -294,67 +294,149 @@ const PerformanceReport = () => {
                     </div>
                   )}
 
-                  {Object.entries(analysis.striker_stats)
-                    .filter(([key, value]) => 
-                      value !== null && 
-                      value !== undefined && 
-                      !key.includes('_per90') &&
-                      !key.toLowerCase().includes('xgchain') &&
-                      !key.toLowerCase().includes('xg_chain')
-                    )
-                    .map(([key, value]) => {
-                      const per90Key = `${key}_per90`;
-                      const per90Value = analysis.striker_stats![per90Key];
-                      const displayName = key
-                        .replace(/_/g, ' ')
-                        .replace(/\b\w/g, l => l.toUpperCase())
-                        .replace(/Xg/g, 'xG')
-                        .replace(/Xa/g, 'xA')
-                        .replace(/Xc/g, 'xC')
-                        .replace(/Adj/g, '(adj.)');
+                  {(() => {
+                    // Helper to check if a stat should be an integer
+                    const isIntegerStat = (key: string) => {
+                      const integerStats = [
+                        'dribbles', 'passes', 'shots', 'touches', 'duels', 'aerials',
+                        'tackles', 'interceptions', 'clearances', 'blocks', 'fouls',
+                        'crosses', 'corners', 'offsides', 'saves', 'goals', 'assists',
+                        'turnovers', 'progressive_passes', 'regains', 'key_passes'
+                      ];
+                      return integerStats.some(stat => key.toLowerCase().includes(stat));
+                    };
+
+                    // Helper to detect paired success/attempt stats
+                    const getPairedStat = (key: string, stats: StrikerStats) => {
+                      // Check if this is a success stat with a corresponding attempted stat
+                      if (key.endsWith('_attempted') || key.endsWith('_successful')) return null;
                       
-                      const displayValue = value;
-                      const displayPer90 = per90Value;
+                      const attemptedKey = `${key}_attempted`;
+                      const successfulKey = `${key}_successful`;
                       
-                      return (
-                        <div key={key} className="text-center p-3 bg-background rounded-md">
-                          <p className="text-xs text-muted-foreground mb-1">{displayName}</p>
-                          <p className="font-bold text-lg">
-                            {(() => {
-                              if (typeof displayValue === 'number') {
-                                if (key.includes('turnovers') || key.includes('interceptions') || key.includes('progressive_passes') || key.includes('regains')) {
-                                  return Math.round(displayValue);
+                      if (stats[attemptedKey] != null && stats[successfulKey] != null) {
+                        const attempted = Number(stats[attemptedKey]);
+                        const successful = Number(stats[successfulKey]);
+                        if (attempted > 0) {
+                          return {
+                            percentage: ((successful / attempted) * 100).toFixed(1),
+                            successful,
+                            attempted
+                          };
+                        }
+                      }
+                      
+                      return null;
+                    };
+
+                    const processedKeys = new Set<string>();
+
+                    return Object.entries(analysis.striker_stats)
+                      .filter(([key, value]) => 
+                        value !== null && 
+                        value !== undefined && 
+                        !key.includes('_per90') &&
+                        !key.toLowerCase().includes('xgchain') &&
+                        !key.toLowerCase().includes('xg_chain') &&
+                        !processedKeys.has(key)
+                      )
+                      .map(([key, value]) => {
+                        // Check if this key has a paired success/attempt relationship
+                        const paired = getPairedStat(key, analysis.striker_stats!);
+                        
+                        if (paired) {
+                          // Mark the attempted and successful keys as processed
+                          processedKeys.add(`${key}_attempted`);
+                          processedKeys.add(`${key}_successful`);
+                          
+                          const per90Key = `${key}_per90`;
+                          const per90Value = analysis.striker_stats![per90Key];
+                          const displayName = key
+                            .replace(/_/g, ' ')
+                            .replace(/\b\w/g, l => l.toUpperCase())
+                            .replace(/Xg/g, 'xG')
+                            .replace(/Xa/g, 'xA');
+                          
+                          return (
+                            <div key={key} className="text-center p-3 bg-background rounded-md">
+                              <p className="text-xs text-muted-foreground mb-1">{displayName}</p>
+                              <p className="font-bold text-lg">{paired.percentage}%</p>
+                              <p className="text-xs text-muted-foreground">{paired.successful} / {paired.attempted}</p>
+                              {per90Value !== undefined && per90Value !== null && (
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  per 90: {typeof per90Value === 'number' ? (isIntegerStat(key) ? Math.round(per90Value) : per90Value.toFixed(1)) : per90Value}
+                                </p>
+                              )}
+                            </div>
+                          );
+                        }
+
+                        // Skip if this is an _attempted or _successful key (will be shown with its pair)
+                        if (key.endsWith('_attempted') || key.endsWith('_successful')) {
+                          processedKeys.add(key);
+                          return null;
+                        }
+
+                        const per90Key = `${key}_per90`;
+                        const per90Value = analysis.striker_stats![per90Key];
+                        const displayName = key
+                          .replace(/_/g, ' ')
+                          .replace(/\b\w/g, l => l.toUpperCase())
+                          .replace(/Xg/g, 'xG')
+                          .replace(/Xa/g, 'xA')
+                          .replace(/Xc/g, 'xC')
+                          .replace(/Adj/g, '(adj.)');
+                        
+                        const displayValue = value;
+                        const displayPer90 = per90Value;
+                        
+                        return (
+                          <div key={key} className="text-center p-3 bg-background rounded-md">
+                            <p className="text-xs text-muted-foreground mb-1">{displayName}</p>
+                            <p className="font-bold text-lg">
+                              {(() => {
+                                if (typeof displayValue === 'number') {
+                                  // Integer stats should show as whole numbers
+                                  if (isIntegerStat(key)) {
+                                    return Math.round(displayValue);
+                                  }
+                                  // xG, xA, and other decimal stats show with 3 decimals
+                                  return displayValue.toFixed(3);
                                 }
-                                return displayValue < 10 ? displayValue.toFixed(3) : displayValue;
-                              }
-                              if (Array.isArray(displayValue)) {
-                                return displayValue.filter(v => v != null).map(v => String(v)).join(', ') || '-';
-                              }
-                              if (displayValue !== null && typeof displayValue === 'object') {
-                                return JSON.stringify(displayValue);
-                              }
-                              return String(displayValue);
-                            })()}
-                          </p>
-                          {displayPer90 !== undefined && displayPer90 !== null && (
-                            <p className="text-xs text-muted-foreground mt-1">
-                              per 90: {(() => {
-                                if (typeof displayPer90 === 'number') {
-                                  return displayPer90 < 10 ? displayPer90.toFixed(3) : displayPer90;
+                                if (Array.isArray(displayValue)) {
+                                  return displayValue.filter(v => v != null).map(v => String(v)).join(', ') || '-';
                                 }
-                                if (Array.isArray(displayPer90)) {
-                                  return displayPer90.filter(v => v != null).map(v => String(v)).join(', ') || '-';
+                                if (displayValue !== null && typeof displayValue === 'object') {
+                                  return JSON.stringify(displayValue);
                                 }
-                                if (displayPer90 !== null && typeof displayPer90 === 'object') {
-                                  return JSON.stringify(displayPer90);
-                                }
-                                return String(displayPer90);
+                                return String(displayValue);
                               })()}
                             </p>
-                          )}
-                        </div>
-                      );
-                    })}
+                            {displayPer90 !== undefined && displayPer90 !== null && (
+                              <p className="text-xs text-muted-foreground mt-1">
+                                per 90: {(() => {
+                                  if (typeof displayPer90 === 'number') {
+                                    if (isIntegerStat(key)) {
+                                      return Math.round(displayPer90);
+                                    }
+                                    return displayPer90.toFixed(3);
+                                  }
+                                  if (Array.isArray(displayPer90)) {
+                                    return displayPer90.filter(v => v != null).map(v => String(v)).join(', ') || '-';
+                                  }
+                                  if (displayPer90 !== null && typeof displayPer90 === 'object') {
+                                    return JSON.stringify(displayPer90);
+                                  }
+                                  return String(displayPer90);
+                                })()}
+                              </p>
+                            )}
+                          </div>
+                        );
+                      })
+                      .filter(Boolean);
+                  })()}
+                  
                   
                   {/* Progressive Passes to Turnovers Ratio - displayed last */}
                   {(() => {
