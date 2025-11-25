@@ -212,6 +212,16 @@ const ScoutingNetworkMap = () => {
     { name: "ACSC FC Arges", country: "Romania", city: "Pitesti", x: 565, y: 475, logo: "/clubs/acsc-fc-arges.png" },
     { name: "AFC Unirea 04 Slobozia", country: "Romania", city: "Slobozia", x: 590, y: 480, logo: "/clubs/afc-unirea-04-slobozia.png" },
     { name: "AFK Csikszereda Miercurea Ciuc", country: "Romania", city: "Miercurea Ciuc", x: 575, y: 450, logo: "/clubs/afk-csikszereda-miercurea-ciuc.png" },
+    { name: "FC Universitatea Cluj", country: "Romania", city: "Cluj-Napoca", x: 566, y: 451, logo: "/clubs/fc-universitatea-cluj.png" },
+    { name: "FCSB", country: "Romania", city: "Bucharest", x: 580, y: 485, logo: "/clubs/fcsb.png" },
+    { name: "FCV Farul Constanta", country: "Romania", city: "Constanta", x: 600, y: 485, logo: "/clubs/fcv-farul-constanta.png" },
+    { name: "Petrolul Ploiesti", country: "Romania", city: "Ploiesti", x: 580, y: 475, logo: "/clubs/petrolul-ploiesti.png" },
+    { name: "SC Otelul Galati", country: "Romania", city: "Galati", x: 600, y: 455, logo: "/clubs/sc-otelul-galati.png" },
+    { name: "UTA Arad", country: "Romania", city: "Arad", x: 540, y: 455, logo: "/clubs/uta-arad.png" },
+    { name: "FC Dinamo 1948", country: "Romania", city: "Bucharest", x: 581, y: 486, logo: "/clubs/fc-dinamo-1948.png" },
+    { name: "FC Hermannstadt", country: "Romania", city: "Sibiu", x: 565, y: 460, logo: "/clubs/fc-hermannstadt.png" },
+    { name: "FC Metaloglobus Bucharest", country: "Romania", city: "Bucharest", x: 580, y: 484, logo: "/clubs/fc-metaloglobus-bucharest.png" },
+    { name: "FC Rapid 1923", country: "Romania", city: "Bucharest", x: 581, y: 485, logo: "/clubs/fc-rapid-1923.png" },
   ];
 
   // Flag mapping
@@ -596,8 +606,8 @@ const ScoutingNetworkMap = () => {
               <line x1="560" y1="250" x2="540" y2="275" />
             </g>
             
-            {/* Country Flag Markers - render on top so they're visible over clusters */}
-            {!selectedCountry && countryMarkers.map((country, idx) => {
+            {/* Country Flag Markers - render on top so they're visible over clusters, hide when zoomed in */}
+            {!selectedCountry && zoomLevel < 10 && countryMarkers.map((country, idx) => {
               const flagImage = flagImages[country.country];
               return (
                 <g 
