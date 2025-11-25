@@ -10,6 +10,7 @@ import forestGreenLogo from "@/assets/clubs/forest-green-rovers.png";
 const ScoutingNetworkMap = () => {
   const [viewBox, setViewBox] = useState("0 0 1000 600");
   const [zoomLevel, setZoomLevel] = useState(0); // 0 = out, 1 = medium, 2 = fully zoomed
+  const [showGrid, setShowGrid] = useState(true);
   // Europe outline is rendered from raster map image (europe-outline.gif)
 
   // Football clubs with their real locations
@@ -253,6 +254,59 @@ const ScoutingNetworkMap = () => {
             {/* Background */}
             <rect width="1000" height="600" fill="hsl(var(--background))" />
 
+            {/* Grid System */}
+            {showGrid && (
+              <g opacity="0.3">
+                {/* Vertical grid lines every 50px */}
+                {Array.from({ length: 21 }, (_, i) => i * 50).map((x) => (
+                  <g key={`v-${x}`}>
+                    <line
+                      x1={x}
+                      y1="0"
+                      x2={x}
+                      y2="600"
+                      stroke="hsl(var(--primary))"
+                      strokeWidth="0.5"
+                      strokeDasharray="2,2"
+                    />
+                    <text
+                      x={x}
+                      y="15"
+                      fontSize="10"
+                      fill="hsl(var(--primary))"
+                      textAnchor="middle"
+                      fontWeight="bold"
+                    >
+                      {x}
+                    </text>
+                  </g>
+                ))}
+                {/* Horizontal grid lines every 50px */}
+                {Array.from({ length: 13 }, (_, i) => i * 50).map((y) => (
+                  <g key={`h-${y}`}>
+                    <line
+                      x1="0"
+                      y1={y}
+                      x2="1000"
+                      y2={y}
+                      stroke="hsl(var(--primary))"
+                      strokeWidth="0.5"
+                      strokeDasharray="2,2"
+                    />
+                    <text
+                      x="15"
+                      y={y + 5}
+                      fontSize="10"
+                      fill="hsl(var(--primary))"
+                      fontWeight="bold"
+                    >
+                      {y}
+                    </text>
+                  </g>
+                ))}
+              </g>
+            )}
+
             {/* Europe outline image */}
             <image
               href={europeOutline}
@@ -338,6 +392,12 @@ const ScoutingNetworkMap = () => {
               <div className="w-4 h-4 rounded bg-primary/20 border border-primary" />
               <span>Partner Club</span>
             </div>
+            <button
+              onClick={() => setShowGrid(!showGrid)}
+              className="flex items-center gap-2 px-3 py-1 rounded border border-border hover:bg-accent transition-colors"
+            >
+              <span>{showGrid ? "Hide" : "Show"} Grid</span>
+            </button>
             <div className="flex items-center gap-2 text-muted-foreground">
               <span>{zoomLevel === 0 ? "Click to zoom in" : zoomLevel === 1 ? "Click to zoom further" : "Click to zoom out"}</span>
             </div>
