@@ -446,10 +446,20 @@ const ScoutingNetworkMap = () => {
     // Czech Republic
     { name: "AC Sparta Prague", country: "Czech Republic", city: "Prague", x: 455, y: 365, logo: "/clubs/ac-sparta-prague.png" },
     { name: "Bohemians Prague 1905", country: "Czech Republic", city: "Prague", x: 456, y: 366, logo: "/clubs/bohemians-prague-1905.png" },
+    { name: "SK Slavia Prague", country: "Czech Republic", city: "Prague", x: 457, y: 367, logo: "/clubs/sk-slavia-prague.png" },
+    { name: "FK Dukla Prague", country: "Czech Republic", city: "Prague", x: 458, y: 368, logo: "/clubs/fk-dukla-prague.png" },
     { name: "FC Slovan Liberec", country: "Czech Republic", city: "Liberec", x: 465, y: 360, logo: "/clubs/fc-slovan-liberec.png" },
+    { name: "FK Jablonec", country: "Czech Republic", city: "Jablonec nad Nisou", x: 466, y: 361, logo: "/clubs/fk-jablonec.png" },
     { name: "FC Baník Ostrava", country: "Czech Republic", city: "Ostrava", x: 490, y: 360, logo: "/clubs/fc-banik-ostrava.png" },
+    { name: "MFK Karviná", country: "Czech Republic", city: "Karviná", x: 491, y: 361, logo: "/clubs/mfk-karvina.png" },
     { name: "FC Hradec Králové", country: "Czech Republic", city: "Hradec Králové", x: 468, y: 363, logo: "/clubs/fc-hradec-kralove.png" },
+    { name: "FK Pardubice", country: "Czech Republic", city: "Pardubice", x: 470, y: 365, logo: "/clubs/fk-pardubice.png" },
+    { name: "FK Mladá Boleslav", country: "Czech Republic", city: "Mladá Boleslav", x: 460, y: 363, logo: "/clubs/fk-mlada-boleslav.png" },
+    { name: "FK Teplice", country: "Czech Republic", city: "Teplice", x: 450, y: 362, logo: "/clubs/fk-teplice.png" },
+    { name: "FC Viktoria Plzeň", country: "Czech Republic", city: "Plzeň", x: 448, y: 368, logo: "/clubs/fc-viktoria-plzen.png" },
     { name: "1.FC Slovácko", country: "Czech Republic", city: "Uherské Hradiště", x: 478, y: 370, logo: "/clubs/1fc-slovacko.png" },
+    { name: "FC Zlín", country: "Czech Republic", city: "Zlín", x: 480, y: 371, logo: "/clubs/fc-zlin.png" },
+    { name: "SK Sigma Olomouc", country: "Czech Republic", city: "Olomouc", x: 482, y: 365, logo: "/clubs/sk-sigma-olomouc.png" },
   ];
 
   // Flag mapping
