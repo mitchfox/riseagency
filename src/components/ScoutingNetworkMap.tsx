@@ -31,6 +31,13 @@ import turkeyFlag from "@/assets/flags/turkey.png";
 import romaniaFlag from "@/assets/flags/romania.png";
 import serbiaFlag from "@/assets/flags/serbia.png";
 import croatiaFlag from "@/assets/flags/croatia.png";
+import ukraineFlag from "@/assets/flags/ukraine.png";
+import russiaFlag from "@/assets/flags/russia.png";
+import finlandFlag from "@/assets/flags/finland.png";
+import estoniaFlag from "@/assets/flags/estonia.png";
+import latviaFlag from "@/assets/flags/latvia.png";
+import lithuaniaFlag from "@/assets/flags/lithuania.png";
+import bulgariaFlag from "@/assets/flags/bulgaria.png";
 
 const ScoutingNetworkMap = () => {
   const [viewBox, setViewBox] = useState("0 0 1000 600");
@@ -72,6 +79,13 @@ const ScoutingNetworkMap = () => {
     "Romania": romaniaFlag,
     "Serbia": serbiaFlag,
     "Croatia": croatiaFlag,
+    "Ukraine": ukraineFlag,
+    "Russia": russiaFlag,
+    "Finland": finlandFlag,
+    "Estonia": estoniaFlag,
+    "Latvia": latviaFlag,
+    "Lithuania": lithuaniaFlag,
+    "Bulgaria": bulgariaFlag,
   };
 
   // Country centers with flag markers
@@ -84,21 +98,28 @@ const ScoutingNetworkMap = () => {
     { country: "Spain", x: 295, y: 525 },
     { country: "France", x: 350, y: 450 },
     { country: "Norway", x: 400, y: 250 },
-    { country: "Sweden", x: 470, y: 280 },
-    { country: "Denmark", x: 410, y: 240 },
+    { country: "Sweden", x: 450, y: 280 },
+    { country: "Denmark", x: 410, y: 315 },
     { country: "Netherlands", x: 380, y: 355 },
     { country: "Belgium", x: 370, y: 385 },
     { country: "Germany", x: 425, y: 375 },
-    { country: "Switzerland", x: 405, y: 445 },
-    { country: "Austria", x: 500, y: 425 },
-    { country: "Czech Republic", x: 480, y: 410 },
-    { country: "Poland", x: 525, y: 375 },
+    { country: "Switzerland", x: 400, y: 445 },
+    { country: "Austria", x: 500, y: 435 },
+    { country: "Czech Republic", x: 460, y: 410 },
+    { country: "Poland", x: 500, y: 375 },
     { country: "Italy", x: 445, y: 500 },
     { country: "Greece", x: 525, y: 530 },
-    { country: "Turkey", x: 650, y: 545 },
-    { country: "Romania", x: 560, y: 465 },
+    { country: "Turkey", x: 650, y: 540 },
+    { country: "Romania", x: 555, y: 455 },
     { country: "Serbia", x: 525, y: 485 },
     { country: "Croatia", x: 490, y: 485 },
+    { country: "Ukraine", x: 650, y: 400 },
+    { country: "Russia", x: 750, y: 200 },
+    { country: "Finland", x: 500, y: 150 },
+    { country: "Estonia", x: 550, y: 220 },
+    { country: "Latvia", x: 550, y: 250 },
+    { country: "Lithuania", x: 530, y: 280 },
+    { country: "Bulgaria", x: 580, y: 500 },
   ];
 
   const handleCountryClick = (x: number, y: number, event: React.MouseEvent) => {
