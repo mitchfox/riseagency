@@ -222,6 +222,18 @@ const ScoutingNetworkMap = () => {
     { name: "FC Hermannstadt", country: "Romania", city: "Sibiu", x: 565, y: 460, logo: "/clubs/fc-hermannstadt.png" },
     { name: "FC Metaloglobus Bucharest", country: "Romania", city: "Bucharest", x: 580, y: 484, logo: "/clubs/fc-metaloglobus-bucharest.png" },
     { name: "FC Rapid 1923", country: "Romania", city: "Bucharest", x: 581, y: 485, logo: "/clubs/fc-rapid-1923.png" },
+    
+    // Russia
+    { name: "CSKA Moscow", country: "Russia", city: "Moscow", x: 695, y: 345, logo: "/clubs/cska-moscow.png" },
+    { name: "Dynamo Moscow", country: "Russia", city: "Moscow", x: 696, y: 346, logo: "/clubs/dynamo-moscow.png" },
+    { name: "FC Krasnodar", country: "Russia", city: "Krasnodar", x: 720, y: 455, logo: "/clubs/fc-krasnodar.png" },
+    { name: "FC Rostov", country: "Russia", city: "Rostov-on-Don", x: 710, y: 440, logo: "/clubs/fc-rostov.png" },
+    { name: "FC Sochi", country: "Russia", city: "Sochi", x: 730, y: 470, logo: "/clubs/fc-sochi.png" },
+    { name: "Akhmat Grozny", country: "Russia", city: "Grozny", x: 750, y: 470, logo: "/clubs/akhmat-grozny.png" },
+    { name: "Akron Togliatti", country: "Russia", city: "Togliatti", x: 785, y: 380, logo: "/clubs/akron-togliatti.png" },
+    { name: "Baltika Kaliningrad", country: "Russia", city: "Kaliningrad", x: 540, y: 370, logo: "/clubs/baltika-kaliningrad.png" },
+    { name: "Dinamo Makhachkala", country: "Russia", city: "Makhachkala", x: 750, y: 465, logo: "/clubs/dinamo-makhachkala.png" },
+    { name: "FC Pari Nizhniy Novgorod", country: "Russia", city: "Nizhniy Novgorod", x: 730, y: 350, logo: "/clubs/fc-pari-nizhniy-novgorod.png" },
   ];
 
   // Flag mapping
@@ -510,7 +522,7 @@ const ScoutingNetworkMap = () => {
             )}
 
             {/* Europe outline image - hide when zoomed in */}
-            {zoomLevel < 5 && (
+            {zoomLevel <= 5 && (
               <image
                 href={europeOutline}
                 x="0"
@@ -607,7 +619,7 @@ const ScoutingNetworkMap = () => {
             </g>
             
             {/* Country Flag Markers - render on top so they're visible over clusters, hide when zoomed in */}
-            {!selectedCountry && zoomLevel < 10 && countryMarkers.map((country, idx) => {
+            {!selectedCountry && zoomLevel <= 5 && countryMarkers.map((country, idx) => {
               const flagImage = flagImages[country.country];
               return (
                 <g 
