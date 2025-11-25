@@ -325,23 +325,23 @@ const ScoutingNetworkMap = () => {
                 <circle
                   cx={club.x}
                   cy={club.y}
-                  r="16"
+                  r="8"
                   fill="hsl(var(--primary))"
                   className="animate-pulse opacity-20"
                 />
                 {/* Circular clip path for logo */}
                 <defs>
                   <clipPath id={`clip-${idx}`}>
-                    <circle cx={club.x} cy={club.y} r="10" />
+                    <circle cx={club.x} cy={club.y} r="5" />
                   </clipPath>
                 </defs>
                 {/* Club logo in circle */}
                 <image
                   href={club.logo}
-                  x={club.x - 10}
-                  y={club.y - 10}
-                  width="20"
-                  height="20"
+                  x={club.x - 5}
+                  y={club.y - 5}
+                  width="10"
+                  height="10"
                   clipPath={`url(#clip-${idx})`}
                   className="cursor-pointer"
                 />
@@ -349,45 +349,16 @@ const ScoutingNetworkMap = () => {
                 <circle
                   cx={club.x}
                   cy={club.y}
-                  r="10"
+                  r="5"
                   fill="none"
                   stroke="white"
-                  strokeWidth="2"
-                  className="cursor-pointer hover:r-12 transition-all"
+                  strokeWidth="1"
+                  className="cursor-pointer hover:r-6 transition-all"
                 >
                   <title>{club.name} - {club.city}, {club.country}</title>
                 </circle>
               </g>
             ))}
-
-            {/* Scouting Location Points */}
-            {scoutingLocations.map((location, idx) => {
-              const patternId = `flag-${location.country.toLowerCase().replace(/ /g, '-')}`;
-              return (
-                <g key={idx}>
-                  {/* Pulse effect */}
-                  <circle
-                    cx={location.x}
-                    cy={location.y}
-                    r="12"
-                    fill="hsl(var(--primary))"
-                    className="animate-ping opacity-20"
-                  />
-                  {/* Main marker with country flag fill */}
-                  <circle
-                    cx={location.x}
-                    cy={location.y}
-                    r="6"
-                    fill={`url(#${patternId})`}
-                    stroke="white"
-                    strokeWidth="2"
-                    className="cursor-pointer hover:r-8 transition-all"
-                  >
-                    <title>{location.city}, {location.country}</title>
-                  </circle>
-                </g>
-              );
-            })}
 
             {/* Connection lines (sample) */}
             <g opacity="0.1" stroke="hsl(var(--primary))" strokeWidth="1">
@@ -400,10 +371,6 @@ const ScoutingNetworkMap = () => {
 
           {/* Legend */}
           <div className="flex items-center justify-center gap-6 mt-4 text-sm flex-wrap">
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-primary shadow-lg shadow-primary/50" />
-              <span>Scouting Location</span>
-            </div>
             <div className="flex items-center gap-2">
               <div className="w-4 h-4 rounded bg-primary/20 border border-primary" />
               <span>Partner Club</span>
