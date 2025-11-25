@@ -7,6 +7,31 @@ import jihlavaLogo from "@/assets/clubs/fc-vysocina-jihlava-official.png";
 import domazliceLogo from "@/assets/clubs/tj-jiskra-domazlice-official.png";
 import forestGreenLogo from "@/assets/clubs/forest-green-rovers.png";
 
+// Flag imports
+import englandFlag from "@/assets/flags/england.png";
+import scotlandFlag from "@/assets/flags/scotland.png";
+import irelandFlag from "@/assets/flags/ireland.png";
+import icelandFlag from "@/assets/flags/iceland.png";
+import portugalFlag from "@/assets/flags/portugal.png";
+import spainFlag from "@/assets/flags/spain.png";
+import franceFlag from "@/assets/flags/france.png";
+import norwayFlag from "@/assets/flags/norway.png";
+import swedenFlag from "@/assets/flags/sweden.png";
+import denmarkFlag from "@/assets/flags/denmark.png";
+import netherlandsFlag from "@/assets/flags/netherlands.png";
+import belgiumFlag from "@/assets/flags/belgium.png";
+import germanyFlag from "@/assets/flags/germany.png";
+import switzerlandFlag from "@/assets/flags/switzerland.png";
+import austriaFlag from "@/assets/flags/austria.png";
+import czechRepublicFlag from "@/assets/flags/czech-republic.png";
+import polandFlag from "@/assets/flags/poland.png";
+import italyFlag from "@/assets/flags/italy.png";
+import greeceFlag from "@/assets/flags/greece.png";
+import turkeyFlag from "@/assets/flags/turkey.png";
+import romaniaFlag from "@/assets/flags/romania.png";
+import serbiaFlag from "@/assets/flags/serbia.png";
+import croatiaFlag from "@/assets/flags/croatia.png";
+
 const ScoutingNetworkMap = () => {
   const [viewBox, setViewBox] = useState("0 0 1000 600");
   const [zoomLevel, setZoomLevel] = useState(0); // 0 = out, 1 = medium, 2 = fully zoomed
@@ -21,6 +46,33 @@ const ScoutingNetworkMap = () => {
     { name: "TJ Jiskra Domažlice", country: "Czech Republic", city: "Domažlice", x: 665, y: 315, logo: domazliceLogo },
     { name: "Forest Green Rovers", country: "England", city: "Nailsworth", x: 510, y: 290, logo: forestGreenLogo },
   ];
+
+  // Flag mapping
+  const flagImages: Record<string, string> = {
+    "England": englandFlag,
+    "Scotland": scotlandFlag,
+    "Ireland": irelandFlag,
+    "Iceland": icelandFlag,
+    "Portugal": portugalFlag,
+    "Spain": spainFlag,
+    "France": franceFlag,
+    "Norway": norwayFlag,
+    "Sweden": swedenFlag,
+    "Denmark": denmarkFlag,
+    "Netherlands": netherlandsFlag,
+    "Belgium": belgiumFlag,
+    "Germany": germanyFlag,
+    "Switzerland": switzerlandFlag,
+    "Austria": austriaFlag,
+    "Czech Republic": czechRepublicFlag,
+    "Poland": polandFlag,
+    "Italy": italyFlag,
+    "Greece": greeceFlag,
+    "Turkey": turkeyFlag,
+    "Romania": romaniaFlag,
+    "Serbia": serbiaFlag,
+    "Croatia": croatiaFlag,
+  };
 
   // Country centers with flag markers
   const countryMarkers = [
@@ -100,165 +152,8 @@ const ScoutingNetworkMap = () => {
             style={{ maxHeight: "600px" }}
             onClick={handleMapClick}
           >
-            {/* Flag Pattern Definitions */}
-            <defs>
-              {/* England - St George's Cross */}
-              <pattern id="flag-england" x="0" y="0" width="60" height="60" patternUnits="userSpaceOnUse">
-                <rect width="60" height="60" fill="#FFFFFF"/>
-                <rect x="25" width="10" height="60" fill="#CE1124"/>
-                <rect y="25" width="60" height="10" fill="#CE1124"/>
-              </pattern>
-
-              {/* France - Tricolor */}
-              <pattern id="flag-france" x="0" y="0" width="60" height="40" patternUnits="userSpaceOnUse">
-                <rect width="20" height="40" fill="#002395"/>
-                <rect x="20" width="20" height="40" fill="#FFFFFF"/>
-                <rect x="40" width="20" height="40" fill="#ED2939"/>
-              </pattern>
-
-              {/* Spain */}
-              <pattern id="flag-spain" x="0" y="0" width="60" height="40" patternUnits="userSpaceOnUse">
-                <rect width="60" height="40" fill="#AA151B"/>
-                <rect y="10" width="60" height="20" fill="#F1BF00"/>
-              </pattern>
-
-              {/* Portugal */}
-              <pattern id="flag-portugal" x="0" y="0" width="60" height="40" patternUnits="userSpaceOnUse">
-                <rect width="24" height="40" fill="#006600"/>
-                <rect x="24" width="36" height="40" fill="#FF0000"/>
-              </pattern>
-
-              {/* Germany */}
-              <pattern id="flag-germany" x="0" y="0" width="60" height="30" patternUnits="userSpaceOnUse">
-                <rect width="60" height="10" fill="#000000"/>
-                <rect y="10" width="60" height="10" fill="#DD0000"/>
-                <rect y="20" width="60" height="10" fill="#FFCE00"/>
-              </pattern>
-
-              {/* Italy */}
-              <pattern id="flag-italy" x="0" y="0" width="60" height="40" patternUnits="userSpaceOnUse">
-                <rect width="20" height="40" fill="#009246"/>
-                <rect x="20" width="20" height="40" fill="#FFFFFF"/>
-                <rect x="40" width="20" height="40" fill="#CE2B37"/>
-              </pattern>
-
-              {/* Netherlands */}
-              <pattern id="flag-netherlands" x="0" y="0" width="60" height="30" patternUnits="userSpaceOnUse">
-                <rect width="60" height="10" fill="#AE1C28"/>
-                <rect y="10" width="60" height="10" fill="#FFFFFF"/>
-                <rect y="20" width="60" height="10" fill="#21468B"/>
-              </pattern>
-
-              {/* Belgium */}
-              <pattern id="flag-belgium" x="0" y="0" width="60" height="40" patternUnits="userSpaceOnUse">
-                <rect width="20" height="40" fill="#000000"/>
-                <rect x="20" width="20" height="40" fill="#FDDA24"/>
-                <rect x="40" width="20" height="40" fill="#EF3340"/>
-              </pattern>
-
-              {/* Switzerland - Red with white cross */}
-              <pattern id="flag-switzerland" x="0" y="0" width="32" height="32" patternUnits="userSpaceOnUse">
-                <rect width="32" height="32" fill="#FF0000"/>
-                <rect x="11" y="6" width="10" height="20" fill="#FFFFFF"/>
-                <rect x="6" y="11" width="20" height="10" fill="#FFFFFF"/>
-              </pattern>
-
-              {/* Austria */}
-              <pattern id="flag-austria" x="0" y="0" width="60" height="30" patternUnits="userSpaceOnUse">
-                <rect width="60" height="30" fill="#ED2939"/>
-                <rect y="10" width="60" height="10" fill="#FFFFFF"/>
-              </pattern>
-
-              {/* Poland */}
-              <pattern id="flag-poland" x="0" y="0" width="60" height="40" patternUnits="userSpaceOnUse">
-                <rect width="60" height="20" fill="#FFFFFF"/>
-                <rect y="20" width="60" height="20" fill="#DC143C"/>
-              </pattern>
-
-              {/* Czech Republic */}
-              <pattern id="flag-czech-republic" x="0" y="0" width="60" height="40" patternUnits="userSpaceOnUse">
-                <rect width="60" height="20" fill="#FFFFFF"/>
-                <rect y="20" width="60" height="20" fill="#D7141A"/>
-                <polygon points="0,0 0,40 30,20" fill="#11457E"/>
-              </pattern>
-
-              {/* Denmark */}
-              <pattern id="flag-denmark" x="0" y="0" width="60" height="40" patternUnits="userSpaceOnUse">
-                <rect width="60" height="40" fill="#C60C30"/>
-                <rect x="17" width="7" height="40" fill="#FFFFFF"/>
-                <rect y="17" width="60" height="6" fill="#FFFFFF"/>
-              </pattern>
-
-              {/* Sweden */}
-              <pattern id="flag-sweden" x="0" y="0" width="60" height="40" patternUnits="userSpaceOnUse">
-                <rect width="60" height="40" fill="#006AA7"/>
-                <rect x="17" width="7" height="40" fill="#FECC00"/>
-                <rect y="17" width="60" height="6" fill="#FECC00"/>
-              </pattern>
-
-              {/* Norway */}
-              <pattern id="flag-norway" x="0" y="0" width="60" height="40" patternUnits="userSpaceOnUse">
-                <rect width="60" height="40" fill="#BA0C2F"/>
-                <rect x="17" width="10" height="40" fill="#FFFFFF"/>
-                <rect y="15" width="60" height="10" fill="#FFFFFF"/>
-                <rect x="19" width="6" height="40" fill="#00205B"/>
-                <rect y="17" width="60" height="6" fill="#00205B"/>
-              </pattern>
-
-              {/* Greece */}
-              <pattern id="flag-greece" x="0" y="0" width="60" height="45" patternUnits="userSpaceOnUse">
-                <rect width="60" height="45" fill="#0D5EAF"/>
-                <rect y="5" width="60" height="5" fill="#FFFFFF"/>
-                <rect y="15" width="60" height="5" fill="#FFFFFF"/>
-                <rect y="25" width="60" height="5" fill="#FFFFFF"/>
-                <rect y="35" width="60" height="5" fill="#FFFFFF"/>
-              </pattern>
-
-              {/* Turkey */}
-              <pattern id="flag-turkey" x="0" y="0" width="60" height="40" patternUnits="userSpaceOnUse">
-                <rect width="60" height="40" fill="#E30A17"/>
-                <circle cx="27" cy="20" r="9" fill="#FFFFFF"/>
-                <circle cx="30" cy="20" r="7" fill="#E30A17"/>
-                <polygon points="37,20 39,22 42,21 40,24 42,26 39,25 37,28 36,25 33,26 35,24 33,21 36,22" fill="#FFFFFF"/>
-              </pattern>
-
-              {/* Scotland */}
-              <pattern id="flag-scotland" x="0" y="0" width="60" height="40" patternUnits="userSpaceOnUse">
-                <rect width="60" height="40" fill="#0065BD"/>
-                <polygon points="0,0 12,20 0,40" fill="#FFFFFF"/>
-                <polygon points="60,0 48,20 60,40" fill="#FFFFFF"/>
-                <polygon points="0,0 30,10 60,0" fill="#FFFFFF"/>
-                <polygon points="0,40 30,30 60,40" fill="#FFFFFF"/>
-              </pattern>
-
-              {/* Ireland */}
-              <pattern id="flag-ireland" x="0" y="0" width="60" height="40" patternUnits="userSpaceOnUse">
-                <rect width="20" height="40" fill="#169B62"/>
-                <rect x="20" width="20" height="40" fill="#FFFFFF"/>
-                <rect x="40" width="20" height="40" fill="#FF883E"/>
-              </pattern>
-
-              {/* Romania */}
-              <pattern id="flag-romania" x="0" y="0" width="60" height="40" patternUnits="userSpaceOnUse">
-                <rect width="20" height="40" fill="#002B7F"/>
-                <rect x="20" width="20" height="40" fill="#FCD116"/>
-                <rect x="40" width="20" height="40" fill="#CE1126"/>
-              </pattern>
-
-              {/* Serbia */}
-              <pattern id="flag-serbia" x="0" y="0" width="60" height="30" patternUnits="userSpaceOnUse">
-                <rect width="60" height="10" fill="#C6363C"/>
-                <rect y="10" width="60" height="10" fill="#0C4076"/>
-                <rect y="20" width="60" height="10" fill="#FFFFFF"/>
-              </pattern>
-
-              {/* Croatia */}
-              <pattern id="flag-croatia" x="0" y="0" width="60" height="30" patternUnits="userSpaceOnUse">
-                <rect width="60" height="10" fill="#FF0000"/>
-                <rect y="10" width="60" height="10" fill="#FFFFFF"/>
-                <rect y="20" width="60" height="10" fill="#171796"/>
-              </pattern>
-            </defs>
+            {/* Flag Pattern Definitions - Removed, using actual flag images */}
+            <defs />
 
             {/* Background */}
             <rect width="1000" height="600" fill="hsl(var(--background))" />
@@ -329,27 +224,42 @@ const ScoutingNetworkMap = () => {
 
             {/* Country Flag Markers */}
             {countryMarkers.map((country, idx) => {
-              const patternId = `flag-${country.country.toLowerCase().replace(/ /g, '-')}`;
+              const flagImage = flagImages[country.country];
               return (
                 <g key={`country-${idx}`}>
                   {/* Glow effect */}
                   <circle
                     cx={country.x}
                     cy={country.y}
-                    r="35"
+                    r="10"
                     fill="hsl(var(--primary))"
                     className="animate-pulse opacity-10"
                   />
-                  {/* Country flag circle */}
+                  {/* Circular clip path for flag */}
+                  <defs>
+                    <clipPath id={`flag-clip-${idx}`}>
+                      <circle cx={country.x} cy={country.y} r="6" />
+                    </clipPath>
+                  </defs>
+                  {/* Country flag image in circle */}
+                  <image
+                    href={flagImage}
+                    x={country.x - 6}
+                    y={country.y - 6}
+                    width="12"
+                    height="12"
+                    clipPath={`url(#flag-clip-${idx})`}
+                    className="cursor-pointer"
+                  />
+                  {/* Circle border */}
                   <circle
                     cx={country.x}
                     cy={country.y}
-                    r="25"
-                    fill={`url(#${patternId})`}
+                    r="6"
+                    fill="none"
                     stroke="white"
-                    strokeWidth="2"
-                    className="cursor-pointer hover:r-28 transition-all"
-                    opacity="0.8"
+                    strokeWidth="1"
+                    className="cursor-pointer hover:r-7 transition-all"
                   >
                     <title>{country.country}</title>
                   </circle>
@@ -411,11 +321,11 @@ const ScoutingNetworkMap = () => {
           {/* Legend */}
           <div className="flex items-center justify-center gap-6 mt-4 text-sm flex-wrap">
             <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-full border-2 border-white bg-primary/30" />
+              <div className="w-3 h-3 rounded-full border border-white bg-primary/30" />
               <span>Country Coverage</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full border border-white bg-primary/20" />
+              <div className="w-2 h-2 rounded-full border border-white bg-primary/20" />
               <span>Partner Club</span>
             </div>
             <button
