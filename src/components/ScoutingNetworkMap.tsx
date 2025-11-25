@@ -1,5 +1,7 @@
-import { MapPin, ZoomOut } from "lucide-react";
-import { useState } from "react";
+import { MapPin, ZoomOut, Lock, Unlock } from "lucide-react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import europeOutline from "@/assets/europe-outline.gif";
 import norwichLogo from "@/assets/clubs/norwich-city-official.png";
 import bohemiansLogo from "@/assets/clubs/bohemians-1905-official.png";
@@ -47,7 +49,142 @@ const ScoutingNetworkMap = () => {
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
   const [selectedCluster, setSelectedCluster] = useState<{x: number, y: number} | null>(null);
   const [expandedCity, setExpandedCity] = useState<string | null>(null);
+  const [isLocked, setIsLocked] = useState(true);
+  const [draggingClub, setDraggingClub] = useState<string | null>(null);
+  const [clubPositions, setClubPositions] = useState<Record<string, {x: number, y: number}>>({});
   // Europe outline is rendered from raster map image (europe-outline.gif)
+  
+  // Load club positions from database on mount
+  useEffect(() => {
+    const loadClubPositions = async () => {
+      const { data, error } = await supabase
+        .from('club_network_contacts')
+        .select('name, x_position, y_position');
+      
+      if (!error && data) {
+        const positions: Record<string, {x: number, y: number}> = {};
+        data.forEach(club => {
+          if (club.x_position && club.y_position) {
+            positions[club.name] = { 
+              x: Number(club.x_position), 
+              y: Number(club.y_position) 
+            };
+          }
+        });
+        setClubPositions(positions);
+      }
+    };
+    
+    loadClubPositions();
+  }, []);
+  
+  // Sync hardcoded positions to database for clubs that don't have positions yet
+  useEffect(() => {
+    const syncPositions = async () => {
+      for (const club of footballClubs) {
+        const { data: existing } = await supabase
+          .from('club_network_contacts')
+          .select('id, x_position, y_position')
+          .eq('name', club.name)
+          .maybeSingle();
+        
+        if (existing && (!existing.x_position || !existing.y_position)) {
+          await supabase
+            .from('club_network_contacts')
+            .update({ 
+              x_position: club.x, 
+              y_position: club.y,
+              city: club.city,
+              country: club.country,
+              image_url: club.logo
+            })
+            .eq('id', existing.id);
+        } else if (!existing) {
+          // Insert new club
+          await supabase
+            .from('club_network_contacts')
+            .insert({
+              name: club.name,
+              city: club.city,
+              country: club.country,
+              x_position: club.x,
+              y_position: club.y,
+              image_url: club.logo
+            });
+        }
+      }
+    };
+    
+    syncPositions();
+  }, []);
+  
+  const handleLockToggle = async () => {
+    if (!isLocked) {
+      // Save all positions to database before locking
+      toast.loading("Saving positions...");
+      
+      for (const club of footballClubs) {
+        const position = clubPositions[club.name] || { x: club.x, y: club.y };
+        
+        const { data: existing } = await supabase
+          .from('club_network_contacts')
+          .select('id')
+          .eq('name', club.name)
+          .maybeSingle();
+        
+        if (existing) {
+          await supabase
+            .from('club_network_contacts')
+            .update({
+              x_position: position.x,
+              y_position: position.y
+            })
+            .eq('id', existing.id);
+        }
+      }
+      
+      toast.dismiss();
+      toast.success("Positions saved successfully!");
+    }
+    
+    setIsLocked(!isLocked);
+  };
+  
+  const handleClubDragStart = (clubName: string, e: React.MouseEvent) => {
+    if (isLocked) return;
+    e.stopPropagation();
+    setDraggingClub(clubName);
+  };
+  
+  const handleMapMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
+    if (!draggingClub || isLocked) return;
+    
+    const svg = e.currentTarget;
+    const rect = svg.getBoundingClientRect();
+    const viewBoxParts = viewBox.split(' ').map(Number);
+    
+    // Calculate position in SVG coordinates
+    const scaleX = viewBoxParts[2] / rect.width;
+    const scaleY = viewBoxParts[3] / rect.height;
+    const x = (e.clientX - rect.left) * scaleX + viewBoxParts[0];
+    const y = (e.clientY - rect.top) * scaleY + viewBoxParts[1];
+    
+    setClubPositions(prev => ({
+      ...prev,
+      [draggingClub]: { x, y }
+    }));
+  };
+  
+  const handleMapMouseUp = () => {
+    setDraggingClub(null);
+  };
+  
+  // Get club position (from database override or hardcoded default)
+  const getClubPosition = (club: typeof footballClubs[0]) => {
+    const override = clubPositions[club.name];
+    return override || { x: club.x, y: club.y };
+  };
+  
   
   // Calculate distance threshold based on zoom level
   const getClusterThreshold = () => {
@@ -610,9 +747,9 @@ const ScoutingNetworkMap = () => {
     
     cityMap.forEach((clubs, cityKey) => {
       if (clubs.length > 1) {
-        // Multiple clubs in same city - calculate center point
-        const sumX = clubs.reduce((sum, club) => sum + club.x, 0);
-        const sumY = clubs.reduce((sum, club) => sum + club.y, 0);
+        // Multiple clubs in same city - calculate center point using current positions
+        const sumX = clubs.reduce((sum, club) => sum + getClubPosition(club).x, 0);
+        const sumY = clubs.reduce((sum, club) => sum + getClubPosition(club).y, 0);
         cityGroups.push({
           cityName: clubs[0].city,
           country: clubs[0].country,
@@ -710,6 +847,9 @@ const ScoutingNetworkMap = () => {
             className="w-full h-auto cursor-pointer transition-all duration-700 ease-in-out"
             style={{ maxHeight: "600px" }}
             onClick={handleMapClick}
+            onMouseMove={handleMapMouseMove}
+            onMouseUp={handleMapMouseUp}
+            onMouseLeave={handleMapMouseUp}
           >
             {/* Rotating ring animation definition */}
             <defs>
@@ -941,35 +1081,42 @@ const ScoutingNetworkMap = () => {
             })}
             
             {/* Individual Football Club Logos (cities with only one club) */}
-            {singleClubs.map((club, idx) => (
-              <g key={`single-club-${idx}`}>
-                <defs>
-                  <clipPath id={`clip-single-${idx}`}>
-                    <circle cx={club.x} cy={club.y} r="5" />
-                  </clipPath>
-                </defs>
-                <image
-                  href={club.logo}
-                  x={club.x - 5}
-                  y={club.y - 5}
-                  width="10"
-                  height="10"
-                  clipPath={`url(#clip-single-${idx})`}
-                  className="cursor-pointer"
-                />
-                <circle
-                  cx={club.x}
-                  cy={club.y}
-                  r="5"
-                  fill="none"
-                  stroke="white"
-                  strokeWidth="1"
-                  className="cursor-pointer hover:stroke-primary transition-colors"
+            {singleClubs.map((club, idx) => {
+              const pos = getClubPosition(club);
+              return (
+                <g 
+                  key={`single-club-${idx}`}
+                  onMouseDown={(e) => handleClubDragStart(club.name, e)}
+                  className={!isLocked ? "cursor-move" : "cursor-pointer"}
+                  style={{ pointerEvents: 'all' }}
                 >
-                  <title>{club.name} - {club.city}, {club.country}</title>
-                </circle>
-              </g>
-            ))}
+                  <defs>
+                    <clipPath id={`clip-single-${idx}`}>
+                      <circle cx={pos.x} cy={pos.y} r="5" />
+                    </clipPath>
+                  </defs>
+                  <image
+                    href={club.logo}
+                    x={pos.x - 5}
+                    y={pos.y - 5}
+                    width="10"
+                    height="10"
+                    clipPath={`url(#clip-single-${idx})`}
+                  />
+                  <circle
+                    cx={pos.x}
+                    cy={pos.y}
+                    r="5"
+                    fill="none"
+                    stroke={!isLocked ? "hsl(var(--primary))" : "white"}
+                    strokeWidth={!isLocked ? "2" : "1"}
+                    className={!isLocked ? "" : "hover:stroke-primary transition-colors"}
+                  >
+                    <title>{club.name} - {club.city}, {club.country}</title>
+                  </circle>
+                </g>
+              );
+            })}
 
             {/* Connection lines (sample) */}
             <g opacity="0.1" stroke="hsl(var(--primary))" strokeWidth="1">
@@ -1050,11 +1197,24 @@ const ScoutingNetworkMap = () => {
             >
               <span>{showGrid ? "Hide" : "Show"} Grid</span>
             </button>
+            <button
+              onClick={handleLockToggle}
+              className={`flex items-center gap-2 px-3 py-1 rounded border transition-colors ${
+                isLocked 
+                  ? "border-border hover:bg-accent" 
+                  : "border-primary bg-primary/10 hover:bg-primary/20"
+              }`}
+            >
+              {isLocked ? <Lock className="h-4 w-4" /> : <Unlock className="h-4 w-4" />}
+              <span>{isLocked ? "Unlock to Reposition" : "Lock & Save Positions"}</span>
+            </button>
             <div className="flex items-center gap-2 text-muted-foreground">
               <span>
-                {zoomLevel === 0 
-                  ? "Click country flag, list, or gold club cluster to zoom in" 
-                  : "Click map to zoom out"}
+                {!isLocked 
+                  ? "Drag club logos to reposition them" 
+                  : zoomLevel === 0 
+                    ? "Click country flag, list, or gold club cluster to zoom in" 
+                    : "Click map to zoom out"}
               </span>
             </div>
           </div>
