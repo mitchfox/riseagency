@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MessageCircle, Mail, MapPin, Users, TrendingUp, Award, Database, BarChart3, Target, Sparkles, Globe, Brain, Zap, Activity, Crosshair } from "lucide-react";
-import { SCOUTING_POSITIONS, POSITION_SKILLS } from "@/data/scoutingSkills";
+import { SCOUTING_POSITIONS, POSITION_SKILLS, ScoutingPosition } from "@/data/scoutingSkills";
 
 const domainConfig = {
   Physical: {
@@ -36,7 +36,21 @@ const domainConfig = {
   }
 };
 
+const positionInitials: Record<ScoutingPosition, string> = {
+  "Goalkeeper": "GK",
+  "Full-Back": "FB",
+  "Centre-Back": "CB",
+  "Central Defensive Midfielder": "CDM",
+  "Central Midfielder": "CM",
+  "Central Attacking Midfielder": "CAM",
+  "Winger / Wide Forward": "W/WF",
+  "Centre Forward / Striker": "CF/ST"
+};
+
 const Scouts = () => {
+  const [selectedPosition, setSelectedPosition] = useState<ScoutingPosition>(SCOUTING_POSITIONS[0]);
+  const [expandedDomain, setExpandedDomain] = useState<keyof typeof domainConfig | null>(null);
+
   const handleWhatsApp = () => {
     window.open("https://wa.me/447856255509", "_blank");
   };
@@ -52,53 +66,6 @@ const Scouts = () => {
       <Header />
       
       <main className="pt-24 md:pt-16">
-        {/* Hero Section */}
-        <section className="relative min-h-[45vh] flex items-center justify-center overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-background via-primary/10 to-background" />
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
-          
-          <div className="relative container mx-auto px-4 text-center z-10 space-y-4 animate-fade-in-up">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 backdrop-blur-sm rounded-full border border-primary/20 mb-2">
-              <Sparkles className="h-4 w-4 text-primary" />
-              <span className="text-sm font-semibold">Elite Scouting Network</span>
-            </div>
-            
-            <h1 className="text-5xl md:text-7xl font-bebas uppercase tracking-wider mb-3 leading-none">
-              <span className="bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent">
-                Scout With
-              </span>
-              <br />
-              <span className="text-primary">RISE</span>
-            </h1>
-            
-            <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto font-light leading-relaxed">
-              Join our elite scouting network with competitive incentives and{" "}
-              <span className="text-primary font-semibold">forever commission</span>
-            </p>
-            
-            <div className="flex gap-4 justify-center flex-wrap pt-2">
-              <Button 
-                size="lg" 
-                className="btn-shine font-bebas uppercase tracking-wider text-lg px-8 py-5 rounded-xl group"
-                onClick={handleWhatsApp}
-              >
-                <MessageCircle className="mr-2 h-5 w-5 group-hover:scale-110 transition-transform" />
-                Contact via WhatsApp
-              </Button>
-              <Button 
-                size="lg" 
-                variant="outline"
-                className="font-bebas uppercase tracking-wider text-lg px-8 py-5 hover:scale-105 transition-all rounded-xl"
-                asChild
-              >
-                <a href="mailto:contact@riseagency.com">
-                  <Mail className="mr-2 h-5 w-5" />
-                  Email Us
-                </a>
-              </Button>
-            </div>
-          </div>
-        </section>
 
         {/* Scouting Criteria by Position Section */}
         <section className="py-10 md:py-16 px-4 relative">
@@ -121,105 +88,148 @@ const Scouts = () => {
             </div>
 
             <div className="max-w-6xl mx-auto">
-              {/* Position Tabs */}
-              <Tabs defaultValue={SCOUTING_POSITIONS[0]} className="w-full">
-                <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-2 bg-muted/50 p-2 h-auto mb-6">
-                  {SCOUTING_POSITIONS.map((position) => (
-                    <TabsTrigger
-                      key={position}
-                      value={position}
-                      className="flex items-center justify-center py-3 px-2 data-[state=active]:bg-card data-[state=active]:shadow-lg text-xs md:text-sm"
-                    >
-                      <span className="font-bebas uppercase tracking-wider text-center leading-tight">
-                        {position}
-                      </span>
-                    </TabsTrigger>
-                  ))}
-                </TabsList>
+              {/* Position Selection */}
+              <div className="grid grid-cols-4 md:grid-cols-8 gap-2 bg-muted/50 p-2 rounded-xl mb-6">
+                {SCOUTING_POSITIONS.map((position) => (
+                  <button
+                    key={position}
+                    onClick={() => setSelectedPosition(position)}
+                    className={`py-3 px-2 rounded-lg font-bebas uppercase tracking-wider text-sm md:text-base transition-all ${
+                      selectedPosition === position
+                        ? "bg-card shadow-lg text-primary scale-105"
+                        : "hover:bg-card/50"
+                    }`}
+                  >
+                    {positionInitials[position]}
+                  </button>
+                ))}
+              </div>
 
-                {/* Position Content - Nested Domain Tabs */}
-                {SCOUTING_POSITIONS.map((position) => {
-                  const positionSkills = POSITION_SKILLS[position];
-                  const skillsByDomain = positionSkills.reduce((acc, skill) => {
-                    if (!acc[skill.domain]) acc[skill.domain] = [];
-                    acc[skill.domain].push(skill);
-                    return acc;
-                  }, {} as Record<string, typeof positionSkills>);
+              {/* Domain Grid */}
+              {(() => {
+                const positionSkills = POSITION_SKILLS[selectedPosition];
+                const skillsByDomain = positionSkills.reduce((acc, skill) => {
+                  if (!acc[skill.domain]) acc[skill.domain] = [];
+                  acc[skill.domain].push(skill);
+                  return acc;
+                }, {} as Record<string, typeof positionSkills>);
 
-                  return (
-                    <TabsContent key={position} value={position} className="mt-0">
-                      <Tabs defaultValue="Physical" className="w-full">
-                        <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 gap-2 bg-muted/50 p-2 h-auto mb-6">
+                return (
+                  <div className="relative">
+                    {expandedDomain ? (
+                      // Expanded view
+                      <div className="relative">
+                        {/* Corner mini domains */}
+                        <div className="absolute top-4 right-4 z-10 grid grid-cols-2 gap-2">
                           {Object.keys(domainConfig).map((domain) => {
+                            if (domain === expandedDomain) return null;
                             const config = domainConfig[domain as keyof typeof domainConfig];
                             const Icon = config.icon;
                             return (
-                              <TabsTrigger
+                              <button
                                 key={domain}
-                                value={domain}
-                                className="flex items-center gap-2 py-3 px-4 data-[state=active]:bg-card data-[state=active]:shadow-lg"
+                                onClick={() => setExpandedDomain(domain as keyof typeof domainConfig)}
+                                className={`h-12 w-12 ${config.bgColor} rounded-lg flex items-center justify-center transition-all hover:scale-110 hover:shadow-lg border ${config.borderColor}`}
                               >
-                                <Icon className={`h-4 w-4 ${config.color}`} />
-                                <span className="font-bebas text-base uppercase tracking-wider">
-                                  {domain}
-                                </span>
-                              </TabsTrigger>
+                                <Icon className={`h-5 w-5 ${config.color}`} />
+                              </button>
                             );
                           })}
-                        </TabsList>
+                        </div>
 
-                        {Object.entries(skillsByDomain).map(([domain, skills]) => {
-                          const config = domainConfig[domain as keyof typeof domainConfig];
+                        {/* Expanded domain card */}
+                        {(() => {
+                          const skills = skillsByDomain[expandedDomain];
+                          const config = domainConfig[expandedDomain];
                           const Icon = config.icon;
                           
                           return (
-                            <TabsContent key={domain} value={domain} className="mt-0">
-                              <Card className={`relative overflow-hidden border-2 ${config.borderColor} bg-gradient-to-br from-card via-card/95 to-background backdrop-blur-sm shadow-xl`}>
-                                <div className={`absolute top-0 right-0 w-64 h-64 ${config.bgColor} rounded-full blur-3xl -translate-y-1/2 translate-x-1/2`} />
-                                
-                                <div className="relative p-6 md:p-8">
-                                  <div className="flex items-center gap-3 mb-6">
+                            <Card className={`relative overflow-hidden border-2 ${config.borderColor} bg-gradient-to-br from-card via-card/95 to-background backdrop-blur-sm shadow-xl`}>
+                              <div className={`absolute top-0 left-0 w-64 h-64 ${config.bgColor} rounded-full blur-3xl -translate-y-1/2 -translate-x-1/2`} />
+                              
+                              <div className="relative p-6 md:p-8">
+                                <button
+                                  onClick={() => setExpandedDomain(null)}
+                                  className="mb-6 hover:opacity-70 transition-opacity"
+                                >
+                                  <div className="flex items-center gap-3">
                                     <div className={`h-12 w-12 ${config.bgColor} rounded-xl flex items-center justify-center`}>
                                       <Icon className={`h-6 w-6 ${config.color}`} />
                                     </div>
-                                    <div>
+                                    <div className="text-left">
                                       <Badge variant="secondary" className={`text-lg px-4 py-1 font-bebas uppercase mb-1 ${config.bgColor} ${config.borderColor} border`}>
-                                        {domain}
+                                        {expandedDomain}
                                       </Badge>
-                                      <p className="text-sm text-muted-foreground">{skills.length} Key Attributes for {position}</p>
+                                      <p className="text-sm text-muted-foreground">{skills.length} Key Attributes for {selectedPosition}</p>
                                     </div>
                                   </div>
-                                  
-                                  <div className="grid md:grid-cols-2 gap-4">
-                                    {skills.map((skill, idx) => (
-                                      <div 
-                                        key={idx} 
-                                        className={`group p-4 bg-gradient-to-br from-muted/50 to-muted/30 rounded-xl hover:${config.bgColor} transition-all duration-300 hover:shadow-lg hover:-translate-y-1 border border-transparent hover:${config.borderColor}`}
-                                      >
-                                        <div className="flex items-start gap-3">
-                                          <div className={`h-2 w-2 rounded-full ${config.color.replace('text-', 'bg-')} mt-2 group-hover:scale-150 transition-transform`} />
-                                          <div className="flex-1">
-                                            <h4 className={`font-bold ${config.color} mb-1.5 text-base`}>
-                                              {skill.skill_name}
-                                            </h4>
-                                            <p className="text-sm text-muted-foreground leading-relaxed">
-                                              {skill.description}
-                                            </p>
-                                          </div>
+                                </button>
+                                
+                                <div className="grid md:grid-cols-2 gap-4">
+                                  {skills.map((skill, idx) => (
+                                    <div 
+                                      key={idx} 
+                                      className={`group p-4 bg-gradient-to-br from-muted/50 to-muted/30 rounded-xl hover:${config.bgColor} transition-all duration-300 hover:shadow-lg hover:-translate-y-1 border border-transparent hover:${config.borderColor}`}
+                                    >
+                                      <div className="flex items-start gap-3">
+                                        <div className={`h-2 w-2 rounded-full ${config.color.replace('text-', 'bg-')} mt-2 group-hover:scale-150 transition-transform`} />
+                                        <div className="flex-1">
+                                          <h4 className={`font-bold ${config.color} mb-1.5 text-base`}>
+                                            {skill.skill_name}
+                                          </h4>
+                                          <p className="text-sm text-muted-foreground leading-relaxed">
+                                            {skill.description}
+                                          </p>
                                         </div>
                                       </div>
-                                    ))}
-                                  </div>
+                                    </div>
+                                  ))}
                                 </div>
-                              </Card>
-                            </TabsContent>
+                              </div>
+                            </Card>
+                          );
+                        })()}
+                      </div>
+                    ) : (
+                      // Grid view
+                      <div className="grid grid-cols-2 gap-4">
+                        {Object.entries(domainConfig).map(([domain, config]) => {
+                          const Icon = config.icon;
+                          const skills = skillsByDomain[domain];
+                          
+                          return (
+                            <button
+                              key={domain}
+                              onClick={() => setExpandedDomain(domain as keyof typeof domainConfig)}
+                              className={`group relative overflow-hidden border-2 ${config.borderColor} bg-gradient-to-br from-card via-card/95 to-background rounded-2xl p-6 transition-all duration-300 hover:shadow-xl hover:scale-105 text-left`}
+                            >
+                              <div className={`absolute top-0 right-0 w-32 h-32 ${config.bgColor} rounded-full blur-2xl opacity-50`} />
+                              
+                              <div className="relative">
+                                <div className={`h-12 w-12 ${config.bgColor} rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
+                                  <Icon className={`h-6 w-6 ${config.color}`} />
+                                </div>
+                                
+                                <h3 className={`text-2xl font-bebas uppercase tracking-wider mb-2 ${config.color}`}>
+                                  {domain}
+                                </h3>
+                                
+                                <p className="text-sm text-muted-foreground mb-3">
+                                  {skills?.length || 4} Key Attributes
+                                </p>
+                                
+                                <div className="text-xs text-muted-foreground/70 group-hover:text-primary transition-colors">
+                                  Click to expand →
+                                </div>
+                              </div>
+                            </button>
                           );
                         })}
-                      </Tabs>
-                    </TabsContent>
-                  );
-                })}
-              </Tabs>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
             </div>
           </div>
         </section>
@@ -528,6 +538,54 @@ const Scouts = () => {
                 </div>
               </div>
             </Card>
+          </div>
+        </section>
+
+        {/* Hero Section - Scout With RISE */}
+        <section className="relative min-h-[45vh] flex items-center justify-center overflow-hidden py-10 md:py-16">
+          <div className="absolute inset-0 bg-gradient-to-br from-background via-primary/10 to-background" />
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
+          
+          <div className="relative container mx-auto px-4 text-center z-10 space-y-4 animate-fade-in-up">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 backdrop-blur-sm rounded-full border border-primary/20 mb-2">
+              <Sparkles className="h-4 w-4 text-primary" />
+              <span className="text-sm font-semibold">Elite Scouting Network</span>
+            </div>
+            
+            <h2 className="text-5xl md:text-7xl font-bebas uppercase tracking-wider mb-3 leading-none">
+              <span className="bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent">
+                Scout With
+              </span>
+              <br />
+              <span className="text-primary">RISE</span>
+            </h2>
+            
+            <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto font-light leading-relaxed">
+              Join our elite scouting network with competitive incentives and{" "}
+              <span className="text-primary font-semibold">forever commission</span>
+            </p>
+            
+            <div className="flex gap-4 justify-center flex-wrap pt-2">
+              <Button 
+                size="lg" 
+                className="btn-shine font-bebas uppercase tracking-wider text-lg px-8 py-5 rounded-xl group"
+                onClick={handleWhatsApp}
+              >
+                <MessageCircle className="mr-2 h-5 w-5 group-hover:scale-110 transition-transform" />
+                Contact via WhatsApp
+              </Button>
+              <Button 
+                size="lg" 
+                variant="outline"
+                className="font-bebas uppercase tracking-wider text-lg px-8 py-5 hover:scale-105 transition-all rounded-xl"
+                asChild
+              >
+                <a href="mailto:contact@riseagency.com">
+                  <Mail className="mr-2 h-5 w-5" />
+                  Email Us
+                </a>
+              </Button>
+            </div>
           </div>
         </section>
 
