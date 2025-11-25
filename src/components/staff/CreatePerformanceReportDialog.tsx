@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
-import { Plus, Trash2, AlertTriangle, LineChart, Sparkles, Search, Loader2, ChevronDown, ChevronUp, List } from "lucide-react";
+import { Plus, Trash2, EyeOff, AlertTriangle, LineChart, Sparkles, Search, Loader2, ChevronDown, ChevronUp, List } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -67,6 +67,7 @@ export const CreatePerformanceReportDialog = ({
   const [selectedStatKeys, setSelectedStatKeys] = useState<string[]>([]);
   const [allStats, setAllStats] = useState<Array<{id: string; stat_name: string; stat_key: string; description: string | null}>>([]);
   const [isAddStatDialogOpen, setIsAddStatDialogOpen] = useState(false);
+  const [hiddenStatKeys, setHiddenStatKeys] = useState<string[]>([]);
   const [actionTypes, setActionTypes] = useState<string[]>([]);
   const [previousScores, setPreviousScores] = useState<Record<number, Array<{score: string | number | null, title: string, description: string}>>>({});
   const [expandedScores, setExpandedScores] = useState<Set<number>>(new Set());
@@ -327,6 +328,15 @@ export const CreatePerformanceReportDialog = ({
         setAllStats(nonPer90Stats);
       }
       
+      // Fetch hidden stats for this player
+      const { data: hiddenStats } = await supabase
+        .from("player_hidden_stats")
+        .select("stat_key")
+        .eq("player_id", playerId);
+      
+      const hiddenKeys = hiddenStats?.map(h => h.stat_key) || [];
+      setHiddenStatKeys(hiddenKeys);
+      
       // Fetch available stats for this position
       if (data?.position) {
         const { data: stats, error: statsError } = await supabase
@@ -337,8 +347,10 @@ export const CreatePerformanceReportDialog = ({
         
         if (!statsError && stats) {
           setAvailableStats(stats);
-          // Auto-select position-specific stats (excluding per90 stats)
-          const nonPer90Keys = stats.filter(s => !s.stat_key.endsWith('_per90')).map(s => s.stat_key);
+          // Auto-select position-specific stats (excluding per90 stats and hidden stats)
+          const nonPer90Keys = stats
+            .filter(s => !s.stat_key.endsWith('_per90') && !hiddenKeys.includes(s.stat_key))
+            .map(s => s.stat_key);
           setSelectedStatKeys(nonPer90Keys);
         }
       }
@@ -550,7 +562,7 @@ export const CreatePerformanceReportDialog = ({
     setPerformanceOverview("");
     setShowStrikerStats(false);
     setAdditionalStats({});
-    setSelectedStatKeys(availableStats.filter(s => !s.stat_key.endsWith('_per90')).map(s => s.stat_key)); // Reset to position-specific stats (excluding per90)
+    setSelectedStatKeys(availableStats.filter(s => !s.stat_key.endsWith('_per90') && !hiddenStatKeys.includes(s.stat_key)).map(s => s.stat_key)); // Reset to position-specific stats (excluding per90 and hidden)
     setStrikerStats({
       xGChain: "",
       xGChain_per90: "",
@@ -1170,64 +1182,248 @@ export const CreatePerformanceReportDialog = ({
             <CollapsibleContent className="mt-4 space-y-4">
               {selectedStatKeys.length > 0 ? (
                 <>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {selectedStatKeys.map((statKey) => {
-                      const stat = allStats.find(s => s.stat_key === statKey);
-                      if (!stat) return null;
-                      const per90Key = `${statKey}_per90`;
-                      const per90Value = additionalStats[per90Key];
+                  <div className="grid grid-cols-1 gap-4">
+                    {(() => {
+                      // Group stats into pairs (attempted/successful) and singles
+                      const processedKeys = new Set<string>();
+                      const statGroups: Array<{ keys: string[], isPair: boolean }> = [];
                       
-                      return (
-                        <div key={stat.id} className="relative space-y-2">
-                          <Label>
-                            {stat.stat_name}
-                            {stat.description && (
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <span className="ml-1 text-muted-foreground cursor-help">ⓘ</span>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p className="text-xs">{stat.description}</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            )}
-                          </Label>
-                          <div className="flex gap-2">
-                            <Input
-                              type="number"
-                              step="1"
-                              value={additionalStats[stat.stat_key] || ""}
-                              onChange={(e) => setAdditionalStats({
-                                ...additionalStats,
-                                [stat.stat_key]: e.target.value
-                              })}
-                              placeholder="0"
-                              className="flex-1"
-                            />
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => {
-                                setSelectedStatKeys(prev => prev.filter(k => k !== statKey));
-                                const newStats = {...additionalStats};
-                                delete newStats[statKey];
-                                delete newStats[per90Key];
-                                setAdditionalStats(newStats);
-                              }}
-                              className="h-10 w-10"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                          {per90Value && (
-                            <div className="text-xs text-muted-foreground pl-1">
-                              Per 90: <span className="font-mono">{per90Value}</span>
+                      selectedStatKeys.forEach(statKey => {
+                        if (processedKeys.has(statKey)) return;
+                        
+                        // Check if this is an attempted stat
+                        if (statKey.endsWith('_attempted') || statKey === 'shots_attempted' || statKey === 'one_v_one_attempts') {
+                          const baseKey = statKey.replace('_attempted', '').replace('_attempts', '');
+                          const successKeys = [
+                            baseKey,
+                            `${baseKey}_completed`,
+                            `${baseKey}_won`,
+                            baseKey === 'shots' ? 'shots_on_target' : null,
+                            baseKey === 'one_v_one' ? 'one_v_one_won' : null
+                          ].filter(Boolean) as string[];
+                          
+                          const matchingSuccessKey = successKeys.find(k => selectedStatKeys.includes(k));
+                          
+                          if (matchingSuccessKey) {
+                            statGroups.push({ keys: [matchingSuccessKey, statKey], isPair: true });
+                            processedKeys.add(statKey);
+                            processedKeys.add(matchingSuccessKey);
+                          } else {
+                            statGroups.push({ keys: [statKey], isPair: false });
+                            processedKeys.add(statKey);
+                          }
+                        } else {
+                          // Check if there's a matching attempted stat
+                          const attemptedKeys = [
+                            `${statKey}_attempted`,
+                            statKey === 'shots_on_target' ? 'shots_attempted' : null,
+                            statKey === 'one_v_one_won' ? 'one_v_one_attempts' : null
+                          ].filter(Boolean) as string[];
+                          
+                          const matchingAttemptedKey = attemptedKeys.find(k => selectedStatKeys.includes(k));
+                          
+                          if (matchingAttemptedKey && !processedKeys.has(matchingAttemptedKey)) {
+                            statGroups.push({ keys: [statKey, matchingAttemptedKey], isPair: true });
+                            processedKeys.add(statKey);
+                            processedKeys.add(matchingAttemptedKey);
+                          } else if (!processedKeys.has(statKey)) {
+                            statGroups.push({ keys: [statKey], isPair: false });
+                            processedKeys.add(statKey);
+                          }
+                        }
+                      });
+                      
+                      return statGroups.map((group, groupIndex) => {
+                        if (group.isPair) {
+                          const [successKey, attemptedKey] = group.keys;
+                          const successStat = allStats.find(s => s.stat_key === successKey);
+                          const attemptedStat = allStats.find(s => s.stat_key === attemptedKey);
+                          if (!successStat || !attemptedStat) return null;
+                          
+                          const successValue = parseFloat(additionalStats[successKey] || "0");
+                          const attemptedValue = parseFloat(additionalStats[attemptedKey] || "0");
+                          const percentage = attemptedValue > 0 ? ((successValue / attemptedValue) * 100).toFixed(1) : "0.0";
+                          
+                          const per90SuccessKey = `${successKey}_per90`;
+                          const per90AttemptedKey = `${attemptedKey}_per90`;
+                          const per90SuccessValue = additionalStats[per90SuccessKey];
+                          const per90AttemptedValue = additionalStats[per90AttemptedKey];
+                          
+                          return (
+                            <div key={groupIndex} className="space-y-3 p-4 border rounded-lg bg-muted/30">
+                              <div className="flex items-center justify-between">
+                                <Label className="text-sm font-semibold">
+                                  {successStat.stat_name} / {attemptedStat.stat_name}
+                                </Label>
+                                <div className="flex gap-2">
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={async () => {
+                                      if (playerId) {
+                                        await supabase.from("player_hidden_stats").insert([
+                                          { player_id: playerId, stat_key: successKey },
+                                          { player_id: playerId, stat_key: attemptedKey }
+                                        ]);
+                                        setHiddenStatKeys(prev => [...prev, successKey, attemptedKey]);
+                                      }
+                                      setSelectedStatKeys(prev => prev.filter(k => k !== successKey && k !== attemptedKey));
+                                      const newStats = {...additionalStats};
+                                      delete newStats[successKey];
+                                      delete newStats[attemptedKey];
+                                      delete newStats[per90SuccessKey];
+                                      delete newStats[per90AttemptedKey];
+                                      setAdditionalStats(newStats);
+                                    }}
+                                    className="h-8 w-8"
+                                  >
+                                    <EyeOff className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => {
+                                      setSelectedStatKeys(prev => prev.filter(k => k !== successKey && k !== attemptedKey));
+                                      const newStats = {...additionalStats};
+                                      delete newStats[successKey];
+                                      delete newStats[attemptedKey];
+                                      delete newStats[per90SuccessKey];
+                                      delete newStats[per90AttemptedKey];
+                                      setAdditionalStats(newStats);
+                                    }}
+                                    className="h-8 w-8"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </div>
+                              <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                  <Label className="text-xs">{successStat.stat_name}</Label>
+                                  <Input
+                                    type="number"
+                                    value={additionalStats[successKey] || ""}
+                                    onChange={(e) => {
+                                      const newStats = {...additionalStats};
+                                      newStats[successKey] = e.target.value;
+                                      setAdditionalStats(newStats);
+                                    }}
+                                    placeholder="0"
+                                  />
+                                  {per90SuccessValue && (
+                                    <div className="text-xs text-muted-foreground mt-1">
+                                      Per 90: <span className="font-mono">{per90SuccessValue}</span>
+                                    </div>
+                                  )}
+                                </div>
+                                <div>
+                                  <Label className="text-xs">{attemptedStat.stat_name}</Label>
+                                  <Input
+                                    type="number"
+                                    value={additionalStats[attemptedKey] || ""}
+                                    onChange={(e) => {
+                                      const newStats = {...additionalStats};
+                                      newStats[attemptedKey] = e.target.value;
+                                      setAdditionalStats(newStats);
+                                    }}
+                                    placeholder="0"
+                                  />
+                                  {per90AttemptedValue && (
+                                    <div className="text-xs text-muted-foreground mt-1">
+                                      Per 90: <span className="font-mono">{per90AttemptedValue}</span>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="text-sm font-medium text-center bg-background/50 rounded p-2">
+                                Success Rate: <span className="font-mono text-primary">{percentage}%</span>
+                              </div>
                             </div>
-                          )}
-                        </div>
-                      );
-                    })}
+                          );
+                        } else {
+                          const statKey = group.keys[0];
+                          const stat = allStats.find(s => s.stat_key === statKey);
+                          if (!stat) return null;
+                          const per90Key = `${statKey}_per90`;
+                          const per90Value = additionalStats[per90Key];
+                          
+                          return (
+                            <div key={groupIndex} className="relative space-y-2">
+                              <Label>
+                                {stat.stat_name}
+                                {stat.description && (
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <span className="ml-1 text-muted-foreground cursor-help">ⓘ</span>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p className="text-xs">{stat.description}</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                )}
+                              </Label>
+                              <div className="flex gap-2">
+                                <Input
+                                  type="number"
+                                  step="1"
+                                  value={additionalStats[statKey] || ""}
+                                  onChange={(e) => setAdditionalStats({
+                                    ...additionalStats,
+                                    [statKey]: e.target.value
+                                  })}
+                                  placeholder="0"
+                                  className="flex-1"
+                                />
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={async () => {
+                                    if (playerId) {
+                                      await supabase.from("player_hidden_stats").insert({
+                                        player_id: playerId,
+                                        stat_key: statKey
+                                      });
+                                      setHiddenStatKeys(prev => [...prev, statKey]);
+                                    }
+                                    setSelectedStatKeys(prev => prev.filter(k => k !== statKey));
+                                    const newStats = {...additionalStats};
+                                    delete newStats[statKey];
+                                    delete newStats[per90Key];
+                                    setAdditionalStats(newStats);
+                                  }}
+                                  className="h-10 w-10"
+                                >
+                                  <EyeOff className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => {
+                                    setSelectedStatKeys(prev => prev.filter(k => k !== statKey));
+                                    const newStats = {...additionalStats};
+                                    delete newStats[statKey];
+                                    delete newStats[per90Key];
+                                    setAdditionalStats(newStats);
+                                  }}
+                                  className="h-10 w-10"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                              {per90Value && (
+                                <div className="text-xs text-muted-foreground pl-1">
+                                  Per 90: <span className="font-mono">{per90Value}</span>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        }
+                      });
+                    })()}
                   </div>
                   <Button
                     type="button"
@@ -1804,13 +2000,27 @@ export const CreatePerformanceReportDialog = ({
                   <div
                     key={stat.id}
                     className="flex items-start justify-between p-3 border rounded-lg hover:bg-accent cursor-pointer"
-                    onClick={() => {
+                    onClick={async () => {
                       setSelectedStatKeys(prev => [...prev, stat.stat_key]);
+                      // If re-adding a hidden stat, unhide it
+                      if (hiddenStatKeys.includes(stat.stat_key) && playerId) {
+                        await supabase
+                          .from("player_hidden_stats")
+                          .delete()
+                          .eq("player_id", playerId)
+                          .eq("stat_key", stat.stat_key);
+                        setHiddenStatKeys(prev => prev.filter(k => k !== stat.stat_key));
+                      }
                       setIsAddStatDialogOpen(false);
                     }}
                   >
                     <div className="flex-1">
-                      <div className="font-medium text-sm">{stat.stat_name}</div>
+                      <div className="font-medium text-sm">
+                        {stat.stat_name}
+                        {hiddenStatKeys.includes(stat.stat_key) && (
+                          <span className="text-xs text-muted-foreground ml-2">(hidden)</span>
+                        )}
+                      </div>
                       {stat.description && (
                         <div className="text-xs text-muted-foreground mt-1">{stat.description}</div>
                       )}
@@ -1819,9 +2029,18 @@ export const CreatePerformanceReportDialog = ({
                       type="button"
                       variant="ghost"
                       size="sm"
-                      onClick={(e) => {
+                      onClick={async (e) => {
                         e.stopPropagation();
                         setSelectedStatKeys(prev => [...prev, stat.stat_key]);
+                        // If re-adding a hidden stat, unhide it
+                        if (hiddenStatKeys.includes(stat.stat_key) && playerId) {
+                          await supabase
+                            .from("player_hidden_stats")
+                            .delete()
+                            .eq("player_id", playerId)
+                            .eq("stat_key", stat.stat_key);
+                          setHiddenStatKeys(prev => prev.filter(k => k !== stat.stat_key));
+                        }
                         setIsAddStatDialogOpen(false);
                       }}
                     >
