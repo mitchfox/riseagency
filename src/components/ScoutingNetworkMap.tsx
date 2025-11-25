@@ -460,6 +460,18 @@ const ScoutingNetworkMap = () => {
     { name: "1.FC Slovácko", country: "Czech Republic", city: "Uherské Hradiště", x: 478, y: 370, logo: "/clubs/1fc-slovacko.png" },
     { name: "FC Zlín", country: "Czech Republic", city: "Zlín", x: 480, y: 371, logo: "/clubs/fc-zlin.png" },
     { name: "SK Sigma Olomouc", country: "Czech Republic", city: "Olomouc", x: 482, y: 365, logo: "/clubs/sk-sigma-olomouc.png" },
+    
+    // Denmark
+    { name: "FC Copenhagen", country: "Denmark", city: "Copenhagen", x: 420, y: 315, logo: "/clubs/fc-copenhagen.png" },
+    { name: "Brøndby IF", country: "Denmark", city: "Brøndby", x: 421, y: 316, logo: "/clubs/brondby-if.png" },
+    { name: "FC Nordsjælland", country: "Denmark", city: "Farum", x: 422, y: 314, logo: "/clubs/fc-nordsjaelland.png" },
+    { name: "FC Midtjylland", country: "Denmark", city: "Herning", x: 395, y: 320, logo: "/clubs/fc-midtjylland.png" },
+    { name: "Silkeborg IF", country: "Denmark", city: "Silkeborg", x: 398, y: 322, logo: "/clubs/silkeborg-if.png" },
+    { name: "Aarhus GF", country: "Denmark", city: "Aarhus", x: 405, y: 323, logo: "/clubs/aarhus-gf.png" },
+    { name: "Randers FC", country: "Denmark", city: "Randers", x: 408, y: 321, logo: "/clubs/randers-fc.png" },
+    { name: "Odense Boldklub", country: "Denmark", city: "Odense", x: 405, y: 330, logo: "/clubs/odense-boldklub.png" },
+    { name: "SønderjyskE", country: "Denmark", city: "Haderslev", x: 395, y: 333, logo: "/clubs/sonderjyske.png" },
+    { name: "FC Fredericia", country: "Denmark", city: "Fredericia", x: 398, y: 332, logo: "/clubs/fc-fredericia.png" },
   ];
 
   // Flag mapping
