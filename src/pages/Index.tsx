@@ -78,7 +78,7 @@ const Index = () => {
         url="/"
       />
       <IntroModal open={showIntroModal} onOpenChange={setShowIntroModal} />
-      <Header />
+      {!showIntroModal && <Header />}
       <div className="bg-background min-h-screen">
         {/* Hero Banner Section */}
         <section className="relative h-[85vh] md:h-screen flex items-center justify-center overflow-hidden pt-24 md:pt-20">
