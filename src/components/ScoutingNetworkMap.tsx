@@ -347,17 +347,29 @@ const ScoutingNetworkMap = () => {
     
     // Norway
     { name: "FK Bodø/Glimt", country: "Norway", city: "Bodø", x: 420, y: 190, logo: "/clubs/fk-bodo-glimt.png" },
+    { name: "Tromsø IL", country: "Norway", city: "Tromsø", x: 445, y: 160, logo: "/clubs/tromso-il.png" },
     { name: "Rosenborg BK", country: "Norway", city: "Trondheim", x: 410, y: 230, logo: "/clubs/rosenborg-bk.png" },
     { name: "Molde FK", country: "Norway", city: "Molde", x: 390, y: 240, logo: "/clubs/molde-fk.png" },
     { name: "Kristiansund BK", country: "Norway", city: "Kristiansund", x: 385, y: 238, logo: "/clubs/kristiansund-bk.png" },
     { name: "SK Brann", country: "Norway", city: "Bergen", x: 360, y: 260, logo: "/clubs/sk-brann.png" },
     { name: "FK Haugesund", country: "Norway", city: "Haugesund", x: 355, y: 270, logo: "/clubs/fk-haugesund.png" },
+    { name: "Viking FK", country: "Norway", city: "Stavanger", x: 350, y: 280, logo: "/clubs/viking-fk.png" },
     { name: "Bryne FK", country: "Norway", city: "Bryne", x: 355, y: 285, logo: "/clubs/bryne-fk.png" },
     { name: "Sandefjord Fotball", country: "Norway", city: "Sandefjord", x: 410, y: 275, logo: "/clubs/sandefjord-fotball.png" },
     { name: "Sarpsborg 08 FF", country: "Norway", city: "Sarpsborg", x: 415, y: 275, logo: "/clubs/sarpsborg-08-ff.png" },
     { name: "Fredrikstad FK", country: "Norway", city: "Fredrikstad", x: 415, y: 278, logo: "/clubs/fredrikstad-fk.png" },
+    { name: "Strømsgodset IF", country: "Norway", city: "Drammen", x: 408, y: 272, logo: "/clubs/stromsgodset-if.png" },
     { name: "KFUM-Kameratene Oslo", country: "Norway", city: "Oslo", x: 412, y: 270, logo: "/clubs/kfum-kameratene-oslo.png" },
+    { name: "Vålerenga Fotball", country: "Norway", city: "Oslo", x: 413, y: 271, logo: "/clubs/valerenga-fotball-elite.png" },
     { name: "Hamarkameratene", country: "Norway", city: "Hamar", x: 418, y: 260, logo: "/clubs/hamarkameratene.png" },
+    
+    // Poland
+    { name: "Arka Gdynia", country: "Poland", city: "Gdynia", x: 465, y: 340, logo: "/clubs/arka-gdynia.png" },
+    { name: "Jagiellonia Białystok", country: "Poland", city: "Białystok", x: 540, y: 345, logo: "/clubs/jagiellonia-bialystok.png" },
+    { name: "Cracovia", country: "Poland", city: "Kraków", x: 520, y: 405, logo: "/clubs/cracovia.png" },
+    { name: "Bruk-Bet Termalica Nieciecza", country: "Poland", city: "Nieciecza", x: 528, y: 410, logo: "/clubs/bruk-bet-termalica-nieciecza.png" },
+    { name: "GKS Katowice", country: "Poland", city: "Katowice", x: 515, y: 400, logo: "/clubs/gks-katowice.png" },
+    { name: "Górnik Zabrze", country: "Poland", city: "Zabrze", x: 512, y: 398, logo: "/clubs/gornik-zabrze.png" },
   ];
 
   // Flag mapping
