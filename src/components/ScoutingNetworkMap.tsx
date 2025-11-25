@@ -392,6 +392,18 @@ const ScoutingNetworkMap = () => {
     { name: "FC Blau-Weiss Linz", country: "Austria", city: "Linz", x: 445, y: 410, logo: "/clubs/fc-blau-weiss-linz.png" },
     { name: "WSG Tirol", country: "Austria", city: "Wattens", x: 415, y: 425, logo: "/clubs/wsg-tirol.png" },
     { name: "SV Ried", country: "Austria", city: "Ried", x: 435, y: 413, logo: "/clubs/sv-ried.png" },
+    { name: "Red Bull Salzburg", country: "Austria", city: "Salzburg", x: 430, y: 415, logo: "/clubs/red-bull-salzburg.png" },
+    { name: "SCR Altach", country: "Austria", city: "Altach", x: 420, y: 420, logo: "/clubs/scr-altach.png" },
+    
+    // Belgium
+    { name: "Club Brugge KV", country: "Belgium", city: "Brugge", x: 360, y: 375, logo: "/clubs/club-brugge-kv.png" },
+    { name: "Cercle Brugge", country: "Belgium", city: "Brugge", x: 361, y: 376, logo: "/clubs/cercle-brugge.png" },
+    { name: "KAA Gent", country: "Belgium", city: "Gent", x: 365, y: 378, logo: "/clubs/kaa-gent.png" },
+    { name: "Oud-Heverlee Leuven", country: "Belgium", city: "Leuven", x: 370, y: 380, logo: "/clubs/oud-heverlee-leuven.png" },
+    { name: "KV Mechelen", country: "Belgium", city: "Mechelen", x: 372, y: 382, logo: "/clubs/kv-mechelen.png" },
+    { name: "KVC Westerlo", country: "Belgium", city: "Westerlo", x: 375, y: 384, logo: "/clubs/kvc-westerlo.png" },
+    { name: "KRC Genk", country: "Belgium", city: "Genk", x: 380, y: 385, logo: "/clubs/krc-genk.png" },
+    { name: "FCV Dender EH", country: "Belgium", city: "Denderleeuw", x: 368, y: 382, logo: "/clubs/fcv-dender-eh.png" },
   ];
 
   // Flag mapping
