@@ -434,10 +434,22 @@ const ScoutingNetworkMap = () => {
     // Croatia
     { name: "GNK Dinamo Zagreb", country: "Croatia", city: "Zagreb", x: 470, y: 410, logo: "/clubs/gnk-dinamo-zagreb.png" },
     { name: "HNK Gorica", country: "Croatia", city: "Velika Gorica", x: 471, y: 411, logo: "/clubs/hnk-gorica.png" },
+    { name: "NK Lokomotiva Zagreb", country: "Croatia", city: "Zagreb", x: 472, y: 412, logo: "/clubs/nk-lokomotiva-zagreb.png" },
     { name: "HNK Hajduk Split", country: "Croatia", city: "Split", x: 465, y: 440, logo: "/clubs/hnk-hajduk-split.png" },
     { name: "HNK Rijeka", country: "Croatia", city: "Rijeka", x: 455, y: 415, logo: "/clubs/hnk-rijeka.png" },
     { name: "NK Istra 1961", country: "Croatia", city: "Pula", x: 450, y: 420, logo: "/clubs/nk-istra-1961.png" },
     { name: "HNK Vukovar 1991", country: "Croatia", city: "Vukovar", x: 500, y: 415, logo: "/clubs/hnk-vukovar-1991.png" },
+    { name: "NK Osijek", country: "Croatia", city: "Osijek", x: 495, y: 413, logo: "/clubs/nk-osijek.png" },
+    { name: "Slaven Belupo Koprivnica", country: "Croatia", city: "Koprivnica", x: 475, y: 408, logo: "/clubs/slaven-belupo-koprivnica.png" },
+    { name: "NK Varaždin", country: "Croatia", city: "Varaždin", x: 473, y: 407, logo: "/clubs/nk-varazdin.png" },
+    
+    // Czech Republic
+    { name: "AC Sparta Prague", country: "Czech Republic", city: "Prague", x: 455, y: 365, logo: "/clubs/ac-sparta-prague.png" },
+    { name: "Bohemians Prague 1905", country: "Czech Republic", city: "Prague", x: 456, y: 366, logo: "/clubs/bohemians-prague-1905.png" },
+    { name: "FC Slovan Liberec", country: "Czech Republic", city: "Liberec", x: 465, y: 360, logo: "/clubs/fc-slovan-liberec.png" },
+    { name: "FC Baník Ostrava", country: "Czech Republic", city: "Ostrava", x: 490, y: 360, logo: "/clubs/fc-banik-ostrava.png" },
+    { name: "FC Hradec Králové", country: "Czech Republic", city: "Hradec Králové", x: 468, y: 363, logo: "/clubs/fc-hradec-kralove.png" },
+    { name: "1.FC Slovácko", country: "Czech Republic", city: "Uherské Hradiště", x: 478, y: 370, logo: "/clubs/1fc-slovacko.png" },
   ];
 
   // Flag mapping
