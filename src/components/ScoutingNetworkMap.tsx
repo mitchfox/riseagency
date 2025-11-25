@@ -586,11 +586,14 @@ const ScoutingNetworkMap = () => {
     }
   };
   
-  // Group clubs by city
+  // Group clubs by city (only when a country is selected)
   const groupClubsByCity = () => {
-    const visibleClubs = selectedCountry 
-      ? footballClubs.filter(club => club.country === selectedCountry)
-      : footballClubs;
+    // If no country selected, show all clubs individually
+    if (!selectedCountry) {
+      return { cityGroups: [], singleClubs: footballClubs };
+    }
+    
+    const visibleClubs = footballClubs.filter(club => club.country === selectedCountry);
     
     const cityMap = new Map<string, typeof footballClubs>();
     
