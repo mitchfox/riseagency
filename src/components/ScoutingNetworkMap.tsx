@@ -190,6 +190,16 @@ const ScoutingNetworkMap = () => {
     { name: "FC Arouca", country: "Portugal", city: "Arouca", x: 238, y: 522, logo: "/clubs/fc-arouca.png" },
     { name: "FC Famalicão", country: "Portugal", city: "Famalicão", x: 238, y: 515, logo: "/clubs/fc-famalicao.png" },
     { name: "FC Alverca", country: "Portugal", city: "Alverca", x: 235, y: 535, logo: "/clubs/fc-alverca.png" },
+    { name: "SC Braga", country: "Portugal", city: "Braga", x: 237, y: 515, logo: "/clubs/sc-braga.png" },
+    { name: "SL Benfica", country: "Portugal", city: "Lisboa", x: 235, y: 536, logo: "/clubs/sl-benfica.png" },
+    { name: "Sporting CP", country: "Portugal", city: "Lisboa", x: 236, y: 537, logo: "/clubs/sporting-cp.png" },
+    { name: "Vitória Guimarães SC", country: "Portugal", city: "Guimarães", x: 238, y: 516, logo: "/clubs/vitoria-guimaraes-sc.png" },
+    { name: "AVS Futebol", country: "Portugal", city: "Vila das Aves", x: 237, y: 517, logo: "/clubs/avs-futebol.png" },
+    { name: "Casa Pia AC", country: "Portugal", city: "Lisboa", x: 236, y: 536, logo: "/clubs/casa-pia-ac.png" },
+    { name: "CD Nacional", country: "Portugal", city: "Funchal", x: 200, y: 560, logo: "/clubs/cd-nacional.png" },
+    { name: "CD Santa Clara", country: "Portugal", city: "Ponta Delgada", x: 150, y: 535, logo: "/clubs/cd-santa-clara.png" },
+    { name: "CD Tondela", country: "Portugal", city: "Tondela", x: 232, y: 525, logo: "/clubs/cd-tondela.png" },
+    { name: "CF Estrela Amadora", country: "Portugal", city: "Amadora", x: 236, y: 535, logo: "/clubs/cf-estrela-amadora.png" },
   ];
 
   // Flag mapping
