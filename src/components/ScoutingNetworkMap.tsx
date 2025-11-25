@@ -242,10 +242,22 @@ const ScoutingNetworkMap = () => {
     { name: "Torpedo Moscow", country: "Russia", city: "Moscow", x: 696, y: 345, logo: "/clubs/torpedo-moscow.png" },
     
     // Scotland
-    { name: "Celtic FC", country: "Scotland", city: "Glasgow", x: 315, y: 340, logo: "/clubs/celtic-fc.png" },
-    { name: "Aberdeen FC", country: "Scotland", city: "Aberdeen", x: 325, y: 315, logo: "/clubs/aberdeen-fc.png" },
-    { name: "Dundee FC", country: "Scotland", city: "Dundee", x: 330, y: 335, logo: "/clubs/dundee-fc.png" },
-    { name: "Dundee United FC", country: "Scotland", city: "Dundee", x: 331, y: 336, logo: "/clubs/dundee-united-fc.png" },
+    { name: "Celtic FC", country: "Scotland", city: "Glasgow", x: 280, y: 312, logo: "/clubs/celtic-fc.png" },
+    { name: "Rangers FC", country: "Scotland", city: "Glasgow", x: 281, y: 313, logo: "/clubs/rangers-fc.png" },
+    { name: "Aberdeen FC", country: "Scotland", city: "Aberdeen", x: 288, y: 305, logo: "/clubs/aberdeen-fc.png" },
+    { name: "Dundee FC", country: "Scotland", city: "Dundee", x: 288, y: 310, logo: "/clubs/dundee-fc.png" },
+    { name: "Dundee United FC", country: "Scotland", city: "Dundee", x: 289, y: 311, logo: "/clubs/dundee-united-fc.png" },
+    { name: "Motherwell FC", country: "Scotland", city: "Motherwell", x: 282, y: 313, logo: "/clubs/motherwell-fc.png" },
+    { name: "St. Mirren FC", country: "Scotland", city: "Paisley", x: 279, y: 313, logo: "/clubs/st-mirren-fc.png" },
+    { name: "Falkirk FC", country: "Scotland", city: "Falkirk", x: 284, y: 314, logo: "/clubs/falkirk-fc.png" },
+    { name: "Heart of Midlothian FC", country: "Scotland", city: "Edinburgh", x: 286, y: 315, logo: "/clubs/heart-of-midlothian-fc.png" },
+    { name: "Hibernian FC", country: "Scotland", city: "Edinburgh", x: 287, y: 316, logo: "/clubs/hibernian-fc.png" },
+    { name: "Kilmarnock FC", country: "Scotland", city: "Kilmarnock", x: 280, y: 314, logo: "/clubs/kilmarnock-fc.png" },
+    { name: "Livingston FC", country: "Scotland", city: "Livingston", x: 285, y: 314, logo: "/clubs/livingston-fc.png" },
+    
+    // Serbia
+    { name: "FK IMT Belgrad", country: "Serbia", city: "Belgrade", x: 525, y: 485, logo: "/clubs/fk-imt-belgrad.png" },
+    { name: "FK Cukaricki", country: "Serbia", city: "Belgrade", x: 526, y: 486, logo: "/clubs/fk-cukaricki.png" },
   ];
 
   // Flag mapping
