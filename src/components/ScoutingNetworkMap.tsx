@@ -324,6 +324,18 @@ const ScoutingNetworkMap = () => {
     { name: "Kayserispor", country: "Turkey", city: "Kayseri", x: 670, y: 555, logo: "/clubs/kayserispor.png" },
     { name: "Kocaelispor", country: "Turkey", city: "Kocaeli", x: 642, y: 540, logo: "/clubs/kocaelispor.png" },
     { name: "Konyaspor", country: "Turkey", city: "Konya", x: 655, y: 560, logo: "/clubs/konyaspor.png" },
+    
+    // Netherlands
+    { name: "Ajax Amsterdam", country: "Netherlands", city: "Amsterdam", x: 378, y: 355, logo: "/clubs/ajax-amsterdam.png" },
+    { name: "FC Volendam", country: "Netherlands", city: "Volendam", x: 380, y: 352, logo: "/clubs/fc-volendam.png" },
+    { name: "AZ Alkmaar", country: "Netherlands", city: "Alkmaar", x: 377, y: 350, logo: "/clubs/az-alkmaar.png" },
+    { name: "Feyenoord Rotterdam", country: "Netherlands", city: "Rotterdam", x: 372, y: 364, logo: "/clubs/feyenoord-rotterdam.png" },
+    { name: "Excelsior Rotterdam", country: "Netherlands", city: "Rotterdam", x: 373, y: 365, logo: "/clubs/excelsior-rotterdam.png" },
+    { name: "FC Utrecht", country: "Netherlands", city: "Utrecht", x: 380, y: 360, logo: "/clubs/fc-utrecht.png" },
+    { name: "FC Groningen", country: "Netherlands", city: "Groningen", x: 388, y: 335, logo: "/clubs/fc-groningen.png" },
+    { name: "Heracles Almelo", country: "Netherlands", city: "Almelo", x: 388, y: 352, logo: "/clubs/heracles-almelo.png" },
+    { name: "Go Ahead Eagles", country: "Netherlands", city: "Deventer", x: 386, y: 355, logo: "/clubs/go-ahead-eagles.png" },
+    { name: "Fortuna Sittard", country: "Netherlands", city: "Sittard", x: 370, y: 375, logo: "/clubs/fortuna-sittard.png" },
   ];
 
   // Flag mapping
