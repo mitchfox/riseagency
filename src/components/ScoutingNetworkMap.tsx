@@ -293,15 +293,27 @@ const ScoutingNetworkMap = () => {
     
     // Switzerland
     { name: "FC Zürich", country: "Switzerland", city: "Zürich", x: 402, y: 440, logo: "/clubs/fc-zurich.png" },
+    { name: "Grasshopper Club Zürich", country: "Switzerland", city: "Zürich", x: 403, y: 441, logo: "/clubs/grasshopper-club-zurich.png" },
     { name: "FC Winterthur", country: "Switzerland", city: "Winterthur", x: 404, y: 438, logo: "/clubs/fc-winterthur.png" },
     { name: "BSC Young Boys", country: "Switzerland", city: "Bern", x: 395, y: 445, logo: "/clubs/bsc-young-boys.png" },
     { name: "FC Thun", country: "Switzerland", city: "Thun", x: 395, y: 455, logo: "/clubs/fc-thun.png" },
     { name: "FC Basel 1893", country: "Switzerland", city: "Basel", x: 385, y: 440, logo: "/clubs/fc-basel-1893.png" },
     { name: "FC Luzern", country: "Switzerland", city: "Luzern", x: 398, y: 448, logo: "/clubs/fc-luzern.png" },
     { name: "FC Lausanne-Sport", country: "Switzerland", city: "Lausanne", x: 388, y: 455, logo: "/clubs/fc-lausanne-sport.png" },
+    { name: "Servette FC", country: "Switzerland", city: "Geneva", x: 386, y: 460, logo: "/clubs/servette-fc.png" },
     { name: "FC Sion", country: "Switzerland", city: "Sion", x: 390, y: 465, logo: "/clubs/fc-sion.png" },
     { name: "FC St. Gallen 1879", country: "Switzerland", city: "St. Gallen", x: 412, y: 438, logo: "/clubs/fc-st-gallen-1879.png" },
     { name: "FC Lugano", country: "Switzerland", city: "Lugano", x: 405, y: 470, logo: "/clubs/fc-lugano.png" },
+    
+    // Turkey
+    { name: "Fenerbahçe", country: "Turkey", city: "Istanbul", x: 635, y: 545, logo: "/clubs/fenerbahce.png" },
+    { name: "Beşiktaş JK", country: "Turkey", city: "Istanbul", x: 636, y: 546, logo: "/clubs/besiktas-jk.png" },
+    { name: "Başakşehir FK", country: "Turkey", city: "Istanbul", x: 637, y: 547, logo: "/clubs/basaksehir-fk.png" },
+    { name: "Eyüpspor", country: "Turkey", city: "Istanbul", x: 638, y: 548, logo: "/clubs/eyupspor.png" },
+    { name: "Fatih Karagümrük", country: "Turkey", city: "Istanbul", x: 639, y: 549, logo: "/clubs/fatih-karagumruk.png" },
+    { name: "Alanyaspor", country: "Turkey", city: "Alanya", x: 655, y: 565, logo: "/clubs/alanyaspor.png" },
+    { name: "Antalyaspor", country: "Turkey", city: "Antalya", x: 650, y: 565, logo: "/clubs/antalyaspor.png" },
+    { name: "Çaykur Rizespor", country: "Turkey", city: "Rize", x: 710, y: 545, logo: "/clubs/caykur-rizespor.png" },
   ];
 
   // Flag mapping
