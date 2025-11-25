@@ -88,148 +88,108 @@ const Scouts = () => {
             </div>
 
             <div className="max-w-6xl mx-auto">
-              {/* Position Selection */}
-              <div className="grid grid-cols-4 md:grid-cols-8 gap-2 bg-muted/50 p-2 rounded-xl mb-6">
-                {SCOUTING_POSITIONS.map((position) => (
-                  <button
-                    key={position}
-                    onClick={() => setSelectedPosition(position)}
-                    className={`py-3 px-2 rounded-lg font-bebas uppercase tracking-wider text-sm md:text-base transition-all ${
-                      selectedPosition === position
-                        ? "bg-card shadow-lg text-primary scale-105"
-                        : "hover:bg-card/50"
-                    }`}
-                  >
-                    {positionInitials[position]}
-                  </button>
-                ))}
-              </div>
+              {/* Integrated Position + Content Box */}
+              <div className="border-2 border-border rounded-2xl overflow-hidden bg-card">
+                {/* Position Selection - Top of box */}
+                <div className="grid grid-cols-4 md:grid-cols-8 gap-0 border-b-2 border-border">
+                  {SCOUTING_POSITIONS.map((position) => (
+                    <button
+                      key={position}
+                      onClick={() => setSelectedPosition(position)}
+                      className={`py-4 px-2 font-bebas uppercase tracking-wider text-sm md:text-base transition-all border-r border-border last:border-r-0 ${
+                        selectedPosition === position
+                          ? "bg-primary/10 text-primary"
+                          : "hover:bg-muted/50"
+                      }`}
+                    >
+                      {positionInitials[position]}
+                    </button>
+                  ))}
+                </div>
 
-              {/* Domain Grid */}
-              {(() => {
-                const positionSkills = POSITION_SKILLS[selectedPosition];
-                const skillsByDomain = positionSkills.reduce((acc, skill) => {
-                  if (!acc[skill.domain]) acc[skill.domain] = [];
-                  acc[skill.domain].push(skill);
-                  return acc;
-                }, {} as Record<string, typeof positionSkills>);
+                {/* Content Area with Corner Domain Selectors */}
+                <div className="relative p-6 md:p-8">
+                  {(() => {
+                    const positionSkills = POSITION_SKILLS[selectedPosition];
+                    const skillsByDomain = positionSkills.reduce((acc, skill) => {
+                      if (!acc[skill.domain]) acc[skill.domain] = [];
+                      acc[skill.domain].push(skill);
+                      return acc;
+                    }, {} as Record<string, typeof positionSkills>);
 
-                return (
-                  <div className="relative">
-                    {expandedDomain ? (
-                      // Expanded view
-                      <div className="relative">
-                        {/* Corner mini domains */}
-                        <div className="absolute top-4 right-4 z-10 grid grid-cols-2 gap-2">
-                          {Object.keys(domainConfig).map((domain) => {
-                            if (domain === expandedDomain) return null;
-                            const config = domainConfig[domain as keyof typeof domainConfig];
-                            const Icon = config.icon;
+                    const currentDomain = expandedDomain || "Physical";
+                    const config = domainConfig[currentDomain];
+                    const Icon = config.icon;
+                    const skills = skillsByDomain[currentDomain];
+
+                    return (
+                      <>
+                        {/* Corner Domain Buttons */}
+                        <div className="absolute top-4 right-4 grid grid-cols-2 gap-2 z-10">
+                          {Object.entries(domainConfig).map(([domain, domainConf], idx) => {
+                            const DomainIcon = domainConf.icon;
+                            const isActive = currentDomain === domain;
                             return (
                               <button
                                 key={domain}
                                 onClick={() => setExpandedDomain(domain as keyof typeof domainConfig)}
-                                className={`h-12 w-12 ${config.bgColor} rounded-lg flex items-center justify-center transition-all hover:scale-110 hover:shadow-lg border ${config.borderColor}`}
+                                className={`h-14 w-14 rounded-lg flex items-center justify-center transition-all hover:scale-110 border-2 ${
+                                  isActive 
+                                    ? 'border-primary bg-primary/20 shadow-lg shadow-primary/20' 
+                                    : `${domainConf.borderColor} ${domainConf.bgColor} hover:shadow-lg`
+                                }`}
+                                title={domain}
                               >
-                                <Icon className={`h-5 w-5 ${config.color}`} />
+                                <DomainIcon className={`h-6 w-6 ${domainConf.color}`} />
                               </button>
                             );
                           })}
                         </div>
 
-                        {/* Expanded domain card */}
-                        {(() => {
-                          const skills = skillsByDomain[expandedDomain];
-                          const config = domainConfig[expandedDomain];
-                          const Icon = config.icon;
-                          
-                          return (
-                            <Card className={`relative overflow-hidden border-2 ${config.borderColor} bg-gradient-to-br from-card via-card/95 to-background backdrop-blur-sm shadow-xl`}>
-                              <div className={`absolute top-0 left-0 w-64 h-64 ${config.bgColor} rounded-full blur-3xl -translate-y-1/2 -translate-x-1/2`} />
-                              
-                              <div className="relative p-6 md:p-8">
-                                <button
-                                  onClick={() => setExpandedDomain(null)}
-                                  className="mb-6 hover:opacity-70 transition-opacity"
-                                >
-                                  <div className="flex items-center gap-3">
-                                    <div className={`h-12 w-12 ${config.bgColor} rounded-xl flex items-center justify-center`}>
-                                      <Icon className={`h-6 w-6 ${config.color}`} />
-                                    </div>
-                                    <div className="text-left">
-                                      <Badge variant="secondary" className={`text-lg px-4 py-1 font-bebas uppercase mb-1 ${config.bgColor} ${config.borderColor} border`}>
-                                        {expandedDomain}
-                                      </Badge>
-                                      <p className="text-sm text-muted-foreground">{skills.length} Key Attributes for {selectedPosition}</p>
-                                    </div>
+                        {/* Content */}
+                        <div className="pr-32">
+                          {/* Header */}
+                          <div className="flex items-center gap-4 mb-6">
+                            <div className={`h-16 w-16 ${config.bgColor} rounded-xl flex items-center justify-center flex-shrink-0`}>
+                              <Icon className={`h-8 w-8 ${config.color}`} />
+                            </div>
+                            <div>
+                              <h3 className={`text-3xl font-bebas uppercase tracking-wider ${config.color}`}>
+                                {currentDomain}
+                              </h3>
+                              <p className="text-sm text-muted-foreground">
+                                {skills.length} Key Attributes for {selectedPosition}
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Attributes Grid */}
+                          <div className="grid md:grid-cols-2 gap-4">
+                            {skills.map((skill, idx) => (
+                              <div 
+                                key={idx} 
+                                className={`group p-5 bg-gradient-to-br from-muted/50 to-muted/30 rounded-xl hover:${config.bgColor} transition-all duration-300 hover:shadow-lg hover:-translate-y-1 border border-transparent hover:${config.borderColor}`}
+                              >
+                                <div className="flex items-start gap-3">
+                                  <div className={`h-2 w-2 rounded-full ${config.color.replace('text-', 'bg-')} mt-2 group-hover:scale-150 transition-transform flex-shrink-0`} />
+                                  <div className="flex-1 min-w-0">
+                                    <h4 className={`font-bold ${config.color} mb-2 text-base`}>
+                                      {skill.skill_name}
+                                    </h4>
+                                    <p className="text-sm text-muted-foreground leading-relaxed">
+                                      {skill.description}
+                                    </p>
                                   </div>
-                                </button>
-                                
-                                <div className="grid md:grid-cols-2 gap-4">
-                                  {skills.map((skill, idx) => (
-                                    <div 
-                                      key={idx} 
-                                      className={`group p-4 bg-gradient-to-br from-muted/50 to-muted/30 rounded-xl hover:${config.bgColor} transition-all duration-300 hover:shadow-lg hover:-translate-y-1 border border-transparent hover:${config.borderColor}`}
-                                    >
-                                      <div className="flex items-start gap-3">
-                                        <div className={`h-2 w-2 rounded-full ${config.color.replace('text-', 'bg-')} mt-2 group-hover:scale-150 transition-transform`} />
-                                        <div className="flex-1">
-                                          <h4 className={`font-bold ${config.color} mb-1.5 text-base`}>
-                                            {skill.skill_name}
-                                          </h4>
-                                          <p className="text-sm text-muted-foreground leading-relaxed">
-                                            {skill.description}
-                                          </p>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  ))}
                                 </div>
                               </div>
-                            </Card>
-                          );
-                        })()}
-                      </div>
-                    ) : (
-                      // Grid view
-                      <div className="grid grid-cols-2 gap-4">
-                        {Object.entries(domainConfig).map(([domain, config]) => {
-                          const Icon = config.icon;
-                          const skills = skillsByDomain[domain];
-                          
-                          return (
-                            <button
-                              key={domain}
-                              onClick={() => setExpandedDomain(domain as keyof typeof domainConfig)}
-                              className={`group relative overflow-hidden border-2 ${config.borderColor} bg-gradient-to-br from-card via-card/95 to-background rounded-2xl p-6 transition-all duration-300 hover:shadow-xl hover:scale-105 text-left`}
-                            >
-                              <div className={`absolute top-0 right-0 w-32 h-32 ${config.bgColor} rounded-full blur-2xl opacity-50`} />
-                              
-                              <div className="relative">
-                                <div className={`h-12 w-12 ${config.bgColor} rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
-                                  <Icon className={`h-6 w-6 ${config.color}`} />
-                                </div>
-                                
-                                <h3 className={`text-2xl font-bebas uppercase tracking-wider mb-2 ${config.color}`}>
-                                  {domain}
-                                </h3>
-                                
-                                <p className="text-sm text-muted-foreground mb-3">
-                                  {skills?.length || 4} Key Attributes
-                                </p>
-                                
-                                <div className="text-xs text-muted-foreground/70 group-hover:text-primary transition-colors">
-                                  Click to expand →
-                                </div>
-                              </div>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                );
-              })()}
+                            ))}
+                          </div>
+                        </div>
+                      </>
+                    );
+                  })()}
+                </div>
+              </div>
             </div>
           </div>
         </section>
