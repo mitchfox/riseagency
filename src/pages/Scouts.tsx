@@ -165,18 +165,19 @@ const Scouts = () => {
                             {skills.map((skill, idx) => (
                               <div 
                                 key={idx} 
-                                className={`group p-5 bg-gradient-to-br from-muted/50 to-muted/30 rounded-xl hover:${config.bgColor} transition-all duration-300 hover:shadow-lg hover:-translate-y-1 border border-transparent hover:${config.borderColor}`}
+                                className={`group bg-gradient-to-br from-muted/50 to-muted/30 rounded-xl hover:${config.bgColor} transition-all duration-300 hover:shadow-lg hover:-translate-y-1 border border-transparent hover:${config.borderColor} overflow-hidden`}
                               >
-                                <div className="flex items-start gap-3">
-                                  <div className={`h-2 w-2 rounded-full ${config.color.replace('text-', 'bg-')} mt-2 group-hover:scale-150 transition-transform flex-shrink-0`} />
-                                  <div className="flex-1 min-w-0">
-                                    <h4 className={`font-bold ${config.color} mb-2 text-base`}>
-                                      {skill.skill_name}
-                                    </h4>
-                                    <p className="text-sm text-muted-foreground leading-relaxed">
-                                      {skill.description}
-                                    </p>
-                                  </div>
+                                {/* Colored Header Box */}
+                                <div className={`${config.color.replace('text-', 'bg-')} px-5 py-3`}>
+                                  <h4 className="font-bold text-black text-base">
+                                    {skill.skill_name}
+                                  </h4>
+                                </div>
+                                {/* Description */}
+                                <div className="px-5 py-4">
+                                  <p className="text-sm text-muted-foreground leading-relaxed">
+                                    {skill.description}
+                                  </p>
                                 </div>
                               </div>
                             ))}
