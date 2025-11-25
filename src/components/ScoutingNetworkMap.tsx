@@ -166,6 +166,30 @@ const ScoutingNetworkMap = () => {
     { name: "SS Lazio", country: "Italy", city: "Roma", x: 466, y: 516, logo: "/clubs/ss-lazio.png" },
     { name: "SSC Napoli", country: "Italy", city: "Napoli", x: 470, y: 525, logo: "/clubs/ssc-napoli.png" },
     { name: "US Lecce", country: "Italy", city: "Lecce", x: 510, y: 530, logo: "/clubs/us-lecce.png" },
+    
+    // Ukraine
+    { name: "Dynamo Kyiv", country: "Ukraine", city: "Kyiv", x: 635, y: 405, logo: "/clubs/dynamo-kyiv.png" },
+    { name: "Obolon Kyiv", country: "Ukraine", city: "Kyiv", x: 636, y: 406, logo: "/clubs/obolon-kyiv.png" },
+    { name: "Shakhtar Donetsk", country: "Ukraine", city: "Donetsk", x: 700, y: 440, logo: "/clubs/shakhtar-donetsk.png" },
+    { name: "Zorya Lugansk", country: "Ukraine", city: "Lugansk", x: 720, y: 430, logo: "/clubs/zorya-lugansk.png" },
+    { name: "Metalist 1925 Kharkiv", country: "Ukraine", city: "Kharkiv", x: 680, y: 410, logo: "/clubs/metalist-1925-kharkiv.png" },
+    { name: "Rukh Lviv", country: "Ukraine", city: "Lviv", x: 560, y: 410, logo: "/clubs/rukh-lviv.png" },
+    { name: "Karpaty Lviv", country: "Ukraine", city: "Lviv", x: 561, y: 411, logo: "/clubs/karpaty-lviv.png" },
+    { name: "Kryvbas Kryvyi Rig", country: "Ukraine", city: "Kryvyi Rig", x: 650, y: 440, logo: "/clubs/kryvbas-kryvyi-rig.png" },
+    { name: "LNZ Cherkasy", country: "Ukraine", city: "Cherkasy", x: 640, y: 420, logo: "/clubs/lnz-cherkasy.png" },
+    { name: "NK Veres Rivne", country: "Ukraine", city: "Rivne", x: 580, y: 395, logo: "/clubs/nk-veres-rivne.png" },
+    { name: "Polissya Zhytomyr", country: "Ukraine", city: "Zhytomyr", x: 610, y: 400, logo: "/clubs/polissya-zhytomyr.png" },
+    { name: "SC Poltava", country: "Ukraine", city: "Poltava", x: 665, y: 415, logo: "/clubs/sc-poltava.png" },
+    { name: "Epicentr Kamyanets-Podilskyi", country: "Ukraine", city: "Kamyanets-Podilskyi", x: 585, y: 430, logo: "/clubs/epicentr-kamyanets-podilskyi.png" },
+    { name: "Kolos Kovalivka", country: "Ukraine", city: "Kovalivka", x: 630, y: 410, logo: "/clubs/kolos-kovalivka.png" },
+    { name: "FC Oleksandriya", country: "Ukraine", city: "Oleksandriya", x: 645, y: 430, logo: "/clubs/fc-oleksandriya.png" },
+    { name: "FC Kudrivka", country: "Ukraine", city: "Kudrivka", x: 632, y: 408, logo: "/clubs/fc-kudrivka.png" },
+    
+    // Portugal
+    { name: "FC Porto", country: "Portugal", city: "Porto", x: 235, y: 518, logo: "/clubs/fc-porto.png" },
+    { name: "FC Arouca", country: "Portugal", city: "Arouca", x: 238, y: 522, logo: "/clubs/fc-arouca.png" },
+    { name: "FC Famalicão", country: "Portugal", city: "Famalicão", x: 238, y: 515, logo: "/clubs/fc-famalicao.png" },
+    { name: "FC Alverca", country: "Portugal", city: "Alverca", x: 235, y: 535, logo: "/clubs/fc-alverca.png" },
   ];
 
   // Flag mapping
@@ -453,16 +477,18 @@ const ScoutingNetworkMap = () => {
               </g>
             )}
 
-            {/* Europe outline image */}
-            <image
-              href={europeOutline}
-              x="0"
-              y="0"
-              width="1000"
-              height="600"
-              preserveAspectRatio="xMidYMid meet"
-              opacity="0.7"
-            />
+            {/* Europe outline image - hide when zoomed in */}
+            {zoomLevel < 5 && (
+              <image
+                href={europeOutline}
+                x="0"
+                y="0"
+                width="1000"
+                height="600"
+                preserveAspectRatio="xMidYMid meet"
+                opacity="0.7"
+              />
+            )}
 
             {/* Football Club Clusters */}
             {clusters.map((cluster, idx) => (
