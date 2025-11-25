@@ -265,6 +265,8 @@ export type Database = {
           phone: string | null
           position: string | null
           updated_at: string
+          x_position: number | null
+          y_position: number | null
         }
         Insert: {
           city?: string | null
@@ -281,6 +283,8 @@ export type Database = {
           phone?: string | null
           position?: string | null
           updated_at?: string
+          x_position?: number | null
+          y_position?: number | null
         }
         Update: {
           city?: string | null
@@ -297,6 +301,8 @@ export type Database = {
           phone?: string | null
           position?: string | null
           updated_at?: string
+          x_position?: number | null
+          y_position?: number | null
         }
         Relationships: []
       }
