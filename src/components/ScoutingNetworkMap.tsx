@@ -46,6 +46,7 @@ const ScoutingNetworkMap = () => {
   const [showGrid, setShowGrid] = useState(true);
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
   const [selectedCluster, setSelectedCluster] = useState<{x: number, y: number} | null>(null);
+  const [expandedCity, setExpandedCity] = useState<string | null>(null);
   // Europe outline is rendered from raster map image (europe-outline.gif)
   
   // Calculate distance threshold based on zoom level
@@ -575,7 +576,9 @@ const ScoutingNetworkMap = () => {
   };
 
   const handleMapClick = () => {
-    if (zoomLevel > 0) {
+    if (expandedCity) {
+      setExpandedCity(null);
+    } else if (zoomLevel > 0) {
       setViewBox("0 0 1000 600");
       setZoomLevel(0);
       setSelectedCountry(null);
@@ -583,70 +586,61 @@ const ScoutingNetworkMap = () => {
     }
   };
   
-  // Calculate clusters based on proximity
-  const calculateClusters = () => {
-    const threshold = getClusterThreshold();
-    if (threshold === 0) return { clusters: [], singles: footballClubs };
-    
-    // Filter clubs by selected country when zoomed
+  // Group clubs by city
+  const groupClubsByCity = () => {
     const visibleClubs = selectedCountry 
       ? footballClubs.filter(club => club.country === selectedCountry)
       : footballClubs;
     
-    const visited = new Set<number>();
-    const clusters: Array<{x: number, y: number, clubs: typeof footballClubs}> = [];
-    const singles: typeof footballClubs = [];
+    const cityMap = new Map<string, typeof footballClubs>();
     
-    visibleClubs.forEach((club, i) => {
-      if (visited.has(i)) return;
-      
-      const nearbyClubs = [club];
-      let sumX = club.x;
-      let sumY = club.y;
-      
-      visibleClubs.forEach((otherClub, j) => {
-        if (i !== j && !visited.has(j)) {
-          const distance = Math.sqrt(
-            Math.pow(club.x - otherClub.x, 2) + Math.pow(club.y - otherClub.y, 2)
-          );
-          if (distance <= threshold) {
-            nearbyClubs.push(otherClub);
-            sumX += otherClub.x;
-            sumY += otherClub.y;
-            visited.add(j);
-          }
-        }
-      });
-      
-      visited.add(i);
-      
-      if (nearbyClubs.length > 1) {
-        clusters.push({
-          x: sumX / nearbyClubs.length,
-          y: sumY / nearbyClubs.length,
-          clubs: nearbyClubs
+    visibleClubs.forEach(club => {
+      const cityKey = `${club.city}-${club.country}`;
+      if (!cityMap.has(cityKey)) {
+        cityMap.set(cityKey, []);
+      }
+      cityMap.get(cityKey)!.push(club);
+    });
+    
+    const cityGroups: Array<{cityName: string, country: string, x: number, y: number, clubs: typeof footballClubs}> = [];
+    const singleClubs: typeof footballClubs = [];
+    
+    cityMap.forEach((clubs, cityKey) => {
+      if (clubs.length > 1) {
+        // Multiple clubs in same city - calculate center point
+        const sumX = clubs.reduce((sum, club) => sum + club.x, 0);
+        const sumY = clubs.reduce((sum, club) => sum + club.y, 0);
+        cityGroups.push({
+          cityName: clubs[0].city,
+          country: clubs[0].country,
+          x: sumX / clubs.length,
+          y: sumY / clubs.length,
+          clubs
         });
       } else {
-        singles.push(club);
+        // Single club in city
+        singleClubs.push(clubs[0]);
       }
     });
     
-    return { clusters, singles };
+    return { cityGroups, singleClubs };
   };
   
-  const handleClusterClick = (cluster: {x: number, y: number, clubs: typeof footballClubs}, event: React.MouseEvent) => {
+  const { cityGroups, singleClubs } = groupClubsByCity();
+  
+  const handleCityClick = (cityGroup: {cityName: string, country: string, x: number, y: number, clubs: typeof footballClubs}, event: React.MouseEvent) => {
     event.stopPropagation();
-    setSelectedCluster({ x: cluster.x, y: cluster.y });
-    const zoom = 20; // Tight zoom to show approximately 50x50 pixel area
-    const newWidth = 1000 / zoom;
-    const newHeight = 600 / zoom;
-    const newX = Math.max(0, Math.min(1000 - newWidth, cluster.x - newWidth / 2));
-    const newY = Math.max(0, Math.min(600 - newHeight, cluster.y - newHeight / 2));
-    setViewBox(`${newX} ${newY} ${newWidth} ${newHeight}`);
-    setZoomLevel(2);
+    setExpandedCity(`${cityGroup.cityName}-${cityGroup.country}`);
   };
   
-  const { clusters, singles } = calculateClusters();
+  const getClubPositionInCircle = (index: number, total: number, centerX: number, centerY: number) => {
+    const radius = 25; // Distance from center
+    const angle = (index * 2 * Math.PI) / total;
+    return {
+      x: centerX + radius * Math.cos(angle),
+      y: centerY + radius * Math.sin(angle)
+    };
+  };
 
   const handleCountryListClick = (country: string, x: number, y: number) => {
     setSelectedCountry(country);
@@ -790,58 +784,158 @@ const ScoutingNetworkMap = () => {
               />
             )}
 
-            {/* Football Club Clusters */}
-            {clusters.map((cluster, idx) => (
-              <g 
-                key={`cluster-${idx}`}
-                onClick={(e) => handleClusterClick(cluster, e)}
-                className="cursor-pointer"
-              >
-                {/* Gold circle background */}
-                <circle
-                  cx={cluster.x}
-                  cy={cluster.y}
-                  r="12"
-                  fill="hsl(var(--primary))"
-                  opacity="0.9"
-                />
-                {/* White border */}
-                <circle
-                  cx={cluster.x}
-                  cy={cluster.y}
-                  r="12"
-                  fill="none"
-                  stroke="white"
-                  strokeWidth="2"
-                  className="hover:stroke-primary-foreground transition-colors"
-                />
-                {/* Count text */}
-                <text
-                  x={cluster.x}
-                  y={cluster.y}
-                  textAnchor="middle"
-                  dominantBaseline="central"
-                  fontSize="10"
-                  fontWeight="bold"
-                  fill="white"
-                  className="pointer-events-none"
+            {/* City Groups with Multiple Clubs */}
+            {cityGroups.map((cityGroup, idx) => {
+              const isExpanded = expandedCity === `${cityGroup.cityName}-${cityGroup.country}`;
+              
+              if (isExpanded) {
+                // Show clubs arranged in circle
+                return (
+                  <g key={`city-expanded-${idx}`}>
+                    {/* Connection lines from center to each club */}
+                    {cityGroup.clubs.map((club, clubIdx) => {
+                      const pos = getClubPositionInCircle(clubIdx, cityGroup.clubs.length, cityGroup.x, cityGroup.y);
+                      return (
+                        <line
+                          key={`line-${clubIdx}`}
+                          x1={cityGroup.x}
+                          y1={cityGroup.y}
+                          x2={pos.x}
+                          y2={pos.y}
+                          stroke="hsl(var(--primary))"
+                          strokeWidth="1"
+                          opacity="0.5"
+                        />
+                      );
+                    })}
+                    
+                    {/* Center city marker */}
+                    <g>
+                      <circle
+                        cx={cityGroup.x}
+                        cy={cityGroup.y}
+                        r="10"
+                        fill="hsl(var(--primary))"
+                        opacity="0.9"
+                      />
+                      <circle
+                        cx={cityGroup.x}
+                        cy={cityGroup.y}
+                        r="10"
+                        fill="none"
+                        stroke="white"
+                        strokeWidth="2"
+                      />
+                      <text
+                        x={cityGroup.x}
+                        y={cityGroup.y}
+                        textAnchor="middle"
+                        dominantBaseline="central"
+                        fontSize="8"
+                        fontWeight="bold"
+                        fill="white"
+                        className="pointer-events-none"
+                      >
+                        {cityGroup.cityName.length > 8 ? cityGroup.cityName.substring(0, 7) + "." : cityGroup.cityName}
+                      </text>
+                    </g>
+                    
+                    {/* Club logos in circle */}
+                    {cityGroup.clubs.map((club, clubIdx) => {
+                      const pos = getClubPositionInCircle(clubIdx, cityGroup.clubs.length, cityGroup.x, cityGroup.y);
+                      return (
+                        <g key={`club-${clubIdx}`}>
+                          <defs>
+                            <clipPath id={`clip-expanded-${idx}-${clubIdx}`}>
+                              <circle cx={pos.x} cy={pos.y} r="6" />
+                            </clipPath>
+                          </defs>
+                          <image
+                            href={club.logo}
+                            x={pos.x - 6}
+                            y={pos.y - 6}
+                            width="12"
+                            height="12"
+                            clipPath={`url(#clip-expanded-${idx}-${clubIdx})`}
+                          />
+                          <circle
+                            cx={pos.x}
+                            cy={pos.y}
+                            r="6"
+                            fill="none"
+                            stroke="white"
+                            strokeWidth="1.5"
+                            className="hover:stroke-primary transition-colors"
+                          >
+                            <title>{club.name}</title>
+                          </circle>
+                        </g>
+                      );
+                    })}
+                  </g>
+                );
+              }
+              
+              // Show city marker (collapsed state)
+              return (
+                <g 
+                  key={`city-${idx}`}
+                  onClick={(e) => handleCityClick(cityGroup, e)}
+                  className="cursor-pointer"
                 >
-                  {cluster.clubs.length}
-                </text>
-                <title>{cluster.clubs.map(c => c.name).join(', ')}</title>
-              </g>
-            ))}
+                  <circle
+                    cx={cityGroup.x}
+                    cy={cityGroup.y}
+                    r="12"
+                    fill="hsl(var(--primary))"
+                    opacity="0.9"
+                  />
+                  <circle
+                    cx={cityGroup.x}
+                    cy={cityGroup.y}
+                    r="12"
+                    fill="none"
+                    stroke="white"
+                    strokeWidth="2"
+                    className="hover:stroke-primary-foreground transition-colors"
+                  />
+                  <text
+                    x={cityGroup.x}
+                    y={cityGroup.y - 1}
+                    textAnchor="middle"
+                    dominantBaseline="central"
+                    fontSize="7"
+                    fontWeight="bold"
+                    fill="white"
+                    className="pointer-events-none"
+                  >
+                    {cityGroup.cityName.length > 8 ? cityGroup.cityName.substring(0, 7) + "." : cityGroup.cityName}
+                  </text>
+                  <text
+                    x={cityGroup.x}
+                    y={cityGroup.y + 7}
+                    textAnchor="middle"
+                    dominantBaseline="central"
+                    fontSize="6"
+                    fontWeight="bold"
+                    fill="white"
+                    className="pointer-events-none"
+                  >
+                    ({cityGroup.clubs.length})
+                  </text>
+                  <title>{cityGroup.cityName}: {cityGroup.clubs.map(c => c.name).join(', ')}</title>
+                </g>
+              );
+            })}
             
-            {/* Individual Football Club Logos */}
-            {singles.map((club, idx) => (
-              <g key={`club-${idx}`}>
-                {/* Circular clip path for logo */}
+            {/* Individual Football Club Logos (cities with only one club) */}
+            {singleClubs.map((club, idx) => (
+              <g key={`single-club-${idx}`}>
                 <defs>
                   <clipPath id={`clip-single-${idx}`}>
                     <circle cx={club.x} cy={club.y} r="5" />
                   </clipPath>
                 </defs>
-                {/* Club logo in circle */}
                 <image
                   href={club.logo}
                   x={club.x - 5}
@@ -851,7 +945,6 @@ const ScoutingNetworkMap = () => {
                   clipPath={`url(#clip-single-${idx})`}
                   className="cursor-pointer"
                 />
-                {/* Circle border */}
                 <circle
                   cx={club.x}
                   cy={club.y}
