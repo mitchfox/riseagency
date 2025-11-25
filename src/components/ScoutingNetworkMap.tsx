@@ -404,6 +404,18 @@ const ScoutingNetworkMap = () => {
     { name: "KVC Westerlo", country: "Belgium", city: "Westerlo", x: 375, y: 384, logo: "/clubs/kvc-westerlo.png" },
     { name: "KRC Genk", country: "Belgium", city: "Genk", x: 380, y: 385, logo: "/clubs/krc-genk.png" },
     { name: "FCV Dender EH", country: "Belgium", city: "Denderleeuw", x: 368, y: 382, logo: "/clubs/fcv-dender-eh.png" },
+    { name: "Royal Antwerp FC", country: "Belgium", city: "Antwerp", x: 373, y: 378, logo: "/clubs/royal-antwerp-fc.png" },
+    { name: "RSC Anderlecht", country: "Belgium", city: "Brussels", x: 371, y: 380, logo: "/clubs/rsc-anderlecht.png" },
+    { name: "Union Saint-Gilloise", country: "Belgium", city: "Brussels", x: 372, y: 381, logo: "/clubs/union-saint-gilloise.png" },
+    { name: "Standard Liège", country: "Belgium", city: "Liège", x: 382, y: 383, logo: "/clubs/standard-liege.png" },
+    { name: "Royal Charleroi SC", country: "Belgium", city: "Charleroi", x: 374, y: 383, logo: "/clubs/royal-charleroi-sc.png" },
+    { name: "Sint-Truidense VV", country: "Belgium", city: "Sint-Truiden", x: 378, y: 382, logo: "/clubs/sint-truidense-vv.png" },
+    { name: "Zulte Waregem", country: "Belgium", city: "Waregem", x: 364, y: 380, logo: "/clubs/zulte-waregem.png" },
+    { name: "RAAL La Louvière", country: "Belgium", city: "La Louvière", x: 370, y: 383, logo: "/clubs/raal-la-louviere.png" },
+    
+    // Bulgaria
+    { name: "Arda Kardzhali", country: "Bulgaria", city: "Kardzhali", x: 550, y: 450, logo: "/clubs/arda-kardzhali.png" },
+    { name: "Beroe Stara Zagora", country: "Bulgaria", city: "Stara Zagora", x: 545, y: 445, logo: "/clubs/beroe-stara-zagora.png" },
   ];
 
   // Flag mapping
