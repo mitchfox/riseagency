@@ -347,7 +347,17 @@ const ScoutingNetworkMap = () => {
     
     // Norway
     { name: "FK Bodø/Glimt", country: "Norway", city: "Bodø", x: 420, y: 190, logo: "/clubs/fk-bodo-glimt.png" },
+    { name: "Rosenborg BK", country: "Norway", city: "Trondheim", x: 410, y: 230, logo: "/clubs/rosenborg-bk.png" },
+    { name: "Molde FK", country: "Norway", city: "Molde", x: 390, y: 240, logo: "/clubs/molde-fk.png" },
+    { name: "Kristiansund BK", country: "Norway", city: "Kristiansund", x: 385, y: 238, logo: "/clubs/kristiansund-bk.png" },
+    { name: "SK Brann", country: "Norway", city: "Bergen", x: 360, y: 260, logo: "/clubs/sk-brann.png" },
+    { name: "FK Haugesund", country: "Norway", city: "Haugesund", x: 355, y: 270, logo: "/clubs/fk-haugesund.png" },
     { name: "Bryne FK", country: "Norway", city: "Bryne", x: 355, y: 285, logo: "/clubs/bryne-fk.png" },
+    { name: "Sandefjord Fotball", country: "Norway", city: "Sandefjord", x: 410, y: 275, logo: "/clubs/sandefjord-fotball.png" },
+    { name: "Sarpsborg 08 FF", country: "Norway", city: "Sarpsborg", x: 415, y: 275, logo: "/clubs/sarpsborg-08-ff.png" },
+    { name: "Fredrikstad FK", country: "Norway", city: "Fredrikstad", x: 415, y: 278, logo: "/clubs/fredrikstad-fk.png" },
+    { name: "KFUM-Kameratene Oslo", country: "Norway", city: "Oslo", x: 412, y: 270, logo: "/clubs/kfum-kameratene-oslo.png" },
+    { name: "Hamarkameratene", country: "Norway", city: "Hamar", x: 418, y: 260, logo: "/clubs/hamarkameratene.png" },
   ];
 
   // Flag mapping
