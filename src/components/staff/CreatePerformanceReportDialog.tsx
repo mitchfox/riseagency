@@ -2015,60 +2015,233 @@ export const CreatePerformanceReportDialog = ({
           </DialogHeader>
           <ScrollArea className="h-[400px] pr-4">
             <div className="space-y-2">
-              {allStats
-                .filter(stat => !selectedStatKeys.includes(stat.stat_key))
-                .map((stat) => (
-                  <div
-                    key={stat.id}
-                    className="flex items-start justify-between p-3 border rounded-lg hover:bg-accent cursor-pointer"
-                    onClick={async () => {
-                      setSelectedStatKeys(prev => [...prev, stat.stat_key]);
-                      // If re-adding a hidden stat, unhide it
-                      if (hiddenStatKeys.includes(stat.stat_key) && playerId) {
-                        await supabase
-                          .from("player_hidden_stats")
-                          .delete()
-                          .eq("player_id", playerId)
-                          .eq("stat_key", stat.stat_key);
-                        setHiddenStatKeys(prev => prev.filter(k => k !== stat.stat_key));
+              {(() => {
+                // Build grouped list of available stats so linked metrics (e.g. dribbles attempted/completed)
+                // are added together instead of as separate items.
+                const availableStats = allStats.filter(
+                  (stat) => !selectedStatKeys.includes(stat.stat_key)
+                );
+
+                type Stat = { id: string; stat_name: string; stat_key: string; description: string | null };
+                const processedKeys = new Set<string>();
+                const statGroups: Array<{
+                  primary: Stat;
+                  secondary?: Stat;
+                  isPair: boolean;
+                }> = [];
+
+                const findStatByKey = (key: string) =>
+                  availableStats.find((s) => s.stat_key === key);
+
+                availableStats.forEach((stat) => {
+                  const key = stat.stat_key;
+                  if (processedKeys.has(key)) return;
+
+                  // Attempt to find a matching attempted/successful pair using
+                  // the same naming conventions as the main stats grid.
+                  let successKey: string | null = null;
+                  let attemptedKey: string | null = null;
+
+                  if (
+                    key.endsWith("_attempted") ||
+                    key === "shots_attempted" ||
+                    key === "one_v_one_attempts"
+                  ) {
+                    // This is an attempted stat – look for its successful counterpart.
+                    const baseKey = key
+                      .replace("_attempted", "")
+                      .replace("_attempts", "");
+
+                    const candidateSuccessKeys = [
+                      baseKey,
+                      `${baseKey}_completed`,
+                      `${baseKey}_won`,
+                      baseKey === "shots" ? "shots_on_target" : null,
+                      baseKey === "one_v_one" ? "one_v_one_won" : null,
+                    ].filter(Boolean) as string[];
+
+                    const foundSuccessKey = candidateSuccessKeys.find((k) =>
+                      availableStats.some((s) => s.stat_key === k)
+                    );
+
+                    if (foundSuccessKey) {
+                      successKey = foundSuccessKey;
+                      attemptedKey = key;
+                    }
+                  } else {
+                    // This is a success stat – look for its attempted counterpart.
+                    const candidateAttemptedKeys = [
+                      `${key}_attempted`,
+                      key === "shots_on_target" ? "shots_attempted" : null,
+                      key === "one_v_one_won" ? "one_v_one_attempts" : null,
+                    ].filter(Boolean) as string[];
+
+                    const foundAttemptedKey = candidateAttemptedKeys.find((k) =>
+                      availableStats.some((s) => s.stat_key === k)
+                    );
+
+                    if (foundAttemptedKey) {
+                      successKey = key;
+                      attemptedKey = foundAttemptedKey;
+                    }
+                  }
+
+                  if (successKey && attemptedKey) {
+                    const successStat = findStatByKey(successKey);
+                    const attemptedStat = findStatByKey(attemptedKey);
+
+                    if (successStat && attemptedStat) {
+                      statGroups.push({
+                        primary: successStat,
+                        secondary: attemptedStat,
+                        isPair: true,
+                      });
+                      processedKeys.add(successKey);
+                      processedKeys.add(attemptedKey);
+                      return;
+                    }
+                  }
+
+                  // Fallback: treat as a single stat.
+                  statGroups.push({ primary: stat, isPair: false });
+                  processedKeys.add(key);
+                });
+
+                return statGroups.map((group) => {
+                  if (group.isPair && group.secondary) {
+                    const successKey = group.primary.stat_key;
+                    const attemptedKey = group.secondary.stat_key;
+
+                    // Clean up the base name for display, matching the main grid.
+                    let baseName = group.primary.stat_name
+                      .replace("Aerials Won", "Aerial Duels")
+                      .replace(" Completed", "")
+                      .replace(" Won", "")
+                      .replace(" On Target", "");
+
+                    const displayName = `${baseName} (Successful/Attempted)`;
+                    const isHidden = [successKey, attemptedKey].some((k) =>
+                      hiddenStatKeys.includes(k)
+                    );
+
+                    const addPair = async () => {
+                      setSelectedStatKeys((prev) => [
+                        ...prev,
+                        successKey,
+                        attemptedKey,
+                      ]);
+
+                      if (playerId) {
+                        // If re-adding hidden stats, unhide both.
+                        for (const k of [successKey, attemptedKey]) {
+                          if (hiddenStatKeys.includes(k)) {
+                            await supabase
+                              .from("player_hidden_stats")
+                              .delete()
+                              .eq("player_id", playerId)
+                              .eq("stat_key", k);
+                          }
+                        }
+                        setHiddenStatKeys((prev) =>
+                          prev.filter((k) => k !== successKey && k !== attemptedKey)
+                        );
                       }
+
                       setIsAddStatDialogOpen(false);
-                    }}
-                  >
-                    <div className="flex-1">
-                      <div className="font-medium text-sm">
-                        {stat.stat_name}
-                        {hiddenStatKeys.includes(stat.stat_key) && (
-                          <span className="text-xs text-muted-foreground ml-2">(hidden)</span>
+                    };
+
+                    return (
+                      <div
+                        key={`${successKey}-${attemptedKey}`}
+                        className="flex items-start justify-between p-3 border rounded-lg hover:bg-accent cursor-pointer"
+                        onClick={addPair}
+                      >
+                        <div className="flex-1">
+                          <div className="font-medium text-sm">
+                            {displayName}
+                            {isHidden && (
+                              <span className="text-xs text-muted-foreground ml-2">
+                                (hidden)
+                              </span>
+                            )}
+                          </div>
+                          {group.primary.description && (
+                            <div className="text-xs text-muted-foreground mt-1">
+                              {group.primary.description}
+                            </div>
+                          )}
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            addPair();
+                          }}
+                        >
+                          <Plus className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    );
+                  }
+
+                  const stat = group.primary;
+                  const isHidden = hiddenStatKeys.includes(stat.stat_key);
+
+                  const addSingle = async () => {
+                    setSelectedStatKeys((prev) => [...prev, stat.stat_key]);
+
+                    if (isHidden && playerId) {
+                      await supabase
+                        .from("player_hidden_stats")
+                        .delete()
+                        .eq("player_id", playerId)
+                        .eq("stat_key", stat.stat_key);
+                      setHiddenStatKeys((prev) =>
+                        prev.filter((k) => k !== stat.stat_key)
+                      );
+                    }
+
+                    setIsAddStatDialogOpen(false);
+                  };
+
+                  return (
+                    <div
+                      key={stat.id}
+                      className="flex items-start justify-between p-3 border rounded-lg hover:bg-accent cursor-pointer"
+                      onClick={addSingle}
+                    >
+                      <div className="flex-1">
+                        <div className="font-medium text-sm">
+                          {stat.stat_name}
+                          {isHidden && (
+                            <span className="text-xs text-muted-foreground ml-2">
+                              (hidden)
+                            </span>
+                          )}
+                        </div>
+                        {stat.description && (
+                          <div className="text-xs text-muted-foreground mt-1">
+                            {stat.description}
+                          </div>
                         )}
                       </div>
-                      {stat.description && (
-                        <div className="text-xs text-muted-foreground mt-1">{stat.description}</div>
-                      )}
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          addSingle();
+                        }}
+                      >
+                        <Plus className="h-4 w-4" />
+                      </Button>
                     </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={async (e) => {
-                        e.stopPropagation();
-                        setSelectedStatKeys(prev => [...prev, stat.stat_key]);
-                        // If re-adding a hidden stat, unhide it
-                        if (hiddenStatKeys.includes(stat.stat_key) && playerId) {
-                          await supabase
-                            .from("player_hidden_stats")
-                            .delete()
-                            .eq("player_id", playerId)
-                            .eq("stat_key", stat.stat_key);
-                          setHiddenStatKeys(prev => prev.filter(k => k !== stat.stat_key));
-                        }
-                        setIsAddStatDialogOpen(false);
-                      }}
-                    >
-                      <Plus className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ))}
+                  );
+                });
+              })()}
             </div>
           </ScrollArea>
         </DialogContent>
