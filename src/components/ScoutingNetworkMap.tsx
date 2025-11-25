@@ -325,22 +325,38 @@ const ScoutingNetworkMap = () => {
                 <circle
                   cx={club.x}
                   cy={club.y}
-                  r="20"
+                  r="16"
                   fill="hsl(var(--primary))"
                   className="animate-pulse opacity-20"
                 />
-                {/* Club logo */}
+                {/* Circular clip path for logo */}
+                <defs>
+                  <clipPath id={`clip-${idx}`}>
+                    <circle cx={club.x} cy={club.y} r="10" />
+                  </clipPath>
+                </defs>
+                {/* Club logo in circle */}
                 <image
                   href={club.logo}
-                  x={club.x - 12}
-                  y={club.y - 12}
-                  width="24"
-                  height="24"
-                  className="cursor-pointer hover:scale-110 transition-transform"
-                  style={{ filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.3))" }}
+                  x={club.x - 10}
+                  y={club.y - 10}
+                  width="20"
+                  height="20"
+                  clipPath={`url(#clip-${idx})`}
+                  className="cursor-pointer"
+                />
+                {/* Circle border */}
+                <circle
+                  cx={club.x}
+                  cy={club.y}
+                  r="10"
+                  fill="none"
+                  stroke="white"
+                  strokeWidth="2"
+                  className="cursor-pointer hover:r-12 transition-all"
                 >
                   <title>{club.name} - {club.city}, {club.country}</title>
-                </image>
+                </circle>
               </g>
             ))}
 
