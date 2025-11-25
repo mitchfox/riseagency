@@ -12,6 +12,7 @@ import { Plus, Trash2, AlertTriangle, LineChart, Sparkles, Search, Loader2, Chev
 import { Checkbox } from "@/components/ui/checkbox";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { R90RatingsViewer } from "./R90RatingsViewer";
 import { formatScoreWithFrequency } from "@/lib/utils";
 import { ActionsByTypeDialog } from "./ActionsByTypeDialog";
@@ -63,6 +64,9 @@ export const CreatePerformanceReportDialog = ({
   const [playerClub, setPlayerClub] = useState<string>("");
   const [playerPosition, setPlayerPosition] = useState<string>("");
   const [availableStats, setAvailableStats] = useState<Array<{id: string; stat_name: string; stat_key: string; description: string | null}>>([]);
+  const [selectedStatKeys, setSelectedStatKeys] = useState<string[]>([]);
+  const [allStats, setAllStats] = useState<Array<{id: string; stat_name: string; stat_key: string; description: string | null}>>([]);
+  const [isAddStatDialogOpen, setIsAddStatDialogOpen] = useState(false);
   const [actionTypes, setActionTypes] = useState<string[]>([]);
   const [previousScores, setPreviousScores] = useState<Record<number, Array<{score: string | number | null, title: string, description: string}>>>({});
   const [expandedScores, setExpandedScores] = useState<Set<number>>(new Set());
@@ -300,6 +304,16 @@ export const CreatePerformanceReportDialog = ({
       setPlayerClub(data?.club || "");
       setPlayerPosition(data?.position || "");
       
+      // Fetch all stats for the add dialog
+      const { data: allStatsData, error: allStatsError } = await supabase
+        .from("performance_statistics")
+        .select("id, stat_name, stat_key, description")
+        .order("stat_name");
+      
+      if (!allStatsError && allStatsData) {
+        setAllStats(allStatsData);
+      }
+      
       // Fetch available stats for this position
       if (data?.position) {
         const { data: stats, error: statsError } = await supabase
@@ -310,6 +324,8 @@ export const CreatePerformanceReportDialog = ({
         
         if (!statsError && stats) {
           setAvailableStats(stats);
+          // Auto-select position-specific stats
+          setSelectedStatKeys(stats.map(s => s.stat_key));
         }
       }
     } catch (error: any) {
@@ -433,14 +449,17 @@ export const CreatePerformanceReportDialog = ({
         ]);
         
         const newStats: Record<string, string> = {};
+        const statsKeys: string[] = [];
         Object.entries(stats).forEach(([key, value]) => {
           if (!legacyKeys.has(key) && value != null) {
             newStats[key] = value.toString();
+            statsKeys.push(key);
           }
         });
         
         if (Object.keys(newStats).length > 0) {
           setAdditionalStats(newStats);
+          setSelectedStatKeys(statsKeys);
         }
         
         setShowStrikerStats(true);
@@ -514,6 +533,7 @@ export const CreatePerformanceReportDialog = ({
     setPerformanceOverview("");
     setShowStrikerStats(false);
     setAdditionalStats({});
+    setSelectedStatKeys(availableStats.map(s => s.stat_key)); // Reset to position-specific stats
     setStrikerStats({
       xGChain: "",
       xGChain_per90: "",
@@ -1131,40 +1151,84 @@ export const CreatePerformanceReportDialog = ({
               </Button>
             </CollapsibleTrigger>
             <CollapsibleContent className="mt-4 space-y-4">
-              {availableStats.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {availableStats.map((stat) => (
-                    <div key={stat.id}>
-                      <Label>
-                        {stat.stat_name}
-                        {stat.description && (
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <span className="ml-1 text-muted-foreground cursor-help">ⓘ</span>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p className="text-xs">{stat.description}</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        )}
-                      </Label>
-                      <Input
-                        type="number"
-                        step="1"
-                        value={additionalStats[stat.stat_key] || ""}
-                        onChange={(e) => setAdditionalStats({
-                          ...additionalStats,
-                          [stat.stat_key]: e.target.value
-                        })}
-                        placeholder="0"
-                      />
-                    </div>
-                  ))}
-                </div>
+              {selectedStatKeys.length > 0 ? (
+                <>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {selectedStatKeys.map((statKey) => {
+                      const stat = allStats.find(s => s.stat_key === statKey);
+                      if (!stat) return null;
+                      return (
+                        <div key={stat.id} className="relative">
+                          <Label>
+                            {stat.stat_name}
+                            {stat.description && (
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <span className="ml-1 text-muted-foreground cursor-help">ⓘ</span>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p className="text-xs">{stat.description}</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            )}
+                          </Label>
+                          <div className="flex gap-2">
+                            <Input
+                              type="number"
+                              step="1"
+                              value={additionalStats[stat.stat_key] || ""}
+                              onChange={(e) => setAdditionalStats({
+                                ...additionalStats,
+                                [stat.stat_key]: e.target.value
+                              })}
+                              placeholder="0"
+                              className="flex-1"
+                            />
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => {
+                                setSelectedStatKeys(prev => prev.filter(k => k !== statKey));
+                                const newStats = {...additionalStats};
+                                delete newStats[statKey];
+                                setAdditionalStats(newStats);
+                              }}
+                              className="h-10 w-10"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsAddStatDialogOpen(true)}
+                    className="w-full"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Another Stat
+                  </Button>
+                </>
               ) : (
-                <p className="text-sm text-muted-foreground">
-                  No additional statistics configured for {playerPosition || "this position"}.
-                </p>
+                <div className="text-center py-4">
+                  <p className="text-sm text-muted-foreground mb-4">
+                    No statistics added yet.
+                  </p>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsAddStatDialogOpen(true)}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Stat
+                  </Button>
+                </div>
               )}
             </CollapsibleContent>
           </Collapsible>
@@ -1699,6 +1763,50 @@ export const CreatePerformanceReportDialog = ({
           analysisId={analysisId}
         />
       )}
+
+      {/* Add Stat Dialog */}
+      <Dialog open={isAddStatDialogOpen} onOpenChange={setIsAddStatDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[600px]">
+          <DialogHeader>
+            <DialogTitle>Add Statistic</DialogTitle>
+          </DialogHeader>
+          <ScrollArea className="h-[400px] pr-4">
+            <div className="space-y-2">
+              {allStats
+                .filter(stat => !selectedStatKeys.includes(stat.stat_key))
+                .map((stat) => (
+                  <div
+                    key={stat.id}
+                    className="flex items-start justify-between p-3 border rounded-lg hover:bg-accent cursor-pointer"
+                    onClick={() => {
+                      setSelectedStatKeys(prev => [...prev, stat.stat_key]);
+                      setIsAddStatDialogOpen(false);
+                    }}
+                  >
+                    <div className="flex-1">
+                      <div className="font-medium text-sm">{stat.stat_name}</div>
+                      {stat.description && (
+                        <div className="text-xs text-muted-foreground mt-1">{stat.description}</div>
+                      )}
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedStatKeys(prev => [...prev, stat.stat_key]);
+                        setIsAddStatDialogOpen(false);
+                      }}
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+            </div>
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
     </Dialog>
   );
 };
