@@ -62,19 +62,180 @@ const ScoutingNetworkMap = () => {
             className="w-full h-auto"
             style={{ maxHeight: "600px" }}
           >
+            {/* Flag Pattern Definitions */}
+            <defs>
+              {/* England - St George's Cross */}
+              <pattern id="flag-england" patternUnits="objectBoundingBox" width="1" height="1">
+                <rect width="100%" height="100%" fill="#FFFFFF"/>
+                <rect x="45%" width="10%" height="100%" fill="#CE1124"/>
+                <rect y="45%" width="100%" height="10%" fill="#CE1124"/>
+              </pattern>
+
+              {/* France - Tricolor */}
+              <pattern id="flag-france" patternUnits="objectBoundingBox" width="1" height="1">
+                <rect width="33.33%" height="100%" fill="#002395"/>
+                <rect x="33.33%" width="33.33%" height="100%" fill="#FFFFFF"/>
+                <rect x="66.66%" width="33.33%" height="100%" fill="#ED2939"/>
+              </pattern>
+
+              {/* Spain */}
+              <pattern id="flag-spain" patternUnits="objectBoundingBox" width="1" height="1">
+                <rect width="100%" height="100%" fill="#AA151B"/>
+                <rect y="25%" width="100%" height="50%" fill="#F1BF00"/>
+              </pattern>
+
+              {/* Portugal */}
+              <pattern id="flag-portugal" patternUnits="objectBoundingBox" width="1" height="1">
+                <rect width="40%" height="100%" fill="#006600"/>
+                <rect x="40%" width="60%" height="100%" fill="#FF0000"/>
+              </pattern>
+
+              {/* Germany */}
+              <pattern id="flag-germany" patternUnits="objectBoundingBox" width="1" height="1">
+                <rect width="100%" height="33.33%" fill="#000000"/>
+                <rect y="33.33%" width="100%" height="33.33%" fill="#DD0000"/>
+                <rect y="66.66%" width="100%" height="33.33%" fill="#FFCE00"/>
+              </pattern>
+
+              {/* Italy */}
+              <pattern id="flag-italy" patternUnits="objectBoundingBox" width="1" height="1">
+                <rect width="33.33%" height="100%" fill="#009246"/>
+                <rect x="33.33%" width="33.33%" height="100%" fill="#FFFFFF"/>
+                <rect x="66.66%" width="33.33%" height="100%" fill="#CE2B37"/>
+              </pattern>
+
+              {/* Netherlands */}
+              <pattern id="flag-netherlands" patternUnits="objectBoundingBox" width="1" height="1">
+                <rect width="100%" height="33.33%" fill="#AE1C28"/>
+                <rect y="33.33%" width="100%" height="33.33%" fill="#FFFFFF"/>
+                <rect y="66.66%" width="100%" height="33.33%" fill="#21468B"/>
+              </pattern>
+
+              {/* Belgium */}
+              <pattern id="flag-belgium" patternUnits="objectBoundingBox" width="1" height="1">
+                <rect width="33.33%" height="100%" fill="#000000"/>
+                <rect x="33.33%" width="33.33%" height="100%" fill="#FDDA24"/>
+                <rect x="66.66%" width="33.33%" height="100%" fill="#EF3340"/>
+              </pattern>
+
+              {/* Switzerland - Red with white cross */}
+              <pattern id="flag-switzerland" patternUnits="objectBoundingBox" width="1" height="1">
+                <rect width="100%" height="100%" fill="#FF0000"/>
+                <rect x="35%" y="20%" width="30%" height="60%" fill="#FFFFFF"/>
+                <rect x="20%" y="35%" width="60%" height="30%" fill="#FFFFFF"/>
+              </pattern>
+
+              {/* Austria */}
+              <pattern id="flag-austria" patternUnits="objectBoundingBox" width="1" height="1">
+                <rect width="100%" height="100%" fill="#ED2939"/>
+                <rect y="33.33%" width="100%" height="33.33%" fill="#FFFFFF"/>
+              </pattern>
+
+              {/* Poland */}
+              <pattern id="flag-poland" patternUnits="objectBoundingBox" width="1" height="1">
+                <rect width="100%" height="50%" fill="#FFFFFF"/>
+                <rect y="50%" width="100%" height="50%" fill="#DC143C"/>
+              </pattern>
+
+              {/* Czech Republic */}
+              <pattern id="flag-czech-republic" patternUnits="objectBoundingBox" width="1" height="1">
+                <rect width="100%" height="50%" fill="#FFFFFF"/>
+                <rect y="50%" width="100%" height="50%" fill="#D7141A"/>
+                <polygon points="0,0 0,100 50,50" fill="#11457E"/>
+              </pattern>
+
+              {/* Denmark */}
+              <pattern id="flag-denmark" patternUnits="objectBoundingBox" width="1" height="1">
+                <rect width="100%" height="100%" fill="#C60C30"/>
+                <rect x="28%" width="12%" height="100%" fill="#FFFFFF"/>
+                <rect y="42%" width="100%" height="16%" fill="#FFFFFF"/>
+              </pattern>
+
+              {/* Sweden */}
+              <pattern id="flag-sweden" patternUnits="objectBoundingBox" width="1" height="1">
+                <rect width="100%" height="100%" fill="#006AA7"/>
+                <rect x="28%" width="12%" height="100%" fill="#FECC00"/>
+                <rect y="42%" width="100%" height="16%" fill="#FECC00"/>
+              </pattern>
+
+              {/* Norway */}
+              <pattern id="flag-norway" patternUnits="objectBoundingBox" width="1" height="1">
+                <rect width="100%" height="100%" fill="#BA0C2F"/>
+                <rect x="28%" width="12%" height="100%" fill="#FFFFFF"/>
+                <rect y="42%" width="100%" height="16%" fill="#FFFFFF"/>
+                <rect x="30%" width="8%" height="100%" fill="#00205B"/>
+                <rect y="44%" width="100%" height="12%" fill="#00205B"/>
+              </pattern>
+
+              {/* Greece */}
+              <pattern id="flag-greece" patternUnits="objectBoundingBox" width="1" height="1">
+                <rect width="100%" height="100%" fill="#0D5EAF"/>
+                <rect y="11.11%" width="100%" height="11.11%" fill="#FFFFFF"/>
+                <rect y="33.33%" width="100%" height="11.11%" fill="#FFFFFF"/>
+                <rect y="55.55%" width="100%" height="11.11%" fill="#FFFFFF"/>
+                <rect y="77.77%" width="100%" height="11.11%" fill="#FFFFFF"/>
+              </pattern>
+
+              {/* Turkey */}
+              <pattern id="flag-turkey" patternUnits="objectBoundingBox" width="1" height="1">
+                <rect width="100%" height="100%" fill="#E30A17"/>
+                <circle cx="45%" cy="50%" r="15%" fill="#FFFFFF"/>
+                <circle cx="48%" cy="50%" r="12%" fill="#E30A17"/>
+              </pattern>
+
+              {/* Scotland */}
+              <pattern id="flag-scotland" patternUnits="objectBoundingBox" width="1" height="1">
+                <rect width="100%" height="100%" fill="#0065BD"/>
+                <polygon points="0,0 30,50 0,100" fill="#FFFFFF"/>
+                <polygon points="100,0 70,50 100,100" fill="#FFFFFF"/>
+                <polygon points="0,0 50,30 100,0" fill="#FFFFFF"/>
+                <polygon points="0,100 50,70 100,100" fill="#FFFFFF"/>
+              </pattern>
+
+              {/* Ireland */}
+              <pattern id="flag-ireland" patternUnits="objectBoundingBox" width="1" height="1">
+                <rect width="33.33%" height="100%" fill="#169B62"/>
+                <rect x="33.33%" width="33.33%" height="100%" fill="#FFFFFF"/>
+                <rect x="66.66%" width="33.33%" height="100%" fill="#FF883E"/>
+              </pattern>
+
+              {/* Romania */}
+              <pattern id="flag-romania" patternUnits="objectBoundingBox" width="1" height="1">
+                <rect width="33.33%" height="100%" fill="#002B7F"/>
+                <rect x="33.33%" width="33.33%" height="100%" fill="#FCD116"/>
+                <rect x="66.66%" width="33.33%" height="100%" fill="#CE1126"/>
+              </pattern>
+
+              {/* Serbia */}
+              <pattern id="flag-serbia" patternUnits="objectBoundingBox" width="1" height="1">
+                <rect width="100%" height="33.33%" fill="#C6363C"/>
+                <rect y="33.33%" width="100%" height="33.33%" fill="#0C4076"/>
+                <rect y="66.66%" width="100%" height="33.33%" fill="#FFFFFF"/>
+              </pattern>
+
+              {/* Croatia */}
+              <pattern id="flag-croatia" patternUnits="objectBoundingBox" width="1" height="1">
+                <rect width="100%" height="33.33%" fill="#FF0000"/>
+                <rect y="33.33%" width="100%" height="33.33%" fill="#FFFFFF"/>
+                <rect y="66.66%" width="100%" height="33.33%" fill="#171796"/>
+              </pattern>
+            </defs>
+
             {/* Background */}
             <rect width="1000" height="600" fill="hsl(var(--background))" />
 
-            {/* Country Borders */}
+            {/* Country Fills with Flags */}
             {europeanCountries.map((country) => (
               <g key={country.name}>
                 <path
                   d={country.path}
-                  fill="none"
+                  fill={`url(#flag-${country.name.toLowerCase().replace(/ /g, '-')})`}
                   stroke="hsl(var(--border))"
                   strokeWidth="2"
-                  className="opacity-40"
-                />
+                  className="opacity-60 hover:opacity-80 transition-opacity"
+                >
+                  <title>{country.name}</title>
+                </path>
               </g>
             ))}
 
