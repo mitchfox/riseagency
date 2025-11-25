@@ -124,6 +124,17 @@ const ScoutingNetworkMap = () => {
     { name: "Hamburger SV", country: "Germany", city: "Hamburg", x: 425, y: 335, logo: "/clubs/hamburger-sv.png" },
     { name: "FC St. Pauli", country: "Germany", city: "Hamburg", x: 426, y: 336, logo: "/clubs/fc-st-pauli.png" },
     { name: "RB Leipzig", country: "Germany", city: "Leipzig", x: 455, y: 375, logo: "/clubs/rb-leipzig.png" },
+    // Spain clubs
+    { name: "Celta de Vigo", country: "Spain", city: "Vigo", x: 270, y: 500, logo: "/clubs/celta-de-vigo.png" },
+    { name: "Athletic Bilbao", country: "Spain", city: "Bilbao", x: 300, y: 495, logo: "/clubs/athletic-bilbao.png" },
+    { name: "Deportivo Alavés", country: "Spain", city: "Vitoria-Gasteiz", x: 305, y: 495, logo: "/clubs/deportivo-alaves.png" },
+    { name: "CA Osasuna", country: "Spain", city: "Pamplona", x: 310, y: 500, logo: "/clubs/ca-osasuna.png" },
+    { name: "Atlético de Madrid", country: "Spain", city: "Madrid", x: 310, y: 520, logo: "/clubs/atletico-de-madrid.png" },
+    { name: "Getafe CF", country: "Spain", city: "Getafe", x: 311, y: 521, logo: "/clubs/getafe-cf.png" },
+    { name: "FC Barcelona", country: "Spain", city: "Barcelona", x: 360, y: 515, logo: "/clubs/fc-barcelona.png" },
+    { name: "Girona FC", country: "Spain", city: "Girona", x: 365, y: 505, logo: "/clubs/girona-fc.png" },
+    { name: "Levante UD", country: "Spain", city: "Valencia", x: 335, y: 535, logo: "/clubs/levante-ud.png" },
+    { name: "Elche CF", country: "Spain", city: "Elche", x: 330, y: 540, logo: "/clubs/elche-cf.png" },
   ];
 
   // Flag mapping
