@@ -6,8 +6,9 @@ import { SEO } from "@/components/SEO";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MessageCircle, Mail, MapPin, Users, TrendingUp, Award, Database, BarChart3, Target, Sparkles, Globe, Brain, Zap, Activity, Crosshair } from "lucide-react";
+import { MessageCircle, Mail, MapPin, Users, TrendingUp, Award, Database, BarChart3, Target, Sparkles, Globe, Brain, Zap, Activity, Crosshair, ChevronLeft, ChevronRight } from "lucide-react";
 import { SCOUTING_POSITIONS, POSITION_SKILLS, ScoutingPosition } from "@/data/scoutingSkills";
+import useEmblaCarousel from "embla-carousel-react";
 
 const domainConfig = {
   Physical: {
@@ -54,6 +55,10 @@ const positionInitials: Record<ScoutingPosition, string> = {
 const Scouts = () => {
   const [selectedPosition, setSelectedPosition] = useState<ScoutingPosition>(SCOUTING_POSITIONS[0]);
   const [expandedDomain, setExpandedDomain] = useState<keyof typeof domainConfig | null>(null);
+  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: false, skipSnaps: false });
+
+  const scrollPrev = () => emblaApi?.scrollPrev();
+  const scrollNext = () => emblaApi?.scrollNext();
 
   const handleWhatsApp = () => {
     window.open("https://wa.me/447856255509", "_blank");
@@ -91,105 +96,204 @@ const Scouts = () => {
               </p>
             </div>
 
-            <div className="max-w-6xl mx-auto">
-              {/* Integrated Position + Content Box */}
-              <div className="border-2 border-border rounded-2xl overflow-hidden bg-card">
-                {/* Position Selection - Top of box */}
-                <div className="grid grid-cols-4 md:grid-cols-8 gap-0 border-b-2 border-border">
-                  {SCOUTING_POSITIONS.map((position) => (
-                    <button
-                      key={position}
-                      onClick={() => setSelectedPosition(position)}
-                      className={`py-4 px-2 font-bebas uppercase tracking-wider text-sm md:text-base transition-all border-r border-border last:border-r-0 ${
-                        selectedPosition === position
-                          ? "bg-primary/10 text-primary"
-                          : "hover:bg-muted/50"
-                      }`}
-                    >
-                      {positionInitials[position]}
-                    </button>
-                  ))}
-                </div>
+            <div className="max-w-6xl mx-auto relative">
+              {/* Carousel Navigation */}
+              <div className="flex justify-center gap-4 mb-6">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={scrollPrev}
+                  className="rounded-full"
+                >
+                  <ChevronLeft className="h-5 w-5" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={scrollNext}
+                  className="rounded-full"
+                >
+                  <ChevronRight className="h-5 w-5" />
+                </Button>
+              </div>
 
-                {/* Content Area with Corner Domain Selectors */}
-                <div className="relative p-0">
-                  {(() => {
-                    const positionSkills = POSITION_SKILLS[selectedPosition];
-                    const skillsByDomain = positionSkills.reduce((acc, skill) => {
-                      if (!acc[skill.domain]) acc[skill.domain] = [];
-                      acc[skill.domain].push(skill);
-                      return acc;
-                    }, {} as Record<string, typeof positionSkills>);
+              {/* Embla Carousel */}
+              <div className="overflow-hidden" ref={emblaRef}>
+                <div className="flex">
+                  {/* Slide 1: Position & Domain Criteria */}
+                  <div className="flex-[0_0_100%] min-w-0">
+                    {/* Integrated Position + Content Box */}
+                    <div className="border-2 border-border rounded-2xl overflow-hidden bg-card">
+                      {/* Position Selection - Top of box */}
+                      <div className="grid grid-cols-4 md:grid-cols-8 gap-0 border-b-2 border-border">
+                        {SCOUTING_POSITIONS.map((position) => (
+                          <button
+                            key={position}
+                            onClick={() => setSelectedPosition(position)}
+                            className={`py-4 px-2 font-bebas uppercase tracking-wider text-sm md:text-base transition-all border-r border-border last:border-r-0 ${
+                              selectedPosition === position
+                                ? "bg-primary/10 text-primary"
+                                : "hover:bg-muted/50"
+                            }`}
+                          >
+                            {positionInitials[position]}
+                          </button>
+                        ))}
+                      </div>
 
-                    const currentDomain = expandedDomain || "Physical";
-                    const config = domainConfig[currentDomain];
-                    const skills = skillsByDomain[currentDomain];
+                      {/* Content Area with Corner Domain Selectors */}
+                      <div className="relative p-0">
+                        {(() => {
+                          const positionSkills = POSITION_SKILLS[selectedPosition];
+                          const skillsByDomain = positionSkills.reduce((acc, skill) => {
+                            if (!acc[skill.domain]) acc[skill.domain] = [];
+                            acc[skill.domain].push(skill);
+                            return acc;
+                          }, {} as Record<string, typeof positionSkills>);
 
-                    // Place domains in corners with proper rounding
-                    const domainKeys = Object.keys(domainConfig) as Array<keyof typeof domainConfig>;
-                    const cornerPositions = [
-                      { domain: domainKeys[0], position: 'top-0 left-0', rounded: 'rounded-br-xl' },      // Physical - top-left (only inner corner)
-                      { domain: domainKeys[1], position: 'top-0 right-0', rounded: 'rounded-bl-xl' },     // Psychological - top-right (only inner corner)
-                      { domain: domainKeys[2], position: 'bottom-0 left-0', rounded: 'rounded-bl-2xl rounded-tr-xl' },   // Technical - bottom-left (outer + inner)
-                      { domain: domainKeys[3], position: 'bottom-0 right-0', rounded: 'rounded-br-2xl rounded-tl-xl' }   // Tactical - bottom-right (outer + inner)
-                    ];
+                          const currentDomain = expandedDomain || "Physical";
+                          const config = domainConfig[currentDomain];
+                          const skills = skillsByDomain[currentDomain];
 
-                    return (
-                      <>
-                        {/* Corner Domain Buttons */}
-                        {cornerPositions.map(({ domain, position, rounded }) => {
-                          const domainConf = domainConfig[domain];
-                          const DomainIcon = domainConf.icon;
-                          const isActive = currentDomain === domain;
-                          
+                          // Place domains in corners with proper rounding
+                          const domainKeys = Object.keys(domainConfig) as Array<keyof typeof domainConfig>;
+                          const cornerPositions = [
+                            { domain: domainKeys[0], position: 'top-0 left-0', rounded: 'rounded-br-xl' },
+                            { domain: domainKeys[1], position: 'top-0 right-0', rounded: 'rounded-bl-xl' },
+                            { domain: domainKeys[2], position: 'bottom-0 left-0', rounded: 'rounded-bl-2xl rounded-tr-xl' },
+                            { domain: domainKeys[3], position: 'bottom-0 right-0', rounded: 'rounded-br-2xl rounded-tl-xl' }
+                          ];
+
                           return (
-                            <button
-                              key={domain}
-                              onClick={() => setExpandedDomain(domain)}
-                              className={`absolute ${position} ${rounded} flex items-center gap-3 transition-all hover:scale-105 border-2 z-10 ${
-                                isActive 
-                                  ? 'border-primary bg-primary/20 shadow-lg shadow-primary/20 h-16 px-4 w-auto' 
-                                  : `${domainConf.borderColor} ${domainConf.bgColor} hover:shadow-lg h-16 w-16 justify-center`
-                              }`}
-                              title={domain}
-                            >
-                              <DomainIcon className={`h-6 w-6 ${domainConf.color} flex-shrink-0`} />
-                              {isActive && (
-                                <span className={`font-bebas uppercase tracking-wider text-xl ${domainConf.color} pr-2 whitespace-nowrap`}>
-                                  {domain}
-                                </span>
-                              )}
-                            </button>
-                          );
-                        })}
+                            <>
+                              {/* Corner Domain Buttons */}
+                              {cornerPositions.map(({ domain, position, rounded }) => {
+                                const domainConf = domainConfig[domain];
+                                const DomainIcon = domainConf.icon;
+                                const isActive = currentDomain === domain;
+                                
+                                return (
+                                  <button
+                                    key={domain}
+                                    onClick={() => setExpandedDomain(domain)}
+                                    className={`absolute ${position} ${rounded} flex items-center gap-3 transition-all hover:scale-105 border-2 z-10 ${
+                                      isActive 
+                                        ? 'border-primary bg-primary/20 shadow-lg shadow-primary/20 h-16 px-4 w-auto' 
+                                        : `${domainConf.borderColor} ${domainConf.bgColor} hover:shadow-lg h-16 w-16 justify-center`
+                                    }`}
+                                    title={domain}
+                                  >
+                                    <DomainIcon className={`h-6 w-6 ${domainConf.color} flex-shrink-0`} />
+                                    {isActive && (
+                                      <span className={`font-bebas uppercase tracking-wider text-xl ${domainConf.color} pr-2 whitespace-nowrap`}>
+                                        {domain}
+                                      </span>
+                                    )}
+                                  </button>
+                                );
+                              })}
 
-                        {/* Content - Attributes Grid */}
-                        <div className="px-6 py-20 md:px-8">
-                          <div className="grid md:grid-cols-2 gap-4">
-                            {skills.map((skill, idx) => (
-                              <div 
-                                key={idx} 
-                                className={`group bg-gradient-to-br from-muted/50 to-muted/30 rounded-xl hover:${config.bgColor} transition-all duration-300 hover:shadow-lg hover:-translate-y-1 border border-transparent hover:${config.borderColor} overflow-hidden`}
-                              >
-                                {/* Colored Header Box */}
-                                <div className={`${config.solidBg} px-5 py-3`}>
-                                  <h4 className="font-bold text-black text-base">
-                                    {skill.skill_name}
-                                  </h4>
-                                </div>
-                                {/* Description */}
-                                <div className="px-5 py-4">
-                                  <p className="text-sm text-muted-foreground leading-relaxed">
-                                    {skill.description}
-                                  </p>
+                              {/* Content - Attributes Grid */}
+                              <div className="px-6 py-20 md:px-8">
+                                <div className="grid md:grid-cols-2 gap-4">
+                                  {skills.map((skill, idx) => (
+                                    <div 
+                                      key={idx} 
+                                      className={`group bg-gradient-to-br from-muted/50 to-muted/30 rounded-xl hover:${config.bgColor} transition-all duration-300 hover:shadow-lg hover:-translate-y-1 border border-transparent hover:${config.borderColor} overflow-hidden`}
+                                    >
+                                      {/* Colored Header Box */}
+                                      <div className={`${config.solidBg} px-5 py-3`}>
+                                        <h4 className="font-bold text-black text-base">
+                                          {skill.skill_name}
+                                        </h4>
+                                      </div>
+                                      {/* Description */}
+                                      <div className="px-5 py-4">
+                                        <p className="text-sm text-muted-foreground leading-relaxed">
+                                          {skill.description}
+                                        </p>
+                                      </div>
+                                    </div>
+                                  ))}
                                 </div>
                               </div>
+                            </>
+                          );
+                        })()}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Slide 2: Tactical Schemes */}
+                  <div className="flex-[0_0_100%] min-w-0 pl-4">
+                    <div className="border-2 border-border rounded-2xl overflow-hidden bg-card p-6 md:p-8">
+                      <div className="text-center mb-8">
+                        <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 backdrop-blur-sm rounded-full border border-primary/20 mb-3">
+                          <Target className="h-4 w-4 text-primary" />
+                          <span className="text-sm font-semibold">Tactical Understanding</span>
+                        </div>
+                        
+                        <h3 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider mb-3 bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent">
+                          Tactical Schemes
+                        </h3>
+                        <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                          Understanding player roles within different tactical formations and systems
+                        </p>
+                      </div>
+
+                      <div className="grid md:grid-cols-2 gap-6">
+                        <Card className="p-6 bg-gradient-to-br from-muted/50 to-muted/30 border-primary/20">
+                          <h4 className="font-bebas text-2xl uppercase tracking-wider text-primary mb-3">
+                            Team Schemes
+                          </h4>
+                          <p className="text-sm text-muted-foreground leading-relaxed mb-4">
+                            How the team sets up tactically: formations (4-3-3, 4-4-2, 3-5-2), build-up patterns, pressing structures, and defensive organization.
+                          </p>
+                          <div className="flex flex-wrap gap-2">
+                            {["4-3-3", "4-4-2", "3-5-2", "4-2-3-1"].map(formation => (
+                              <Badge key={formation} variant="secondary" className="bg-primary/20 border-primary/30">
+                                {formation}
+                              </Badge>
                             ))}
                           </div>
-                        </div>
-                      </>
-                    );
-                  })()}
+                        </Card>
+
+                        <Card className="p-6 bg-gradient-to-br from-muted/50 to-muted/30 border-primary/20">
+                          <h4 className="font-bebas text-2xl uppercase tracking-wider text-primary mb-3">
+                            Opposition Analysis
+                          </h4>
+                          <p className="text-sm text-muted-foreground leading-relaxed mb-4">
+                            Understanding the opponent's tactical approach, identifying weaknesses to exploit, and recognizing their strengths to neutralize.
+                          </p>
+                          <div className="flex flex-wrap gap-2">
+                            {["High Press", "Low Block", "Counter Attack", "Possession"].map(style => (
+                              <Badge key={style} variant="secondary" className="bg-primary/20 border-primary/30">
+                                {style}
+                              </Badge>
+                            ))}
+                          </div>
+                        </Card>
+
+                        <Card className="p-6 bg-gradient-to-br from-muted/50 to-muted/30 border-primary/20">
+                          <h4 className="font-bebas text-2xl uppercase tracking-wider text-primary mb-3">
+                            Position-Specific Roles
+                          </h4>
+                          <p className="text-sm text-muted-foreground leading-relaxed">
+                            How each position operates within different systems: inverted full-backs, false 9s, box-to-box midfielders, and other tactical variations.
+                          </p>
+                        </Card>
+
+                        <Card className="p-6 bg-gradient-to-br from-muted/50 to-muted/30 border-primary/20">
+                          <h4 className="font-bebas text-2xl uppercase tracking-wider text-primary mb-3">
+                            Game Phases
+                          </h4>
+                          <p className="text-sm text-muted-foreground leading-relaxed">
+                            Player performance across all phases: build-up play, offensive transition, attacking, defensive transition, and defensive organization.
+                          </p>
+                        </Card>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
