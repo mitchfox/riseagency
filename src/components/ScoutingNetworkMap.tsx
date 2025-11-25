@@ -478,8 +478,18 @@ const ScoutingNetworkMap = () => {
     // Greece
     { name: "AEK Athens", country: "Greece", city: "Athens", x: 540, y: 475, logo: "/clubs/aek-athens.png" },
     { name: "AE Kifisias", country: "Greece", city: "Kifisia", x: 541, y: 476, logo: "/clubs/ae-kifisias.png" },
+    { name: "Panathinaikos FC", country: "Greece", city: "Athens", x: 542, y: 477, logo: "/clubs/panathinaikos-fc.png" },
+    { name: "Atromitos Athens", country: "Greece", city: "Athens", x: 543, y: 478, logo: "/clubs/atromitos-athens.png" },
+    { name: "Olympiacos Piraeus", country: "Greece", city: "Piraeus", x: 544, y: 475, logo: "/clubs/olympiacos-piraeus.png" },
     { name: "APO Levadiakos", country: "Greece", city: "Livadeia", x: 535, y: 473, logo: "/clubs/apo-levadiakos.png" },
     { name: "AE Larisa", country: "Greece", city: "Larisa", x: 530, y: 468, logo: "/clubs/ae-larisa.png" },
+    { name: "Volos NPS", country: "Greece", city: "Volos", x: 532, y: 467, logo: "/clubs/volos-nps.png" },
+    { name: "PAOK Thessaloniki", country: "Greece", city: "Thessaloniki", x: 525, y: 460, logo: "/clubs/paok-thessaloniki.png" },
+    { name: "Aris Thessaloniki", country: "Greece", city: "Thessaloniki", x: 526, y: 461, logo: "/clubs/aris-thessaloniki.png" },
+    { name: "Panserraikos", country: "Greece", city: "Serres", x: 528, y: 458, logo: "/clubs/panserraikos.png" },
+    { name: "Asteras Aktor", country: "Greece", city: "Tripoli", x: 530, y: 478, logo: "/clubs/asteras-aktor.png" },
+    { name: "Panetolikos GFS", country: "Greece", city: "Agrinio", x: 518, y: 471, logo: "/clubs/panetolikos-gfs.png" },
+    { name: "OFI Crete FC", country: "Greece", city: "Heraklion", x: 548, y: 500, logo: "/clubs/ofi-crete-fc.png" },
   ];
 
   // Flag mapping
