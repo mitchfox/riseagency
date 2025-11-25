@@ -259,6 +259,10 @@ const ScoutingNetworkMap = () => {
     { name: "FK IMT Belgrad", country: "Serbia", city: "Belgrade", x: 525, y: 485, logo: "/clubs/fk-imt-belgrad.png" },
     { name: "FK Cukaricki", country: "Serbia", city: "Belgrade", x: 526, y: 486, logo: "/clubs/fk-cukaricki.png" },
     { name: "FK Partizan Belgrade", country: "Serbia", city: "Belgrade", x: 527, y: 487, logo: "/clubs/fk-partizan-belgrade.png" },
+    { name: "Red Star Belgrade", country: "Serbia", city: "Belgrade", x: 528, y: 488, logo: "/clubs/red-star-belgrade.png" },
+    { name: "OFK Beograd", country: "Serbia", city: "Belgrade", x: 529, y: 489, logo: "/clubs/ofk-beograd.png" },
+    { name: "FK Vojvodina Novi Sad", country: "Serbia", city: "Novi Sad", x: 522, y: 471, logo: "/clubs/fk-vojvodina-novi-sad.png" },
+    { name: "Zeleznicar Pancevo", country: "Serbia", city: "Pancevo", x: 530, y: 480, logo: "/clubs/zeleznicar-pancevo.png" },
     { name: "FK Radnik Surdulica", country: "Serbia", city: "Surdulica", x: 538, y: 500, logo: "/clubs/fk-radnik-surdulica.png" },
     { name: "FK Spartak Subotica", country: "Serbia", city: "Subotica", x: 520, y: 468, logo: "/clubs/fk-spartak-subotica.png" },
     { name: "FK TSC Backa Topola", country: "Serbia", city: "Backa Topola", x: 521, y: 469, logo: "/clubs/fk-tsc-backa-topola.png" },
@@ -268,6 +272,14 @@ const ScoutingNetworkMap = () => {
     { name: "FK Novi Pazar", country: "Serbia", city: "Novi Pazar", x: 518, y: 495, logo: "/clubs/fk-novi-pazar.png" },
     { name: "FK Radnicki 1923 Kragujevac", country: "Serbia", city: "Kragujevac", x: 524, y: 488, logo: "/clubs/fk-radnicki-1923-kragujevac.png" },
     { name: "FK Radnicki Nis", country: "Serbia", city: "Nis", x: 532, y: 494, logo: "/clubs/fk-radnicki-nis.png" },
+    
+    // Sweden
+    { name: "AIK", country: "Sweden", city: "Stockholm", x: 430, y: 280, logo: "/clubs/aik.png" },
+    { name: "Djurgårdens IF", country: "Sweden", city: "Stockholm", x: 431, y: 281, logo: "/clubs/djurgardens-if.png" },
+    { name: "BK Häcken", country: "Sweden", city: "Gothenburg", x: 395, y: 300, logo: "/clubs/bk-hacken.png" },
+    { name: "GAIS", country: "Sweden", city: "Gothenburg", x: 396, y: 301, logo: "/clubs/gais.png" },
+    { name: "Halmstads BK", country: "Sweden", city: "Halmstad", x: 398, y: 315, logo: "/clubs/halmstads-bk.png" },
+    { name: "Degerfors IF", country: "Sweden", city: "Degerfors", x: 410, y: 290, logo: "/clubs/degerfors-if.png" },
   ];
 
   // Flag mapping
