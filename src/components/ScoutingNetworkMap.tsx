@@ -45,7 +45,15 @@ const ScoutingNetworkMap = () => {
   const [zoomLevel, setZoomLevel] = useState(0); // 0 = out, 1 = medium, 2 = fully zoomed
   const [showGrid, setShowGrid] = useState(true);
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
+  const [selectedCluster, setSelectedCluster] = useState<{x: number, y: number} | null>(null);
   // Europe outline is rendered from raster map image (europe-outline.gif)
+  
+  // Calculate distance threshold based on zoom level
+  const getClusterThreshold = () => {
+    if (zoomLevel === 0) return 30; // Large threshold when zoomed out
+    if (zoomLevel === 1) return 15; // Medium threshold
+    return 0; // No clustering when fully zoomed in
+  };
 
   // Football clubs with their real locations
   const footballClubs = [
@@ -56,16 +64,28 @@ const ScoutingNetworkMap = () => {
     // England clubs
     { name: "Norwich City FC", country: "England", city: "Norwich", x: 345, y: 365, logo: norwichLogo },
     { name: "Forest Green Rovers", country: "England", city: "Nailsworth", x: 315, y: 380, logo: forestGreenLogo },
+    // London clubs
     { name: "Arsenal FC", country: "England", city: "London", x: 335, y: 385, logo: "/clubs/arsenal-fc.png" },
     { name: "Chelsea FC", country: "England", city: "London", x: 332, y: 386, logo: "/clubs/chelsea-fc.png" },
     { name: "Fulham FC", country: "England", city: "London", x: 333, y: 387, logo: "/clubs/fulham-fc.png" },
     { name: "Brentford FC", country: "England", city: "London", x: 334, y: 384, logo: "/clubs/brentford-fc.png" },
     { name: "Crystal Palace", country: "England", city: "London", x: 336, y: 388, logo: "/clubs/crystal-palace.png" },
+    { name: "Tottenham Hotspur", country: "England", city: "London", x: 337, y: 383, logo: "/clubs/tottenham-hotspur.png" },
+    { name: "West Ham United", country: "England", city: "London", x: 338, y: 386, logo: "/clubs/west-ham-united.png" },
+    // Other England clubs
     { name: "Brighton & Hove Albion", country: "England", city: "Brighton", x: 335, y: 393, logo: "/clubs/brighton-hove-albion.png" },
     { name: "AFC Bournemouth", country: "England", city: "Bournemouth", x: 318, y: 390, logo: "/clubs/afc-bournemouth.png" },
     { name: "Aston Villa", country: "England", city: "Birmingham", x: 318, y: 375, logo: "/clubs/aston-villa.png" },
-    { name: "Everton FC", country: "England", city: "Liverpool", x: 312, y: 365, logo: "/clubs/everton-fc.png" },
+    { name: "Wolverhampton Wanderers", country: "England", city: "Wolverhampton", x: 315, y: 372, logo: "/clubs/wolverhampton-wanderers.png" },
+    { name: "Nottingham Forest", country: "England", city: "Nottingham", x: 325, y: 370, logo: "/clubs/nottingham-forest.png" },
+    { name: "Liverpool FC", country: "England", city: "Liverpool", x: 312, y: 365, logo: "/clubs/liverpool-fc.png" },
+    { name: "Everton FC", country: "England", city: "Liverpool", x: 313, y: 367, logo: "/clubs/everton-fc.png" },
+    { name: "Manchester City", country: "England", city: "Manchester", x: 316, y: 363, logo: "/clubs/manchester-city.png" },
+    { name: "Manchester United", country: "England", city: "Manchester", x: 317, y: 364, logo: "/clubs/manchester-united.png" },
+    { name: "Leeds United", country: "England", city: "Leeds", x: 322, y: 358, logo: "/clubs/leeds-united.png" },
     { name: "Burnley FC", country: "England", city: "Burnley", x: 320, y: 360, logo: "/clubs/burnley-fc.png" },
+    { name: "Newcastle United", country: "England", city: "Newcastle", x: 322, y: 345, logo: "/clubs/newcastle-united.png" },
+    { name: "Sunderland AFC", country: "England", city: "Sunderland", x: 324, y: 343, logo: "/clubs/sunderland-afc.png" },
   ];
 
   // Flag mapping
@@ -155,8 +175,69 @@ const ScoutingNetworkMap = () => {
       setViewBox("0 0 1000 600");
       setZoomLevel(0);
       setSelectedCountry(null);
+      setSelectedCluster(null);
     }
   };
+  
+  // Calculate clusters based on proximity
+  const calculateClusters = () => {
+    const threshold = getClusterThreshold();
+    if (threshold === 0) return { clusters: [], singles: footballClubs };
+    
+    const visited = new Set<number>();
+    const clusters: Array<{x: number, y: number, clubs: typeof footballClubs}> = [];
+    const singles: typeof footballClubs = [];
+    
+    footballClubs.forEach((club, i) => {
+      if (visited.has(i)) return;
+      
+      const nearbyClubs = [club];
+      let sumX = club.x;
+      let sumY = club.y;
+      
+      footballClubs.forEach((otherClub, j) => {
+        if (i !== j && !visited.has(j)) {
+          const distance = Math.sqrt(
+            Math.pow(club.x - otherClub.x, 2) + Math.pow(club.y - otherClub.y, 2)
+          );
+          if (distance <= threshold) {
+            nearbyClubs.push(otherClub);
+            sumX += otherClub.x;
+            sumY += otherClub.y;
+            visited.add(j);
+          }
+        }
+      });
+      
+      visited.add(i);
+      
+      if (nearbyClubs.length > 1) {
+        clusters.push({
+          x: sumX / nearbyClubs.length,
+          y: sumY / nearbyClubs.length,
+          clubs: nearbyClubs
+        });
+      } else {
+        singles.push(club);
+      }
+    });
+    
+    return { clusters, singles };
+  };
+  
+  const handleClusterClick = (cluster: {x: number, y: number, clubs: typeof footballClubs}, event: React.MouseEvent) => {
+    event.stopPropagation();
+    setSelectedCluster({ x: cluster.x, y: cluster.y });
+    const zoom = 4;
+    const newWidth = 1000 / zoom;
+    const newHeight = 600 / zoom;
+    const newX = Math.max(0, Math.min(1000 - newWidth, cluster.x - newWidth / 2));
+    const newY = Math.max(0, Math.min(600 - newHeight, cluster.y - newHeight / 2));
+    setViewBox(`${newX} ${newY} ${newWidth} ${newHeight}`);
+    setZoomLevel(2);
+  };
+  
+  const { clusters, singles } = calculateClusters();
 
   const handleCountryListClick = (country: string, x: number, y: number) => {
     setSelectedCountry(country);
@@ -325,12 +406,54 @@ const ScoutingNetworkMap = () => {
               );
             })}
 
-            {/* Football Club Logos */}
-            {footballClubs.map((club, idx) => (
+            {/* Football Club Clusters */}
+            {clusters.map((cluster, idx) => (
+              <g 
+                key={`cluster-${idx}`}
+                onClick={(e) => handleClusterClick(cluster, e)}
+                className="cursor-pointer"
+              >
+                {/* Gold circle background */}
+                <circle
+                  cx={cluster.x}
+                  cy={cluster.y}
+                  r="12"
+                  fill="hsl(var(--primary))"
+                  opacity="0.9"
+                />
+                {/* White border */}
+                <circle
+                  cx={cluster.x}
+                  cy={cluster.y}
+                  r="12"
+                  fill="none"
+                  stroke="white"
+                  strokeWidth="2"
+                  className="hover:stroke-primary-foreground transition-colors"
+                />
+                {/* Count text */}
+                <text
+                  x={cluster.x}
+                  y={cluster.y}
+                  textAnchor="middle"
+                  dominantBaseline="central"
+                  fontSize="10"
+                  fontWeight="bold"
+                  fill="white"
+                  className="pointer-events-none"
+                >
+                  {cluster.clubs.length}
+                </text>
+                <title>{cluster.clubs.map(c => c.name).join(', ')}</title>
+              </g>
+            ))}
+            
+            {/* Individual Football Club Logos */}
+            {singles.map((club, idx) => (
               <g key={`club-${idx}`}>
                 {/* Circular clip path for logo */}
                 <defs>
-                  <clipPath id={`clip-${idx}`}>
+                  <clipPath id={`clip-single-${idx}`}>
                     <circle cx={club.x} cy={club.y} r="5" />
                   </clipPath>
                 </defs>
@@ -341,7 +464,7 @@ const ScoutingNetworkMap = () => {
                   y={club.y - 5}
                   width="10"
                   height="10"
-                  clipPath={`url(#clip-${idx})`}
+                  clipPath={`url(#clip-single-${idx})`}
                   className="cursor-pointer"
                 />
                 {/* Circle border */}
@@ -379,7 +502,7 @@ const ScoutingNetworkMap = () => {
             <div className="flex items-center gap-2 text-muted-foreground">
               <span>
                 {zoomLevel === 0 
-                  ? "Click country flag or list to zoom in" 
+                  ? "Click country flag, list, or gold club cluster to zoom in" 
                   : "Click map to zoom out"}
               </span>
             </div>
