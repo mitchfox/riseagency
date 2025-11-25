@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MessageCircle, Mail, MapPin, Users, TrendingUp, Award, Database, BarChart3, Target, Sparkles, Globe, Brain, Zap, Activity, Crosshair, ChevronLeft, ChevronRight } from "lucide-react";
 import { SCOUTING_POSITIONS, POSITION_SKILLS, ScoutingPosition } from "@/data/scoutingSkills";
 import useEmblaCarousel from "embla-carousel-react";
-import EuropeScoutingMap from "@/components/EuropeScoutingMap";
+import ScoutingNetworkMap from "@/components/ScoutingNetworkMap";
 
 const domainConfig = {
   Physical: {
@@ -118,6 +118,22 @@ const Scouts = () => {
                 Four key domains assessed for each position based on{" "}
                 <span className="text-foreground font-semibold">thousands of professional reports</span>
               </p>
+            </div>
+
+            {/* Gold Circle Indicators - ABOVE carousel */}
+            <div className="flex justify-center gap-3 pb-4">
+              {[0, 1, 2].map((index) => (
+                <button
+                  key={index}
+                  onClick={() => scrollToSlide(index)}
+                  className={`transition-all duration-300 rounded-full ${
+                    selectedSlide === index
+                      ? 'w-12 h-3 bg-gradient-to-r from-[#D4AF37] via-[#F4D03F] to-[#D4AF37] shadow-lg shadow-yellow-500/50'
+                      : 'w-3 h-3 bg-muted hover:bg-muted-foreground/50'
+                  }`}
+                  aria-label={`Go to slide ${index + 1}`}
+                />
+              ))}
             </div>
 
             {/* Embla Carousel - Full Screen */}
@@ -306,28 +322,12 @@ const Scouts = () => {
                   <div className="flex-[0_0_100%] min-w-0 px-4 pb-20 flex items-center">
                     <div className="w-full max-w-6xl mx-auto">
                       <div className="border-2 border-border rounded-2xl overflow-hidden bg-card p-6 md:p-8 animate-fade-in">
-                        <EuropeScoutingMap />
+                        <ScoutingNetworkMap />
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
-            
-            {/* Gold Circle Indicators */}
-            <div className="flex justify-center gap-3 pb-8">
-              {[0, 1, 2].map((index) => (
-                <button
-                  key={index}
-                  onClick={() => scrollToSlide(index)}
-                  className={`transition-all duration-300 rounded-full ${
-                    selectedSlide === index
-                      ? 'w-12 h-3 bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 shadow-lg shadow-yellow-500/50'
-                      : 'w-3 h-3 bg-muted hover:bg-muted-foreground/50'
-                  }`}
-                  aria-label={`Go to slide ${index + 1}`}
-                />
-              ))}
-            </div>
           </div>
         </section>
 
