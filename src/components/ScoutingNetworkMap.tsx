@@ -366,10 +366,32 @@ const ScoutingNetworkMap = () => {
     // Poland
     { name: "Arka Gdynia", country: "Poland", city: "Gdynia", x: 465, y: 340, logo: "/clubs/arka-gdynia.png" },
     { name: "Jagiellonia Białystok", country: "Poland", city: "Białystok", x: 540, y: 345, logo: "/clubs/jagiellonia-bialystok.png" },
+    { name: "Lechia Gdańsk", country: "Poland", city: "Gdańsk", x: 467, y: 338, logo: "/clubs/lechia-gdansk.png" },
+    { name: "Legia Warszawa", country: "Poland", city: "Warsaw", x: 510, y: 362, logo: "/clubs/legia-warszawa.png" },
+    { name: "Radomiak Radom", country: "Poland", city: "Radom", x: 515, y: 370, logo: "/clubs/radomiak-radom.png" },
+    { name: "Motor Lublin", country: "Poland", city: "Lublin", x: 545, y: 375, logo: "/clubs/motor-lublin.png" },
+    { name: "Widzew Łódź", country: "Poland", city: "Łódź", x: 500, y: 370, logo: "/clubs/widzew-lodz.png" },
+    { name: "Korona Kielce", country: "Poland", city: "Kielce", x: 515, y: 385, logo: "/clubs/korona-kielce.png" },
+    { name: "Raków Częstochowa", country: "Poland", city: "Częstochowa", x: 505, y: 390, logo: "/clubs/rakow-czestochowa.png" },
     { name: "Cracovia", country: "Poland", city: "Kraków", x: 520, y: 405, logo: "/clubs/cracovia.png" },
     { name: "Bruk-Bet Termalica Nieciecza", country: "Poland", city: "Nieciecza", x: 528, y: 410, logo: "/clubs/bruk-bet-termalica-nieciecza.png" },
     { name: "GKS Katowice", country: "Poland", city: "Katowice", x: 515, y: 400, logo: "/clubs/gks-katowice.png" },
     { name: "Górnik Zabrze", country: "Poland", city: "Zabrze", x: 512, y: 398, logo: "/clubs/gornik-zabrze.png" },
+    { name: "Piast Gliwice", country: "Poland", city: "Gliwice", x: 513, y: 395, logo: "/clubs/piast-gliwice.png" },
+    { name: "Pogoń Szczecin", country: "Poland", city: "Szczecin", x: 440, y: 345, logo: "/clubs/pogon-szczecin.png" },
+    { name: "Lech Poznań", country: "Poland", city: "Poznań", x: 470, y: 365, logo: "/clubs/lech-poznan.png" },
+    { name: "Zagłębie Lubin", country: "Poland", city: "Lubin", x: 475, y: 375, logo: "/clubs/zaglebie-lubin.png" },
+    { name: "Wisła Płock", country: "Poland", city: "Płock", x: 505, y: 360, logo: "/clubs/wisla-plock.png" },
+    
+    // Austria
+    { name: "SK Sturm Graz", country: "Austria", city: "Graz", x: 455, y: 420, logo: "/clubs/sk-sturm-graz.png" },
+    { name: "Grazer AK", country: "Austria", city: "Graz", x: 456, y: 421, logo: "/clubs/grazer-ak-1902.png" },
+    { name: "Wolfsberger AC", country: "Austria", city: "Wolfsberg", x: 445, y: 425, logo: "/clubs/wolfsberger-ac.png" },
+    { name: "TSV Hartberg", country: "Austria", city: "Hartberg", x: 460, y: 423, logo: "/clubs/tsv-hartberg.png" },
+    { name: "Austria Wien", country: "Austria", city: "Vienna", x: 480, y: 410, logo: "/clubs/austria-vienna.png" },
+    { name: "FC Blau-Weiss Linz", country: "Austria", city: "Linz", x: 445, y: 410, logo: "/clubs/fc-blau-weiss-linz.png" },
+    { name: "WSG Tirol", country: "Austria", city: "Wattens", x: 415, y: 425, logo: "/clubs/wsg-tirol.png" },
+    { name: "SV Ried", country: "Austria", city: "Ried", x: 435, y: 413, logo: "/clubs/sv-ried.png" },
   ];
 
   // Flag mapping
