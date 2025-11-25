@@ -135,6 +135,16 @@ const ScoutingNetworkMap = () => {
     { name: "Girona FC", country: "Spain", city: "Girona", x: 365, y: 505, logo: "/clubs/girona-fc.png" },
     { name: "Levante UD", country: "Spain", city: "Valencia", x: 335, y: 535, logo: "/clubs/levante-ud.png" },
     { name: "Elche CF", country: "Spain", city: "Elche", x: 330, y: 540, logo: "/clubs/elche-cf.png" },
+    { name: "Real Madrid", country: "Spain", city: "Madrid", x: 310, y: 520, logo: "/clubs/real-madrid.png" },
+    { name: "Rayo Vallecano", country: "Spain", city: "Madrid", x: 312, y: 519, logo: "/clubs/rayo-vallecano.png" },
+    { name: "Real Sociedad", country: "Spain", city: "San Sebastián", x: 308, y: 493, logo: "/clubs/real-sociedad.png" },
+    { name: "Real Oviedo", country: "Spain", city: "Oviedo", x: 278, y: 493, logo: "/clubs/real-oviedo.png" },
+    { name: "Sevilla FC", country: "Spain", city: "Sevilla", x: 290, y: 555, logo: "/clubs/sevilla-fc.png" },
+    { name: "Real Betis Balompié", country: "Spain", city: "Sevilla", x: 291, y: 556, logo: "/clubs/real-betis-balompie.png" },
+    { name: "Valencia CF", country: "Spain", city: "Valencia", x: 334, y: 536, logo: "/clubs/valencia-cf.png" },
+    { name: "Villarreal CF", country: "Spain", city: "Villarreal", x: 337, y: 532, logo: "/clubs/villarreal-cf.png" },
+    { name: "RCD Espanyol Barcelona", country: "Spain", city: "Barcelona", x: 361, y: 516, logo: "/clubs/rcd-espanyol-barcelona.png" },
+    { name: "RCD Mallorca", country: "Spain", city: "Palma", x: 365, y: 540, logo: "/clubs/rcd-mallorca.png" },
   ];
 
   // Flag mapping
