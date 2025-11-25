@@ -49,11 +49,23 @@ const ScoutingNetworkMap = () => {
 
   // Football clubs with their real locations
   const footballClubs = [
-    { name: "Norwich City FC", country: "England", city: "Norwich", x: 335, y: 365, logo: norwichLogo },
+    // Czech Republic clubs
     { name: "Bohemians 1905", country: "Czech Republic", city: "Prague", x: 465, y: 405, logo: bohemiansLogo },
     { name: "FC Vysočina Jihlava", country: "Czech Republic", city: "Jihlava", x: 475, y: 415, logo: jihlavaLogo },
     { name: "TJ Jiskra Domažlice", country: "Czech Republic", city: "Domažlice", x: 455, y: 410, logo: domazliceLogo },
-    { name: "Forest Green Rovers", country: "England", city: "Nailsworth", x: 305, y: 380, logo: forestGreenLogo },
+    // England clubs
+    { name: "Norwich City FC", country: "England", city: "Norwich", x: 345, y: 365, logo: norwichLogo },
+    { name: "Forest Green Rovers", country: "England", city: "Nailsworth", x: 315, y: 380, logo: forestGreenLogo },
+    { name: "Arsenal FC", country: "England", city: "London", x: 335, y: 385, logo: "/clubs/arsenal-fc.png" },
+    { name: "Chelsea FC", country: "England", city: "London", x: 332, y: 386, logo: "/clubs/chelsea-fc.png" },
+    { name: "Fulham FC", country: "England", city: "London", x: 333, y: 387, logo: "/clubs/fulham-fc.png" },
+    { name: "Brentford FC", country: "England", city: "London", x: 334, y: 384, logo: "/clubs/brentford-fc.png" },
+    { name: "Crystal Palace", country: "England", city: "London", x: 336, y: 388, logo: "/clubs/crystal-palace.png" },
+    { name: "Brighton & Hove Albion", country: "England", city: "Brighton", x: 335, y: 393, logo: "/clubs/brighton-hove-albion.png" },
+    { name: "AFC Bournemouth", country: "England", city: "Bournemouth", x: 318, y: 390, logo: "/clubs/afc-bournemouth.png" },
+    { name: "Aston Villa", country: "England", city: "Birmingham", x: 318, y: 375, logo: "/clubs/aston-villa.png" },
+    { name: "Everton FC", country: "England", city: "Liverpool", x: 312, y: 365, logo: "/clubs/everton-fc.png" },
+    { name: "Burnley FC", country: "England", city: "Burnley", x: 320, y: 360, logo: "/clubs/burnley-fc.png" },
   ];
 
   // Flag mapping
