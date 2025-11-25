@@ -174,7 +174,7 @@ export const PlayerCard = ({ player, viewMode = "grid" }: PlayerCardProps) => {
               </div>
               
               {/* Club */}
-              <div className="flex flex-col items-center">
+              <div className="flex flex-col items-center transition-transform duration-300 group-hover:translate-x-[30px]">
                 <div className="mb-1">
                   {clubLogo && (
                     <img 
