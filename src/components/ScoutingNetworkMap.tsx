@@ -97,6 +97,14 @@ const ScoutingNetworkMap = () => {
     { name: "FC Toulouse", country: "France", city: "Toulouse", x: 350, y: 485, logo: "/clubs/fc-toulouse.png" },
     { name: "AS Monaco", country: "France", city: "Monaco", x: 400, y: 485, logo: "/clubs/as-monaco.png" },
     { name: "OGC Nice", country: "France", city: "Nice", x: 395, y: 490, logo: "/clubs/ogc-nice.png" },
+    { name: "Stade Rennais FC", country: "France", city: "Rennes", x: 332, y: 425, logo: "/clubs/stade-rennais-fc.png" },
+    { name: "Stade Brestois 29", country: "France", city: "Brest", x: 320, y: 425, logo: "/clubs/stade-brestois-29.png" },
+    { name: "Paris Saint-Germain", country: "France", city: "Paris", x: 358, y: 420, logo: "/clubs/paris-saint-germain.png" },
+    { name: "Paris FC", country: "France", city: "Paris", x: 359, y: 421, logo: "/clubs/paris-fc.png" },
+    { name: "RC Lens", country: "France", city: "Lens", x: 362, y: 395, logo: "/clubs/rc-lens.png" },
+    { name: "RC Strasbourg Alsace", country: "France", city: "Strasbourg", x: 395, y: 425, logo: "/clubs/rc-strasbourg-alsace.png" },
+    { name: "Olympique Lyon", country: "France", city: "Lyon", x: 378, y: 455, logo: "/clubs/olympique-lyon.png" },
+    { name: "Olympique Marseille", country: "France", city: "Marseille", x: 378, y: 495, logo: "/clubs/olympique-marseille.png" },
   ];
 
   // Flag mapping
@@ -390,61 +398,6 @@ const ScoutingNetworkMap = () => {
               opacity="0.7"
             />
 
-            {/* Country Flag Markers */}
-            {countryMarkers
-              .filter(country => !selectedCountry || country.country === selectedCountry)
-              .map((country, idx) => {
-              const flagImage = flagImages[country.country];
-              return (
-                <g 
-                  key={`country-${idx}`}
-                  onClick={(e) => handleCountryClick(country.country, country.x, country.y, e)}
-                  className="cursor-pointer"
-                >
-                  {/* Rotating gold ring border */}
-                  <g className="rotating-ring" style={{ transformOrigin: `${country.x}px ${country.y}px` }}>
-                    <circle
-                      cx={country.x}
-                      cy={country.y}
-                      r="16"
-                      fill="none"
-                      stroke="hsl(var(--primary))"
-                      strokeWidth="2"
-                      strokeDasharray="10 20"
-                      opacity="0.6"
-                    />
-                  </g>
-                  {/* Circular clip path for flag */}
-                  <defs>
-                    <clipPath id={`flag-clip-${idx}`}>
-                      <circle cx={country.x} cy={country.y} r="12" />
-                    </clipPath>
-                  </defs>
-                  {/* Country flag image in circle */}
-                  <image
-                    href={flagImage}
-                    x={country.x - 12}
-                    y={country.y - 12}
-                    width="24"
-                    height="24"
-                    clipPath={`url(#flag-clip-${idx})`}
-                  />
-                  {/* Circle border */}
-                  <circle
-                    cx={country.x}
-                    cy={country.y}
-                    r="12"
-                    fill="none"
-                    stroke="white"
-                    strokeWidth="2"
-                    className="hover:stroke-primary transition-colors"
-                  >
-                    <title>{country.country}</title>
-                  </circle>
-                </g>
-              );
-            })}
-
             {/* Football Club Clusters */}
             {clusters.map((cluster, idx) => (
               <g 
@@ -520,6 +473,68 @@ const ScoutingNetworkMap = () => {
                 </circle>
               </g>
             ))}
+
+            {/* Connection lines (sample) */}
+            <g opacity="0.1" stroke="hsl(var(--primary))" strokeWidth="1">
+              <line x1="520" y1="290" x2="510" y2="360" />
+              <line x1="510" y1="360" x2="420" y2="480" />
+              <line x1="650" y1="280" x2="680" y2="295" />
+              <line x1="560" y1="250" x2="540" y2="275" />
+            </g>
+            
+            {/* Country Flag Markers - render on top so they're visible over clusters */}
+            {!selectedCountry && countryMarkers.map((country, idx) => {
+              const flagImage = flagImages[country.country];
+              return (
+                <g 
+                  key={`country-overlay-${idx}`}
+                  onClick={(e) => handleCountryClick(country.country, country.x, country.y, e)}
+                  className="cursor-pointer"
+                  style={{ pointerEvents: 'all' }}
+                >
+                  {/* Rotating gold ring border */}
+                  <g className="rotating-ring" style={{ transformOrigin: `${country.x}px ${country.y}px` }}>
+                    <circle
+                      cx={country.x}
+                      cy={country.y}
+                      r="16"
+                      fill="none"
+                      stroke="hsl(var(--primary))"
+                      strokeWidth="2"
+                      strokeDasharray="10 20"
+                      opacity="0.6"
+                    />
+                  </g>
+                  {/* Circular clip path for flag */}
+                  <defs>
+                    <clipPath id={`flag-clip-overlay-${idx}`}>
+                      <circle cx={country.x} cy={country.y} r="12" />
+                    </clipPath>
+                  </defs>
+                  {/* Country flag image in circle */}
+                  <image
+                    href={flagImage}
+                    x={country.x - 12}
+                    y={country.y - 12}
+                    width="24"
+                    height="24"
+                    clipPath={`url(#flag-clip-overlay-${idx})`}
+                  />
+                  {/* Circle border */}
+                  <circle
+                    cx={country.x}
+                    cy={country.y}
+                    r="12"
+                    fill="none"
+                    stroke="white"
+                    strokeWidth="2"
+                    className="hover:stroke-primary transition-colors"
+                  >
+                    <title>{country.country}</title>
+                  </circle>
+                </g>
+              );
+            })}
 
             {/* Connection lines (sample) */}
             <g opacity="0.1" stroke="hsl(var(--primary))" strokeWidth="1">
