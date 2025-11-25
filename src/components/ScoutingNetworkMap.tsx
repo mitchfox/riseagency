@@ -145,6 +145,17 @@ const ScoutingNetworkMap = () => {
     { name: "Villarreal CF", country: "Spain", city: "Villarreal", x: 337, y: 532, logo: "/clubs/villarreal-cf.png" },
     { name: "RCD Espanyol Barcelona", country: "Spain", city: "Barcelona", x: 361, y: 516, logo: "/clubs/rcd-espanyol-barcelona.png" },
     { name: "RCD Mallorca", country: "Spain", city: "Palma", x: 365, y: 540, logo: "/clubs/rcd-mallorca.png" },
+    // Italy clubs
+    { name: "Inter Milan", country: "Italy", city: "Milano", x: 445, y: 455, logo: "/clubs/inter-milan.png" },
+    { name: "AC Milan", country: "Italy", city: "Milano", x: 446, y: 456, logo: "/clubs/ac-milan.png" },
+    { name: "Como 1907", country: "Italy", city: "Como", x: 442, y: 452, logo: "/clubs/como-1907.png" },
+    { name: "Atalanta BC", country: "Italy", city: "Bergamo", x: 448, y: 453, logo: "/clubs/atalanta-bc.png" },
+    { name: "Hellas Verona", country: "Italy", city: "Verona", x: 455, y: 455, logo: "/clubs/hellas-verona.png" },
+    { name: "Genoa CFC", country: "Italy", city: "Genova", x: 425, y: 475, logo: "/clubs/genoa-cfc.png" },
+    { name: "Bologna FC 1909", country: "Italy", city: "Bologna", x: 450, y: 475, logo: "/clubs/bologna-fc-1909.png" },
+    { name: "ACF Fiorentina", country: "Italy", city: "Firenze", x: 450, y: 490, logo: "/clubs/acf-fiorentina.png" },
+    { name: "AS Roma", country: "Italy", city: "Roma", x: 465, y: 515, logo: "/clubs/as-roma.png" },
+    { name: "Cagliari Calcio", country: "Italy", city: "Cagliari", x: 425, y: 530, logo: "/clubs/cagliari-calcio.png" },
   ];
 
   // Flag mapping
@@ -243,18 +254,23 @@ const ScoutingNetworkMap = () => {
     const threshold = getClusterThreshold();
     if (threshold === 0) return { clusters: [], singles: footballClubs };
     
+    // Filter clubs by selected country when zoomed
+    const visibleClubs = selectedCountry 
+      ? footballClubs.filter(club => club.country === selectedCountry)
+      : footballClubs;
+    
     const visited = new Set<number>();
     const clusters: Array<{x: number, y: number, clubs: typeof footballClubs}> = [];
     const singles: typeof footballClubs = [];
     
-    footballClubs.forEach((club, i) => {
+    visibleClubs.forEach((club, i) => {
       if (visited.has(i)) return;
       
       const nearbyClubs = [club];
       let sumX = club.x;
       let sumY = club.y;
       
-      footballClubs.forEach((otherClub, j) => {
+      visibleClubs.forEach((otherClub, j) => {
         if (i !== j && !visited.has(j)) {
           const distance = Math.sqrt(
             Math.pow(club.x - otherClub.x, 2) + Math.pow(club.y - otherClub.y, 2)
@@ -287,7 +303,7 @@ const ScoutingNetworkMap = () => {
   const handleClusterClick = (cluster: {x: number, y: number, clubs: typeof footballClubs}, event: React.MouseEvent) => {
     event.stopPropagation();
     setSelectedCluster({ x: cluster.x, y: cluster.y });
-    const zoom = 8; // Much tighter zoom to focus on just the cluster area
+    const zoom = 20; // Tight zoom to show approximately 50x50 pixel area
     const newWidth = 1000 / zoom;
     const newHeight = 600 / zoom;
     const newX = Math.max(0, Math.min(1000 - newWidth, cluster.x - newWidth / 2));
