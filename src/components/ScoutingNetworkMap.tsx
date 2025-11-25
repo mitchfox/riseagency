@@ -38,6 +38,7 @@ import estoniaFlag from "@/assets/flags/estonia.png";
 import latviaFlag from "@/assets/flags/latvia.png";
 import lithuaniaFlag from "@/assets/flags/lithuania.png";
 import bulgariaFlag from "@/assets/flags/bulgaria.png";
+import belarusFlag from "@/assets/flags/belarus.png";
 
 const ScoutingNetworkMap = () => {
   const [viewBox, setViewBox] = useState("0 0 1000 600");
@@ -48,11 +49,11 @@ const ScoutingNetworkMap = () => {
 
   // Football clubs with their real locations
   const footballClubs = [
-    { name: "Norwich City FC", country: "England", city: "Norwich", x: 530, y: 270, logo: norwichLogo },
-    { name: "Bohemians 1905", country: "Czech Republic", city: "Prague", x: 680, y: 295, logo: bohemiansLogo },
-    { name: "FC Vysočina Jihlava", country: "Czech Republic", city: "Jihlava", x: 675, y: 310, logo: jihlavaLogo },
-    { name: "TJ Jiskra Domažlice", country: "Czech Republic", city: "Domažlice", x: 665, y: 315, logo: domazliceLogo },
-    { name: "Forest Green Rovers", country: "England", city: "Nailsworth", x: 510, y: 290, logo: forestGreenLogo },
+    { name: "Norwich City FC", country: "England", city: "Norwich", x: 335, y: 365, logo: norwichLogo },
+    { name: "Bohemians 1905", country: "Czech Republic", city: "Prague", x: 465, y: 405, logo: bohemiansLogo },
+    { name: "FC Vysočina Jihlava", country: "Czech Republic", city: "Jihlava", x: 475, y: 415, logo: jihlavaLogo },
+    { name: "TJ Jiskra Domažlice", country: "Czech Republic", city: "Domažlice", x: 455, y: 410, logo: domazliceLogo },
+    { name: "Forest Green Rovers", country: "England", city: "Nailsworth", x: 305, y: 380, logo: forestGreenLogo },
   ];
 
   // Flag mapping
@@ -87,6 +88,7 @@ const ScoutingNetworkMap = () => {
     "Latvia": latviaFlag,
     "Lithuania": lithuaniaFlag,
     "Bulgaria": bulgariaFlag,
+    "Belarus": belarusFlag,
   };
 
   // Country centers with flag markers and leagues
@@ -116,11 +118,12 @@ const ScoutingNetworkMap = () => {
     { country: "Croatia", x: 490, y: 485, leagues: ["Croatian First Football League", "Croatian Second Football League"] },
     { country: "Ukraine", x: 620, y: 400, leagues: ["Ukrainian Premier League", "Ukrainian First League"] },
     { country: "Russia", x: 650, y: 300, leagues: ["Russian Premier League", "FNL"] },
-    { country: "Finland", x: 500, y: 150, leagues: ["Veikkausliiga", "Ykkönen"] },
+    { country: "Finland", x: 575, y: 200, leagues: ["Veikkausliiga", "Ykkönen"] },
     { country: "Estonia", x: 570, y: 240, leagues: ["Meistriliiga", "Esiliiga"] },
     { country: "Latvia", x: 570, y: 270, leagues: ["Virslīga", "1. līga"] },
     { country: "Lithuania", x: 550, y: 300, leagues: ["A Lyga", "I Lyga"] },
     { country: "Bulgaria", x: 560, y: 500, leagues: ["First Professional Football League", "Second Professional Football League"] },
+    { country: "Belarus", x: 590, y: 290, leagues: ["Belarusian Premier League", "Belarusian First League"] },
   ];
 
   const handleCountryClick = (country: string, x: number, y: number, event: React.MouseEvent) => {
