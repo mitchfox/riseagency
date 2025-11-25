@@ -14,25 +14,29 @@ const domainConfig = {
     icon: Activity,
     color: "text-red-500",
     bgColor: "bg-red-500/10",
-    borderColor: "border-red-500/20"
+    borderColor: "border-red-500/20",
+    solidBg: "bg-red-500"
   },
   Psychological: {
     icon: Brain,
     color: "text-purple-500",
     bgColor: "bg-purple-500/10",
-    borderColor: "border-purple-500/20"
+    borderColor: "border-purple-500/20",
+    solidBg: "bg-purple-500"
   },
   Technical: {
     icon: Zap,
     color: "text-blue-500",
     bgColor: "bg-blue-500/10",
-    borderColor: "border-blue-500/20"
+    borderColor: "border-blue-500/20",
+    solidBg: "bg-blue-500"
   },
   Tactical: {
     icon: Crosshair,
     color: "text-green-500",
     bgColor: "bg-green-500/10",
-    borderColor: "border-green-500/20"
+    borderColor: "border-green-500/20",
+    solidBg: "bg-green-500"
   }
 };
 
@@ -168,7 +172,7 @@ const Scouts = () => {
                                 className={`group bg-gradient-to-br from-muted/50 to-muted/30 rounded-xl hover:${config.bgColor} transition-all duration-300 hover:shadow-lg hover:-translate-y-1 border border-transparent hover:${config.borderColor} overflow-hidden`}
                               >
                                 {/* Colored Header Box */}
-                                <div className={`${config.color.replace('text-', 'bg-')} px-5 py-3`}>
+                                <div className={`${config.solidBg} px-5 py-3`}>
                                   <h4 className="font-bold text-black text-base">
                                     {skill.skill_name}
                                   </h4>
