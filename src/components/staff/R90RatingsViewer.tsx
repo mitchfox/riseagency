@@ -95,7 +95,9 @@ export const R90RatingsViewer = ({ open, onOpenChange, initialCategory, searchTe
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (selectedCategory !== 'all') {
+      // For most categories, filter directly in SQL. For synthetic "Shots" category,
+      // we fetch everything and filter in-memory so we can match Finishing/Shot, etc.
+      if (selectedCategory !== 'all' && selectedCategory !== 'Shots') {
         query = query.eq('category', selectedCategory);
       }
 
@@ -134,6 +136,21 @@ export const R90RatingsViewer = ({ open, onOpenChange, initialCategory, searchTe
           ].join(' ').toLowerCase();
           
           return filterWords.some(word => searchableText.includes(word));
+        });
+      }
+
+      // Special handling for the synthetic "Shots" category: show any rating
+      // whose category, subcategory or text clearly relates to shots.
+      if (selectedCategory === 'Shots') {
+        filteredData = filteredData.filter(rating => {
+          const text = [
+            rating.category || '',
+            rating.subcategory || '',
+            rating.title || '',
+            rating.description || '',
+            rating.content || ''
+          ].join(' ').toLowerCase();
+          return text.includes('shot');
         });
       }
       
@@ -394,13 +411,24 @@ export const R90RatingsViewer = ({ open, onOpenChange, initialCategory, searchTe
                     <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
                   </div>
                 ) : ratings.length === 0 ? (
-                  <div className="text-center py-12">
-                    <LineChart className="w-12 h-12 mx-auto mb-4 text-muted-foreground/40" />
-                    <p className="text-muted-foreground">
-                      No R90 ratings found
-                      {selectedCategory !== 'all' && ` for ${selectedCategory}`}
-                    </p>
-                  </div>
+                  selectedCategory === 'Shots' ? (
+                    <div className="text-center py-12 space-y-4">
+                      <div className="max-w-md mx-auto">
+                        <XGPitchMap />
+                      </div>
+                      <p className="text-muted-foreground">
+                        No specific R90 ratings saved yet for Shots, but you can still use the xG pitch map as a visual reference.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="text-center py-12">
+                      <LineChart className="w-12 h-12 mx-auto mb-4 text-muted-foreground/40" />
+                      <p className="text-muted-foreground">
+                        No R90 ratings found
+                        {selectedCategory !== 'all' && ` for ${selectedCategory}`}
+                      </p>
+                    </div>
+                  )
                 ) : (
                   <div className="space-y-3">
                     {Object.entries(groupedRatings()).map(([category, subcategories]) => {
