@@ -61,6 +61,8 @@ export const CreatePerformanceReportDialog = ({
   const [showStrikerStats, setShowStrikerStats] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [playerClub, setPlayerClub] = useState<string>("");
+  const [playerPosition, setPlayerPosition] = useState<string>("");
+  const [availableStats, setAvailableStats] = useState<Array<{id: string; stat_name: string; stat_key: string; description: string | null}>>([]);
   const [actionTypes, setActionTypes] = useState<string[]>([]);
   const [previousScores, setPreviousScores] = useState<Record<number, Array<{score: string | number | null, title: string, description: string}>>>({});
   const [expandedScores, setExpandedScores] = useState<Set<number>>(new Set());
@@ -158,7 +160,10 @@ export const CreatePerformanceReportDialog = ({
     setIsR90ViewerOpen(true);
   };
 
-  // Striker stats
+  // Dynamic stats based on position
+  const [additionalStats, setAdditionalStats] = useState<Record<string, string>>({});
+  
+  // Striker stats (keeping for backwards compatibility)
   const [strikerStats, setStrikerStats] = useState({
     xGChain: "",
     xGChain_per90: "",
@@ -287,12 +292,26 @@ export const CreatePerformanceReportDialog = ({
     try {
       const { data, error } = await supabase
         .from("players")
-        .select("club")
+        .select("club, position")
         .eq("id", playerId)
         .single();
 
       if (error) throw error;
       setPlayerClub(data?.club || "");
+      setPlayerPosition(data?.position || "");
+      
+      // Fetch available stats for this position
+      if (data?.position) {
+        const { data: stats, error: statsError } = await supabase
+          .from("performance_statistics")
+          .select("id, stat_name, stat_key, description")
+          .contains("positions", [data.position])
+          .order("stat_name");
+        
+        if (!statsError && stats) {
+          setAvailableStats(stats);
+        }
+      }
     } catch (error: any) {
       console.error("Error fetching player club:", error);
     }
@@ -373,6 +392,8 @@ export const CreatePerformanceReportDialog = ({
       // Populate striker stats if they exist
       if (analysisData.striker_stats) {
         const stats = analysisData.striker_stats as any;
+        
+        // Populate legacy striker stats
         setStrikerStats({
           xGChain: stats.xGChain?.toString() || "",
           xGChain_per90: stats.xGChain_per90?.toString() || "",
@@ -399,6 +420,29 @@ export const CreatePerformanceReportDialog = ({
           progressive_passes_adj: stats.progressive_passes_adj?.toString() || "",
           progressive_passes_adj_per90: stats.progressive_passes_adj_per90?.toString() || "",
         });
+        
+        // Populate additional stats (any keys not in legacy striker stats)
+        const legacyKeys = new Set([
+          'xGChain', 'xGChain_per90', 'xG_adj', 'xG_adj_per90', 'xA_adj', 'xA_adj_per90',
+          'movement_in_behind_xC', 'movement_in_behind_xC_per90', 'movement_down_side_xC', 
+          'movement_down_side_xC_per90', 'triple_threat_xC', 'triple_threat_xC_per90',
+          'movement_to_feet_xC', 'movement_to_feet_xC_per90', 'crossing_movement_xC',
+          'crossing_movement_xC_per90', 'interceptions', 'interceptions_per90',
+          'regains_adj', 'regains_adj_per90', 'turnovers_adj', 'turnovers_adj_per90',
+          'progressive_passes_adj', 'progressive_passes_adj_per90'
+        ]);
+        
+        const newStats: Record<string, string> = {};
+        Object.entries(stats).forEach(([key, value]) => {
+          if (!legacyKeys.has(key) && value != null) {
+            newStats[key] = value.toString();
+          }
+        });
+        
+        if (Object.keys(newStats).length > 0) {
+          setAdditionalStats(newStats);
+        }
+        
         setShowStrikerStats(true);
       }
 
@@ -469,6 +513,7 @@ export const CreatePerformanceReportDialog = ({
     setSelectedFixtureId("");
     setPerformanceOverview("");
     setShowStrikerStats(false);
+    setAdditionalStats({});
     setStrikerStats({
       xGChain: "",
       xGChain_per90: "",
@@ -869,13 +914,32 @@ export const CreatePerformanceReportDialog = ({
       const rawScore = actions.reduce((sum, a) => sum + (parseFloat(a.action_score) || 0), 0);
       const calculatedR90 = (rawScore / parseInt(minutesPlayed)) * 90;
       
-      // Prepare striker stats JSONB
+      // Prepare striker stats JSONB - merge legacy and new stats
       const hasStrikerStats = Object.values(strikerStats).some(v => v !== "");
-      const strikerStatsJson = hasStrikerStats ? Object.fromEntries(
-        Object.entries(strikerStats)
-          .filter(([_, value]) => value !== "")
-          .map(([key, value]) => [key, parseFloat(value)])
-      ) : null;
+      const hasAdditionalStats = Object.values(additionalStats).some(v => v !== "");
+      
+      let strikerStatsJson = null;
+      if (hasStrikerStats || hasAdditionalStats) {
+        strikerStatsJson = {};
+        
+        // Add legacy striker stats
+        if (hasStrikerStats) {
+          Object.entries(strikerStats)
+            .filter(([_, value]) => value !== "")
+            .forEach(([key, value]) => {
+              strikerStatsJson[key] = parseFloat(value);
+            });
+        }
+        
+        // Add new position-based additional stats
+        if (hasAdditionalStats) {
+          Object.entries(additionalStats)
+            .filter(([_, value]) => value !== "")
+            .forEach(([key, value]) => {
+              strikerStatsJson[key] = parseInt(value);
+            });
+        }
+      }
 
       let analysisIdToUse = analysisId;
 
@@ -1067,232 +1131,41 @@ export const CreatePerformanceReportDialog = ({
               </Button>
             </CollapsibleTrigger>
             <CollapsibleContent className="mt-4 space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div>
-                  <Label>xGChain</Label>
-                  <Input
-                    type="number"
-                    step="0.001"
-                    value={strikerStats.xGChain}
-                    onChange={(e) => setStrikerStats({...strikerStats, xGChain: e.target.value})}
-                  />
+              {availableStats.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {availableStats.map((stat) => (
+                    <div key={stat.id}>
+                      <Label>
+                        {stat.stat_name}
+                        {stat.description && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="ml-1 text-muted-foreground cursor-help">ⓘ</span>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p className="text-xs">{stat.description}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        )}
+                      </Label>
+                      <Input
+                        type="number"
+                        step="1"
+                        value={additionalStats[stat.stat_key] || ""}
+                        onChange={(e) => setAdditionalStats({
+                          ...additionalStats,
+                          [stat.stat_key]: e.target.value
+                        })}
+                        placeholder="0"
+                      />
+                    </div>
+                  ))}
                 </div>
-                <div>
-                  <Label>xGChain per90 (Auto-calculated)</Label>
-                  <Input
-                    type="number"
-                    step="0.001"
-                    value={strikerStats.xGChain_per90}
-                    readOnly
-                    className="bg-muted cursor-not-allowed"
-                  />
-                </div>
-                <div>
-                  <Label>xG (adj.)</Label>
-                  <Input
-                    type="number"
-                    step="0.001"
-                    value={strikerStats.xG_adj}
-                    onChange={(e) => setStrikerStats({...strikerStats, xG_adj: e.target.value})}
-                  />
-                </div>
-                <div>
-                  <Label>xG (adj.) per90 (Auto-calculated)</Label>
-                  <Input
-                    type="number"
-                    step="0.001"
-                    value={strikerStats.xG_adj_per90}
-                    readOnly
-                    className="bg-muted cursor-not-allowed"
-                  />
-                </div>
-                <div>
-                  <Label>xA (adj.)</Label>
-                  <Input
-                    type="number"
-                    step="0.001"
-                    value={strikerStats.xA_adj}
-                    onChange={(e) => setStrikerStats({...strikerStats, xA_adj: e.target.value})}
-                  />
-                </div>
-                <div>
-                  <Label>xA (adj.) per90 (Auto-calculated)</Label>
-                  <Input
-                    type="number"
-                    step="0.001"
-                    value={strikerStats.xA_adj_per90}
-                    readOnly
-                    className="bg-muted cursor-not-allowed"
-                  />
-                </div>
-                <div>
-                  <Label>Movement In Behind xC</Label>
-                  <Input
-                    type="number"
-                    step="0.001"
-                    value={strikerStats.movement_in_behind_xC}
-                    onChange={(e) => setStrikerStats({...strikerStats, movement_in_behind_xC: e.target.value})}
-                  />
-                </div>
-                <div>
-                  <Label>Movement In Behind xC per90 (Auto-calculated)</Label>
-                  <Input
-                    type="number"
-                    step="0.001"
-                    value={strikerStats.movement_in_behind_xC_per90}
-                    readOnly
-                    className="bg-muted cursor-not-allowed"
-                  />
-                </div>
-                <div>
-                  <Label>Movement Down Side xC</Label>
-                  <Input
-                    type="number"
-                    step="0.001"
-                    value={strikerStats.movement_down_side_xC}
-                    onChange={(e) => setStrikerStats({...strikerStats, movement_down_side_xC: e.target.value})}
-                  />
-                </div>
-                <div>
-                  <Label>Movement Down Side xC per90 (Auto-calculated)</Label>
-                  <Input
-                    type="number"
-                    step="0.001"
-                    value={strikerStats.movement_down_side_xC_per90}
-                    readOnly
-                    className="bg-muted cursor-not-allowed"
-                  />
-                </div>
-                <div>
-                  <Label>Triple Threat xC</Label>
-                  <Input
-                    type="number"
-                    step="0.001"
-                    value={strikerStats.triple_threat_xC}
-                    onChange={(e) => setStrikerStats({...strikerStats, triple_threat_xC: e.target.value})}
-                  />
-                </div>
-                <div>
-                  <Label>Triple Threat xC per90 (Auto-calculated)</Label>
-                  <Input
-                    type="number"
-                    step="0.001"
-                    value={strikerStats.triple_threat_xC_per90}
-                    readOnly
-                    className="bg-muted cursor-not-allowed"
-                  />
-                </div>
-                <div>
-                  <Label>Movement To Feet xC</Label>
-                  <Input
-                    type="number"
-                    step="0.001"
-                    value={strikerStats.movement_to_feet_xC}
-                    onChange={(e) => setStrikerStats({...strikerStats, movement_to_feet_xC: e.target.value})}
-                  />
-                </div>
-                <div>
-                  <Label>Movement To Feet xC per90 (Auto-calculated)</Label>
-                  <Input
-                    type="number"
-                    step="0.001"
-                    value={strikerStats.movement_to_feet_xC_per90}
-                    readOnly
-                    className="bg-muted cursor-not-allowed"
-                  />
-                </div>
-                <div>
-                  <Label>Crossing Movement xC</Label>
-                  <Input
-                    type="number"
-                    step="0.001"
-                    value={strikerStats.crossing_movement_xC}
-                    onChange={(e) => setStrikerStats({...strikerStats, crossing_movement_xC: e.target.value})}
-                  />
-                </div>
-                <div>
-                  <Label>Crossing Movement xC per90 (Auto-calculated)</Label>
-                  <Input
-                    type="number"
-                    step="0.001"
-                    value={strikerStats.crossing_movement_xC_per90}
-                    readOnly
-                    className="bg-muted cursor-not-allowed"
-                  />
-                </div>
-                <div>
-                  <Label>Interceptions</Label>
-                  <Input
-                    type="number"
-                    value={strikerStats.interceptions}
-                    onChange={(e) => setStrikerStats({...strikerStats, interceptions: e.target.value})}
-                  />
-                </div>
-                <div>
-                  <Label>Interceptions per90 (Auto-calculated)</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    value={strikerStats.interceptions_per90}
-                    readOnly
-                    className="bg-muted cursor-not-allowed"
-                  />
-                </div>
-                <div>
-                  <Label>Regains (Adj.)</Label>
-                  <Input
-                    type="number"
-                    value={strikerStats.regains_adj}
-                    onChange={(e) => setStrikerStats({...strikerStats, regains_adj: e.target.value})}
-                  />
-                </div>
-                <div>
-                  <Label>Regains (Adj.) per90 (Auto-calculated)</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    value={strikerStats.regains_adj_per90}
-                    readOnly
-                    className="bg-muted cursor-not-allowed"
-                  />
-                </div>
-                <div>
-                  <Label>Turnovers (Adj.)</Label>
-                  <Input
-                    type="number"
-                    value={strikerStats.turnovers_adj}
-                    onChange={(e) => setStrikerStats({...strikerStats, turnovers_adj: e.target.value})}
-                  />
-                </div>
-                <div>
-                  <Label>Turnovers (Adj.) per90 (Auto-calculated)</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    value={strikerStats.turnovers_adj_per90}
-                    readOnly
-                    className="bg-muted cursor-not-allowed"
-                  />
-                </div>
-                <div>
-                  <Label>Progressive Passes (Adj.)</Label>
-                  <Input
-                    type="number"
-                    value={strikerStats.progressive_passes_adj}
-                    onChange={(e) => setStrikerStats({...strikerStats, progressive_passes_adj: e.target.value})}
-                  />
-                </div>
-                <div>
-                  <Label>Progressive Passes (Adj.) per90 (Auto-calculated)</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    value={strikerStats.progressive_passes_adj_per90}
-                    readOnly
-                    className="bg-muted cursor-not-allowed"
-                  />
-                </div>
-              </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  No additional statistics configured for {playerPosition || "this position"}.
+                </p>
+              )}
             </CollapsibleContent>
           </Collapsible>
 
