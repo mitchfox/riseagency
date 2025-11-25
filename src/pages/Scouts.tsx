@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -69,7 +69,7 @@ const Scouts = () => {
   };
 
   // Update selected slide on scroll
-  useState(() => {
+  useEffect(() => {
     if (!emblaApi) return;
     
     const onSelect = () => {
@@ -82,7 +82,7 @@ const Scouts = () => {
     return () => {
       emblaApi.off('select', onSelect);
     };
-  });
+  }, [emblaApi]);
 
   const handleWhatsApp = () => {
     window.open("https://wa.me/447856255509", "_blank");

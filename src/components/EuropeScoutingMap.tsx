@@ -69,6 +69,7 @@ const EuropeScoutingMap = () => {
     { name: "Austria", path: "M 640 330 L 690 320 L 710 340 L 700 360 L 660 370 L 640 350 Z", contacts: 0 },
     { name: "Poland", path: "M 700 220 L 760 210 L 780 240 L 770 280 L 740 300 L 700 290 L 680 260 Z", contacts: 0 },
     { name: "Czech Republic", path: "M 660 280 L 700 270 L 710 290 L 700 310 L 670 310 L 660 295 Z", contacts: 0 },
+    { name: "Czechia", path: "M 660 280 L 700 270 L 710 290 L 700 310 L 670 310 L 660 295 Z", contacts: 0 },
     { name: "Denmark", path: "M 580 190 L 610 180 L 630 200 L 620 220 L 590 210 Z", contacts: 0 },
     { name: "Sweden", path: "M 630 100 L 660 90 L 680 120 L 690 160 L 670 200 L 640 210 L 620 180 L 630 140 Z", contacts: 0 },
     { name: "Norway", path: "M 580 80 L 620 60 L 650 90 L 640 140 L 610 170 L 580 150 L 570 110 Z", contacts: 0 },
