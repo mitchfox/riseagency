@@ -230,10 +230,11 @@ const ScoutingNetworkMap = () => {
               <g key={country.name}>
                 <path
                   d={country.path}
-                  fill="hsl(var(--muted) / 0.25)"
+                  fill="none"
                   stroke="hsl(var(--border))"
-                  strokeWidth="2"
-                  className="transition-colors duration-200"
+                  strokeWidth="1.5"
+                  opacity="0.6"
+                  className="transition-opacity duration-200"
                 >
                   <title>{country.name}</title>
                 </path>
