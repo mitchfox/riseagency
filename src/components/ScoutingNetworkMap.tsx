@@ -258,6 +258,16 @@ const ScoutingNetworkMap = () => {
     // Serbia
     { name: "FK IMT Belgrad", country: "Serbia", city: "Belgrade", x: 525, y: 485, logo: "/clubs/fk-imt-belgrad.png" },
     { name: "FK Cukaricki", country: "Serbia", city: "Belgrade", x: 526, y: 486, logo: "/clubs/fk-cukaricki.png" },
+    { name: "FK Partizan Belgrade", country: "Serbia", city: "Belgrade", x: 527, y: 487, logo: "/clubs/fk-partizan-belgrade.png" },
+    { name: "FK Radnik Surdulica", country: "Serbia", city: "Surdulica", x: 538, y: 500, logo: "/clubs/fk-radnik-surdulica.png" },
+    { name: "FK Spartak Subotica", country: "Serbia", city: "Subotica", x: 520, y: 468, logo: "/clubs/fk-spartak-subotica.png" },
+    { name: "FK TSC Backa Topola", country: "Serbia", city: "Backa Topola", x: 521, y: 469, logo: "/clubs/fk-tsc-backa-topola.png" },
+    { name: "FK Javor-Matis Ivanjica", country: "Serbia", city: "Ivanjica", x: 518, y: 490, logo: "/clubs/fk-javor-matis-ivanjica.png" },
+    { name: "FK Mladost Lucani", country: "Serbia", city: "Lucani", x: 522, y: 486, logo: "/clubs/fk-mladost-lucani.png" },
+    { name: "FK Napredak Krusevac", country: "Serbia", city: "Krusevac", x: 530, y: 490, logo: "/clubs/fk-napredak-krusevac.png" },
+    { name: "FK Novi Pazar", country: "Serbia", city: "Novi Pazar", x: 518, y: 495, logo: "/clubs/fk-novi-pazar.png" },
+    { name: "FK Radnicki 1923 Kragujevac", country: "Serbia", city: "Kragujevac", x: 524, y: 488, logo: "/clubs/fk-radnicki-1923-kragujevac.png" },
+    { name: "FK Radnicki Nis", country: "Serbia", city: "Nis", x: 532, y: 494, logo: "/clubs/fk-radnicki-nis.png" },
   ];
 
   // Flag mapping
