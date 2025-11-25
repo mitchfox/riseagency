@@ -438,13 +438,12 @@ export const R90RatingsViewer = ({ open, onOpenChange, initialCategory, searchTe
                             </CollapsibleTrigger>
                             <CollapsibleContent>
                               <CardContent className="space-y-3 pt-0">
-                                {(() => {
-                                  console.log('Category check:', { category, upperCase: category.toUpperCase(), check: category.toUpperCase() === 'SHOTS' });
-                                  return category.toUpperCase() === 'SHOTS';
-                                })() ? (
-                                  <XGPitchMap />
-                                ) : (
-                                  Object.entries(subcategories).map(([subcategory, ratingsInSubcat]) => {
+                                {category.toUpperCase() === 'SHOTS' && (
+                                  <div className="mb-4">
+                                    <XGPitchMap />
+                                  </div>
+                                )}
+                                {Object.entries(subcategories).map(([subcategory, ratingsInSubcat]) => {
                                   const subcategoryKey = `${categoryKey}-${subcategory}`;
                                   const isSubcategoryExpanded = expandedSubcategories.has(subcategoryKey);
                                   
@@ -629,8 +628,8 @@ export const R90RatingsViewer = ({ open, onOpenChange, initialCategory, searchTe
                                         </CollapsibleContent>
                                       </Card>
                                     </Collapsible>
-                                   );
-                                }))}
+                                    );
+                                  })}
                               </CardContent>
                             </CollapsibleContent>
                           </Card>
