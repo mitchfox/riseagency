@@ -290,6 +290,18 @@ const ScoutingNetworkMap = () => {
     { name: "Mjällby AIF", country: "Sweden", city: "Sölvesborg", x: 412, y: 320, logo: "/clubs/mjallby-aif.png" },
     { name: "IFK Värnamo", country: "Sweden", city: "Värnamo", x: 408, y: 308, logo: "/clubs/ifk-varnamo.png" },
     { name: "Östers IF", country: "Sweden", city: "Växjö", x: 415, y: 315, logo: "/clubs/osters-if.png" },
+    
+    // Switzerland
+    { name: "FC Zürich", country: "Switzerland", city: "Zürich", x: 402, y: 440, logo: "/clubs/fc-zurich.png" },
+    { name: "FC Winterthur", country: "Switzerland", city: "Winterthur", x: 404, y: 438, logo: "/clubs/fc-winterthur.png" },
+    { name: "BSC Young Boys", country: "Switzerland", city: "Bern", x: 395, y: 445, logo: "/clubs/bsc-young-boys.png" },
+    { name: "FC Thun", country: "Switzerland", city: "Thun", x: 395, y: 455, logo: "/clubs/fc-thun.png" },
+    { name: "FC Basel 1893", country: "Switzerland", city: "Basel", x: 385, y: 440, logo: "/clubs/fc-basel-1893.png" },
+    { name: "FC Luzern", country: "Switzerland", city: "Luzern", x: 398, y: 448, logo: "/clubs/fc-luzern.png" },
+    { name: "FC Lausanne-Sport", country: "Switzerland", city: "Lausanne", x: 388, y: 455, logo: "/clubs/fc-lausanne-sport.png" },
+    { name: "FC Sion", country: "Switzerland", city: "Sion", x: 390, y: 465, logo: "/clubs/fc-sion.png" },
+    { name: "FC St. Gallen 1879", country: "Switzerland", city: "St. Gallen", x: 412, y: 438, logo: "/clubs/fc-st-gallen-1879.png" },
+    { name: "FC Lugano", country: "Switzerland", city: "Lugano", x: 405, y: 470, logo: "/clubs/fc-lugano.png" },
   ];
 
   // Flag mapping
@@ -578,7 +590,7 @@ const ScoutingNetworkMap = () => {
             )}
 
             {/* Europe outline image - hide when zoomed in */}
-            {zoomLevel <= 5 && (
+            {zoomLevel < 2 && (
               <image
                 href={europeOutline}
                 x="0"
@@ -675,7 +687,7 @@ const ScoutingNetworkMap = () => {
             </g>
             
             {/* Country Flag Markers - render on top so they're visible over clusters, hide when zoomed in */}
-            {!selectedCountry && zoomLevel <= 5 && countryMarkers.map((country, idx) => {
+            {!selectedCountry && zoomLevel < 2 && countryMarkers.map((country, idx) => {
               const flagImage = flagImages[country.country];
               return (
                 <g 
