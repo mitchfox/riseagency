@@ -8,7 +8,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
-import { Plus, Trash2, EyeOff, AlertTriangle, LineChart, Sparkles, Search, Loader2, ChevronDown, ChevronUp, List } from "lucide-react";
+import { Plus, Trash2, EyeOff, AlertTriangle, LineChart, Sparkles, Search, Loader2, ChevronDown, ChevronUp, List, GripVertical } from "lucide-react";
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { Checkbox } from "@/components/ui/checkbox";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -45,6 +48,43 @@ interface PerformanceAction {
   action_description: string;
   notes: string;
 }
+
+interface SortableStatItemProps {
+  id: string;
+  children: React.ReactNode;
+}
+
+const SortableStatItem = ({ id, children }: SortableStatItemProps) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} className="relative">
+      <div
+        {...attributes}
+        {...listeners}
+        className="absolute left-1 top-1/2 -translate-y-1/2 cursor-grab active:cursor-grabbing z-10 p-1 hover:bg-accent/50 rounded"
+      >
+        <GripVertical className="h-4 w-4 text-muted-foreground" />
+      </div>
+      <div className="pl-7">
+        {children}
+      </div>
+    </div>
+  );
+};
 
 export const CreatePerformanceReportDialog = ({
   open,
@@ -200,6 +240,27 @@ export const CreatePerformanceReportDialog = ({
   const [actions, setActions] = useState<PerformanceAction[]>([
     { action_number: 1, minute: "", action_score: "", action_type: "", action_description: "", notes: "" }
   ]);
+
+  // Drag and drop sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      setSelectedStatKeys((items) => {
+        const oldIndex = items.indexOf(active.id as string);
+        const newIndex = items.indexOf(over.id as string);
+        
+        return arrayMove(items, oldIndex, newIndex);
+      });
+    }
+  };
 
   useEffect(() => {
     if (open) {
@@ -1219,11 +1280,17 @@ export const CreatePerformanceReportDialog = ({
 
               {selectedStatKeys.length > 0 ? (
                 <>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {(() => {
-                      // Group stats into pairs (attempted/successful) and singles
-                      const processedKeys = new Set<string>();
-                      const statGroups: Array<{ keys: string[], isPair: boolean }> = [];
+                  <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragEnd={handleDragEnd}
+                  >
+                    <SortableContext items={selectedStatKeys} strategy={verticalListSortingStrategy}>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {(() => {
+                        // Group stats into pairs (attempted/successful) and singles
+                        const processedKeys = new Set<string>();
+                        const statGroups: Array<{ id: string, keys: string[], isPair: boolean }> = [];
                       
                       selectedStatKeys.forEach(statKey => {
                         if (processedKeys.has(statKey)) return;
@@ -1241,14 +1308,14 @@ export const CreatePerformanceReportDialog = ({
                           
                           const matchingSuccessKey = successKeys.find(k => selectedStatKeys.includes(k));
                           
-                          if (matchingSuccessKey) {
-                            statGroups.push({ keys: [matchingSuccessKey, statKey], isPair: true });
-                            processedKeys.add(statKey);
-                            processedKeys.add(matchingSuccessKey);
-                          } else {
-                            statGroups.push({ keys: [statKey], isPair: false });
-                            processedKeys.add(statKey);
-                          }
+                            if (matchingSuccessKey) {
+                              statGroups.push({ id: statKey, keys: [matchingSuccessKey, statKey], isPair: true });
+                              processedKeys.add(statKey);
+                              processedKeys.add(matchingSuccessKey);
+                            } else {
+                              statGroups.push({ id: statKey, keys: [statKey], isPair: false });
+                              processedKeys.add(statKey);
+                            }
                         } else {
                           // Check if there's a matching attempted stat
                           const attemptedKeys = [
@@ -1259,14 +1326,14 @@ export const CreatePerformanceReportDialog = ({
                           
                           const matchingAttemptedKey = attemptedKeys.find(k => selectedStatKeys.includes(k));
                           
-                          if (matchingAttemptedKey && !processedKeys.has(matchingAttemptedKey)) {
-                            statGroups.push({ keys: [statKey, matchingAttemptedKey], isPair: true });
-                            processedKeys.add(statKey);
-                            processedKeys.add(matchingAttemptedKey);
-                          } else if (!processedKeys.has(statKey)) {
-                            statGroups.push({ keys: [statKey], isPair: false });
-                            processedKeys.add(statKey);
-                          }
+                            if (matchingAttemptedKey && !processedKeys.has(matchingAttemptedKey)) {
+                              statGroups.push({ id: statKey, keys: [statKey, matchingAttemptedKey], isPair: true });
+                              processedKeys.add(statKey);
+                              processedKeys.add(matchingAttemptedKey);
+                            } else if (!processedKeys.has(statKey)) {
+                              statGroups.push({ id: statKey, keys: [statKey], isPair: false });
+                              processedKeys.add(statKey);
+                            }
                         }
                       });
                       
@@ -1296,7 +1363,8 @@ export const CreatePerformanceReportDialog = ({
                           const displayName = `${baseName} (Successful/Attempted)`;
                           
                           return (
-                            <div key={groupIndex} className="p-2 border rounded-lg bg-muted/20">
+                            <SortableStatItem key={group.id} id={group.id}>
+                              <div className="p-2 border rounded-lg bg-muted/20">
                               <div className="flex items-center justify-between mb-1.5">
                                 <Label className="text-xs font-semibold">{displayName}</Label>
                                 <Button
@@ -1373,7 +1441,8 @@ export const CreatePerformanceReportDialog = ({
                               <div className="text-[10px] text-center text-muted-foreground">
                                 {percentage}% success
                               </div>
-                            </div>
+                              </div>
+                            </SortableStatItem>
                           );
                         } else {
                           const statKey = group.keys[0];
@@ -1383,7 +1452,8 @@ export const CreatePerformanceReportDialog = ({
                           const per90Value = additionalStats[per90Key];
                           
                           return (
-                            <div key={groupIndex} className="p-2 border rounded-lg bg-muted/20">
+                            <SortableStatItem key={group.id} id={group.id}>
+                              <div className="p-2 border rounded-lg bg-muted/20">
                               <div className="flex items-center justify-between mb-1.5">
                                 <Label className="text-xs">
                                   {stat.stat_name}
@@ -1440,12 +1510,15 @@ export const CreatePerformanceReportDialog = ({
                                   className="w-14 h-7 text-xs bg-muted"
                                 />
                               </div>
-                            </div>
+                              </div>
+                            </SortableStatItem>
                           );
                         }
                       });
-                    })()}
-                  </div>
+                      })()}
+                    </div>
+                  </SortableContext>
+                </DndContext>
                   <Button
                     type="button"
                     variant="outline"
