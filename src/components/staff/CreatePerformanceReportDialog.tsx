@@ -243,11 +243,22 @@ export const CreatePerformanceReportDialog = ({
       turnovers_adj_per90: calculatePer90(prev.turnovers_adj),
       progressive_passes_adj_per90: calculatePer90(prev.progressive_passes_adj),
     }));
+
+    // Auto-calculate per90 for additional stats
+    const updatedStats: Record<string, string> = { ...additionalStats };
+    Object.keys(additionalStats).forEach(key => {
+      if (!key.endsWith('_per90')) {
+        const per90Key = `${key}_per90`;
+        updatedStats[per90Key] = calculatePer90(additionalStats[key]);
+      }
+    });
+    setAdditionalStats(updatedStats);
   }, [minutesPlayed, strikerStats.xGChain, strikerStats.xG_adj, strikerStats.xA_adj, 
       strikerStats.movement_in_behind_xC, strikerStats.movement_down_side_xC, 
       strikerStats.triple_threat_xC, strikerStats.movement_to_feet_xC, 
       strikerStats.crossing_movement_xC, strikerStats.interceptions, 
-      strikerStats.regains_adj, strikerStats.turnovers_adj, strikerStats.progressive_passes_adj]);
+      strikerStats.regains_adj, strikerStats.turnovers_adj, strikerStats.progressive_passes_adj,
+      ...Object.values(additionalStats)]);
 
   // Auto-calculate xGChain and xGChain_per90 directly from actions
   useEffect(() => {
@@ -311,7 +322,9 @@ export const CreatePerformanceReportDialog = ({
         .order("stat_name");
       
       if (!allStatsError && allStatsData) {
-        setAllStats(allStatsData);
+        // Filter out per90 stats from manual selection
+        const nonPer90Stats = allStatsData.filter(stat => !stat.stat_key.endsWith('_per90'));
+        setAllStats(nonPer90Stats);
       }
       
       // Fetch available stats for this position
@@ -324,8 +337,9 @@ export const CreatePerformanceReportDialog = ({
         
         if (!statsError && stats) {
           setAvailableStats(stats);
-          // Auto-select position-specific stats
-          setSelectedStatKeys(stats.map(s => s.stat_key));
+          // Auto-select position-specific stats (excluding per90 stats)
+          const nonPer90Keys = stats.filter(s => !s.stat_key.endsWith('_per90')).map(s => s.stat_key);
+          setSelectedStatKeys(nonPer90Keys);
         }
       }
     } catch (error: any) {
@@ -453,7 +467,10 @@ export const CreatePerformanceReportDialog = ({
         Object.entries(stats).forEach(([key, value]) => {
           if (!legacyKeys.has(key) && value != null) {
             newStats[key] = value.toString();
-            statsKeys.push(key);
+            // Only add non-per90 keys to selectedStatKeys (per90 will be auto-calculated)
+            if (!key.endsWith('_per90')) {
+              statsKeys.push(key);
+            }
           }
         });
         
@@ -533,7 +550,7 @@ export const CreatePerformanceReportDialog = ({
     setPerformanceOverview("");
     setShowStrikerStats(false);
     setAdditionalStats({});
-    setSelectedStatKeys(availableStats.map(s => s.stat_key)); // Reset to position-specific stats
+    setSelectedStatKeys(availableStats.filter(s => !s.stat_key.endsWith('_per90')).map(s => s.stat_key)); // Reset to position-specific stats (excluding per90)
     setStrikerStats({
       xGChain: "",
       xGChain_per90: "",
@@ -1157,8 +1174,11 @@ export const CreatePerformanceReportDialog = ({
                     {selectedStatKeys.map((statKey) => {
                       const stat = allStats.find(s => s.stat_key === statKey);
                       if (!stat) return null;
+                      const per90Key = `${statKey}_per90`;
+                      const per90Value = additionalStats[per90Key];
+                      
                       return (
-                        <div key={stat.id} className="relative">
+                        <div key={stat.id} className="relative space-y-2">
                           <Label>
                             {stat.stat_name}
                             {stat.description && (
@@ -1192,6 +1212,7 @@ export const CreatePerformanceReportDialog = ({
                                 setSelectedStatKeys(prev => prev.filter(k => k !== statKey));
                                 const newStats = {...additionalStats};
                                 delete newStats[statKey];
+                                delete newStats[per90Key];
                                 setAdditionalStats(newStats);
                               }}
                               className="h-10 w-10"
@@ -1199,6 +1220,11 @@ export const CreatePerformanceReportDialog = ({
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>
+                          {per90Value && (
+                            <div className="text-xs text-muted-foreground pl-1">
+                              Per 90: <span className="font-mono">{per90Value}</span>
+                            </div>
+                          )}
                         </div>
                       );
                     })}
