@@ -122,13 +122,13 @@ const Scouts = () => {
 
             {/* Gold Circle Indicators - ABOVE carousel */}
             <div className="flex justify-center gap-3 pb-4">
-              {[0, 1, 2].map((index) => (
+              {[0, 1].map((index) => (
                 <button
                   key={index}
                   onClick={() => scrollToSlide(index)}
                   className={`transition-all duration-300 rounded-full ${
                     selectedSlide === index
-                      ? 'w-12 h-3 bg-gradient-to-r from-[#D4AF37] via-[#F4D03F] to-[#D4AF37] shadow-lg shadow-yellow-500/50'
+                      ? 'w-12 h-3 bg-primary shadow-lg shadow-primary/50'
                       : 'w-3 h-3 bg-muted hover:bg-muted-foreground/50'
                   }`}
                   aria-label={`Go to slide ${index + 1}`}
@@ -317,15 +317,6 @@ const Scouts = () => {
                     </div>
                     </div>
                   </div>
-
-                  {/* Slide 3: Europe Scouting Map */}
-                  <div className="flex-[0_0_100%] min-w-0 px-4 pb-20 flex items-center">
-                    <div className="w-full max-w-6xl mx-auto">
-                      <div className="border-2 border-border rounded-2xl overflow-hidden bg-card p-6 md:p-8 animate-fade-in">
-                        <ScoutingNetworkMap />
-                      </div>
-                    </div>
-                  </div>
                 </div>
               </div>
           </div>
@@ -432,16 +423,10 @@ const Scouts = () => {
               </p>
             </div>
 
-            {/* Map Placeholder */}
+            {/* Scouting Network Map */}
             <div className="max-w-5xl mx-auto mb-8">
-              <div className="relative aspect-video bg-muted/30 rounded-2xl border border-border flex items-center justify-center overflow-hidden group hover:border-primary/40 transition-all duration-500">
-                <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                
-                <div className="relative text-center z-10">
-                  <MapPin className="h-16 w-16 mx-auto mb-4 text-muted-foreground group-hover:scale-110 transition-transform duration-500" />
-                  <p className="text-xl font-bebas uppercase tracking-wider mb-1">Interactive Europe Map</p>
-                  <p className="text-sm text-muted-foreground">Coverage visualization coming soon</p>
-                </div>
+              <div className="relative bg-card rounded-2xl border-2 border-border overflow-hidden">
+                <ScoutingNetworkMap />
               </div>
             </div>
 
