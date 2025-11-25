@@ -1,4 +1,4 @@
-import { MapPin } from "lucide-react";
+import { MapPin, ZoomOut } from "lucide-react";
 import { useState } from "react";
 import europeOutline from "@/assets/europe-outline.gif";
 import norwichLogo from "@/assets/clubs/norwich-city-official.png";
@@ -86,6 +86,17 @@ const ScoutingNetworkMap = () => {
     { name: "Burnley FC", country: "England", city: "Burnley", x: 320, y: 360, logo: "/clubs/burnley-fc.png" },
     { name: "Newcastle United", country: "England", city: "Newcastle", x: 322, y: 345, logo: "/clubs/newcastle-united.png" },
     { name: "Sunderland AFC", country: "England", city: "Sunderland", x: 324, y: 343, logo: "/clubs/sunderland-afc.png" },
+    // France clubs
+    { name: "LOSC Lille", country: "France", city: "Lille", x: 360, y: 390, logo: "/clubs/losc-lille.png" },
+    { name: "Le Havre AC", country: "France", city: "Le Havre", x: 345, y: 410, logo: "/clubs/le-havre-ac.png" },
+    { name: "FC Metz", country: "France", city: "Metz", x: 385, y: 415, logo: "/clubs/fc-metz.png" },
+    { name: "AJ Auxerre", country: "France", city: "Auxerre", x: 365, y: 435, logo: "/clubs/aj-auxerre.png" },
+    { name: "FC Nantes", country: "France", city: "Nantes", x: 335, y: 440, logo: "/clubs/fc-nantes.png" },
+    { name: "Angers SCO", country: "France", city: "Angers", x: 340, y: 435, logo: "/clubs/angers-sco.png" },
+    { name: "FC Lorient", country: "France", city: "Lorient", x: 325, y: 445, logo: "/clubs/fc-lorient.png" },
+    { name: "FC Toulouse", country: "France", city: "Toulouse", x: 350, y: 485, logo: "/clubs/fc-toulouse.png" },
+    { name: "AS Monaco", country: "France", city: "Monaco", x: 400, y: 485, logo: "/clubs/as-monaco.png" },
+    { name: "OGC Nice", country: "France", city: "Nice", x: 395, y: 490, logo: "/clubs/ogc-nice.png" },
   ];
 
   // Flag mapping
@@ -261,7 +272,35 @@ const ScoutingNetworkMap = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Map Section */}
-        <div className="lg:col-span-2 bg-card rounded-lg p-6 border">
+        <div className="lg:col-span-2 bg-card rounded-lg p-6 border relative">
+          {/* Country Flag Overlay when zoomed */}
+          {selectedCountry && (
+            <div className="absolute top-6 left-6 z-10 bg-card/95 backdrop-blur-sm border border-primary/20 rounded-lg p-4 shadow-xl">
+              <div className="flex flex-col gap-3 items-center">
+                <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-primary shadow-lg">
+                  <img 
+                    src={flagImages[selectedCountry]} 
+                    alt={selectedCountry}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div className="text-center">
+                  <h4 className="font-bebas text-xl">{selectedCountry}</h4>
+                  <p className="text-xs text-muted-foreground">
+                    {countryMarkers.find(c => c.country === selectedCountry)?.leagues.length} leagues
+                  </p>
+                </div>
+                <button
+                  onClick={handleMapClick}
+                  className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+                >
+                  <ZoomOut className="h-4 w-4" />
+                  <span className="text-sm font-medium">Zoom Out</span>
+                </button>
+              </div>
+            </div>
+          )}
+          
           <svg
             viewBox={viewBox}
             className="w-full h-auto cursor-pointer transition-all duration-700 ease-in-out"
