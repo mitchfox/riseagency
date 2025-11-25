@@ -634,6 +634,15 @@ const ScoutingNetworkMap = () => {
   const handleCityClick = (cityGroup: {cityName: string, country: string, x: number, y: number, clubs: typeof footballClubs}, event: React.MouseEvent) => {
     event.stopPropagation();
     setExpandedCity(`${cityGroup.cityName}-${cityGroup.country}`);
+    
+    // Zoom in on the city
+    const zoom = 8;
+    const newWidth = 1000 / zoom;
+    const newHeight = 600 / zoom;
+    const newX = Math.max(0, Math.min(1000 - newWidth, cityGroup.x - newWidth / 2));
+    const newY = Math.max(0, Math.min(600 - newHeight, cityGroup.y - newHeight / 2));
+    setViewBox(`${newX} ${newY} ${newWidth} ${newHeight}`);
+    setZoomLevel(2);
   };
   
   const getClubPositionInCircle = (index: number, total: number, centerX: number, centerY: number) => {
@@ -834,12 +843,12 @@ const ScoutingNetworkMap = () => {
                         y={cityGroup.y}
                         textAnchor="middle"
                         dominantBaseline="central"
-                        fontSize="8"
+                        fontSize="5"
                         fontWeight="bold"
                         fill="white"
-                        className="pointer-events-none"
+                        className="pointer-events-none uppercase"
                       >
-                        {cityGroup.cityName.length > 8 ? cityGroup.cityName.substring(0, 7) + "." : cityGroup.cityName}
+                        {cityGroup.cityName.toUpperCase()}
                       </text>
                     </g>
                     
@@ -904,19 +913,19 @@ const ScoutingNetworkMap = () => {
                   />
                   <text
                     x={cityGroup.x}
-                    y={cityGroup.y - 1}
+                    y={cityGroup.y - 2}
                     textAnchor="middle"
                     dominantBaseline="central"
-                    fontSize="7"
+                    fontSize="5"
                     fontWeight="bold"
                     fill="white"
-                    className="pointer-events-none"
+                    className="pointer-events-none uppercase"
                   >
-                    {cityGroup.cityName.length > 8 ? cityGroup.cityName.substring(0, 7) + "." : cityGroup.cityName}
+                    {cityGroup.cityName.toUpperCase()}
                   </text>
                   <text
                     x={cityGroup.x}
-                    y={cityGroup.y + 7}
+                    y={cityGroup.y + 5}
                     textAnchor="middle"
                     dominantBaseline="central"
                     fontSize="6"
@@ -926,7 +935,7 @@ const ScoutingNetworkMap = () => {
                   >
                     ({cityGroup.clubs.length})
                   </text>
-                  <title>{cityGroup.cityName}: {cityGroup.clubs.map(c => c.name).join(', ')}</title>
+                  <title>{cityGroup.cityName}: {cityGroup.clubs.map(c => c.name).join(", ")}</title>
                 </g>
               );
             })}
