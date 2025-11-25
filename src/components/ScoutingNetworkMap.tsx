@@ -358,14 +358,6 @@ const ScoutingNetworkMap = () => {
 
           {/* Legend */}
           <div className="flex items-center justify-center gap-6 mt-4 text-sm flex-wrap">
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full border border-white bg-primary/30" />
-              <span>Country Coverage</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full border border-white bg-primary/20" />
-              <span>Partner Club</span>
-            </div>
             <button
               onClick={() => setShowGrid(!showGrid)}
               className="flex items-center gap-2 px-3 py-1 rounded border border-border hover:bg-accent transition-colors"
@@ -388,12 +380,16 @@ const ScoutingNetworkMap = () => {
             <h4 className="font-bebas text-xl mb-3">NETWORK COVERAGE</h4>
             <div className="space-y-3">
               <div className="flex justify-between items-center">
-                <span className="text-muted-foreground">Partner Clubs</span>
-                <span className="font-bold text-xl">{footballClubs.length}</span>
+                <span className="text-muted-foreground">Professional Players</span>
+                <span className="font-bold text-xl">10,000+</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-muted-foreground">Countries</span>
-                <span className="font-bold text-xl">{countryMarkers.length}</span>
+                <span className="text-muted-foreground">Youth Prospects</span>
+                <span className="font-bold text-xl">4,000+</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-muted-foreground">Teams</span>
+                <span className="font-bold text-xl">500+</span>
               </div>
             </div>
           </div>
