@@ -1154,6 +1154,42 @@ export type Database = {
           },
         ]
       }
+      player_hidden_stats: {
+        Row: {
+          created_at: string
+          id: string
+          player_id: string
+          stat_key: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          player_id: string
+          stat_key: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          player_id?: string
+          stat_key?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "player_hidden_stats_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "player_hidden_stats_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       player_other_analysis: {
         Row: {
           analysis_id: string
