@@ -7,61 +7,34 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MessageCircle, Mail, MapPin, Users, TrendingUp, Award, Database, BarChart3, Target, Sparkles, Globe, Brain, Zap, Activity, Crosshair } from "lucide-react";
+import { SCOUTING_POSITIONS, POSITION_SKILLS } from "@/data/scoutingSkills";
 
-const scoutingDomains = [
-  {
-    domain: "Physical",
+const domainConfig = {
+  Physical: {
     icon: Activity,
     color: "text-red-500",
     bgColor: "bg-red-500/10",
-    borderColor: "border-red-500/20",
-    criteria: [
-      { skill: "Strength, Power & Speed", description: "Physical dominance in duels, explosive speed, and power to compete at the highest level." },
-      { skill: "Use of Body", description: "Effective body positioning to shield the ball, maintain balance, and win physical contests." },
-      { skill: "Anaerobic Endurance", description: "Capacity for repeated high-intensity efforts throughout 90 minutes without significant decline." },
-      { skill: "Size & Aerial Ability", description: "How physical attributes are utilized in aerial duels and physical confrontations." }
-    ]
+    borderColor: "border-red-500/20"
   },
-  {
-    domain: "Psychological",
+  Psychological: {
     icon: Brain,
     color: "text-purple-500",
     bgColor: "bg-purple-500/10",
-    borderColor: "border-purple-500/20",
-    criteria: [
-      { skill: "Composure", description: "Maintains calm under pressure, makes clear decisions in high-stakes moments." },
-      { skill: "Confidence", description: "Self-assured in all situations, willing to take risks and attempt difficult actions." },
-      { skill: "Consistency", description: "Reliable performance throughout the match, continues making correct decisions regardless of outcomes." },
-      { skill: "Mental Strength", description: "Resilience, aggression, intensity, and ability to respond to setbacks positively." }
-    ]
+    borderColor: "border-purple-500/20"
   },
-  {
-    domain: "Technical",
+  Technical: {
     icon: Zap,
     color: "text-blue-500",
     bgColor: "bg-blue-500/10",
-    borderColor: "border-blue-500/20",
-    criteria: [
-      { skill: "First Touch & Ball Control", description: "Exceptional first touch to receive under pressure from all angles with both feet." },
-      { skill: "Passing & Distribution", description: "Range and accuracy of passing, can play short combinations and long switches effectively." },
-      { skill: "Dribbling & 1v1 Ability", description: "Capacity to beat opponents in tight spaces, carry the ball, and create space." },
-      { skill: "Finishing & Shooting", description: "Clinical finishing, quality of shots from all ranges, and ability to create shooting opportunities." }
-    ]
+    borderColor: "border-blue-500/20"
   },
-  {
-    domain: "Tactical",
+  Tactical: {
     icon: Crosshair,
     color: "text-green-500",
     bgColor: "bg-green-500/10",
-    borderColor: "border-green-500/20",
-    criteria: [
-      { skill: "Positioning & Movement", description: "Intelligent positioning to receive the ball, create angles, and exploit space effectively." },
-      { skill: "Decision-Making", description: "Knows when to pass, dribble, shoot, or hold position based on game context." },
-      { skill: "Reading the Game", description: "Anticipates opponent movements and passes, proactive rather than reactive play." },
-      { skill: "Defensive Awareness", description: "Understanding of defensive responsibilities, tracking runners, and contributing to pressing." }
-    ]
+    borderColor: "border-green-500/20"
   }
-];
+};
 
 const Scouts = () => {
   const handleWhatsApp = () => {
@@ -127,7 +100,7 @@ const Scouts = () => {
           </div>
         </section>
 
-        {/* Scouting Domains Section */}
+        {/* Scouting Criteria by Position Section */}
         <section className="py-10 md:py-16 px-4 relative">
           <div className="absolute inset-0 bg-gradient-to-b from-background via-primary/5 to-background" />
           
@@ -135,80 +108,114 @@ const Scouts = () => {
             <div className="text-center mb-8">
               <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 backdrop-blur-sm rounded-full border border-primary/20 mb-3">
                 <Target className="h-4 w-4 text-primary" />
-                <span className="text-sm font-semibold">Universal Scouting Criteria</span>
+                <span className="text-sm font-semibold">Position-Specific Scouting Criteria</span>
               </div>
               
               <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider mb-3 bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent">
                 What We Look For
               </h2>
               <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto font-light">
-                Four key domains assessed across all positions based on{" "}
+                Four key domains assessed for each position based on{" "}
                 <span className="text-foreground font-semibold">thousands of professional reports</span>
               </p>
             </div>
 
             <div className="max-w-6xl mx-auto">
-              <Tabs defaultValue="Physical" className="w-full">
-                <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 gap-2 bg-muted/50 p-2 h-auto mb-6">
-                  {scoutingDomains.map((domain) => {
-                    const Icon = domain.icon;
-                    return (
-                      <TabsTrigger
-                        key={domain.domain}
-                        value={domain.domain}
-                        className="flex items-center gap-2 py-3 px-4 data-[state=active]:bg-card data-[state=active]:shadow-lg"
-                      >
-                        <Icon className={`h-4 w-4 ${domain.color}`} />
-                        <span className="font-bebas text-base uppercase tracking-wider">
-                          {domain.domain}
-                        </span>
-                      </TabsTrigger>
-                    );
-                  })}
+              {/* Position Tabs */}
+              <Tabs defaultValue={SCOUTING_POSITIONS[0]} className="w-full">
+                <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-2 bg-muted/50 p-2 h-auto mb-6">
+                  {SCOUTING_POSITIONS.map((position) => (
+                    <TabsTrigger
+                      key={position}
+                      value={position}
+                      className="flex items-center justify-center py-3 px-2 data-[state=active]:bg-card data-[state=active]:shadow-lg text-xs md:text-sm"
+                    >
+                      <span className="font-bebas uppercase tracking-wider text-center leading-tight">
+                        {position}
+                      </span>
+                    </TabsTrigger>
+                  ))}
                 </TabsList>
 
-                {scoutingDomains.map((domain) => {
-                  const Icon = domain.icon;
+                {/* Position Content - Nested Domain Tabs */}
+                {SCOUTING_POSITIONS.map((position) => {
+                  const positionSkills = POSITION_SKILLS[position];
+                  const skillsByDomain = positionSkills.reduce((acc, skill) => {
+                    if (!acc[skill.domain]) acc[skill.domain] = [];
+                    acc[skill.domain].push(skill);
+                    return acc;
+                  }, {} as Record<string, typeof positionSkills>);
+
                   return (
-                    <TabsContent key={domain.domain} value={domain.domain} className="mt-0">
-                      <Card className={`relative overflow-hidden border-2 ${domain.borderColor} bg-gradient-to-br from-card via-card/95 to-background backdrop-blur-sm shadow-xl`}>
-                        <div className={`absolute top-0 right-0 w-64 h-64 ${domain.bgColor} rounded-full blur-3xl -translate-y-1/2 translate-x-1/2`} />
-                        
-                        <div className="relative p-6 md:p-8">
-                          <div className="flex items-center gap-3 mb-6">
-                            <div className={`h-12 w-12 ${domain.bgColor} rounded-xl flex items-center justify-center`}>
-                              <Icon className={`h-6 w-6 ${domain.color}`} />
-                            </div>
-                            <div>
-                              <Badge variant="secondary" className={`text-lg px-4 py-1 font-bebas uppercase mb-1 ${domain.bgColor} ${domain.borderColor} border`}>
-                                {domain.domain}
-                              </Badge>
-                              <p className="text-sm text-muted-foreground">4 Key Attributes</p>
-                            </div>
-                          </div>
-                          
-                          <div className="grid md:grid-cols-2 gap-4">
-                            {domain.criteria.map((criterion, idx) => (
-                              <div 
-                                key={idx} 
-                                className={`group p-4 bg-gradient-to-br from-muted/50 to-muted/30 rounded-xl hover:${domain.bgColor} transition-all duration-300 hover:shadow-lg hover:-translate-y-1 border border-transparent hover:${domain.borderColor}`}
+                    <TabsContent key={position} value={position} className="mt-0">
+                      <Tabs defaultValue="Physical" className="w-full">
+                        <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 gap-2 bg-muted/50 p-2 h-auto mb-6">
+                          {Object.keys(domainConfig).map((domain) => {
+                            const config = domainConfig[domain as keyof typeof domainConfig];
+                            const Icon = config.icon;
+                            return (
+                              <TabsTrigger
+                                key={domain}
+                                value={domain}
+                                className="flex items-center gap-2 py-3 px-4 data-[state=active]:bg-card data-[state=active]:shadow-lg"
                               >
-                                <div className="flex items-start gap-3">
-                                  <div className={`h-2 w-2 rounded-full ${domain.color.replace('text-', 'bg-')} mt-2 group-hover:scale-150 transition-transform`} />
-                                  <div className="flex-1">
-                                    <h4 className={`font-bold ${domain.color} mb-1.5 text-base`}>
-                                      {criterion.skill}
-                                    </h4>
-                                    <p className="text-sm text-muted-foreground leading-relaxed">
-                                      {criterion.description}
-                                    </p>
+                                <Icon className={`h-4 w-4 ${config.color}`} />
+                                <span className="font-bebas text-base uppercase tracking-wider">
+                                  {domain}
+                                </span>
+                              </TabsTrigger>
+                            );
+                          })}
+                        </TabsList>
+
+                        {Object.entries(skillsByDomain).map(([domain, skills]) => {
+                          const config = domainConfig[domain as keyof typeof domainConfig];
+                          const Icon = config.icon;
+                          
+                          return (
+                            <TabsContent key={domain} value={domain} className="mt-0">
+                              <Card className={`relative overflow-hidden border-2 ${config.borderColor} bg-gradient-to-br from-card via-card/95 to-background backdrop-blur-sm shadow-xl`}>
+                                <div className={`absolute top-0 right-0 w-64 h-64 ${config.bgColor} rounded-full blur-3xl -translate-y-1/2 translate-x-1/2`} />
+                                
+                                <div className="relative p-6 md:p-8">
+                                  <div className="flex items-center gap-3 mb-6">
+                                    <div className={`h-12 w-12 ${config.bgColor} rounded-xl flex items-center justify-center`}>
+                                      <Icon className={`h-6 w-6 ${config.color}`} />
+                                    </div>
+                                    <div>
+                                      <Badge variant="secondary" className={`text-lg px-4 py-1 font-bebas uppercase mb-1 ${config.bgColor} ${config.borderColor} border`}>
+                                        {domain}
+                                      </Badge>
+                                      <p className="text-sm text-muted-foreground">{skills.length} Key Attributes for {position}</p>
+                                    </div>
+                                  </div>
+                                  
+                                  <div className="grid md:grid-cols-2 gap-4">
+                                    {skills.map((skill, idx) => (
+                                      <div 
+                                        key={idx} 
+                                        className={`group p-4 bg-gradient-to-br from-muted/50 to-muted/30 rounded-xl hover:${config.bgColor} transition-all duration-300 hover:shadow-lg hover:-translate-y-1 border border-transparent hover:${config.borderColor}`}
+                                      >
+                                        <div className="flex items-start gap-3">
+                                          <div className={`h-2 w-2 rounded-full ${config.color.replace('text-', 'bg-')} mt-2 group-hover:scale-150 transition-transform`} />
+                                          <div className="flex-1">
+                                            <h4 className={`font-bold ${config.color} mb-1.5 text-base`}>
+                                              {skill.skill_name}
+                                            </h4>
+                                            <p className="text-sm text-muted-foreground leading-relaxed">
+                                              {skill.description}
+                                            </p>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    ))}
                                   </div>
                                 </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </Card>
+                              </Card>
+                            </TabsContent>
+                          );
+                        })}
+                      </Tabs>
                     </TabsContent>
                   );
                 })}
