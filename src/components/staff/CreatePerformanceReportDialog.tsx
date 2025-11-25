@@ -1180,9 +1180,46 @@ export const CreatePerformanceReportDialog = ({
               </Button>
             </CollapsibleTrigger>
             <CollapsibleContent className="mt-4 space-y-4">
+              {/* xG Chain - Pinned at top */}
+              <div className="p-3 bg-primary/5 border-2 border-primary/20 rounded-lg">
+                <div className="flex items-center justify-between mb-2">
+                  <Label className="text-sm font-semibold">xG Chain (Auto-calculated)</Label>
+                  <span className="text-xs text-muted-foreground">Sum of positive actions</span>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <div className="text-xs text-muted-foreground mb-1">Total</div>
+                    <Input
+                      type="number"
+                      step="0.001"
+                      value={strikerStats.xGChain || 0}
+                      readOnly
+                      className="h-8 bg-muted text-sm"
+                    />
+                  </div>
+                  <div>
+                    <div className="text-xs text-muted-foreground mb-1">Per 90</div>
+                    <Input
+                      type="number"
+                      step="0.001"
+                      value={
+                        minutesPlayed && actions.length > 0
+                          ? ((actions.reduce((sum, a) => {
+                              const score = parseFloat(a.action_score);
+                              return score > 0 ? sum + score : sum;
+                            }, 0) / parseInt(minutesPlayed)) * 90).toFixed(3)
+                          : "0.000"
+                      }
+                      readOnly
+                      className="h-8 bg-muted text-sm"
+                    />
+                  </div>
+                </div>
+              </div>
+
               {selectedStatKeys.length > 0 ? (
                 <>
-                  <div className="grid grid-cols-1 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {(() => {
                       // Group stats into pairs (attempted/successful) and singles
                       const processedKeys = new Set<string>();
@@ -1249,96 +1286,86 @@ export const CreatePerformanceReportDialog = ({
                           const per90SuccessValue = additionalStats[per90SuccessKey];
                           const per90AttemptedValue = additionalStats[per90AttemptedKey];
                           
+                          // Fix stat names (e.g., Aerials Won -> Aerial Duels)
+                          const displayName = successStat.stat_name.replace('Aerials Won', 'Aerial Duels');
+                          
                           return (
-                            <div key={groupIndex} className="space-y-3 p-4 border rounded-lg bg-muted/30">
-                              <div className="flex items-center justify-between">
-                                <Label className="text-sm font-semibold">
-                                  {successStat.stat_name} / {attemptedStat.stat_name}
-                                </Label>
-                                <div className="flex gap-2">
-                                  <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={async () => {
-                                      if (playerId) {
-                                        await supabase.from("player_hidden_stats").insert([
-                                          { player_id: playerId, stat_key: successKey },
-                                          { player_id: playerId, stat_key: attemptedKey }
-                                        ]);
-                                        setHiddenStatKeys(prev => [...prev, successKey, attemptedKey]);
-                                      }
-                                      setSelectedStatKeys(prev => prev.filter(k => k !== successKey && k !== attemptedKey));
-                                      const newStats = {...additionalStats};
-                                      delete newStats[successKey];
-                                      delete newStats[attemptedKey];
-                                      delete newStats[per90SuccessKey];
-                                      delete newStats[per90AttemptedKey];
-                                      setAdditionalStats(newStats);
-                                    }}
-                                    className="h-8 w-8"
-                                  >
-                                    <EyeOff className="h-4 w-4" />
-                                  </Button>
-                                  <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => {
-                                      setSelectedStatKeys(prev => prev.filter(k => k !== successKey && k !== attemptedKey));
-                                      const newStats = {...additionalStats};
-                                      delete newStats[successKey];
-                                      delete newStats[attemptedKey];
-                                      delete newStats[per90SuccessKey];
-                                      delete newStats[per90AttemptedKey];
-                                      setAdditionalStats(newStats);
-                                    }}
-                                    className="h-8 w-8"
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
-                                </div>
+                            <div key={groupIndex} className="p-2 border rounded-lg bg-muted/20">
+                              <div className="flex items-center justify-between mb-1.5">
+                                <Label className="text-xs font-semibold">{displayName}</Label>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={async () => {
+                                    if (playerId) {
+                                      await supabase.from("player_hidden_stats").insert([
+                                        { player_id: playerId, stat_key: successKey },
+                                        { player_id: playerId, stat_key: attemptedKey }
+                                      ]);
+                                      setHiddenStatKeys(prev => [...prev, successKey, attemptedKey]);
+                                    }
+                                    setSelectedStatKeys(prev => prev.filter(k => k !== successKey && k !== attemptedKey));
+                                    const newStats = {...additionalStats};
+                                    delete newStats[successKey];
+                                    delete newStats[attemptedKey];
+                                    delete newStats[per90SuccessKey];
+                                    delete newStats[per90AttemptedKey];
+                                    setAdditionalStats(newStats);
+                                  }}
+                                  className="h-6 w-6 p-0"
+                                >
+                                  <EyeOff className="h-3 w-3" />
+                                </Button>
                               </div>
-                              <div className="grid grid-cols-2 gap-3">
+                              <div className="grid grid-cols-2 gap-2 mb-1">
                                 <div>
-                                  <Label className="text-xs">{successStat.stat_name}</Label>
-                                  <Input
-                                    type="number"
-                                    value={additionalStats[successKey] || ""}
-                                    onChange={(e) => {
-                                      const newStats = {...additionalStats};
-                                      newStats[successKey] = e.target.value;
-                                      setAdditionalStats(newStats);
-                                    }}
-                                    placeholder="0"
-                                  />
-                                  {per90SuccessValue && (
-                                    <div className="text-xs text-muted-foreground mt-1">
-                                      Per 90: <span className="font-mono">{per90SuccessValue}</span>
-                                    </div>
-                                  )}
+                                  <div className="text-[10px] text-muted-foreground mb-0.5">Successful</div>
+                                  <div className="flex gap-1">
+                                    <Input
+                                      type="number"
+                                      value={additionalStats[successKey] || ""}
+                                      onChange={(e) => {
+                                        const newStats = {...additionalStats};
+                                        newStats[successKey] = e.target.value;
+                                        setAdditionalStats(newStats);
+                                      }}
+                                      placeholder="0"
+                                      className="h-7 text-xs"
+                                    />
+                                    <Input
+                                      type="number"
+                                      value={per90SuccessValue || ""}
+                                      readOnly
+                                      className="h-7 text-xs bg-muted w-14"
+                                    />
+                                  </div>
                                 </div>
                                 <div>
-                                  <Label className="text-xs">{attemptedStat.stat_name}</Label>
-                                  <Input
-                                    type="number"
-                                    value={additionalStats[attemptedKey] || ""}
-                                    onChange={(e) => {
-                                      const newStats = {...additionalStats};
-                                      newStats[attemptedKey] = e.target.value;
-                                      setAdditionalStats(newStats);
-                                    }}
-                                    placeholder="0"
-                                  />
-                                  {per90AttemptedValue && (
-                                    <div className="text-xs text-muted-foreground mt-1">
-                                      Per 90: <span className="font-mono">{per90AttemptedValue}</span>
-                                    </div>
-                                  )}
+                                  <div className="text-[10px] text-muted-foreground mb-0.5">Attempted</div>
+                                  <div className="flex gap-1">
+                                    <Input
+                                      type="number"
+                                      value={additionalStats[attemptedKey] || ""}
+                                      onChange={(e) => {
+                                        const newStats = {...additionalStats};
+                                        newStats[attemptedKey] = e.target.value;
+                                        setAdditionalStats(newStats);
+                                      }}
+                                      placeholder="0"
+                                      className="h-7 text-xs"
+                                    />
+                                    <Input
+                                      type="number"
+                                      value={per90AttemptedValue || ""}
+                                      readOnly
+                                      className="h-7 text-xs bg-muted w-14"
+                                    />
+                                  </div>
                                 </div>
                               </div>
-                              <div className="text-sm font-medium text-center bg-background/50 rounded p-2">
-                                Success Rate: <span className="font-mono text-primary">{percentage}%</span>
+                              <div className="text-[10px] text-center text-muted-foreground">
+                                {percentage}% success
                               </div>
                             </div>
                           );
@@ -1350,36 +1377,25 @@ export const CreatePerformanceReportDialog = ({
                           const per90Value = additionalStats[per90Key];
                           
                           return (
-                            <div key={groupIndex} className="relative space-y-2">
-                              <Label>
-                                {stat.stat_name}
-                                {stat.description && (
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <span className="ml-1 text-muted-foreground cursor-help">ⓘ</span>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                      <p className="text-xs">{stat.description}</p>
-                                    </TooltipContent>
-                                  </Tooltip>
-                                )}
-                              </Label>
-                              <div className="flex gap-2">
-                                <Input
-                                  type="number"
-                                  step="1"
-                                  value={additionalStats[statKey] || ""}
-                                  onChange={(e) => setAdditionalStats({
-                                    ...additionalStats,
-                                    [statKey]: e.target.value
-                                  })}
-                                  placeholder="0"
-                                  className="flex-1"
-                                />
+                            <div key={groupIndex} className="p-2 border rounded-lg bg-muted/20">
+                              <div className="flex items-center justify-between mb-1.5">
+                                <Label className="text-xs">
+                                  {stat.stat_name}
+                                  {stat.description && (
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <span className="ml-1 text-muted-foreground cursor-help text-[10px]">ⓘ</span>
+                                      </TooltipTrigger>
+                                      <TooltipContent>
+                                        <p className="text-xs">{stat.description}</p>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  )}
+                                </Label>
                                 <Button
                                   type="button"
                                   variant="ghost"
-                                  size="icon"
+                                  size="sm"
                                   onClick={async () => {
                                     if (playerId) {
                                       await supabase.from("player_hidden_stats").insert({
@@ -1394,31 +1410,30 @@ export const CreatePerformanceReportDialog = ({
                                     delete newStats[per90Key];
                                     setAdditionalStats(newStats);
                                   }}
-                                  className="h-10 w-10"
+                                  className="h-6 w-6 p-0"
                                 >
-                                  <EyeOff className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => {
-                                    setSelectedStatKeys(prev => prev.filter(k => k !== statKey));
-                                    const newStats = {...additionalStats};
-                                    delete newStats[statKey];
-                                    delete newStats[per90Key];
-                                    setAdditionalStats(newStats);
-                                  }}
-                                  className="h-10 w-10"
-                                >
-                                  <Trash2 className="h-4 w-4" />
+                                  <EyeOff className="h-3 w-3" />
                                 </Button>
                               </div>
-                              {per90Value && (
-                                <div className="text-xs text-muted-foreground pl-1">
-                                  Per 90: <span className="font-mono">{per90Value}</span>
-                                </div>
-                              )}
+                              <div className="flex gap-1">
+                                <Input
+                                  type="number"
+                                  step="1"
+                                  value={additionalStats[statKey] || ""}
+                                  onChange={(e) => setAdditionalStats({
+                                    ...additionalStats,
+                                    [statKey]: e.target.value
+                                  })}
+                                  placeholder="0"
+                                  className="flex-1 h-7 text-xs"
+                                />
+                                <Input
+                                  type="number"
+                                  value={per90Value || ""}
+                                  readOnly
+                                  className="w-14 h-7 text-xs bg-muted"
+                                />
+                              </div>
                             </div>
                           );
                         }
