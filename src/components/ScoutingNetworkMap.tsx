@@ -308,12 +308,22 @@ const ScoutingNetworkMap = () => {
     // Turkey
     { name: "Fenerbahçe", country: "Turkey", city: "Istanbul", x: 635, y: 545, logo: "/clubs/fenerbahce.png" },
     { name: "Beşiktaş JK", country: "Turkey", city: "Istanbul", x: 636, y: 546, logo: "/clubs/besiktas-jk.png" },
-    { name: "Başakşehir FK", country: "Turkey", city: "Istanbul", x: 637, y: 547, logo: "/clubs/basaksehir-fk.png" },
-    { name: "Eyüpspor", country: "Turkey", city: "Istanbul", x: 638, y: 548, logo: "/clubs/eyupspor.png" },
-    { name: "Fatih Karagümrük", country: "Turkey", city: "Istanbul", x: 639, y: 549, logo: "/clubs/fatih-karagumruk.png" },
+    { name: "Galatasaray", country: "Turkey", city: "Istanbul", x: 637, y: 547, logo: "/clubs/galatasaray.png" },
+    { name: "Başakşehir FK", country: "Turkey", city: "Istanbul", x: 638, y: 548, logo: "/clubs/basaksehir-fk.png" },
+    { name: "Eyüpspor", country: "Turkey", city: "Istanbul", x: 639, y: 549, logo: "/clubs/eyupspor.png" },
+    { name: "Kasımpaşa", country: "Turkey", city: "Istanbul", x: 640, y: 550, logo: "/clubs/kasimpasa.png" },
+    { name: "Fatih Karagümrük", country: "Turkey", city: "Istanbul", x: 641, y: 551, logo: "/clubs/fatih-karagumruk.png" },
     { name: "Alanyaspor", country: "Turkey", city: "Alanya", x: 655, y: 565, logo: "/clubs/alanyaspor.png" },
     { name: "Antalyaspor", country: "Turkey", city: "Antalya", x: 650, y: 565, logo: "/clubs/antalyaspor.png" },
     { name: "Çaykur Rizespor", country: "Turkey", city: "Rize", x: 710, y: 545, logo: "/clubs/caykur-rizespor.png" },
+    { name: "Trabzonspor", country: "Turkey", city: "Trabzon", x: 700, y: 545, logo: "/clubs/trabzonspor.png" },
+    { name: "Samsunspor", country: "Turkey", city: "Samsun", x: 680, y: 540, logo: "/clubs/samsunspor.png" },
+    { name: "Gaziantep FK", country: "Turkey", city: "Gaziantep", x: 685, y: 565, logo: "/clubs/gaziantep-fk.png" },
+    { name: "Gençlerbirliği Ankara", country: "Turkey", city: "Ankara", x: 655, y: 535, logo: "/clubs/genclerbirligi-ankara.png" },
+    { name: "Göztepe", country: "Turkey", city: "Izmir", x: 605, y: 560, logo: "/clubs/goztepe.png" },
+    { name: "Kayserispor", country: "Turkey", city: "Kayseri", x: 670, y: 555, logo: "/clubs/kayserispor.png" },
+    { name: "Kocaelispor", country: "Turkey", city: "Kocaeli", x: 642, y: 540, logo: "/clubs/kocaelispor.png" },
+    { name: "Konyaspor", country: "Turkey", city: "Konya", x: 655, y: 560, logo: "/clubs/konyaspor.png" },
   ];
 
   // Flag mapping
