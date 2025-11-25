@@ -105,6 +105,17 @@ const ScoutingNetworkMap = () => {
     { name: "RC Strasbourg Alsace", country: "France", city: "Strasbourg", x: 395, y: 425, logo: "/clubs/rc-strasbourg-alsace.png" },
     { name: "Olympique Lyon", country: "France", city: "Lyon", x: 378, y: 455, logo: "/clubs/olympique-lyon.png" },
     { name: "Olympique Marseille", country: "France", city: "Marseille", x: 378, y: 495, logo: "/clubs/olympique-marseille.png" },
+    // Germany clubs
+    { name: "1. FC Union Berlin", country: "Germany", city: "Berlin", x: 480, y: 355, logo: "/clubs/1-fc-union-berlin.png" },
+    { name: "Borussia Dortmund", country: "Germany", city: "Dortmund", x: 405, y: 375, logo: "/clubs/borussia-dortmund.png" },
+    { name: "Borussia Mönchengladbach", country: "Germany", city: "Mönchengladbach", x: 393, y: 380, logo: "/clubs/borussia-monchengladbach.png" },
+    { name: "1. FC Köln", country: "Germany", city: "Köln", x: 395, y: 385, logo: "/clubs/1-fc-koln.png" },
+    { name: "Bayer 04 Leverkusen", country: "Germany", city: "Leverkusen", x: 398, y: 387, logo: "/clubs/bayer-04-leverkusen.png" },
+    { name: "1. FSV Mainz 05", country: "Germany", city: "Mainz", x: 405, y: 405, logo: "/clubs/1-fsv-mainz-05.png" },
+    { name: "Eintracht Frankfurt", country: "Germany", city: "Frankfurt", x: 410, y: 405, logo: "/clubs/eintracht-frankfurt.png" },
+    { name: "1. FC Heidenheim 1846", country: "Germany", city: "Heidenheim", x: 420, y: 415, logo: "/clubs/1-fc-heidenheim-1846.png" },
+    { name: "FC Augsburg", country: "Germany", city: "Augsburg", x: 430, y: 425, logo: "/clubs/fc-augsburg.png" },
+    { name: "Bayern Munich", country: "Germany", city: "München", x: 435, y: 425, logo: "/clubs/bayern-munich.png" },
   ];
 
   // Flag mapping
