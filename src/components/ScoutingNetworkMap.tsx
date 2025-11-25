@@ -234,6 +234,18 @@ const ScoutingNetworkMap = () => {
     { name: "Baltika Kaliningrad", country: "Russia", city: "Kaliningrad", x: 540, y: 370, logo: "/clubs/baltika-kaliningrad.png" },
     { name: "Dinamo Makhachkala", country: "Russia", city: "Makhachkala", x: 750, y: 465, logo: "/clubs/dinamo-makhachkala.png" },
     { name: "FC Pari Nizhniy Novgorod", country: "Russia", city: "Nizhniy Novgorod", x: 730, y: 350, logo: "/clubs/fc-pari-nizhniy-novgorod.png" },
+    { name: "Zenit St. Petersburg", country: "Russia", city: "St. Petersburg", x: 635, y: 315, logo: "/clubs/zenit-st-petersburg.png" },
+    { name: "Krylya Sovetov Samara", country: "Russia", city: "Samara", x: 800, y: 380, logo: "/clubs/krylya-sovetov-samara.png" },
+    { name: "Lokomotiv Moscow", country: "Russia", city: "Moscow", x: 697, y: 347, logo: "/clubs/lokomotiv-moscow.png" },
+    { name: "Rubin Kazan", country: "Russia", city: "Kazan", x: 780, y: 350, logo: "/clubs/rubin-kazan.png" },
+    { name: "Spartak Moscow", country: "Russia", city: "Moscow", x: 695, y: 346, logo: "/clubs/spartak-moscow.png" },
+    { name: "Torpedo Moscow", country: "Russia", city: "Moscow", x: 696, y: 345, logo: "/clubs/torpedo-moscow.png" },
+    
+    // Scotland
+    { name: "Celtic FC", country: "Scotland", city: "Glasgow", x: 315, y: 340, logo: "/clubs/celtic-fc.png" },
+    { name: "Aberdeen FC", country: "Scotland", city: "Aberdeen", x: 325, y: 315, logo: "/clubs/aberdeen-fc.png" },
+    { name: "Dundee FC", country: "Scotland", city: "Dundee", x: 330, y: 335, logo: "/clubs/dundee-fc.png" },
+    { name: "Dundee United FC", country: "Scotland", city: "Dundee", x: 331, y: 336, logo: "/clubs/dundee-united-fc.png" },
   ];
 
   // Flag mapping
