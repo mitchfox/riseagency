@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MessageCircle, Mail, MapPin, Users, TrendingUp, Award, Database, BarChart3, Target, Sparkles, Globe, Brain, Zap, Activity, Crosshair, ChevronLeft, ChevronRight } from "lucide-react";
 import { SCOUTING_POSITIONS, POSITION_SKILLS, ScoutingPosition } from "@/data/scoutingSkills";
 import useEmblaCarousel from "embla-carousel-react";
+import EuropeScoutingMap from "@/components/EuropeScoutingMap";
 
 const domainConfig = {
   Physical: {
@@ -292,6 +293,13 @@ const Scouts = () => {
                           </p>
                         </Card>
                       </div>
+                    </div>
+                  </div>
+
+                  {/* Slide 3: Europe Scouting Map */}
+                  <div className="flex-[0_0_100%] min-w-0 pl-4">
+                    <div className="border-2 border-border rounded-2xl overflow-hidden bg-card p-6 md:p-8">
+                      <EuropeScoutingMap />
                     </div>
                   </div>
                 </div>
