@@ -22,22 +22,31 @@ const ScoutingNetworkMap = () => {
     { name: "Forest Green Rovers", country: "England", city: "Nailsworth", x: 510, y: 290, logo: forestGreenLogo },
   ];
 
-  // Sample scouting locations across Europe
-  const scoutingLocations = [
-    { country: "England", city: "London", x: 520, y: 290 },
-    { country: "Spain", city: "Madrid", x: 420, y: 480 },
-    { country: "Germany", city: "Berlin", x: 650, y: 280 },
-    { country: "Italy", city: "Rome", x: 620, y: 490 },
-    { country: "France", city: "Paris", x: 510, y: 360 },
-    { country: "Netherlands", city: "Amsterdam", x: 560, y: 250 },
-    { country: "Portugal", city: "Lisbon", x: 340, y: 490 },
-    { country: "Belgium", city: "Brussels", x: 540, y: 275 },
-    { country: "Czech Republic", city: "Prague", x: 680, y: 295 },
-    { country: "Austria", city: "Vienna", x: 670, y: 345 },
-    { country: "Poland", city: "Warsaw", x: 730, y: 260 },
-    { country: "Denmark", city: "Copenhagen", x: 605, y: 200 },
-    { country: "Sweden", city: "Stockholm", x: 650, y: 140 },
-    { country: "Norway", city: "Oslo", x: 600, y: 120 },
+  // Country centers with flag markers
+  const countryMarkers = [
+    { country: "England", x: 325, y: 375 },
+    { country: "Scotland", x: 275, y: 310 },
+    { country: "Ireland", x: 230, y: 375 },
+    { country: "Iceland", x: 225, y: 110 },
+    { country: "Portugal", x: 250, y: 525 },
+    { country: "Spain", x: 325, y: 525 },
+    { country: "France", x: 350, y: 450 },
+    { country: "Norway", x: 400, y: 100 },
+    { country: "Sweden", x: 450, y: 130 },
+    { country: "Denmark", x: 410, y: 240 },
+    { country: "Netherlands", x: 375, y: 350 },
+    { country: "Belgium", x: 360, y: 375 },
+    { country: "Germany", x: 450, y: 375 },
+    { country: "Switzerland", x: 425, y: 425 },
+    { country: "Austria", x: 500, y: 425 },
+    { country: "Czech Republic", x: 500, y: 350 },
+    { country: "Poland", x: 550, y: 300 },
+    { country: "Italy", x: 475, y: 500 },
+    { country: "Greece", x: 575, y: 550 },
+    { country: "Turkey", x: 650, y: 525 },
+    { country: "Romania", x: 600, y: 425 },
+    { country: "Serbia", x: 575, y: 475 },
+    { country: "Croatia", x: 500, y: 475 },
   ];
 
   const handleMapClick = (event: React.MouseEvent<SVGSVGElement>) => {
@@ -78,7 +87,7 @@ const ScoutingNetworkMap = () => {
       <div className="text-center space-y-2">
         <h3 className="text-3xl font-bebas">SCOUTING NETWORK ACROSS EUROPE</h3>
         <p className="text-muted-foreground">
-          Our extensive scouting presence spanning {scoutingLocations.length} major cities
+          Our extensive scouting presence spanning {countryMarkers.length} countries
         </p>
       </div>
 
@@ -318,6 +327,36 @@ const ScoutingNetworkMap = () => {
               opacity="0.7"
             />
 
+            {/* Country Flag Markers */}
+            {countryMarkers.map((country, idx) => {
+              const patternId = `flag-${country.country.toLowerCase().replace(/ /g, '-')}`;
+              return (
+                <g key={`country-${idx}`}>
+                  {/* Glow effect */}
+                  <circle
+                    cx={country.x}
+                    cy={country.y}
+                    r="35"
+                    fill="hsl(var(--primary))"
+                    className="animate-pulse opacity-10"
+                  />
+                  {/* Country flag circle */}
+                  <circle
+                    cx={country.x}
+                    cy={country.y}
+                    r="25"
+                    fill={`url(#${patternId})`}
+                    stroke="white"
+                    strokeWidth="2"
+                    className="cursor-pointer hover:r-28 transition-all"
+                    opacity="0.8"
+                  >
+                    <title>{country.country}</title>
+                  </circle>
+                </g>
+              );
+            })}
+
             {/* Football Club Logos */}
             {footballClubs.map((club, idx) => (
               <g key={`club-${idx}`}>
@@ -372,7 +411,11 @@ const ScoutingNetworkMap = () => {
           {/* Legend */}
           <div className="flex items-center justify-center gap-6 mt-4 text-sm flex-wrap">
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded bg-primary/20 border border-primary" />
+              <div className="w-6 h-6 rounded-full border-2 border-white bg-primary/30" />
+              <span>Country Coverage</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full border border-white bg-primary/20" />
               <span>Partner Club</span>
             </div>
             <button
@@ -393,29 +436,28 @@ const ScoutingNetworkMap = () => {
             <h4 className="font-bebas text-xl mb-3">NETWORK COVERAGE</h4>
             <div className="space-y-3">
               <div className="flex justify-between items-center">
-                <span className="text-muted-foreground">Cities Covered</span>
-                <span className="font-bold text-xl">{scoutingLocations.length}</span>
+                <span className="text-muted-foreground">Partner Clubs</span>
+                <span className="font-bold text-xl">{footballClubs.length}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-muted-foreground">Countries</span>
-                <span className="font-bold text-xl">{new Set(scoutingLocations.map(l => l.country)).size}</span>
+                <span className="font-bold text-xl">{countryMarkers.length}</span>
               </div>
             </div>
           </div>
 
-          {/* Location List */}
+          {/* Country List */}
           <div className="bg-card rounded-lg p-4 border max-h-96 overflow-y-auto">
-            <h4 className="font-bebas text-xl mb-3">SCOUTING LOCATIONS</h4>
+            <h4 className="font-bebas text-xl mb-3">COVERAGE REGIONS</h4>
             <div className="space-y-2">
-              {scoutingLocations.map((location, idx) => (
+              {countryMarkers.map((country, idx) => (
                 <div
                   key={idx}
                   className="flex items-center gap-3 p-2 rounded hover:bg-accent transition-colors"
                 >
                   <MapPin className="h-4 w-4 text-primary flex-shrink-0" />
                   <div className="flex-1">
-                    <div className="font-medium">{location.city}</div>
-                    <div className="text-xs text-muted-foreground">{location.country}</div>
+                    <div className="font-medium">{country.country}</div>
                   </div>
                 </div>
               ))}
