@@ -416,6 +416,16 @@ const ScoutingNetworkMap = () => {
     // Bulgaria
     { name: "Arda Kardzhali", country: "Bulgaria", city: "Kardzhali", x: 550, y: 450, logo: "/clubs/arda-kardzhali.png" },
     { name: "Beroe Stara Zagora", country: "Bulgaria", city: "Stara Zagora", x: 545, y: 445, logo: "/clubs/beroe-stara-zagora.png" },
+    { name: "Botev Plovdiv", country: "Bulgaria", city: "Plovdiv", x: 544, y: 446, logo: "/clubs/botev-plovdiv.png" },
+    { name: "Lokomotiv Plovdiv", country: "Bulgaria", city: "Plovdiv", x: 545, y: 447, logo: "/clubs/lokomotiv-plovdiv.png" },
+    { name: "CSKA Sofia", country: "Bulgaria", city: "Sofia", x: 535, y: 445, logo: "/clubs/cska-sofia.png" },
+    { name: "CSKA 1948", country: "Bulgaria", city: "Sofia", x: 536, y: 446, logo: "/clubs/cska-1948.png" },
+    { name: "Levski Sofia", country: "Bulgaria", city: "Sofia", x: 537, y: 447, logo: "/clubs/levski-sofia.png" },
+    { name: "Lokomotiv Sofia", country: "Bulgaria", city: "Sofia", x: 538, y: 448, logo: "/clubs/lokomotiv-sofia.png" },
+    { name: "Cherno More Varna", country: "Bulgaria", city: "Varna", x: 555, y: 440, logo: "/clubs/cherno-more-varna.png" },
+    { name: "Ludogorets Razgrad", country: "Bulgaria", city: "Razgrad", x: 552, y: 438, logo: "/clubs/ludogorets-razgrad.png" },
+    { name: "Botev Vratsa", country: "Bulgaria", city: "Vratsa", x: 540, y: 440, logo: "/clubs/botev-vratsa.png" },
+    { name: "Dobrudzha Dobrich", country: "Bulgaria", city: "Dobrich", x: 557, y: 437, logo: "/clubs/dobrudzha-dobrich.png" },
   ];
 
   // Flag mapping
