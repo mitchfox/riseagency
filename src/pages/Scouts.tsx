@@ -56,10 +56,33 @@ const positionInitials: Record<ScoutingPosition, string> = {
 const Scouts = () => {
   const [selectedPosition, setSelectedPosition] = useState<ScoutingPosition>(SCOUTING_POSITIONS[0]);
   const [expandedDomain, setExpandedDomain] = useState<keyof typeof domainConfig | null>(null);
-  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: false, skipSnaps: false });
+  const [selectedSlide, setSelectedSlide] = useState(0);
+  const [emblaRef, emblaApi] = useEmblaCarousel({ 
+    loop: false, 
+    skipSnaps: false,
+    duration: 40,
+  });
 
-  const scrollPrev = () => emblaApi?.scrollPrev();
-  const scrollNext = () => emblaApi?.scrollNext();
+  const scrollToSlide = (index: number) => {
+    emblaApi?.scrollTo(index);
+    setSelectedSlide(index);
+  };
+
+  // Update selected slide on scroll
+  useState(() => {
+    if (!emblaApi) return;
+    
+    const onSelect = () => {
+      setSelectedSlide(emblaApi.selectedScrollSnap());
+    };
+    
+    emblaApi.on('select', onSelect);
+    onSelect();
+    
+    return () => {
+      emblaApi.off('select', onSelect);
+    };
+  });
 
   const handleWhatsApp = () => {
     window.open("https://wa.me/447856255509", "_blank");
@@ -78,11 +101,11 @@ const Scouts = () => {
       <main className="pt-24 md:pt-16">
 
         {/* Scouting Criteria by Position Section */}
-        <section className="py-10 md:py-16 px-4 relative">
+        <section className="relative min-h-screen flex flex-col">
           <div className="absolute inset-0 bg-gradient-to-b from-background via-primary/5 to-background" />
           
-          <div className="container mx-auto relative z-10">
-            <div className="text-center mb-8">
+          <div className="flex-1 flex flex-col relative z-10">
+            <div className="text-center py-8 px-4">
               <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 backdrop-blur-sm rounded-full border border-primary/20 mb-3">
                 <Target className="h-4 w-4 text-primary" />
                 <span className="text-sm font-semibold">Position-Specific Scouting Criteria</span>
@@ -97,34 +120,14 @@ const Scouts = () => {
               </p>
             </div>
 
-            <div className="max-w-6xl mx-auto relative">
-              {/* Carousel Navigation */}
-              <div className="flex justify-center gap-4 mb-6">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={scrollPrev}
-                  className="rounded-full"
-                >
-                  <ChevronLeft className="h-5 w-5" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={scrollNext}
-                  className="rounded-full"
-                >
-                  <ChevronRight className="h-5 w-5" />
-                </Button>
-              </div>
-
-              {/* Embla Carousel */}
-              <div className="overflow-hidden" ref={emblaRef}>
-                <div className="flex">
+            {/* Embla Carousel - Full Screen */}
+            <div className="flex-1 overflow-hidden" ref={emblaRef}>
+                <div className="flex h-full">
                   {/* Slide 1: Position & Domain Criteria */}
-                  <div className="flex-[0_0_100%] min-w-0">
-                    {/* Integrated Position + Content Box */}
-                    <div className="border-2 border-border rounded-2xl overflow-hidden bg-card">
+                  <div className="flex-[0_0_100%] min-w-0 px-4 pb-20 flex items-center">
+                    <div className="w-full max-w-6xl mx-auto">
+                      {/* Integrated Position + Content Box */}
+                      <div className="border-2 border-border rounded-2xl overflow-hidden bg-card animate-fade-in">
                       {/* Position Selection - Top of box */}
                       <div className="grid grid-cols-4 md:grid-cols-8 gap-0 border-b-2 border-border">
                         {SCOUTING_POSITIONS.map((position) => (
@@ -223,11 +226,13 @@ const Scouts = () => {
                         })()}
                       </div>
                     </div>
+                    </div>
                   </div>
 
                   {/* Slide 2: Tactical Schemes */}
-                  <div className="flex-[0_0_100%] min-w-0 pl-4">
-                    <div className="border-2 border-border rounded-2xl overflow-hidden bg-card p-6 md:p-8">
+                  <div className="flex-[0_0_100%] min-w-0 px-4 pb-20 flex items-center">
+                    <div className="w-full max-w-6xl mx-auto">
+                      <div className="border-2 border-border rounded-2xl overflow-hidden bg-card p-6 md:p-8 animate-fade-in">
                       <div className="text-center mb-8">
                         <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 backdrop-blur-sm rounded-full border border-primary/20 mb-3">
                           <Target className="h-4 w-4 text-primary" />
@@ -294,16 +299,34 @@ const Scouts = () => {
                         </Card>
                       </div>
                     </div>
+                    </div>
                   </div>
 
                   {/* Slide 3: Europe Scouting Map */}
-                  <div className="flex-[0_0_100%] min-w-0 pl-4">
-                    <div className="border-2 border-border rounded-2xl overflow-hidden bg-card p-6 md:p-8">
-                      <EuropeScoutingMap />
+                  <div className="flex-[0_0_100%] min-w-0 px-4 pb-20 flex items-center">
+                    <div className="w-full max-w-6xl mx-auto">
+                      <div className="border-2 border-border rounded-2xl overflow-hidden bg-card p-6 md:p-8 animate-fade-in">
+                        <EuropeScoutingMap />
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
+            
+            {/* Gold Circle Indicators */}
+            <div className="flex justify-center gap-3 pb-8">
+              {[0, 1, 2].map((index) => (
+                <button
+                  key={index}
+                  onClick={() => scrollToSlide(index)}
+                  className={`transition-all duration-300 rounded-full ${
+                    selectedSlide === index
+                      ? 'w-12 h-3 bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 shadow-lg shadow-yellow-500/50'
+                      : 'w-3 h-3 bg-muted hover:bg-muted-foreground/50'
+                  }`}
+                  aria-label={`Go to slide ${index + 1}`}
+                />
+              ))}
             </div>
           </div>
         </section>
