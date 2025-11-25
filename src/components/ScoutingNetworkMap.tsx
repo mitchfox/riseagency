@@ -472,6 +472,14 @@ const ScoutingNetworkMap = () => {
     { name: "Odense Boldklub", country: "Denmark", city: "Odense", x: 405, y: 330, logo: "/clubs/odense-boldklub.png" },
     { name: "SønderjyskE", country: "Denmark", city: "Haderslev", x: 395, y: 333, logo: "/clubs/sonderjyske.png" },
     { name: "FC Fredericia", country: "Denmark", city: "Fredericia", x: 398, y: 332, logo: "/clubs/fc-fredericia.png" },
+    { name: "Viborg FF", country: "Denmark", city: "Viborg", x: 400, y: 323, logo: "/clubs/viborg-ff.png" },
+    { name: "Vejle Boldklub", country: "Denmark", city: "Vejle", x: 402, y: 329, logo: "/clubs/vejle-boldklub.png" },
+    
+    // Greece
+    { name: "AEK Athens", country: "Greece", city: "Athens", x: 540, y: 475, logo: "/clubs/aek-athens.png" },
+    { name: "AE Kifisias", country: "Greece", city: "Kifisia", x: 541, y: 476, logo: "/clubs/ae-kifisias.png" },
+    { name: "APO Levadiakos", country: "Greece", city: "Livadeia", x: 535, y: 473, logo: "/clubs/apo-levadiakos.png" },
+    { name: "AE Larisa", country: "Greece", city: "Larisa", x: 530, y: 468, logo: "/clubs/ae-larisa.png" },
   ];
 
   // Flag mapping
