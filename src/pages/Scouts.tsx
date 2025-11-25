@@ -119,16 +119,15 @@ const Scouts = () => {
 
                     const currentDomain = expandedDomain || "Physical";
                     const config = domainConfig[currentDomain];
-                    const Icon = config.icon;
                     const skills = skillsByDomain[currentDomain];
 
-                    // Place domains in corners: top-left, top-right, bottom-left, bottom-right
+                    // Place domains in corners with proper rounding
                     const domainKeys = Object.keys(domainConfig) as Array<keyof typeof domainConfig>;
                     const cornerPositions = [
-                      { domain: domainKeys[0], position: 'top-0 left-0', rounded: 'rounded-tl-2xl rounded-br-xl' },      // Physical - top-left
-                      { domain: domainKeys[1], position: 'top-0 right-0', rounded: 'rounded-tr-2xl rounded-bl-xl' },     // Psychological - top-right
-                      { domain: domainKeys[2], position: 'bottom-0 left-0', rounded: 'rounded-bl-2xl rounded-tr-xl' },   // Technical - bottom-left
-                      { domain: domainKeys[3], position: 'bottom-0 right-0', rounded: 'rounded-br-2xl rounded-tl-xl' }   // Tactical - bottom-right
+                      { domain: domainKeys[0], position: 'top-0 left-0', rounded: 'rounded-br-xl' },      // Physical - top-left (only inner corner)
+                      { domain: domainKeys[1], position: 'top-0 right-0', rounded: 'rounded-bl-xl' },     // Psychological - top-right (only inner corner)
+                      { domain: domainKeys[2], position: 'bottom-0 left-0', rounded: 'rounded-bl-2xl rounded-tr-xl' },   // Technical - bottom-left (outer + inner)
+                      { domain: domainKeys[3], position: 'bottom-0 right-0', rounded: 'rounded-br-2xl rounded-tl-xl' }   // Tactical - bottom-right (outer + inner)
                     ];
 
                     return (
@@ -139,36 +138,30 @@ const Scouts = () => {
                           const DomainIcon = domainConf.icon;
                           const isActive = currentDomain === domain;
                           
-                          if (isActive) {
-                            return null; // Don't show button for active domain
-                          }
-                          
                           return (
                             <button
                               key={domain}
                               onClick={() => setExpandedDomain(domain)}
-                              className={`absolute ${position} h-16 w-16 ${rounded} flex items-center justify-center transition-all hover:scale-105 border-2 z-10 ${domainConf.borderColor} ${domainConf.bgColor} hover:shadow-lg`}
+                              className={`absolute ${position} ${rounded} flex items-center gap-3 transition-all hover:scale-105 border-2 z-10 ${
+                                isActive 
+                                  ? 'border-primary bg-primary/20 shadow-lg shadow-primary/20 h-16 px-4 w-auto' 
+                                  : `${domainConf.borderColor} ${domainConf.bgColor} hover:shadow-lg h-16 w-16 justify-center`
+                              }`}
                               title={domain}
                             >
-                              <DomainIcon className={`h-6 w-6 ${domainConf.color}`} />
+                              <DomainIcon className={`h-6 w-6 ${domainConf.color} flex-shrink-0`} />
+                              {isActive && (
+                                <span className={`font-bebas uppercase tracking-wider text-xl ${domainConf.color} pr-2 whitespace-nowrap`}>
+                                  {domain}
+                                </span>
+                              )}
                             </button>
                           );
                         })}
 
-                        {/* Content */}
-                        <div className="p-6 md:p-8">
-                          {/* Header with Icon and Title */}
-                          <div className="flex items-center gap-4 mb-6">
-                            <div className={`h-16 w-16 ${config.bgColor} rounded-xl flex items-center justify-center flex-shrink-0 border-2 ${config.borderColor}`}>
-                              <Icon className={`h-8 w-8 ${config.color}`} />
-                            </div>
-                            <h3 className={`text-4xl font-bebas uppercase tracking-wider ${config.color}`}>
-                              {currentDomain}
-                            </h3>
-                          </div>
-
-                          {/* Attributes Grid - Full Width */}
-                          <div className="grid md:grid-cols-2 gap-4 -mx-2">
+                        {/* Content - Attributes Grid */}
+                        <div className="px-6 py-20 md:px-8">
+                          <div className="grid md:grid-cols-2 gap-4">
                             {skills.map((skill, idx) => (
                               <div 
                                 key={idx} 
