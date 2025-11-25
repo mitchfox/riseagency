@@ -113,13 +113,13 @@ const ScoutingNetworkMap = () => {
     { country: "Romania", x: 555, y: 455 },
     { country: "Serbia", x: 525, y: 485 },
     { country: "Croatia", x: 490, y: 485 },
-    { country: "Ukraine", x: 650, y: 400 },
-    { country: "Russia", x: 750, y: 200 },
+    { country: "Ukraine", x: 620, y: 400 },
+    { country: "Russia", x: 650, y: 300 },
     { country: "Finland", x: 500, y: 150 },
-    { country: "Estonia", x: 550, y: 220 },
-    { country: "Latvia", x: 550, y: 250 },
-    { country: "Lithuania", x: 530, y: 280 },
-    { country: "Bulgaria", x: 580, y: 500 },
+    { country: "Estonia", x: 570, y: 240 },
+    { country: "Latvia", x: 570, y: 270 },
+    { country: "Lithuania", x: 550, y: 300 },
+    { country: "Bulgaria", x: 560, y: 500 },
   ];
 
   const handleCountryClick = (x: number, y: number, event: React.MouseEvent) => {
