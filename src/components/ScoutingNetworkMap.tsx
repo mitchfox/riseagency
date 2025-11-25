@@ -422,10 +422,22 @@ const ScoutingNetworkMap = () => {
     { name: "CSKA 1948", country: "Bulgaria", city: "Sofia", x: 536, y: 446, logo: "/clubs/cska-1948.png" },
     { name: "Levski Sofia", country: "Bulgaria", city: "Sofia", x: 537, y: 447, logo: "/clubs/levski-sofia.png" },
     { name: "Lokomotiv Sofia", country: "Bulgaria", city: "Sofia", x: 538, y: 448, logo: "/clubs/lokomotiv-sofia.png" },
+    { name: "Septemvri Sofia", country: "Bulgaria", city: "Sofia", x: 539, y: 449, logo: "/clubs/septemvri-sofia.png" },
+    { name: "Slavia Sofia", country: "Bulgaria", city: "Sofia", x: 540, y: 450, logo: "/clubs/slavia-sofia.png" },
     { name: "Cherno More Varna", country: "Bulgaria", city: "Varna", x: 555, y: 440, logo: "/clubs/cherno-more-varna.png" },
+    { name: "Spartak Varna", country: "Bulgaria", city: "Varna", x: 556, y: 441, logo: "/clubs/spartak-varna.png" },
     { name: "Ludogorets Razgrad", country: "Bulgaria", city: "Razgrad", x: 552, y: 438, logo: "/clubs/ludogorets-razgrad.png" },
     { name: "Botev Vratsa", country: "Bulgaria", city: "Vratsa", x: 540, y: 440, logo: "/clubs/botev-vratsa.png" },
     { name: "Dobrudzha Dobrich", country: "Bulgaria", city: "Dobrich", x: 557, y: 437, logo: "/clubs/dobrudzha-dobrich.png" },
+    { name: "Montana", country: "Bulgaria", city: "Montana", x: 532, y: 440, logo: "/clubs/montana.png" },
+    
+    // Croatia
+    { name: "GNK Dinamo Zagreb", country: "Croatia", city: "Zagreb", x: 470, y: 410, logo: "/clubs/gnk-dinamo-zagreb.png" },
+    { name: "HNK Gorica", country: "Croatia", city: "Velika Gorica", x: 471, y: 411, logo: "/clubs/hnk-gorica.png" },
+    { name: "HNK Hajduk Split", country: "Croatia", city: "Split", x: 465, y: 440, logo: "/clubs/hnk-hajduk-split.png" },
+    { name: "HNK Rijeka", country: "Croatia", city: "Rijeka", x: 455, y: 415, logo: "/clubs/hnk-rijeka.png" },
+    { name: "NK Istra 1961", country: "Croatia", city: "Pula", x: 450, y: 420, logo: "/clubs/nk-istra-1961.png" },
+    { name: "HNK Vukovar 1991", country: "Croatia", city: "Vukovar", x: 500, y: 415, logo: "/clubs/hnk-vukovar-1991.png" },
   ];
 
   // Flag mapping
