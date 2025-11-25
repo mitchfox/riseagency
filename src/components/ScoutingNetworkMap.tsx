@@ -276,10 +276,20 @@ const ScoutingNetworkMap = () => {
     // Sweden
     { name: "AIK", country: "Sweden", city: "Stockholm", x: 430, y: 280, logo: "/clubs/aik.png" },
     { name: "Djurgårdens IF", country: "Sweden", city: "Stockholm", x: 431, y: 281, logo: "/clubs/djurgardens-if.png" },
+    { name: "Hammarby IF", country: "Sweden", city: "Stockholm", x: 432, y: 282, logo: "/clubs/hammarby-if.png" },
+    { name: "IF Brommapojkarna", country: "Sweden", city: "Stockholm", x: 433, y: 283, logo: "/clubs/if-brommapojkarna.png" },
     { name: "BK Häcken", country: "Sweden", city: "Gothenburg", x: 395, y: 300, logo: "/clubs/bk-hacken.png" },
     { name: "GAIS", country: "Sweden", city: "Gothenburg", x: 396, y: 301, logo: "/clubs/gais.png" },
+    { name: "IFK Göteborg", country: "Sweden", city: "Gothenburg", x: 397, y: 302, logo: "/clubs/ifk-goteborg.png" },
+    { name: "IF Elfsborg", country: "Sweden", city: "Borås", x: 398, y: 305, logo: "/clubs/if-elfsborg.png" },
     { name: "Halmstads BK", country: "Sweden", city: "Halmstad", x: 398, y: 315, logo: "/clubs/halmstads-bk.png" },
     { name: "Degerfors IF", country: "Sweden", city: "Degerfors", x: 410, y: 290, logo: "/clubs/degerfors-if.png" },
+    { name: "IFK Norrköping", country: "Sweden", city: "Norrköping", x: 422, y: 295, logo: "/clubs/ifk-norrkoping.png" },
+    { name: "IK Sirius", country: "Sweden", city: "Uppsala", x: 425, y: 285, logo: "/clubs/ik-sirius.png" },
+    { name: "Malmö FF", country: "Sweden", city: "Malmö", x: 398, y: 325, logo: "/clubs/malmo-ff.png" },
+    { name: "Mjällby AIF", country: "Sweden", city: "Sölvesborg", x: 412, y: 320, logo: "/clubs/mjallby-aif.png" },
+    { name: "IFK Värnamo", country: "Sweden", city: "Värnamo", x: 408, y: 308, logo: "/clubs/ifk-varnamo.png" },
+    { name: "Östers IF", country: "Sweden", city: "Växjö", x: 415, y: 315, logo: "/clubs/osters-if.png" },
   ];
 
   // Flag mapping
