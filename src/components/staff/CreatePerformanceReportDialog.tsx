@@ -1286,8 +1286,14 @@ export const CreatePerformanceReportDialog = ({
                           const per90SuccessValue = additionalStats[per90SuccessKey];
                           const per90AttemptedValue = additionalStats[per90AttemptedKey];
                           
-                          // Fix stat names (e.g., Aerials Won -> Aerial Duels)
-                          const displayName = successStat.stat_name.replace('Aerials Won', 'Aerial Duels');
+                          // Fix stat names and create combined display name
+                          let baseName = successStat.stat_name
+                            .replace('Aerials Won', 'Aerial Duels')
+                            .replace(' Completed', '')
+                            .replace(' Won', '')
+                            .replace(' On Target', '');
+                          
+                          const displayName = `${baseName} (Successful/Attempted)`;
                           
                           return (
                             <div key={groupIndex} className="p-2 border rounded-lg bg-muted/20">
