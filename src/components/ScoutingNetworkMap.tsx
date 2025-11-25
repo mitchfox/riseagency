@@ -200,6 +200,18 @@ const ScoutingNetworkMap = () => {
     { name: "CD Santa Clara", country: "Portugal", city: "Ponta Delgada", x: 150, y: 535, logo: "/clubs/cd-santa-clara.png" },
     { name: "CD Tondela", country: "Portugal", city: "Tondela", x: 232, y: 525, logo: "/clubs/cd-tondela.png" },
     { name: "CF Estrela Amadora", country: "Portugal", city: "Amadora", x: 236, y: 535, logo: "/clubs/cf-estrela-amadora.png" },
+    { name: "GD Estoril Praia", country: "Portugal", city: "Estoril", x: 234, y: 536, logo: "/clubs/gd-estoril-praia.png" },
+    { name: "Gil Vicente FC", country: "Portugal", city: "Barcelos", x: 237, y: 516, logo: "/clubs/gil-vicente-fc.png" },
+    { name: "Moreirense FC", country: "Portugal", city: "Moreira de Cónegos", x: 237, y: 517, logo: "/clubs/moreirense-fc.png" },
+    { name: "Rio Ave FC", country: "Portugal", city: "Vila do Conde", x: 236, y: 517, logo: "/clubs/rio-ave-fc.png" },
+    
+    // Romania
+    { name: "CFR Cluj", country: "Romania", city: "Cluj-Napoca", x: 565, y: 450, logo: "/clubs/cfr-cluj.png" },
+    { name: "CS Universitatea Craiova", country: "Romania", city: "Craiova", x: 560, y: 485, logo: "/clubs/cs-universitatea-craiova.png" },
+    { name: "FC Botosani", country: "Romania", city: "Botosani", x: 585, y: 440, logo: "/clubs/fc-botosani.png" },
+    { name: "ACSC FC Arges", country: "Romania", city: "Pitesti", x: 565, y: 475, logo: "/clubs/acsc-fc-arges.png" },
+    { name: "AFC Unirea 04 Slobozia", country: "Romania", city: "Slobozia", x: 590, y: 480, logo: "/clubs/afc-unirea-04-slobozia.png" },
+    { name: "AFK Csikszereda Miercurea Ciuc", country: "Romania", city: "Miercurea Ciuc", x: 575, y: 450, logo: "/clubs/afk-csikszereda-miercurea-ciuc.png" },
   ];
 
   // Flag mapping
