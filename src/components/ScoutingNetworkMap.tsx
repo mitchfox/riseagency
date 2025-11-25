@@ -156,6 +156,16 @@ const ScoutingNetworkMap = () => {
     { name: "ACF Fiorentina", country: "Italy", city: "Firenze", x: 450, y: 490, logo: "/clubs/acf-fiorentina.png" },
     { name: "AS Roma", country: "Italy", city: "Roma", x: 465, y: 515, logo: "/clubs/as-roma.png" },
     { name: "Cagliari Calcio", country: "Italy", city: "Cagliari", x: 425, y: 530, logo: "/clubs/cagliari-calcio.png" },
+    { name: "Juventus FC", country: "Italy", city: "Torino", x: 405, y: 455, logo: "/clubs/juventus-fc.png" },
+    { name: "Torino FC", country: "Italy", city: "Torino", x: 406, y: 456, logo: "/clubs/torino-fc.png" },
+    { name: "Udinese Calcio", country: "Italy", city: "Udine", x: 480, y: 450, logo: "/clubs/udinese-calcio.png" },
+    { name: "Parma Calcio 1913", country: "Italy", city: "Parma", x: 440, y: 470, logo: "/clubs/parma-calcio-1913.png" },
+    { name: "US Sassuolo", country: "Italy", city: "Sassuolo", x: 445, y: 472, logo: "/clubs/us-sassuolo.png" },
+    { name: "US Cremonese", country: "Italy", city: "Cremona", x: 448, y: 457, logo: "/clubs/us-cremonese.png" },
+    { name: "Pisa Sporting Club", country: "Italy", city: "Pisa", x: 440, y: 490, logo: "/clubs/pisa-sporting-club.png" },
+    { name: "SS Lazio", country: "Italy", city: "Roma", x: 466, y: 516, logo: "/clubs/ss-lazio.png" },
+    { name: "SSC Napoli", country: "Italy", city: "Napoli", x: 470, y: 525, logo: "/clubs/ssc-napoli.png" },
+    { name: "US Lecce", country: "Italy", city: "Lecce", x: 510, y: 530, logo: "/clubs/us-lecce.png" },
   ];
 
   // Flag mapping
