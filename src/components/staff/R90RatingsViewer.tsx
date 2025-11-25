@@ -466,8 +466,15 @@ export const R90RatingsViewer = ({ open, onOpenChange, initialCategory, searchTe
                             </CollapsibleTrigger>
                             <CollapsibleContent>
                               <CardContent className="space-y-3 pt-0">
-                                {(category.toUpperCase().includes('SHOT') || 
-                                  Object.keys(subcategories).some(sub => sub.toUpperCase().includes('SHOT'))) && (
+                                {(() => {
+                                  const isOffensiveShots = ['shots', 'finishing', 'attacking', 'offensive', 'striker'].some(
+                                    keyword => category.toLowerCase().includes(keyword)
+                                  ) && (
+                                    category.toLowerCase().includes('shot') || 
+                                    Object.keys(subcategories).some(sub => sub.toLowerCase().includes('shot'))
+                                  );
+                                  return isOffensiveShots;
+                                })() && (
                                   <div className="mb-4">
                                     <XGPitchMap />
                                   </div>
