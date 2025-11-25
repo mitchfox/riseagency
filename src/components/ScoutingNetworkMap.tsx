@@ -329,13 +329,25 @@ const ScoutingNetworkMap = () => {
     { name: "Ajax Amsterdam", country: "Netherlands", city: "Amsterdam", x: 378, y: 355, logo: "/clubs/ajax-amsterdam.png" },
     { name: "FC Volendam", country: "Netherlands", city: "Volendam", x: 380, y: 352, logo: "/clubs/fc-volendam.png" },
     { name: "AZ Alkmaar", country: "Netherlands", city: "Alkmaar", x: 377, y: 350, logo: "/clubs/az-alkmaar.png" },
+    { name: "SC Telstar", country: "Netherlands", city: "Velsen-Zuid", x: 376, y: 353, logo: "/clubs/sc-telstar.png" },
     { name: "Feyenoord Rotterdam", country: "Netherlands", city: "Rotterdam", x: 372, y: 364, logo: "/clubs/feyenoord-rotterdam.png" },
     { name: "Excelsior Rotterdam", country: "Netherlands", city: "Rotterdam", x: 373, y: 365, logo: "/clubs/excelsior-rotterdam.png" },
+    { name: "Sparta Rotterdam", country: "Netherlands", city: "Rotterdam", x: 374, y: 366, logo: "/clubs/sparta-rotterdam.png" },
     { name: "FC Utrecht", country: "Netherlands", city: "Utrecht", x: 380, y: 360, logo: "/clubs/fc-utrecht.png" },
     { name: "FC Groningen", country: "Netherlands", city: "Groningen", x: 388, y: 335, logo: "/clubs/fc-groningen.png" },
+    { name: "SC Heerenveen", country: "Netherlands", city: "Heerenveen", x: 383, y: 340, logo: "/clubs/sc-heerenveen.png" },
     { name: "Heracles Almelo", country: "Netherlands", city: "Almelo", x: 388, y: 352, logo: "/clubs/heracles-almelo.png" },
+    { name: "FC Twente", country: "Netherlands", city: "Enschede", x: 390, y: 355, logo: "/clubs/twente-enschede-fc.png" },
     { name: "Go Ahead Eagles", country: "Netherlands", city: "Deventer", x: 386, y: 355, logo: "/clubs/go-ahead-eagles.png" },
+    { name: "PEC Zwolle", country: "Netherlands", city: "Zwolle", x: 385, y: 350, logo: "/clubs/pec-zwolle.png" },
+    { name: "NEC Nijmegen", country: "Netherlands", city: "Nijmegen", x: 383, y: 368, logo: "/clubs/nec-nijmegen.png" },
+    { name: "PSV Eindhoven", country: "Netherlands", city: "Eindhoven", x: 378, y: 375, logo: "/clubs/psv-eindhoven.png" },
+    { name: "NAC Breda", country: "Netherlands", city: "Breda", x: 375, y: 370, logo: "/clubs/nac-breda.png" },
     { name: "Fortuna Sittard", country: "Netherlands", city: "Sittard", x: 370, y: 375, logo: "/clubs/fortuna-sittard.png" },
+    
+    // Norway
+    { name: "FK Bodø/Glimt", country: "Norway", city: "Bodø", x: 420, y: 190, logo: "/clubs/fk-bodo-glimt.png" },
+    { name: "Bryne FK", country: "Norway", city: "Bryne", x: 355, y: 285, logo: "/clubs/bryne-fk.png" },
   ];
 
   // Flag mapping
