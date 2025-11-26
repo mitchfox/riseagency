@@ -992,19 +992,14 @@ export const MarketingManagement = ({ isAdmin, isMarketeer }: { isAdmin: boolean
           <div className="space-y-4">
             <div className="relative">
               <Input
-                placeholder="Search clips or players..."
+                placeholder="Search clips..."
                 value={clipSearchQuery}
                 onChange={(e) => setClipSearchQuery(e.target.value)}
                 className="w-full"
               />
             </div>
             {playerHighlights.filter(player => {
-              const searchLower = clipSearchQuery.toLowerCase();
-              
-              // Check if player name matches
-              if (player.name.toLowerCase().includes(searchLower)) return true;
-              
-              // Parse highlights and check clip titles
+              // Parse highlights and build videos array
               let highlights = player.highlights as any;
               if (typeof highlights === 'string') {
                 try {
@@ -1013,15 +1008,20 @@ export const MarketingManagement = ({ isAdmin, isMarketeer }: { isAdmin: boolean
                   return false;
                 }
               }
-              
+
               const matchHighlights = Array.isArray(highlights?.matchHighlights) ? highlights.matchHighlights : [];
               const bestClips = Array.isArray(highlights?.bestClips) ? highlights.bestClips : [];
               const videos = [...matchHighlights, ...bestClips];
-              
+
+              if (!Array.isArray(videos) || videos.length === 0) return false;
+
+              const search = clipSearchQuery.trim().toLowerCase();
+              if (!search) return true;
+
               // Check if any clip title matches
               return videos.some((video: any) => {
                 const videoTitle = video?.title || video?.name || '';
-                return videoTitle.toLowerCase().includes(searchLower);
+                return videoTitle.toLowerCase().includes(search);
               });
             }).length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
@@ -1031,12 +1031,7 @@ export const MarketingManagement = ({ isAdmin, isMarketeer }: { isAdmin: boolean
             ) : (
               <Accordion type="single" collapsible className="w-full">
                 {playerHighlights.filter(player => {
-                  const searchLower = clipSearchQuery.toLowerCase();
-                  
-                  // Check if player name matches
-                  if (player.name.toLowerCase().includes(searchLower)) return true;
-                  
-                  // Parse highlights and check clip titles
+                  // Parse highlights and build videos array
                   let highlights = player.highlights as any;
                   if (typeof highlights === 'string') {
                     try {
@@ -1045,15 +1040,20 @@ export const MarketingManagement = ({ isAdmin, isMarketeer }: { isAdmin: boolean
                       return false;
                     }
                   }
-                  
+
                   const matchHighlights = Array.isArray(highlights?.matchHighlights) ? highlights.matchHighlights : [];
                   const bestClips = Array.isArray(highlights?.bestClips) ? highlights.bestClips : [];
                   const videos = [...matchHighlights, ...bestClips];
-                  
+
+                  if (!Array.isArray(videos) || videos.length === 0) return false;
+
+                  const search = clipSearchQuery.trim().toLowerCase();
+                  if (!search) return true;
+
                   // Check if any clip title matches
                   return videos.some((video: any) => {
                     const videoTitle = video?.title || video?.name || '';
-                    return videoTitle.toLowerCase().includes(searchLower);
+                    return videoTitle.toLowerCase().includes(search);
                   });
                 }).map((player) => {
                   let highlights = player.highlights as any;
@@ -1078,6 +1078,16 @@ export const MarketingManagement = ({ isAdmin, isMarketeer }: { isAdmin: boolean
                   const videos = [...matchHighlights, ...bestClips];
                   
                   if (!Array.isArray(videos) || videos.length === 0) return null;
+
+                  const search = clipSearchQuery.trim().toLowerCase();
+                  const filteredVideos = !search
+                    ? videos
+                    : videos.filter((video: any) => {
+                        const videoTitle = video?.title || video?.name || '';
+                        return videoTitle.toLowerCase().includes(search);
+                      });
+
+                  if (!Array.isArray(filteredVideos) || filteredVideos.length === 0) return null;
                   
                   return (
                     <AccordionItem key={player.id} value={player.id}>
@@ -1085,13 +1095,13 @@ export const MarketingManagement = ({ isAdmin, isMarketeer }: { isAdmin: boolean
                         <div className="flex items-center gap-2">
                           <span className="font-semibold">{player.name}</span>
                           <span className="text-sm text-muted-foreground">
-                            ({videos.length} {videos.length === 1 ? 'clip' : 'clips'})
+                            ({filteredVideos.length} {filteredVideos.length === 1 ? 'clip' : 'clips'})
                           </span>
                         </div>
                       </AccordionTrigger>
                       <AccordionContent>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-                          {videos.map((video: any, index: number) => {
+                          {filteredVideos.map((video: any, index: number) => {
                             const videoUrl = video.url || video.videoUrl || video;
                             const videoTitle = video.title || video.name || `Highlight ${index + 1}`;
                             
