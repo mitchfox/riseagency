@@ -120,6 +120,10 @@ export const MarketingManagement = ({ isAdmin, isMarketeer }: { isAdmin: boolean
     budget: '',
   });
 
+  const [showImportDialog, setShowImportDialog] = useState(false);
+  const [playerHighlights, setPlayerHighlights] = useState<any[]>([]);
+  const [importing, setImporting] = useState(false);
+
   useEffect(() => {
     if (activeTab === 'gallery') {
       fetchGalleryItems();
@@ -242,6 +246,49 @@ export const MarketingManagement = ({ isAdmin, isMarketeer }: { isAdmin: boolean
     } catch (error) {
       console.error('Delete error:', error);
       toast.error('Failed to delete item');
+    }
+  };
+
+  const fetchPlayerHighlights = async () => {
+    const { data, error } = await supabase
+      .from('players')
+      .select('id, name, highlights')
+      .not('highlights', 'is', null)
+      .order('name');
+    
+    if (error) {
+      console.error('Failed to fetch player highlights:', error);
+      return;
+    }
+
+    setPlayerHighlights(data || []);
+  };
+
+  const handleImportVideo = async (playerId: string, playerName: string, videoUrl: string, videoTitle: string) => {
+    if (!canManage) return;
+
+    setImporting(true);
+    try {
+      const { error } = await supabase
+        .from('marketing_gallery')
+        .insert({
+          title: `${playerName} - ${videoTitle}`,
+          description: 'Imported from player highlights',
+          file_url: videoUrl,
+          file_type: 'video',
+          category: 'players',
+          player_id: playerId,
+        });
+
+      if (error) throw error;
+
+      toast.success('Video imported to marketing gallery');
+      fetchGalleryItems();
+    } catch (error) {
+      console.error('Import error:', error);
+      toast.error('Failed to import video');
+    } finally {
+      setImporting(false);
     }
   };
 
@@ -434,11 +481,26 @@ export const MarketingManagement = ({ isAdmin, isMarketeer }: { isAdmin: boolean
                   )}
                   
                   {canManage && (
-                    <Button onClick={() => setShowUploadDialog(true)} size="sm" className="md:size-default">
-                      <Upload className="w-4 h-4 mr-2" />
-                      <span className="hidden sm:inline">Upload Media</span>
-                      <span className="sm:hidden">Upload</span>
-                    </Button>
+                    <>
+                      <Button onClick={() => setShowUploadDialog(true)} size="sm" className="md:size-default">
+                        <Upload className="w-4 h-4 mr-2" />
+                        <span className="hidden sm:inline">Upload Media</span>
+                        <span className="sm:hidden">Upload</span>
+                      </Button>
+                      <Button 
+                        onClick={() => {
+                          setShowImportDialog(true);
+                          fetchPlayerHighlights();
+                        }} 
+                        size="sm" 
+                        variant="outline"
+                        className="md:size-default"
+                      >
+                        <Play className="w-4 h-4 mr-2" />
+                        <span className="hidden sm:inline">Import from Clips</span>
+                        <span className="sm:hidden">Import</span>
+                      </Button>
+                    </>
                   )}
                 </div>
               </div>
@@ -810,6 +872,67 @@ export const MarketingManagement = ({ isAdmin, isMarketeer }: { isAdmin: boolean
               </Button>
             </div>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Import from Player Clips Dialog */}
+      <Dialog open={showImportDialog} onOpenChange={setShowImportDialog}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Import Videos from Player Clips</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-6">
+            {playerHighlights.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <Play className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                <p>No player highlights available to import</p>
+              </div>
+            ) : (
+              playerHighlights.map((player) => {
+                const highlights = player.highlights as any;
+                const videos = highlights?.videos || highlights?.clips || [];
+                
+                if (!Array.isArray(videos) || videos.length === 0) return null;
+                
+                return (
+                  <div key={player.id} className="border rounded-lg p-4">
+                    <h3 className="font-semibold text-lg mb-3">{player.name}</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {videos.map((video: any, index: number) => {
+                        const videoUrl = video.url || video.videoUrl || video;
+                        const videoTitle = video.title || video.name || `Highlight ${index + 1}`;
+                        
+                        if (typeof videoUrl !== 'string') return null;
+                        
+                        return (
+                          <Card key={index} className="overflow-hidden">
+                            <div className="relative aspect-video bg-muted">
+                              <video
+                                src={videoUrl}
+                                className="w-full h-full object-cover"
+                                controls
+                              />
+                            </div>
+                            <CardContent className="p-3">
+                              <p className="text-sm font-medium mb-2">{videoTitle}</p>
+                              <Button
+                                size="sm"
+                                className="w-full"
+                                onClick={() => handleImportVideo(player.id, player.name, videoUrl, videoTitle)}
+                                disabled={importing}
+                              >
+                                {importing ? 'Importing...' : 'Import to Gallery'}
+                              </Button>
+                            </CardContent>
+                          </Card>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
         </DialogContent>
       </Dialog>
     </div>
