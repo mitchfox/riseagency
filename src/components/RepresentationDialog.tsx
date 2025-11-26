@@ -80,7 +80,7 @@ export const RepresentationDialog = ({ open, onOpenChange }: RepresentationDialo
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[500px] z-[150]">
         <DialogHeader>
           <DialogTitle className="text-3xl font-bebas uppercase tracking-wider">
             Request Representation

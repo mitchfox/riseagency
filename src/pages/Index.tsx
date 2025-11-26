@@ -6,9 +6,9 @@ import { WorkWithUsDialog } from "@/components/WorkWithUsDialog";
 import { IntroModal } from "@/components/IntroModal";
 import { SEO } from "@/components/SEO";
 import { VideoPortfolio } from "@/components/VideoPortfolio";
+import { VideoScene3D } from "@/components/VideoScene3D";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import bannerHero from "@/assets/banner-hero-team.jpg";
 import marbleBg from "@/assets/marble-bg.png";
 import riseStarIcon from "@/assets/rise-star-icon.png";
 import marbleTexture from "@/assets/marble-texture.png";
@@ -81,48 +81,19 @@ const Index = () => {
       <IntroModal open={showIntroModal} onOpenChange={setShowIntroModal} />
       {!showIntroModal && <Header />}
       <div className="bg-background min-h-screen">
-        {/* Hero Banner Section */}
-        <section className="relative h-[85vh] md:h-screen flex items-center justify-center overflow-hidden pt-24 md:pt-20">
-          <div 
-            className="absolute inset-0 bg-cover bg-center scale-105 animate-[scale-in_20s_ease-in-out_infinite_alternate]"
-            style={{ backgroundImage: `url(${bannerHero})` }}
-          />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-background" />
+        {/* 3D Video Scene Section */}
+        <section className="relative pt-24 md:pt-20">
+          <VideoScene3D />
           
-          <div className="relative z-10 container mx-auto px-4">
-            <div className="max-w-5xl mx-auto text-center space-y-12 animate-fade-in">
-              <div className="space-y-6">
-                <div className="overflow-hidden relative w-full mb-8">
-                  <h1 
-                    className="text-6xl md:text-8xl lg:text-9xl font-bebas font-bold uppercase tracking-[0.15em] text-white whitespace-nowrap inline-block animate-[scroll-left_45s_linear_infinite]"
-                  >
-                    REALISE POTENTIAL • REALISE POTENTIAL • REALISE POTENTIAL • REALISE POTENTIAL • REALISE POTENTIAL • REALISE POTENTIAL •
-                  </h1>
-                </div>
-                <p className="text-xl md:text-2xl text-white/90 max-w-3xl lg:max-w-5xl mx-auto font-light tracking-wide italic">
-                  Elite Football Representation & Performance Optimisation
-                </p>
-              </div>
-              
-              <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
-                <WorkWithUsDialog>
-                  <Button 
-                    size="lg" 
-                    variant="outline"
-                    className="text-lg font-bebas uppercase tracking-widest w-full sm:w-[240px] h-[60px] hover:scale-105 transition-all duration-300 bg-white/10 backdrop-blur-sm border-white/30 text-white hover:bg-white/20"
-                  >
-                    RISE WITH US
-                  </Button>
-                </WorkWithUsDialog>
-              </div>
-            </div>
-          </div>
-          
-          {/* Scroll indicator - hidden on mobile */}
-          <div className="absolute bottom-12 left-1/2 transform -translate-x-1/2 hidden md:block">
-            <div className="w-6 h-10 border-2 border-white/50 rounded-full flex items-start justify-center p-2">
-              <div className="w-1 h-3 bg-white/50 rounded-full animate-pulse"></div>
-            </div>
+          {/* Text overlay below 3D scene */}
+          <div className="py-12 text-center space-y-6">
+            <h1 className="text-5xl md:text-7xl lg:text-8xl font-bebas uppercase tracking-wider">
+              <span className="text-foreground">REALISE </span>
+              <span className="text-primary">POTENTIAL</span>
+            </h1>
+            <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto font-light tracking-wide italic px-4">
+              Elite Football Representation & Performance Optimisation
+            </p>
           </div>
         </section>
 
