@@ -871,7 +871,7 @@ const ScoutingNetworkMap = () => {
             <rect width="1000" height="600" fill="hsl(var(--background))" />
 
             {/* Grid System */}
-            {showGrid && (
+            {showGrid && !expandedCity && (
               <g opacity="0.3">
                 {/* Vertical grid lines every 50px */}
                 {Array.from({ length: 21 }, (_, i) => i * 50).map((x) => (
@@ -923,8 +923,8 @@ const ScoutingNetworkMap = () => {
               </g>
             )}
 
-            {/* Europe outline image - hide when zoomed in */}
-            {zoomLevel < 2 && (
+            {/* Europe outline image - hide when zoomed in or city expanded */}
+            {!expandedCity && zoomLevel < 2 && (
               <image
                 href={europeOutline}
                 x="0"
@@ -1133,8 +1133,8 @@ const ScoutingNetworkMap = () => {
               </g>
             )}
             
-            {/* Country Flag Markers - render on top so they're visible over clusters, hide when zoomed in */}
-            {!selectedCountry && zoomLevel < 2 && countryMarkers.map((country, idx) => {
+            {/* Country Flag Markers - render on top so they're visible over clusters, hide when zoomed in or city expanded */}
+            {!selectedCountry && !expandedCity && zoomLevel < 2 && countryMarkers.map((country, idx) => {
               const flagImage = flagImages[country.country];
               return (
                 <g 
@@ -1186,14 +1186,6 @@ const ScoutingNetworkMap = () => {
                 </g>
               );
             })}
-
-            {/* Connection lines (sample) */}
-            <g opacity="0.1" stroke="hsl(var(--primary))" strokeWidth="1">
-              <line x1="520" y1="290" x2="510" y2="360" />
-              <line x1="510" y1="360" x2="420" y2="480" />
-              <line x1="650" y1="280" x2="680" y2="295" />
-              <line x1="560" y1="250" x2="540" y2="275" />
-            </g>
           </svg>
 
           {/* Legend */}
