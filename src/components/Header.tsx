@@ -330,24 +330,27 @@ export const Header = () => {
                     </nav>
 
                     {/* Bottom action cards */}
-                    <div className="grid grid-cols-2 gap-4 max-w-2xl -mt-5">
+                    <div className="grid grid-cols-2 gap-4 max-w-2xl -mt-[30px]">
                       <DrawerClose asChild>
                         <Link
                           to="/login"
-                          className="flex flex-col group"
+                          className="relative group"
                         >
-                          <h3 className="text-white font-bebas text-xl md:text-2xl uppercase tracking-wider mb-2 text-center">
-                            Portal
-                          </h3>
-                          <div className="relative aspect-[16/9] rounded overflow-hidden mb-2">
+                          <div className="relative aspect-[16/9] rounded overflow-hidden">
                             <img 
                               src={playerPortalImage} 
                               alt="Portal" 
                               className="w-full h-full object-cover"
                             />
-                          </div>
-                          <div className="bg-primary text-black font-bebas uppercase tracking-widest text-sm md:text-base py-3 text-center group-hover:brightness-110 transition-all">
-                            Portal
+                            <div className="absolute inset-0 bg-black/30" />
+                            <div className="absolute inset-0 flex flex-col items-center justify-between p-4">
+                              <h3 className="text-white font-bebas text-xl md:text-2xl uppercase tracking-wider text-center">
+                                Portal
+                              </h3>
+                              <div className="bg-primary text-black font-bebas uppercase tracking-widest text-sm md:text-base py-3 px-6 text-center group-hover:brightness-110 transition-all w-full">
+                                Portal
+                              </div>
+                            </div>
                           </div>
                         </Link>
                       </DrawerClose>
@@ -355,20 +358,23 @@ export const Header = () => {
                       <DrawerClose asChild>
                         <button
                           onClick={() => setRepresentationOpen(true)}
-                          className="flex flex-col group"
+                          className="relative group"
                         >
-                          <h3 className="text-white font-bebas text-xl md:text-2xl uppercase tracking-wider mb-2 text-center">
-                            Realise Potential
-                          </h3>
-                          <div className="relative aspect-[16/9] rounded overflow-hidden mb-2">
+                          <div className="relative aspect-[16/9] rounded overflow-hidden">
                             <img 
                               src={workingTogether} 
                               alt="Request Representation" 
                               className="w-full h-full object-cover"
                             />
-                          </div>
-                          <div className="bg-primary text-black font-bebas uppercase tracking-widest text-sm md:text-base py-3 text-center group-hover:brightness-110 transition-all">
-                            Request Representation
+                            <div className="absolute inset-0 bg-black/30" />
+                            <div className="absolute inset-0 flex flex-col items-center justify-between p-4">
+                              <h3 className="text-white font-bebas text-xl md:text-2xl uppercase tracking-wider text-center">
+                                Realise Potential
+                              </h3>
+                              <div className="bg-primary text-black font-bebas uppercase tracking-widest text-sm md:text-base py-3 px-6 text-center group-hover:brightness-110 transition-all w-full">
+                                Request Representation
+                              </div>
+                            </div>
                           </div>
                         </button>
                       </DrawerClose>
@@ -548,7 +554,7 @@ export const Header = () => {
                           : 'border border-white/20 grayscale'
                       }`}
                     >
-                      {/* Cycling Images */}
+                      {/* Cycling Images with pan animation */}
                       {realisePotentialImages.map((image, index) => (
                         <div
                           key={index}
@@ -558,7 +564,8 @@ export const Header = () => {
                           <img 
                             src={image} 
                             alt={`Realise Potential ${index + 1}`}
-                            className="w-full h-full object-cover" 
+                            className="h-full w-auto min-w-[120%] object-cover animate-pan-right" 
+                            style={{ objectPosition: 'left center' }}
                           />
                         </div>
                       ))}
