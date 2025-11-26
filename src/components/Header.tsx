@@ -162,10 +162,10 @@ export const Header = () => {
         <div className="fixed top-14 md:top-16 left-0 right-0 z-50 bg-background/95 backdrop-blur-md transition-all duration-500 border-b-2 border-primary">
           <div className="container mx-auto px-2 md:px-4">
           <div className="flex items-center justify-between h-9 md:h-10">
-            <div className="flex flex-wrap items-center gap-1 md:gap-4">
+            <div className="flex flex-wrap items-center gap-1 md:gap-4 transition-all duration-500">
               <Link
                 to="/contact"
-                className="text-xs md:text-sm font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-colors flex items-center gap-1.5"
+                className="text-xs md:text-sm font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500 flex items-center gap-1.5"
               >
                 <MessageCircle className="w-3.5 h-3.5 hidden sm:block" />
                 <span className="hidden md:inline">Contact Us</span>
@@ -174,17 +174,17 @@ export const Header = () => {
               <div className="w-px h-4 bg-white/20 md:hidden" />
               <button
                 onClick={() => setDeclareInterestOpen(true)}
-                className="text-xs md:text-sm font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-colors flex items-center gap-1.5"
+                className="text-xs md:text-sm font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500 flex items-center gap-1.5"
               >
                 <Users className="w-3.5 h-3.5 hidden sm:block" />
                 <span className="hidden md:inline">Declare Interest In A Star</span>
                 <span className="md:hidden">Declare Interest</span>
               </button>
             </div>
-            <div className="flex flex-wrap items-center gap-1 md:gap-4">
+            <div className="flex flex-wrap items-center gap-1 md:gap-4 transition-all duration-500">
               <button
                 onClick={() => setRepresentationOpen(true)}
-                className="text-xs md:text-sm font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-colors flex items-center gap-1.5"
+                className="text-xs md:text-sm font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500 flex items-center gap-1.5"
               >
                 <MessageCircle className="w-3.5 h-3.5 hidden sm:block" />
                 <span className="hidden md:inline">Request Representation</span>
@@ -193,7 +193,7 @@ export const Header = () => {
               <div className="w-px h-4 bg-white/20 md:hidden" />
               <Link
                 to="/login"
-                className="text-xs md:text-sm font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-colors flex items-center gap-1.5"
+                className="text-xs md:text-sm font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500 flex items-center gap-1.5"
               >
                 <LogIn className="w-3.5 h-3.5 hidden sm:block" />
                 <span>PORTAL</span>
@@ -748,38 +748,50 @@ export const Header = () => {
           {showTopBar && isScrolled && (
             <>
               {/* Left side icons - next to menu */}
-              <div className="absolute left-12 md:left-16 top-1/2 -translate-y-1/2 flex items-center gap-1 md:gap-2 animate-slide-down-fade-in">
+              <div className="absolute left-12 md:left-16 top-1/2 -translate-y-1/2 flex items-center gap-1 md:gap-2 transition-all duration-500">
                 <Link
                   to="/contact"
-                  className="p-1.5 md:p-2 rounded-full hover:bg-primary/10 transition-all duration-300 group"
+                  className="group p-1.5 md:p-2 rounded-full hover:bg-primary/10 transition-all duration-300 flex items-center gap-1.5 overflow-hidden"
                   title="Contact Us"
                 >
-                  <MessageCircle className="w-4 h-4 md:w-5 md:h-5 text-white/80 group-hover:text-primary transition-colors" />
+                  <MessageCircle className="w-4 h-4 md:w-5 md:h-5 text-white/80 group-hover:text-primary transition-colors flex-shrink-0" />
+                  <span className="max-w-0 group-hover:max-w-xs transition-all duration-300 text-xs font-bebas uppercase tracking-wider text-white/80 group-hover:text-primary whitespace-nowrap overflow-hidden">
+                    Contact Us
+                  </span>
                 </Link>
                 <button
                   onClick={() => setDeclareInterestOpen(true)}
-                  className="p-1.5 md:p-2 rounded-full hover:bg-primary/10 transition-all duration-300 group"
+                  className="group p-1.5 md:p-2 rounded-full hover:bg-primary/10 transition-all duration-300 flex items-center gap-1.5 overflow-hidden"
                   title="Declare Interest"
                 >
-                  <Users className="w-4 h-4 md:w-5 md:h-5 text-white/80 group-hover:text-primary transition-colors" />
+                  <Users className="w-4 h-4 md:w-5 md:h-5 text-white/80 group-hover:text-primary transition-colors flex-shrink-0" />
+                  <span className="max-w-0 group-hover:max-w-xs transition-all duration-300 text-xs font-bebas uppercase tracking-wider text-white/80 group-hover:text-primary whitespace-nowrap overflow-hidden">
+                    Declare Interest
+                  </span>
                 </button>
               </div>
               
               {/* Right side icons - next to Rise With Us */}
-              <div className="absolute right-20 md:right-28 top-1/2 -translate-y-1/2 flex items-center gap-1 md:gap-2 animate-slide-down-fade-in">
+              <div className="absolute right-20 md:right-28 top-1/2 -translate-y-1/2 flex items-center gap-1 md:gap-2 transition-all duration-500">
                 <button
                   onClick={() => setRepresentationOpen(true)}
-                  className="p-1.5 md:p-2 rounded-full hover:bg-primary/10 transition-all duration-300 group"
+                  className="group p-1.5 md:p-2 rounded-full hover:bg-primary/10 transition-all duration-300 flex items-center gap-1.5 overflow-hidden"
                   title="Request Representation"
                 >
-                  <MessageCircle className="w-4 h-4 md:w-5 md:h-5 text-white/80 group-hover:text-primary transition-colors" />
+                  <MessageCircle className="w-4 h-4 md:w-5 md:h-5 text-white/80 group-hover:text-primary transition-colors flex-shrink-0" />
+                  <span className="max-w-0 group-hover:max-w-xs transition-all duration-300 text-xs font-bebas uppercase tracking-wider text-white/80 group-hover:text-primary whitespace-nowrap overflow-hidden">
+                    Request Representation
+                  </span>
                 </button>
                 <Link
                   to="/login"
-                  className="p-1.5 md:p-2 rounded-full hover:bg-primary/10 transition-all duration-300 group"
+                  className="group p-1.5 md:p-2 rounded-full hover:bg-primary/10 transition-all duration-300 flex items-center gap-1.5 overflow-hidden"
                   title="Portal"
                 >
-                  <LogIn className="w-4 h-4 md:w-5 md:h-5 text-white/80 group-hover:text-primary transition-colors" />
+                  <LogIn className="w-4 h-4 md:w-5 md:h-5 text-white/80 group-hover:text-primary transition-colors flex-shrink-0" />
+                  <span className="max-w-0 group-hover:max-w-xs transition-all duration-300 text-xs font-bebas uppercase tracking-wider text-white/80 group-hover:text-primary whitespace-nowrap overflow-hidden">
+                    Portal
+                  </span>
                 </Link>
               </div>
             </>
