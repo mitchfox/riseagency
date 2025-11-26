@@ -81,8 +81,53 @@ const Index = () => {
       <IntroModal open={showIntroModal} onOpenChange={setShowIntroModal} />
       {!showIntroModal && <Header />}
       <div className="bg-background min-h-screen">
+        {/* WATCH NOW Section - Moved to top */}
+        <section className="pt-16 md:pt-14 py-12 md:py-16 px-4 bg-muted/30">
+          <div className="container mx-auto max-w-7xl">
+            <div className="text-center mb-6 space-y-3">
+              <div className="inline-block">
+                <span className="text-sm font-bebas uppercase tracking-widest text-primary border border-primary/30 px-6 py-2 rounded-full">
+                  Video
+                </span>
+              </div>
+              <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-foreground">
+                WATCH <span className="text-primary">NOW</span>
+              </h2>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {/* Video 1 */}
+              <div className="relative aspect-video rounded-xl overflow-hidden border border-border shadow-lg">
+                <iframe
+                  width="100%"
+                  height="100%"
+                  src="https://www.youtube.com/embed/pWH2cdmzwVg?rel=0"
+                  title="RISE Football Video 1"
+                  frameBorder="0"
+                  allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  className="absolute inset-0 w-full h-full"
+                />
+              </div>
+
+              {/* Video 2 - Hidden on mobile */}
+              <div className="relative aspect-video rounded-xl overflow-hidden border border-border shadow-lg hidden md:block">
+                <iframe
+                  width="100%"
+                  height="100%"
+                  src="https://www.youtube.com/embed/XtmRhHvXeyo?rel=0"
+                  title="RISE Football Video 2"
+                  frameBorder="0"
+                  allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  className="absolute inset-0 w-full h-full"
+                />
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* 3D Video Scene Section */}
-        <section className="relative pt-16 md:pt-14">
+        <section className="relative">
           <VideoScene3D />
           
           {/* Text overlay below 3D scene */}
@@ -236,51 +281,6 @@ const Index = () => {
             </div>
           </section>
         )}
-
-        {/* WATCH NOW Section */}
-        <section className="py-12 md:py-16 px-4 bg-muted/30">
-          <div className="container mx-auto max-w-7xl">
-            <div className="text-center mb-6 space-y-3">
-              <div className="inline-block">
-                <span className="text-sm font-bebas uppercase tracking-widest text-primary border border-primary/30 px-6 py-2 rounded-full">
-                  Video
-                </span>
-              </div>
-              <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-foreground">
-                WATCH <span className="text-primary">NOW</span>
-              </h2>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {/* Video 1 */}
-              <div className="relative aspect-video rounded-xl overflow-hidden border border-border shadow-lg">
-                <iframe
-                  width="100%"
-                  height="100%"
-                  src="https://www.youtube.com/embed/pWH2cdmzwVg?rel=0"
-                  title="RISE Football Video 1"
-                  frameBorder="0"
-                  allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                  className="absolute inset-0 w-full h-full"
-                />
-              </div>
-
-              {/* Video 2 - Hidden on mobile */}
-              <div className="relative aspect-video rounded-xl overflow-hidden border border-border shadow-lg hidden md:block">
-                <iframe
-                  width="100%"
-                  height="100%"
-                  src="https://www.youtube.com/embed/XtmRhHvXeyo?rel=0"
-                  title="RISE Football Video 2"
-                  frameBorder="0"
-                  allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                  className="absolute inset-0 w-full h-full"
-                />
-              </div>
-            </div>
-          </div>
-        </section>
 
         {/* Video Portfolio Section */}
         <section className="py-12 md:py-20 px-4 bg-background relative overflow-hidden">
