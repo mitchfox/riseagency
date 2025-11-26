@@ -45,7 +45,7 @@ const Login = () => {
           .maybeSingle();
           
         if (data) {
-          navigate("/scout-portal");
+          navigate("/potential");
           return;
         } else {
           localStorage.removeItem("scout_email");
@@ -136,7 +136,7 @@ const Login = () => {
         }
         
         toast.success("Welcome to your scout portal!");
-        navigate("/scout-portal");
+        navigate("/potential");
         return;
       }
 
