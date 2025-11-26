@@ -241,7 +241,15 @@ const ClubNetworkManagement = () => {
         </div>
       </div>
 
-      <PlayerDatabase />
+      <div className="mt-8 pt-8 border-t">
+        <div className="mb-6">
+          <h2 className="text-xl font-semibold">Player Database</h2>
+          <p className="text-muted-foreground text-sm mt-1">
+            View all players with scouting reports
+          </p>
+        </div>
+        <PlayerDatabase />
+      </div>
 
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
         <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto p-4 md:p-6">

@@ -80,10 +80,8 @@ export const PlayerDatabase = () => {
   }
 
   return (
-    <div className="space-y-4">
-      <h3 className="text-lg font-semibold">Player Database</h3>
-      <div className="space-y-2">
-        {playerReports.map((player) => (
+    <div className="space-y-2">
+      {playerReports.map((player) => (
           <div key={player.player_name} className="border rounded-lg bg-card">
             <button
               onClick={() => togglePlayer(player.player_name)}
@@ -155,13 +153,12 @@ export const PlayerDatabase = () => {
               </div>
             )}
           </div>
-        ))}
-        {playerReports.length === 0 && (
-          <div className="text-center py-8 text-muted-foreground">
-            No players in database yet
-          </div>
-        )}
-      </div>
+      ))}
+      {playerReports.length === 0 && (
+        <div className="text-center py-8 text-muted-foreground">
+          No players in database yet
+        </div>
+      )}
     </div>
   );
 };
