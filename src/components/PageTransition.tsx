@@ -1,65 +1,42 @@
-import { useEffect, useState, useRef } from "react";
-import { useLocation } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useLocation, type Location } from "react-router-dom";
 import logo from "@/assets/logo.png";
 
-export const PageTransition = ({ children }: { children: React.ReactNode }) => {
+interface PageTransitionProps {
+  children: (displayLocation: Location) => React.ReactNode;
+}
+
+export const PageTransition = ({ children }: PageTransitionProps) => {
   const location = useLocation();
+  const [displayLocation, setDisplayLocation] = useState(location);
   const [isTransitioning, setIsTransitioning] = useState(false);
-  const [prevPath, setPrevPath] = useState(location.pathname);
-  const [frozenContent, setFrozenContent] = useState<React.ReactNode>(null);
-  
-  // Always keep track of the last rendered children
-  const lastChildrenRef = useRef(children);
-  
-  // Update ref when NOT transitioning
-  useEffect(() => {
-    if (!isTransitioning) {
-      lastChildrenRef.current = children;
-    }
-  }, [children, isTransitioning]);
 
   useEffect(() => {
-    // Only trigger transition if path actually changed
-    if (location.pathname === prevPath) {
-      return;
-    }
+    // If the URL changed but our displayed location hasn't, start a queued transition
+    if (location.pathname === displayLocation.pathname) return;
 
-    // Freeze the PREVIOUS content (before React Router updated children)
-    setFrozenContent(lastChildrenRef.current);
-    
-    // Start transition
     setIsTransitioning(true);
-    setPrevPath(location.pathname);
 
-    // Clear frozen content and show new page after black circle fully covers screen
-    const updateTimer = setTimeout(() => {
-      setFrozenContent(null);
-    }, 5200); // After 5s circle expand + small buffer
+    // After 5s (transition out), actually switch the rendered route
+    const showNewTimer = setTimeout(() => {
+      setDisplayLocation(location);
+    }, 5000);
 
-    // End transition after expand + hold + contract animations
+    // After another 5s (transition in), end the overlay
     const endTimer = setTimeout(() => {
       setIsTransitioning(false);
-    }, 11000); // Total: expand (5s) + hold (1s) + contract (5s)
+    }, 10000);
 
     return () => {
-      clearTimeout(updateTimer);
+      clearTimeout(showNewTimer);
       clearTimeout(endTimer);
     };
-  }, [location.pathname, prevPath]);
+  }, [location, displayLocation]);
 
   return (
     <>
-      {/* New page content - always rendered but hidden during transition */}
-      <div className={frozenContent ? "invisible" : "visible"}>
-        {children}
-      </div>
-
-      {/* Frozen old page content as fixed overlay during transition */}
-      {frozenContent && (
-        <div className="fixed inset-0 z-[150] overflow-auto">
-          {frozenContent}
-        </div>
-      )}
+      {/* Render routes based on the queued displayLocation */}
+      {children(displayLocation)}
 
       {/* Black circle transition overlay */}
       {isTransitioning && (
@@ -72,8 +49,9 @@ export const PageTransition = ({ children }: { children: React.ReactNode }) => {
                 width: "200vmax",
                 height: "200vmax",
                 transform: "scale(0)",
+                // 5s expand, then 5s contract
                 animation:
-                  "circleExpand 5s ease-in-out 0s forwards, circleContract 5s ease-in-out 6s forwards",
+                  "circleExpand 5s ease-in-out 0s forwards, circleContract 5s ease-in-out 5s forwards",
               }}
             />
           </div>
