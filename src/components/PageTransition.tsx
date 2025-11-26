@@ -25,12 +25,12 @@ export const PageTransition = ({ children }: { children: React.ReactNode }) => {
       clearTimeout(updateTimer);
       clearTimeout(endTimer);
     };
-  }, [location.pathname]); // Triggers on every route change
+  }, [location.pathname, children]); // Triggers on every route change
 
   return (
     <>
       {isTransitioning && (
-        <div className="fixed inset-0 z-[200] pointer-events-none">
+        <div className="fixed inset-0 z-[200] pointer-events-none" key={location.pathname}>
           {/* Logo */}
           <div className="absolute inset-0 flex items-center justify-center">
             <img 
