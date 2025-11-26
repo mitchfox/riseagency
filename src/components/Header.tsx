@@ -290,14 +290,18 @@ export const Header = () => {
 
           {/* Logo - Center */}
           <Link to="/" className="absolute left-1/2 transform -translate-x-1/2 z-10">
-            <img src={logo} alt="RISE Football Agency" className="h-7 md:h-10" />
+            <img 
+              src={logo} 
+              alt="RISE Football Agency" 
+              className={`transition-all duration-300 ease-out ${isScrolled ? 'h-[42px] md:h-[60px] -translate-y-5' : 'h-7 md:h-10'}`} 
+            />
           </Link>
 
           {/* RISE WITH US Button - Right */}
           <Button
             onClick={() => setWorkWithUsOpen(true)}
             size="sm"
-            className="btn-shine font-bebas uppercase tracking-wider text-xs md:text-base px-3 md:px-6 h-8 md:h-10"
+            className={`btn-shine font-bebas uppercase tracking-wider transition-all duration-300 ease-out ${isScrolled ? 'text-[8px] md:text-[11px] px-2 md:px-4 h-[22px] md:h-7' : 'text-xs md:text-base px-3 md:px-6 h-8 md:h-10'}`}
           >
             <span className="hidden sm:inline">RISE WITH US</span>
             <span className="sm:hidden">RISE</span>
