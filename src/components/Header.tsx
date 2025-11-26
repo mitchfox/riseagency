@@ -5,6 +5,8 @@ import { X, MessageCircle, Users, LogIn } from "lucide-react";
 import workingTogether from "@/assets/menu-working-together.jpg";
 import playerPortalImage from "@/assets/menu-player-portal.png";
 import blackMarbleBg from "@/assets/black-marble-smudged.png";
+import { supabase } from "@/integrations/supabase/client";
+import { getCountryFlagUrl } from "@/lib/countryFlags";
 import {
   Drawer,
   DrawerClose,
@@ -27,10 +29,37 @@ export const Header = () => {
   const [introModalOpen, setIntroModalOpen] = useState(false);
   const [showTopBar, setShowTopBar] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [starsHovered, setStarsHovered] = useState(false);
+  const [starPlayers, setStarPlayers] = useState<any[]>([]);
+  const [starIndex, setStarIndex] = useState(0);
 
   useEffect(() => {
     setShowTopBar(location.pathname === '/');
   }, [location.pathname]);
+
+  useEffect(() => {
+    const fetchStarPlayers = async () => {
+      const { data, error } = await supabase
+        .from('players')
+        .select('*')
+        .eq('visible_on_stars_page', true)
+        .limit(3);
+      
+      if (data && !error && data.length > 0) {
+        setStarPlayers(data);
+      }
+    };
+    fetchStarPlayers();
+  }, []);
+
+  useEffect(() => {
+    if (starPlayers.length > 0) {
+      const starInterval = setInterval(() => {
+        setStarIndex(prev => (prev + 1) % starPlayers.length);
+      }, 6000);
+      return () => clearInterval(starInterval);
+    }
+  }, [starPlayers.length]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -168,6 +197,8 @@ export const Header = () => {
                       <DrawerClose asChild>
                         <Link
                           to="/stars"
+                          onMouseEnter={() => setStarsHovered(true)}
+                          onMouseLeave={() => setStarsHovered(false)}
                           className={`text-2xl md:text-3xl font-bebas uppercase text-white hover:text-primary transition-colors tracking-wider py-1 ${
                             isActive("/stars") || location.pathname.startsWith("/stars/") ? "text-primary" : ""
                           }`}
@@ -246,7 +277,7 @@ export const Header = () => {
                     </nav>
 
                     {/* Bottom action cards */}
-                    <div className="grid grid-cols-2 gap-4 max-w-2xl mt-8">
+                    <div className="grid grid-cols-2 gap-4 max-w-2xl -mt-5">
                       <DrawerClose asChild>
                         <button
                           onClick={() => setRepresentationOpen(true)}
@@ -259,7 +290,7 @@ export const Header = () => {
                           />
                           <div className="absolute inset-0 bg-black/40 group-hover:bg-black/30 transition-all" />
                           <div className="absolute inset-0 flex items-center justify-center">
-                            <span className="text-lg md:text-xl font-bebas uppercase text-primary tracking-wider px-4 py-2 border-2 border-primary rounded bg-black/50 group-hover:bg-primary group-hover:text-black transition-all">
+                            <span className="text-lg md:text-xl font-bebas uppercase tracking-wider px-4 py-2 bg-primary text-black rounded group-hover:scale-105 transition-all">
                               Represent Me
                             </span>
                           </div>
@@ -278,7 +309,7 @@ export const Header = () => {
                           />
                           <div className="absolute inset-0 bg-black/40 group-hover:bg-black/30 transition-all" />
                           <div className="absolute inset-0 flex items-center justify-center">
-                            <span className="text-lg md:text-xl font-bebas uppercase text-primary tracking-wider px-4 py-2 border-2 border-primary rounded bg-black/50 group-hover:bg-primary group-hover:text-black transition-all">
+                            <span className="text-lg md:text-xl font-bebas uppercase tracking-wider px-4 py-2 bg-primary text-black rounded group-hover:scale-105 transition-all">
                               Portal
                             </span>
                           </div>
@@ -288,36 +319,120 @@ export const Header = () => {
                   </div>
                 </div>
 
-                {/* Right side - Images (desktop only) */}
-                <div className="hidden lg:grid grid-cols-2 gap-4 p-8 bg-background overflow-y-auto">
-                  <div className="aspect-[3/4] bg-muted rounded-lg overflow-hidden">
-                    <img 
-                      src={playerPortalImage} 
-                      alt="Portal" 
-                      className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-300"
-                    />
-                  </div>
-                  <div className="aspect-[3/4] bg-muted rounded-lg overflow-hidden">
-                    <img 
-                      src={workingTogether} 
-                      alt="Working Together" 
-                      className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-300"
-                    />
-                  </div>
-                  <div className="aspect-[3/4] bg-muted rounded-lg overflow-hidden">
-                    <img 
-                      src={workingTogether} 
-                      alt="Image 3" 
-                      className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-300"
-                    />
-                  </div>
-                  <div className="aspect-[3/4] bg-muted rounded-lg overflow-hidden">
-                    <img 
-                      src={playerPortalImage} 
-                      alt="Image 4" 
-                      className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-300"
-                    />
-                  </div>
+                {/* Right side - Stars Card (desktop only) */}
+                <div className="hidden lg:flex items-center justify-center bg-background p-8">
+                  {starPlayers.length > 0 && (
+                    <div className="w-full max-w-md">
+                      <div 
+                        className={`relative w-full aspect-[3/4] rounded-lg overflow-hidden transition-all duration-300 ${
+                          starsHovered 
+                            ? 'border-2 border-primary shadow-[0_0_20px_rgba(184,165,116,0.6)]' 
+                            : 'border border-white/20 grayscale'
+                        }`}
+                      >
+                        {/* Player Images with Dark Overlay */}
+                        {starPlayers.map((player, index) => (
+                          <div
+                            key={player.id}
+                            className="absolute inset-0 transition-opacity duration-1000 ease-in-out"
+                            style={{ opacity: index === starIndex ? 1 : 0 }}
+                          >
+                            <img 
+                              src={player.image_url} 
+                              alt={player.name}
+                              className="w-full h-full object-cover" 
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/80" />
+                          </div>
+                        ))}
+                      
+                        {/* Age - Top Left */}
+                        <div className="absolute top-4 left-4 flex flex-col items-center min-w-[60px]">
+                          {starPlayers.map((player, index) => (
+                            <div
+                              key={`age-${player.id}`}
+                              className="transition-opacity duration-1000 ease-in-out"
+                              style={{ 
+                                opacity: index === starIndex ? 1 : 0,
+                                position: index === starIndex ? 'relative' : 'absolute',
+                                visibility: index === starIndex ? 'visible' : 'hidden'
+                              }}
+                            >
+                              <div className="text-4xl font-bold text-white font-bebas leading-none text-center">{player.age}</div>
+                              <div className="text-[9px] text-white/80 uppercase tracking-wider mt-0.5 text-center">Age</div>
+                            </div>
+                          ))}
+                        </div>
+                        
+                        {/* Nationality Flag - Top Right */}
+                        <div className="absolute top-4 right-4 flex flex-col items-center min-w-[60px]">
+                          {starPlayers.map((player, index) => {
+                            const nat = player.nationality;
+                            if (!nat) return null;
+                            const normalizedNat = nat === 'Cape Verdean' ? 'Cape Verde' : nat;
+                            const flagUrl = getCountryFlagUrl(normalizedNat);
+                            return (
+                              <div
+                                key={`nat-${player.id}`}
+                                className="flex flex-col items-center transition-opacity duration-1000 ease-in-out"
+                                style={{ 
+                                  opacity: index === starIndex ? 1 : 0,
+                                  position: index === starIndex ? 'relative' : 'absolute',
+                                  visibility: index === starIndex ? 'visible' : 'hidden'
+                                }}
+                              >
+                                <img 
+                                  src={flagUrl} 
+                                  alt={`${normalizedNat} flag`}
+                                  className="w-10 h-8 object-contain mb-1"
+                                />
+                                <div className="text-[9px] text-white/80 uppercase tracking-wider text-center">Nationality</div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                        
+                        {/* Position - Bottom Left */}
+                        <div className="absolute bottom-4 left-4 flex flex-col items-center min-w-[60px]">
+                          {starPlayers.map((player, index) => (
+                            <div
+                              key={`pos-${player.id}`}
+                              className="transition-opacity duration-1000 ease-in-out"
+                              style={{ 
+                                opacity: index === starIndex ? 1 : 0,
+                                position: index === starIndex ? 'relative' : 'absolute',
+                                visibility: index === starIndex ? 'visible' : 'hidden'
+                              }}
+                            >
+                              <div className="text-3xl font-bold text-white font-bebas leading-none text-center">{player.position}</div>
+                              <div className="text-[9px] text-white/80 uppercase tracking-wider mt-0.5 text-center">Position</div>
+                            </div>
+                          ))}
+                        </div>
+                        
+                        {/* Club Logo - Bottom Right */}
+                        <div className="absolute bottom-4 right-4 flex flex-col items-center min-w-[60px]">
+                          {starPlayers.map((player, index) => {
+                            const clubLogo = player.club_logo;
+                            return clubLogo ? (
+                              <div
+                                key={`club-${player.id}`}
+                                className="flex flex-col items-center transition-opacity duration-1000 ease-in-out"
+                                style={{ 
+                                  opacity: index === starIndex ? 1 : 0,
+                                  position: index === starIndex ? 'relative' : 'absolute',
+                                  visibility: index === starIndex ? 'visible' : 'hidden'
+                                }}
+                              >
+                                <img src={clubLogo} alt="Club" className="w-12 h-12 object-contain mb-1" />
+                                <div className="text-[9px] text-white/80 uppercase tracking-wider text-center">Club</div>
+                              </div>
+                            ) : null;
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </DrawerContent>
