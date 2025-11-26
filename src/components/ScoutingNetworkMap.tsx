@@ -804,13 +804,6 @@ const ScoutingNetworkMap = () => {
 
   return (
     <div className="w-full space-y-6">
-      <div className="text-center space-y-2">
-        <h3 className="text-3xl font-bebas">SCOUTING NETWORK ACROSS EUROPE</h3>
-        <p className="text-muted-foreground">
-          Our extensive scouting presence spanning {countryMarkers.length} countries
-        </p>
-      </div>
-
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Map Section */}
         <div className="lg:col-span-2 bg-card rounded-lg p-6 border relative">
@@ -1242,53 +1235,57 @@ const ScoutingNetworkMap = () => {
           {/* Country List */}
           <div className="bg-card rounded-lg p-4 border max-h-96 overflow-y-auto">
             <h4 className="font-bebas text-xl mb-3">COVERAGE REGIONS</h4>
-            <div className="space-y-2">
+            <div className="space-y-0">
               {countryMarkers
                 .filter(country => !selectedCountry || country.country === selectedCountry)
-                .map((country, idx) => (
-                <div
-                  key={idx}
-                  className="flex flex-col gap-2 p-2 rounded hover:bg-accent transition-colors cursor-pointer"
-                  onClick={() => handleCountryListClick(country.country, country.x, country.y)}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="relative w-6 h-6 flex-shrink-0">
-                      <svg width="24" height="24" viewBox="0 0 24 24">
-                        <defs>
-                          <clipPath id={`list-flag-clip-${idx}`}>
-                            <circle cx="12" cy="12" r="10" />
-                          </clipPath>
-                        </defs>
-                        <image
-                          href={flagImages[country.country]}
-                          x="2"
-                          y="2"
-                          width="20"
-                          height="20"
-                          clipPath={`url(#list-flag-clip-${idx})`}
-                        />
-                        <circle
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          fill="none"
-                          stroke="hsl(var(--primary))"
-                          strokeWidth="1.5"
-                        />
-                      </svg>
+                .map((country, idx, arr) => (
+                <div key={idx}>
+                  <div
+                    className="flex flex-col gap-2 p-2 rounded hover:bg-accent transition-colors cursor-pointer"
+                    onClick={() => handleCountryListClick(country.country, country.x, country.y)}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="relative w-6 h-6 flex-shrink-0">
+                        <svg width="24" height="24" viewBox="0 0 24 24">
+                          <defs>
+                            <clipPath id={`list-flag-clip-${idx}`}>
+                              <circle cx="12" cy="12" r="10" />
+                            </clipPath>
+                          </defs>
+                          <image
+                            href={flagImages[country.country]}
+                            x="2"
+                            y="2"
+                            width="20"
+                            height="20"
+                            clipPath={`url(#list-flag-clip-${idx})`}
+                          />
+                          <circle
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            fill="none"
+                            stroke="hsl(var(--primary))"
+                            strokeWidth="1.5"
+                          />
+                        </svg>
+                      </div>
+                      <div className="flex-1">
+                        <div className="font-medium">{country.country}</div>
+                      </div>
                     </div>
-                    <div className="flex-1">
-                      <div className="font-medium">{country.country}</div>
-                    </div>
+                    {selectedCountry === country.country && (
+                      <div className="ml-7 space-y-1">
+                        {country.leagues.map((league, leagueIdx) => (
+                          <div key={leagueIdx} className="text-sm text-muted-foreground">
+                            • {league}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                  {selectedCountry === country.country && (
-                    <div className="ml-7 space-y-1">
-                      {country.leagues.map((league, leagueIdx) => (
-                        <div key={leagueIdx} className="text-sm text-muted-foreground">
-                          • {league}
-                        </div>
-                      ))}
-                    </div>
+                  {idx < arr.length - 1 && (
+                    <div className="h-px bg-gold/20 my-1" />
                   )}
                 </div>
               ))}
