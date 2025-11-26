@@ -128,7 +128,7 @@ export const Header = () => {
               </button>
             </DrawerTrigger>
             <DrawerContent 
-              className="h-full w-full inset-0 rounded-none bg-black animate-slide-in-left transition-all duration-300 ease-out z-[110]"
+              className="fixed inset-0 h-screen w-full rounded-none bg-black animate-slide-in-left transition-all duration-300 ease-out z-[200]"
             >
               {/* Full screen grid layout */}
               <div className="grid lg:grid-cols-2 h-full w-full">
@@ -151,11 +151,11 @@ export const Header = () => {
                   </div>
                   
                   <div className="flex-1 flex flex-col justify-center px-8 md:px-16 lg:px-20 xl:px-24 pb-12">
-                    <nav className="flex flex-col gap-2 max-w-md">
+                    <nav className="flex flex-col gap-1 max-w-md">
                       <DrawerClose asChild>
                         <Link
                           to="/"
-                          className={`text-4xl md:text-5xl lg:text-6xl font-bebas uppercase text-white hover:text-primary transition-colors tracking-wider py-2 ${
+                          className={`text-2xl md:text-3xl font-bebas uppercase text-white hover:text-primary transition-colors tracking-wider py-1 ${
                             isActive("/") ? "text-primary" : ""
                           }`}
                         >
@@ -166,7 +166,7 @@ export const Header = () => {
                       <DrawerClose asChild>
                         <Link
                           to="/stars"
-                          className={`text-4xl md:text-5xl lg:text-6xl font-bebas uppercase text-white hover:text-primary transition-colors tracking-wider py-2 ${
+                          className={`text-2xl md:text-3xl font-bebas uppercase text-white hover:text-primary transition-colors tracking-wider py-1 ${
                             isActive("/stars") || location.pathname.startsWith("/stars/") ? "text-primary" : ""
                           }`}
                         >
@@ -177,7 +177,7 @@ export const Header = () => {
                       <DrawerClose asChild>
                         <Link
                           to="/performance"
-                          className={`text-4xl md:text-5xl lg:text-6xl font-bebas uppercase text-white hover:text-primary transition-colors tracking-wider py-2 ${
+                          className={`text-2xl md:text-3xl font-bebas uppercase text-white hover:text-primary transition-colors tracking-wider py-1 ${
                             isActive("/performance") ? "text-primary" : ""
                           }`}
                         >
@@ -188,7 +188,7 @@ export const Header = () => {
                       <DrawerClose asChild>
                         <Link
                           to="/between-the-lines"
-                          className={`text-4xl md:text-5xl lg:text-6xl font-bebas uppercase text-white hover:text-primary transition-colors tracking-wider py-2 ${
+                          className={`text-2xl md:text-3xl font-bebas uppercase text-white hover:text-primary transition-colors tracking-wider py-1 ${
                             isActive("/between-the-lines") ? "text-primary" : ""
                           }`}
                         >
@@ -196,12 +196,12 @@ export const Header = () => {
                         </Link>
                       </DrawerClose>
                       
-                      <div className="h-px bg-white/20 my-4" />
+                      <div className="h-px bg-white/20 my-2" />
                       
                       <DrawerClose asChild>
                         <Link
                           to="/players"
-                          className={`text-4xl md:text-5xl lg:text-6xl font-bebas uppercase text-white hover:text-primary transition-colors tracking-wider py-2 ${
+                          className={`text-2xl md:text-3xl font-bebas uppercase text-white hover:text-primary transition-colors tracking-wider py-1 ${
                             isActive("/players") || location.pathname.startsWith("/players/") ? "text-primary" : ""
                           }`}
                         >
@@ -212,7 +212,7 @@ export const Header = () => {
                       <DrawerClose asChild>
                         <Link
                           to="/clubs"
-                          className={`text-4xl md:text-5xl lg:text-6xl font-bebas uppercase text-white hover:text-primary transition-colors tracking-wider py-2 ${
+                          className={`text-2xl md:text-3xl font-bebas uppercase text-white hover:text-primary transition-colors tracking-wider py-1 ${
                             isActive("/clubs") ? "text-primary" : ""
                           }`}
                         >
@@ -223,7 +223,7 @@ export const Header = () => {
                       <DrawerClose asChild>
                         <Link
                           to="/coaches"
-                          className={`text-4xl md:text-5xl lg:text-6xl font-bebas uppercase text-white hover:text-primary transition-colors tracking-wider py-2 ${
+                          className={`text-2xl md:text-3xl font-bebas uppercase text-white hover:text-primary transition-colors tracking-wider py-1 ${
                             isActive("/coaches") ? "text-primary" : ""
                           }`}
                         >
@@ -234,7 +234,7 @@ export const Header = () => {
                       <DrawerClose asChild>
                         <Link
                           to="/scouts"
-                          className={`text-4xl md:text-5xl lg:text-6xl font-bebas uppercase text-white hover:text-primary transition-colors tracking-wider py-2 ${
+                          className={`text-2xl md:text-3xl font-bebas uppercase text-white hover:text-primary transition-colors tracking-wider py-1 ${
                             isActive("/scouts") ? "text-primary" : ""
                           }`}
                         >
