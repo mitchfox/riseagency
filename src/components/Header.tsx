@@ -186,7 +186,7 @@ export const Header = () => {
                       <DrawerClose asChild>
                         <Link
                           to="/"
-                          className={`text-2xl md:text-3xl font-bebas uppercase text-white hover:text-primary transition-colors tracking-wider py-1 ${
+                          className={`text-2xl md:text-3xl font-bebas uppercase text-white hover:text-primary hover:bg-white/20 transition-all tracking-wider py-1 px-2 rounded ${
                             isActive("/") ? "text-primary" : ""
                           }`}
                         >
@@ -194,12 +194,14 @@ export const Header = () => {
                         </Link>
                       </DrawerClose>
                       
+                      <div className="h-px bg-white/20 my-2" />
+                      
                       <DrawerClose asChild>
                         <Link
                           to="/stars"
                           onMouseEnter={() => setStarsHovered(true)}
                           onMouseLeave={() => setStarsHovered(false)}
-                          className={`text-2xl md:text-3xl font-bebas uppercase text-white hover:text-primary transition-colors tracking-wider py-1 ${
+                          className={`text-2xl md:text-3xl font-bebas uppercase text-white hover:text-primary hover:bg-white/20 transition-all tracking-wider py-1 px-2 rounded ${
                             isActive("/stars") || location.pathname.startsWith("/stars/") ? "text-primary" : ""
                           }`}
                         >
@@ -210,7 +212,7 @@ export const Header = () => {
                       <DrawerClose asChild>
                         <Link
                           to="/performance"
-                          className={`text-2xl md:text-3xl font-bebas uppercase text-white hover:text-primary transition-colors tracking-wider py-1 ${
+                          className={`text-2xl md:text-3xl font-bebas uppercase text-white hover:text-primary hover:bg-white/20 transition-all tracking-wider py-1 px-2 rounded ${
                             isActive("/performance") ? "text-primary" : ""
                           }`}
                         >
@@ -221,7 +223,7 @@ export const Header = () => {
                       <DrawerClose asChild>
                         <Link
                           to="/between-the-lines"
-                          className={`text-2xl md:text-3xl font-bebas uppercase text-white hover:text-primary transition-colors tracking-wider py-1 ${
+                          className={`text-2xl md:text-3xl font-bebas uppercase text-white hover:text-primary hover:bg-white/20 transition-all tracking-wider py-1 px-2 rounded ${
                             isActive("/between-the-lines") ? "text-primary" : ""
                           }`}
                         >
@@ -234,7 +236,7 @@ export const Header = () => {
                       <DrawerClose asChild>
                         <Link
                           to="/players"
-                          className={`text-2xl md:text-3xl font-bebas uppercase text-white hover:text-primary transition-colors tracking-wider py-1 ${
+                          className={`text-2xl md:text-3xl font-bebas uppercase text-white hover:text-primary hover:bg-white/20 transition-all tracking-wider py-1 px-2 rounded ${
                             isActive("/players") || location.pathname.startsWith("/players/") ? "text-primary" : ""
                           }`}
                         >
@@ -245,7 +247,7 @@ export const Header = () => {
                       <DrawerClose asChild>
                         <Link
                           to="/clubs"
-                          className={`text-2xl md:text-3xl font-bebas uppercase text-white hover:text-primary transition-colors tracking-wider py-1 ${
+                          className={`text-2xl md:text-3xl font-bebas uppercase text-white hover:text-primary hover:bg-white/20 transition-all tracking-wider py-1 px-2 rounded ${
                             isActive("/clubs") ? "text-primary" : ""
                           }`}
                         >
@@ -256,7 +258,7 @@ export const Header = () => {
                       <DrawerClose asChild>
                         <Link
                           to="/coaches"
-                          className={`text-2xl md:text-3xl font-bebas uppercase text-white hover:text-primary transition-colors tracking-wider py-1 ${
+                          className={`text-2xl md:text-3xl font-bebas uppercase text-white hover:text-primary hover:bg-white/20 transition-all tracking-wider py-1 px-2 rounded ${
                             isActive("/coaches") ? "text-primary" : ""
                           }`}
                         >
@@ -267,7 +269,7 @@ export const Header = () => {
                       <DrawerClose asChild>
                         <Link
                           to="/scouts"
-                          className={`text-2xl md:text-3xl font-bebas uppercase text-white hover:text-primary transition-colors tracking-wider py-1 ${
+                          className={`text-2xl md:text-3xl font-bebas uppercase text-white hover:text-primary hover:bg-white/20 transition-all tracking-wider py-1 px-2 rounded ${
                             isActive("/scouts") ? "text-primary" : ""
                           }`}
                         >
@@ -320,9 +322,9 @@ export const Header = () => {
                 </div>
 
                 {/* Right side - Stars Card (desktop only) */}
-                <div className="hidden lg:flex items-center justify-center bg-background p-8">
+                <div className="hidden lg:grid grid-cols-2 grid-rows-2 gap-4 bg-background p-8">
                   {starPlayers.length > 0 && (
-                    <div className="w-full max-w-md">
+                    <div className="w-full">
                       <div 
                         className={`relative w-full aspect-[3/4] rounded-lg overflow-hidden transition-all duration-300 ${
                           starsHovered 
@@ -347,7 +349,7 @@ export const Header = () => {
                         ))}
                       
                         {/* Age - Top Left */}
-                        <div className="absolute top-4 left-4 flex flex-col items-center min-w-[60px]">
+                        <div className="absolute top-2 left-2 flex flex-col items-center min-w-[30px]">
                           {starPlayers.map((player, index) => (
                             <div
                               key={`age-${player.id}`}
@@ -358,14 +360,14 @@ export const Header = () => {
                                 visibility: index === starIndex ? 'visible' : 'hidden'
                               }}
                             >
-                              <div className="text-4xl font-bold text-white font-bebas leading-none text-center">{player.age}</div>
-                              <div className="text-[9px] text-white/80 uppercase tracking-wider mt-0.5 text-center">Age</div>
+                              <div className="text-2xl font-bold text-white font-bebas leading-none text-center">{player.age}</div>
+                              <div className="text-[7px] text-white/80 uppercase tracking-wider mt-0.5 text-center">Age</div>
                             </div>
                           ))}
                         </div>
                         
                         {/* Nationality Flag - Top Right */}
-                        <div className="absolute top-4 right-4 flex flex-col items-center min-w-[60px]">
+                        <div className="absolute top-2 right-2 flex flex-col items-center min-w-[30px]">
                           {starPlayers.map((player, index) => {
                             const nat = player.nationality;
                             if (!nat) return null;
@@ -384,16 +386,16 @@ export const Header = () => {
                                 <img 
                                   src={flagUrl} 
                                   alt={`${normalizedNat} flag`}
-                                  className="w-10 h-8 object-contain mb-1"
+                                  className="w-6 h-5 object-contain mb-0.5"
                                 />
-                                <div className="text-[9px] text-white/80 uppercase tracking-wider text-center">Nationality</div>
+                                <div className="text-[7px] text-white/80 uppercase tracking-wider text-center">Nationality</div>
                               </div>
                             );
                           })}
                         </div>
                         
                         {/* Position - Bottom Left */}
-                        <div className="absolute bottom-4 left-4 flex flex-col items-center min-w-[60px]">
+                        <div className="absolute bottom-2 left-2 flex flex-col items-center min-w-[30px]">
                           {starPlayers.map((player, index) => (
                             <div
                               key={`pos-${player.id}`}
@@ -404,14 +406,14 @@ export const Header = () => {
                                 visibility: index === starIndex ? 'visible' : 'hidden'
                               }}
                             >
-                              <div className="text-3xl font-bold text-white font-bebas leading-none text-center">{player.position}</div>
-                              <div className="text-[9px] text-white/80 uppercase tracking-wider mt-0.5 text-center">Position</div>
+                              <div className="text-xl font-bold text-white font-bebas leading-none text-center">{player.position}</div>
+                              <div className="text-[7px] text-white/80 uppercase tracking-wider mt-0.5 text-center">Position</div>
                             </div>
                           ))}
                         </div>
                         
                         {/* Club Logo - Bottom Right */}
-                        <div className="absolute bottom-4 right-4 flex flex-col items-center min-w-[60px]">
+                        <div className="absolute bottom-2 right-2 flex flex-col items-center min-w-[30px]">
                           {starPlayers.map((player, index) => {
                             const clubLogo = player.club_logo;
                             return clubLogo ? (
@@ -424,8 +426,8 @@ export const Header = () => {
                                   visibility: index === starIndex ? 'visible' : 'hidden'
                                 }}
                               >
-                                <img src={clubLogo} alt="Club" className="w-12 h-12 object-contain mb-1" />
-                                <div className="text-[9px] text-white/80 uppercase tracking-wider text-center">Club</div>
+                                <img src={clubLogo} alt="Club" className="w-7 h-7 object-contain mb-0.5" />
+                                <div className="text-[7px] text-white/80 uppercase tracking-wider text-center">Club</div>
                               </div>
                             ) : null;
                           })}
@@ -433,6 +435,11 @@ export const Header = () => {
                       </div>
                     </div>
                   )}
+                  
+                  {/* Placeholder for 3 other components */}
+                  <div className="bg-muted/20 rounded-lg border border-white/10" />
+                  <div className="bg-muted/20 rounded-lg border border-white/10" />
+                  <div className="bg-muted/20 rounded-lg border border-white/10" />
                 </div>
               </div>
             </DrawerContent>
