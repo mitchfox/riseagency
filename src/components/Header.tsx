@@ -157,9 +157,9 @@ export const Header = () => {
 
   return (
     <>
-      {/* Top Utility Bar - only on homepage */}
-      {showTopBar && (
-        <div className="fixed top-14 md:top-16 left-0 right-0 z-50 bg-black/95 backdrop-blur-md border-b-2 border-gold">
+      {/* Top Utility Bar - only on homepage and only when not scrolled */}
+      {showTopBar && !isScrolled && (
+        <div className="fixed top-14 md:top-16 left-0 right-0 z-50 bg-black/95 backdrop-blur-md border-b-2 border-gold transition-all duration-300">
           <div className="container mx-auto px-2 md:px-4">
           <div className="flex items-center justify-between h-9 md:h-10">
             <div className="flex flex-wrap items-center gap-1 md:gap-4">
@@ -744,6 +744,40 @@ export const Header = () => {
             />
           </Link>
 
+          {/* Utility icons - only show when scrolled on homepage */}
+          {showTopBar && isScrolled && (
+            <div className="absolute right-20 md:right-28 top-1/2 -translate-y-1/2 flex items-center gap-1 md:gap-2 animate-fade-in">
+              <Link
+                to="/contact"
+                className="p-1.5 md:p-2 rounded-full hover:bg-primary/10 transition-colors group"
+                title="Contact Us"
+              >
+                <MessageCircle className="w-4 h-4 md:w-5 md:h-5 text-white/80 group-hover:text-primary transition-colors" />
+              </Link>
+              <button
+                onClick={() => setDeclareInterestOpen(true)}
+                className="p-1.5 md:p-2 rounded-full hover:bg-primary/10 transition-colors group"
+                title="Declare Interest"
+              >
+                <Users className="w-4 h-4 md:w-5 md:h-5 text-white/80 group-hover:text-primary transition-colors" />
+              </button>
+              <button
+                onClick={() => setRepresentationOpen(true)}
+                className="p-1.5 md:p-2 rounded-full hover:bg-primary/10 transition-colors group"
+                title="Request Representation"
+              >
+                <MessageCircle className="w-4 h-4 md:w-5 md:h-5 text-white/80 group-hover:text-primary transition-colors" />
+              </button>
+              <Link
+                to="/login"
+                className="p-1.5 md:p-2 rounded-full hover:bg-primary/10 transition-colors group"
+                title="Portal"
+              >
+                <LogIn className="w-4 h-4 md:w-5 md:h-5 text-white/80 group-hover:text-primary transition-colors" />
+              </Link>
+            </div>
+          )}
+
           {/* RISE WITH US Button - Right */}
           <Button
             onClick={() => setWorkWithUsOpen(true)}
@@ -755,6 +789,7 @@ export const Header = () => {
           </Button>
         </div>
       </div>
+      </header>
       
       <WorkWithUsDialog open={workWithUsOpen} onOpenChange={setWorkWithUsOpen} />
       <RepresentationDialog 
@@ -769,7 +804,6 @@ export const Header = () => {
         open={introModalOpen} 
         onOpenChange={setIntroModalOpen} 
       />
-    </header>
     </>
   );
 };
