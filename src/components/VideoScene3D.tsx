@@ -12,142 +12,131 @@ export const VideoScene3D = () => {
 
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
+  // Calculate sizes based on hover state
+  const getVideoSize = (index: number) => {
+    if (hoveredIndex === null) {
+      return "flex-1"; // Equal sizes when nothing is hovered
+    }
+    return hoveredIndex === index ? "flex-[2.5]" : "flex-[0.7]"; // Hovered grows, others shrink
+  };
+
   return (
-    <div className="w-full bg-black py-8 md:py-12 relative z-0">
-      <div className="container mx-auto px-4">
-        {/* Asymmetric grid layout */}
-        <div className="grid grid-cols-12 gap-4 md:gap-6">
-          {/* Large video - spans 8 cols */}
-          <div 
-            className="col-span-12 md:col-span-8 aspect-video relative overflow-hidden rounded-lg border-2 border-primary/30 transition-all duration-300 hover:border-primary hover:scale-[1.02]"
-            onMouseEnter={() => setHoveredIndex(0)}
-            onMouseLeave={() => setHoveredIndex(null)}
-          >
-            <iframe
-              src={videos[0]}
-              className="absolute inset-0 w-full h-full"
-              frameBorder="0"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-              title="Video 1"
-            />
-            {hoveredIndex === 0 && (
-              <div className="absolute inset-0 bg-primary/10 pointer-events-none" />
-            )}
+    <div className="w-full bg-black py-0 relative z-0 h-[40vh] md:h-[35vh]">
+      <div className="w-full h-full">
+        {/* Tight grid with no gaps - videos share borders */}
+        <div className="flex flex-col h-full">
+          {/* Top row */}
+          <div className="flex flex-1">
+            <div 
+              className={`${getVideoSize(0)} relative overflow-hidden border-r-2 border-b-2 border-primary/20 transition-all duration-500 ease-in-out`}
+              onMouseEnter={() => setHoveredIndex(0)}
+              onMouseLeave={() => setHoveredIndex(null)}
+            >
+              <iframe
+                src={videos[0]}
+                className="absolute inset-0 w-full h-full"
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                title="Video 1"
+              />
+              {hoveredIndex === 0 && (
+                <div className="absolute inset-0 border-4 border-primary pointer-events-none z-10" />
+              )}
+            </div>
+
+            <div 
+              className={`${getVideoSize(1)} relative overflow-hidden border-r-2 border-b-2 border-primary/20 transition-all duration-500 ease-in-out`}
+              onMouseEnter={() => setHoveredIndex(1)}
+              onMouseLeave={() => setHoveredIndex(null)}
+            >
+              <iframe
+                src={videos[1]}
+                className="absolute inset-0 w-full h-full"
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                title="Video 2"
+              />
+              {hoveredIndex === 1 && (
+                <div className="absolute inset-0 border-4 border-primary pointer-events-none z-10" />
+              )}
+            </div>
+
+            <div 
+              className={`${getVideoSize(2)} relative overflow-hidden border-b-2 border-primary/20 transition-all duration-500 ease-in-out`}
+              onMouseEnter={() => setHoveredIndex(2)}
+              onMouseLeave={() => setHoveredIndex(null)}
+            >
+              <iframe
+                src={videos[2]}
+                className="absolute inset-0 w-full h-full"
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                title="Video 3"
+              />
+              {hoveredIndex === 2 && (
+                <div className="absolute inset-0 border-4 border-primary pointer-events-none z-10" />
+              )}
+            </div>
           </div>
 
-          {/* Medium video - spans 4 cols */}
-          <div 
-            className="col-span-12 md:col-span-4 aspect-video relative overflow-hidden rounded-lg border-2 border-primary/30 transition-all duration-300 hover:border-primary hover:scale-[1.02]"
-            onMouseEnter={() => setHoveredIndex(1)}
-            onMouseLeave={() => setHoveredIndex(null)}
-          >
-            <iframe
-              src={videos[1]}
-              className="absolute inset-0 w-full h-full"
-              frameBorder="0"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-              title="Video 2"
-            />
-            {hoveredIndex === 1 && (
-              <div className="absolute inset-0 bg-primary/10 pointer-events-none" />
-            )}
-          </div>
+          {/* Bottom row */}
+          <div className="flex flex-1">
+            <div 
+              className={`${getVideoSize(3)} relative overflow-hidden border-r-2 border-primary/20 transition-all duration-500 ease-in-out`}
+              onMouseEnter={() => setHoveredIndex(3)}
+              onMouseLeave={() => setHoveredIndex(null)}
+            >
+              <iframe
+                src={videos[3]}
+                className="absolute inset-0 w-full h-full"
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                title="Video 4"
+              />
+              {hoveredIndex === 3 && (
+                <div className="absolute inset-0 border-4 border-primary pointer-events-none z-10" />
+              )}
+            </div>
 
-          {/* Small video - spans 3 cols */}
-          <div 
-            className="col-span-6 md:col-span-3 aspect-video relative overflow-hidden rounded-lg border-2 border-primary/30 transition-all duration-300 hover:border-primary hover:scale-[1.02]"
-            onMouseEnter={() => setHoveredIndex(2)}
-            onMouseLeave={() => setHoveredIndex(null)}
-          >
-            <iframe
-              src={videos[2]}
-              className="absolute inset-0 w-full h-full"
-              frameBorder="0"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-              title="Video 3"
-            />
-            {hoveredIndex === 2 && (
-              <div className="absolute inset-0 bg-primary/10 pointer-events-none" />
-            )}
-          </div>
+            <div 
+              className={`${getVideoSize(4)} relative overflow-hidden border-r-2 border-primary/20 transition-all duration-500 ease-in-out`}
+              onMouseEnter={() => setHoveredIndex(4)}
+              onMouseLeave={() => setHoveredIndex(null)}
+            >
+              <iframe
+                src={videos[4]}
+                className="absolute inset-0 w-full h-full"
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                title="Video 5"
+              />
+              {hoveredIndex === 4 && (
+                <div className="absolute inset-0 border-4 border-primary pointer-events-none z-10" />
+              )}
+            </div>
 
-          {/* Medium video - spans 5 cols */}
-          <div 
-            className="col-span-6 md:col-span-5 aspect-video relative overflow-hidden rounded-lg border-2 border-primary/30 transition-all duration-300 hover:border-primary hover:scale-[1.02]"
-            onMouseEnter={() => setHoveredIndex(3)}
-            onMouseLeave={() => setHoveredIndex(null)}
-          >
-            <iframe
-              src={videos[3]}
-              className="absolute inset-0 w-full h-full"
-              frameBorder="0"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-              title="Video 4"
-            />
-            {hoveredIndex === 3 && (
-              <div className="absolute inset-0 bg-primary/10 pointer-events-none" />
-            )}
-          </div>
-
-          {/* Small video - spans 4 cols */}
-          <div 
-            className="col-span-12 md:col-span-4 aspect-video relative overflow-hidden rounded-lg border-2 border-primary/30 transition-all duration-300 hover:border-primary hover:scale-[1.02]"
-            onMouseEnter={() => setHoveredIndex(4)}
-            onMouseLeave={() => setHoveredIndex(null)}
-          >
-            <iframe
-              src={videos[4]}
-              className="absolute inset-0 w-full h-full"
-              frameBorder="0"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-              title="Video 5"
-            />
-            {hoveredIndex === 4 && (
-              <div className="absolute inset-0 bg-primary/10 pointer-events-none" />
-            )}
-          </div>
-
-          {/* Large video - spans 7 cols */}
-          <div 
-            className="col-span-12 md:col-span-7 aspect-video relative overflow-hidden rounded-lg border-2 border-primary/30 transition-all duration-300 hover:border-primary hover:scale-[1.02]"
-            onMouseEnter={() => setHoveredIndex(5)}
-            onMouseLeave={() => setHoveredIndex(null)}
-          >
-            <iframe
-              src={videos[5]}
-              className="absolute inset-0 w-full h-full"
-              frameBorder="0"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-              title="Video 6"
-            />
-            {hoveredIndex === 5 && (
-              <div className="absolute inset-0 bg-primary/10 pointer-events-none" />
-            )}
-          </div>
-
-          {/* Medium video - spans 5 cols */}
-          <div 
-            className="col-span-12 md:col-span-5 aspect-video relative overflow-hidden rounded-lg border-2 border-primary/30 transition-all duration-300 hover:border-primary hover:scale-[1.02]"
-            onMouseEnter={() => setHoveredIndex(5)}
-            onMouseLeave={() => setHoveredIndex(null)}
-          >
-            <iframe
-              src={videos[0]}
-              className="absolute inset-0 w-full h-full"
-              frameBorder="0"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-              title="Video 7"
-            />
-            {hoveredIndex === 5 && (
-              <div className="absolute inset-0 bg-primary/10 pointer-events-none" />
-            )}
+            <div 
+              className={`${getVideoSize(5)} relative overflow-hidden border-primary/20 transition-all duration-500 ease-in-out`}
+              onMouseEnter={() => setHoveredIndex(5)}
+              onMouseLeave={() => setHoveredIndex(null)}
+            >
+              <iframe
+                src={videos[5]}
+                className="absolute inset-0 w-full h-full"
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                title="Video 6"
+              />
+              {hoveredIndex === 5 && (
+                <div className="absolute inset-0 border-4 border-primary pointer-events-none z-10" />
+              )}
+            </div>
           </div>
         </div>
       </div>
