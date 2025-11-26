@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import logo from "@/assets/logo.png";
 import { X, MessageCircle, Users, LogIn } from "lucide-react";
-import { TbMenu } from "react-icons/tb";
 import workingTogether from "@/assets/menu-working-together.jpg";
 import playerPortalImage from "@/assets/menu-player-portal.png";
 import blackMarbleBg from "@/assets/black-marble-smudged.png";
@@ -103,7 +102,17 @@ export const Header = () => {
                 className={`group relative flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-primary transition-all duration-300 ease-out ${isScrolled ? 'w-5 h-5 md:w-6 md:h-6' : 'w-10 h-10 md:w-12 md:h-12'}`}
                 aria-label="Toggle menu"
               >
-                <TbMenu className={`text-primary group-hover:text-foreground transition-all duration-300 ease-out ${isScrolled ? 'w-4 h-4 md:w-5 md:h-5' : 'w-6 h-6 md:w-7 md:h-7'}`} />
+                <svg 
+                  className={`text-primary group-hover:text-foreground transition-all duration-300 ease-out ${isScrolled ? 'w-4 h-4 md:w-5 md:h-5' : 'w-6 h-6 md:w-7 md:h-7'}`}
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                >
+                  <line x1="4" y1="8" x2="20" y2="8" transform="rotate(45 12 12)" />
+                  <line x1="2" y1="16" x2="18" y2="16" transform="rotate(45 12 12)" />
+                </svg>
               </button>
             </DrawerTrigger>
             <DrawerContent 
