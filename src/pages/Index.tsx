@@ -82,11 +82,11 @@ const Index = () => {
       {!showIntroModal && <Header />}
       <div className="bg-background min-h-screen">
         {/* 3D Video Scene Section */}
-        <section className="relative pt-24 md:pt-20">
+        <section className="relative pt-16 md:pt-14">
           <VideoScene3D />
           
           {/* Text overlay below 3D scene */}
-          <div className="py-12 text-center space-y-6">
+          <div className="py-6 text-center space-y-6">
             <h1 className="text-5xl md:text-7xl lg:text-8xl font-bebas uppercase tracking-wider">
               <span className="text-foreground">REALISE </span>
               <span className="text-primary">POTENTIAL</span>
