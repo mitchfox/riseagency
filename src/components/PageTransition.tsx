@@ -7,6 +7,16 @@ export const PageTransition = ({ children }: { children: React.ReactNode }) => {
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [prevPath, setPrevPath] = useState(location.pathname);
   const [frozenContent, setFrozenContent] = useState<React.ReactNode>(null);
+  
+  // Always keep track of the last rendered children
+  const lastChildrenRef = useRef(children);
+  
+  // Update ref when NOT transitioning
+  useEffect(() => {
+    if (!isTransitioning) {
+      lastChildrenRef.current = children;
+    }
+  }, [children, isTransitioning]);
 
   useEffect(() => {
     // Only trigger transition if path actually changed
@@ -14,8 +24,8 @@ export const PageTransition = ({ children }: { children: React.ReactNode }) => {
       return;
     }
 
-    // Freeze the current content as an overlay before React Router updates
-    setFrozenContent(children);
+    // Freeze the PREVIOUS content (before React Router updated children)
+    setFrozenContent(lastChildrenRef.current);
     
     // Start transition
     setIsTransitioning(true);
@@ -35,7 +45,7 @@ export const PageTransition = ({ children }: { children: React.ReactNode }) => {
       clearTimeout(updateTimer);
       clearTimeout(endTimer);
     };
-  }, [location.pathname, prevPath, children]);
+  }, [location.pathname, prevPath]);
 
   return (
     <>
