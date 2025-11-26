@@ -235,10 +235,10 @@ export const Header = () => {
               </button>
             </DrawerTrigger>
             <DrawerContent 
-              className="fixed inset-0 h-screen w-full !mt-0 rounded-none bg-black animate-slide-in-left transition-all duration-300 ease-out z-[200]"
+              className="fixed inset-0 h-screen w-full !mt-0 rounded-none bg-black animate-slide-in-left transition-all duration-300 ease-out z-[200] overflow-hidden"
             >
               {/* Full screen grid layout */}
-              <div className="grid lg:grid-cols-2 h-full w-full">
+              <div className="grid lg:grid-cols-2 h-full w-full overflow-hidden">
                 {/* Left side - Navigation */}
                 <div 
                   className="h-full flex flex-col bg-cover bg-center relative"
@@ -282,7 +282,7 @@ export const Header = () => {
                     </DrawerClose>
                   </div>
                   
-                  <div className="flex-1 flex flex-col justify-between px-2 md:px-4 py-12">
+                  <div className="flex-1 flex flex-col justify-between px-2 md:px-4 py-12 overflow-y-auto">
                     <nav className="flex flex-col gap-1 max-w-md">
                       <DrawerClose asChild>
                         <Link
@@ -392,11 +392,11 @@ export const Header = () => {
                     </nav>
 
                     {/* Bottom action cards */}
-                    <div className="grid grid-cols-2 gap-4 max-w-2xl -mt-[30px]">
+                    <div className="grid grid-cols-2 gap-4 max-w-2xl mt-8">
                       <DrawerClose asChild>
                         <Link
                           to="/login"
-                          className="relative group h-[80px] md:h-[112px]"
+                          className="relative group h-[70px] md:h-[102px]"
                         >
                           <div className="relative h-full rounded overflow-hidden">
                             <img 
@@ -420,7 +420,7 @@ export const Header = () => {
                       <DrawerClose asChild>
                         <button
                           onClick={() => setRepresentationOpen(true)}
-                          className="relative group h-[80px] md:h-[112px]"
+                          className="relative group h-[70px] md:h-[102px]"
                         >
                           <div className="relative h-full rounded overflow-hidden">
                             <img 
@@ -461,7 +461,8 @@ export const Header = () => {
                       style={{
                         transform: hoveredCard === 'top-left' ? 'translateY(20px)' : 
                                    hoveredCard === 'bottom-left' ? 'translateY(20px)' :
-                                   hoveredCard === 'top-right' || hoveredCard === 'bottom-right' ? 'translateY(-20px)' : 'translateY(0)'
+                                   hoveredCard === 'top-right' ? 'translateY(20px)' : 
+                                   hoveredCard === 'bottom-right' ? 'translateY(20px)' : 'translateY(0)'
                       }}
                     >
                       <div 
@@ -584,7 +585,8 @@ export const Header = () => {
                       style={{
                         transform: hoveredCard === 'bottom-left' ? 'translateY(-20px)' :
                                    hoveredCard === 'top-left' ? 'translateY(-20px)' :
-                                   hoveredCard === 'top-right' || hoveredCard === 'bottom-right' ? 'translateY(20px)' : 'translateY(0)'
+                                   hoveredCard === 'top-right' ? 'translateY(-20px)' : 
+                                   hoveredCard === 'bottom-right' ? 'translateY(-20px)' : 'translateY(0)'
                       }}
                     >
                       <div 
@@ -640,7 +642,8 @@ export const Header = () => {
                     style={{
                       transform: hoveredCard === 'top-right' ? 'translateY(20px)' :
                                  hoveredCard === 'bottom-right' ? 'translateY(20px)' :
-                                 hoveredCard === 'top-left' || hoveredCard === 'bottom-left' ? 'translateY(-20px)' : 'translateY(0)'
+                                 hoveredCard === 'top-left' ? 'translateY(20px)' : 
+                                 hoveredCard === 'bottom-left' ? 'translateY(20px)' : 'translateY(0)'
                     }}
                   >
                     <div 
@@ -683,7 +686,8 @@ export const Header = () => {
                       style={{
                         transform: hoveredCard === 'bottom-right' ? 'translateY(-20px)' :
                                    hoveredCard === 'top-right' ? 'translateY(-20px)' :
-                                   hoveredCard === 'top-left' || hoveredCard === 'bottom-left' ? 'translateY(20px)' : 'translateY(0)'
+                                   hoveredCard === 'top-left' ? 'translateY(-20px)' : 
+                                   hoveredCard === 'bottom-left' ? 'translateY(-20px)' : 'translateY(0)'
                       }}
                     >
                       <div 
