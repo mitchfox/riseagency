@@ -142,6 +142,13 @@ const Index = () => {
         {/* News Section */}
         <section className="py-12 md:py-16 px-4 bg-background">
           <div className="container mx-auto max-w-7xl w-full">
+            <div className="text-center mb-8 space-y-3">
+              <div className="inline-block">
+                <span className="text-sm font-bebas uppercase tracking-widest text-primary border border-primary/30 px-6 py-2 rounded-full">
+                  Latest Updates
+                </span>
+              </div>
+            </div>
             <div className="flex items-center justify-between mb-8">
               <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-foreground">
                 News
@@ -268,7 +275,7 @@ const Index = () => {
             <div className="text-center mb-6 space-y-3">
               <div className="inline-block">
                 <span className="text-sm font-bebas uppercase tracking-widest text-primary border border-primary/30 px-6 py-2 rounded-full">
-                  Video
+                  OUR WORK
                 </span>
               </div>
               <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-foreground">
@@ -372,7 +379,7 @@ const Index = () => {
             <div className="space-y-4">
               <div className="inline-block">
                 <span className="text-sm font-bebas uppercase tracking-widest text-primary border border-primary/30 px-6 py-2 rounded-full">
-                  Get Started
+                  RISE WITH US
                 </span>
               </div>
               <h2 className="text-4xl md:text-6xl lg:text-7xl font-bebas uppercase tracking-wider text-foreground leading-tight">
@@ -413,8 +420,13 @@ const Index = () => {
           <div className="container mx-auto">
             <div className="max-w-3xl mx-auto p-8 rounded-lg border border-primary/20 bg-primary/5 relative overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent"></div>
-              <div className="text-center relative z-10">
-                <h2 className="text-2xl md:text-3xl font-bebas uppercase tracking-wider text-primary mb-3">
+              <div className="text-center relative z-10 space-y-4">
+                <div className="inline-block">
+                  <span className="text-sm font-bebas uppercase tracking-widest text-primary border border-primary/30 px-6 py-2 rounded-full">
+                    STAY UP TO DATE
+                  </span>
+                </div>
+                <h2 className="text-2xl md:text-3xl font-bebas uppercase tracking-wider text-primary">
                   Join RISE Broadcast on Instagram
                 </h2>
                 <p className="text-foreground mb-6 text-base md:text-lg leading-relaxed">
