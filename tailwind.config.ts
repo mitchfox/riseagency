@@ -126,6 +126,14 @@ export default {
           "0%": { opacity: "0", transform: "rotate(-45deg) scale(0.8)" },
           "100%": { opacity: "1", transform: "rotate(0deg) scale(1)" },
         },
+        "diagonal-to-x-1": {
+          "0%": { transform: "rotate(-45deg)", opacity: "0.5" },
+          "100%": { transform: "rotate(45deg)", x1: "4", y1: "4", x2: "20", y2: "20", opacity: "1" },
+        },
+        "diagonal-to-x-2": {
+          "0%": { transform: "rotate(45deg)", opacity: "0.5" },
+          "100%": { transform: "rotate(-45deg)", x1: "20", y1: "4", x2: "4", y2: "20", opacity: "1" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -139,6 +147,8 @@ export default {
         "scale-in": "scale-in 0.5s ease-out",
         "pan-right": "pan-right 6s linear infinite",
         "spin-to-x": "spin-to-x 0.3s ease-out forwards",
+        "diagonal-to-x-1": "diagonal-to-x-1 0.4s ease-out forwards",
+        "diagonal-to-x-2": "diagonal-to-x-2 0.4s ease-out forwards",
       },
     },
   },

@@ -234,14 +234,12 @@ export const Header = () => {
                           strokeLinecap="round"
                         >
                           <line 
-                            x1="4" y1="4" x2="20" y2="20" 
-                            className="origin-center animate-[spin-to-x_0.3s_ease-out_forwards]"
-                            style={{ animationDelay: '0s' }}
+                            x1="12" y1="4" x2="12" y2="20" 
+                            className="origin-center animate-[diagonal-to-x-1_0.4s_ease-out_forwards]"
                           />
                           <line 
-                            x1="20" y1="4" x2="4" y2="20" 
-                            className="origin-center animate-[spin-to-x_0.3s_ease-out_forwards]"
-                            style={{ animationDelay: '0.1s' }}
+                            x1="12" y1="4" x2="12" y2="20" 
+                            className="origin-center animate-[diagonal-to-x-2_0.4s_ease-out_forwards]"
                           />
                         </svg>
                       </button>
@@ -362,20 +360,20 @@ export const Header = () => {
                       <DrawerClose asChild>
                         <Link
                           to="/login"
-                          className="relative group"
+                          className="relative group h-40 md:h-48"
                         >
-                          <div className="relative aspect-[16/9] rounded overflow-hidden" style={{ height: 'calc((100% - 20px) / 2)' }}>
+                          <div className="relative h-full rounded overflow-hidden">
                             <img 
                               src={playerPortalImage} 
                               alt="Portal" 
                               className="w-full h-full object-cover"
                             />
                             <div className="absolute inset-0 bg-black/30" />
-                            <div className="absolute inset-0 flex flex-col items-center justify-between p-2">
-                              <h3 className="text-white font-bebas text-sm md:text-base uppercase tracking-wider text-center">
+                            <div className="absolute inset-0 flex flex-col items-center justify-between p-4 md:p-6">
+                              <h3 className="text-white font-bebas text-xl md:text-2xl uppercase tracking-wider text-center">
                                 Portal
                               </h3>
-                              <div className="bg-primary text-black font-bebas uppercase tracking-widest text-xs py-1 px-3 text-center group-hover:brightness-110 transition-all w-full">
+                              <div className="bg-primary text-black font-bebas uppercase tracking-widest text-sm md:text-base py-2 md:py-3 px-6 md:px-8 text-center group-hover:brightness-110 transition-all w-full">
                                 Portal
                               </div>
                             </div>
@@ -386,20 +384,20 @@ export const Header = () => {
                       <DrawerClose asChild>
                         <button
                           onClick={() => setRepresentationOpen(true)}
-                          className="relative group"
+                          className="relative group h-40 md:h-48"
                         >
-                          <div className="relative aspect-[16/9] rounded overflow-hidden" style={{ height: 'calc((100% - 20px) / 2)' }}>
+                          <div className="relative h-full rounded overflow-hidden">
                             <img 
                               src={workingTogether} 
                               alt="Request Representation" 
                               className="w-full h-full object-cover"
                             />
                             <div className="absolute inset-0 bg-black/30" />
-                            <div className="absolute inset-0 flex flex-col items-center justify-between p-2">
-                              <h3 className="text-white font-bebas text-sm md:text-base uppercase tracking-wider text-center">
+                            <div className="absolute inset-0 flex flex-col items-center justify-between p-4 md:p-6">
+                              <h3 className="text-white font-bebas text-xl md:text-2xl uppercase tracking-wider text-center">
                                 Realise Potential
                               </h3>
-                              <div className="bg-primary text-black font-bebas uppercase tracking-widest text-xs py-1 px-3 text-center group-hover:brightness-110 transition-all w-full whitespace-nowrap">
+                              <div className="bg-primary text-black font-bebas uppercase tracking-widest text-sm md:text-base py-2 md:py-3 px-4 md:px-6 text-center group-hover:brightness-110 transition-all w-full whitespace-nowrap">
                                 Request Representation
                               </div>
                             </div>
