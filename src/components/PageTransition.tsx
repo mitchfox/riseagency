@@ -14,12 +14,12 @@ export const PageTransition = ({ children }: { children: React.ReactNode }) => {
     // Update children once black overlay fully covers the screen
     const updateTimer = setTimeout(() => {
       setDisplayChildren(children);
-    }, 3000); // After black expand completes (2.5s) + small buffer
+    }, 2200); // After circle expand (~1.5s) + small buffer
 
     // End transition after expand + hold + contract animations
     const endTimer = setTimeout(() => {
       setIsTransitioning(false);
-    }, 6000); // Total: expand (2.5s) + hold (1.0s) + contract (2.5s)
+    }, 3800); // Total: expand (1.5s) + hold (0.5s) + contract (1.5s)
 
     return () => {
       clearTimeout(updateTimer);
@@ -27,18 +27,23 @@ export const PageTransition = ({ children }: { children: React.ReactNode }) => {
     };
   }, [location.pathname]); // Triggers on every route change
 
+
   return (
     <>
       {isTransitioning && (
         <div className="fixed inset-0 z-[200] pointer-events-none" key={location.pathname}>
-          {/* Black overlay expanding from center, behind the logo */}
-          <div
-            className="absolute inset-0 bg-black z-10"
-            style={{
-              animation: "expandFromCenter 2.5s ease-in-out 0s forwards, contractToCenter 2.5s ease-in-out 3.5s forwards",
-              clipPath: "circle(0% at 50% 50%)",
-            }}
-          />
+          {/* Black circle expanding from center, behind the logo */}
+          <div className="absolute inset-0 flex items-center justify-center z-10">
+            <div
+              className="bg-black rounded-full"
+              style={{
+                width: "200vmax",
+                height: "200vmax",
+                transform: "scale(0)",
+                animation: "circleExpand 1.5s ease-in-out 0s forwards, circleContract 1.5s ease-in-out 2s forwards",
+              }}
+            />
+          </div>
 
           {/* Logo on top of black overlay */}
           <div className="absolute inset-0 flex items-center justify-center z-20">
@@ -94,24 +99,24 @@ export const PageTransition = ({ children }: { children: React.ReactNode }) => {
           }
         }
         
-        @keyframes expandFromCenter {
+        @keyframes circleExpand {
           from {
-            clip-path: circle(0% at 50% 50%);
+            transform: scale(0);
             opacity: 0;
           }
           to {
-            clip-path: circle(150% at 50% 50%);
+            transform: scale(1);
             opacity: 1;
           }
         }
         
-        @keyframes contractToCenter {
+        @keyframes circleContract {
           from {
-            clip-path: circle(150% at 50% 50%);
+            transform: scale(1);
             opacity: 1;
           }
           to {
-            clip-path: circle(0% at 50% 50%);
+            transform: scale(0);
             opacity: 0;
           }
         }
