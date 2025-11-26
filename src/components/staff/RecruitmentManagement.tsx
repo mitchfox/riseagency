@@ -61,8 +61,8 @@ const RECIPIENT_TYPES = [
   "Manager"
 ];
 
-export const RecruitmentManagement = ({ isAdmin }: { isAdmin: boolean }) => {
-  const [activeTab, setActiveTab] = useState("prospects");
+export const RecruitmentManagement = ({ isAdmin, initialTab = 'prospects' }: { isAdmin: boolean; initialTab?: 'prospects' | 'outreach' | 'templates' | 'scouts' }) => {
+  const [activeTab, setActiveTab] = useState<string>(initialTab);
   const [prospects, setProspects] = useState<Prospect[]>([]);
   const [loading, setLoading] = useState(true);
   const isMobile = useIsMobile();
