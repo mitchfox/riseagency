@@ -198,16 +198,6 @@ export const Header = () => {
                 </DrawerClose>
                 <DrawerClose asChild>
                   <Link
-                    to="/players-draft"
-                    className={`text-xl font-bebas uppercase text-white hover:text-primary transition-colors tracking-wider py-1.5 px-4 rounded ${
-                      isActive("/players-draft") ? "bg-primary/80 text-white" : "hover:bg-white/10"
-                    }`}
-                  >
-                    Players Draft
-                  </Link>
-                </DrawerClose>
-                <DrawerClose asChild>
-                  <Link
                     to="/clubs"
                     className={`text-xl font-bebas uppercase text-white hover:text-primary transition-colors tracking-wider py-1.5 px-4 rounded ${
                       isActive("/clubs") ? "bg-primary/80 text-white" : "hover:bg-white/10"

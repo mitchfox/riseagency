@@ -81,40 +81,61 @@ const PlayersDraft = () => {
 
       {/* Fixed Pitch Background */}
       <div className="fixed inset-0 pointer-events-none z-0 pt-16">
-        <div className="w-full h-full relative overflow-hidden">
-          {/* Pitch */}
-          <div className="absolute inset-0 bg-gradient-to-b from-green-800 via-green-700 to-green-800">
-            {/* Pitch lines */}
-            <div className="absolute inset-0 opacity-20">
-              {/* Center circle */}
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 border-2 border-white rounded-full" />
-              {/* Center line */}
-              <div className="absolute top-0 left-1/2 w-0.5 h-full bg-white" />
-              {/* Penalty boxes */}
-              <div className="absolute top-1/2 left-0 -translate-y-1/2 w-32 h-64 border-2 border-white border-l-0" />
-              <div className="absolute top-1/2 right-0 -translate-y-1/2 w-32 h-64 border-2 border-white border-r-0" />
-            </div>
+        <div className="w-full h-full relative overflow-hidden bg-background">
+          {/* Pitch lines only - no grass */}
+          <div className="absolute inset-0 opacity-15">
+            {/* Center circle */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 border-2 border-white rounded-full" />
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full" />
+            {/* Center line */}
+            <div className="absolute top-0 left-1/2 w-0.5 h-full bg-white" />
+            {/* Penalty boxes */}
+            <div className="absolute top-1/2 left-0 -translate-y-1/2 w-32 h-64 border-2 border-white border-l-0" />
+            <div className="absolute top-1/2 right-0 -translate-y-1/2 w-32 h-64 border-2 border-white border-r-0" />
+            {/* Goal areas */}
+            <div className="absolute top-1/2 left-0 -translate-y-1/2 w-16 h-32 border-2 border-white border-l-0" />
+            <div className="absolute top-1/2 right-0 -translate-y-1/2 w-16 h-32 border-2 border-white border-r-0" />
+            {/* Corner arcs */}
+            <svg className="absolute top-0 left-0 w-16 h-16" viewBox="0 0 100 100">
+              <path d="M 100 0 A 100 100 0 0 0 0 100" fill="none" stroke="white" strokeWidth="2" />
+            </svg>
+            <svg className="absolute top-0 right-0 w-16 h-16" viewBox="0 0 100 100">
+              <path d="M 0 0 A 100 100 0 0 1 100 100" fill="none" stroke="white" strokeWidth="2" />
+            </svg>
+            <svg className="absolute bottom-0 left-0 w-16 h-16" viewBox="0 0 100 100">
+              <path d="M 100 100 A 100 100 0 0 1 0 0" fill="none" stroke="white" strokeWidth="2" />
+            </svg>
+            <svg className="absolute bottom-0 right-0 w-16 h-16" viewBox="0 0 100 100">
+              <path d="M 0 100 A 100 100 0 0 0 100 0" fill="none" stroke="white" strokeWidth="2" />
+            </svg>
+          </div>
 
-            {/* Animated Football */}
-            <div
-              className="absolute w-8 h-8 bg-white rounded-full shadow-lg transition-all duration-1000 ease-in-out z-10 border-2 border-black"
-              style={{
-                left: `${ballPos.x}%`,
-                top: `${ballPos.y}%`,
-                transform: 'translate(-50%, -50%)',
-                boxShadow: '0 4px 15px rgba(0,0,0,0.4), inset -2px -2px 5px rgba(0,0,0,0.2)',
-              }}
-            >
-              {/* Pentagon pattern on ball */}
-              <div className="absolute inset-0 rounded-full overflow-hidden">
-                <div className="absolute top-1/4 left-1/4 w-2 h-2 bg-black rotate-45" />
-                <div className="absolute top-1/4 right-1/4 w-2 h-2 bg-black rotate-45" />
-                <div className="absolute bottom-1/4 left-1/3 w-2 h-2 bg-black rotate-45" />
-              </div>
-            </div>
-
-            {/* Grass texture overlay */}
-            <div className="absolute inset-0 opacity-10 bg-[repeating-linear-gradient(0deg,transparent,transparent_10px,rgba(0,0,0,0.1)_10px,rgba(0,0,0,0.1)_20px)]" />
+          {/* Animated Football */}
+          <div
+            className="absolute w-12 h-12 transition-all duration-1000 ease-in-out z-10"
+            style={{
+              left: `${ballPos.x}%`,
+              top: `${ballPos.y}%`,
+              transform: 'translate(-50%, -50%)',
+            }}
+          >
+            {/* Football SVG with proper pentagon pattern */}
+            <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-xl">
+              {/* White base */}
+              <circle cx="50" cy="50" r="48" fill="white" stroke="#000" strokeWidth="1" />
+              
+              {/* Black pentagons pattern */}
+              <path d="M 50 10 L 60 30 L 52 45 L 38 45 L 30 30 Z" fill="black" />
+              <path d="M 60 30 L 80 30 L 75 48 L 60 48 L 52 45 Z" fill="black" />
+              <path d="M 20 30 L 30 30 L 38 45 L 25 48 L 15 35 Z" fill="black" />
+              <path d="M 38 45 L 52 45 L 60 60 L 50 72 L 40 60 Z" fill="black" />
+              <path d="M 60 48 L 75 48 L 80 65 L 70 75 L 60 60 Z" fill="black" />
+              <path d="M 25 48 L 38 45 L 40 60 L 30 75 L 20 65 Z" fill="black" />
+              
+              {/* White hexagons between black pentagons */}
+              <path d="M 60 48 L 60 60 L 50 72 L 52 45 Z" fill="white" stroke="black" strokeWidth="0.5" />
+              <path d="M 40 60 L 50 72 L 38 45 L 25 48 Z" fill="white" stroke="black" strokeWidth="0.5" />
+            </svg>
           </div>
         </div>
       </div>
