@@ -99,7 +99,7 @@ export const ScoutingCentre = ({ open, onOpenChange }: ScoutingCentreProps) => {
   const [prospectReports, setProspectReports] = useState<ScoutingReport[]>([]);
   const [sortField, setSortField] = useState<string>("overall_rating");
   const [players, setPlayers] = useState<{ id: string; name: string }[]>([]);
-  const [mainTab, setMainTab] = useState<"reports" | "all-players" | "network">("reports");
+  const [mainTab, setMainTab] = useState<"reports" | "all-players" | "network" | "scouts">("reports");
   const [groupBy, setGroupBy] = useState<"country" | "club" | "scout">("country");
   const [formData, setFormData] = useState({
     player_name: "",
@@ -523,7 +523,7 @@ export const ScoutingCentre = ({ open, onOpenChange }: ScoutingCentreProps) => {
           </DialogHeader>
           
           <Tabs value={mainTab} onValueChange={(v) => setMainTab(v as any)} className="flex-1 flex flex-col px-6 pb-6">
-            <TabsList className="grid w-full grid-cols-3 mb-4">
+            <TabsList className="grid w-full grid-cols-4 mb-4">
               <TabsTrigger value="reports" className="gap-2">
                 <FileText className="h-4 w-4" />
                 Create & View Reports
@@ -531,6 +531,10 @@ export const ScoutingCentre = ({ open, onOpenChange }: ScoutingCentreProps) => {
               <TabsTrigger value="all-players" className="gap-2">
                 <Users className="h-4 w-4" />
                 All Scouted Players
+              </TabsTrigger>
+              <TabsTrigger value="scouts" className="gap-2">
+                <Target className="h-4 w-4" />
+                Scouts
               </TabsTrigger>
               <TabsTrigger value="network" className="gap-2">
                 <Globe className="h-4 w-4" />
@@ -933,6 +937,127 @@ export const ScoutingCentre = ({ open, onOpenChange }: ScoutingCentreProps) => {
                   ))}
 
                   {Object.keys(groupedReports).length === 0 && (
+                    <div className="text-center py-12 text-muted-foreground">
+                      No scouting reports found
+                    </div>
+                  )}
+                </div>
+              </ScrollArea>
+            </TabsContent>
+
+            <TabsContent value="scouts" className="flex-1 mt-0">
+              <ScrollArea className="h-[calc(98vh-200px)]">
+                <div className="space-y-4 pr-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-semibold">Scout Performance</h3>
+                  </div>
+
+                  {(() => {
+                    // Get unique scouts and their report counts
+                    const scoutStats = reports.reduce((acc, report) => {
+                      const scoutName = report.scout_name || 'Unknown Scout';
+                      if (!acc[scoutName]) {
+                        acc[scoutName] = {
+                          name: scoutName,
+                          reports: [],
+                          totalReports: 0,
+                          recommended: 0,
+                          monitoring: 0,
+                          pending: 0,
+                          rejected: 0
+                        };
+                      }
+                      acc[scoutName].reports.push(report);
+                      acc[scoutName].totalReports++;
+                      
+                      // Count by status
+                      if (report.status === 'recommended') acc[scoutName].recommended++;
+                      else if (report.status === 'monitoring') acc[scoutName].monitoring++;
+                      else if (report.status === 'pending') acc[scoutName].pending++;
+                      else if (report.status === 'rejected') acc[scoutName].rejected++;
+                      
+                      return acc;
+                    }, {} as Record<string, { 
+                      name: string; 
+                      reports: ScoutingReport[]; 
+                      totalReports: number;
+                      recommended: number;
+                      monitoring: number;
+                      pending: number;
+                      rejected: number;
+                    }>);
+
+                    return Object.values(scoutStats)
+                      .sort((a, b) => b.totalReports - a.totalReports)
+                      .map((scout) => (
+                        <Card key={scout.name}>
+                          <CardHeader>
+                            <div className="flex items-center justify-between">
+                              <CardTitle className="text-lg">{scout.name}</CardTitle>
+                              <Badge variant="secondary">{scout.totalReports} {scout.totalReports === 1 ? 'report' : 'reports'}</Badge>
+                            </div>
+                          </CardHeader>
+                          <CardContent className="space-y-4">
+                            {/* Stats */}
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                              <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/20">
+                                <div className="text-2xl font-bold text-green-500">{scout.recommended}</div>
+                                <div className="text-xs text-muted-foreground">Recommended</div>
+                              </div>
+                              <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
+                                <div className="text-2xl font-bold text-blue-500">{scout.monitoring}</div>
+                                <div className="text-xs text-muted-foreground">Monitoring</div>
+                              </div>
+                              <div className="p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/20">
+                                <div className="text-2xl font-bold text-yellow-500">{scout.pending}</div>
+                                <div className="text-xs text-muted-foreground">Pending</div>
+                              </div>
+                              <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20">
+                                <div className="text-2xl font-bold text-red-500">{scout.rejected}</div>
+                                <div className="text-xs text-muted-foreground">Rejected</div>
+                              </div>
+                            </div>
+
+                            {/* Recent Reports */}
+                            <div>
+                              <h4 className="font-semibold mb-2 text-sm">Recent Reports</h4>
+                              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                {scout.reports.slice(0, 6).map((report) => (
+                                  <Card 
+                                    key={report.id} 
+                                    className="cursor-pointer hover:border-primary transition-colors" 
+                                    onClick={() => setViewingReport(report)}
+                                  >
+                                    <CardHeader className="pb-2">
+                                      <CardTitle className="text-sm">{report.player_name}</CardTitle>
+                                      <p className="text-xs text-muted-foreground">{report.position}</p>
+                                    </CardHeader>
+                                    <CardContent className="space-y-1">
+                                      {report.current_club && (
+                                        <p className="text-xs"><span className="text-muted-foreground">Club:</span> {report.current_club}</p>
+                                      )}
+                                      {report.scouting_date && (
+                                        <p className="text-xs"><span className="text-muted-foreground">Date:</span> {format(new Date(report.scouting_date), "dd MMM yyyy")}</p>
+                                      )}
+                                      <Badge variant="outline" className={getStatusColor(report.status)}>
+                                        {report.status}
+                                      </Badge>
+                                    </CardContent>
+                                  </Card>
+                                ))}
+                              </div>
+                              {scout.reports.length > 6 && (
+                                <p className="text-xs text-muted-foreground mt-2">
+                                  +{scout.reports.length - 6} more reports
+                                </p>
+                              )}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ));
+                  })()}
+
+                  {reports.length === 0 && (
                     <div className="text-center py-12 text-muted-foreground">
                       No scouting reports found
                     </div>
