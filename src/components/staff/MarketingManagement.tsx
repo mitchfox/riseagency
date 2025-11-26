@@ -389,7 +389,7 @@ export const MarketingManagement = ({ isAdmin, isMarketeer }: { isAdmin: boolean
             Gallery
           </TabsTrigger>
           <TabsTrigger value="planner">
-            <Calendar className="w-4 h-4 mr-2" />
+            <CalendarIcon className="w-4 h-4 mr-2" />
             Planner
           </TabsTrigger>
         </TabsList>
