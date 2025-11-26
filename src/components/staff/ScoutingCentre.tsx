@@ -11,11 +11,12 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Plus, Edit2, Trash2, UserPlus, Eye, Filter, Search, Sparkles, FileText, Target, Users } from "lucide-react";
+import { Plus, Edit2, Trash2, UserPlus, Eye, Filter, Search, Sparkles, FileText, Target, Users, Globe } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { format } from "date-fns";
 import { SkillEvaluationForm } from "./SkillEvaluationForm";
 import { initializeSkillEvaluations, SkillEvaluation, SCOUTING_POSITIONS, POSITION_SKILLS, ScoutingPosition } from "@/data/scoutingSkills";
+import ScoutingNetworkMap from "@/components/ScoutingNetworkMap";
 
 // Import pitch background
 import pitchBg from "@/assets/scouting-pitch-bg.jpg";
@@ -98,6 +99,8 @@ export const ScoutingCentre = ({ open, onOpenChange }: ScoutingCentreProps) => {
   const [prospectReports, setProspectReports] = useState<ScoutingReport[]>([]);
   const [sortField, setSortField] = useState<string>("overall_rating");
   const [players, setPlayers] = useState<{ id: string; name: string }[]>([]);
+  const [mainTab, setMainTab] = useState<"reports" | "all-players" | "network">("reports");
+  const [groupBy, setGroupBy] = useState<"country" | "club" | "scout">("country");
   const [formData, setFormData] = useState({
     player_name: "",
     age: "",
@@ -493,9 +496,51 @@ export const ScoutingCentre = ({ open, onOpenChange }: ScoutingCentreProps) => {
     return matchesStatus && matchesSearch;
   });
 
+  // Group reports by country, club, or scout
+  const groupedReports = reports.reduce((acc, report) => {
+    let key = '';
+    if (groupBy === 'country') {
+      key = report.nationality || 'Unknown';
+    } else if (groupBy === 'club') {
+      key = report.current_club || 'Unknown';
+    } else if (groupBy === 'scout') {
+      key = report.scout_name || 'Unknown';
+    }
+    
+    if (!acc[key]) {
+      acc[key] = [];
+    }
+    acc[key].push(report);
+    return acc;
+  }, {} as Record<string, ScoutingReport[]>);
+
   return (
     <>
-      <div className="space-y-6">
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-[98vw] max-h-[98vh] w-full h-full p-0">
+          <DialogHeader className="px-6 pt-6 pb-4">
+            <DialogTitle className="text-2xl">Scouting Centre</DialogTitle>
+          </DialogHeader>
+          
+          <Tabs value={mainTab} onValueChange={(v) => setMainTab(v as any)} className="flex-1 flex flex-col px-6 pb-6">
+            <TabsList className="grid w-full grid-cols-3 mb-4">
+              <TabsTrigger value="reports" className="gap-2">
+                <FileText className="h-4 w-4" />
+                Create & View Reports
+              </TabsTrigger>
+              <TabsTrigger value="all-players" className="gap-2">
+                <Users className="h-4 w-4" />
+                All Scouted Players
+              </TabsTrigger>
+              <TabsTrigger value="network" className="gap-2">
+                <Globe className="h-4 w-4" />
+                Scouting Network
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="reports" className="flex-1 mt-0">
+              <ScrollArea className="h-[calc(98vh-200px)]">
+                <div className="space-y-6 pr-4">
         {viewMode === "positions" ? (
           <>
             {/* Position Tiles View */}
@@ -824,7 +869,87 @@ export const ScoutingCentre = ({ open, onOpenChange }: ScoutingCentreProps) => {
         )}
           </>
         )}
-      </div>
+                </div>
+              </ScrollArea>
+            </TabsContent>
+
+            <TabsContent value="all-players" className="flex-1 mt-0">
+              <ScrollArea className="h-[calc(98vh-200px)]">
+                <div className="space-y-4 pr-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-semibold">All Scouted Players</h3>
+                    <Select value={groupBy} onValueChange={(v) => setGroupBy(v as any)}>
+                      <SelectTrigger className="w-[180px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="country">Group by Country</SelectItem>
+                        <SelectItem value="club">Group by Club</SelectItem>
+                        <SelectItem value="scout">Group by Scout</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {Object.entries(groupedReports).sort(([a], [b]) => a.localeCompare(b)).map(([group, groupReports]) => (
+                    <Card key={group}>
+                      <CardHeader>
+                        <CardTitle className="text-lg flex items-center justify-between">
+                          <span>{group}</span>
+                          <Badge variant="secondary">{groupReports.length} {groupReports.length === 1 ? 'player' : 'players'}</Badge>
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                          {groupReports.map((report) => (
+                            <Card key={report.id} className="cursor-pointer hover:border-primary transition-colors" onClick={() => setViewingReport(report)}>
+                              <CardHeader className="pb-2">
+                                <CardTitle className="text-sm">{report.player_name}</CardTitle>
+                                <p className="text-xs text-muted-foreground">{report.position}</p>
+                              </CardHeader>
+                              <CardContent className="space-y-2">
+                                {report.current_club && (
+                                  <p className="text-xs"><span className="text-muted-foreground">Club:</span> {report.current_club}</p>
+                                )}
+                                {report.nationality && (
+                                  <p className="text-xs"><span className="text-muted-foreground">Nationality:</span> {report.nationality}</p>
+                                )}
+                                {report.scout_name && (
+                                  <p className="text-xs"><span className="text-muted-foreground">Scout:</span> {report.scout_name}</p>
+                                )}
+                                <div className="flex gap-2 flex-wrap">
+                                  <Badge variant="outline" className={getStatusColor(report.status)}>
+                                    {report.status}
+                                  </Badge>
+                                  {report.overall_rating && (
+                                    <Badge variant="outline">{report.overall_rating}/10</Badge>
+                                  )}
+                                </div>
+                              </CardContent>
+                            </Card>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+
+                  {Object.keys(groupedReports).length === 0 && (
+                    <div className="text-center py-12 text-muted-foreground">
+                      No scouting reports found
+                    </div>
+                  )}
+                </div>
+              </ScrollArea>
+            </TabsContent>
+
+            <TabsContent value="network" className="flex-1 mt-0">
+              <div className="h-[calc(98vh-200px)]">
+                <ScoutingNetworkMap />
+              </div>
+            </TabsContent>
+          </Tabs>
+        </DialogContent>
+      </Dialog>
+
 
       {/* Add/Edit Dialog */}
       <Dialog open={isAddingNew} onOpenChange={(open) => { if (!open) resetForm(); }}>
