@@ -95,6 +95,7 @@ export const MarketingManagement = ({ isAdmin, isMarketeer }: { isAdmin: boolean
   const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([]);
   const [categoryFilter, setCategoryFilter] = useState<'all' | 'brand' | 'players' | 'other'>('all');
   const [selectedPlayerId, setSelectedPlayerId] = useState<string>('all');
+  const [videoPlayerFilter, setVideoPlayerFilter] = useState<string>('all');
   const [players, setPlayers] = useState<any[]>([]);
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -564,36 +565,19 @@ export const MarketingManagement = ({ isAdmin, isMarketeer }: { isAdmin: boolean
                 <TabsContent value="videos" className="space-y-4">
                   <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
                     <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
-                      <Select value={categoryFilter} onValueChange={(v) => {
-                        setCategoryFilter(v as any);
-                        setSelectedPlayerId('all');
-                      }}>
-                        <SelectTrigger className="w-full sm:w-[180px]">
-                          <SelectValue />
+                      <Select value={videoPlayerFilter} onValueChange={setVideoPlayerFilter}>
+                        <SelectTrigger className="w-full sm:w-[200px]">
+                          <SelectValue placeholder="All Players" />
                         </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">All Categories</SelectItem>
-                          <SelectItem value="brand">Brand</SelectItem>
-                          <SelectItem value="players">Players</SelectItem>
-                          <SelectItem value="other">Other</SelectItem>
+                        <SelectContent className="bg-background z-50">
+                          <SelectItem value="all">All Players</SelectItem>
+                          {players.map(player => (
+                            <SelectItem key={player.id} value={player.id}>
+                              {player.name}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
-                      
-                      {categoryFilter === 'players' && (
-                        <Select value={selectedPlayerId} onValueChange={setSelectedPlayerId}>
-                          <SelectTrigger className="w-full sm:w-[200px]">
-                            <SelectValue placeholder="All Players" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="all">All Players</SelectItem>
-                            {players.map(player => (
-                              <SelectItem key={player.id} value={player.id}>
-                                {player.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      )}
                       
                       {canManage && (
                         <>
@@ -621,11 +605,9 @@ export const MarketingManagement = ({ isAdmin, isMarketeer }: { isAdmin: boolean
                   </div>
 
                   {(() => {
-                    const filtered = categoryFilter === 'all' 
-                      ? galleryItems.filter(item => item.file_type === 'video')
-                      : categoryFilter === 'players' && selectedPlayerId !== 'all'
-                        ? galleryItems.filter(item => item.file_type === 'video' && item.category === 'players' && item.player_id === selectedPlayerId)
-                        : galleryItems.filter(item => item.file_type === 'video' && item.category === categoryFilter);
+                    const filtered = videoPlayerFilter !== 'all'
+                      ? galleryItems.filter(item => item.file_type === 'video' && item.player_id === videoPlayerFilter)
+                      : galleryItems.filter(item => item.file_type === 'video');
                     
                     return filtered.length === 0 ? (
                       <div className="text-center py-12 text-muted-foreground">
