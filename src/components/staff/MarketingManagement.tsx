@@ -1205,8 +1205,8 @@ export const MarketingManagement = ({ isAdmin, isMarketeer }: { isAdmin: boolean
 
       {/* Homepage Video Manager Dialog */}
       <Dialog open={showHomepageVideos} onOpenChange={setShowHomepageVideos}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
+        <DialogContent className="max-w-[95vw] sm:max-w-4xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
+          <DialogHeader className="pb-4">
             <DialogTitle>3D Portfolio Videos</DialogTitle>
             <DialogDescription>
               Manage videos displayed on the homepage 3D portfolio
