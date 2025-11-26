@@ -99,13 +99,14 @@ export const VideoScene3D = () => {
                 onMouseEnter={() => setHoveredIndex(0)}
                 onMouseLeave={() => setHoveredIndex(null)}
               >
-                <iframe
+                <video
                   src={videos[0]}
-                  className="absolute inset-0 w-full h-full"
-                  frameBorder="0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                  title="Video 1"
+                  className="absolute inset-0 w-full h-full object-cover"
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  controls={false}
                 />
                 {hoveredIndex === 0 && (
                   <div className="absolute inset-0 border-4 border-primary pointer-events-none z-10" />
@@ -117,13 +118,14 @@ export const VideoScene3D = () => {
                 onMouseEnter={() => setHoveredIndex(1)}
                 onMouseLeave={() => setHoveredIndex(null)}
               >
-                <iframe
+                <video
                   src={videos[1]}
-                  className="absolute inset-0 w-full h-full"
-                  frameBorder="0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                  title="Video 2"
+                  className="absolute inset-0 w-full h-full object-cover"
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  controls={false}
                 />
                 {hoveredIndex === 1 && (
                   <div className="absolute inset-0 border-4 border-primary pointer-events-none z-10" />
@@ -135,13 +137,14 @@ export const VideoScene3D = () => {
                 onMouseEnter={() => setHoveredIndex(2)}
                 onMouseLeave={() => setHoveredIndex(null)}
               >
-                <iframe
+                <video
                   src={videos[2]}
-                  className="absolute inset-0 w-full h-full"
-                  frameBorder="0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                  title="Video 3"
+                  className="absolute inset-0 w-full h-full object-cover"
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  controls={false}
                 />
                 {hoveredIndex === 2 && (
                   <div className="absolute inset-0 border-4 border-primary pointer-events-none z-10" />
@@ -156,13 +159,14 @@ export const VideoScene3D = () => {
                 onMouseEnter={() => setHoveredIndex(3)}
                 onMouseLeave={() => setHoveredIndex(null)}
               >
-                <iframe
+                <video
                   src={videos[3]}
-                  className="absolute inset-0 w-full h-full"
-                  frameBorder="0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                  title="Video 4"
+                  className="absolute inset-0 w-full h-full object-cover"
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  controls={false}
                 />
                 {hoveredIndex === 3 && (
                   <div className="absolute inset-0 border-4 border-primary pointer-events-none z-10" />
@@ -174,13 +178,14 @@ export const VideoScene3D = () => {
                 onMouseEnter={() => setHoveredIndex(4)}
                 onMouseLeave={() => setHoveredIndex(null)}
               >
-                <iframe
+                <video
                   src={videos[4]}
-                  className="absolute inset-0 w-full h-full"
-                  frameBorder="0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                  title="Video 5"
+                  className="absolute inset-0 w-full h-full object-cover"
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  controls={false}
                 />
                 {hoveredIndex === 4 && (
                   <div className="absolute inset-0 border-4 border-primary pointer-events-none z-10" />
@@ -192,13 +197,14 @@ export const VideoScene3D = () => {
                 onMouseEnter={() => setHoveredIndex(5)}
                 onMouseLeave={() => setHoveredIndex(null)}
               >
-                <iframe
+                <video
                   src={videos[5]}
-                  className="absolute inset-0 w-full h-full"
-                  frameBorder="0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                  title="Video 6"
+                  className="absolute inset-0 w-full h-full object-cover"
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  controls={false}
                 />
                 {hoveredIndex === 5 && (
                   <div className="absolute inset-0 border-4 border-primary pointer-events-none z-10" />
