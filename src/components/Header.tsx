@@ -34,11 +34,17 @@ export const Header = () => {
 
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50);
+      // Only apply shrink effect on homepage
+      if (location.pathname === '/') {
+        setIsScrolled(window.scrollY > 50);
+      } else {
+        setIsScrolled(false);
+      }
     };
     window.addEventListener('scroll', handleScroll);
+    handleScroll(); // Call immediately to set correct state
     return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  }, [location.pathname]);
 
   const isActive = (path: string) => location.pathname === path;
 
