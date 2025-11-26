@@ -128,7 +128,7 @@ export const Header = () => {
               </button>
             </DrawerTrigger>
             <DrawerContent 
-              className="fixed inset-0 h-screen w-full rounded-none bg-black animate-slide-in-left transition-all duration-300 ease-out z-[200]"
+              className="fixed inset-0 h-screen w-full !mt-0 rounded-none bg-black animate-slide-in-left transition-all duration-300 ease-out z-[200]"
             >
               {/* Full screen grid layout */}
               <div className="grid lg:grid-cols-2 h-full w-full">
