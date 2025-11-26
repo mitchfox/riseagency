@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { VideoPreviewCard } from "./VideoPreviewCard";
 import { PlaylistManager } from "@/components/PlaylistManager";
+import { HomepageVideoManager } from "./HomepageVideoManager";
 import { Calendar, momentLocalizer, Event as CalendarEvent } from 'react-big-calendar';
 import moment from 'moment';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
@@ -427,6 +428,9 @@ export const MarketingManagement = ({ isAdmin, isMarketeer }: { isAdmin: boolean
         </TabsList>
 
         <TabsContent value="resources" className="space-y-4">
+          {/* 3D Portfolio Video Manager */}
+          <HomepageVideoManager isAdmin={isAdmin} />
+          
           <Card>
             <CardHeader>
               <CardTitle>Marketing Resources</CardTitle>

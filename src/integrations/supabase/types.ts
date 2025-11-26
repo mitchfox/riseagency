@@ -672,6 +672,39 @@ export type Database = {
         }
         Relationships: []
       }
+      homepage_videos: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          order_position: number
+          playlist_name: string
+          updated_at: string | null
+          video_title: string
+          video_url: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          order_position: number
+          playlist_name?: string
+          updated_at?: string | null
+          video_title: string
+          video_url: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          order_position?: number
+          playlist_name?: string
+          updated_at?: string | null
+          video_title?: string
+          video_url?: string
+        }
+        Relationships: []
+      }
       invoices: {
         Row: {
           amount: number
