@@ -130,6 +130,63 @@ const Index = () => {
                   <div className="text-sm uppercase tracking-wider text-muted-foreground">International Players</div>
                 </div>
               </div>
+              
+              {/* Flip Cards */}
+              <div className="grid md:grid-cols-3 gap-6 mt-12 max-w-5xl mx-auto">
+                {/* Card 1 - Founder's Background */}
+                <div className="flip-card-container group perspective cursor-pointer" onClick={(e) => e.currentTarget.classList.toggle('flipped')}>
+                  <div className="flip-card relative w-full h-64 transition-transform duration-700 preserve-3d">
+                    {/* Front */}
+                    <div className="flip-card-front absolute inset-0 backface-hidden rounded-lg border border-primary/30 bg-background/80 backdrop-blur-sm p-6 flex flex-col items-center justify-center">
+                      <div className="text-4xl font-bebas text-primary mb-3">EXPERTISE</div>
+                      <div className="text-sm uppercase tracking-wider text-muted-foreground text-center">Click to learn more</div>
+                    </div>
+                    {/* Back */}
+                    <div className="flip-card-back absolute inset-0 backface-hidden rotate-y-180 rounded-lg border border-primary/30 bg-primary/10 backdrop-blur-sm p-6 flex flex-col items-center justify-center">
+                      <div className="text-2xl font-bebas text-primary mb-3 text-center">ELITE EXPERIENCE</div>
+                      <p className="text-sm text-foreground/80 text-center leading-relaxed">
+                        Our founder's background includes personal training elite players across Europe's biggest leagues, bringing world-class expertise to every client.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Card 2 - FIFA Licenses */}
+                <div className="flip-card-container group perspective cursor-pointer" onClick={(e) => e.currentTarget.classList.toggle('flipped')}>
+                  <div className="flip-card relative w-full h-64 transition-transform duration-700 preserve-3d">
+                    {/* Front */}
+                    <div className="flip-card-front absolute inset-0 backface-hidden rounded-lg border border-primary/30 bg-background/80 backdrop-blur-sm p-6 flex flex-col items-center justify-center">
+                      <div className="text-4xl font-bebas text-primary mb-3">LICENSED</div>
+                      <div className="text-sm uppercase tracking-wider text-muted-foreground text-center">Click to learn more</div>
+                    </div>
+                    {/* Back */}
+                    <div className="flip-card-back absolute inset-0 backface-hidden rotate-y-180 rounded-lg border border-primary/30 bg-primary/10 backdrop-blur-sm p-6 flex flex-col items-center justify-center">
+                      <div className="text-2xl font-bebas text-primary mb-3 text-center">CERTIFIED & APPROVED</div>
+                      <p className="text-sm text-foreground/80 text-center leading-relaxed">
+                        FIFA licensed intermediaries and approved by football's governing bodies, ensuring full compliance and professional representation.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Card 3 - Club Network */}
+                <div className="flip-card-container group perspective cursor-pointer" onClick={(e) => e.currentTarget.classList.toggle('flipped')}>
+                  <div className="flip-card relative w-full h-64 transition-transform duration-700 preserve-3d">
+                    {/* Front */}
+                    <div className="flip-card-front absolute inset-0 backface-hidden rounded-lg border border-primary/30 bg-background/80 backdrop-blur-sm p-6 flex flex-col items-center justify-center">
+                      <div className="text-4xl font-bebas text-primary mb-3">CONNECTED</div>
+                      <div className="text-sm uppercase tracking-wider text-muted-foreground text-center">Click to learn more</div>
+                    </div>
+                    {/* Back */}
+                    <div className="flip-card-back absolute inset-0 backface-hidden rotate-y-180 rounded-lg border border-primary/30 bg-primary/10 backdrop-blur-sm p-6 flex flex-col items-center justify-center">
+                      <div className="text-2xl font-bebas text-primary mb-3 text-center">GLOBAL NETWORK</div>
+                      <p className="text-sm text-foreground/80 text-center leading-relaxed">
+                        Extensive club network spanning top European leagues and beyond, providing unparalleled access and opportunities for our clients.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </section>
