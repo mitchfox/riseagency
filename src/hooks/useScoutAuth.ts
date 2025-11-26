@@ -28,6 +28,7 @@ export const useScoutAuth = () => {
       
       if (!scoutEmail) {
         navigate("/login");
+        setLoading(false);
         return;
       }
 

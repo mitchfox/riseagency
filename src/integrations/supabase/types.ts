@@ -1755,6 +1755,39 @@ export type Database = {
         }
         Relationships: []
       }
+      scout_messages: {
+        Row: {
+          content: string
+          created_at: string
+          created_by: string | null
+          id: string
+          priority: string
+          title: string
+          updated_at: string
+          visible_to_scouts: boolean
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          priority?: string
+          title: string
+          updated_at?: string
+          visible_to_scouts?: boolean
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          priority?: string
+          title?: string
+          updated_at?: string
+          visible_to_scouts?: boolean
+        }
+        Relationships: []
+      }
       scouting_reports: {
         Row: {
           added_to_prospects: boolean | null
