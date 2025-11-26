@@ -793,11 +793,11 @@ const ScoutingNetworkMap = () => {
   
   // Calculate font size to fit text within circle
   const getCityFontSize = (cityName: string, circleRadius: number) => {
-    // Approximate character width is about 60% of font size
+    // Approximate character width is about 65% of font size for better accuracy
     const textLength = cityName.length;
-    // We want text width to be about 80% of circle diameter to have some padding
-    const maxTextWidth = circleRadius * 2 * 0.8;
-    const approximateFontSize = maxTextWidth / (textLength * 0.6);
+    // We want text width to be about 65% of circle diameter to have generous padding
+    const maxTextWidth = circleRadius * 2 * 0.65;
+    const approximateFontSize = maxTextWidth / (textLength * 0.65);
     // Clamp between 2 and 6 for readability
     return Math.max(2, Math.min(6, approximateFontSize));
   };
