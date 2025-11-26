@@ -6,6 +6,7 @@ import { X, MessageCircle, Users, LogIn } from "lucide-react";
 import workingTogether from "@/assets/menu-working-together.jpg";
 import playerPortalImage from "@/assets/menu-player-portal.png";
 import blackMarbleBg from "@/assets/black-marble-smudged.png";
+import whiteMarbleBg from "@/assets/white-marble.png";
 import realisePotentialSessions from "@/assets/realise-potential-sessions.png";
 import realisePotentialPaos from "@/assets/realise-potential-paos.png";
 import realisePotentialReport from "@/assets/realise-potential-report.png";
@@ -388,7 +389,7 @@ export const Header = () => {
                       <DrawerClose asChild>
                         <Link
                           to="/login"
-                          className="relative group h-40 md:h-48"
+                          className="relative group h-[140px] md:h-[172px]"
                         >
                           <div className="relative h-full rounded overflow-hidden">
                             <img 
@@ -412,7 +413,7 @@ export const Header = () => {
                       <DrawerClose asChild>
                         <button
                           onClick={() => setRepresentationOpen(true)}
-                          className="relative group h-40 md:h-48"
+                          className="relative group h-[140px] md:h-[172px]"
                         >
                           <div className="relative h-full rounded overflow-hidden">
                             <img 
@@ -437,7 +438,14 @@ export const Header = () => {
                 </div>
 
                 {/* Right side - Stars Card (desktop only) */}
-                <div className="hidden lg:grid grid-cols-2 grid-rows-2 gap-4 bg-background p-8">
+                <div 
+                  className="hidden lg:grid grid-cols-2 grid-rows-2 gap-4 p-8 bg-cover bg-center"
+                  style={{ 
+                    backgroundImage: `url(${whiteMarbleBg})`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center'
+                  }}
+                >
                   {starPlayers.length > 0 && (
                     <div 
                       className="w-full transition-transform duration-300"
