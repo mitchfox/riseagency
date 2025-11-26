@@ -289,8 +289,8 @@ export const Header = () => {
           </Drawer>
 
           {/* Logo - Center */}
-          <Link to="/" className="absolute left-1/2 transform -translate-x-1/2">
-            <img src={logo} alt="RISE Football Agency" className={`transition-all duration-300 ease-out ${isScrolled ? 'h-4 md:h-5' : 'h-7 md:h-10'}`} />
+          <Link to="/" className="absolute left-1/2 transform -translate-x-1/2 z-10">
+            <img src={logo} alt="RISE Football Agency" className="h-7 md:h-10" />
           </Link>
 
           {/* RISE WITH US Button - Right */}
