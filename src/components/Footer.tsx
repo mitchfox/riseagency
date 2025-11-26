@@ -142,9 +142,14 @@ export const Footer = () => {
               <Link to="/privacy-policy" className="text-sm text-muted-foreground hover:text-primary transition-colors font-bebas uppercase tracking-wider">
                 Privacy Policy
               </Link>
-              <Link to="/terms-of-service" className="text-sm text-muted-foreground hover:text-primary transition-colors font-bebas uppercase tracking-wider">
-                Terms of Service
-              </Link>
+              <a 
+                href="/FIFA_Football_Agent_Regulations.pdf" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-sm text-muted-foreground hover:text-primary transition-colors font-bebas uppercase tracking-wider"
+              >
+                REGULATIONS
+              </a>
             </div>
           </div>
         </div>
