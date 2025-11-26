@@ -132,6 +132,7 @@ export const MarketingManagement = ({ isAdmin, isMarketeer }: { isAdmin: boolean
   const [showPlaylistManager, setShowPlaylistManager] = useState(false);
   const [selectedVideoForPlaylist, setSelectedVideoForPlaylist] = useState<GalleryItem | null>(null);
   const [playlistPlayerData, setPlaylistPlayerData] = useState<any>(null);
+  const [showHomepageVideos, setShowHomepageVideos] = useState(false);
 
   useEffect(() => {
     if (activeTab === 'gallery') {
@@ -428,9 +429,6 @@ export const MarketingManagement = ({ isAdmin, isMarketeer }: { isAdmin: boolean
         </TabsList>
 
         <TabsContent value="resources" className="space-y-4">
-          {/* 3D Portfolio Video Manager */}
-          <HomepageVideoManager isAdmin={isAdmin} />
-          
           <Card>
             <CardHeader>
               <CardTitle>Marketing Resources</CardTitle>
@@ -631,6 +629,16 @@ export const MarketingManagement = ({ isAdmin, isMarketeer }: { isAdmin: boolean
                             <Play className="w-4 h-4 mr-2" />
                             <span className="hidden sm:inline">Import from Clips</span>
                             <span className="sm:hidden">Import</span>
+                          </Button>
+                          <Button 
+                            onClick={() => setShowHomepageVideos(true)} 
+                            size="sm" 
+                            variant="outline"
+                            className="md:size-default"
+                          >
+                            <List className="w-4 h-4 mr-2" />
+                            <span className="hidden sm:inline">3D Portfolio</span>
+                            <span className="sm:hidden">Portfolio</span>
                           </Button>
                         </>
                       )}
@@ -1194,6 +1202,19 @@ export const MarketingManagement = ({ isAdmin, isMarketeer }: { isAdmin: boolean
           }}
         />
       )}
+
+      {/* Homepage Video Manager Dialog */}
+      <Dialog open={showHomepageVideos} onOpenChange={setShowHomepageVideos}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>3D Portfolio Videos</DialogTitle>
+            <DialogDescription>
+              Manage videos displayed on the homepage 3D portfolio
+            </DialogDescription>
+          </DialogHeader>
+          <HomepageVideoManager isAdmin={isAdmin} />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
