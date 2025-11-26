@@ -27,10 +27,19 @@ export const Header = () => {
   const [declareInterestOpen, setDeclareInterestOpen] = useState(false);
   const [introModalOpen, setIntroModalOpen] = useState(false);
   const [showTopBar, setShowTopBar] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {
     setShowTopBar(location.pathname === '/');
   }, [location.pathname]);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 50);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -75,8 +84,7 @@ export const Header = () => {
                 className="text-xs md:text-sm font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-colors flex items-center gap-1.5"
               >
                 <LogIn className="w-3.5 h-3.5 hidden sm:block" />
-                <span className="hidden md:inline">Player Portal</span>
-                <span className="md:hidden">Portal</span>
+                <span>PORTAL</span>
               </Link>
             </div>
           </div>
@@ -85,17 +93,17 @@ export const Header = () => {
       )}
 
       {/* Main Header */}
-      <header className={`fixed ${showTopBar ? 'top-9 md:top-10' : 'top-0'} left-0 right-0 z-[100] bg-background/95 backdrop-blur-md border-b-2 border-gold w-full`}>
+      <header className={`fixed ${showTopBar ? 'top-9 md:top-10' : 'top-0'} left-0 right-0 z-[100] bg-background/95 backdrop-blur-md border-b-2 border-gold w-full transition-all duration-300 ease-out`}>
         <div className="container mx-auto px-2 md:px-4">
-        <div className="flex items-center justify-between h-14 md:h-16">
+        <div className={`flex items-center justify-between transition-all duration-300 ease-out ${isScrolled ? 'h-7 md:h-8' : 'h-14 md:h-16'}`}>
           {/* Drawer Menu - Left */}
           <Drawer direction="left" modal={false} preventScrollRestoration={false}>
             <DrawerTrigger asChild>
               <button
-                className="group relative w-10 h-10 md:w-12 md:h-12 flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                className={`group relative flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-primary transition-all duration-300 ease-out ${isScrolled ? 'w-5 h-5 md:w-6 md:h-6' : 'w-10 h-10 md:w-12 md:h-12'}`}
                 aria-label="Toggle menu"
               >
-                <TbMenu className="w-6 h-6 md:w-7 md:h-7 text-primary group-hover:text-foreground transition-colors" />
+                <TbMenu className={`text-primary group-hover:text-foreground transition-all duration-300 ease-out ${isScrolled ? 'w-4 h-4 md:w-5 md:h-5' : 'w-6 h-6 md:w-7 md:h-7'}`} />
               </button>
             </DrawerTrigger>
             <DrawerContent 
@@ -225,14 +233,14 @@ export const Header = () => {
                   <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70" />
                   <div className="relative h-full flex flex-col items-center justify-between p-3">
                     <h3 className="text-lg font-bebas uppercase tracking-wider text-white drop-shadow-lg text-center">
-                      Player Portal
+                      PORTAL
                     </h3>
                     <DrawerClose asChild>
                       <Button
                         asChild
                         className="btn-shine w-full font-bebas uppercase tracking-wider h-6 text-xs"
                       >
-                        <Link to="/login">Login</Link>
+                        <Link to="/login">PORTAL</Link>
                       </Button>
                     </DrawerClose>
                   </div>
@@ -267,14 +275,14 @@ export const Header = () => {
 
           {/* Logo - Center */}
           <Link to="/" className="absolute left-1/2 transform -translate-x-1/2">
-            <img src={logo} alt="RISE Football Agency" className="h-7 md:h-10" />
+            <img src={logo} alt="RISE Football Agency" className={`transition-all duration-300 ease-out ${isScrolled ? 'h-4 md:h-5' : 'h-7 md:h-10'}`} />
           </Link>
 
           {/* RISE WITH US Button - Right */}
           <Button
             onClick={() => setWorkWithUsOpen(true)}
             size="sm"
-            className="btn-shine font-bebas uppercase tracking-wider text-xs md:text-base px-3 md:px-6 h-8 md:h-10"
+            className={`btn-shine font-bebas uppercase tracking-wider transition-all duration-300 ease-out ${isScrolled ? 'text-[10px] md:text-xs px-2 md:px-3 h-4 md:h-5' : 'text-xs md:text-base px-3 md:px-6 h-8 md:h-10'}`}
           >
             <span className="hidden sm:inline">RISE WITH US</span>
             <span className="sm:hidden">RISE</span>
