@@ -5,6 +5,10 @@ import { X, MessageCircle, Users, LogIn } from "lucide-react";
 import workingTogether from "@/assets/menu-working-together.jpg";
 import playerPortalImage from "@/assets/menu-player-portal.png";
 import blackMarbleBg from "@/assets/black-marble-smudged.png";
+import realisePotentialSessions from "@/assets/realise-potential-sessions.png";
+import realisePotentialPaos from "@/assets/realise-potential-paos.png";
+import realisePotentialReport from "@/assets/realise-potential-report.png";
+import realisePotentialAnalysis from "@/assets/realise-potential-analysis.png";
 import { supabase } from "@/integrations/supabase/client";
 import { getCountryFlagUrl } from "@/lib/countryFlags";
 import {
@@ -35,6 +39,15 @@ export const Header = () => {
   const [betweenLinesHovered, setBetweenLinesHovered] = useState(false);
   const [betweenLinesPosts, setBetweenLinesPosts] = useState<any[]>([]);
   const [btlIndex, setBtlIndex] = useState(0);
+  const [realisePotentialHovered, setRealisePotentialHovered] = useState(false);
+  const [rpIndex, setRpIndex] = useState(0);
+
+  const realisePotentialImages = [
+    realisePotentialSessions,
+    realisePotentialPaos,
+    realisePotentialReport,
+    realisePotentialAnalysis
+  ];
 
   useEffect(() => {
     setShowTopBar(location.pathname === '/');
@@ -87,6 +100,13 @@ export const Header = () => {
       return () => clearInterval(btlInterval);
     }
   }, [betweenLinesPosts.length]);
+
+  useEffect(() => {
+    const rpInterval = setInterval(() => {
+      setRpIndex(prev => (prev + 1) % realisePotentialImages.length);
+    }, 6000);
+    return () => clearInterval(rpInterval);
+  }, [realisePotentialImages.length]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -239,6 +259,8 @@ export const Header = () => {
                       <DrawerClose asChild>
                         <Link
                           to="/performance"
+                          onMouseEnter={() => setRealisePotentialHovered(true)}
+                          onMouseLeave={() => setRealisePotentialHovered(false)}
                           className={`text-2xl md:text-3xl font-bebas uppercase text-white hover:text-primary hover:bg-white/5 transition-all tracking-wider py-1 px-2 rounded ${
                             isActive("/performance") ? "text-primary" : ""
                           }`}
@@ -517,8 +539,33 @@ export const Header = () => {
                     </div>
                   )}
                   
-                  {/* Placeholder for 2 other components */}
-                  <div className="bg-muted/20 rounded-lg border border-white/10" />
+                  {/* Realise Potential Card */}
+                  <div className="w-full">
+                    <div 
+                      className={`relative w-full aspect-[3/4] rounded-lg overflow-hidden transition-all duration-300 ${
+                        realisePotentialHovered 
+                          ? 'border-2 border-primary shadow-[0_0_20px_rgba(184,165,116,0.6)]' 
+                          : 'border border-white/20 grayscale'
+                      }`}
+                    >
+                      {/* Cycling Images */}
+                      {realisePotentialImages.map((image, index) => (
+                        <div
+                          key={index}
+                          className="absolute inset-0 transition-opacity duration-1000 ease-in-out"
+                          style={{ opacity: index === rpIndex ? 1 : 0 }}
+                        >
+                          <img 
+                            src={image} 
+                            alt={`Realise Potential ${index + 1}`}
+                            className="w-full h-full object-cover" 
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  {/* Placeholder for 1 other component */}
                   <div className="bg-muted/20 rounded-lg border border-white/10" />
                 </div>
               </div>
