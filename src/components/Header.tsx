@@ -159,7 +159,7 @@ export const Header = () => {
     <>
       {/* Top Utility Bar - only on homepage and only when not scrolled */}
       {showTopBar && !isScrolled && (
-        <div className="fixed top-14 md:top-16 left-0 right-0 z-50 bg-background/95 backdrop-blur-md transition-all duration-500">
+        <div className="fixed top-14 md:top-16 left-0 right-0 z-50 bg-background/95 backdrop-blur-md transition-all duration-500 border-b-2 border-primary">
           <div className="container mx-auto px-2 md:px-4">
           <div className="flex items-center justify-between h-9 md:h-10">
             <div className="flex flex-wrap items-center gap-1 md:gap-4">
@@ -205,9 +205,9 @@ export const Header = () => {
       )}
 
       {/* Main Header */}
-      <header className={`fixed top-0 left-0 right-0 z-[100] bg-background/95 backdrop-blur-md border-b border-white/10 w-full transition-all duration-300 ease-out`}>
+      <header className={`fixed top-0 left-0 right-0 z-[100] bg-background/95 backdrop-blur-md w-full transition-all duration-500 ease-out ${showTopBar && isScrolled ? 'border-b-2 border-primary' : 'border-b border-white/10'}`}>
         <div className="container mx-auto px-2 md:px-4">
-        <div className={`flex items-center justify-between transition-all duration-300 ease-out ${isScrolled ? 'h-7 md:h-8' : 'h-14 md:h-16'}`}>
+        <div className={`flex items-center justify-between transition-all duration-500 ease-out ${isScrolled ? 'h-12 md:h-14' : 'h-14 md:h-16'}`}>
           {/* Drawer Menu - Left */}
           <Drawer direction="left" modal={false} preventScrollRestoration={false}>
             <DrawerTrigger asChild>
@@ -740,7 +740,7 @@ export const Header = () => {
             <img 
               src={logo} 
               alt="RISE Football Agency" 
-              className={`transition-all duration-300 ease-out ${isScrolled ? 'h-[42px] md:h-[60px] -translate-y-5' : 'h-7 md:h-10'}`} 
+              className={`transition-all duration-500 ease-out ${isScrolled ? 'h-9 md:h-11' : 'h-7 md:h-10'}`} 
             />
           </Link>
 
@@ -789,7 +789,7 @@ export const Header = () => {
           <Button
             onClick={() => setWorkWithUsOpen(true)}
             size="sm"
-            className={`btn-shine font-bebas uppercase tracking-wider transition-all duration-300 ease-out translate-x-[1px] ${isScrolled ? 'text-[8px] md:text-[11px] px-2 md:px-4 h-[22px] md:h-7 -translate-y-[5px]' : 'text-xs md:text-base px-3 md:px-6 h-8 md:h-10'}`}
+            className={`btn-shine font-bebas uppercase tracking-wider transition-all duration-500 ease-out translate-x-[1px] ${isScrolled ? 'text-xs md:text-sm px-3 md:px-5 h-8 md:h-9' : 'text-xs md:text-base px-3 md:px-6 h-8 md:h-10'}`}
           >
             <span className="hidden sm:inline">RISE WITH US</span>
             <span className="sm:hidden">RISE</span>
