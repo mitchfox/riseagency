@@ -175,25 +175,24 @@ export const HomepageVideoManager = ({ canManage }: { canManage: boolean }) => {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex justify-between items-start">
-          <div>
-            <CardTitle className="flex items-center gap-2">
-              <Video className="w-5 h-5" />
-              3D Portfolio Videos
-            </CardTitle>
-            <CardDescription>
-              Manage videos shown in the 3D video grid on the homepage
-            </CardDescription>
-          </div>
-          <Button onClick={openAddDialog}>
-            <Plus className="w-4 h-4 mr-2" />
-            Add Video
-          </Button>
+    <div className="space-y-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h3 className="text-lg font-semibold flex items-center gap-2">
+            <Video className="w-5 h-5" />
+            3D Portfolio Videos
+          </h3>
+          <p className="text-sm text-muted-foreground">
+            Manage videos shown in the 3D video grid on the homepage
+          </p>
         </div>
-      </CardHeader>
-      <CardContent>
+        <Button onClick={openAddDialog} className="w-full sm:w-auto">
+          <Plus className="w-4 h-4 mr-2" />
+          Add Video
+        </Button>
+      </div>
+      
+      <div>
         {loading ? (
           <div className="text-center py-8 text-muted-foreground">Loading videos...</div>
         ) : videos.length === 0 ? (
@@ -206,15 +205,15 @@ export const HomepageVideoManager = ({ canManage }: { canManage: boolean }) => {
             {videos.map((video, index) => (
               <div
                 key={video.id}
-                className="flex items-center gap-3 p-3 border rounded-lg bg-card"
+                className="flex flex-col sm:flex-row items-start sm:items-center gap-3 p-3 border rounded-lg bg-card"
               >
-                <div className="flex flex-col gap-1">
+                <div className="flex sm:flex-col gap-2 sm:gap-1">
                   <Button
                     size="sm"
                     variant="ghost"
                     onClick={() => moveVideo(index, 'up')}
                     disabled={index === 0}
-                    className="h-6 w-6 p-0"
+                    className="h-8 w-8 sm:h-6 sm:w-6 p-0"
                   >
                     <ChevronUp className="w-4 h-4" />
                   </Button>
@@ -223,21 +222,21 @@ export const HomepageVideoManager = ({ canManage }: { canManage: boolean }) => {
                     variant="ghost"
                     onClick={() => moveVideo(index, 'down')}
                     disabled={index === videos.length - 1}
-                    className="h-6 w-6 p-0"
+                    className="h-8 w-8 sm:h-6 sm:w-6 p-0"
                   >
                     <ChevronDown className="w-4 h-4" />
                   </Button>
                 </div>
                 
-                <div className="flex-1 min-w-0">
+                <div className="flex-1 min-w-0 w-full sm:w-auto">
                   <div className="font-medium truncate">{video.video_title}</div>
                   <div className="text-sm text-muted-foreground truncate">{video.video_url}</div>
                   <div className="text-xs text-muted-foreground mt-1">Position: {video.order_position}</div>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-2">
-                    <Label htmlFor={`active-${video.id}`} className="text-xs">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+                  <div className="flex items-center justify-between sm:justify-start gap-2 px-2 sm:px-0">
+                    <Label htmlFor={`active-${video.id}`} className="text-xs whitespace-nowrap">
                       {video.is_active ? 'Active' : 'Hidden'}
                     </Label>
                     <Switch
@@ -247,30 +246,34 @@ export const HomepageVideoManager = ({ canManage }: { canManage: boolean }) => {
                     />
                   </div>
                   
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => openEditDialog(video)}
-                  >
-                    Edit
-                  </Button>
-                  
-                  <Button
-                    size="sm"
-                    variant="destructive"
-                    onClick={() => handleDelete(video.id)}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => openEditDialog(video)}
+                      className="flex-1 sm:flex-none"
+                    >
+                      Edit
+                    </Button>
+                    
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={() => handleDelete(video.id)}
+                      className="flex-1 sm:flex-none"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
               </div>
             ))}
           </div>
         )}
-      </CardContent>
+      </div>
 
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent>
+        <DialogContent className="max-w-[95vw] sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>{editingVideo ? 'Edit Video' : 'Add Video'}</DialogTitle>
           </DialogHeader>
@@ -309,6 +312,6 @@ export const HomepageVideoManager = ({ canManage }: { canManage: boolean }) => {
           </form>
         </DialogContent>
       </Dialog>
-    </Card>
+    </div>
   );
 };
