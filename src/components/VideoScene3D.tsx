@@ -31,17 +31,18 @@ function VideoCard({ position, rotation, url, index }: { position: [number, numb
         style={{
           width: '400px',
           height: '225px',
-          pointerEvents: 'auto',
+          pointerEvents: 'none',
         }}
       >
         <div className="w-full h-full rounded-lg overflow-hidden border-2 border-primary/40">
           <iframe
             src={url}
-            className="w-full h-full"
+            className="w-full h-full scale-110"
             frameBorder="0"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
             title={`Video ${index + 1}`}
+            style={{ pointerEvents: 'none' }}
           />
         </div>
       </Html>
