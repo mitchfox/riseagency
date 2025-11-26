@@ -134,6 +134,32 @@ export default {
           "0%": { transform: "rotate(45deg)", opacity: "0.5" },
           "100%": { transform: "rotate(-45deg)", x1: "20", y1: "4", x2: "4", y2: "20", opacity: "1" },
         },
+        "menu-open-line-1": {
+          "0%": { 
+            transform: "rotate(-45deg) translateY(4px)",
+          },
+          "50%": {
+            transform: "rotate(0deg) translateY(0)",
+          },
+          "100%": { 
+            transform: "rotate(45deg)",
+          },
+        },
+        "menu-open-line-2": {
+          "0%": { 
+            transform: "rotate(-45deg) translateY(-4px) translateX(2px)",
+          },
+          "50%": {
+            transform: "rotate(0deg) translateY(0) translateX(0)",
+          },
+          "100%": { 
+            transform: "rotate(-45deg)",
+          },
+        },
+        "color-to-gold": {
+          "0%": { stroke: "currentColor" },
+          "100%": { stroke: "hsl(var(--primary))" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -148,6 +174,10 @@ export default {
         "pan-right": "pan-right 6s linear infinite",
         "spin-to-x": "spin-to-x 0.3s ease-out forwards",
         "diagonal-to-x-1": "diagonal-to-x-1 0.4s ease-out forwards",
+        "diagonal-to-x-2": "diagonal-to-x-2 0.4s ease-out forwards",
+        "menu-open-line-1": "menu-open-line-1 0.6s ease-out forwards",
+        "menu-open-line-2": "menu-open-line-2 0.6s ease-out forwards",
+        "color-to-gold": "color-to-gold 0.3s ease-out 0.6s forwards",
         "diagonal-to-x-2": "diagonal-to-x-2 0.4s ease-out forwards",
       },
     },

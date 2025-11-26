@@ -251,11 +251,18 @@ export const Header = () => {
                   <div className={`flex items-center transition-all duration-300 ease-out px-2 md:px-4 ${isScrolled ? 'h-7 md:h-8 pt-2' : 'h-14 md:h-16'}`}>
                     <DrawerClose asChild>
                       <button
-                        className="group relative flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-primary transition-all duration-300 ease-out w-10 h-10 md:w-12 md:h-12"
+                        className="group relative flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-primary transition-all duration-300 ease-out w-10 h-10 md:w-12 md:h-12 pointer-events-none [&>svg]:animate-color-to-gold"
                         aria-label="Close menu"
+                        style={{ pointerEvents: 'none' }}
+                        onAnimationEnd={(e) => {
+                          if (e.animationName.includes('color-to-gold')) {
+                            (e.currentTarget as HTMLButtonElement).style.pointerEvents = 'auto';
+                            e.currentTarget.classList.remove('pointer-events-none');
+                          }
+                        }}
                       >
                         <svg 
-                          className="h-6 w-6 md:h-7 md:w-7 text-primary"
+                          className="h-6 w-6 md:h-7 md:w-7 text-white"
                           viewBox="0 0 24 24"
                           fill="none"
                           stroke="currentColor"
@@ -263,12 +270,12 @@ export const Header = () => {
                           strokeLinecap="round"
                         >
                           <line 
-                            x1="12" y1="4" x2="12" y2="20" 
-                            className="origin-center animate-[diagonal-to-x-1_0.4s_ease-out_forwards]"
+                            x1="6" y1="10" x2="18" y2="14" 
+                            className="origin-center animate-menu-open-line-1"
                           />
                           <line 
-                            x1="12" y1="4" x2="12" y2="20" 
-                            className="origin-center animate-[diagonal-to-x-2_0.4s_ease-out_forwards]"
+                            x1="4" y1="16" x2="16" y2="20" 
+                            className="origin-center animate-menu-open-line-2"
                           />
                         </svg>
                       </button>
