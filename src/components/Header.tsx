@@ -364,18 +364,18 @@ export const Header = () => {
                           to="/login"
                           className="relative group"
                         >
-                          <div className="relative aspect-[16/9] rounded overflow-hidden" style={{ height: 'calc(100% - 20px)' }}>
+                          <div className="relative aspect-[16/9] rounded overflow-hidden" style={{ height: 'calc((100% - 20px) / 2)' }}>
                             <img 
                               src={playerPortalImage} 
                               alt="Portal" 
                               className="w-full h-full object-cover"
                             />
                             <div className="absolute inset-0 bg-black/30" />
-                            <div className="absolute inset-0 flex flex-col items-center justify-between p-3">
-                              <h3 className="text-white font-bebas text-lg md:text-xl uppercase tracking-wider text-center">
+                            <div className="absolute inset-0 flex flex-col items-center justify-between p-2">
+                              <h3 className="text-white font-bebas text-sm md:text-base uppercase tracking-wider text-center">
                                 Portal
                               </h3>
-                              <div className="bg-primary text-black font-bebas uppercase tracking-widest text-xs md:text-sm py-2 px-4 text-center group-hover:brightness-110 transition-all w-full">
+                              <div className="bg-primary text-black font-bebas uppercase tracking-widest text-xs py-1 px-3 text-center group-hover:brightness-110 transition-all w-full">
                                 Portal
                               </div>
                             </div>
@@ -388,18 +388,18 @@ export const Header = () => {
                           onClick={() => setRepresentationOpen(true)}
                           className="relative group"
                         >
-                          <div className="relative aspect-[16/9] rounded overflow-hidden" style={{ height: 'calc(100% - 20px)' }}>
+                          <div className="relative aspect-[16/9] rounded overflow-hidden" style={{ height: 'calc((100% - 20px) / 2)' }}>
                             <img 
                               src={workingTogether} 
                               alt="Request Representation" 
                               className="w-full h-full object-cover"
                             />
                             <div className="absolute inset-0 bg-black/30" />
-                            <div className="absolute inset-0 flex flex-col items-center justify-between p-3">
-                              <h3 className="text-white font-bebas text-lg md:text-xl uppercase tracking-wider text-center">
+                            <div className="absolute inset-0 flex flex-col items-center justify-between p-2">
+                              <h3 className="text-white font-bebas text-sm md:text-base uppercase tracking-wider text-center">
                                 Realise Potential
                               </h3>
-                              <div className="bg-primary text-black font-bebas uppercase tracking-widest text-xs md:text-sm py-2 px-4 text-center group-hover:brightness-110 transition-all w-full">
+                              <div className="bg-primary text-black font-bebas uppercase tracking-widest text-xs py-1 px-3 text-center group-hover:brightness-110 transition-all w-full whitespace-nowrap">
                                 Request Representation
                               </div>
                             </div>
