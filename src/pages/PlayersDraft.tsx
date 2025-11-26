@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { useEffect, useRef, useState } from "react";
+import footballIcon from "@/assets/football-icon.png";
 
 const PlayersDraft = () => {
   const [activeSection, setActiveSection] = useState(0);
@@ -83,7 +84,7 @@ const PlayersDraft = () => {
       <div className="fixed inset-0 pointer-events-none z-0 pt-16">
         <div className="w-full h-full relative overflow-hidden bg-background">
           {/* Pitch lines only - no grass */}
-          <div className="absolute inset-0 opacity-15">
+          <div className="absolute inset-0 opacity-25">
             {/* Center circle */}
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 border-2 border-white rounded-full" />
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full" />
@@ -96,12 +97,8 @@ const PlayersDraft = () => {
             <div className="absolute top-1/2 left-0 -translate-y-1/2 w-16 h-32 border-2 border-white border-l-0" />
             <div className="absolute top-1/2 right-0 -translate-y-1/2 w-16 h-32 border-2 border-white border-r-0" />
             {/* Penalty arcs (D) */}
-            <svg className="absolute top-1/2 left-32 -translate-y-1/2 w-20 h-64" viewBox="0 0 100 200">
-              <path d="M 100 40 A 60 60 0 0 0 100 160" fill="none" stroke="white" strokeWidth="2" />
-            </svg>
-            <svg className="absolute top-1/2 right-32 -translate-y-1/2 w-20 h-64" viewBox="0 0 100 200">
-              <path d="M 0 40 A 60 60 0 0 1 0 160" fill="none" stroke="white" strokeWidth="2" />
-            </svg>
+            <div className="absolute top-1/2 left-[8rem] -translate-y-1/2 w-10 h-32 border-2 border-white border-l-0 rounded-r-full" />
+            <div className="absolute top-1/2 right-[8rem] -translate-y-1/2 w-10 h-32 border-2 border-white border-r-0 rounded-l-full" />
             {/* Corner arcs */}
             <svg className="absolute top-0 left-0 w-16 h-16" viewBox="0 0 100 100">
               <path d="M 100 0 A 100 100 0 0 0 0 100" fill="none" stroke="white" strokeWidth="2" />
@@ -126,31 +123,11 @@ const PlayersDraft = () => {
               transform: 'translate(-50%, -50%)',
             }}
           >
-            {/* Football SVG with clearer classic pattern */}
-            <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-xl">
-              {/* White base */}
-              <circle cx="50" cy="50" r="48" fill="white" stroke="#000" strokeWidth="2" />
-              
-              {/* Central black pentagon */}
-              <path
-                d="M 50 22 L 63 32 L 58 48 L 42 48 L 37 32 Z"
-                fill="black"
-              />
-              
-              {/* Surrounding black patches */}
-              <path d="M 63 32 L 78 34 L 72 48 L 58 48 Z" fill="black" />
-              <path d="M 37 32 L 22 34 L 28 48 L 42 48 Z" fill="black" />
-              <path d="M 58 48 L 72 48 L 68 64 L 56 70 Z" fill="black" />
-              <path d="M 42 48 L 28 48 L 32 64 L 44 70 Z" fill="black" />
-              
-              {/* Panel outlines to suggest hex pattern */}
-              <path
-                d="M 50 22 L 63 32 L 78 34 L 72 48 L 68 64 L 56 70 L 44 70 L 32 64 L 28 48 L 22 34 L 37 32 Z"
-                fill="none"
-                stroke="#000"
-                strokeWidth="1"
-              />
-            </svg>
+            <img
+              src={footballIcon}
+              alt="Football"
+              className="w-full h-full object-contain drop-shadow-xl"
+            />
           </div>
         </div>
       </div>

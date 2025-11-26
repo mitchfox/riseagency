@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Users, MessageSquare, Plus, Trash2, Edit, Sparkles, Copy, UserPlus } from "lucide-react";
+import { Users, MessageSquare, Plus, Trash2, Edit, Sparkles, Copy, UserPlus, MapPin, Mail } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -36,6 +36,20 @@ interface MarketingTemplate {
   recipient_type: string;
   message_title: string;
   message_content: string;
+}
+
+interface Scout {
+  id: string;
+  name: string;
+  email: string;
+  phone: string | null;
+  country: string | null;
+  regions: string[] | null;
+  status: string;
+  commission_rate: number | null;
+  successful_signings: number;
+  total_submissions: number;
+  profile_image_url: string | null;
 }
 
 const RECIPIENT_TYPES = [
@@ -67,6 +81,10 @@ export const RecruitmentManagement = ({ isAdmin }: { isAdmin: boolean }) => {
     notes: "",
     priority: "medium" as 'low' | 'medium' | 'high',
   });
+
+  // Scouts list state
+  const [scouts, setScouts] = useState<Scout[]>([]);
+  const [loadingScouts, setLoadingScouts] = useState(true);
 
   // Template management state
   const [templates, setTemplates] = useState<MarketingTemplate[]>([]);
@@ -109,6 +127,7 @@ export const RecruitmentManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   useEffect(() => {
     fetchProspects();
     fetchTemplates();
+    fetchScouts();
   }, []);
 
   const fetchProspects = async () => {
@@ -435,7 +454,7 @@ export const RecruitmentManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   return (
     <div className="space-y-4 sm:space-y-6">
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-3 h-auto sm:h-10">
+        <TabsList className="grid w-full grid-cols-4 h-auto sm:h-10">
           <TabsTrigger value="prospects" className="flex-1 text-xs sm:text-sm px-2 py-2.5">
             <Users className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
             <span className="hidden sm:inline">Prospect Board</span>
@@ -450,6 +469,11 @@ export const RecruitmentManagement = ({ isAdmin }: { isAdmin: boolean }) => {
             <MessageSquare className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
             <span className="hidden sm:inline">Message Templates</span>
             <span className="sm:hidden">Templates</span>
+          </TabsTrigger>
+          <TabsTrigger value="scouts" className="flex-1 text-xs sm:text-sm px-2 py-2.5">
+            <Users className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+            <span className="hidden sm:inline">Scouts List</span>
+            <span className="sm:hidden">Scouts</span>
           </TabsTrigger>
         </TabsList>
 
