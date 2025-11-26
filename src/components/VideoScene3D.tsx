@@ -11,25 +11,45 @@ export const VideoScene3D = () => {
   ];
 
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
-  const [activeIndex, setActiveIndex] = useState<number>(0);
+  const [videoWeights, setVideoWeights] = useState<number[]>(videos.map(() => 1));
 
-  // Auto-cycle through videos
+  // Continuous size animation using sine waves with different phases
   useEffect(() => {
-    const interval = setInterval(() => {
-      setActiveIndex((prev) => (prev + 1) % videos.length);
-    }, 3000);
+    let animationFrameId: number;
+    const startTime = Date.now();
 
-    return () => clearInterval(interval);
+    const animate = () => {
+      const elapsed = (Date.now() - startTime) / 1000; // Time in seconds
+      
+      const newWeights = videos.map((_, index) => {
+        // Each video has a different phase offset for variation
+        const phase = (index * Math.PI) / 3;
+        // Sine wave oscillation between 0.8 and 2.2 for smooth size changes
+        const weight = 1.5 + Math.sin(elapsed * 0.4 + phase) * 0.7;
+        return weight;
+      });
+
+      setVideoWeights(newWeights);
+      animationFrameId = requestAnimationFrame(animate);
+    };
+
+    animate();
+
+    return () => {
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+      }
+    };
   }, [videos.length]);
 
-  // Calculate sizes based on hover state or auto-cycle
+  // Calculate sizes based on hover state or continuous animation
   const getVideoSize = (index: number) => {
-    // Hover takes priority over auto-cycle
+    // Hover takes priority
     if (hoveredIndex !== null) {
       return hoveredIndex === index ? "flex-[2.5]" : "flex-[0.7]";
     }
-    // Auto-cycle effect
-    return activeIndex === index ? "flex-[2]" : "flex-1";
+    // Use continuous animation weights
+    return `flex-[${videoWeights[index].toFixed(2)}]`;
   };
 
   return (
