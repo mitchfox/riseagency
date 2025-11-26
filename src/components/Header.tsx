@@ -212,11 +212,11 @@ export const Header = () => {
           <Drawer direction="left" modal={false} preventScrollRestoration={false}>
             <DrawerTrigger asChild>
               <button
-                className="group relative flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-primary transition-all duration-300 ease-out w-10 h-10 md:w-12 md:h-12 -translate-y-[7px]"
+                className="group relative flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-primary transition-all duration-300 ease-out w-12 h-12 md:w-14 md:h-14"
                 aria-label="Toggle menu"
               >
                 <svg 
-                  className="text-primary group-hover:text-foreground transition-all duration-300 ease-out w-6 h-6 md:w-7 md:h-7"
+                  className="text-primary group-hover:text-foreground transition-all duration-300 ease-out w-7 h-7 md:w-8 md:h-8"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
@@ -750,7 +750,7 @@ export const Header = () => {
                 className="fixed flex items-center gap-1 md:gap-2 z-[90]"
                 style={{
                   left: "3.25rem",
-                  top: isScrolled ? "32px" : "82px",
+                  top: isScrolled ? "24px" : "82px",
                   opacity: isScrolled ? 1 : 0,
                   pointerEvents: isScrolled ? "auto" : "none",
                   transition: "all 0.5s cubic-bezier(0.4, 0, 0.2, 1)",
@@ -783,7 +783,7 @@ export const Header = () => {
                 className="fixed flex items-center gap-1 md:gap-2 z-[90]"
                 style={{
                   right: isScrolled ? "7rem" : "2.5rem",
-                  top: isScrolled ? "32px" : "82px",
+                  top: isScrolled ? "24px" : "82px",
                   opacity: isScrolled ? 1 : 0,
                   pointerEvents: isScrolled ? "auto" : "none",
                   transition: "all 0.5s cubic-bezier(0.4, 0, 0.2, 1)",
