@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export const VideoScene3D = () => {
   const videos = [
@@ -11,13 +11,25 @@ export const VideoScene3D = () => {
   ];
 
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const [activeIndex, setActiveIndex] = useState<number>(0);
 
-  // Calculate sizes based on hover state
+  // Auto-cycle through videos
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setActiveIndex((prev) => (prev + 1) % videos.length);
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [videos.length]);
+
+  // Calculate sizes based on hover state or auto-cycle
   const getVideoSize = (index: number) => {
-    if (hoveredIndex === null) {
-      return "flex-1"; // Equal sizes when nothing is hovered
+    // Hover takes priority over auto-cycle
+    if (hoveredIndex !== null) {
+      return hoveredIndex === index ? "flex-[2.5]" : "flex-[0.7]";
     }
-    return hoveredIndex === index ? "flex-[2.5]" : "flex-[0.7]"; // Hovered grows, others shrink
+    // Auto-cycle effect
+    return activeIndex === index ? "flex-[2]" : "flex-1";
   };
 
   return (
