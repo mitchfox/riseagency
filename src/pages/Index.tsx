@@ -7,7 +7,7 @@ import { IntroModal } from "@/components/IntroModal";
 import { SEO } from "@/components/SEO";
 import { VideoPortfolio } from "@/components/VideoPortfolio";
 import { VideoScene3D } from "@/components/VideoScene3D";
-import EuropeScoutingMap from "@/components/EuropeScoutingMap";
+import ScoutingNetworkMap from "@/components/ScoutingNetworkMap";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import marbleBg from "@/assets/marble-bg.png";
@@ -258,7 +258,7 @@ const Index = () => {
                 CLUB <span className="text-primary">NETWORK</span>
               </h2>
             </div>
-            <EuropeScoutingMap />
+            <ScoutingNetworkMap />
           </div>
         </section>
 
