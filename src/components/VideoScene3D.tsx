@@ -17,7 +17,7 @@ function VideoCard({ position, rotation, url, index }: { position: [number, numb
       onPointerOut={() => setHovered(false)}
       scale={hovered ? 1.1 : 1}
     >
-      <planeGeometry args={[4, 2.25]} />
+      <planeGeometry args={[6, 3.375]} />
       <meshStandardMaterial 
         color="#000000"
         side={THREE.DoubleSide}
@@ -31,8 +31,8 @@ function VideoCard({ position, rotation, url, index }: { position: [number, numb
         distanceFactor={1.5}
         position={[0, 0, 0.01]}
         style={{
-          width: '533px',
-          height: '300px',
+          width: '800px',
+          height: '450px',
           pointerEvents: 'none',
         }}
       >
@@ -68,14 +68,14 @@ function Scene() {
     "https://www.youtube.com/embed/XtmRhHvXeyo?autoplay=1&mute=1&controls=0&loop=1&playlist=XtmRhHvXeyo&modestbranding=1&rel=0",
   ];
 
-  // Arrange videos in a circular formation
+  // Arrange videos in a circular formation with closer spacing
   const positions: [number, number, number][] = [
     [0, 0, 0],      // Center
-    [5, 1, -3],     // Right upper
-    [-5, -1, -3],   // Left lower
-    [3, -2, 2],     // Right lower front
-    [-3, 2, 2],     // Left upper front
-    [0, -3, -5],    // Bottom back
+    [3, 0.5, -2],   // Right upper
+    [-3, -0.5, -2], // Left lower
+    [2, -1, 1],     // Right lower front
+    [-2, 1, 1],     // Left upper front
+    [0, -1.5, -3],  // Bottom back
   ];
 
   const rotations: [number, number, number][] = [
@@ -126,7 +126,7 @@ function Scene() {
 
 export const VideoScene3D = () => {
   return (
-    <div className="w-full h-[80vh] md:h-[90vh] bg-black">
+    <div className="w-full h-[40vh] md:h-[45vh] bg-black">
       <Canvas
         camera={{ position: [0, 0, 10], fov: 75 }}
         gl={{ antialias: true, alpha: true }}
