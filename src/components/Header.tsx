@@ -141,19 +141,19 @@ export const Header = () => {
                     backgroundPosition: 'center'
                   }}
                 >
-                  <div className="absolute top-6 left-6 z-10">
+                  <div className={`flex items-center transition-all duration-300 ease-out px-2 md:px-4 ${isScrolled ? 'h-7 md:h-8 pt-2' : 'h-14 md:h-16'}`}>
                     <DrawerClose asChild>
                       <button
-                        className="rounded-sm transition-opacity hover:opacity-80 focus:outline-none"
+                        className={`group relative flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-primary transition-all duration-300 ease-out ${isScrolled ? 'w-7 h-7 md:w-8 md:h-8' : 'w-10 h-10 md:w-12 md:h-12'}`}
                         aria-label="Close menu"
                       >
-                        <X className="h-8 w-8 text-primary" strokeWidth={2.5} />
+                        <X className="h-6 w-6 md:h-7 md:w-7 text-primary" strokeWidth={2.5} />
                       </button>
                     </DrawerClose>
                   </div>
                   
-                  <div className="flex-1 flex flex-col justify-between px-8 md:px-16 lg:px-20 xl:px-24 py-12">
-                    <nav className="flex flex-col gap-1 max-w-md mt-12">
+                  <div className="flex-1 flex flex-col justify-between px-2 md:px-4 py-12">
+                    <nav className="flex flex-col gap-1 max-w-md">
                       <DrawerClose asChild>
                         <Link
                           to="/"
@@ -245,23 +245,43 @@ export const Header = () => {
                       </DrawerClose>
                     </nav>
 
-                    {/* Bottom actions */}
-                    <div className="flex flex-col gap-2 max-w-md">
+                    {/* Bottom action cards */}
+                    <div className="grid grid-cols-2 gap-4 max-w-2xl mt-8">
                       <DrawerClose asChild>
                         <button
                           onClick={() => setRepresentationOpen(true)}
-                          className="text-xl md:text-2xl font-bebas uppercase text-white hover:text-primary transition-colors tracking-wider py-1 text-left"
+                          className="relative aspect-[3/2] rounded-lg overflow-hidden group"
                         >
-                          Request Representation
+                          <img 
+                            src={workingTogether} 
+                            alt="Request Representation" 
+                            className="absolute inset-0 w-full h-full object-cover"
+                          />
+                          <div className="absolute inset-0 bg-black/40 group-hover:bg-black/30 transition-all" />
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <span className="text-lg md:text-xl font-bebas uppercase text-primary tracking-wider px-4 py-2 border-2 border-primary rounded bg-black/50 group-hover:bg-primary group-hover:text-black transition-all">
+                              Represent Me
+                            </span>
+                          </div>
                         </button>
                       </DrawerClose>
                       
                       <DrawerClose asChild>
                         <Link
                           to="/login"
-                          className="text-xl md:text-2xl font-bebas uppercase text-white hover:text-primary transition-colors tracking-wider py-1"
+                          className="relative aspect-[3/2] rounded-lg overflow-hidden group block"
                         >
-                          Portal
+                          <img 
+                            src={playerPortalImage} 
+                            alt="Portal" 
+                            className="absolute inset-0 w-full h-full object-cover"
+                          />
+                          <div className="absolute inset-0 bg-black/40 group-hover:bg-black/30 transition-all" />
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <span className="text-lg md:text-xl font-bebas uppercase text-primary tracking-wider px-4 py-2 border-2 border-primary rounded bg-black/50 group-hover:bg-primary group-hover:text-black transition-all">
+                              Portal
+                            </span>
+                          </div>
                         </Link>
                       </DrawerClose>
                     </div>
