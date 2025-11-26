@@ -19,30 +19,37 @@ function VideoCard({ position, rotation, url, index }: { position: [number, numb
     >
       <planeGeometry args={[4, 2.25]} />
       <meshStandardMaterial 
-        color={hovered ? "#e8c168" : "#ffffff"} 
+        color="#000000"
         side={THREE.DoubleSide}
         emissive={hovered ? "#e8c168" : "#000000"}
-        emissiveIntensity={hovered ? 0.3 : 0}
+        emissiveIntensity={hovered ? 0.5 : 0}
+        transparent
+        opacity={0}
       />
       <Html
         transform
         distanceFactor={1.5}
         position={[0, 0, 0.01]}
         style={{
-          width: '400px',
-          height: '225px',
+          width: '533px',
+          height: '300px',
           pointerEvents: 'none',
         }}
       >
-        <div className="w-full h-full rounded-lg overflow-hidden border-2 border-primary/40">
+        <div className="w-full h-full rounded-lg overflow-hidden shadow-2xl" style={{ border: hovered ? '3px solid #e8c168' : '3px solid rgba(232, 193, 104, 0.3)' }}>
           <iframe
             src={url}
-            className="w-full h-full scale-110"
+            className="w-full h-full"
             frameBorder="0"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
             title={`Video ${index + 1}`}
-            style={{ pointerEvents: 'none' }}
+            style={{ 
+              pointerEvents: 'none',
+              display: 'block',
+              margin: 0,
+              padding: 0,
+            }}
           />
         </div>
       </Html>
