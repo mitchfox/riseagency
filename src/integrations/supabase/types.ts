@@ -2072,6 +2072,48 @@ export type Database = {
         }
         Relationships: []
       }
+      staff_goals: {
+        Row: {
+          color: string
+          created_at: string
+          current_value: number
+          display_order: number
+          id: string
+          quarter: string
+          target_value: number
+          title: string
+          unit: string
+          updated_at: string
+          year: number
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          current_value?: number
+          display_order?: number
+          id?: string
+          quarter: string
+          target_value: number
+          title: string
+          unit: string
+          updated_at?: string
+          year: number
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          current_value?: number
+          display_order?: number
+          id?: string
+          quarter?: string
+          target_value?: number
+          title?: string
+          unit?: string
+          updated_at?: string
+          year?: number
+        }
+        Relationships: []
+      }
       staff_notification_events: {
         Row: {
           created_at: string | null
@@ -2090,6 +2132,39 @@ export type Database = {
           event_data?: Json | null
           event_type?: string
           id?: string
+        }
+        Relationships: []
+      }
+      staff_tasks: {
+        Row: {
+          category: string | null
+          completed: boolean
+          created_at: string
+          display_order: number
+          id: string
+          priority: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          completed?: boolean
+          created_at?: string
+          display_order?: number
+          id?: string
+          priority?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          completed?: boolean
+          created_at?: string
+          display_order?: number
+          id?: string
+          priority?: string
+          title?: string
+          updated_at?: string
         }
         Relationships: []
       }

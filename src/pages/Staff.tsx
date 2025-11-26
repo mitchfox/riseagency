@@ -31,6 +31,7 @@ import { InvoiceManagement } from "@/components/staff/InvoiceManagement";
 import { UpdatesManagement } from "@/components/staff/UpdatesManagement";
 import { StaffSchedule } from "@/components/staff/StaffSchedule";
 import { StaffOverview } from "@/components/staff/StaffOverview";
+import { GoalsTasksManagement } from "@/components/staff/GoalsTasksManagement";
 import { StaffAvailabilityManagement } from "@/components/staff/StaffAvailabilityManagement";
 import { MarketingManagement } from "@/components/staff/MarketingManagement";
 import { RecruitmentManagement } from "@/components/staff/RecruitmentManagement";
@@ -84,7 +85,7 @@ const Staff = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [isMarketeer, setIsMarketeer] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-  const [expandedSection, setExpandedSection] = useState<'overview' | 'schedule' | 'staffaccounts' | 'passwords' | 'pwainstall' | 'offlinemanager' | 'pushnotifications' | 'players' | 'playerlist' | 'recruitment' | 'scoutingcentre' | 'blog' | 'betweenthelines' | 'coaching' | 'analysis' | 'marketing' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'legal' | 'sitemanagement' | null>('overview');
+  const [expandedSection, setExpandedSection] = useState<'overview' | 'schedule' | 'goalstasks' | 'staffaccounts' | 'passwords' | 'pwainstall' | 'offlinemanager' | 'pushnotifications' | 'players' | 'playerlist' | 'recruitment' | 'scoutingcentre' | 'blog' | 'betweenthelines' | 'coaching' | 'analysis' | 'marketing' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'legal' | 'sitemanagement' | null>('overview');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   
   // Enable staff notifications
@@ -509,7 +510,10 @@ const Staff = () => {
       id: 'overview',
       title: 'Overview',
       icon: Calendar,
-      sections: [{ id: 'overview', title: 'Overview', icon: Calendar }],
+      sections: [
+        { id: 'overview', title: 'Overview', icon: Calendar },
+        { id: 'goalstasks', title: 'Goals & Tasks', icon: Target },
+      ],
       locked: false
     },
     {
@@ -839,6 +843,7 @@ const Staff = () => {
                       <StaffAvailabilityManagement isAdmin={isAdmin} />
                     </div>
                   )}
+                  {expandedSection === 'goalstasks' && <GoalsTasksManagement />}
                   {expandedSection === 'playerlist' && <PlayerList isAdmin={isAdmin} />}
                   {expandedSection === 'players' && <PlayerManagement isAdmin={isAdmin} />}
                   {expandedSection === 'recruitment' && <RecruitmentManagement isAdmin={isAdmin} />}
