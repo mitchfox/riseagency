@@ -160,11 +160,8 @@ const Login = () => {
           >
           <CardHeader className="space-y-1">
             <CardTitle className="text-3xl font-bebas uppercase tracking-wider text-center text-white">
-              Player Portal
+              PORTAL
             </CardTitle>
-            <CardDescription className="text-center text-white/90">
-              Access your portal to view your personal analysis, programming, and submissions
-            </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleEmailLogin} className="space-y-6">
@@ -200,7 +197,7 @@ const Login = () => {
                 className="w-full btn-shine font-bebas text-lg uppercase tracking-wider"
                 disabled={loading}
               >
-                {loading ? "Signing in..." : "Access Portal"}
+                {loading ? "Signing in..." : "PORTAL"}
               </Button>
             </form>
           </CardContent>
