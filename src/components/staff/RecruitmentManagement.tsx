@@ -289,6 +289,23 @@ export const RecruitmentManagement = ({ isAdmin }: { isAdmin: boolean }) => {
     }
   };
 
+  const fetchScouts = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("scouts")
+        .select("id, name, email, phone, country, regions, status, commission_rate, successful_signings, total_submissions, profile_image_url")
+        .order("name", { ascending: true });
+
+      if (error) throw error;
+      setScouts((data || []) as Scout[]);
+    } catch (error: any) {
+      console.error("Error fetching scouts:", error);
+      toast.error("Failed to load scouts");
+    } finally {
+      setLoadingScouts(false);
+    }
+  };
+
   const handleTemplateSubmit = async () => {
     if (!templateFormData.recipient_type || !templateFormData.message_title || !templateFormData.message_content) {
       toast.error("Please fill in all fields");
