@@ -747,12 +747,13 @@ export const Header = () => {
             <>
               {/* Left side icons - move from top bar into header next to menu */}
               <div
-                className="fixed flex items-center gap-1 md:gap-2 transition-all duration-500 z-[90]"
+                className="fixed flex items-center gap-1 md:gap-2 z-[90]"
                 style={{
                   left: "3.25rem",
                   top: isScrolled ? "32px" : "82px",
                   opacity: isScrolled ? 1 : 0,
                   pointerEvents: isScrolled ? "auto" : "none",
+                  transition: "all 0.5s cubic-bezier(0.4, 0, 0.2, 1)",
                 }}
               >
                 <Link
@@ -779,12 +780,13 @@ export const Header = () => {
               
               {/* Right side icons - move from top bar into header next to RISE WITH US */}
               <div
-                className="fixed flex items-center gap-1 md:gap-2 transition-all duration-500 z-[90]"
+                className="fixed flex items-center gap-1 md:gap-2 z-[90]"
                 style={{
                   right: isScrolled ? "7rem" : "2.5rem",
                   top: isScrolled ? "32px" : "82px",
                   opacity: isScrolled ? 1 : 0,
                   pointerEvents: isScrolled ? "auto" : "none",
+                  transition: "all 0.5s cubic-bezier(0.4, 0, 0.2, 1)",
                 }}
               >
                 <button
