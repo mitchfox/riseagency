@@ -32,6 +32,9 @@ export const Header = () => {
   const [starsHovered, setStarsHovered] = useState(false);
   const [starPlayers, setStarPlayers] = useState<any[]>([]);
   const [starIndex, setStarIndex] = useState(0);
+  const [betweenLinesHovered, setBetweenLinesHovered] = useState(false);
+  const [betweenLinesPosts, setBetweenLinesPosts] = useState<any[]>([]);
+  const [btlIndex, setBtlIndex] = useState(0);
 
   useEffect(() => {
     setShowTopBar(location.pathname === '/');
@@ -49,7 +52,22 @@ export const Header = () => {
         setStarPlayers(data);
       }
     };
+
+    const fetchBetweenLinesPosts = async () => {
+      const { data, error } = await supabase
+        .from('blog_posts')
+        .select('*')
+        .eq('published', true)
+        .order('created_at', { ascending: false })
+        .limit(3);
+      
+      if (data && !error && data.length > 0) {
+        setBetweenLinesPosts(data);
+      }
+    };
+
     fetchStarPlayers();
+    fetchBetweenLinesPosts();
   }, []);
 
   useEffect(() => {
@@ -60,6 +78,15 @@ export const Header = () => {
       return () => clearInterval(starInterval);
     }
   }, [starPlayers.length]);
+
+  useEffect(() => {
+    if (betweenLinesPosts.length > 0) {
+      const btlInterval = setInterval(() => {
+        setBtlIndex(prev => (prev + 1) % betweenLinesPosts.length);
+      }, 6000);
+      return () => clearInterval(btlInterval);
+    }
+  }, [betweenLinesPosts.length]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -223,6 +250,8 @@ export const Header = () => {
                       <DrawerClose asChild>
                         <Link
                           to="/between-the-lines"
+                          onMouseEnter={() => setBetweenLinesHovered(true)}
+                          onMouseLeave={() => setBetweenLinesHovered(false)}
                           className={`text-2xl md:text-3xl font-bebas uppercase text-white hover:text-primary hover:bg-white/20 transition-all tracking-wider py-1 px-2 rounded ${
                             isActive("/between-the-lines") ? "text-primary" : ""
                           }`}
@@ -281,47 +310,45 @@ export const Header = () => {
                     {/* Bottom action cards */}
                     <div className="grid grid-cols-2 gap-4 max-w-2xl -mt-5">
                       <DrawerClose asChild>
+                        <Link
+                          to="/login"
+                          className="flex flex-col group"
+                        >
+                          <h3 className="text-white font-bebas text-xl md:text-2xl uppercase tracking-wider mb-2 text-center">
+                            Portal
+                          </h3>
+                          <div className="relative aspect-[16/9] rounded overflow-hidden mb-2">
+                            <img 
+                              src={playerPortalImage} 
+                              alt="Portal" 
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                          <div className="bg-primary text-black font-bebas uppercase tracking-widest text-sm md:text-base py-3 text-center group-hover:brightness-110 transition-all">
+                            Portal
+                          </div>
+                        </Link>
+                      </DrawerClose>
+                      
+                      <DrawerClose asChild>
                         <button
                           onClick={() => setRepresentationOpen(true)}
-                          className="relative overflow-hidden group flex flex-col"
+                          className="flex flex-col group"
                         >
                           <h3 className="text-white font-bebas text-xl md:text-2xl uppercase tracking-wider mb-2 text-center">
                             Realise Potential
                           </h3>
-                          <div className="relative aspect-[4/3] rounded-lg overflow-hidden mb-2">
+                          <div className="relative aspect-[16/9] rounded overflow-hidden mb-2">
                             <img 
                               src={workingTogether} 
                               alt="Request Representation" 
-                              className="absolute inset-0 w-full h-full object-cover"
+                              className="w-full h-full object-cover"
                             />
-                            <div className="absolute inset-0 bg-black/20" />
                           </div>
-                          <div className="bg-primary text-black font-bebas uppercase tracking-wider text-sm md:text-base py-2 rounded group-hover:scale-[1.02] transition-all text-center">
+                          <div className="bg-primary text-black font-bebas uppercase tracking-widest text-sm md:text-base py-3 text-center group-hover:brightness-110 transition-all">
                             Request Representation
                           </div>
                         </button>
-                      </DrawerClose>
-                      
-                      <DrawerClose asChild>
-                        <Link
-                          to="/login"
-                          className="relative overflow-hidden group flex flex-col"
-                        >
-                          <h3 className="text-white font-bebas text-xl md:text-2xl uppercase tracking-wider mb-2 text-center">
-                            Portal
-                          </h3>
-                          <div className="relative aspect-[4/3] rounded-lg overflow-hidden mb-2">
-                            <img 
-                              src={playerPortalImage} 
-                              alt="Portal" 
-                              className="absolute inset-0 w-full h-full object-cover"
-                            />
-                            <div className="absolute inset-0 bg-black/20" />
-                          </div>
-                          <div className="bg-primary text-black font-bebas uppercase tracking-wider text-sm md:text-base py-2 rounded group-hover:scale-[1.02] transition-all text-center">
-                            Portal
-                          </div>
-                        </Link>
                       </DrawerClose>
                     </div>
                   </div>
@@ -442,8 +469,55 @@ export const Header = () => {
                     </div>
                   )}
                   
-                  {/* Placeholder for 3 other components */}
-                  <div className="bg-muted/20 rounded-lg border border-white/10" />
+                  {/* Between The Lines Card */}
+                  {betweenLinesPosts.length > 0 && (
+                    <div className="w-full">
+                      <div 
+                        className={`relative w-full aspect-[3/4] rounded-lg overflow-hidden transition-all duration-300 ${
+                          betweenLinesHovered 
+                            ? 'border-2 border-primary shadow-[0_0_20px_rgba(184,165,116,0.6)]' 
+                            : 'border border-white/20 grayscale'
+                        }`}
+                      >
+                        {/* Post Images */}
+                        {betweenLinesPosts.map((post, index) => (
+                          <div
+                            key={post.id}
+                            className="absolute inset-0 transition-opacity duration-1000 ease-in-out"
+                            style={{ opacity: index === btlIndex ? 1 : 0 }}
+                          >
+                            <img 
+                              src={post.image_url} 
+                              alt={post.title}
+                              className="w-full h-full object-cover" 
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/80" />
+                          </div>
+                        ))}
+                        
+                        {/* Title Overlay */}
+                        <div className="absolute bottom-2 left-2 right-2">
+                          {betweenLinesPosts.map((post, index) => (
+                            <div
+                              key={`title-${post.id}`}
+                              className="transition-opacity duration-1000 ease-in-out"
+                              style={{ 
+                                opacity: index === btlIndex ? 1 : 0,
+                                position: index === btlIndex ? 'relative' : 'absolute',
+                                visibility: index === btlIndex ? 'visible' : 'hidden'
+                              }}
+                            >
+                              <h4 className="text-white font-bebas text-sm uppercase tracking-wider line-clamp-2">
+                                {post.title}
+                              </h4>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Placeholder for 2 other components */}
                   <div className="bg-muted/20 rounded-lg border border-white/10" />
                   <div className="bg-muted/20 rounded-lg border border-white/10" />
                 </div>
