@@ -7,6 +7,7 @@ import { IntroModal } from "@/components/IntroModal";
 import { SEO } from "@/components/SEO";
 import { VideoPortfolio } from "@/components/VideoPortfolio";
 import { VideoScene3D } from "@/components/VideoScene3D";
+import EuropeScoutingMap from "@/components/EuropeScoutingMap";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import marbleBg from "@/assets/marble-bg.png";
@@ -102,17 +103,6 @@ const Index = () => {
         {/* 3D Video Scene Section */}
         <section className="relative">
           <VideoScene3D />
-          
-          {/* Text overlay below 3D scene */}
-          <div className="py-6 text-center space-y-6">
-            <h1 className="text-5xl md:text-7xl lg:text-8xl font-bebas uppercase tracking-wider">
-              <span className="text-foreground">REALISE </span>
-              <span className="text-primary">POTENTIAL</span>
-            </h1>
-            <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto font-light tracking-wide italic px-4">
-              Elite Football Representation & Performance Optimisation
-            </p>
-          </div>
         </section>
 
         {/* Agency Overview Section */}
@@ -254,6 +244,23 @@ const Index = () => {
             </div>
           </section>
         )}
+
+        {/* Club Network Map Section */}
+        <section className="py-12 md:py-16 px-4 bg-background">
+          <div className="container mx-auto max-w-7xl">
+            <div className="text-center mb-8 space-y-3">
+              <div className="inline-block">
+                <span className="text-sm font-bebas uppercase tracking-widest text-primary border border-primary/30 px-6 py-2 rounded-full">
+                  Global Reach
+                </span>
+              </div>
+              <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-foreground">
+                CLUB <span className="text-primary">NETWORK</span>
+              </h2>
+            </div>
+            <EuropeScoutingMap />
+          </div>
+        </section>
 
         {/* WATCH NOW Section */}
         <section className="py-12 md:py-16 px-4 bg-muted/30">
