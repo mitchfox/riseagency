@@ -142,7 +142,7 @@ export default {
             transform: "rotate(0deg) translateY(0)",
           },
           "100%": { 
-            transform: "rotate(45deg)",
+            transform: "rotate(0deg)",
           },
         },
         "menu-open-line-2": {
@@ -153,7 +153,7 @@ export default {
             transform: "rotate(0deg) translateY(0) translateX(0)",
           },
           "100%": { 
-            transform: "rotate(-45deg)",
+            transform: "rotate(0deg)",
           },
         },
         "color-to-gold": {

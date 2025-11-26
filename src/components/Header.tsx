@@ -270,11 +270,11 @@ export const Header = () => {
                           strokeLinecap="round"
                         >
                           <line 
-                            x1="6" y1="10" x2="18" y2="14" 
+                            x1="6" y1="6" x2="18" y2="18" 
                             className="origin-center animate-menu-open-line-1"
                           />
                           <line 
-                            x1="4" y1="16" x2="16" y2="20" 
+                            x1="18" y1="6" x2="6" y2="18" 
                             className="origin-center animate-menu-open-line-2"
                           />
                         </svg>
@@ -396,7 +396,7 @@ export const Header = () => {
                       <DrawerClose asChild>
                         <Link
                           to="/login"
-                          className="relative group h-[140px] md:h-[172px]"
+                          className="relative group h-[110px] md:h-[142px]"
                         >
                           <div className="relative h-full rounded overflow-hidden">
                             <img 
@@ -420,7 +420,7 @@ export const Header = () => {
                       <DrawerClose asChild>
                         <button
                           onClick={() => setRepresentationOpen(true)}
-                          className="relative group h-[140px] md:h-[172px]"
+                          className="relative group h-[110px] md:h-[142px]"
                         >
                           <div className="relative h-full rounded overflow-hidden">
                             <img 
