@@ -123,7 +123,7 @@ export const MarketingManagement = ({ isAdmin, isMarketeer }: { isAdmin: boolean
 
   const [showImportDialog, setShowImportDialog] = useState(false);
   const [playerHighlights, setPlayerHighlights] = useState<any[]>([]);
-  const [importing, setImporting] = useState(false);
+  const [importingClipUrl, setImportingClipUrl] = useState<string | null>(null);
   const [clipSearchQuery, setClipSearchQuery] = useState('');
 
   useEffect(() => {
@@ -269,7 +269,7 @@ export const MarketingManagement = ({ isAdmin, isMarketeer }: { isAdmin: boolean
   const handleImportVideo = async (playerId: string, playerName: string, videoUrl: string, videoTitle: string) => {
     if (!canManage) return;
 
-    setImporting(true);
+    setImportingClipUrl(videoUrl);
     try {
       const { error } = await supabase
         .from('marketing_gallery')
@@ -290,7 +290,7 @@ export const MarketingManagement = ({ isAdmin, isMarketeer }: { isAdmin: boolean
       console.error('Import error:', error);
       toast.error('Failed to import video');
     } finally {
-      setImporting(false);
+      setImportingClipUrl(null);
     }
   };
 
@@ -1122,9 +1122,9 @@ export const MarketingManagement = ({ isAdmin, isMarketeer }: { isAdmin: boolean
                                     size="sm"
                                     className="w-full"
                                     onClick={() => handleImportVideo(player.id, player.name, videoUrl, videoTitle)}
-                                    disabled={importing}
+                                    disabled={importingClipUrl === videoUrl}
                                   >
-                                    {importing ? 'Importing...' : 'Import to Gallery'}
+                                    {importingClipUrl === videoUrl ? 'Importing...' : 'Import to Gallery'}
                                   </Button>
                                 </CardContent>
                               </Card>
