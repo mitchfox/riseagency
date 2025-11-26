@@ -283,7 +283,7 @@ export const Header = () => {
                   </div>
                   
                   <div className="flex-1 flex flex-col justify-between px-2 md:px-4 py-12 overflow-y-auto">
-                    <nav className="flex flex-col gap-1 max-w-md">
+                    <nav className="flex flex-col gap-1 max-w-md transform -translate-y-[10px] translate-x-[5px]">
                       <DrawerClose asChild>
                         <Link
                           to="/"
@@ -405,10 +405,7 @@ export const Header = () => {
                               className="w-full h-full object-cover"
                             />
                             <div className="absolute inset-0 bg-black/30" />
-                            <div className="absolute inset-0 flex flex-col items-center justify-between p-4 md:p-6">
-                              <h3 className="text-white font-bebas text-xl md:text-2xl uppercase tracking-wider text-center">
-                                Portal
-                              </h3>
+                            <div className="absolute inset-0 flex items-center justify-center p-4 md:p-6">
                               <div className="bg-primary text-black font-bebas uppercase tracking-widest text-sm md:text-base py-1 md:py-2 px-6 md:px-8 text-center group-hover:brightness-110 transition-all w-full">
                                 Portal
                               </div>
@@ -429,10 +426,7 @@ export const Header = () => {
                               className="w-full h-full object-cover"
                             />
                             <div className="absolute inset-0 bg-black/30" />
-                            <div className="absolute inset-0 flex flex-col items-center justify-between p-4 md:p-6">
-                              <h3 className="text-white font-bebas text-xl md:text-2xl uppercase tracking-wider text-center">
-                                Realise Potential
-                              </h3>
+                            <div className="absolute inset-0 flex items-center justify-center p-4 md:p-6">
                               <div className="bg-primary text-black font-bebas uppercase tracking-widest text-sm md:text-base py-1 md:py-2 px-4 md:px-6 text-center group-hover:brightness-110 transition-all w-full whitespace-nowrap">
                                 Request Representation
                               </div>
