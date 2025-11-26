@@ -12,6 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { PlayerDatabase } from './PlayerDatabase';
 
 
 interface Contact {
@@ -171,14 +172,15 @@ const ClubNetworkManagement = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold">Club Network Contacts</h2>
-        <Button onClick={openAddDialog}>
-          <Plus className="h-4 w-4 mr-2" />
-          Add Contact
-        </Button>
-      </div>
+    <div className="space-y-8">
+      <div>
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-xl font-semibold">Club Network Contacts</h2>
+          <Button onClick={openAddDialog}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Contact
+          </Button>
+        </div>
 
       <div className="space-y-4">
           {contacts.map((contact) => (
@@ -236,7 +238,10 @@ const ClubNetworkManagement = () => {
               )}
             </div>
         ))}
+        </div>
       </div>
+
+      <PlayerDatabase />
 
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
         <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto p-4 md:p-6">
