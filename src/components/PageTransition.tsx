@@ -14,12 +14,12 @@ export const PageTransition = ({ children }: { children: React.ReactNode }) => {
     // Update children after logo appears and black fills
     const updateTimer = setTimeout(() => {
       setDisplayChildren(children);
-    }, 1500); // After fade in (1s) + half of expansion
+    }, 1100); // After logo fade + black expand
 
     // End transition after full animation
     const endTimer = setTimeout(() => {
       setIsTransitioning(false);
-    }, 3000); // Total: fade in (1s) + black expand + fade out (1s)
+    }, 2400); // Total: logo fade (0.6s) + black expand (0.5s) + hold + pulse (0.3s) + contract (0.5s)
 
     return () => {
       clearTimeout(updateTimer);
@@ -38,7 +38,7 @@ export const PageTransition = ({ children }: { children: React.ReactNode }) => {
               alt="RISE" 
               className="h-16 md:h-20"
               style={{
-                animation: "logoFadeIn 1s ease-out forwards, logoFadeOut 1s ease-out 2s forwards",
+                animation: "logoFadeIn 0.6s ease-out forwards, logoPulse 0.3s ease-out 1.5s forwards, logoFadeOut 0.5s ease-out 1.8s forwards",
                 opacity: 0,
               }}
             />
@@ -48,7 +48,7 @@ export const PageTransition = ({ children }: { children: React.ReactNode }) => {
           <div 
             className="absolute inset-0 bg-black"
             style={{
-              animation: "expandFromCenter 0.8s ease-out 1s forwards, fadeFromCenter 1s ease-out 2s forwards",
+              animation: "expandFromCenter 0.5s ease-out 0.6s forwards, contractToCenter 0.5s ease-out 1.8s forwards",
               clipPath: "circle(0% at 50% 50%)",
             }}
           />
@@ -63,10 +63,22 @@ export const PageTransition = ({ children }: { children: React.ReactNode }) => {
         @keyframes logoFadeIn {
           from {
             opacity: 0;
-            transform: scale(0.9);
+            transform: scale(0.8);
           }
           to {
             opacity: 1;
+            transform: scale(1);
+          }
+        }
+        
+        @keyframes logoPulse {
+          0% {
+            transform: scale(1);
+          }
+          50% {
+            transform: scale(1.08);
+          }
+          100% {
             transform: scale(1);
           }
         }
@@ -78,7 +90,7 @@ export const PageTransition = ({ children }: { children: React.ReactNode }) => {
           }
           to {
             opacity: 0;
-            transform: scale(1.1);
+            transform: scale(0.95);
           }
         }
         
@@ -91,14 +103,12 @@ export const PageTransition = ({ children }: { children: React.ReactNode }) => {
           }
         }
         
-        @keyframes fadeFromCenter {
+        @keyframes contractToCenter {
           from {
             clip-path: circle(150% at 50% 50%);
-            opacity: 1;
           }
           to {
-            clip-path: circle(150% at 50% 50%);
-            opacity: 0;
+            clip-path: circle(0% at 50% 50%);
           }
         }
       `}</style>
