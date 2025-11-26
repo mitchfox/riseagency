@@ -6,8 +6,9 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Plus, Trash2, GripVertical, ChevronUp, ChevronDown, Video } from 'lucide-react';
+import { Plus, Trash2, GripVertical, ChevronUp, ChevronDown, Video, Search } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface HomepageVideo {
   id: string;
@@ -17,19 +18,41 @@ interface HomepageVideo {
   is_active: boolean;
 }
 
+interface GalleryVideo {
+  id: string;
+  title: string;
+  file_url: string;
+  thumbnail_url: string | null;
+  player_id: string | null;
+}
+
 export const HomepageVideoManager = ({ canManage }: { canManage: boolean }) => {
   const [videos, setVideos] = useState<HomepageVideo[]>([]);
+  const [galleryVideos, setGalleryVideos] = useState<GalleryVideo[]>([]);
   const [showDialog, setShowDialog] = useState(false);
   const [editingVideo, setEditingVideo] = useState<HomepageVideo | null>(null);
-  const [formData, setFormData] = useState({
-    video_url: '',
-    video_title: '',
-  });
+  const [selectedGalleryVideo, setSelectedGalleryVideo] = useState<GalleryVideo | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchVideos();
+    fetchGalleryVideos();
   }, []);
+
+  const fetchGalleryVideos = async () => {
+    const { data, error } = await supabase
+      .from('marketing_gallery')
+      .select('id, title, file_url, thumbnail_url, player_id')
+      .eq('file_type', 'video')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Failed to load gallery videos:', error);
+    } else {
+      setGalleryVideos(data || []);
+    }
+  };
 
   const fetchVideos = async () => {
     setLoading(true);
@@ -50,8 +73,8 @@ export const HomepageVideoManager = ({ canManage }: { canManage: boolean }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.video_url || !formData.video_title) {
-      toast.error('Please fill in all fields');
+    if (!selectedGalleryVideo) {
+      toast.error('Please select a video from the gallery');
       return;
     }
 
@@ -59,8 +82,8 @@ export const HomepageVideoManager = ({ canManage }: { canManage: boolean }) => {
       const { error } = await supabase
         .from('homepage_videos')
         .update({
-          video_url: formData.video_url,
-          video_title: formData.video_title,
+          video_url: selectedGalleryVideo.file_url,
+          video_title: selectedGalleryVideo.title,
         })
         .eq('id', editingVideo.id);
 
@@ -77,8 +100,8 @@ export const HomepageVideoManager = ({ canManage }: { canManage: boolean }) => {
       const { error } = await supabase
         .from('homepage_videos')
         .insert({
-          video_url: formData.video_url,
-          video_title: formData.video_title,
+          video_url: selectedGalleryVideo.file_url,
+          video_title: selectedGalleryVideo.title,
           order_position: maxOrder + 1,
         });
 
@@ -93,7 +116,8 @@ export const HomepageVideoManager = ({ canManage }: { canManage: boolean }) => {
 
     setShowDialog(false);
     setEditingVideo(null);
-    setFormData({ video_url: '', video_title: '' });
+    setSelectedGalleryVideo(null);
+    setSearchQuery('');
     fetchVideos();
   };
 
@@ -157,18 +181,23 @@ export const HomepageVideoManager = ({ canManage }: { canManage: boolean }) => {
 
   const openEditDialog = (video: HomepageVideo) => {
     setEditingVideo(video);
-    setFormData({
-      video_url: video.video_url,
-      video_title: video.video_title,
-    });
+    // Find the gallery video that matches this URL
+    const matchingGalleryVideo = galleryVideos.find(gv => gv.file_url === video.video_url);
+    setSelectedGalleryVideo(matchingGalleryVideo || null);
+    setSearchQuery('');
     setShowDialog(true);
   };
 
   const openAddDialog = () => {
     setEditingVideo(null);
-    setFormData({ video_url: '', video_title: '' });
+    setSelectedGalleryVideo(null);
+    setSearchQuery('');
     setShowDialog(true);
   };
+
+  const filteredGalleryVideos = galleryVideos.filter(video =>
+    video.title.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   if (!canManage) {
     return null;
@@ -273,39 +302,78 @@ export const HomepageVideoManager = ({ canManage }: { canManage: boolean }) => {
       </div>
 
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent className="max-w-[95vw] sm:max-w-lg">
+        <DialogContent className="max-w-[95vw] sm:max-w-3xl max-h-[90vh]">
           <DialogHeader>
             <DialogTitle>{editingVideo ? 'Edit Video' : 'Add Video'}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <Label htmlFor="video_title">Video Title</Label>
-              <Input
-                id="video_title"
-                value={formData.video_title}
-                onChange={(e) => setFormData({ ...formData, video_title: e.target.value })}
-                placeholder="e.g., Player Highlights"
-                required
-              />
+            <div className="space-y-2">
+              <Label>Search Videos</Label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search by video title..."
+                  className="pl-10"
+                />
+              </div>
             </div>
-            <div>
-              <Label htmlFor="video_url">Video URL</Label>
-              <Input
-                id="video_url"
-                value={formData.video_url}
-                onChange={(e) => setFormData({ ...formData, video_url: e.target.value })}
-                placeholder="YouTube embed URL with autoplay parameters"
-                required
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                Example: https://www.youtube.com/embed/VIDEO_ID?autoplay=1&mute=1&controls=0&loop=1&playlist=VIDEO_ID
-              </p>
+
+            <div className="space-y-2">
+              <Label>Select Video from Gallery</Label>
+              <ScrollArea className="h-[400px] border rounded-lg">
+                <div className="p-4 space-y-2">
+                  {filteredGalleryVideos.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <Video className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                      <p>No videos found in gallery</p>
+                      <p className="text-sm mt-1">Upload videos to the Marketing Gallery first</p>
+                    </div>
+                  ) : (
+                    filteredGalleryVideos.map((video) => (
+                      <div
+                        key={video.id}
+                        onClick={() => setSelectedGalleryVideo(video)}
+                        className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                          selectedGalleryVideo?.id === video.id
+                            ? 'border-primary bg-primary/5'
+                            : 'border-border hover:border-primary/50 hover:bg-accent/50'
+                        }`}
+                      >
+                        <div className="flex gap-3">
+                          {video.thumbnail_url && (
+                            <img
+                              src={video.thumbnail_url}
+                              alt={video.title}
+                              className="w-32 h-20 object-cover rounded"
+                            />
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium truncate">{video.title}</div>
+                            <div className="text-xs text-muted-foreground truncate mt-1">
+                              {video.file_url}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </ScrollArea>
             </div>
+
+            {selectedGalleryVideo && (
+              <div className="p-3 bg-accent/50 rounded-lg">
+                <p className="text-sm font-medium">Selected: {selectedGalleryVideo.title}</p>
+              </div>
+            )}
+
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setShowDialog(false)}>
                 Cancel
               </Button>
-              <Button type="submit">
+              <Button type="submit" disabled={!selectedGalleryVideo}>
                 {editingVideo ? 'Update' : 'Add'}
               </Button>
             </DialogFooter>
