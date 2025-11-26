@@ -6,10 +6,17 @@ export const PageTransition = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [displayChildren, setDisplayChildren] = useState(children);
+  const [prevPath, setPrevPath] = useState(location.pathname);
 
   useEffect(() => {
+    // Only trigger transition if path actually changed
+    if (location.pathname === prevPath) {
+      return;
+    }
+
     // Start transition when route changes
     setIsTransitioning(true);
+    setPrevPath(location.pathname);
     
     // Update children once black overlay fully covers the screen
     const updateTimer = setTimeout(() => {
@@ -25,7 +32,7 @@ export const PageTransition = ({ children }: { children: React.ReactNode }) => {
       clearTimeout(updateTimer);
       clearTimeout(endTimer);
     };
-  }, [location.pathname]); // Triggers on every route change
+  }, [location.pathname, children, prevPath]); // Triggers on route or children change
 
 
   return (
