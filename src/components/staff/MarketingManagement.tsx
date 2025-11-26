@@ -124,6 +124,7 @@ export const MarketingManagement = ({ isAdmin, isMarketeer }: { isAdmin: boolean
   const [showImportDialog, setShowImportDialog] = useState(false);
   const [playerHighlights, setPlayerHighlights] = useState<any[]>([]);
   const [importing, setImporting] = useState(false);
+  const [clipSearchQuery, setClipSearchQuery] = useState('');
 
   useEffect(() => {
     if (activeTab === 'gallery') {
@@ -989,14 +990,26 @@ export const MarketingManagement = ({ isAdmin, isMarketeer }: { isAdmin: boolean
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            {playerHighlights.length === 0 ? (
+            <div className="relative">
+              <Input
+                placeholder="Search players..."
+                value={clipSearchQuery}
+                onChange={(e) => setClipSearchQuery(e.target.value)}
+                className="w-full"
+              />
+            </div>
+            {playerHighlights.filter(player => 
+              player.name.toLowerCase().includes(clipSearchQuery.toLowerCase())
+            ).length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 <Play className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                <p>No player highlights available to import</p>
+                <p>{clipSearchQuery ? 'No players found matching your search' : 'No player highlights available to import'}</p>
               </div>
             ) : (
               <Accordion type="single" collapsible className="w-full">
-                {playerHighlights.map((player) => {
+                {playerHighlights.filter(player => 
+                  player.name.toLowerCase().includes(clipSearchQuery.toLowerCase())
+                ).map((player) => {
                   let highlights = player.highlights as any;
 
                   // Handle potential stringified JSON
