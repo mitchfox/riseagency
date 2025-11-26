@@ -1,12 +1,27 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import logo from "@/assets/logo.png";
 
 export const PageTransition = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
   const [isTransitioning, setIsTransitioning] = useState(false);
-  const [displayChildren, setDisplayChildren] = useState(children);
   const [prevPath, setPrevPath] = useState(location.pathname);
+  
+  // Refs to capture old and new page content
+  const prevChildrenRef = useRef(children);
+  const nextChildrenRef = useRef(children);
+  const isTransitioningRef = useRef(false);
+  const [displayChildren, setDisplayChildren] = useState(children);
+
+  // Capture children on every render
+  useEffect(() => {
+    if (!isTransitioningRef.current) {
+      // Not transitioning - update the "previous" ref with current content
+      prevChildrenRef.current = children;
+    }
+    // Always update next ref with the latest children (the new page)
+    nextChildrenRef.current = children;
+  });
 
   useEffect(() => {
     // Only trigger transition if path actually changed
@@ -14,26 +29,30 @@ export const PageTransition = ({ children }: { children: React.ReactNode }) => {
       return;
     }
 
-    // Start transition when route changes
+    // Start transition - lock in the old content
     setIsTransitioning(true);
+    isTransitioningRef.current = true;
     setPrevPath(location.pathname);
     
-    // Update children once black overlay fully covers the screen
+    // Keep showing old page content during transition
+    setDisplayChildren(prevChildrenRef.current);
+    
+    // Swap to new page content after black circle fully covers screen
     const updateTimer = setTimeout(() => {
-      setDisplayChildren(children);
-    }, 5200); // After long circle expand (~5s) + small buffer
+      setDisplayChildren(nextChildrenRef.current);
+    }, 5200); // After 5s circle expand + buffer
 
-    // End transition after expand + hold + contract animations
+    // End transition after full cycle
     const endTimer = setTimeout(() => {
       setIsTransitioning(false);
+      isTransitioningRef.current = false;
     }, 11000); // Total: expand (5s) + hold (1s) + contract (5s)
 
     return () => {
       clearTimeout(updateTimer);
       clearTimeout(endTimer);
     };
-  }, [location.pathname, children, prevPath]); // Triggers on route or children change
-
+  }, [location.pathname, prevPath]);
 
   return (
     <>
