@@ -443,145 +443,242 @@ export const MarketingManagement = ({ isAdmin, isMarketeer }: { isAdmin: boolean
         <TabsContent value="gallery" className="space-y-4">
           <Card>
             <CardHeader>
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div>
-                  <CardTitle>Marketing Gallery</CardTitle>
-                  <CardDescription>Upload and manage images and videos for marketing</CardDescription>
-                </div>
-                <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
-                  <Select value={categoryFilter} onValueChange={(v) => {
-                    setCategoryFilter(v as any);
-                    setSelectedPlayerId('all');
-                  }}>
-                    <SelectTrigger className="w-full sm:w-[180px]">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Categories</SelectItem>
-                      <SelectItem value="brand">Brand</SelectItem>
-                      <SelectItem value="players">Players</SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  
-                  {categoryFilter === 'players' && (
-                    <Select value={selectedPlayerId} onValueChange={setSelectedPlayerId}>
-                      <SelectTrigger className="w-full sm:w-[200px]">
-                        <SelectValue placeholder="All Players" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Players</SelectItem>
-                        {players.map(player => (
-                          <SelectItem key={player.id} value={player.id}>
-                            {player.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                  
-                  {canManage && (
-                    <>
-                      <Button onClick={() => setShowUploadDialog(true)} size="sm" className="md:size-default">
-                        <Upload className="w-4 h-4 mr-2" />
-                        <span className="hidden sm:inline">Upload Media</span>
-                        <span className="sm:hidden">Upload</span>
-                      </Button>
-                      <Button 
-                        onClick={() => {
-                          setShowImportDialog(true);
-                          fetchPlayerHighlights();
-                        }} 
-                        size="sm" 
-                        variant="outline"
-                        className="md:size-default"
-                      >
-                        <Play className="w-4 h-4 mr-2" />
-                        <span className="hidden sm:inline">Import from Clips</span>
-                        <span className="sm:hidden">Import</span>
-                      </Button>
-                    </>
-                  )}
-                </div>
-              </div>
+              <CardTitle>Marketing Gallery</CardTitle>
+              <CardDescription>Upload and manage images and videos for marketing</CardDescription>
             </CardHeader>
             <CardContent>
-              {(() => {
-                // Show ALL items when "all" is selected, no filtering
-                const filtered = categoryFilter === 'all' 
-                  ? galleryItems 
-                  : categoryFilter === 'players' && selectedPlayerId !== 'all'
-                    ? galleryItems.filter(item => item.category === 'players' && item.player_id === selectedPlayerId)
-                    : galleryItems.filter(item => item.category === categoryFilter);
-                
-                console.log('Rendering gallery:', { 
-                  categoryFilter, 
-                  selectedPlayerId, 
-                  totalItems: galleryItems.length, 
-                  filteredItems: filtered.length 
-                });
-                
-                return filtered.length === 0 ? (
-                <div className="text-center py-12 text-muted-foreground">
-                  <Image className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                  <p className="text-lg mb-2">No media in this category</p>
-                  <p className="text-sm">Upload images and videos to build your marketing gallery</p>
-                  <p className="text-xs mt-2 text-destructive">Total in DB: {galleryItems.length}</p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-                  {filtered.map((item) => (
-                    <Card key={item.id} className="overflow-hidden">
-                      <div className="relative aspect-video bg-muted">
-                        {item.file_type === 'image' ? (
-                          <img
-                            src={item.file_url}
-                            alt={item.title}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="relative w-full h-full">
-                            <video
-                              src={item.file_url}
-                              className="w-full h-full object-cover"
-                              controls
-                            />
-                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                              <Play className="w-12 h-12 text-white opacity-80" />
-                            </div>
-                          </div>
-                        )}
+              <Tabs defaultValue="videos" className="w-full">
+                <TabsList className="grid w-full grid-cols-2 mb-4">
+                  <TabsTrigger value="images">
+                    <Image className="w-4 h-4 mr-2" />
+                    Images
+                  </TabsTrigger>
+                  <TabsTrigger value="videos">
+                    <Play className="w-4 h-4 mr-2" />
+                    Videos
+                  </TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="images" className="space-y-4">
+                  <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
+                    <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+                      <Select value={categoryFilter} onValueChange={(v) => {
+                        setCategoryFilter(v as any);
+                        setSelectedPlayerId('all');
+                      }}>
+                        <SelectTrigger className="w-full sm:w-[180px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Categories</SelectItem>
+                          <SelectItem value="brand">Brand</SelectItem>
+                          <SelectItem value="players">Players</SelectItem>
+                          <SelectItem value="other">Other</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      
+                      {categoryFilter === 'players' && (
+                        <Select value={selectedPlayerId} onValueChange={setSelectedPlayerId}>
+                          <SelectTrigger className="w-full sm:w-[200px]">
+                            <SelectValue placeholder="All Players" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">All Players</SelectItem>
+                            {players.map(player => (
+                              <SelectItem key={player.id} value={player.id}>
+                                {player.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                      
+                      {canManage && (
+                        <Button onClick={() => setShowUploadDialog(true)} size="sm" className="md:size-default">
+                          <Upload className="w-4 h-4 mr-2" />
+                          <span className="hidden sm:inline">Upload Image</span>
+                          <span className="sm:hidden">Upload</span>
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+
+                  {(() => {
+                    const filtered = categoryFilter === 'all' 
+                      ? galleryItems.filter(item => item.file_type === 'image')
+                      : categoryFilter === 'players' && selectedPlayerId !== 'all'
+                        ? galleryItems.filter(item => item.file_type === 'image' && item.category === 'players' && item.player_id === selectedPlayerId)
+                        : galleryItems.filter(item => item.file_type === 'image' && item.category === categoryFilter);
+                    
+                    return filtered.length === 0 ? (
+                      <div className="text-center py-12 text-muted-foreground">
+                        <Image className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                        <p className="text-lg mb-2">No images in this category</p>
+                        <p className="text-sm">Upload images to build your marketing gallery</p>
                       </div>
-                      <CardContent className="p-4">
-                        <h3 className="font-semibold mb-1">{item.title}</h3>
-                        {item.description && (
-                          <p className="text-sm text-muted-foreground mb-3">{item.description}</p>
-                        )}
-                        <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="flex-1"
-                            onClick={() => window.open(item.file_url, '_blank')}
-                          >
-                            View Full
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+                        {filtered.map((item) => (
+                          <Card key={item.id} className="overflow-hidden">
+                            <div className="relative aspect-video bg-muted">
+                              <img
+                                src={item.file_url}
+                                alt={item.title}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                            <CardContent className="p-4">
+                              <h3 className="font-semibold mb-1">{item.title}</h3>
+                              {item.description && (
+                                <p className="text-sm text-muted-foreground mb-3">{item.description}</p>
+                              )}
+                              <div className="flex gap-2">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="flex-1"
+                                  onClick={() => window.open(item.file_url, '_blank')}
+                                >
+                                  View Full
+                                </Button>
+                                {canManage && (
+                                  <Button
+                                    size="sm"
+                                    variant="destructive"
+                                    onClick={() => handleDelete(item)}
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </Button>
+                                )}
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    );
+                  })()}
+                </TabsContent>
+
+                <TabsContent value="videos" className="space-y-4">
+                  <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
+                    <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+                      <Select value={categoryFilter} onValueChange={(v) => {
+                        setCategoryFilter(v as any);
+                        setSelectedPlayerId('all');
+                      }}>
+                        <SelectTrigger className="w-full sm:w-[180px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Categories</SelectItem>
+                          <SelectItem value="brand">Brand</SelectItem>
+                          <SelectItem value="players">Players</SelectItem>
+                          <SelectItem value="other">Other</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      
+                      {categoryFilter === 'players' && (
+                        <Select value={selectedPlayerId} onValueChange={setSelectedPlayerId}>
+                          <SelectTrigger className="w-full sm:w-[200px]">
+                            <SelectValue placeholder="All Players" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">All Players</SelectItem>
+                            {players.map(player => (
+                              <SelectItem key={player.id} value={player.id}>
+                                {player.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                      
+                      {canManage && (
+                        <>
+                          <Button onClick={() => setShowUploadDialog(true)} size="sm" className="md:size-default">
+                            <Upload className="w-4 h-4 mr-2" />
+                            <span className="hidden sm:inline">Upload Video</span>
+                            <span className="sm:hidden">Upload</span>
                           </Button>
-                          {canManage && (
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => handleDelete(item)}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          )}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              );
-              })()}
+                          <Button 
+                            onClick={() => {
+                              setShowImportDialog(true);
+                              fetchPlayerHighlights();
+                            }} 
+                            size="sm" 
+                            variant="outline"
+                            className="md:size-default"
+                          >
+                            <Play className="w-4 h-4 mr-2" />
+                            <span className="hidden sm:inline">Import from Clips</span>
+                            <span className="sm:hidden">Import</span>
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  {(() => {
+                    const filtered = categoryFilter === 'all' 
+                      ? galleryItems.filter(item => item.file_type === 'video')
+                      : categoryFilter === 'players' && selectedPlayerId !== 'all'
+                        ? galleryItems.filter(item => item.file_type === 'video' && item.category === 'players' && item.player_id === selectedPlayerId)
+                        : galleryItems.filter(item => item.file_type === 'video' && item.category === categoryFilter);
+                    
+                    return filtered.length === 0 ? (
+                      <div className="text-center py-12 text-muted-foreground">
+                        <Play className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                        <p className="text-lg mb-2">No videos in this category</p>
+                        <p className="text-sm">Upload or import videos to build your marketing gallery</p>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+                        {filtered.map((item) => (
+                          <Card key={item.id} className="overflow-hidden">
+                            <div className="relative aspect-video bg-muted">
+                              <div className="relative w-full h-full">
+                                <video
+                                  src={item.file_url}
+                                  className="w-full h-full object-cover"
+                                  controls
+                                />
+                                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                  <Play className="w-12 h-12 text-white opacity-80" />
+                                </div>
+                              </div>
+                            </div>
+                            <CardContent className="p-4">
+                              <h3 className="font-semibold mb-1">{item.title}</h3>
+                              {item.description && (
+                                <p className="text-sm text-muted-foreground mb-3">{item.description}</p>
+                              )}
+                              <div className="flex gap-2">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="flex-1"
+                                  onClick={() => window.open(item.file_url, '_blank')}
+                                >
+                                  View Full
+                                </Button>
+                                {canManage && (
+                                  <Button
+                                    size="sm"
+                                    variant="destructive"
+                                    onClick={() => handleDelete(item)}
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </Button>
+                                )}
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    );
+                  })()}
+                </TabsContent>
+              </Tabs>
             </CardContent>
           </Card>
         </TabsContent>
