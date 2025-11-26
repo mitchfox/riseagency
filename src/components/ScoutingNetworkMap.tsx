@@ -940,6 +940,11 @@ const ScoutingNetworkMap = () => {
             {cityGroups.map((cityGroup, idx) => {
               const isExpanded = expandedCity === `${cityGroup.cityName}-${cityGroup.country}`;
               
+              // If a city is expanded, only show that city
+              if (expandedCity && !isExpanded) {
+                return null;
+              }
+              
               if (isExpanded) {
                 // Show clubs arranged in circle
                 return (
@@ -1081,7 +1086,7 @@ const ScoutingNetworkMap = () => {
             })}
             
             {/* Individual Football Club Logos (cities with only one club) */}
-            {singleClubs.map((club, idx) => {
+            {!expandedCity && singleClubs.map((club, idx) => {
               const pos = getClubPosition(club);
               return (
                 <g 
@@ -1119,12 +1124,14 @@ const ScoutingNetworkMap = () => {
             })}
 
             {/* Connection lines (sample) */}
-            <g opacity="0.1" stroke="hsl(var(--primary))" strokeWidth="1">
-              <line x1="520" y1="290" x2="510" y2="360" />
-              <line x1="510" y1="360" x2="420" y2="480" />
-              <line x1="650" y1="280" x2="680" y2="295" />
-              <line x1="560" y1="250" x2="540" y2="275" />
-            </g>
+            {!expandedCity && (
+              <g opacity="0.1" stroke="hsl(var(--primary))" strokeWidth="1">
+                <line x1="520" y1="290" x2="510" y2="360" />
+                <line x1="510" y1="360" x2="420" y2="480" />
+                <line x1="650" y1="280" x2="680" y2="295" />
+                <line x1="560" y1="250" x2="540" y2="275" />
+              </g>
+            )}
             
             {/* Country Flag Markers - render on top so they're visible over clusters, hide when zoomed in */}
             {!selectedCountry && zoomLevel < 2 && countryMarkers.map((country, idx) => {
