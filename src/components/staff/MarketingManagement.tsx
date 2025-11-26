@@ -11,6 +11,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Calendar as CalendarIcon, FileText, Image, Table, Folder, HardDrive, ExternalLink, Upload, Trash2, Play, ChevronDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { VideoPreviewCard } from "./VideoPreviewCard";
 import { Calendar, momentLocalizer, Event as CalendarEvent } from 'react-big-calendar';
 import moment from 'moment';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
@@ -1090,26 +1091,13 @@ export const MarketingManagement = ({ isAdmin, isMarketeer }: { isAdmin: boolean
                             if (typeof videoUrl !== 'string') return null;
                             
                             return (
-                              <Card key={index} className="overflow-hidden">
-                                <div className="relative aspect-video bg-muted">
-                                  <video
-                                    src={videoUrl}
-                                    className="w-full h-full object-cover"
-                                    controls
-                                  />
-                                </div>
-                                <CardContent className="p-3">
-                                  <p className="text-sm font-medium mb-2">{videoTitle}</p>
-                                  <Button
-                                    size="sm"
-                                    className="w-full"
-                                    onClick={() => handleImportVideo(player.id, player.name, videoUrl, videoTitle)}
-                                    disabled={importingClipUrl === videoUrl}
-                                  >
-                                    {importingClipUrl === videoUrl ? 'Importing...' : 'Import to Gallery'}
-                                  </Button>
-                                </CardContent>
-                              </Card>
+                              <VideoPreviewCard
+                                key={index}
+                                videoUrl={videoUrl}
+                                videoTitle={videoTitle}
+                                onImport={() => handleImportVideo(player.id, player.name, videoUrl, videoTitle)}
+                                isImporting={importingClipUrl === videoUrl}
+                              />
                             );
                           })}
                         </div>
