@@ -183,11 +183,11 @@ export const Header = () => {
           <Drawer direction="left" modal={false} preventScrollRestoration={false}>
             <DrawerTrigger asChild>
               <button
-                className={`group relative flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-primary transition-all duration-300 ease-out ${isScrolled ? 'w-7 h-7 md:w-8 md:h-8 -translate-y-[5px]' : 'w-10 h-10 md:w-12 md:h-12'}`}
+                className="group relative flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-primary transition-all duration-300 ease-out w-10 h-10 md:w-12 md:h-12"
                 aria-label="Toggle menu"
               >
                 <svg 
-                  className={`text-primary group-hover:text-foreground transition-all duration-300 ease-out ${isScrolled ? 'w-5 h-5 md:w-6 md:h-6' : 'w-6 h-6 md:w-7 md:h-7'}`}
+                  className="text-primary group-hover:text-foreground transition-all duration-300 ease-out w-6 h-6 md:w-7 md:h-7"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
@@ -222,7 +222,7 @@ export const Header = () => {
                   <div className={`flex items-center transition-all duration-300 ease-out px-2 md:px-4 ${isScrolled ? 'h-7 md:h-8 pt-2' : 'h-14 md:h-16'}`}>
                     <DrawerClose asChild>
                       <button
-                        className={`group relative flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-primary transition-all duration-300 ease-out mt-[15px] ${isScrolled ? 'w-7 h-7 md:w-8 md:h-8' : 'w-10 h-10 md:w-12 md:h-12'}`}
+                        className="group relative flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-primary transition-all duration-300 ease-out w-10 h-10 md:w-12 md:h-12"
                         aria-label="Close menu"
                       >
                         <svg 
