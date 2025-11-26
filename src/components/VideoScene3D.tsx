@@ -101,12 +101,14 @@ export const VideoScene3D = () => {
               >
                 <video
                   src={videos[0]}
-                  className="absolute inset-0 w-full h-full object-cover"
+                  className="absolute inset-0 w-full h-full object-cover [&::-webkit-media-controls]:hidden [&::-webkit-media-controls-enclosure]:hidden"
                   autoPlay
                   muted
                   loop
                   playsInline
-                  controls={false}
+                  disablePictureInPicture
+                  controlsList="nodownload nofullscreen noremoteplayback"
+                  style={{ pointerEvents: 'none' }}
                 />
                 {hoveredIndex === 0 && (
                   <div className="absolute inset-0 border-4 border-primary pointer-events-none z-10" />
@@ -120,12 +122,14 @@ export const VideoScene3D = () => {
               >
                 <video
                   src={videos[1]}
-                  className="absolute inset-0 w-full h-full object-cover"
+                  className="absolute inset-0 w-full h-full object-cover [&::-webkit-media-controls]:hidden [&::-webkit-media-controls-enclosure]:hidden"
                   autoPlay
                   muted
                   loop
                   playsInline
-                  controls={false}
+                  disablePictureInPicture
+                  controlsList="nodownload nofullscreen noremoteplayback"
+                  style={{ pointerEvents: 'none' }}
                 />
                 {hoveredIndex === 1 && (
                   <div className="absolute inset-0 border-4 border-primary pointer-events-none z-10" />
@@ -139,12 +143,14 @@ export const VideoScene3D = () => {
               >
                 <video
                   src={videos[2]}
-                  className="absolute inset-0 w-full h-full object-cover"
+                  className="absolute inset-0 w-full h-full object-cover [&::-webkit-media-controls]:hidden [&::-webkit-media-controls-enclosure]:hidden"
                   autoPlay
                   muted
                   loop
                   playsInline
-                  controls={false}
+                  disablePictureInPicture
+                  controlsList="nodownload nofullscreen noremoteplayback"
+                  style={{ pointerEvents: 'none' }}
                 />
                 {hoveredIndex === 2 && (
                   <div className="absolute inset-0 border-4 border-primary pointer-events-none z-10" />
@@ -161,12 +167,14 @@ export const VideoScene3D = () => {
               >
                 <video
                   src={videos[3]}
-                  className="absolute inset-0 w-full h-full object-cover"
+                  className="absolute inset-0 w-full h-full object-cover [&::-webkit-media-controls]:hidden [&::-webkit-media-controls-enclosure]:hidden"
                   autoPlay
                   muted
                   loop
                   playsInline
-                  controls={false}
+                  disablePictureInPicture
+                  controlsList="nodownload nofullscreen noremoteplayback"
+                  style={{ pointerEvents: 'none' }}
                 />
                 {hoveredIndex === 3 && (
                   <div className="absolute inset-0 border-4 border-primary pointer-events-none z-10" />
@@ -180,12 +188,14 @@ export const VideoScene3D = () => {
               >
                 <video
                   src={videos[4]}
-                  className="absolute inset-0 w-full h-full object-cover"
+                  className="absolute inset-0 w-full h-full object-cover [&::-webkit-media-controls]:hidden [&::-webkit-media-controls-enclosure]:hidden"
                   autoPlay
                   muted
                   loop
                   playsInline
-                  controls={false}
+                  disablePictureInPicture
+                  controlsList="nodownload nofullscreen noremoteplayback"
+                  style={{ pointerEvents: 'none' }}
                 />
                 {hoveredIndex === 4 && (
                   <div className="absolute inset-0 border-4 border-primary pointer-events-none z-10" />
@@ -199,12 +209,14 @@ export const VideoScene3D = () => {
               >
                 <video
                   src={videos[5]}
-                  className="absolute inset-0 w-full h-full object-cover"
+                  className="absolute inset-0 w-full h-full object-cover [&::-webkit-media-controls]:hidden [&::-webkit-media-controls-enclosure]:hidden"
                   autoPlay
                   muted
                   loop
                   playsInline
-                  controls={false}
+                  disablePictureInPicture
+                  controlsList="nodownload nofullscreen noremoteplayback"
+                  style={{ pointerEvents: 'none' }}
                 />
                 {hoveredIndex === 5 && (
                   <div className="absolute inset-0 border-4 border-primary pointer-events-none z-10" />
