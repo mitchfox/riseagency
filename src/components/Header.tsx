@@ -76,7 +76,7 @@ export const Header = () => {
         .from('blog_posts')
         .select('*')
         .eq('published', true)
-        .eq('category', 'Between The Lines')
+        .neq('category', 'PLAYER NEWS')
         .order('created_at', { ascending: false })
         .limit(3);
       
@@ -90,7 +90,7 @@ export const Header = () => {
         .from('blog_posts')
         .select('*')
         .eq('published', true)
-        .eq('category', 'News')
+        .eq('category', 'PLAYER NEWS')
         .order('created_at', { ascending: false })
         .limit(3);
       
@@ -401,7 +401,7 @@ export const Header = () => {
                               <h3 className="text-white font-bebas text-xl md:text-2xl uppercase tracking-wider text-center">
                                 Portal
                               </h3>
-                              <div className="bg-primary text-black font-bebas uppercase tracking-widest text-sm md:text-base py-2 md:py-3 px-6 md:px-8 text-center group-hover:brightness-110 transition-all w-full">
+                              <div className="bg-primary text-black font-bebas uppercase tracking-widest text-sm md:text-base py-1 md:py-2 px-6 md:px-8 text-center group-hover:brightness-110 transition-all w-full">
                                 Portal
                               </div>
                             </div>
@@ -425,7 +425,7 @@ export const Header = () => {
                               <h3 className="text-white font-bebas text-xl md:text-2xl uppercase tracking-wider text-center">
                                 Realise Potential
                               </h3>
-                              <div className="bg-primary text-black font-bebas uppercase tracking-widest text-sm md:text-base py-2 md:py-3 px-4 md:px-6 text-center group-hover:brightness-110 transition-all w-full whitespace-nowrap">
+                              <div className="bg-primary text-black font-bebas uppercase tracking-widest text-sm md:text-base py-1 md:py-2 px-4 md:px-6 text-center group-hover:brightness-110 transition-all w-full whitespace-nowrap">
                                 Request Representation
                               </div>
                             </div>
