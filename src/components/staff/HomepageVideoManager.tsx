@@ -302,11 +302,11 @@ export const HomepageVideoManager = ({ canManage }: { canManage: boolean }) => {
       </div>
 
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent className="max-w-[95vw] sm:max-w-3xl max-h-[90vh]">
+        <DialogContent className="max-w-[95vw] sm:max-w-2xl max-h-[85vh] flex flex-col">
           <DialogHeader>
             <DialogTitle>{editingVideo ? 'Edit Video' : 'Add Video'}</DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="flex flex-col gap-3 flex-1 min-h-0">
             <div className="space-y-2">
               <Label>Search Videos</Label>
               <div className="relative">
@@ -320,10 +320,10 @@ export const HomepageVideoManager = ({ canManage }: { canManage: boolean }) => {
               </div>
             </div>
 
-            <div className="space-y-2">
+            <div className="flex-1 min-h-0 flex flex-col gap-2">
               <Label>Select Video from Gallery</Label>
-              <ScrollArea className="h-[400px] border rounded-lg">
-                <div className="p-4 space-y-2">
+              <ScrollArea className="flex-1 border rounded-lg">
+                <div className="p-3 space-y-2">
                   {filteredGalleryVideos.length === 0 ? (
                     <div className="text-center py-8 text-muted-foreground">
                       <Video className="w-12 h-12 mx-auto mb-3 opacity-50" />
@@ -335,23 +335,23 @@ export const HomepageVideoManager = ({ canManage }: { canManage: boolean }) => {
                       <div
                         key={video.id}
                         onClick={() => setSelectedGalleryVideo(video)}
-                        className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                        className={`p-2 rounded-lg border-2 cursor-pointer transition-all ${
                           selectedGalleryVideo?.id === video.id
                             ? 'border-primary bg-primary/5'
                             : 'border-border hover:border-primary/50 hover:bg-accent/50'
                         }`}
                       >
-                        <div className="flex gap-3">
+                        <div className="flex gap-2 items-start">
                           {video.thumbnail_url && (
                             <img
                               src={video.thumbnail_url}
                               alt={video.title}
-                              className="w-32 h-20 object-cover rounded"
+                              className="w-20 h-12 sm:w-24 sm:h-14 object-cover rounded flex-shrink-0"
                             />
                           )}
                           <div className="flex-1 min-w-0">
-                            <div className="font-medium truncate">{video.title}</div>
-                            <div className="text-xs text-muted-foreground truncate mt-1">
+                            <div className="font-medium text-sm truncate">{video.title}</div>
+                            <div className="text-xs text-muted-foreground truncate mt-0.5">
                               {video.file_url}
                             </div>
                           </div>
@@ -364,12 +364,12 @@ export const HomepageVideoManager = ({ canManage }: { canManage: boolean }) => {
             </div>
 
             {selectedGalleryVideo && (
-              <div className="p-3 bg-accent/50 rounded-lg">
-                <p className="text-sm font-medium">Selected: {selectedGalleryVideo.title}</p>
+              <div className="p-2 bg-accent/50 rounded-lg">
+                <p className="text-sm font-medium truncate">Selected: {selectedGalleryVideo.title}</p>
               </div>
             )}
 
-            <DialogFooter>
+            <DialogFooter className="gap-2">
               <Button type="button" variant="outline" onClick={() => setShowDialog(false)}>
                 Cancel
               </Button>
