@@ -85,7 +85,7 @@ const Staff = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [isMarketeer, setIsMarketeer] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-  const [expandedSection, setExpandedSection] = useState<'overview' | 'schedule' | 'goalstasks' | 'staffaccounts' | 'passwords' | 'pwainstall' | 'offlinemanager' | 'pushnotifications' | 'players' | 'playerlist' | 'recruitment' | 'scoutingcentre' | 'blog' | 'betweenthelines' | 'coaching' | 'analysis' | 'marketing' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'legal' | 'sitemanagement' | null>('overview');
+  const [expandedSection, setExpandedSection] = useState<'overview' | 'schedule' | 'goalstasks' | 'staffaccounts' | 'passwords' | 'pwainstall' | 'offlinemanager' | 'pushnotifications' | 'players' | 'playerlist' | 'recruitment' | 'scouts' | 'scoutingcentre' | 'blog' | 'betweenthelines' | 'coaching' | 'analysis' | 'marketing' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'legal' | 'sitemanagement' | null>('overview');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   
   // Enable staff notifications
@@ -534,14 +534,15 @@ const Staff = () => {
       title: 'Network & Recruitment',
       icon: Network,
       locked: false,
-      sections: [
-        { id: 'clubnetwork', title: 'Club Network', icon: Network },
-        { id: 'playerlist', title: 'Player List', icon: Users },
-        { id: 'recruitment', title: 'Recruitment', icon: Target },
-        { id: 'scoutingcentre', title: 'Scouting Centre', icon: ClipboardList },
-        { id: 'submissions', title: 'Form Submissions', icon: Mail },
-      ]
-    },
+        sections: [
+          { id: 'clubnetwork', title: 'Club Network', icon: Network },
+          { id: 'playerlist', title: 'Player List', icon: Users },
+          { id: 'recruitment', title: 'Recruitment', icon: Target },
+          { id: 'scouts', title: 'Scouts', icon: Users },
+          { id: 'scoutingcentre', title: 'Scouting Centre', icon: ClipboardList },
+          { id: 'submissions', title: 'Form Submissions', icon: Mail },
+        ]
+      },
     {
       id: 'marketing',
       title: 'Marketing & Brand',
@@ -847,6 +848,7 @@ const Staff = () => {
                   {expandedSection === 'playerlist' && <PlayerList isAdmin={isAdmin} />}
                   {expandedSection === 'players' && <PlayerManagement isAdmin={isAdmin} />}
                   {expandedSection === 'recruitment' && <RecruitmentManagement isAdmin={isAdmin} />}
+                  {expandedSection === 'scouts' && <RecruitmentManagement isAdmin={isAdmin} initialTab="scouts" />}
                   {expandedSection === 'scoutingcentre' && <ScoutingCentreManagement isAdmin={isAdmin} />}
                   {expandedSection === 'coaching' && <CoachingDatabase isAdmin={isAdmin} />}
                   {expandedSection === 'analysis' && <AnalysisManagement isAdmin={isAdmin} />}
