@@ -992,24 +992,70 @@ export const MarketingManagement = ({ isAdmin, isMarketeer }: { isAdmin: boolean
           <div className="space-y-4">
             <div className="relative">
               <Input
-                placeholder="Search players..."
+                placeholder="Search clips or players..."
                 value={clipSearchQuery}
                 onChange={(e) => setClipSearchQuery(e.target.value)}
                 className="w-full"
               />
             </div>
-            {playerHighlights.filter(player => 
-              player.name.toLowerCase().includes(clipSearchQuery.toLowerCase())
-            ).length === 0 ? (
+            {playerHighlights.filter(player => {
+              const searchLower = clipSearchQuery.toLowerCase();
+              
+              // Check if player name matches
+              if (player.name.toLowerCase().includes(searchLower)) return true;
+              
+              // Parse highlights and check clip titles
+              let highlights = player.highlights as any;
+              if (typeof highlights === 'string') {
+                try {
+                  highlights = JSON.parse(highlights);
+                } catch (e) {
+                  return false;
+                }
+              }
+              
+              const matchHighlights = Array.isArray(highlights?.matchHighlights) ? highlights.matchHighlights : [];
+              const bestClips = Array.isArray(highlights?.bestClips) ? highlights.bestClips : [];
+              const videos = [...matchHighlights, ...bestClips];
+              
+              // Check if any clip title matches
+              return videos.some((video: any) => {
+                const videoTitle = video?.title || video?.name || '';
+                return videoTitle.toLowerCase().includes(searchLower);
+              });
+            }).length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 <Play className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                <p>{clipSearchQuery ? 'No players found matching your search' : 'No player highlights available to import'}</p>
+                <p>{clipSearchQuery ? 'No clips found matching your search' : 'No player highlights available to import'}</p>
               </div>
             ) : (
               <Accordion type="single" collapsible className="w-full">
-                {playerHighlights.filter(player => 
-                  player.name.toLowerCase().includes(clipSearchQuery.toLowerCase())
-                ).map((player) => {
+                {playerHighlights.filter(player => {
+                  const searchLower = clipSearchQuery.toLowerCase();
+                  
+                  // Check if player name matches
+                  if (player.name.toLowerCase().includes(searchLower)) return true;
+                  
+                  // Parse highlights and check clip titles
+                  let highlights = player.highlights as any;
+                  if (typeof highlights === 'string') {
+                    try {
+                      highlights = JSON.parse(highlights);
+                    } catch (e) {
+                      return false;
+                    }
+                  }
+                  
+                  const matchHighlights = Array.isArray(highlights?.matchHighlights) ? highlights.matchHighlights : [];
+                  const bestClips = Array.isArray(highlights?.bestClips) ? highlights.bestClips : [];
+                  const videos = [...matchHighlights, ...bestClips];
+                  
+                  // Check if any clip title matches
+                  return videos.some((video: any) => {
+                    const videoTitle = video?.title || video?.name || '';
+                    return videoTitle.toLowerCase().includes(searchLower);
+                  });
+                }).map((player) => {
                   let highlights = player.highlights as any;
 
                   // Handle potential stringified JSON
