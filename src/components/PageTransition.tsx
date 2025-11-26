@@ -14,12 +14,12 @@ export const PageTransition = ({ children }: { children: React.ReactNode }) => {
     // Update children once black overlay fully covers the screen
     const updateTimer = setTimeout(() => {
       setDisplayChildren(children);
-    }, 1200); // After black expand completes (1.0s) + small buffer
+    }, 2000); // After black expand completes (1.5s) + small buffer
 
     // End transition after expand + hold + contract animations
     const endTimer = setTimeout(() => {
       setIsTransitioning(false);
-    }, 2600); // Total: expand (1.0s) + hold (0.6s) + contract (1.0s)
+    }, 4000); // Total: expand (1.5s) + hold (1.0s) + contract (1.5s)
 
     return () => {
       clearTimeout(updateTimer);
@@ -35,7 +35,7 @@ export const PageTransition = ({ children }: { children: React.ReactNode }) => {
           <div
             className="absolute inset-0 bg-black z-10"
             style={{
-              animation: "expandFromCenter 1s ease-in-out 0s forwards, contractToCenter 1s ease-in-out 1.6s forwards",
+              animation: "expandFromCenter 1.5s ease-in-out 0s forwards, contractToCenter 1.5s ease-in-out 2.5s forwards",
               clipPath: "circle(0% at 50% 50%)",
             }}
           />
@@ -47,7 +47,7 @@ export const PageTransition = ({ children }: { children: React.ReactNode }) => {
               alt="RISE" 
               className="h-16 md:h-20"
               style={{
-                animation: "logoFadeIn 0.4s ease-out forwards, logoPulse 0.3s ease-out 0.5s forwards, logoFadeOut 0.4s ease-out 0.9s forwards",
+                animation: "logoFadeIn 0.6s ease-out forwards, logoPulse 0.4s ease-out 1.2s forwards, logoFadeOut 0.6s ease-out 2s forwards",
                 opacity: 0,
               }}
             />

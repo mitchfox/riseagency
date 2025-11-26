@@ -21,7 +21,7 @@ export const VideoScene3D = () => {
   };
 
   return (
-    <div className="w-full bg-black py-0 relative z-0 h-[40vh] md:h-[35vh]">
+    <div className="w-full bg-black py-0 relative z-0 h-[80vh] md:h-[70vh]">
       <div className="w-full h-full">
         {/* Tight grid with no gaps - videos share borders */}
         <div className="flex flex-col h-full">
