@@ -1067,14 +1067,14 @@ const ScoutingNetworkMap = () => {
                   <circle
                     cx={cityGroup.x}
                     cy={cityGroup.y}
-                    r="12"
+                    r="8"
                     fill="hsl(var(--primary))"
                     opacity="0.9"
                   />
                   <circle
                     cx={cityGroup.x}
                     cy={cityGroup.y}
-                    r="12"
+                    r="8"
                     fill="none"
                     stroke="white"
                     strokeWidth="2"
@@ -1085,7 +1085,7 @@ const ScoutingNetworkMap = () => {
                     y={cityGroup.y - 2}
                     textAnchor="middle"
                     dominantBaseline="central"
-                    fontSize={getCityFontSize(cityGroup.cityName, 12)}
+                    fontSize={getCityFontSize(cityGroup.cityName, 8)}
                     fontWeight="bold"
                     fill="white"
                     className="pointer-events-none uppercase"
