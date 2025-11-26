@@ -159,7 +159,7 @@ export const Header = () => {
     <>
       {/* Top Utility Bar - only on homepage */}
       {showTopBar && (
-        <div className="fixed top-14 md:top-16 left-0 right-0 z-50 bg-black/95 backdrop-blur-md border-b border-white/10">
+        <div className="fixed top-14 md:top-16 left-0 right-0 z-50 bg-black/95 backdrop-blur-md border-b-2 border-gold">
           <div className="container mx-auto px-2 md:px-4">
           <div className="flex items-center justify-between h-9 md:h-10">
             <div className="flex flex-wrap items-center gap-1 md:gap-4">
@@ -205,7 +205,7 @@ export const Header = () => {
       )}
 
       {/* Main Header */}
-      <header className={`fixed top-0 left-0 right-0 z-[100] bg-background/95 backdrop-blur-md border-b-2 border-gold w-full transition-all duration-300 ease-out`}>
+      <header className={`fixed top-0 left-0 right-0 z-[100] bg-background/95 backdrop-blur-md border-b border-white/10 w-full transition-all duration-300 ease-out`}>
         <div className="container mx-auto px-2 md:px-4">
         <div className={`flex items-center justify-between transition-all duration-300 ease-out ${isScrolled ? 'h-7 md:h-8' : 'h-14 md:h-16'}`}>
           {/* Drawer Menu - Left */}
