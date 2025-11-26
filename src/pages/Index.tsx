@@ -100,11 +100,6 @@ const Index = () => {
           </div>
         </section>
 
-        {/* 3D Video Scene Section */}
-        <section className="relative">
-          <VideoScene3D />
-        </section>
-
         {/* Agency Overview Section */}
         <section className="py-12 md:py-16 px-4 bg-background relative">
           <div className="absolute inset-0 bg-gradient-to-b from-transparent via-primary/5 to-transparent"></div>
