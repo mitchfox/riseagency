@@ -174,6 +174,16 @@ const ClubNetworkManagement = () => {
   return (
     <div className="space-y-8">
       <div>
+        <div className="mb-6">
+          <h2 className="text-xl font-semibold">Player Database</h2>
+          <p className="text-muted-foreground text-sm mt-1">
+            View all players with scouting reports
+          </p>
+        </div>
+        <PlayerDatabase />
+      </div>
+
+      <div className="mt-8 pt-8 border-t">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-semibold">Club Network Contacts</h2>
           <Button onClick={openAddDialog}>
@@ -239,16 +249,6 @@ const ClubNetworkManagement = () => {
             </div>
         ))}
         </div>
-      </div>
-
-      <div className="mt-8 pt-8 border-t">
-        <div className="mb-6">
-          <h2 className="text-xl font-semibold">Player Database</h2>
-          <p className="text-muted-foreground text-sm mt-1">
-            View all players with scouting reports
-          </p>
-        </div>
-        <PlayerDatabase />
       </div>
 
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
