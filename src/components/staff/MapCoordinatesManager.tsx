@@ -4,9 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Plus, Trash2, Save, MapPin } from "lucide-react";
+import { Plus, Trash2, Save } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 interface MapContact {
@@ -21,9 +22,10 @@ interface MapContact {
 
 export const MapCoordinatesManager = () => {
   const [contacts, setContacts] = useState<MapContact[]>([]);
+  const [editedContacts, setEditedContacts] = useState<Record<string, { x_position: string; y_position: string }>>({});
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingContact, setEditingContact] = useState<MapContact | null>(null);
   const [formData, setFormData] = useState({
     name: "",
     club_name: "",
@@ -68,22 +70,12 @@ export const MapCoordinatesManager = () => {
         image_url: formData.image_url || null,
       };
 
-      if (editingContact) {
-        const { error } = await supabase
-          .from("club_network_contacts")
-          .update(contactData)
-          .eq("id", editingContact.id);
+      const { error } = await supabase
+        .from("club_network_contacts")
+        .insert([contactData]);
 
-        if (error) throw error;
-        toast.success("Contact coordinates updated");
-      } else {
-        const { error } = await supabase
-          .from("club_network_contacts")
-          .insert([contactData]);
-
-        if (error) throw error;
-        toast.success("Contact added to map");
-      }
+      if (error) throw error;
+      toast.success("Contact added to map");
 
       setDialogOpen(false);
       resetForm();
@@ -94,17 +86,59 @@ export const MapCoordinatesManager = () => {
     }
   };
 
-  const handleEdit = (contact: MapContact) => {
-    setEditingContact(contact);
-    setFormData({
-      name: contact.name,
-      club_name: contact.club_name || "",
-      country: contact.country || "",
-      x_position: contact.x_position?.toString() || "",
-      y_position: contact.y_position?.toString() || "",
-      image_url: contact.image_url || ""
-    });
-    setDialogOpen(true);
+  const handleCoordinateChange = (contactId: string, field: 'x_position' | 'y_position', value: string) => {
+    setEditedContacts(prev => ({
+      ...prev,
+      [contactId]: {
+        ...prev[contactId],
+        x_position: field === 'x_position' ? value : (prev[contactId]?.x_position ?? ''),
+        y_position: field === 'y_position' ? value : (prev[contactId]?.y_position ?? ''),
+      }
+    }));
+  };
+
+  const getCurrentValue = (contact: MapContact, field: 'x_position' | 'y_position') => {
+    if (editedContacts[contact.id]?.[field] !== undefined) {
+      return editedContacts[contact.id][field];
+    }
+    return contact[field]?.toString() ?? '';
+  };
+
+  const handleSaveAll = async () => {
+    if (Object.keys(editedContacts).length === 0) {
+      toast.info("No changes to save");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const updates = Object.entries(editedContacts).map(([id, coords]) => ({
+        id,
+        x_position: coords.x_position ? parseFloat(coords.x_position) : null,
+        y_position: coords.y_position ? parseFloat(coords.y_position) : null,
+      }));
+
+      for (const update of updates) {
+        const { error } = await supabase
+          .from("club_network_contacts")
+          .update({
+            x_position: update.x_position,
+            y_position: update.y_position,
+          })
+          .eq("id", update.id);
+
+        if (error) throw error;
+      }
+
+      toast.success(`Updated ${updates.length} contact${updates.length > 1 ? 's' : ''}`);
+      setEditedContacts({});
+      fetchContacts();
+    } catch (error: any) {
+      console.error("Error saving changes:", error);
+      toast.error("Failed to save changes");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleDelete = async (id: string) => {
@@ -126,7 +160,6 @@ export const MapCoordinatesManager = () => {
   };
 
   const resetForm = () => {
-    setEditingContact(null);
     setFormData({
       name: "",
       club_name: "",
@@ -137,12 +170,7 @@ export const MapCoordinatesManager = () => {
     });
   };
 
-  const groupedByCountry = contacts.reduce((acc, contact) => {
-    const country = contact.country || "Unknown";
-    if (!acc[country]) acc[country] = [];
-    acc[country].push(contact);
-    return acc;
-  }, {} as Record<string, MapContact[]>);
+  const hasChanges = Object.keys(editedContacts).length > 0;
 
   return (
     <div className="space-y-4">
@@ -150,26 +178,31 @@ export const MapCoordinatesManager = () => {
         <div>
           <h3 className="text-lg font-semibold">Europe Map Coordinates</h3>
           <p className="text-sm text-muted-foreground">
-            Manage club and flag positions on the interactive map
+            Adjust coordinates directly in the table and save all changes at once
           </p>
         </div>
-        <Dialog open={dialogOpen} onOpenChange={(open) => {
-          setDialogOpen(open);
-          if (!open) resetForm();
-        }}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Add to Map
+        <div className="flex gap-2">
+          {hasChanges && (
+            <Button onClick={handleSaveAll} disabled={saving}>
+              <Save className="h-4 w-4 mr-2" />
+              {saving ? 'Saving...' : `Save ${Object.keys(editedContacts).length} Change${Object.keys(editedContacts).length > 1 ? 's' : ''}`}
             </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>
-                {editingContact ? "Edit Map Position" : "Add to Map"}
-              </DialogTitle>
-            </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4">
+          )}
+          <Dialog open={dialogOpen} onOpenChange={(open) => {
+            setDialogOpen(open);
+            if (!open) resetForm();
+          }}>
+            <DialogTrigger asChild>
+              <Button variant="outline">
+                <Plus className="h-4 w-4 mr-2" />
+                Add New
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>Add to Map</DialogTitle>
+              </DialogHeader>
+              <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="name">Name *</Label>
@@ -255,76 +288,71 @@ export const MapCoordinatesManager = () => {
             </form>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       {loading ? (
         <div className="text-center py-12">Loading contacts...</div>
+      ) : contacts.length === 0 ? (
+        <div className="text-center py-12 text-muted-foreground">
+          No contacts on the map yet. Click "Add New" to begin.
+        </div>
       ) : (
-        <ScrollArea className="h-[calc(100vh-300px)]">
-          <div className="space-y-6 pr-4">
-            {Object.entries(groupedByCountry)
-              .sort(([a], [b]) => a.localeCompare(b))
-              .map(([country, countryContacts]) => (
-                <Card key={country}>
-                  <CardHeader>
-                    <CardTitle className="text-base flex items-center gap-2">
-                      <MapPin className="h-4 w-4" />
-                      {country}
-                      <span className="text-sm text-muted-foreground font-normal">
-                        ({countryContacts.length})
-                      </span>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2">
-                      {countryContacts.map((contact) => (
-                        <div
-                          key={contact.id}
-                          className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-accent/5 transition-colors"
-                        >
-                          <div className="flex-1 min-w-0">
-                            <div className="font-medium truncate">{contact.name}</div>
-                            {contact.club_name && (
-                              <div className="text-sm text-muted-foreground truncate">
-                                {contact.club_name}
-                              </div>
-                            )}
-                            <div className="flex gap-4 mt-1 text-xs text-muted-foreground">
-                              <span>X: {contact.x_position ?? "—"}</span>
-                              <span>Y: {contact.y_position ?? "—"}</span>
-                            </div>
-                          </div>
-                          <div className="flex gap-1">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleEdit(contact)}
-                            >
-                              Edit
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="text-destructive"
-                              onClick={() => handleDelete(contact.id)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-
-            {Object.keys(groupedByCountry).length === 0 && (
-              <div className="text-center py-12 text-muted-foreground">
-                No contacts on the map yet. Click "Add to Map" to begin.
-              </div>
-            )}
-          </div>
-        </ScrollArea>
+        <Card>
+          <ScrollArea className="h-[calc(100vh-300px)]">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Club</TableHead>
+                  <TableHead>Country</TableHead>
+                  <TableHead className="w-[120px]">X Position</TableHead>
+                  <TableHead className="w-[120px]">Y Position</TableHead>
+                  <TableHead className="w-[80px]"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {contacts.map((contact) => (
+                  <TableRow key={contact.id}>
+                    <TableCell className="font-medium">{contact.name}</TableCell>
+                    <TableCell className="text-muted-foreground">{contact.club_name || "—"}</TableCell>
+                    <TableCell className="text-muted-foreground">{contact.country || "—"}</TableCell>
+                    <TableCell>
+                      <Input
+                        type="number"
+                        step="0.1"
+                        value={getCurrentValue(contact, 'x_position')}
+                        onChange={(e) => handleCoordinateChange(contact.id, 'x_position', e.target.value)}
+                        className="h-8 w-full"
+                        placeholder="0-1000"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Input
+                        type="number"
+                        step="0.1"
+                        value={getCurrentValue(contact, 'y_position')}
+                        onChange={(e) => handleCoordinateChange(contact.id, 'y_position', e.target.value)}
+                        className="h-8 w-full"
+                        placeholder="0-700"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-destructive h-8 w-8 p-0"
+                        onClick={() => handleDelete(contact.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </ScrollArea>
+        </Card>
       )}
     </div>
   );
