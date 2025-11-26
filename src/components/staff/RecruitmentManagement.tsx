@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -50,6 +51,7 @@ interface Scout {
   successful_signings: number;
   total_submissions: number;
   profile_image_url: string | null;
+  notes: string | null;
 }
 
 const RECIPIENT_TYPES = [
@@ -85,6 +87,18 @@ export const RecruitmentManagement = ({ isAdmin, initialTab = 'prospects' }: { i
   // Scouts list state
   const [scouts, setScouts] = useState<Scout[]>([]);
   const [loadingScouts, setLoadingScouts] = useState(true);
+  const [scoutDialogOpen, setScoutDialogOpen] = useState(false);
+  const [editingScout, setEditingScout] = useState<Scout | null>(null);
+  const [scoutFormData, setScoutFormData] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    country: "",
+    regions: [] as string[],
+    commission_rate: "",
+    status: "pending" as string,
+    notes: ""
+  });
 
   // Template management state
   const [templates, setTemplates] = useState<MarketingTemplate[]>([]);
@@ -293,7 +307,7 @@ export const RecruitmentManagement = ({ isAdmin, initialTab = 'prospects' }: { i
     try {
       const { data, error } = await supabase
         .from("scouts")
-        .select("id, name, email, phone, country, regions, status, commission_rate, successful_signings, total_submissions, profile_image_url")
+        .select("id, name, email, phone, country, regions, status, commission_rate, successful_signings, total_submissions, profile_image_url, notes")
         .order("name", { ascending: true });
 
       if (error) throw error;
@@ -304,6 +318,99 @@ export const RecruitmentManagement = ({ isAdmin, initialTab = 'prospects' }: { i
     } finally {
       setLoadingScouts(false);
     }
+  };
+
+  const handleScoutSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!scoutFormData.email) {
+      toast.error("Email is required for portal access");
+      return;
+    }
+
+    try {
+      const scoutData = {
+        name: scoutFormData.name,
+        email: scoutFormData.email,
+        phone: scoutFormData.phone || null,
+        country: scoutFormData.country || null,
+        regions: scoutFormData.regions.length > 0 ? scoutFormData.regions : null,
+        commission_rate: scoutFormData.commission_rate ? parseFloat(scoutFormData.commission_rate) : null,
+        status: scoutFormData.status,
+        notes: scoutFormData.notes || null,
+      };
+
+      if (editingScout) {
+        const { error } = await supabase
+          .from("scouts")
+          .update(scoutData)
+          .eq("id", editingScout.id);
+
+        if (error) throw error;
+        toast.success("Scout updated successfully");
+      } else {
+        const { error } = await supabase
+          .from("scouts")
+          .insert([scoutData]);
+
+        if (error) throw error;
+        toast.success("Scout added successfully. They can now log in at /potential with their email.");
+      }
+
+      setScoutDialogOpen(false);
+      resetScoutForm();
+      fetchScouts();
+    } catch (error: any) {
+      console.error("Error saving scout:", error);
+      toast.error("Failed to save scout");
+    }
+  };
+
+  const handleScoutEdit = (scout: Scout) => {
+    setEditingScout(scout);
+    setScoutFormData({
+      name: scout.name,
+      email: scout.email,
+      phone: scout.phone || "",
+      country: scout.country || "",
+      regions: scout.regions || [],
+      commission_rate: scout.commission_rate?.toString() || "",
+      status: scout.status,
+      notes: scout.notes || ""
+    });
+    setScoutDialogOpen(true);
+  };
+
+  const handleScoutDelete = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this scout? They will lose portal access.")) return;
+
+    try {
+      const { error } = await supabase
+        .from("scouts")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
+      toast.success("Scout deleted successfully");
+      fetchScouts();
+    } catch (error: any) {
+      console.error("Error deleting scout:", error);
+      toast.error("Failed to delete scout");
+    }
+  };
+
+  const resetScoutForm = () => {
+    setEditingScout(null);
+    setScoutFormData({
+      name: "",
+      email: "",
+      phone: "",
+      country: "",
+      regions: [],
+      commission_rate: "",
+      status: "pending",
+      notes: ""
+    });
   };
 
   const handleTemplateSubmit = async () => {
@@ -917,6 +1024,117 @@ export const RecruitmentManagement = ({ isAdmin, initialTab = 'prospects' }: { i
             </div>
           )}
         </TabsContent>
+
+        <TabsContent value="scouts" className="space-y-4">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
+            <div>
+              <h3 className="text-base sm:text-lg font-semibold">Scout Management</h3>
+              <p className="text-sm text-muted-foreground mt-1">
+                Manage scouts with portal access to /potential
+              </p>
+            </div>
+            <Button size="sm" onClick={() => {
+              resetScoutForm();
+              setScoutDialogOpen(true);
+            }}>
+              <Plus className="w-4 h-4 mr-2" />
+              Add Scout
+            </Button>
+          </div>
+
+          {loadingScouts ? (
+            <Card>
+              <CardContent className="py-12 text-center text-muted-foreground">
+                Loading scouts...
+              </CardContent>
+            </Card>
+          ) : scouts.length === 0 ? (
+            <Card>
+              <CardContent className="py-12 text-center text-muted-foreground">
+                <Users className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                <p className="text-lg mb-2">No scouts added yet</p>
+                <p className="text-sm">Add scouts to give them portal access</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {scouts.map((scout) => (
+                <Card key={scout.id}>
+                  <CardHeader>
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <CardTitle className="text-lg">{scout.name}</CardTitle>
+                        <p className="text-sm text-muted-foreground mt-1">{scout.email}</p>
+                        {scout.country && (
+                          <p className="text-xs text-muted-foreground mt-1">
+                            <MapPin className="inline h-3 w-3 mr-1" />
+                            {scout.country}
+                          </p>
+                        )}
+                      </div>
+                      <Badge variant={scout.status === 'active' ? 'default' : 'secondary'}>
+                        {scout.status}
+                      </Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {scout.regions && scout.regions.length > 0 && (
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-1">Scouting Areas:</p>
+                        <div className="flex flex-wrap gap-1">
+                          {scout.regions.map((region, idx) => (
+                            <Badge key={idx} variant="outline" className="text-xs">
+                              {region}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    <div className="grid grid-cols-2 gap-3 pt-2 border-t">
+                      <div>
+                        <p className="text-xs text-muted-foreground">Commission</p>
+                        <p className="font-semibold">{scout.commission_rate || 0}%</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">Reports</p>
+                        <p className="font-semibold">{scout.total_submissions}</p>
+                      </div>
+                    </div>
+
+                    {scout.notes && (
+                      <div className="pt-2 border-t">
+                        <p className="text-xs text-muted-foreground mb-1">Notes:</p>
+                        <p className="text-sm">{scout.notes}</p>
+                      </div>
+                    )}
+
+                    <div className="flex gap-2 pt-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1"
+                        onClick={() => handleScoutEdit(scout)}
+                      >
+                        <Edit className="h-4 w-4 mr-2" />
+                        Edit
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1 text-destructive"
+                        onClick={() => handleScoutDelete(scout.id)}
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Remove
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </TabsContent>
       </Tabs>
 
       {/* Template Dialog */}
@@ -1166,6 +1384,126 @@ export const RecruitmentManagement = ({ isAdmin, initialTab = 'prospects' }: { i
               Close
             </Button>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Scout Dialog */}
+      <Dialog open={scoutDialogOpen} onOpenChange={setScoutDialogOpen}>
+        <DialogContent className="w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{editingScout ? "Edit Scout" : "Add New Scout"}</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleScoutSubmit} className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="scout-name">Name *</Label>
+                <Input
+                  id="scout-name"
+                  value={scoutFormData.name}
+                  onChange={(e) => setScoutFormData({ ...scoutFormData, name: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="scout-email">Email (for portal login) *</Label>
+                <Input
+                  id="scout-email"
+                  type="email"
+                  value={scoutFormData.email}
+                  onChange={(e) => setScoutFormData({ ...scoutFormData, email: e.target.value })}
+                  required
+                  placeholder="scout@example.com"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="scout-phone">Phone</Label>
+                <Input
+                  id="scout-phone"
+                  value={scoutFormData.phone}
+                  onChange={(e) => setScoutFormData({ ...scoutFormData, phone: e.target.value })}
+                  placeholder="+1234567890"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="scout-country">Country</Label>
+                <Input
+                  id="scout-country"
+                  value={scoutFormData.country}
+                  onChange={(e) => setScoutFormData({ ...scoutFormData, country: e.target.value })}
+                  placeholder="e.g. Spain"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="scout-regions">Leagues/Clubs (comma-separated)</Label>
+              <Input
+                id="scout-regions"
+                value={scoutFormData.regions.join(", ")}
+                onChange={(e) => setScoutFormData({ 
+                  ...scoutFormData, 
+                  regions: e.target.value.split(",").map(r => r.trim()).filter(r => r) 
+                })}
+                placeholder="e.g. La Liga, Real Madrid, Barcelona"
+              />
+              <p className="text-xs text-muted-foreground">
+                Enter leagues, clubs, or regions this scout is responsible for
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="scout-commission">Commission Rate (%)</Label>
+                <Input
+                  id="scout-commission"
+                  type="number"
+                  step="0.5"
+                  value={scoutFormData.commission_rate}
+                  onChange={(e) => setScoutFormData({ ...scoutFormData, commission_rate: e.target.value })}
+                  placeholder="5"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="scout-status">Status</Label>
+                <Select
+                  value={scoutFormData.status}
+                  onValueChange={(value) => setScoutFormData({ ...scoutFormData, status: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="inactive">Inactive</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="scout-notes">Notes</Label>
+              <Textarea
+                id="scout-notes"
+                value={scoutFormData.notes}
+                onChange={(e) => setScoutFormData({ ...scoutFormData, notes: e.target.value })}
+                placeholder="Any additional notes about this scout..."
+                rows={3}
+              />
+            </div>
+
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="outline" onClick={() => setScoutDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit">
+                {editingScout ? "Update Scout" : "Add Scout"}
+              </Button>
+            </div>
+          </form>
         </DialogContent>
       </Dialog>
     </div>
