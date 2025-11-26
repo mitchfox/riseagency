@@ -751,6 +751,8 @@ export const Header = () => {
                 style={{
                   left: "3.25rem",
                   top: isScrolled ? "32px" : "82px",
+                  opacity: isScrolled ? 1 : 0,
+                  pointerEvents: isScrolled ? "auto" : "none",
                 }}
               >
                 <Link
@@ -781,6 +783,8 @@ export const Header = () => {
                 style={{
                   right: isScrolled ? "7rem" : "2.5rem",
                   top: isScrolled ? "32px" : "82px",
+                  opacity: isScrolled ? 1 : 0,
+                  pointerEvents: isScrolled ? "auto" : "none",
                 }}
               >
                 <button
