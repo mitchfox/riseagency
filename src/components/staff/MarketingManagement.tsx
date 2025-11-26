@@ -1212,7 +1212,7 @@ export const MarketingManagement = ({ isAdmin, isMarketeer }: { isAdmin: boolean
               Manage videos displayed on the homepage 3D portfolio
             </DialogDescription>
           </DialogHeader>
-          <HomepageVideoManager isAdmin={isAdmin} />
+          <HomepageVideoManager canManage={canManage} />
         </DialogContent>
       </Dialog>
     </div>

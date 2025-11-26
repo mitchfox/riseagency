@@ -17,7 +17,7 @@ interface HomepageVideo {
   is_active: boolean;
 }
 
-export const HomepageVideoManager = ({ isAdmin }: { isAdmin: boolean }) => {
+export const HomepageVideoManager = ({ canManage }: { canManage: boolean }) => {
   const [videos, setVideos] = useState<HomepageVideo[]>([]);
   const [showDialog, setShowDialog] = useState(false);
   const [editingVideo, setEditingVideo] = useState<HomepageVideo | null>(null);
@@ -170,7 +170,7 @@ export const HomepageVideoManager = ({ isAdmin }: { isAdmin: boolean }) => {
     setShowDialog(true);
   };
 
-  if (!isAdmin) {
+  if (!canManage) {
     return null;
   }
 
