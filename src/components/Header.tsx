@@ -110,8 +110,14 @@ export const Header = () => {
                   strokeWidth="2"
                   strokeLinecap="round"
                 >
-                  <line x1="4" y1="8" x2="20" y2="8" transform="rotate(45 12 12)" />
-                  <line x1="2" y1="16" x2="18" y2="16" transform="rotate(45 12 12)" />
+                  <line 
+                    x1="4" y1="8" x2="20" y2="8" 
+                    className="origin-center transition-transform duration-300 group-hover:rotate-[-45deg]"
+                  />
+                  <line 
+                    x1="2" y1="16" x2="18" y2="16" 
+                    className="origin-center transition-transform duration-300 group-hover:rotate-[-45deg] group-hover:translate-x-1"
+                  />
                 </svg>
               </button>
             </DrawerTrigger>
@@ -291,7 +297,7 @@ export const Header = () => {
           <Button
             onClick={() => setWorkWithUsOpen(true)}
             size="sm"
-            className={`btn-shine font-bebas uppercase tracking-wider transition-all duration-300 ease-out ${isScrolled ? 'text-[10px] md:text-xs px-2 md:px-3 h-4 md:h-5' : 'text-xs md:text-base px-3 md:px-6 h-8 md:h-10'}`}
+            className="btn-shine font-bebas uppercase tracking-wider text-xs md:text-base px-3 md:px-6 h-8 md:h-10"
           >
             <span className="hidden sm:inline">RISE WITH US</span>
             <span className="sm:hidden">RISE</span>
