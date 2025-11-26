@@ -7,6 +7,24 @@ import { StaffSchedule } from "./StaffSchedule";
 import marbleOverlay from "@/assets/smudged-marble-overlay.png";
 import { supabase } from "@/integrations/supabase/client";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Checkbox } from "@/components/ui/checkbox";
+
+interface Goal {
+  id: string;
+  title: string;
+  target_value: number;
+  current_value: number;
+  unit: string;
+  color: string;
+  quarter: string;
+  year: number;
+}
+
+interface Task {
+  id: string;
+  title: string;
+  completed: boolean;
+}
 
 interface WidgetProps {
   id: string;
@@ -130,6 +148,8 @@ export const StaffOverview = ({ isAdmin }: { isAdmin: boolean }) => {
   const [expandedWidget, setExpandedWidget] = useState<string | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
   const [players, setPlayers] = useState<any[]>([]);
+  const [goals, setGoals] = useState<Goal[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
   const isMobile = useIsMobile();
 
   useEffect(() => {
@@ -145,7 +165,33 @@ export const StaffOverview = ({ isAdmin }: { isAdmin: boolean }) => {
       }
     };
 
+    const fetchGoals = async () => {
+      const { data, error } = await supabase
+        .from('staff_goals')
+        .select('*')
+        .order('display_order', { ascending: true });
+      
+      if (data && !error) {
+        setGoals(data);
+      }
+    };
+
+    const fetchTasks = async () => {
+      const { data, error } = await supabase
+        .from('staff_tasks')
+        .select('*')
+        .eq('completed', false)
+        .order('display_order', { ascending: true })
+        .limit(5);
+      
+      if (data && !error) {
+        setTasks(data);
+      }
+    };
+
     fetchPlayers();
+    fetchGoals();
+    fetchTasks();
   }, []);
 
   const toggleWidget = (id: string) => {
@@ -154,6 +200,35 @@ export const StaffOverview = ({ isAdmin }: { isAdmin: boolean }) => {
 
   const navigateToPlayer = (playerSlug: string, tab: string) => {
     setSearchParams({ section: 'players', player: playerSlug, tab });
+  };
+
+  const navigateToGoalsTasks = () => {
+    setSearchParams({ section: 'goalstasks' });
+  };
+
+  const toggleTask = async (taskId: string, currentCompleted: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('staff_tasks')
+        .update({ completed: !currentCompleted })
+        .eq('id', taskId);
+
+      if (error) throw error;
+
+      // Refresh tasks
+      const { data } = await supabase
+        .from('staff_tasks')
+        .select('*')
+        .eq('completed', false)
+        .order('display_order', { ascending: true })
+        .limit(5);
+      
+      if (data) {
+        setTasks(data);
+      }
+    } catch (error) {
+      console.error('Error toggling task:', error);
+    }
   };
 
   return (
@@ -167,34 +242,40 @@ export const StaffOverview = ({ isAdmin }: { isAdmin: boolean }) => {
         expanded={expandedWidget === "goals"}
         onToggleExpand={() => toggleWidget("goals")}
       >
-        <div className="space-y-2 px-1">
-          <div className="group">
-            <div className="flex items-center justify-between mb-1 gap-2">
-              <span className="text-[10px] sm:text-xs font-medium truncate">Player Signings</span>
-              <span className="text-[10px] sm:text-xs font-bold whitespace-nowrap">3<span className="text-muted-foreground">/5</span></span>
+        <div className="space-y-2 px-1 cursor-pointer" onClick={navigateToGoalsTasks}>
+          {goals.length === 0 ? (
+            <div className="text-center text-xs text-muted-foreground py-4">
+              Click to add goals
             </div>
-            <div className="w-full bg-muted/50 rounded-full h-1.5 overflow-hidden">
-              <div className="bg-gradient-to-r from-primary to-primary-glow h-1.5 rounded-full transition-all" style={{ width: '60%' }} />
-            </div>
-          </div>
-          <div className="group">
-            <div className="flex items-center justify-between mb-1 gap-2">
-              <span className="text-[10px] sm:text-xs font-medium truncate">Revenue</span>
-              <span className="text-[10px] sm:text-xs font-bold whitespace-nowrap">€45k<span className="text-muted-foreground">/€100k</span></span>
-            </div>
-            <div className="w-full bg-muted/50 rounded-full h-1.5 overflow-hidden">
-              <div className="bg-gradient-to-r from-amber-500 to-amber-400 h-1.5 rounded-full transition-all" style={{ width: '45%' }} />
-            </div>
-          </div>
-          <div className="group">
-            <div className="flex items-center justify-between mb-1 gap-2">
-              <span className="text-[10px] sm:text-xs font-medium truncate">Partnerships</span>
-              <span className="text-[10px] sm:text-xs font-bold whitespace-nowrap">7<span className="text-muted-foreground">/10</span></span>
-            </div>
-            <div className="w-full bg-muted/50 rounded-full h-1.5 overflow-hidden">
-              <div className="bg-gradient-to-r from-emerald-500 to-emerald-400 h-1.5 rounded-full transition-all" style={{ width: '70%' }} />
-            </div>
-          </div>
+          ) : (
+            goals.slice(0, 3).map((goal) => (
+              <div key={goal.id} className="group">
+                <div className="flex items-center justify-between mb-1 gap-2">
+                  <span className="text-[10px] sm:text-xs font-medium truncate">{goal.title}</span>
+                  <span className="text-[10px] sm:text-xs font-bold whitespace-nowrap">
+                    {goal.current_value}
+                    <span className="text-muted-foreground">/{goal.target_value}</span>
+                  </span>
+                </div>
+                <div className="w-full bg-muted/50 rounded-full h-1.5 overflow-hidden">
+                  <div 
+                    className={`h-1.5 rounded-full transition-all ${
+                      goal.color === "amber"
+                        ? "bg-gradient-to-r from-amber-500 to-amber-400"
+                        : goal.color === "emerald"
+                        ? "bg-gradient-to-r from-emerald-500 to-emerald-400"
+                        : goal.color === "rose"
+                        ? "bg-gradient-to-r from-rose-500 to-rose-400"
+                        : goal.color === "purple"
+                        ? "bg-gradient-to-r from-purple-500 to-purple-400"
+                        : "bg-gradient-to-r from-primary to-primary-glow"
+                    }`}
+                    style={{ width: `${Math.min((goal.current_value / goal.target_value) * 100, 100)}%` }} 
+                  />
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </Widget>
 
@@ -208,26 +289,34 @@ export const StaffOverview = ({ isAdmin }: { isAdmin: boolean }) => {
         onToggleExpand={() => toggleWidget("todo")}
       >
         <div className="space-y-1.5">
-          <label className="flex items-center gap-2 p-1.5 hover:bg-accent/50 rounded cursor-pointer transition-colors group">
-            <input type="checkbox" className="h-3 w-3 rounded border-muted-foreground/30 text-primary" />
-            <span className="text-xs">Contract renewals</span>
-          </label>
-          <label className="flex items-center gap-2 p-1.5 hover:bg-accent/50 rounded cursor-pointer transition-colors group">
-            <input type="checkbox" className="h-3 w-3 rounded border-muted-foreground/30 text-primary" />
-            <span className="text-xs">Update reports</span>
-          </label>
-          <label className="flex items-center gap-2 p-1.5 hover:bg-accent/50 rounded cursor-pointer transition-colors group">
-            <input type="checkbox" className="h-3 w-3 rounded border-muted-foreground/30 text-primary" />
-            <span className="text-xs">Schedule meetings</span>
-          </label>
-          <label className="flex items-center gap-2 p-1.5 hover:bg-accent/50 rounded cursor-pointer transition-colors group">
-            <input type="checkbox" className="h-3 w-3 rounded border-muted-foreground/30 text-primary" />
-            <span className="text-xs">Process invoices</span>
-          </label>
-          <label className="flex items-center gap-2 p-1.5 hover:bg-accent/50 rounded cursor-pointer transition-colors group">
-            <input type="checkbox" className="h-3 w-3 rounded border-muted-foreground/30 text-primary" />
-            <span className="text-xs">Follow up scouts</span>
-          </label>
+          {tasks.length === 0 ? (
+            <div className="text-center text-xs text-muted-foreground py-4 cursor-pointer" onClick={navigateToGoalsTasks}>
+              Click to add tasks
+            </div>
+          ) : (
+            <>
+              {tasks.map((task) => (
+                <label key={task.id} className="flex items-center gap-2 p-1.5 hover:bg-accent/50 rounded cursor-pointer transition-colors group">
+                  <Checkbox
+                    checked={task.completed}
+                    onCheckedChange={() => toggleTask(task.id, task.completed)}
+                    className="h-3 w-3"
+                  />
+                  <span className="text-xs">{task.title}</span>
+                </label>
+              ))}
+              <div className="pt-1 text-center">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="h-6 text-[10px]"
+                  onClick={navigateToGoalsTasks}
+                >
+                  Manage Tasks
+                </Button>
+              </div>
+            </>
+          )}
         </div>
       </Widget>
 
