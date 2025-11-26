@@ -251,11 +251,11 @@ const Index = () => {
             <div className="text-center mb-8 space-y-3">
               <div className="inline-block">
                 <span className="text-sm font-bebas uppercase tracking-widest text-primary border border-primary/30 px-6 py-2 rounded-full">
-                  Global Reach
+                  Eyes Across The Game
                 </span>
               </div>
               <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-foreground">
-                CLUB <span className="text-primary">NETWORK</span>
+                SCOUTING <span className="text-primary">NETWORK</span>
               </h2>
             </div>
             <ScoutingNetworkMap />
