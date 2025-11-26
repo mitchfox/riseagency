@@ -1,4 +1,4 @@
-import { MapPin, ZoomOut, Lock, Unlock } from "lucide-react";
+import { MapPin, ZoomOut } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -49,7 +49,6 @@ const ScoutingNetworkMap = () => {
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
   const [selectedCluster, setSelectedCluster] = useState<{x: number, y: number} | null>(null);
   const [expandedCity, setExpandedCity] = useState<string | null>(null);
-  const [isLocked, setIsLocked] = useState(true);
   const [draggingClub, setDraggingClub] = useState<string | null>(null);
   const [clubPositions, setClubPositions] = useState<Record<string, {x: number, y: number}>>({});
   // Europe outline is rendered from raster map image (europe-outline.gif)
@@ -118,46 +117,13 @@ const ScoutingNetworkMap = () => {
     syncPositions();
   }, []);
   
-  const handleLockToggle = async () => {
-    if (!isLocked) {
-      // Save all positions to database before locking
-      toast.loading("Saving positions...");
-      
-      for (const club of footballClubs) {
-        const position = clubPositions[club.name] || { x: club.x, y: club.y };
-        
-        const { data: existing } = await supabase
-          .from('club_network_contacts')
-          .select('id')
-          .eq('name', club.name)
-          .maybeSingle();
-        
-        if (existing) {
-          await supabase
-            .from('club_network_contacts')
-            .update({
-              x_position: position.x,
-              y_position: position.y
-            })
-            .eq('id', existing.id);
-        }
-      }
-      
-      toast.dismiss();
-      toast.success("Positions saved successfully!");
-    }
-    
-    setIsLocked(!isLocked);
-  };
-  
   const handleClubDragStart = (clubName: string, e: React.MouseEvent) => {
-    if (isLocked) return;
     e.stopPropagation();
     setDraggingClub(clubName);
   };
   
   const handleMapMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
-    if (!draggingClub || isLocked) return;
+    if (!draggingClub) return;
     
     const svg = e.currentTarget;
     const rect = svg.getBoundingClientRect();
@@ -1046,7 +1012,7 @@ const ScoutingNetworkMap = () => {
                         <g 
                           key={`club-${clubIdx}`}
                           onMouseDown={(e) => handleClubDragStart(club.name, e)}
-                          className={!isLocked ? "cursor-move" : "cursor-pointer"}
+                          className="cursor-move"
                           style={{ pointerEvents: 'all' }}
                         >
                           <defs>
@@ -1067,9 +1033,9 @@ const ScoutingNetworkMap = () => {
                             cy={pos.y}
                             r="6"
                             fill="none"
-                            stroke={!isLocked ? "hsl(var(--primary))" : "white"}
-                            strokeWidth={!isLocked ? "2" : "1.5"}
-                            className={!isLocked ? "" : "hover:stroke-primary transition-colors"}
+                            stroke="hsl(var(--primary))"
+                            strokeWidth="2"
+                            className="hover:stroke-primary-foreground transition-colors"
                           >
                             <title>{club.name}</title>
                           </circle>
@@ -1139,7 +1105,7 @@ const ScoutingNetworkMap = () => {
                 <g 
                   key={`single-club-${idx}`}
                   onMouseDown={(e) => handleClubDragStart(club.name, e)}
-                  className={!isLocked ? "cursor-move" : "cursor-pointer"}
+                  className="cursor-move"
                   style={{ pointerEvents: 'all' }}
                 >
                   <defs>
@@ -1160,9 +1126,9 @@ const ScoutingNetworkMap = () => {
                     cy={pos.y}
                     r="5"
                     fill="none"
-                    stroke={!isLocked ? "hsl(var(--primary))" : "white"}
-                    strokeWidth={!isLocked ? "2" : "1"}
-                    className={!isLocked ? "" : "hover:stroke-primary transition-colors"}
+                    stroke="hsl(var(--primary))"
+                    strokeWidth="2"
+                    className="hover:stroke-primary-foreground transition-colors"
                   >
                     <title>{club.name} - {club.city}, {club.country}</title>
                   </circle>
@@ -1243,24 +1209,11 @@ const ScoutingNetworkMap = () => {
             >
               <span>{showGrid ? "Hide" : "Show"} Grid</span>
             </button>
-            <button
-              onClick={handleLockToggle}
-              className={`flex items-center gap-2 px-3 py-1 rounded border transition-colors ${
-                isLocked 
-                  ? "border-border hover:bg-accent" 
-                  : "border-primary bg-primary/10 hover:bg-primary/20"
-              }`}
-            >
-              {isLocked ? <Lock className="h-4 w-4" /> : <Unlock className="h-4 w-4" />}
-              <span>{isLocked ? "Unlock to Reposition" : "Lock & Save Positions"}</span>
-            </button>
             <div className="flex items-center gap-2 text-muted-foreground">
               <span>
-                {!isLocked 
-                  ? "Drag club logos to reposition them" 
-                  : zoomLevel === 0 
-                    ? "Click country flag, list, or gold club cluster to zoom in" 
-                    : "Click map to zoom out"}
+                {zoomLevel === 0 
+                  ? "Click country flag, list, or gold club cluster to zoom in • Drag club logos in expanded cities to reposition" 
+                  : "Click map to zoom out • Drag club logos to reposition"}
               </span>
             </div>
           </div>
