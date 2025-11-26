@@ -2,12 +2,13 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar as CalendarIcon, FileText, Image, Table, Folder, HardDrive, ExternalLink, Upload, Trash2, Play } from "lucide-react";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Calendar as CalendarIcon, FileText, Image, Table, Folder, HardDrive, ExternalLink, Upload, Trash2, Play, ChevronDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Calendar, momentLocalizer, Event as CalendarEvent } from 'react-big-calendar';
@@ -747,6 +748,9 @@ export const MarketingManagement = ({ isAdmin, isMarketeer }: { isAdmin: boolean
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Upload Media</DialogTitle>
+            <DialogDescription>
+              Upload images or videos to your marketing gallery
+            </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleFileUpload} className="space-y-4">
             <div>
@@ -850,6 +854,9 @@ export const MarketingManagement = ({ isAdmin, isMarketeer }: { isAdmin: boolean
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Create Campaign</DialogTitle>
+            <DialogDescription>
+              Plan and schedule a new marketing campaign
+            </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleCampaignSubmit} className="space-y-4">
             <div>
@@ -977,57 +984,71 @@ export const MarketingManagement = ({ isAdmin, isMarketeer }: { isAdmin: boolean
         <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Import Videos from Player Clips</DialogTitle>
+            <DialogDescription>
+              Select player highlights to import to your marketing gallery
+            </DialogDescription>
           </DialogHeader>
-          <div className="space-y-6">
+          <div className="space-y-4">
             {playerHighlights.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 <Play className="w-12 h-12 mx-auto mb-3 opacity-50" />
                 <p>No player highlights available to import</p>
               </div>
             ) : (
-              playerHighlights.map((player) => {
-                const highlights = player.highlights as any;
-                const videos = highlights?.videos || highlights?.clips || [];
-                
-                if (!Array.isArray(videos) || videos.length === 0) return null;
-                
-                return (
-                  <div key={player.id} className="border rounded-lg p-4">
-                    <h3 className="font-semibold text-lg mb-3">{player.name}</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {videos.map((video: any, index: number) => {
-                        const videoUrl = video.url || video.videoUrl || video;
-                        const videoTitle = video.title || video.name || `Highlight ${index + 1}`;
-                        
-                        if (typeof videoUrl !== 'string') return null;
-                        
-                        return (
-                          <Card key={index} className="overflow-hidden">
-                            <div className="relative aspect-video bg-muted">
-                              <video
-                                src={videoUrl}
-                                className="w-full h-full object-cover"
-                                controls
-                              />
-                            </div>
-                            <CardContent className="p-3">
-                              <p className="text-sm font-medium mb-2">{videoTitle}</p>
-                              <Button
-                                size="sm"
-                                className="w-full"
-                                onClick={() => handleImportVideo(player.id, player.name, videoUrl, videoTitle)}
-                                disabled={importing}
-                              >
-                                {importing ? 'Importing...' : 'Import to Gallery'}
-                              </Button>
-                            </CardContent>
-                          </Card>
-                        );
-                      })}
-                    </div>
-                  </div>
-                );
-              })
+              <Accordion type="single" collapsible className="w-full">
+                {playerHighlights.map((player) => {
+                  const highlights = player.highlights as any;
+                  const videos = highlights?.videos || highlights?.clips || [];
+                  
+                  if (!Array.isArray(videos) || videos.length === 0) return null;
+                  
+                  return (
+                    <AccordionItem key={player.id} value={player.id}>
+                      <AccordionTrigger className="hover:no-underline">
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold">{player.name}</span>
+                          <span className="text-sm text-muted-foreground">
+                            ({videos.length} {videos.length === 1 ? 'clip' : 'clips'})
+                          </span>
+                        </div>
+                      </AccordionTrigger>
+                      <AccordionContent>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                          {videos.map((video: any, index: number) => {
+                            const videoUrl = video.url || video.videoUrl || video;
+                            const videoTitle = video.title || video.name || `Highlight ${index + 1}`;
+                            
+                            if (typeof videoUrl !== 'string') return null;
+                            
+                            return (
+                              <Card key={index} className="overflow-hidden">
+                                <div className="relative aspect-video bg-muted">
+                                  <video
+                                    src={videoUrl}
+                                    className="w-full h-full object-cover"
+                                    controls
+                                  />
+                                </div>
+                                <CardContent className="p-3">
+                                  <p className="text-sm font-medium mb-2">{videoTitle}</p>
+                                  <Button
+                                    size="sm"
+                                    className="w-full"
+                                    onClick={() => handleImportVideo(player.id, player.name, videoUrl, videoTitle)}
+                                    disabled={importing}
+                                  >
+                                    {importing ? 'Importing...' : 'Import to Gallery'}
+                                  </Button>
+                                </CardContent>
+                              </Card>
+                            );
+                          })}
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                  );
+                })}
+              </Accordion>
             )}
           </div>
         </DialogContent>
