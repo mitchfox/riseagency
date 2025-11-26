@@ -145,8 +145,8 @@ const Index = () => {
                       <div className="text-sm uppercase tracking-wider text-muted-foreground text-center">Click to learn more</div>
                     </div>
                     {/* Back */}
-                    <div className="flip-card-back absolute inset-0 rounded-lg border border-primary/30 bg-primary/10 backdrop-blur-sm p-6 flex flex-col items-center justify-center">
-                      <div className="text-2xl font-bebas text-primary mb-3 text-center">ELITE EXPERIENCE</div>
+                    <div className="flip-card-back absolute inset-0 rounded-lg border border-primary/30 bg-background/95 backdrop-blur-sm p-6 flex flex-col justify-center">
+                      <div className="text-2xl font-bebas text-primary mb-4 text-center">ELITE EXPERIENCE</div>
                       <p className="text-sm text-foreground text-center leading-relaxed">
                         Our founder's background includes personal training elite players across Europe's biggest leagues, bringing world-class expertise to every client.
                       </p>
@@ -166,8 +166,8 @@ const Index = () => {
                       <div className="text-sm uppercase tracking-wider text-muted-foreground text-center">Click to learn more</div>
                     </div>
                     {/* Back */}
-                    <div className="flip-card-back absolute inset-0 rounded-lg border border-primary/30 bg-primary/10 backdrop-blur-sm p-6 flex flex-col items-center justify-center">
-                      <div className="text-2xl font-bebas text-primary mb-3 text-center">CERTIFIED & APPROVED</div>
+                    <div className="flip-card-back absolute inset-0 rounded-lg border border-primary/30 bg-background/95 backdrop-blur-sm p-6 flex flex-col justify-center">
+                      <div className="text-2xl font-bebas text-primary mb-4 text-center">CERTIFIED & APPROVED</div>
                       <p className="text-sm text-foreground text-center leading-relaxed">
                         FIFA licensed intermediaries and approved by football's governing bodies, ensuring full compliance and professional representation.
                       </p>
@@ -187,8 +187,8 @@ const Index = () => {
                       <div className="text-sm uppercase tracking-wider text-muted-foreground text-center">Click to learn more</div>
                     </div>
                     {/* Back */}
-                    <div className="flip-card-back absolute inset-0 rounded-lg border border-primary/30 bg-primary/10 backdrop-blur-sm p-6 flex flex-col items-center justify-center">
-                      <div className="text-2xl font-bebas text-primary mb-3 text-center">GLOBAL NETWORK</div>
+                    <div className="flip-card-back absolute inset-0 rounded-lg border border-primary/30 bg-background/95 backdrop-blur-sm p-6 flex flex-col justify-center">
+                      <div className="text-2xl font-bebas text-primary mb-4 text-center">GLOBAL NETWORK</div>
                       <p className="text-sm text-foreground text-center leading-relaxed">
                         Extensive club network spanning top European leagues and beyond, providing unparalleled access and opportunities for our clients.
                       </p>
@@ -197,6 +197,61 @@ const Index = () => {
                 </div>
               </div>
             </div>
+          </div>
+        </section>
+
+        {/* INSIDE:ACCESS Section */}
+        {insideAccessArticles.length > 0 && (
+          <section className="py-12 md:py-16 px-4 bg-background">
+            <div className="container mx-auto max-w-7xl w-full">
+              <div className="text-center mb-6 space-y-3">
+              <div className="inline-block">
+                <span className="text-sm font-bebas uppercase tracking-widest text-primary border border-primary/30 px-6 py-2 rounded-full">
+                  Exclusive
+                </span>
+              </div>
+                <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-foreground">
+                  INSIDE<span className="text-primary">:ACCESS</span>
+                </h2>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                {insideAccessArticles.map((article, index) => (
+                  article.image_url && (
+                    <Link
+                      key={article.id}
+                      to={`/news/${article.id}`}
+                      className={`group relative aspect-[4/5] overflow-hidden rounded-lg ${
+                        index >= 2 ? 'hidden md:block' : ''
+                      }`}
+                    >
+                      <img 
+                        src={article.image_url} 
+                        alt={article.title}
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                      />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    </Link>
+                  )
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* Club Network Map Section */}
+        <section className="py-12 md:py-16 px-4 bg-background">
+          <div className="container mx-auto max-w-7xl">
+            <div className="text-center mb-8 space-y-3">
+              <div className="inline-block">
+                <span className="text-sm font-bebas uppercase tracking-widest text-primary border border-primary/30 px-6 py-2 rounded-full">
+                  Eyes Across The Game
+                </span>
+              </div>
+              <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-foreground">
+                SCOUTING <span className="text-primary">NETWORK</span>
+              </h2>
+            </div>
+            <ScoutingNetworkMap />
           </div>
         </section>
 
@@ -272,61 +327,6 @@ const Index = () => {
                 </Link>
               ))}
             </div>
-          </div>
-        </section>
-
-        {/* INSIDE:ACCESS Section */}
-        {insideAccessArticles.length > 0 && (
-          <section className="py-12 md:py-16 px-4 bg-background">
-            <div className="container mx-auto max-w-7xl w-full">
-              <div className="text-center mb-6 space-y-3">
-              <div className="inline-block">
-                <span className="text-sm font-bebas uppercase tracking-widest text-primary border border-primary/30 px-6 py-2 rounded-full">
-                  Exclusive
-                </span>
-              </div>
-                <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-foreground">
-                  INSIDE<span className="text-primary">:ACCESS</span>
-                </h2>
-              </div>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {insideAccessArticles.map((article, index) => (
-                  article.image_url && (
-                    <Link
-                      key={article.id}
-                      to={`/news/${article.id}`}
-                      className={`group relative aspect-[4/5] overflow-hidden rounded-lg ${
-                        index >= 2 ? 'hidden md:block' : ''
-                      }`}
-                    >
-                      <img 
-                        src={article.image_url} 
-                        alt={article.title}
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                      />
-                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                    </Link>
-                  )
-                ))}
-              </div>
-            </div>
-          </section>
-        )}
-
-        {/* Club Network Map Section */}
-        <section className="py-12 md:py-16 px-4 bg-background">
-          <div className="container mx-auto max-w-7xl">
-            <div className="text-center mb-8 space-y-3">
-              <div className="inline-block">
-                <span className="text-sm font-bebas uppercase tracking-widest text-primary border border-primary/30 px-6 py-2 rounded-full">
-                  Eyes Across The Game
-                </span>
-              </div>
-              <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-foreground">
-                SCOUTING <span className="text-primary">NETWORK</span>
-              </h2>
-            </div>
-            <ScoutingNetworkMap />
           </div>
         </section>
 
