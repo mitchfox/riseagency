@@ -997,8 +997,26 @@ export const MarketingManagement = ({ isAdmin, isMarketeer }: { isAdmin: boolean
             ) : (
               <Accordion type="single" collapsible className="w-full">
                 {playerHighlights.map((player) => {
-                  const highlights = player.highlights as any;
-                  const videos = highlights?.videos || highlights?.clips || [];
+                  let highlights = player.highlights as any;
+
+                  // Handle potential stringified JSON
+                  if (typeof highlights === 'string') {
+                    try {
+                      highlights = JSON.parse(highlights);
+                    } catch (e) {
+                      console.error('Failed to parse highlights JSON for player', player.id, e);
+                      highlights = {};
+                    }
+                  }
+
+                  const matchHighlights = Array.isArray(highlights?.matchHighlights)
+                    ? highlights.matchHighlights
+                    : [];
+                  const bestClips = Array.isArray(highlights?.bestClips)
+                    ? highlights.bestClips
+                    : [];
+
+                  const videos = [...matchHighlights, ...bestClips];
                   
                   if (!Array.isArray(videos) || videos.length === 0) return null;
                   
