@@ -455,7 +455,7 @@ export const Header = () => {
                       style={{
                         transform: hoveredCard === 'top-left' ? 'translateY(20px)' : 
                                    hoveredCard === 'bottom-left' ? 'translateY(20px)' :
-                                   hoveredCard === 'top-right' ? 'translateY(20px)' : 
+                                   hoveredCard === 'top-right' ? 'translateY(-20px)' : 
                                    hoveredCard === 'bottom-right' ? 'translateY(20px)' : 'translateY(0)'
                       }}
                     >
@@ -578,9 +578,9 @@ export const Header = () => {
                       onMouseLeave={() => setHoveredCard(null)}
                       style={{
                         transform: hoveredCard === 'bottom-left' ? 'translateY(-20px)' :
-                                   hoveredCard === 'top-left' ? 'translateY(-20px)' :
+                                   hoveredCard === 'top-left' ? 'translateY(20px)' :
                                    hoveredCard === 'top-right' ? 'translateY(-20px)' : 
-                                   hoveredCard === 'bottom-right' ? 'translateY(-20px)' : 'translateY(0)'
+                                   hoveredCard === 'bottom-right' ? 'translateY(20px)' : 'translateY(0)'
                       }}
                     >
                       <div 
@@ -636,7 +636,7 @@ export const Header = () => {
                     style={{
                       transform: hoveredCard === 'top-right' ? 'translateY(20px)' :
                                  hoveredCard === 'bottom-right' ? 'translateY(20px)' :
-                                 hoveredCard === 'top-left' ? 'translateY(20px)' : 
+                                 hoveredCard === 'top-left' ? 'translateY(-20px)' : 
                                  hoveredCard === 'bottom-left' ? 'translateY(20px)' : 'translateY(0)'
                     }}
                   >
@@ -679,9 +679,9 @@ export const Header = () => {
                       }}
                       style={{
                         transform: hoveredCard === 'bottom-right' ? 'translateY(-20px)' :
-                                   hoveredCard === 'top-right' ? 'translateY(-20px)' :
+                                   hoveredCard === 'top-right' ? 'translateY(20px)' :
                                    hoveredCard === 'top-left' ? 'translateY(-20px)' : 
-                                   hoveredCard === 'bottom-left' ? 'translateY(-20px)' : 'translateY(0)'
+                                   hoveredCard === 'bottom-left' ? 'translateY(20px)' : 'translateY(0)'
                       }}
                     >
                       <div 
