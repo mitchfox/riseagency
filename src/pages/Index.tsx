@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import { WorkWithUsDialog } from "@/components/WorkWithUsDialog";
 import { IntroModal } from "@/components/IntroModal";
 import { SEO } from "@/components/SEO";
+import { VideoPortfolio } from "@/components/VideoPortfolio";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import bannerHero from "@/assets/banner-hero-team.jpg";
@@ -310,151 +311,24 @@ const Index = () => {
           </div>
         </section>
 
-        {/* Inbound CTA Section */}
-        <section className="py-12 md:py-16 px-4 bg-background relative overflow-hidden">
+        {/* Video Portfolio Section */}
+        <section className="py-12 md:py-20 px-4 bg-background relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-transparent to-primary/5"></div>
           <div className="container mx-auto max-w-7xl relative z-10">
-            <div className="text-center mb-12 space-y-3">
-              <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider">
+            <VideoPortfolio />
+            
+            <div className="text-center mt-12 space-y-6">
+              <h2 className="text-4xl md:text-6xl lg:text-7xl font-bebas uppercase tracking-wider">
                 <span className="text-foreground">REALISE </span>
                 <span className="text-primary">POTENTIAL</span>
               </h2>
-            </div>
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-              {/* Players */}
-              <div className="relative overflow-hidden rounded-2xl group cursor-pointer">
-                <div className="aspect-[4/5] relative">
-                  <img 
-                    src={playersNetwork} 
-                    alt="Players" 
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent opacity-90 group-hover:opacity-95 transition-opacity duration-300" />
-                </div>
-                <div className="absolute inset-0 flex flex-col items-center justify-between p-8 text-center">
-                  <div className="flex-1 flex items-center">
-                    <h3 className="text-4xl font-bebas uppercase tracking-wider text-white transform transition-transform duration-300 group-hover:-translate-y-2">
-                      Players
-                    </h3>
-                  </div>
-                  <div className="flex-1 flex items-center">
-                    <p className="text-white/90 text-sm leading-relaxed transform transition-transform duration-300 group-hover:-translate-y-2">
-                      Take your career to the next level with professional representation
-                    </p>
-                  </div>
-                  <div className="flex-1 flex items-end w-full">
-                    <Button 
-                      asChild
-                      size="lg" 
-                      className="btn-shine w-full text-lg font-bebas uppercase tracking-wider transform transition-transform duration-300 group-hover:-translate-y-2"
-                    >
-                      <Link to="/stars">Learn More</Link>
-                    </Button>
-                  </div>
-                </div>
-              </div>
-
-              {/* Clubs */}
-              <div className="relative overflow-hidden rounded-2xl group cursor-pointer">
-                <div className="aspect-[4/5] relative">
-                  <img 
-                    src={clubsNetwork} 
-                    alt="Clubs" 
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent opacity-90 group-hover:opacity-95 transition-opacity duration-300" />
-                </div>
-                <div className="absolute inset-0 flex flex-col items-center justify-between p-8 text-center">
-                  <div className="flex-1 flex items-center">
-                    <h3 className="text-4xl font-bebas uppercase tracking-wider text-white transform transition-transform duration-300 group-hover:-translate-y-2">
-                      Clubs
-                    </h3>
-                  </div>
-                  <div className="flex-1 flex items-center">
-                    <p className="text-white/90 text-sm leading-relaxed transform transition-transform duration-300 group-hover:-translate-y-2">
-                      Discover top talent for your squad through our extensive network
-                    </p>
-                  </div>
-                  <div className="flex-1 flex items-end w-full">
-                    <Button 
-                      asChild
-                      size="lg" 
-                      className="btn-shine w-full text-lg font-bebas uppercase tracking-wider transform transition-transform duration-300 group-hover:-translate-y-2"
-                    >
-                      <Link to="/clubs">Learn More</Link>
-                    </Button>
-                  </div>
-                </div>
-              </div>
-
-              {/* Scouts */}
-              <div className="relative overflow-hidden rounded-2xl group cursor-pointer">
-                <div className="aspect-[4/5] relative">
-                  <img 
-                    src={scoutsNetwork} 
-                    alt="Scouts" 
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent opacity-90 group-hover:opacity-95 transition-opacity duration-300" />
-                </div>
-                <div className="absolute inset-0 flex flex-col items-center justify-between p-8 text-center">
-                  <div className="flex-1 flex items-center">
-                    <h3 className="text-4xl font-bebas uppercase tracking-wider text-white transform transition-transform duration-300 group-hover:-translate-y-2">
-                      Scouts
-                    </h3>
-                  </div>
-                  <div className="flex-1 flex items-center">
-                    <p className="text-white/90 text-sm leading-relaxed transform transition-transform duration-300 group-hover:-translate-y-2">
-                      Collaborate with us to identify and develop emerging talent
-                    </p>
-                  </div>
-                  <div className="flex-1 flex items-end w-full">
-                    <Button 
-                      asChild
-                      size="lg" 
-                      className="btn-shine w-full text-lg font-bebas uppercase tracking-wider transform transition-transform duration-300 group-hover:-translate-y-2"
-                    >
-                      <Link to="/scouts">Learn More</Link>
-                    </Button>
-                  </div>
-                </div>
-              </div>
-
-              {/* Coaches */}
-              <div className="relative overflow-hidden rounded-2xl group cursor-pointer">
-                <div className="aspect-[4/5] relative">
-                  <img 
-                    src={coachesNetwork} 
-                    alt="Coaches" 
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent opacity-90 group-hover:opacity-95 transition-opacity duration-300" />
-                </div>
-                <div className="absolute inset-0 flex flex-col items-center justify-between p-8 text-center">
-                  <div className="flex-1 flex items-center">
-                    <h3 className="text-4xl font-bebas uppercase tracking-wider text-white transform transition-transform duration-300 group-hover:-translate-y-2">
-                      Coaches
-                    </h3>
-                  </div>
-                  <div className="flex-1 flex items-center">
-                    <p className="text-white/90 text-sm leading-relaxed transform transition-transform duration-300 group-hover:-translate-y-2">
-                      Connect with professional representation for your coaching career
-                    </p>
-                  </div>
-                  <div className="flex-1 flex items-end w-full">
-                    <Button 
-                      asChild
-                      size="lg" 
-                      className="btn-shine w-full text-lg font-bebas uppercase tracking-wider transform transition-transform duration-300 group-hover:-translate-y-2"
-                    >
-                      <Link to="/coaches">Learn More</Link>
-                    </Button>
-                  </div>
-                </div>
-              </div>
+              <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto font-light tracking-wide italic">
+                Elite Football Representation & Performance Optimisation
+              </p>
             </div>
           </div>
         </section>
+
 
 
         {/* Services Section for Players - HIDDEN */}
