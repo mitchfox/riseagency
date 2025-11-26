@@ -48,8 +48,14 @@ export const VideoScene3D = () => {
     if (hoveredIndex !== null) {
       return hoveredIndex === index ? "flex-[2.5]" : "flex-[0.7]";
     }
-    // Use continuous animation weights
-    return `flex-[${videoWeights[index].toFixed(2)}]`;
+    // Use continuous animation weights - map to predefined flex classes
+    const weight = videoWeights[index];
+    if (weight < 1.2) return "flex-[0.8]";
+    if (weight < 1.4) return "flex-1";
+    if (weight < 1.6) return "flex-[1.2]";
+    if (weight < 1.8) return "flex-[1.5]";
+    if (weight < 2.0) return "flex-[1.8]";
+    return "flex-[2.2]";
   };
 
   return (

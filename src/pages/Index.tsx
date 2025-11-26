@@ -81,47 +81,20 @@ const Index = () => {
       <IntroModal open={showIntroModal} onOpenChange={setShowIntroModal} />
       {!showIntroModal && <Header />}
       <div className="bg-background min-h-screen">
-        {/* WATCH NOW Section - Moved to top */}
-        <section className="pt-16 md:pt-14 py-12 md:py-16 px-4 bg-muted/30">
-          <div className="container mx-auto max-w-7xl">
-            <div className="text-center mb-6 space-y-3">
-              <div className="inline-block">
-                <span className="text-sm font-bebas uppercase tracking-widest text-primary border border-primary/30 px-6 py-2 rounded-full">
-                  Video
-                </span>
-              </div>
-              <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-foreground">
-                WATCH <span className="text-primary">NOW</span>
+        {/* Video Portfolio Section - Moved to top */}
+        <section className="pt-16 md:pt-14 py-12 md:py-20 px-4 bg-background relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-transparent to-primary/5"></div>
+          <div className="container mx-auto max-w-7xl relative z-10">
+            <VideoPortfolio />
+            
+            <div className="text-center mt-12 space-y-6">
+              <h2 className="text-4xl md:text-6xl lg:text-7xl font-bebas uppercase tracking-wider">
+                <span className="text-foreground">REALISE </span>
+                <span className="text-primary">POTENTIAL</span>
               </h2>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {/* Video 1 */}
-              <div className="relative aspect-video rounded-xl overflow-hidden border border-border shadow-lg">
-                <iframe
-                  width="100%"
-                  height="100%"
-                  src="https://www.youtube.com/embed/pWH2cdmzwVg?rel=0"
-                  title="RISE Football Video 1"
-                  frameBorder="0"
-                  allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                  className="absolute inset-0 w-full h-full"
-                />
-              </div>
-
-              {/* Video 2 - Hidden on mobile */}
-              <div className="relative aspect-video rounded-xl overflow-hidden border border-border shadow-lg hidden md:block">
-                <iframe
-                  width="100%"
-                  height="100%"
-                  src="https://www.youtube.com/embed/XtmRhHvXeyo?rel=0"
-                  title="RISE Football Video 2"
-                  frameBorder="0"
-                  allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                  className="absolute inset-0 w-full h-full"
-                />
-              </div>
+              <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto font-light tracking-wide italic">
+                Elite Football Representation & Performance Optimisation
+              </p>
             </div>
           </div>
         </section>
@@ -282,20 +255,47 @@ const Index = () => {
           </section>
         )}
 
-        {/* Video Portfolio Section */}
-        <section className="py-12 md:py-20 px-4 bg-background relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-transparent to-primary/5"></div>
-          <div className="container mx-auto max-w-7xl relative z-10">
-            <VideoPortfolio />
-            
-            <div className="text-center mt-12 space-y-6">
-              <h2 className="text-4xl md:text-6xl lg:text-7xl font-bebas uppercase tracking-wider">
-                <span className="text-foreground">REALISE </span>
-                <span className="text-primary">POTENTIAL</span>
+        {/* WATCH NOW Section */}
+        <section className="py-12 md:py-16 px-4 bg-muted/30">
+          <div className="container mx-auto max-w-7xl">
+            <div className="text-center mb-6 space-y-3">
+              <div className="inline-block">
+                <span className="text-sm font-bebas uppercase tracking-widest text-primary border border-primary/30 px-6 py-2 rounded-full">
+                  Video
+                </span>
+              </div>
+              <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-foreground">
+                WATCH <span className="text-primary">NOW</span>
               </h2>
-              <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto font-light tracking-wide italic">
-                Elite Football Representation & Performance Optimisation
-              </p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {/* Video 1 */}
+              <div className="relative aspect-video rounded-xl overflow-hidden border border-border shadow-lg">
+                <iframe
+                  width="100%"
+                  height="100%"
+                  src="https://www.youtube.com/embed/pWH2cdmzwVg?rel=0"
+                  title="RISE Football Video 1"
+                  frameBorder="0"
+                  allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  className="absolute inset-0 w-full h-full"
+                />
+              </div>
+
+              {/* Video 2 - Hidden on mobile */}
+              <div className="relative aspect-video rounded-xl overflow-hidden border border-border shadow-lg hidden md:block">
+                <iframe
+                  width="100%"
+                  height="100%"
+                  src="https://www.youtube.com/embed/XtmRhHvXeyo?rel=0"
+                  title="RISE Football Video 2"
+                  frameBorder="0"
+                  allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  className="absolute inset-0 w-full h-full"
+                />
+              </div>
             </div>
           </div>
         </section>
