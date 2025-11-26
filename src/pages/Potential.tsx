@@ -14,6 +14,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { SkillEvaluationForm } from "@/components/staff/SkillEvaluationForm";
 import { initializeSkillEvaluations, SkillEvaluation, SCOUTING_POSITIONS, ScoutingPosition } from "@/data/scoutingSkills";
+import ScoutingNetworkMap from "@/components/ScoutingNetworkMap";
+import { Globe, TrendingUp, Award, Users2 } from "lucide-react";
 
 // Map form positions to scouting positions
 const positionMapping: Record<string, ScoutingPosition> = {
@@ -116,6 +118,34 @@ const Potential = () => {
       return data;
     },
   });
+
+  // Fetch all player names to determine exclusive vs contributor
+  const { data: allPlayerNames = [] } = useQuery({
+    queryKey: ["all-player-names"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("scouting_reports")
+        .select("player_name, scout_id, created_at")
+        .order("created_at", { ascending: true });
+      
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Calculate exclusive rights and contributor players
+  const playerRights = submissions.reduce((acc, report) => {
+    const playerName = report.player_name.toLowerCase();
+    const earliestReport = allPlayerNames.find(r => r.player_name.toLowerCase() === playerName);
+    
+    if (earliestReport?.scout_id === scout?.id) {
+      acc.exclusive.push(report);
+    } else {
+      acc.contributor.push(report);
+    }
+    
+    return acc;
+  }, { exclusive: [] as any[], contributor: [] as any[] });
 
   // Save draft mutation
   const saveDraftMutation = useMutation({
@@ -340,8 +370,12 @@ const Potential = () => {
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
-        <Tabs defaultValue="submissions" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
+        <Tabs defaultValue="overview" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="overview">
+              <Globe className="h-4 w-4 mr-2" />
+              Overview
+            </TabsTrigger>
             <TabsTrigger value="submissions">
               <Users className="h-4 w-4 mr-2" />
               My Submissions
@@ -355,6 +389,161 @@ const Potential = () => {
               Messages
             </TabsTrigger>
           </TabsList>
+
+          {/* Overview Tab */}
+          <TabsContent value="overview" className="space-y-6">
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Card>
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-sm font-medium text-muted-foreground">
+                      Total Submissions
+                    </CardTitle>
+                    <TrendingUp className="h-4 w-4 text-primary" />
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold">{submissions.length}</div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    All time reports
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-sm font-medium text-muted-foreground">
+                      Exclusive Rights
+                    </CardTitle>
+                    <Award className="h-4 w-4 text-green-500" />
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold text-green-500">
+                    {playerRights.exclusive.length}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    New to database
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-sm font-medium text-muted-foreground">
+                      Contributors
+                    </CardTitle>
+                    <Users2 className="h-4 w-4 text-blue-500" />
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold text-blue-500">
+                    {playerRights.contributor.length}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Existing players
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Scouting Map */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Your Scouting Network</CardTitle>
+                <CardDescription>
+                  Geographic reach of your scouting reports
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="h-[500px] rounded-lg overflow-hidden border border-border">
+                  <ScoutingNetworkMap />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Player Rights Breakdown */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Award className="h-5 w-5 text-green-500" />
+                    Exclusive Rights Players
+                  </CardTitle>
+                  <CardDescription>
+                    First to report on these players - full commission guaranteed
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ScrollArea className="h-[300px]">
+                    {playerRights.exclusive.length === 0 ? (
+                      <p className="text-sm text-muted-foreground text-center py-8">
+                        No exclusive rights players yet
+                      </p>
+                    ) : (
+                      <div className="space-y-2">
+                        {playerRights.exclusive.map((report: any) => (
+                          <div
+                            key={report.id}
+                            className="p-3 rounded-lg border border-border bg-card hover:bg-accent/5 transition-colors"
+                          >
+                            <div className="font-medium">{report.player_name}</div>
+                            <div className="text-xs text-muted-foreground">
+                              {report.position} • {report.current_club}
+                            </div>
+                            <div className="text-xs text-muted-foreground mt-1">
+                              Submitted {new Date(report.created_at).toLocaleDateString()}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </ScrollArea>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Users2 className="h-5 w-5 text-blue-500" />
+                    Contributor Players
+                  </CardTitle>
+                  <CardDescription>
+                    Additional reports on existing players - commission may be rewarded
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ScrollArea className="h-[300px]">
+                    {playerRights.contributor.length === 0 ? (
+                      <p className="text-sm text-muted-foreground text-center py-8">
+                        No contributor reports yet
+                      </p>
+                    ) : (
+                      <div className="space-y-2">
+                        {playerRights.contributor.map((report: any) => (
+                          <div
+                            key={report.id}
+                            className="p-3 rounded-lg border border-border bg-card hover:bg-accent/5 transition-colors"
+                          >
+                            <div className="font-medium">{report.player_name}</div>
+                            <div className="text-xs text-muted-foreground">
+                              {report.position} • {report.current_club}
+                            </div>
+                            <div className="text-xs text-muted-foreground mt-1">
+                              Submitted {new Date(report.created_at).toLocaleDateString()}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </ScrollArea>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
 
           {/* My Submissions Tab */}
           <TabsContent value="submissions" className="space-y-4">
