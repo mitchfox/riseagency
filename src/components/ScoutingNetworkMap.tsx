@@ -175,7 +175,30 @@ const ScoutingNetworkMap = () => {
     }));
   };
   
-  const handleMapMouseUp = () => {
+  const handleMapMouseUp = async () => {
+    if (draggingClub && clubPositions[draggingClub]) {
+      // Save the club position to database immediately
+      const position = clubPositions[draggingClub];
+      const club = footballClubs.find(c => c.name === draggingClub);
+      
+      if (club) {
+        const { data: existing } = await supabase
+          .from('club_network_contacts')
+          .select('id')
+          .eq('name', club.name)
+          .maybeSingle();
+        
+        if (existing) {
+          await supabase
+            .from('club_network_contacts')
+            .update({
+              x_position: position.x,
+              y_position: position.y
+            })
+            .eq('id', existing.id);
+        }
+      }
+    }
     setDraggingClub(null);
   };
   
