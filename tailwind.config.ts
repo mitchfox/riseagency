@@ -142,18 +142,18 @@ export default {
             transform: "rotate(0deg) translateY(0)",
           },
           "100%": { 
-            transform: "rotate(0deg)",
+            transform: "rotate(45deg) translateY(0)",
           },
         },
         "menu-open-line-2": {
           "0%": { 
-            transform: "rotate(-45deg) translateY(-4px) translateX(2px)",
+            transform: "rotate(-45deg) translateY(-4px)",
           },
           "50%": {
-            transform: "rotate(0deg) translateY(0) translateX(0)",
+            transform: "rotate(0deg) translateY(0)",
           },
           "100%": { 
-            transform: "rotate(0deg)",
+            transform: "rotate(-45deg) translateY(0)",
           },
         },
         "color-to-gold": {
