@@ -790,6 +790,17 @@ const ScoutingNetworkMap = () => {
       y: centerY + radius * Math.sin(angle)
     };
   };
+  
+  // Calculate font size to fit text within circle
+  const getCityFontSize = (cityName: string, circleRadius: number) => {
+    // Approximate character width is about 60% of font size
+    const textLength = cityName.length;
+    // We want text width to be about 80% of circle diameter to have some padding
+    const maxTextWidth = circleRadius * 2 * 0.8;
+    const approximateFontSize = maxTextWidth / (textLength * 0.6);
+    // Clamp between 2 and 6 for readability
+    return Math.max(2, Math.min(6, approximateFontSize));
+  };
 
   const handleCountryListClick = (country: string, x: number, y: number) => {
     setSelectedCountry(country);
@@ -988,7 +999,7 @@ const ScoutingNetworkMap = () => {
                         y={cityGroup.y}
                         textAnchor="middle"
                         dominantBaseline="central"
-                        fontSize="5"
+                        fontSize={getCityFontSize(cityGroup.cityName, 10)}
                         fontWeight="bold"
                         fill="white"
                         className="pointer-events-none uppercase"
@@ -1061,7 +1072,7 @@ const ScoutingNetworkMap = () => {
                     y={cityGroup.y - 2}
                     textAnchor="middle"
                     dominantBaseline="central"
-                    fontSize="5"
+                    fontSize={getCityFontSize(cityGroup.cityName, 12)}
                     fontWeight="bold"
                     fill="white"
                     className="pointer-events-none uppercase"
