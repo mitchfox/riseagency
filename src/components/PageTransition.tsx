@@ -6,64 +6,52 @@ export const PageTransition = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [prevPath, setPrevPath] = useState(location.pathname);
+  const [frozenContent, setFrozenContent] = useState<React.ReactNode>(null);
 
-  // Refs to capture old and new page content
-  const prevChildrenRef = useRef(children);
-  const nextChildrenRef = useRef(children);
-  const isTransitioningRef = useRef(false);
-
-  const [displayChildren, setDisplayChildren] = useState(children);
-
-  // Handle route changes and drive transition timing
   useEffect(() => {
     // Only trigger transition if path actually changed
     if (location.pathname === prevPath) {
       return;
     }
 
-    // Start transition - lock in the old content
-    isTransitioningRef.current = true;
+    // Freeze the current content as an overlay before React Router updates
+    setFrozenContent(children);
+    
+    // Start transition
     setIsTransitioning(true);
-
-    // Ensure prevChildrenRef holds whatever is currently on screen (old page)
-    prevChildrenRef.current = displayChildren;
-
     setPrevPath(location.pathname);
 
-    // Keep showing old page content during transition-out
-    setDisplayChildren(prevChildrenRef.current);
-
-    // Swap to new page content after black circle fully covers the screen
+    // Clear frozen content and show new page after black circle fully covers screen
     const updateTimer = setTimeout(() => {
-      setDisplayChildren(nextChildrenRef.current);
+      setFrozenContent(null);
     }, 5200); // After 5s circle expand + small buffer
 
     // End transition after expand + hold + contract animations
     const endTimer = setTimeout(() => {
       setIsTransitioning(false);
-      isTransitioningRef.current = false;
     }, 11000); // Total: expand (5s) + hold (1s) + contract (5s)
 
     return () => {
       clearTimeout(updateTimer);
       clearTimeout(endTimer);
     };
-  }, [location.pathname, prevPath, displayChildren]);
-
-  // Keep refs in sync with the latest routed children
-  useEffect(() => {
-    // Always track the latest routed children as the next page
-    nextChildrenRef.current = children;
-
-    // When we're not in a transition, keep prev in sync and render normally
-    if (!isTransitioningRef.current) {
-      prevChildrenRef.current = children;
-      setDisplayChildren(children);
-    }
-  }, [children]);
+  }, [location.pathname, prevPath, children]);
 
   return (
     <>
+      {/* New page content - always rendered but hidden during transition */}
+      <div className={frozenContent ? "invisible" : "visible"}>
+        {children}
+      </div>
+
+      {/* Frozen old page content as fixed overlay during transition */}
+      {frozenContent && (
+        <div className="fixed inset-0 z-[150] overflow-auto">
+          {frozenContent}
+        </div>
+      )}
+
+      {/* Black circle transition overlay */}
       {isTransitioning && (
         <div className="fixed inset-0 z-[200] pointer-events-none" key={location.pathname}>
           {/* Black circle expanding from center, behind the logo */}
@@ -95,8 +83,6 @@ export const PageTransition = ({ children }: { children: React.ReactNode }) => {
           </div>
         </div>
       )}
-
-      <div className="opacity-100 transition-opacity duration-300">{displayChildren}</div>
 
       <style>{`
         @keyframes logoFadeIn {
