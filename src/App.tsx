@@ -51,40 +51,42 @@ const App = () => {
           <PageTracker />
           <ScrollToTop />
           <PageTransition>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/intro" element={<Intro />} />
-              <Route path="/stars" element={<Stars />} />
-              <Route path="/stars/:playername" element={<PlayerDetail />} />
-              <Route path="/players" element={<Players />} />
-              <Route path="/players-list" element={<PlayersList />} />
-              <Route path="/players-draft" element={<PlayersDraft />} />
-              <Route path="/clubs" element={<Clubs />} />
-              <Route path="/club-network" element={<ClubNetwork />} />
-              <Route path="/coaches" element={<Coaches />} />
-              <Route path="/scouts" element={<Scouts />} />
-              <Route path="/performance" element={<Performance />} />
-              <Route path="/news" element={<News />} />
-              <Route path="/news/:articleId" element={<News />} />
-              <Route path="/between-the-lines" element={<BetweenTheLines />} />
-              <Route path="/between-the-lines/:articleId" element={<News />} />
-              <Route path="/contact" element={<Contact />} />
-              <Route path="/about" element={<About />} />
-              <Route path="/staff" element={<Staff />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/portal" element={<Dashboard />} />
-              <Route path="/scout-portal" element={<ScoutPortal />} />
-              <Route path="/potential" element={<Potential />} />
-              <Route path="/performance-report/:slug" element={<PerformanceReport />} />
-              <Route path="/analysis/:analysisId" element={<AnalysisViewer />} />
-              <Route path="/import-program" element={<ImportProgramCSV />} />
-              <Route path="/replace-program" element={<ReplaceProgram />} />
-              <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-              <Route path="/terms-of-service" element={<TermsOfService />} />
-              <Route path="/pdf-viewer" element={<PDFViewer />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
+            {(displayLocation) => (
+              <Routes location={displayLocation}>
+                <Route path="/" element={<Index />} />
+                <Route path="/intro" element={<Intro />} />
+                <Route path="/stars" element={<Stars />} />
+                <Route path="/stars/:playername" element={<PlayerDetail />} />
+                <Route path="/players" element={<Players />} />
+                <Route path="/players-list" element={<PlayersList />} />
+                <Route path="/players-draft" element={<PlayersDraft />} />
+                <Route path="/clubs" element={<Clubs />} />
+                <Route path="/club-network" element={<ClubNetwork />} />
+                <Route path="/coaches" element={<Coaches />} />
+                <Route path="/scouts" element={<Scouts />} />
+                <Route path="/performance" element={<Performance />} />
+                <Route path="/news" element={<News />} />
+                <Route path="/news/:articleId" element={<News />} />
+                <Route path="/between-the-lines" element={<BetweenTheLines />} />
+                <Route path="/between-the-lines/:articleId" element={<News />} />
+                <Route path="/contact" element={<Contact />} />
+                <Route path="/about" element={<About />} />
+                <Route path="/staff" element={<Staff />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/portal" element={<Dashboard />} />
+                <Route path="/scout-portal" element={<ScoutPortal />} />
+                <Route path="/potential" element={<Potential />} />
+                <Route path="/performance-report/:slug" element={<PerformanceReport />} />
+                <Route path="/analysis/:analysisId" element={<AnalysisViewer />} />
+                <Route path="/import-program" element={<ImportProgramCSV />} />
+                <Route path="/replace-program" element={<ReplaceProgram />} />
+                <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                <Route path="/terms-of-service" element={<TermsOfService />} />
+                <Route path="/pdf-viewer" element={<PDFViewer />} />
+                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            )}
           </PageTransition>
         </BrowserRouter>
     </TooltipProvider>
