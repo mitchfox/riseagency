@@ -212,7 +212,7 @@ export const Header = () => {
           <Drawer direction="left" modal={false} preventScrollRestoration={false}>
             <DrawerTrigger asChild>
               <button
-                className="group relative flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-primary transition-all duration-300 ease-out w-10 h-10 md:w-12 md:h-12"
+                className="group relative flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-primary transition-all duration-300 ease-out w-10 h-10 md:w-12 md:h-12 -translate-y-[7px]"
                 aria-label="Toggle menu"
               >
                 <svg 
