@@ -11,15 +11,15 @@ export const PageTransition = ({ children }: { children: React.ReactNode }) => {
     // Start transition when route changes
     setIsTransitioning(true);
     
-    // Update children after logo appears and black fills
+    // Update children once black overlay fully covers the screen
     const updateTimer = setTimeout(() => {
       setDisplayChildren(children);
-    }, 1100); // After logo fade + black expand
+    }, 600); // After black expand completes (0.5s) + small buffer
 
-    // End transition after full animation
+    // End transition after expand + hold + contract animations
     const endTimer = setTimeout(() => {
       setIsTransitioning(false);
-    }, 2400); // Total: logo fade (0.6s) + black expand (0.5s) + hold + pulse (0.3s) + contract (0.5s)
+    }, 1300); // Total: expand (0.5s) + hold (0.3s) + contract (0.5s)
 
     return () => {
       clearTimeout(updateTimer);
@@ -31,31 +31,31 @@ export const PageTransition = ({ children }: { children: React.ReactNode }) => {
     <>
       {isTransitioning && (
         <div className="fixed inset-0 z-[200] pointer-events-none" key={location.pathname}>
-          {/* Logo */}
-          <div className="absolute inset-0 flex items-center justify-center">
+          {/* Black overlay expanding from center, behind the logo */}
+          <div
+            className="absolute inset-0 bg-black z-10"
+            style={{
+              animation: "expandFromCenter 0.5s ease-out 0s forwards, contractToCenter 0.5s ease-out 0.8s forwards",
+              clipPath: "circle(0% at 50% 50%)",
+            }}
+          />
+
+          {/* Logo on top of black overlay */}
+          <div className="absolute inset-0 flex items-center justify-center z-20">
             <img 
               src={logo} 
               alt="RISE" 
               className="h-16 md:h-20"
               style={{
-                animation: "logoFadeIn 0.6s ease-out forwards, logoPulse 0.3s ease-out 1.5s forwards, logoFadeOut 0.5s ease-out 1.8s forwards",
+                animation: "logoFadeIn 0.4s ease-out forwards, logoPulse 0.3s ease-out 0.5s forwards, logoFadeOut 0.4s ease-out 0.9s forwards",
                 opacity: 0,
               }}
             />
           </div>
-          
-          {/* Black overlay expanding from center */}
-          <div 
-            className="absolute inset-0 bg-black"
-            style={{
-              animation: "expandFromCenter 0.5s ease-out 0.6s forwards, contractToCenter 0.5s ease-out 1.8s forwards",
-              clipPath: "circle(0% at 50% 50%)",
-            }}
-          />
         </div>
       )}
       
-      <div className={isTransitioning ? "opacity-0" : "opacity-100 transition-opacity duration-300"}>
+      <div className="opacity-100 transition-opacity duration-300">
         {displayChildren}
       </div>
 
