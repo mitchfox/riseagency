@@ -128,156 +128,152 @@ export const Header = () => {
               </button>
             </DrawerTrigger>
             <DrawerContent 
-              className="h-full w-[240px] left-0 flex flex-col rounded-r-none bg-cover bg-center animate-slide-in-left transition-all duration-300 ease-out overflow-y-auto z-[110]"
-              style={{ 
-                backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url(${blackMarbleBg})` 
-              }}
+              className="h-full w-full inset-0 rounded-none bg-black animate-slide-in-left transition-all duration-300 ease-out z-[110]"
             >
-              <div className="flex justify-end p-4 sticky top-0 bg-black/40 backdrop-blur-sm z-10">
-                <DrawerClose asChild>
-                  <button
-                    className="rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none text-white"
-                    aria-label="Close menu"
-                  >
-                    <X className="h-6 w-6" />
-                  </button>
-                </DrawerClose>
-              </div>
-              <nav className="flex flex-col gap-1 px-4 flex-1 pb-4 overflow-y-auto min-h-0">
-                <DrawerClose asChild>
-                  <Link
-                    to="/"
-                    className={`text-xl font-bebas uppercase text-white hover:text-primary transition-colors tracking-wider py-1.5 px-4 rounded ${
-                      isActive("/") ? "bg-primary/80 text-white" : "hover:bg-white/10"
-                    }`}
-                  >
-                    Home
-                  </Link>
-                </DrawerClose>
-                
-                {/* Separator */}
-                <div className="h-px bg-white/20 my-2 mx-4" />
-                
-                <DrawerClose asChild>
-                  <Link
-                    to="/stars"
-                    className={`text-xl font-bebas uppercase text-white hover:text-primary transition-colors tracking-wider py-1.5 px-4 rounded ${
-                      isActive("/stars") || location.pathname.startsWith("/stars/") ? "bg-primary/80 text-white" : "hover:bg-white/10"
-                    }`}
-                  >
-                    Stars
-                  </Link>
-                </DrawerClose>
-                <DrawerClose asChild>
-                  <Link
-                    to="/performance"
-                    className={`text-xl font-bebas uppercase text-white hover:text-primary transition-colors tracking-wider py-1.5 px-4 rounded ${
-                      isActive("/performance") ? "bg-primary/80 text-white" : "hover:bg-white/10"
-                    }`}
-                  >
-                    Realise Potential
-                  </Link>
-                </DrawerClose>
-                <DrawerClose asChild>
-                  <Link
-                    to="/between-the-lines"
-                    className={`text-xl font-bebas uppercase text-white hover:text-primary transition-colors tracking-wider py-1.5 px-4 rounded ${
-                      isActive("/between-the-lines") ? "bg-primary/80 text-white" : "hover:bg-white/10"
-                    }`}
-                  >
-                    Between The Lines
-                  </Link>
-                </DrawerClose>
-                
-                {/* Separator */}
-                <div className="h-px bg-white/20 my-2 mx-4" />
-                
-                <DrawerClose asChild>
-                  <Link
-                    to="/players"
-                    className={`text-xl font-bebas uppercase text-white hover:text-primary transition-colors tracking-wider py-1.5 px-4 rounded ${
-                      isActive("/players") || location.pathname.startsWith("/players/") ? "bg-primary/80 text-white" : "hover:bg-white/10"
-                    }`}
-                  >
-                    Players
-                  </Link>
-                </DrawerClose>
-                <DrawerClose asChild>
-                  <Link
-                    to="/clubs"
-                    className={`text-xl font-bebas uppercase text-white hover:text-primary transition-colors tracking-wider py-1.5 px-4 rounded ${
-                      isActive("/clubs") ? "bg-primary/80 text-white" : "hover:bg-white/10"
-                    }`}
-                  >
-                    Clubs
-                  </Link>
-                </DrawerClose>
-                <DrawerClose asChild>
-                  <Link
-                    to="/coaches"
-                    className={`text-xl font-bebas uppercase text-white hover:text-primary transition-colors tracking-wider py-1.5 px-4 rounded ${
-                      isActive("/coaches") ? "bg-primary/80 text-white" : "hover:bg-white/10"
-                    }`}
-                  >
-                    Coaches
-                  </Link>
-                </DrawerClose>
-                <DrawerClose asChild>
-                  <Link
-                    to="/scouts"
-                    className={`text-xl font-bebas uppercase text-white hover:text-primary transition-colors tracking-wider py-1.5 px-4 rounded ${
-                      isActive("/scouts") ? "bg-primary/80 text-white" : "hover:bg-white/10"
-                    }`}
-                  >
-                    Scouts
-                  </Link>
-                </DrawerClose>
-              </nav>
-              
-              {/* Player Portal Box */}
-              <div className="px-4 pb-3 flex-shrink-0">
-                <div className="relative overflow-hidden rounded-lg h-20">
-                  <div 
-                    className="absolute inset-0 bg-cover bg-top"
-                    style={{ backgroundImage: `url(${playerPortalImage})` }}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70" />
-                  <div className="relative h-full flex flex-col items-center justify-between p-3">
-                    <h3 className="text-lg font-bebas uppercase tracking-wider text-white drop-shadow-lg text-center">
-                      PORTAL
-                    </h3>
+              {/* Full screen grid layout */}
+              <div className="grid lg:grid-cols-2 h-full w-full">
+                {/* Left side - Navigation */}
+                <div 
+                  className="h-full flex flex-col bg-cover bg-center"
+                  style={{ 
+                    backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url(${blackMarbleBg})` 
+                  }}
+                >
+                  <div className="flex justify-end p-6 sticky top-0 bg-black/40 backdrop-blur-sm z-10">
                     <DrawerClose asChild>
-                      <Button
-                        asChild
-                        className="btn-shine w-full font-bebas uppercase tracking-wider h-6 text-xs"
+                      <button
+                        className="rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none text-white"
+                        aria-label="Close menu"
                       >
-                        <Link to="/login">PORTAL</Link>
-                      </Button>
+                        <X className="h-8 w-8" />
+                      </button>
                     </DrawerClose>
                   </div>
+                  
+                  <div className="flex-1 flex flex-col justify-center px-8 md:px-16 lg:px-20 xl:px-24 pb-12">
+                    <nav className="flex flex-col gap-2 max-w-md">
+                      <DrawerClose asChild>
+                        <Link
+                          to="/"
+                          className={`text-4xl md:text-5xl lg:text-6xl font-bebas uppercase text-white hover:text-primary transition-colors tracking-wider py-2 ${
+                            isActive("/") ? "text-primary" : ""
+                          }`}
+                        >
+                          Home
+                        </Link>
+                      </DrawerClose>
+                      
+                      <DrawerClose asChild>
+                        <Link
+                          to="/stars"
+                          className={`text-4xl md:text-5xl lg:text-6xl font-bebas uppercase text-white hover:text-primary transition-colors tracking-wider py-2 ${
+                            isActive("/stars") || location.pathname.startsWith("/stars/") ? "text-primary" : ""
+                          }`}
+                        >
+                          Stars
+                        </Link>
+                      </DrawerClose>
+                      
+                      <DrawerClose asChild>
+                        <Link
+                          to="/performance"
+                          className={`text-4xl md:text-5xl lg:text-6xl font-bebas uppercase text-white hover:text-primary transition-colors tracking-wider py-2 ${
+                            isActive("/performance") ? "text-primary" : ""
+                          }`}
+                        >
+                          Realise Potential
+                        </Link>
+                      </DrawerClose>
+                      
+                      <DrawerClose asChild>
+                        <Link
+                          to="/between-the-lines"
+                          className={`text-4xl md:text-5xl lg:text-6xl font-bebas uppercase text-white hover:text-primary transition-colors tracking-wider py-2 ${
+                            isActive("/between-the-lines") ? "text-primary" : ""
+                          }`}
+                        >
+                          Between The Lines
+                        </Link>
+                      </DrawerClose>
+                      
+                      <div className="h-px bg-white/20 my-4" />
+                      
+                      <DrawerClose asChild>
+                        <Link
+                          to="/players"
+                          className={`text-4xl md:text-5xl lg:text-6xl font-bebas uppercase text-white hover:text-primary transition-colors tracking-wider py-2 ${
+                            isActive("/players") || location.pathname.startsWith("/players/") ? "text-primary" : ""
+                          }`}
+                        >
+                          Players
+                        </Link>
+                      </DrawerClose>
+                      
+                      <DrawerClose asChild>
+                        <Link
+                          to="/clubs"
+                          className={`text-4xl md:text-5xl lg:text-6xl font-bebas uppercase text-white hover:text-primary transition-colors tracking-wider py-2 ${
+                            isActive("/clubs") ? "text-primary" : ""
+                          }`}
+                        >
+                          Clubs
+                        </Link>
+                      </DrawerClose>
+                      
+                      <DrawerClose asChild>
+                        <Link
+                          to="/coaches"
+                          className={`text-4xl md:text-5xl lg:text-6xl font-bebas uppercase text-white hover:text-primary transition-colors tracking-wider py-2 ${
+                            isActive("/coaches") ? "text-primary" : ""
+                          }`}
+                        >
+                          Coaches
+                        </Link>
+                      </DrawerClose>
+                      
+                      <DrawerClose asChild>
+                        <Link
+                          to="/scouts"
+                          className={`text-4xl md:text-5xl lg:text-6xl font-bebas uppercase text-white hover:text-primary transition-colors tracking-wider py-2 ${
+                            isActive("/scouts") ? "text-primary" : ""
+                          }`}
+                        >
+                          Scouts
+                        </Link>
+                      </DrawerClose>
+                    </nav>
+                  </div>
                 </div>
-              </div>
 
-              {/* Working Together Box */}
-              <div className="px-4 pb-4 flex-shrink-0">
-                <div className="relative overflow-hidden rounded-lg h-20">
-                  <div 
-                    className="absolute inset-0 bg-cover bg-center"
-                    style={{ backgroundImage: `url(${workingTogether})` }}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70" />
-                  <div className="relative h-full flex flex-col items-center justify-between p-3">
-                    <h3 className="text-lg font-bebas uppercase tracking-wider text-white drop-shadow-lg text-center">
-                      Realise Potential
-                    </h3>
-                    <DrawerClose asChild>
-                      <Button
-                        onClick={() => setRepresentationOpen(true)}
-                        className="btn-shine w-full font-bebas uppercase tracking-wider h-6 text-xs"
-                      >
-                        REQUEST REPRESENTATION
-                      </Button>
-                    </DrawerClose>
+                {/* Right side - Images (desktop only) */}
+                <div className="hidden lg:grid grid-cols-2 gap-4 p-8 bg-background overflow-y-auto">
+                  <div className="aspect-[3/4] bg-muted rounded-lg overflow-hidden">
+                    <img 
+                      src={playerPortalImage} 
+                      alt="Portal" 
+                      className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-300"
+                    />
+                  </div>
+                  <div className="aspect-[3/4] bg-muted rounded-lg overflow-hidden">
+                    <img 
+                      src={workingTogether} 
+                      alt="Working Together" 
+                      className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-300"
+                    />
+                  </div>
+                  <div className="aspect-[3/4] bg-muted rounded-lg overflow-hidden">
+                    <img 
+                      src={workingTogether} 
+                      alt="Image 3" 
+                      className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-300"
+                    />
+                  </div>
+                  <div className="aspect-[3/4] bg-muted rounded-lg overflow-hidden">
+                    <img 
+                      src={playerPortalImage} 
+                      alt="Image 4" 
+                      className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-300"
+                    />
                   </div>
                 </div>
               </div>
