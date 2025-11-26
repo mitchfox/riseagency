@@ -134,24 +134,26 @@ export const Header = () => {
               <div className="grid lg:grid-cols-2 h-full w-full">
                 {/* Left side - Navigation */}
                 <div 
-                  className="h-full flex flex-col bg-cover bg-center"
+                  className="h-full flex flex-col bg-cover bg-center relative"
                   style={{ 
-                    backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url(${blackMarbleBg})` 
+                    backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url(${blackMarbleBg})`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center'
                   }}
                 >
-                  <div className="flex justify-end p-6 sticky top-0 bg-black/40 backdrop-blur-sm z-10">
+                  <div className="absolute top-6 left-6 z-10">
                     <DrawerClose asChild>
                       <button
-                        className="rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none text-white"
+                        className="rounded-sm transition-opacity hover:opacity-80 focus:outline-none"
                         aria-label="Close menu"
                       >
-                        <X className="h-8 w-8" />
+                        <X className="h-8 w-8 text-primary" strokeWidth={2.5} />
                       </button>
                     </DrawerClose>
                   </div>
                   
-                  <div className="flex-1 flex flex-col justify-center px-8 md:px-16 lg:px-20 xl:px-24 pb-12">
-                    <nav className="flex flex-col gap-1 max-w-md">
+                  <div className="flex-1 flex flex-col justify-between px-8 md:px-16 lg:px-20 xl:px-24 py-12">
+                    <nav className="flex flex-col gap-1 max-w-md mt-12">
                       <DrawerClose asChild>
                         <Link
                           to="/"
@@ -242,6 +244,27 @@ export const Header = () => {
                         </Link>
                       </DrawerClose>
                     </nav>
+
+                    {/* Bottom actions */}
+                    <div className="flex flex-col gap-2 max-w-md">
+                      <DrawerClose asChild>
+                        <button
+                          onClick={() => setRepresentationOpen(true)}
+                          className="text-xl md:text-2xl font-bebas uppercase text-white hover:text-primary transition-colors tracking-wider py-1 text-left"
+                        >
+                          Request Representation
+                        </button>
+                      </DrawerClose>
+                      
+                      <DrawerClose asChild>
+                        <Link
+                          to="/login"
+                          className="text-xl md:text-2xl font-bebas uppercase text-white hover:text-primary transition-colors tracking-wider py-1"
+                        >
+                          Portal
+                        </Link>
+                      </DrawerClose>
+                    </div>
                   </div>
                 </div>
 
