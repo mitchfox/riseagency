@@ -17,15 +17,15 @@ export const PageTransition = ({ children }: PageTransitionProps) => {
 
     setIsTransitioning(true);
 
-    // After 5s (transition out), actually switch the rendered route
+    // After 1.5s (transition out), actually switch the rendered route
     const showNewTimer = setTimeout(() => {
       setDisplayLocation(location);
-    }, 5000);
+    }, 1500);
 
-    // After another 5s (transition in), end the overlay
+    // After another 1.5s (transition in), end the overlay
     const endTimer = setTimeout(() => {
       setIsTransitioning(false);
-    }, 10000);
+    }, 3000);
 
     return () => {
       clearTimeout(showNewTimer);
@@ -49,9 +49,9 @@ export const PageTransition = ({ children }: PageTransitionProps) => {
                 width: "200vmax",
                 height: "200vmax",
                 transform: "scale(0)",
-                // 5s expand, then 5s contract
+                // 1.5s expand, then 1.5s contract
                 animation:
-                  "circleExpand 5s ease-in-out 0s forwards, circleContract 5s ease-in-out 5s forwards",
+                  "circleExpand 1.5s ease-in-out 0s forwards, circleContract 1.5s ease-in-out 1.5s forwards",
               }}
             />
           </div>
