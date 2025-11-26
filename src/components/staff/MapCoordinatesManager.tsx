@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Plus, Trash2, Save } from "lucide-react";
@@ -26,6 +27,7 @@ export const MapCoordinatesManager = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedCountry, setSelectedCountry] = useState<string>("all");
   const [formData, setFormData] = useState({
     name: "",
     club_name: "",
@@ -176,16 +178,35 @@ export const MapCoordinatesManager = () => {
 
   const hasChanges = Object.keys(editedContacts).length > 0;
 
+  const uniqueCountries = Array.from(new Set(contacts.map(c => c.country).filter(Boolean))).sort();
+  
+  const filteredContacts = selectedCountry === "all" 
+    ? contacts 
+    : contacts.filter(c => c.country === selectedCountry);
+
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex-1">
           <h3 className="text-lg font-semibold">Europe Map Coordinates</h3>
           <p className="text-sm text-muted-foreground">
             Adjust coordinates directly in the table and save all changes at once
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center">
+          <Select value={selectedCountry} onValueChange={setSelectedCountry}>
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Filter by country" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Countries</SelectItem>
+              {uniqueCountries.map((country) => (
+                <SelectItem key={country} value={country!}>
+                  {country}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           {hasChanges && (
             <Button onClick={handleSaveAll} disabled={saving}>
               <Save className="h-4 w-4 mr-2" />
@@ -301,6 +322,10 @@ export const MapCoordinatesManager = () => {
         <div className="text-center py-12 text-muted-foreground">
           No contacts on the map yet. Click "Add New" to begin.
         </div>
+      ) : filteredContacts.length === 0 ? (
+        <div className="text-center py-12 text-muted-foreground">
+          No contacts found for this country.
+        </div>
       ) : (
         <Card>
           <ScrollArea className="h-[calc(100vh-300px)]">
@@ -316,7 +341,7 @@ export const MapCoordinatesManager = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {contacts.map((contact) => (
+                {filteredContacts.map((contact) => (
                   <TableRow key={contact.id}>
                     <TableCell className="font-medium">{contact.name}</TableCell>
                     <TableCell className="text-muted-foreground">{contact.club_name || "—"}</TableCell>
