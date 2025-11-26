@@ -8,10 +8,11 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Calendar as CalendarIcon, FileText, Image, Table, Folder, HardDrive, ExternalLink, Upload, Trash2, Play, ChevronDown } from "lucide-react";
+import { Calendar as CalendarIcon, FileText, Image, Table, Folder, HardDrive, ExternalLink, Upload, Trash2, Play, ChevronDown, List } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { VideoPreviewCard } from "./VideoPreviewCard";
+import { PlaylistManager } from "@/components/PlaylistManager";
 import { Calendar, momentLocalizer, Event as CalendarEvent } from 'react-big-calendar';
 import moment from 'moment';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
@@ -127,6 +128,9 @@ export const MarketingManagement = ({ isAdmin, isMarketeer }: { isAdmin: boolean
   const [playerHighlights, setPlayerHighlights] = useState<any[]>([]);
   const [importingClipUrl, setImportingClipUrl] = useState<string | null>(null);
   const [clipSearchQuery, setClipSearchQuery] = useState('');
+  const [showPlaylistManager, setShowPlaylistManager] = useState(false);
+  const [selectedVideoForPlaylist, setSelectedVideoForPlaylist] = useState<GalleryItem | null>(null);
+  const [playlistPlayerData, setPlaylistPlayerData] = useState<any>(null);
 
   useEffect(() => {
     if (activeTab === 'gallery') {
@@ -217,6 +221,30 @@ export const MarketingManagement = ({ isAdmin, isMarketeer }: { isAdmin: boolean
       toast.error('Failed to upload file');
     } finally {
       setUploading(false);
+    }
+  };
+
+  const openPlaylistForVideo = async (item: GalleryItem) => {
+    if (!item.player_id) return;
+    
+    try {
+      const { data: player, error } = await supabase
+        .from('players')
+        .select('id, name, email, highlights')
+        .eq('id', item.player_id)
+        .single();
+      
+      if (error || !player) {
+        toast.error('Failed to load player data');
+        return;
+      }
+      
+      setSelectedVideoForPlaylist(item);
+      setPlaylistPlayerData(player);
+      setShowPlaylistManager(true);
+    } catch (err) {
+      console.error('Error loading player for playlist:', err);
+      toast.error('Failed to load player data');
     }
   };
 
@@ -646,6 +674,16 @@ export const MarketingManagement = ({ isAdmin, isMarketeer }: { isAdmin: boolean
                                 >
                                   View Full
                                 </Button>
+                                {item.player_id && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => openPlaylistForVideo(item)}
+                                    title="Add to Playlist"
+                                  >
+                                    <List className="w-4 h-4" />
+                                  </Button>
+                                )}
                                 {canManage && (
                                   <Button
                                     size="sm"
@@ -1110,6 +1148,48 @@ export const MarketingManagement = ({ isAdmin, isMarketeer }: { isAdmin: boolean
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Playlist Manager */}
+      {showPlaylistManager && selectedVideoForPlaylist && playlistPlayerData && (
+        <PlaylistManager
+          playerData={playlistPlayerData}
+          availableClips={(() => {
+            // Get all videos for this player from gallery
+            const playerVideos = galleryItems
+              .filter(item => item.file_type === 'video' && item.player_id === playlistPlayerData.id)
+              .map(item => ({
+                id: item.id,
+                name: item.title,
+                videoUrl: item.file_url
+              }));
+            
+            // Also include player's existing highlights
+            let highlights = playlistPlayerData.highlights;
+            if (typeof highlights === 'string') {
+              try {
+                highlights = JSON.parse(highlights);
+              } catch (e) {
+                highlights = {};
+              }
+            }
+            
+            const matchHighlights = Array.isArray(highlights?.matchHighlights) ? highlights.matchHighlights : [];
+            const bestClips = Array.isArray(highlights?.bestClips) ? highlights.bestClips : [];
+            const existingClips = [...matchHighlights, ...bestClips].map((clip: any, index: number) => ({
+              id: clip.url || clip.videoUrl || `clip-${index}`,
+              name: clip.title || clip.name || `Highlight ${index + 1}`,
+              videoUrl: clip.url || clip.videoUrl || clip
+            }));
+            
+            return [...playerVideos, ...existingClips];
+          })()}
+          onClose={() => {
+            setShowPlaylistManager(false);
+            setSelectedVideoForPlaylist(null);
+            setPlaylistPlayerData(null);
+          }}
+        />
+      )}
     </div>
   );
 };
