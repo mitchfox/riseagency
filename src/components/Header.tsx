@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import logo from "@/assets/logo.png";
+import riseStar from "@/assets/rise-star.png";
 import { X, MessageCircle, Users, LogIn } from "lucide-react";
 import workingTogether from "@/assets/menu-working-together.jpg";
 import playerPortalImage from "@/assets/menu-player-portal.png";
@@ -41,6 +42,7 @@ export const Header = () => {
   const [btlIndex, setBtlIndex] = useState(0);
   const [realisePotentialHovered, setRealisePotentialHovered] = useState(false);
   const [rpIndex, setRpIndex] = useState(0);
+  const [hoveredCard, setHoveredCard] = useState<string | null>(null);
 
   const realisePotentialImages = [
     realisePotentialSessions,
@@ -223,7 +225,25 @@ export const Header = () => {
                         className={`group relative flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-primary transition-all duration-300 ease-out mt-[15px] ${isScrolled ? 'w-7 h-7 md:w-8 md:h-8' : 'w-10 h-10 md:w-12 md:h-12'}`}
                         aria-label="Close menu"
                       >
-                        <X className="h-6 w-6 md:h-7 md:w-7 text-primary animate-in zoom-in-50 duration-300" strokeWidth={2.5} />
+                        <svg 
+                          className="h-6 w-6 md:h-7 md:w-7 text-primary"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.5"
+                          strokeLinecap="round"
+                        >
+                          <line 
+                            x1="4" y1="4" x2="20" y2="20" 
+                            className="origin-center animate-[spin-to-x_0.3s_ease-out_forwards]"
+                            style={{ animationDelay: '0s' }}
+                          />
+                          <line 
+                            x1="20" y1="4" x2="4" y2="20" 
+                            className="origin-center animate-[spin-to-x_0.3s_ease-out_forwards]"
+                            style={{ animationDelay: '0.1s' }}
+                          />
+                        </svg>
                       </button>
                     </DrawerClose>
                   </div>
@@ -233,11 +253,12 @@ export const Header = () => {
                       <DrawerClose asChild>
                         <Link
                           to="/"
-                          className={`text-2xl md:text-3xl font-bebas uppercase text-white hover:text-primary hover:bg-white/5 transition-all tracking-wider py-1 px-2 rounded ${
+                          className={`text-2xl md:text-3xl font-bebas uppercase text-white hover:text-primary hover:bg-white/5 transition-all tracking-wider py-1 px-2 rounded flex items-center gap-2 ${
                             isActive("/") ? "text-primary" : ""
                           }`}
                         >
                           Home
+                          {isActive("/") && <img src={riseStar} alt="" className="w-5 h-5 inline-block" />}
                         </Link>
                       </DrawerClose>
                       
@@ -248,11 +269,12 @@ export const Header = () => {
                           to="/stars"
                           onMouseEnter={() => setStarsHovered(true)}
                           onMouseLeave={() => setStarsHovered(false)}
-                          className={`text-2xl md:text-3xl font-bebas uppercase text-white hover:text-primary hover:bg-white/5 transition-all tracking-wider py-1 px-2 rounded ${
+                          className={`text-2xl md:text-3xl font-bebas uppercase text-white hover:text-primary hover:bg-white/5 transition-all tracking-wider py-1 px-2 rounded flex items-center gap-2 ${
                             isActive("/stars") || location.pathname.startsWith("/stars/") ? "text-primary" : ""
                           }`}
                         >
                           Stars
+                          {(isActive("/stars") || location.pathname.startsWith("/stars/")) && <img src={riseStar} alt="" className="w-5 h-5 inline-block" />}
                         </Link>
                       </DrawerClose>
                       
@@ -261,11 +283,12 @@ export const Header = () => {
                           to="/performance"
                           onMouseEnter={() => setRealisePotentialHovered(true)}
                           onMouseLeave={() => setRealisePotentialHovered(false)}
-                          className={`text-2xl md:text-3xl font-bebas uppercase text-white hover:text-primary hover:bg-white/5 transition-all tracking-wider py-1 px-2 rounded ${
+                          className={`text-2xl md:text-3xl font-bebas uppercase text-white hover:text-primary hover:bg-white/5 transition-all tracking-wider py-1 px-2 rounded flex items-center gap-2 ${
                             isActive("/performance") ? "text-primary" : ""
                           }`}
                         >
                           Realise Potential
+                          {isActive("/performance") && <img src={riseStar} alt="" className="w-5 h-5 inline-block" />}
                         </Link>
                       </DrawerClose>
                       
@@ -274,11 +297,12 @@ export const Header = () => {
                           to="/between-the-lines"
                           onMouseEnter={() => setBetweenLinesHovered(true)}
                           onMouseLeave={() => setBetweenLinesHovered(false)}
-                          className={`text-2xl md:text-3xl font-bebas uppercase text-white hover:text-primary hover:bg-white/5 transition-all tracking-wider py-1 px-2 rounded ${
+                          className={`text-2xl md:text-3xl font-bebas uppercase text-white hover:text-primary hover:bg-white/5 transition-all tracking-wider py-1 px-2 rounded flex items-center gap-2 ${
                             isActive("/between-the-lines") ? "text-primary" : ""
                           }`}
                         >
                           Between The Lines
+                          {isActive("/between-the-lines") && <img src={riseStar} alt="" className="w-5 h-5 inline-block" />}
                         </Link>
                       </DrawerClose>
                       
@@ -287,44 +311,48 @@ export const Header = () => {
                       <DrawerClose asChild>
                         <Link
                           to="/players"
-                          className={`text-2xl md:text-3xl font-bebas uppercase text-white hover:text-primary hover:bg-white/5 transition-all tracking-wider py-1 px-2 rounded ${
+                          className={`text-2xl md:text-3xl font-bebas uppercase text-white hover:text-primary hover:bg-white/5 transition-all tracking-wider py-1 px-2 rounded flex items-center gap-2 ${
                             isActive("/players") || location.pathname.startsWith("/players/") ? "text-primary" : ""
                           }`}
                         >
                           Players
+                          {(isActive("/players") || location.pathname.startsWith("/players/")) && <img src={riseStar} alt="" className="w-5 h-5 inline-block" />}
                         </Link>
                       </DrawerClose>
                       
                       <DrawerClose asChild>
                         <Link
                           to="/clubs"
-                          className={`text-2xl md:text-3xl font-bebas uppercase text-white hover:text-primary hover:bg-white/5 transition-all tracking-wider py-1 px-2 rounded ${
+                          className={`text-2xl md:text-3xl font-bebas uppercase text-white hover:text-primary hover:bg-white/5 transition-all tracking-wider py-1 px-2 rounded flex items-center gap-2 ${
                             isActive("/clubs") ? "text-primary" : ""
                           }`}
                         >
                           Clubs
+                          {isActive("/clubs") && <img src={riseStar} alt="" className="w-5 h-5 inline-block" />}
                         </Link>
                       </DrawerClose>
                       
                       <DrawerClose asChild>
                         <Link
                           to="/coaches"
-                          className={`text-2xl md:text-3xl font-bebas uppercase text-white hover:text-primary hover:bg-white/5 transition-all tracking-wider py-1 px-2 rounded ${
+                          className={`text-2xl md:text-3xl font-bebas uppercase text-white hover:text-primary hover:bg-white/5 transition-all tracking-wider py-1 px-2 rounded flex items-center gap-2 ${
                             isActive("/coaches") ? "text-primary" : ""
                           }`}
                         >
                           Coaches
+                          {isActive("/coaches") && <img src={riseStar} alt="" className="w-5 h-5 inline-block" />}
                         </Link>
                       </DrawerClose>
                       
                       <DrawerClose asChild>
                         <Link
                           to="/scouts"
-                          className={`text-2xl md:text-3xl font-bebas uppercase text-white hover:text-primary hover:bg-white/5 transition-all tracking-wider py-1 px-2 rounded ${
+                          className={`text-2xl md:text-3xl font-bebas uppercase text-white hover:text-primary hover:bg-white/5 transition-all tracking-wider py-1 px-2 rounded flex items-center gap-2 ${
                             isActive("/scouts") ? "text-primary" : ""
                           }`}
                         >
                           Scouts
+                          {isActive("/scouts") && <img src={riseStar} alt="" className="w-5 h-5 inline-block" />}
                         </Link>
                       </DrawerClose>
                     </nav>
@@ -336,18 +364,18 @@ export const Header = () => {
                           to="/login"
                           className="relative group"
                         >
-                          <div className="relative aspect-[16/9] rounded overflow-hidden">
+                          <div className="relative aspect-[16/9] rounded overflow-hidden" style={{ height: 'calc(100% - 20px)' }}>
                             <img 
                               src={playerPortalImage} 
                               alt="Portal" 
                               className="w-full h-full object-cover"
                             />
                             <div className="absolute inset-0 bg-black/30" />
-                            <div className="absolute inset-0 flex flex-col items-center justify-between p-4">
-                              <h3 className="text-white font-bebas text-xl md:text-2xl uppercase tracking-wider text-center">
+                            <div className="absolute inset-0 flex flex-col items-center justify-between p-3">
+                              <h3 className="text-white font-bebas text-lg md:text-xl uppercase tracking-wider text-center">
                                 Portal
                               </h3>
-                              <div className="bg-primary text-black font-bebas uppercase tracking-widest text-sm md:text-base py-3 px-6 text-center group-hover:brightness-110 transition-all w-full">
+                              <div className="bg-primary text-black font-bebas uppercase tracking-widest text-xs md:text-sm py-2 px-4 text-center group-hover:brightness-110 transition-all w-full">
                                 Portal
                               </div>
                             </div>
@@ -360,18 +388,18 @@ export const Header = () => {
                           onClick={() => setRepresentationOpen(true)}
                           className="relative group"
                         >
-                          <div className="relative aspect-[16/9] rounded overflow-hidden">
+                          <div className="relative aspect-[16/9] rounded overflow-hidden" style={{ height: 'calc(100% - 20px)' }}>
                             <img 
                               src={workingTogether} 
                               alt="Request Representation" 
                               className="w-full h-full object-cover"
                             />
                             <div className="absolute inset-0 bg-black/30" />
-                            <div className="absolute inset-0 flex flex-col items-center justify-between p-4">
-                              <h3 className="text-white font-bebas text-xl md:text-2xl uppercase tracking-wider text-center">
+                            <div className="absolute inset-0 flex flex-col items-center justify-between p-3">
+                              <h3 className="text-white font-bebas text-lg md:text-xl uppercase tracking-wider text-center">
                                 Realise Potential
                               </h3>
-                              <div className="bg-primary text-black font-bebas uppercase tracking-widest text-sm md:text-base py-3 px-6 text-center group-hover:brightness-110 transition-all w-full">
+                              <div className="bg-primary text-black font-bebas uppercase tracking-widest text-xs md:text-sm py-2 px-4 text-center group-hover:brightness-110 transition-all w-full">
                                 Request Representation
                               </div>
                             </div>
@@ -385,7 +413,16 @@ export const Header = () => {
                 {/* Right side - Stars Card (desktop only) */}
                 <div className="hidden lg:grid grid-cols-2 grid-rows-2 gap-4 bg-background p-8">
                   {starPlayers.length > 0 && (
-                    <div className="w-full">
+                    <div 
+                      className="w-full transition-transform duration-300"
+                      onMouseEnter={() => setHoveredCard('top-left')}
+                      onMouseLeave={() => setHoveredCard(null)}
+                      style={{
+                        transform: hoveredCard === 'top-left' ? 'translateY(20px)' : 
+                                   hoveredCard === 'bottom-left' ? 'translateY(20px)' :
+                                   hoveredCard === 'top-right' || hoveredCard === 'bottom-right' ? 'translateY(-20px)' : 'translateY(0)'
+                      }}
+                    >
                       <div 
                         className={`relative w-full aspect-[3/4] rounded-lg overflow-hidden transition-all duration-300 ${
                           starsHovered 
@@ -499,7 +536,16 @@ export const Header = () => {
                   
                   {/* Between The Lines Card */}
                   {betweenLinesPosts.length > 0 && (
-                    <div className="w-full">
+                    <div 
+                      className="w-full transition-transform duration-300"
+                      onMouseEnter={() => setHoveredCard('bottom-left')}
+                      onMouseLeave={() => setHoveredCard(null)}
+                      style={{
+                        transform: hoveredCard === 'bottom-left' ? 'translateY(-20px)' :
+                                   hoveredCard === 'top-left' ? 'translateY(-20px)' :
+                                   hoveredCard === 'top-right' || hoveredCard === 'bottom-right' ? 'translateY(20px)' : 'translateY(0)'
+                      }}
+                    >
                       <div 
                         className={`relative w-full aspect-[3/4] rounded-lg overflow-hidden transition-all duration-300 ${
                           betweenLinesHovered 
@@ -546,7 +592,16 @@ export const Header = () => {
                   )}
                   
                   {/* Realise Potential Card */}
-                  <div className="w-full">
+                  <div 
+                    className="w-full transition-transform duration-300"
+                    onMouseEnter={() => setHoveredCard('top-right')}
+                    onMouseLeave={() => setHoveredCard(null)}
+                    style={{
+                      transform: hoveredCard === 'top-right' ? 'translateY(20px)' :
+                                 hoveredCard === 'bottom-right' ? 'translateY(20px)' :
+                                 hoveredCard === 'top-left' || hoveredCard === 'bottom-left' ? 'translateY(-20px)' : 'translateY(0)'
+                    }}
+                  >
                     <div 
                       className={`relative w-full aspect-[3/4] rounded-lg overflow-hidden transition-all duration-300 ${
                         realisePotentialHovered 
@@ -573,7 +628,16 @@ export const Header = () => {
                   </div>
                   
                   {/* Placeholder for 1 other component */}
-                  <div className="bg-muted/20 rounded-lg border border-white/10" />
+                  <div 
+                    className="bg-muted/20 rounded-lg border border-white/10 transition-transform duration-300"
+                    onMouseEnter={() => setHoveredCard('bottom-right')}
+                    onMouseLeave={() => setHoveredCard(null)}
+                    style={{
+                      transform: hoveredCard === 'bottom-right' ? 'translateY(-20px)' :
+                                 hoveredCard === 'top-right' ? 'translateY(-20px)' :
+                                 hoveredCard === 'top-left' || hoveredCard === 'bottom-left' ? 'translateY(20px)' : 'translateY(0)'
+                    }}
+                  />
                 </div>
               </div>
             </DrawerContent>
