@@ -43,6 +43,9 @@ export const Header = () => {
   const [realisePotentialHovered, setRealisePotentialHovered] = useState(false);
   const [rpIndex, setRpIndex] = useState(0);
   const [hoveredCard, setHoveredCard] = useState<string | null>(null);
+  const [newsHovered, setNewsHovered] = useState(false);
+  const [newsArticles, setNewsArticles] = useState<any[]>([]);
+  const [newsIndex, setNewsIndex] = useState(0);
 
   const realisePotentialImages = [
     realisePotentialSessions,
@@ -73,6 +76,7 @@ export const Header = () => {
         .from('blog_posts')
         .select('*')
         .eq('published', true)
+        .eq('category', 'Between The Lines')
         .order('created_at', { ascending: false })
         .limit(3);
       
@@ -81,8 +85,23 @@ export const Header = () => {
       }
     };
 
+    const fetchNewsArticles = async () => {
+      const { data, error } = await supabase
+        .from('blog_posts')
+        .select('*')
+        .eq('published', true)
+        .eq('category', 'News')
+        .order('created_at', { ascending: false })
+        .limit(3);
+      
+      if (data && !error && data.length > 0) {
+        setNewsArticles(data);
+      }
+    };
+
     fetchStarPlayers();
     fetchBetweenLinesPosts();
+    fetchNewsArticles();
   }, []);
 
   useEffect(() => {
@@ -109,6 +128,15 @@ export const Header = () => {
     }, 6000);
     return () => clearInterval(rpInterval);
   }, [realisePotentialImages.length]);
+
+  useEffect(() => {
+    if (newsArticles.length > 0) {
+      const newsInterval = setInterval(() => {
+        setNewsIndex(prev => (prev + 1) % newsArticles.length);
+      }, 6000);
+      return () => clearInterval(newsInterval);
+    }
+  }, [newsArticles.length]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -625,17 +653,68 @@ export const Header = () => {
                     </div>
                   </div>
                   
-                  {/* Placeholder for 1 other component */}
-                  <div 
-                    className="bg-muted/20 rounded-lg border border-white/10 transition-transform duration-300"
-                    onMouseEnter={() => setHoveredCard('bottom-right')}
-                    onMouseLeave={() => setHoveredCard(null)}
-                    style={{
-                      transform: hoveredCard === 'bottom-right' ? 'translateY(-20px)' :
-                                 hoveredCard === 'top-right' ? 'translateY(-20px)' :
-                                 hoveredCard === 'top-left' || hoveredCard === 'bottom-left' ? 'translateY(20px)' : 'translateY(0)'
-                    }}
-                  />
+                  {/* News Articles Card */}
+                  {newsArticles.length > 0 && (
+                    <div 
+                      className="w-full transition-transform duration-300"
+                      onMouseEnter={() => {
+                        setHoveredCard('bottom-right');
+                        setNewsHovered(true);
+                      }}
+                      onMouseLeave={() => {
+                        setHoveredCard(null);
+                        setNewsHovered(false);
+                      }}
+                      style={{
+                        transform: hoveredCard === 'bottom-right' ? 'translateY(-20px)' :
+                                   hoveredCard === 'top-right' ? 'translateY(-20px)' :
+                                   hoveredCard === 'top-left' || hoveredCard === 'bottom-left' ? 'translateY(20px)' : 'translateY(0)'
+                      }}
+                    >
+                      <div 
+                        className={`relative w-full aspect-[3/4] rounded-lg overflow-hidden transition-all duration-300 ${
+                          newsHovered 
+                            ? 'border-2 border-primary shadow-[0_0_20px_rgba(184,165,116,0.6)]' 
+                            : 'border border-white/20 grayscale'
+                        }`}
+                      >
+                        {/* News Images */}
+                        {newsArticles.map((article, index) => (
+                          <div
+                            key={article.id}
+                            className="absolute inset-0 transition-opacity duration-1000 ease-in-out"
+                            style={{ opacity: index === newsIndex ? 1 : 0 }}
+                          >
+                            <img 
+                              src={article.image_url} 
+                              alt={article.title}
+                              className="w-full h-full object-cover" 
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/80" />
+                          </div>
+                        ))}
+                        
+                        {/* Title Overlay */}
+                        <div className="absolute bottom-2 left-2 right-2">
+                          {newsArticles.map((article, index) => (
+                            <div
+                              key={`title-${article.id}`}
+                              className="transition-opacity duration-1000 ease-in-out"
+                              style={{ 
+                                opacity: index === newsIndex ? 1 : 0,
+                                position: index === newsIndex ? 'relative' : 'absolute',
+                                visibility: index === newsIndex ? 'visible' : 'hidden'
+                              }}
+                            >
+                              <h4 className="text-white font-bebas text-sm uppercase tracking-wider line-clamp-2">
+                                {article.title}
+                              </h4>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </DrawerContent>
