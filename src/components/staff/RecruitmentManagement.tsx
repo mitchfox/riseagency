@@ -471,22 +471,26 @@ export const RecruitmentManagement = ({ isAdmin, initialTab = 'prospects' }: { i
   return (
     <div className="space-y-4 sm:space-y-6">
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-4 h-auto sm:h-10">
-          <TabsTrigger value="prospects" className="flex-1 text-xs sm:text-sm px-2 py-2.5">
-            <Users className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-            <span className="hidden sm:inline">Prospect Board</span>
-            <span className="sm:hidden">Prospects</span>
-          </TabsTrigger>
-          <TabsTrigger value="outreach" className="flex-1 text-xs sm:text-sm px-2 py-2.5">
-            <UserPlus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-            <span className="hidden sm:inline">Player Outreach</span>
-            <span className="sm:hidden">Outreach</span>
-          </TabsTrigger>
-          <TabsTrigger value="templates" className="flex-1 text-xs sm:text-sm px-2 py-2.5">
-            <MessageSquare className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-            <span className="hidden sm:inline">Message Templates</span>
-            <span className="sm:hidden">Templates</span>
-          </TabsTrigger>
+        <TabsList className={`grid w-full ${initialTab === 'scouts' ? 'grid-cols-1' : 'grid-cols-4'} h-auto sm:h-10`}>
+          {initialTab !== 'scouts' && (
+            <>
+              <TabsTrigger value="prospects" className="flex-1 text-xs sm:text-sm px-2 py-2.5">
+                <Users className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">Prospect Board</span>
+                <span className="sm:hidden">Prospects</span>
+              </TabsTrigger>
+              <TabsTrigger value="outreach" className="flex-1 text-xs sm:text-sm px-2 py-2.5">
+                <UserPlus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">Player Outreach</span>
+                <span className="sm:hidden">Outreach</span>
+              </TabsTrigger>
+              <TabsTrigger value="templates" className="flex-1 text-xs sm:text-sm px-2 py-2.5">
+                <MessageSquare className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">Message Templates</span>
+                <span className="sm:hidden">Templates</span>
+              </TabsTrigger>
+            </>
+          )}
           <TabsTrigger value="scouts" className="flex-1 text-xs sm:text-sm px-2 py-2.5">
             <Users className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
             <span className="hidden sm:inline">Scouts List</span>
