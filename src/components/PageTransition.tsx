@@ -11,21 +11,21 @@ export const PageTransition = ({ children }: { children: React.ReactNode }) => {
     // Start transition when route changes
     setIsTransitioning(true);
     
-    // Update children after logo appears and before reveal
+    // Update children after logo appears and black fills
     const updateTimer = setTimeout(() => {
       setDisplayChildren(children);
-    }, 800);
+    }, 1500); // After fade in (1s) + half of expansion
 
     // End transition after full animation
     const endTimer = setTimeout(() => {
       setIsTransitioning(false);
-    }, 1600);
+    }, 3000); // Total: fade in (1s) + black expand + fade out (1s)
 
     return () => {
       clearTimeout(updateTimer);
       clearTimeout(endTimer);
     };
-  }, [location.pathname]);
+  }, [location.pathname]); // Triggers on every route change
 
   return (
     <>
@@ -36,9 +36,9 @@ export const PageTransition = ({ children }: { children: React.ReactNode }) => {
             <img 
               src={logo} 
               alt="RISE" 
-              className="h-16 md:h-20 animate-fade-in"
+              className="h-16 md:h-20"
               style={{
-                animation: "fade-in 0.5s ease-out 0.3s forwards, scale-in 0.5s ease-out 0.3s forwards, fade-out 0.3s ease-out 1.1s forwards",
+                animation: "logoFadeIn 1s ease-out forwards, logoFadeOut 1s ease-out 2s forwards",
                 opacity: 0,
               }}
             />
@@ -48,7 +48,7 @@ export const PageTransition = ({ children }: { children: React.ReactNode }) => {
           <div 
             className="absolute inset-0 bg-black"
             style={{
-              animation: "expandFromCenter 0.6s ease-out 0.4s forwards, fadeFromCenter 0.6s ease-out 1s forwards",
+              animation: "expandFromCenter 0.8s ease-out 1s forwards, fadeFromCenter 1s ease-out 2s forwards",
               clipPath: "circle(0% at 50% 50%)",
             }}
           />
@@ -60,6 +60,28 @@ export const PageTransition = ({ children }: { children: React.ReactNode }) => {
       </div>
 
       <style>{`
+        @keyframes logoFadeIn {
+          from {
+            opacity: 0;
+            transform: scale(0.9);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1);
+          }
+        }
+        
+        @keyframes logoFadeOut {
+          from {
+            opacity: 1;
+            transform: scale(1);
+          }
+          to {
+            opacity: 0;
+            transform: scale(1.1);
+          }
+        }
+        
         @keyframes expandFromCenter {
           from {
             clip-path: circle(0% at 50% 50%);
