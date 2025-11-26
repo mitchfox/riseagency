@@ -116,16 +116,16 @@ const Index = () => {
               <p className="text-base md:text-xl lg:text-2xl text-muted-foreground leading-relaxed max-w-4xl lg:max-w-6xl mx-auto font-light">
                 RISE Football is the performance-first agency, ensuring our players, coaches and clubs develop optimally on the pitch, as well as off. To reach their potential, we provide our clients with an extensive training, analysis and recovery protocol while utilising our network to put them in a position to succeed.
               </p>
-              <div className="flex justify-center gap-12 pt-8">
-                <div className="text-center">
+              <div className="flex justify-center gap-8 md:gap-12 pt-8 max-w-3xl mx-auto">
+                <div className="flex flex-col items-center text-center">
                   <div className="text-5xl font-bebas text-primary mb-2">15+</div>
                   <div className="text-sm uppercase tracking-wider text-muted-foreground">Countries</div>
                 </div>
-                <div className="text-center">
+                <div className="flex flex-col items-center text-center">
                   <div className="text-5xl font-bebas text-primary mb-2">25+</div>
                   <div className="text-sm uppercase tracking-wider text-muted-foreground">Premier League Players</div>
                 </div>
-                <div className="text-center">
+                <div className="flex flex-col items-center text-center">
                   <div className="text-5xl font-bebas text-primary mb-2">50+</div>
                   <div className="text-sm uppercase tracking-wider text-muted-foreground">International Players</div>
                 </div>
@@ -252,6 +252,49 @@ const Index = () => {
               </h2>
             </div>
             <ScoutingNetworkMap />
+          </div>
+        </section>
+
+        {/* CTA Section - moved above News */}
+        <section className="py-12 md:py-16 px-4 bg-background relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-b from-primary/10 via-transparent to-primary/10"></div>
+          <div className="container mx-auto max-w-4xl text-center space-y-8 relative z-10">
+            <div className="space-y-4">
+              <div className="inline-block">
+                <span className="text-sm font-bebas uppercase tracking-widest text-primary border border-primary/30 px-6 py-2 rounded-full">
+                  RISE WITH US
+                </span>
+              </div>
+              <h2 className="text-4xl md:text-6xl lg:text-7xl font-bebas uppercase tracking-wider text-foreground leading-tight">
+                Take The <span className="text-primary">1st Step</span>
+              </h2>
+              <p className="text-base md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+                Reach out to one of our representatives for a direct 1:1 conversation about yourself, or a player under your care.
+              </p>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-6 justify-center items-center pt-4">
+              <WorkWithUsDialog>
+                <Button 
+                  size="lg" 
+                  className="btn-shine text-xl font-bebas uppercase tracking-wider px-12 py-7 hover:scale-105 transition-transform shadow-xl"
+                >
+                  Work With Us
+                </Button>
+              </WorkWithUsDialog>
+              <Button 
+                asChild
+                variant="outline"
+                size="lg" 
+                className="text-xl font-bebas uppercase tracking-wider px-12 py-7 hover:scale-105 transition-transform"
+              >
+                <a href="mailto:jolon.levene@risefootballagency.com?subject=Portfolio%20Request">
+                  Request Our Portfolio
+                </a>
+              </Button>
+            </div>
+            <p className="text-sm text-muted-foreground italic">
+              Learn more about our portfolio, including how we work and with whom we work.
+            </p>
           </div>
         </section>
 
@@ -433,48 +476,7 @@ const Index = () => {
         </section>
 
 
-        {/* CTA Section */}
-        <section className="py-12 md:py-16 px-4 bg-background relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-b from-primary/10 via-transparent to-primary/10"></div>
-          <div className="container mx-auto max-w-4xl text-center space-y-8 relative z-10">
-            <div className="space-y-4">
-              <div className="inline-block">
-                <span className="text-sm font-bebas uppercase tracking-widest text-primary border border-primary/30 px-6 py-2 rounded-full">
-                  RISE WITH US
-                </span>
-              </div>
-              <h2 className="text-4xl md:text-6xl lg:text-7xl font-bebas uppercase tracking-wider text-foreground leading-tight">
-                Take The <span className="text-primary">1st Step</span>
-              </h2>
-              <p className="text-base md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-                Reach out to one of our representatives for a direct 1:1 conversation about yourself, or a player under your care.
-              </p>
-            </div>
-            <div className="flex flex-col sm:flex-row gap-6 justify-center items-center pt-4">
-              <WorkWithUsDialog>
-                <Button 
-                  size="lg" 
-                  className="btn-shine text-xl font-bebas uppercase tracking-wider px-12 py-7 hover:scale-105 transition-transform shadow-xl"
-                >
-                  Work With Us
-                </Button>
-              </WorkWithUsDialog>
-              <Button 
-                asChild
-                variant="outline"
-                size="lg" 
-                className="text-xl font-bebas uppercase tracking-wider px-12 py-7 hover:scale-105 transition-transform"
-              >
-                <a href="mailto:jolon.levene@risefootballagency.com?subject=Portfolio%20Request">
-                  Request Our Portfolio
-                </a>
-              </Button>
-            </div>
-            <p className="text-sm text-muted-foreground italic">
-              Learn more about our portfolio, including how we work and with whom we work.
-            </p>
-          </div>
-        </section>
+        {/* CTA Section moved above News */}
 
         {/* RISE Broadcast Advertisement */}
         <section className="py-12 md:py-16 px-4 bg-muted/30">

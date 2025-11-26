@@ -744,11 +744,17 @@ export const Header = () => {
             />
           </Link>
 
-          {/* Utility icons - only show when scrolled on homepage */}
-          {showTopBar && isScrolled && (
+          {/* Utility icons - smoothly reposition between top bar and header */}
+          {showTopBar && (
             <>
-              {/* Left side icons - next to menu */}
-              <div className="absolute left-12 md:left-16 top-1/2 -translate-y-1/2 flex items-center gap-1 md:gap-2 transition-all duration-500">
+              {/* Left side icons - move from top bar into header next to menu */}
+              <div
+                className="fixed flex items-center gap-1 md:gap-2 transition-all duration-500 z-[90]"
+                style={{
+                  left: "3.25rem",
+                  top: isScrolled ? "32px" : "82px",
+                }}
+              >
                 <Link
                   to="/contact"
                   className="group p-1.5 md:p-2 rounded-full hover:bg-primary/10 transition-all duration-300 flex items-center gap-1.5 overflow-hidden"
@@ -771,8 +777,14 @@ export const Header = () => {
                 </button>
               </div>
               
-              {/* Right side icons - next to Rise With Us */}
-              <div className="absolute right-20 md:right-28 top-1/2 -translate-y-1/2 flex items-center gap-1 md:gap-2 transition-all duration-500">
+              {/* Right side icons - move from top bar into header next to RISE WITH US */}
+              <div
+                className="fixed flex items-center gap-1 md:gap-2 transition-all duration-500 z-[90]"
+                style={{
+                  right: isScrolled ? "7rem" : "2.5rem",
+                  top: isScrolled ? "32px" : "82px",
+                }}
+              >
                 <button
                   onClick={() => setRepresentationOpen(true)}
                   className="group p-1.5 md:p-2 rounded-full hover:bg-primary/10 transition-all duration-300 flex items-center gap-1.5 overflow-hidden"
