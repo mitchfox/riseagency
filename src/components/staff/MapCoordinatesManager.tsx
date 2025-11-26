@@ -87,14 +87,18 @@ export const MapCoordinatesManager = () => {
   };
 
   const handleCoordinateChange = (contactId: string, field: 'x_position' | 'y_position', value: string) => {
-    setEditedContacts(prev => ({
-      ...prev,
-      [contactId]: {
-        ...prev[contactId],
-        x_position: field === 'x_position' ? value : (prev[contactId]?.x_position ?? ''),
-        y_position: field === 'y_position' ? value : (prev[contactId]?.y_position ?? ''),
-      }
-    }));
+    setEditedContacts(prev => {
+      const contact = contacts.find(c => c.id === contactId);
+      const existing = prev[contactId];
+      
+      return {
+        ...prev,
+        [contactId]: {
+          x_position: field === 'x_position' ? value : (existing?.x_position ?? contact?.x_position?.toString() ?? ''),
+          y_position: field === 'y_position' ? value : (existing?.y_position ?? contact?.y_position?.toString() ?? ''),
+        }
+      };
+    });
   };
 
   const getCurrentValue = (contact: MapContact, field: 'x_position' | 'y_position') => {
