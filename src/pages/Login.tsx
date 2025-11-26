@@ -28,19 +28,47 @@ const Login = () => {
           
         if (data) {
           navigate("/portal");
+          return;
         } else {
           localStorage.removeItem("player_email");
           sessionStorage.removeItem("player_email");
+        }
+      }
+
+      // Check localStorage for scout email
+      const scoutEmail = localStorage.getItem("scout_email") || sessionStorage.getItem("scout_email");
+      if (scoutEmail) {
+        const { data } = await supabase
+          .from("scouts")
+          .select("id")
+          .eq("email", scoutEmail)
+          .maybeSingle();
+          
+        if (data) {
+          navigate("/scout-portal");
+          return;
+        } else {
+          localStorage.removeItem("scout_email");
+          sessionStorage.removeItem("scout_email");
         }
       }
     };
 
     checkAuth();
 
-    const savedEmail = localStorage.getItem("player_saved_email");
-    const savedRememberMe = localStorage.getItem("player_remember_me");
+    // Load saved email (check both player and scout)
+    const savedPlayerEmail = localStorage.getItem("player_saved_email");
+    const savedScoutEmail = localStorage.getItem("scout_saved_email");
+    const savedEmail = savedPlayerEmail || savedScoutEmail;
+    
     if (savedEmail) setEmail(savedEmail);
-    if (savedRememberMe === "false") setRememberMe(false);
+    
+    const savedPlayerRemember = localStorage.getItem("player_remember_me");
+    const savedScoutRemember = localStorage.getItem("scout_remember_me");
+    
+    if (savedPlayerRemember === "false" || savedScoutRemember === "false") {
+      setRememberMe(false);
+    }
   }, [navigate]);
 
   const handleEmailLogin = async (e: React.FormEvent) => {
@@ -48,7 +76,7 @@ const Login = () => {
     setLoading(true);
 
     try {
-      // Check if email exists in players table
+      // First check if email exists in players table
       const { data: player, error: playerError } = await supabase
         .from("players")
         .select("id, email")
@@ -57,31 +85,63 @@ const Login = () => {
 
       if (playerError) throw playerError;
       
-      if (!player) {
-        toast.error("Email not found. Please contact your coach to get access.");
-        setLoading(false);
+      if (player) {
+        // Save player login info
+        try {
+          localStorage.setItem("player_email", email);
+          sessionStorage.setItem("player_email", email);
+          localStorage.setItem("player_login_timestamp", Date.now().toString());
+          
+          if (rememberMe) {
+            localStorage.setItem("player_saved_email", email);
+            localStorage.setItem("player_remember_me", "true");
+          } else {
+            localStorage.removeItem("player_saved_email");
+            localStorage.setItem("player_remember_me", "false");
+          }
+        } catch (storageError) {
+          console.error("Storage error:", storageError);
+        }
+        
+        toast.success("Welcome to your portal!");
+        navigate("/portal");
         return;
       }
 
-      // Save login info
-      try {
-        localStorage.setItem("player_email", email);
-        sessionStorage.setItem("player_email", email);
-        localStorage.setItem("player_login_timestamp", Date.now().toString());
-        
-        if (rememberMe) {
-          localStorage.setItem("player_saved_email", email);
-          localStorage.setItem("player_remember_me", "true");
-        } else {
-          localStorage.removeItem("player_saved_email");
-          localStorage.setItem("player_remember_me", "false");
-        }
-      } catch (storageError) {
-        console.error("Storage error:", storageError);
-      }
+      // If not a player, check if email exists in scouts table
+      const { data: scout, error: scoutError } = await supabase
+        .from("scouts")
+        .select("id, email")
+        .eq("email", email)
+        .maybeSingle();
+
+      if (scoutError) throw scoutError;
       
-      toast.success("Welcome to your portal!");
-      navigate("/portal");
+      if (scout) {
+        // Save scout login info
+        try {
+          localStorage.setItem("scout_email", email);
+          sessionStorage.setItem("scout_email", email);
+          localStorage.setItem("scout_login_timestamp", Date.now().toString());
+          
+          if (rememberMe) {
+            localStorage.setItem("scout_saved_email", email);
+            localStorage.setItem("scout_remember_me", "true");
+          } else {
+            localStorage.removeItem("scout_saved_email");
+            localStorage.setItem("scout_remember_me", "false");
+          }
+        } catch (storageError) {
+          console.error("Storage error:", storageError);
+        }
+        
+        toast.success("Welcome to your scout portal!");
+        navigate("/scout-portal");
+        return;
+      }
+
+      // If neither player nor scout found
+      toast.error("Email not found. Please contact support to get access.");
     } catch (error: any) {
       console.error("Login error:", error);
       toast.error(error.message || "Failed to access portal");
@@ -103,7 +163,7 @@ const Login = () => {
               Player Portal
             </CardTitle>
             <CardDescription className="text-center text-white/90">
-              The player portal is for our represented players to view their personal analysis and programming
+              Access your portal to view your personal analysis, programming, and submissions
             </CardDescription>
           </CardHeader>
           <CardContent>
