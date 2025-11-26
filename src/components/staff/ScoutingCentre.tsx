@@ -11,12 +11,13 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Plus, Edit2, Trash2, UserPlus, Eye, Filter, Search, Sparkles, FileText, Target, Users, Globe } from "lucide-react";
+import { Plus, Edit2, Trash2, UserPlus, Eye, Filter, Search, Sparkles, FileText, Target, Users, Globe, MapPin } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { format } from "date-fns";
 import { SkillEvaluationForm } from "./SkillEvaluationForm";
 import { initializeSkillEvaluations, SkillEvaluation, SCOUTING_POSITIONS, POSITION_SKILLS, ScoutingPosition } from "@/data/scoutingSkills";
 import ScoutingNetworkMap from "@/components/ScoutingNetworkMap";
+import { MapCoordinatesManager } from "./MapCoordinatesManager";
 
 // Import pitch background
 import pitchBg from "@/assets/scouting-pitch-bg.jpg";
@@ -128,7 +129,7 @@ export const ScoutingCentre = ({ open, onOpenChange }: ScoutingCentreProps) => {
     notes: ""
   });
   const [players, setPlayers] = useState<{ id: string; name: string }[]>([]);
-  const [mainTab, setMainTab] = useState<"reports" | "all-players" | "network" | "scouts">("reports");
+  const [mainTab, setMainTab] = useState<"reports" | "all-players" | "network" | "scouts" | "map-coords">("reports");
   const [groupBy, setGroupBy] = useState<"country" | "club" | "scout">("country");
   const [formData, setFormData] = useState({
     player_name: "",
@@ -568,7 +569,7 @@ export const ScoutingCentre = ({ open, onOpenChange }: ScoutingCentreProps) => {
           </DialogHeader>
           
           <Tabs value={mainTab} onValueChange={(v) => setMainTab(v as any)} className="flex-1 flex flex-col px-6 pb-6">
-            <TabsList className="grid w-full grid-cols-4 mb-4">
+            <TabsList className="grid w-full grid-cols-5 mb-4">
               <TabsTrigger value="reports" className="gap-2">
                 <FileText className="h-4 w-4" />
                 Create & View Reports
@@ -584,6 +585,10 @@ export const ScoutingCentre = ({ open, onOpenChange }: ScoutingCentreProps) => {
               <TabsTrigger value="network" className="gap-2">
                 <Globe className="h-4 w-4" />
                 Scouting Network
+              </TabsTrigger>
+              <TabsTrigger value="map-coords" className="gap-2">
+                <MapPin className="h-4 w-4" />
+                Map Coordinates
               </TabsTrigger>
             </TabsList>
 
@@ -1132,6 +1137,12 @@ export const ScoutingCentre = ({ open, onOpenChange }: ScoutingCentreProps) => {
             <TabsContent value="network" className="flex-1 mt-0">
               <div className="h-[calc(98vh-200px)]">
                 <ScoutingNetworkMap />
+              </div>
+            </TabsContent>
+
+            <TabsContent value="map-coords" className="flex-1 mt-0">
+              <div className="h-[calc(98vh-200px)]">
+                <MapCoordinatesManager />
               </div>
             </TabsContent>
           </Tabs>
