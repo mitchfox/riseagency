@@ -173,7 +173,7 @@ export const Header = () => {
                   <div className={`flex items-center transition-all duration-300 ease-out px-2 md:px-4 ${isScrolled ? 'h-7 md:h-8 pt-2' : 'h-14 md:h-16'}`}>
                     <DrawerClose asChild>
                       <button
-                        className={`group relative flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-primary transition-all duration-300 ease-out ${isScrolled ? 'w-7 h-7 md:w-8 md:h-8' : 'w-10 h-10 md:w-12 md:h-12'}`}
+                        className={`group relative flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-primary transition-all duration-300 ease-out ml-[-5px] mt-5 ${isScrolled ? 'w-7 h-7 md:w-8 md:h-8' : 'w-10 h-10 md:w-12 md:h-12'}`}
                         aria-label="Close menu"
                       >
                         <X className="h-6 w-6 md:h-7 md:w-7 text-primary" strokeWidth={2.5} />
@@ -283,18 +283,21 @@ export const Header = () => {
                       <DrawerClose asChild>
                         <button
                           onClick={() => setRepresentationOpen(true)}
-                          className="relative aspect-[3/2] rounded-lg overflow-hidden group"
+                          className="relative overflow-hidden group flex flex-col"
                         >
-                          <img 
-                            src={workingTogether} 
-                            alt="Request Representation" 
-                            className="absolute inset-0 w-full h-full object-cover"
-                          />
-                          <div className="absolute inset-0 bg-black/40 group-hover:bg-black/30 transition-all" />
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <span className="text-lg md:text-xl font-bebas uppercase tracking-wider px-4 py-2 bg-primary text-black rounded group-hover:scale-105 transition-all">
-                              Represent Me
-                            </span>
+                          <h3 className="text-white font-bebas text-xl md:text-2xl uppercase tracking-wider mb-2 text-center">
+                            Realise Potential
+                          </h3>
+                          <div className="relative aspect-[4/3] rounded-lg overflow-hidden mb-2">
+                            <img 
+                              src={workingTogether} 
+                              alt="Request Representation" 
+                              className="absolute inset-0 w-full h-full object-cover"
+                            />
+                            <div className="absolute inset-0 bg-black/20" />
+                          </div>
+                          <div className="bg-primary text-black font-bebas uppercase tracking-wider text-sm md:text-base py-2 rounded group-hover:scale-[1.02] transition-all text-center">
+                            Request Representation
                           </div>
                         </button>
                       </DrawerClose>
@@ -302,18 +305,21 @@ export const Header = () => {
                       <DrawerClose asChild>
                         <Link
                           to="/login"
-                          className="relative aspect-[3/2] rounded-lg overflow-hidden group block"
+                          className="relative overflow-hidden group flex flex-col"
                         >
-                          <img 
-                            src={playerPortalImage} 
-                            alt="Portal" 
-                            className="absolute inset-0 w-full h-full object-cover"
-                          />
-                          <div className="absolute inset-0 bg-black/40 group-hover:bg-black/30 transition-all" />
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <span className="text-lg md:text-xl font-bebas uppercase tracking-wider px-4 py-2 bg-primary text-black rounded group-hover:scale-105 transition-all">
-                              Portal
-                            </span>
+                          <h3 className="text-white font-bebas text-xl md:text-2xl uppercase tracking-wider mb-2 text-center">
+                            Portal
+                          </h3>
+                          <div className="relative aspect-[4/3] rounded-lg overflow-hidden mb-2">
+                            <img 
+                              src={playerPortalImage} 
+                              alt="Portal" 
+                              className="absolute inset-0 w-full h-full object-cover"
+                            />
+                            <div className="absolute inset-0 bg-black/20" />
+                          </div>
+                          <div className="bg-primary text-black font-bebas uppercase tracking-wider text-sm md:text-base py-2 rounded group-hover:scale-[1.02] transition-all text-center">
+                            Portal
                           </div>
                         </Link>
                       </DrawerClose>
