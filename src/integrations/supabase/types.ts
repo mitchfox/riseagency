@@ -1786,6 +1786,7 @@ export type Database = {
           profile_image_url: string | null
           prospect_id: string | null
           recommendation: string | null
+          scout_id: string | null
           scout_name: string | null
           scouting_date: string
           skill_evaluations: Json | null
@@ -1828,6 +1829,7 @@ export type Database = {
           profile_image_url?: string | null
           prospect_id?: string | null
           recommendation?: string | null
+          scout_id?: string | null
           scout_name?: string | null
           scouting_date?: string
           skill_evaluations?: Json | null
@@ -1870,6 +1872,7 @@ export type Database = {
           profile_image_url?: string | null
           prospect_id?: string | null
           recommendation?: string | null
+          scout_id?: string | null
           scout_name?: string | null
           scouting_date?: string
           skill_evaluations?: Json | null
@@ -1904,7 +1907,65 @@ export type Database = {
             referencedRelation: "prospects"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "scouting_reports_scout_id_fkey"
+            columns: ["scout_id"]
+            isOneToOne: false
+            referencedRelation: "scouts"
+            referencedColumns: ["id"]
+          },
         ]
+      }
+      scouts: {
+        Row: {
+          commission_rate: number | null
+          country: string | null
+          created_at: string
+          email: string
+          id: string
+          name: string
+          notes: string | null
+          phone: string | null
+          profile_image_url: string | null
+          regions: string[] | null
+          status: string
+          successful_signings: number
+          total_submissions: number
+          updated_at: string
+        }
+        Insert: {
+          commission_rate?: number | null
+          country?: string | null
+          created_at?: string
+          email: string
+          id?: string
+          name: string
+          notes?: string | null
+          phone?: string | null
+          profile_image_url?: string | null
+          regions?: string[] | null
+          status?: string
+          successful_signings?: number
+          total_submissions?: number
+          updated_at?: string
+        }
+        Update: {
+          commission_rate?: number | null
+          country?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          profile_image_url?: string | null
+          regions?: string[] | null
+          status?: string
+          successful_signings?: number
+          total_submissions?: number
+          updated_at?: string
+        }
+        Relationships: []
       }
       site_visits: {
         Row: {

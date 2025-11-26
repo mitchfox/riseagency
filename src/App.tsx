@@ -33,6 +33,7 @@ import PlayersList from "./pages/PlayersList";
 import PlayersDraft from "./pages/PlayersDraft";
 import ClubNetwork from "./pages/ClubNetwork";
 import PDFViewer from "./pages/PDFViewer";
+import ScoutPortal from "./pages/ScoutPortal";
 
 const queryClient = new QueryClient();
 
@@ -69,6 +70,7 @@ const App = () => {
           <Route path="/staff" element={<Staff />} />
           <Route path="/login" element={<Login />} />
           <Route path="/portal" element={<Dashboard />} />
+          <Route path="/scout-portal" element={<ScoutPortal />} />
           <Route path="/performance-report/:slug" element={<PerformanceReport />} />
           <Route path="/analysis/:analysisId" element={<AnalysisViewer />} />
           <Route path="/import-program" element={<ImportProgramCSV />} />
