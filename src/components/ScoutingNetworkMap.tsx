@@ -962,7 +962,11 @@ const ScoutingNetworkMap = () => {
                   <g key={`city-expanded-${idx}`}>
                     {/* Connection lines from center to each club */}
                     {cityGroup.clubs.map((club, clubIdx) => {
-                      const pos = getClubPositionInCircle(clubIdx, cityGroup.clubs.length, cityGroup.x, cityGroup.y);
+                      // Use custom position if available, otherwise calculate circle position
+                      const customPos = clubPositions[club.name];
+                      const defaultPos = getClubPositionInCircle(clubIdx, cityGroup.clubs.length, cityGroup.x, cityGroup.y);
+                      const pos = customPos || defaultPos;
+                      
                       return (
                         <line
                           key={`line-${clubIdx}`}
@@ -1010,9 +1014,18 @@ const ScoutingNetworkMap = () => {
                     
                     {/* Club logos in circle */}
                     {cityGroup.clubs.map((club, clubIdx) => {
-                      const pos = getClubPositionInCircle(clubIdx, cityGroup.clubs.length, cityGroup.x, cityGroup.y);
+                      // Use custom position if available, otherwise calculate circle position
+                      const customPos = clubPositions[club.name];
+                      const defaultPos = getClubPositionInCircle(clubIdx, cityGroup.clubs.length, cityGroup.x, cityGroup.y);
+                      const pos = customPos || defaultPos;
+                      
                       return (
-                        <g key={`club-${clubIdx}`}>
+                        <g 
+                          key={`club-${clubIdx}`}
+                          onMouseDown={(e) => handleClubDragStart(club.name, e)}
+                          className={!isLocked ? "cursor-move" : "cursor-pointer"}
+                          style={{ pointerEvents: 'all' }}
+                        >
                           <defs>
                             <clipPath id={`clip-expanded-${idx}-${clubIdx}`}>
                               <circle cx={pos.x} cy={pos.y} r="6" />
@@ -1031,9 +1044,9 @@ const ScoutingNetworkMap = () => {
                             cy={pos.y}
                             r="6"
                             fill="none"
-                            stroke="white"
-                            strokeWidth="1.5"
-                            className="hover:stroke-primary transition-colors"
+                            stroke={!isLocked ? "hsl(var(--primary))" : "white"}
+                            strokeWidth={!isLocked ? "2" : "1.5"}
+                            className={!isLocked ? "" : "hover:stroke-primary transition-colors"}
                           >
                             <title>{club.name}</title>
                           </circle>
