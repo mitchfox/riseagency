@@ -1821,6 +1821,71 @@ export type Database = {
         }
         Relationships: []
       }
+      scouting_report_drafts: {
+        Row: {
+          age: number | null
+          competition: string | null
+          created_at: string | null
+          current_club: string | null
+          id: string
+          nationality: string | null
+          player_name: string
+          position: string | null
+          recommendation: string | null
+          scout_id: string | null
+          skill_evaluations: Json | null
+          strengths: string | null
+          summary: string | null
+          updated_at: string | null
+          video_url: string | null
+          weaknesses: string | null
+        }
+        Insert: {
+          age?: number | null
+          competition?: string | null
+          created_at?: string | null
+          current_club?: string | null
+          id?: string
+          nationality?: string | null
+          player_name: string
+          position?: string | null
+          recommendation?: string | null
+          scout_id?: string | null
+          skill_evaluations?: Json | null
+          strengths?: string | null
+          summary?: string | null
+          updated_at?: string | null
+          video_url?: string | null
+          weaknesses?: string | null
+        }
+        Update: {
+          age?: number | null
+          competition?: string | null
+          created_at?: string | null
+          current_club?: string | null
+          id?: string
+          nationality?: string | null
+          player_name?: string
+          position?: string | null
+          recommendation?: string | null
+          scout_id?: string | null
+          skill_evaluations?: Json | null
+          strengths?: string | null
+          summary?: string | null
+          updated_at?: string | null
+          video_url?: string | null
+          weaknesses?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scouting_report_drafts_scout_id_fkey"
+            columns: ["scout_id"]
+            isOneToOne: false
+            referencedRelation: "scouts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       scouting_reports: {
         Row: {
           added_to_prospects: boolean | null

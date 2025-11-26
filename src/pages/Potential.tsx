@@ -8,30 +8,59 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { LogOut, Plus, Users, MessageSquare, Search } from "lucide-react";
+import { LogOut, Plus, Users, MessageSquare, Search, FileText, Trash2, Edit } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { SkillEvaluationForm } from "@/components/staff/SkillEvaluationForm";
+import { initializeSkillEvaluations, SkillEvaluation, SCOUTING_POSITIONS, ScoutingPosition } from "@/data/scoutingSkills";
+
+// Map form positions to scouting positions
+const positionMapping: Record<string, ScoutingPosition> = {
+  "GK": "Goalkeeper",
+  "LB": "Full-Back",
+  "RB": "Full-Back",
+  "CB": "Centre-Back",
+  "CDM": "Central Defensive Midfielder",
+  "CM": "Central Midfielder",
+  "CAM": "Central Attacking Midfielder",
+  "LW": "Winger / Wide Forward",
+  "RW": "Winger / Wide Forward",
+  "ST": "Centre Forward / Striker"
+};
+
+interface DraftFormData {
+  id?: string;
+  player_name: string;
+  position: string;
+  age: string;
+  current_club: string;
+  nationality: string;
+  competition: string;
+  skill_evaluations: SkillEvaluation[];
+  strengths: string;
+  weaknesses: string;
+  summary: string;
+  recommendation: string;
+  video_url: string;
+}
 
 const Potential = () => {
   const { scout, loading, signOut } = useScoutAuth();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
-  const [showNewReportForm, setShowNewReportForm] = useState(false);
+  const [selectedDraft, setSelectedDraft] = useState<string | null>(null);
+  const [isCreatingNew, setIsCreatingNew] = useState(false);
 
-  // Form state for new submission
-  const [newReport, setNewReport] = useState({
+  // Form state for draft
+  const [draftForm, setDraftForm] = useState<DraftFormData>({
     player_name: "",
     position: "",
     age: "",
     current_club: "",
     nationality: "",
     competition: "",
-    overall_rating: "",
-    technical_rating: "",
-    physical_rating: "",
-    tactical_rating: "",
-    mental_rating: "",
+    skill_evaluations: [],
     strengths: "",
     weaknesses: "",
     summary: "",
@@ -56,6 +85,23 @@ const Potential = () => {
     enabled: !!scout?.id,
   });
 
+  // Fetch drafts
+  const { data: drafts = [] } = useQuery({
+    queryKey: ["scout-drafts", scout?.id],
+    queryFn: async () => {
+      if (!scout?.id) return [];
+      const { data, error } = await supabase
+        .from("scouting_report_drafts")
+        .select("*")
+        .eq("scout_id", scout.id)
+        .order("updated_at", { ascending: false });
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!scout?.id,
+  });
+
   // Fetch messages
   const { data: messages = [] } = useQuery({
     queryKey: ["scout-messages"],
@@ -71,13 +117,94 @@ const Potential = () => {
     },
   });
 
-  // Submit new report mutation
+  // Save draft mutation
+  const saveDraftMutation = useMutation({
+    mutationFn: async (draftData: DraftFormData) => {
+      const dataToSave = {
+        player_name: draftData.player_name,
+        position: draftData.position,
+        age: draftData.age ? parseInt(draftData.age) : null,
+        current_club: draftData.current_club,
+        nationality: draftData.nationality,
+        competition: draftData.competition,
+        skill_evaluations: draftData.skill_evaluations as any,
+        strengths: draftData.strengths,
+        weaknesses: draftData.weaknesses,
+        summary: draftData.summary,
+        recommendation: draftData.recommendation,
+        video_url: draftData.video_url,
+        scout_id: scout?.id,
+      };
+
+      if (draftData.id) {
+        // Update existing draft
+        const { error } = await supabase
+          .from("scouting_report_drafts")
+          .update(dataToSave)
+          .eq("id", draftData.id);
+        
+        if (error) throw error;
+      } else {
+        // Create new draft
+        const { error } = await supabase
+          .from("scouting_report_drafts")
+          .insert(dataToSave);
+        
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      toast.success("Draft saved successfully!");
+      queryClient.invalidateQueries({ queryKey: ["scout-drafts"] });
+      setIsCreatingNew(false);
+      setSelectedDraft(null);
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to save draft");
+    },
+  });
+
+  // Delete draft mutation
+  const deleteDraftMutation = useMutation({
+    mutationFn: async (draftId: string) => {
+      const { error } = await supabase
+        .from("scouting_report_drafts")
+        .delete()
+        .eq("id", draftId);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Draft deleted successfully!");
+      queryClient.invalidateQueries({ queryKey: ["scout-drafts"] });
+      if (selectedDraft) {
+        setSelectedDraft(null);
+        resetForm();
+      }
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to delete draft");
+    },
+  });
+
+  // Submit report mutation
   const submitReportMutation = useMutation({
-    mutationFn: async (reportData: any) => {
+    mutationFn: async (reportData: DraftFormData) => {
       const { error } = await supabase
         .from("scouting_reports")
         .insert({
-          ...reportData,
+          player_name: reportData.player_name,
+          position: reportData.position,
+          age: reportData.age ? parseInt(reportData.age) : null,
+          current_club: reportData.current_club,
+          nationality: reportData.nationality,
+          competition: reportData.competition,
+          skill_evaluations: reportData.skill_evaluations as any,
+          strengths: reportData.strengths,
+          weaknesses: reportData.weaknesses,
+          summary: reportData.summary,
+          recommendation: reportData.recommendation,
+          video_url: reportData.video_url,
           scout_id: scout?.id,
           scout_name: scout?.name,
           scouting_date: new Date().toISOString().split('T')[0],
@@ -85,52 +212,98 @@ const Potential = () => {
         });
       
       if (error) throw error;
+
+      // Delete the draft if submitting from a saved draft
+      if (reportData.id) {
+        await supabase
+          .from("scouting_report_drafts")
+          .delete()
+          .eq("id", reportData.id);
+      }
     },
     onSuccess: () => {
       toast.success("Report submitted successfully!");
       queryClient.invalidateQueries({ queryKey: ["scout-submissions"] });
-      setShowNewReportForm(false);
-      setNewReport({
-        player_name: "",
-        position: "",
-        age: "",
-        current_club: "",
-        nationality: "",
-        competition: "",
-        overall_rating: "",
-        technical_rating: "",
-        physical_rating: "",
-        tactical_rating: "",
-        mental_rating: "",
-        strengths: "",
-        weaknesses: "",
-        summary: "",
-        recommendation: "",
-        video_url: "",
-      });
+      queryClient.invalidateQueries({ queryKey: ["scout-drafts"] });
+      setIsCreatingNew(false);
+      setSelectedDraft(null);
+      resetForm();
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to submit report");
     },
   });
 
-  const handleSubmitReport = () => {
-    if (!newReport.player_name || !newReport.position) {
+  const resetForm = () => {
+    setDraftForm({
+      player_name: "",
+      position: "",
+      age: "",
+      current_club: "",
+      nationality: "",
+      competition: "",
+      skill_evaluations: [],
+      strengths: "",
+      weaknesses: "",
+      summary: "",
+      recommendation: "",
+      video_url: "",
+    });
+  };
+
+  const handleCreateNew = () => {
+    resetForm();
+    setSelectedDraft(null);
+    setIsCreatingNew(true);
+  };
+
+  const handleEditDraft = (draft: any) => {
+    setDraftForm({
+      id: draft.id,
+      player_name: draft.player_name || "",
+      position: draft.position || "",
+      age: draft.age?.toString() || "",
+      current_club: draft.current_club || "",
+      nationality: draft.nationality || "",
+      competition: draft.competition || "",
+      skill_evaluations: draft.skill_evaluations || [],
+      strengths: draft.strengths || "",
+      weaknesses: draft.weaknesses || "",
+      summary: draft.summary || "",
+      recommendation: draft.recommendation || "",
+      video_url: draft.video_url || "",
+    });
+    setSelectedDraft(draft.id);
+    setIsCreatingNew(true);
+  };
+
+  const handlePositionChange = (position: string) => {
+    setDraftForm(prev => {
+      const scoutingPosition = positionMapping[position];
+      const skillEvals = scoutingPosition ? initializeSkillEvaluations(scoutingPosition) : [];
+      
+      return {
+        ...prev,
+        position,
+        skill_evaluations: skillEvals
+      };
+    });
+  };
+
+  const handleSaveDraft = () => {
+    if (!draftForm.player_name || !draftForm.position) {
       toast.error("Please fill in player name and position");
       return;
     }
+    saveDraftMutation.mutate(draftForm);
+  };
 
-    const reportData = {
-      ...newReport,
-      age: newReport.age ? parseInt(newReport.age) : null,
-      overall_rating: newReport.overall_rating ? parseFloat(newReport.overall_rating) : null,
-      technical_rating: newReport.technical_rating ? parseFloat(newReport.technical_rating) : null,
-      physical_rating: newReport.physical_rating ? parseFloat(newReport.physical_rating) : null,
-      tactical_rating: newReport.tactical_rating ? parseFloat(newReport.tactical_rating) : null,
-      mental_rating: newReport.mental_rating ? parseFloat(newReport.mental_rating) : null,
-    };
-
-    submitReportMutation.mutate(reportData);
+  const handleSubmitReport = () => {
+    if (!draftForm.player_name || !draftForm.position) {
+      toast.error("Please fill in player name and position");
+      return;
+    }
+    submitReportMutation.mutate(draftForm);
   };
 
   const filteredSubmissions = submissions.filter(sub =>
@@ -173,9 +346,9 @@ const Potential = () => {
               <Users className="h-4 w-4 mr-2" />
               My Submissions
             </TabsTrigger>
-            <TabsTrigger value="new-report">
-              <Plus className="h-4 w-4 mr-2" />
-              New Report
+            <TabsTrigger value="drafts" onClick={() => setIsCreatingNew(false)}>
+              <FileText className="h-4 w-4 mr-2" />
+              Drafts
             </TabsTrigger>
             <TabsTrigger value="messages">
               <MessageSquare className="h-4 w-4 mr-2" />
@@ -237,28 +410,6 @@ const Potential = () => {
                         </div>
                       </CardHeader>
                       <CardContent>
-                        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-4">
-                          <div>
-                            <p className="text-xs text-muted-foreground">Overall</p>
-                            <p className="text-lg font-bold">{report.overall_rating}/10</p>
-                          </div>
-                          <div>
-                            <p className="text-xs text-muted-foreground">Technical</p>
-                            <p className="text-lg font-bold">{report.technical_rating}/10</p>
-                          </div>
-                          <div>
-                            <p className="text-xs text-muted-foreground">Physical</p>
-                            <p className="text-lg font-bold">{report.physical_rating}/10</p>
-                          </div>
-                          <div>
-                            <p className="text-xs text-muted-foreground">Tactical</p>
-                            <p className="text-lg font-bold">{report.tactical_rating}/10</p>
-                          </div>
-                          <div>
-                            <p className="text-xs text-muted-foreground">Mental</p>
-                            <p className="text-lg font-bold">{report.mental_rating}/10</p>
-                          </div>
-                        </div>
                         {report.summary && (
                           <p className="text-sm text-muted-foreground mb-2">{report.summary}</p>
                         )}
@@ -273,229 +424,269 @@ const Potential = () => {
             </ScrollArea>
           </TabsContent>
 
-          {/* New Report Tab */}
-          <TabsContent value="new-report">
-            <Card>
-              <CardHeader>
-                <CardTitle>Submit New Scouting Report</CardTitle>
-                <CardDescription>
-                  Fill in the details for the player you want to recommend
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ScrollArea className="h-[600px] pr-4">
-                  <div className="space-y-6">
-                    {/* Basic Info */}
-                    <div className="space-y-4">
-                      <h3 className="font-semibold">Basic Information</h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="player_name">Player Name *</Label>
-                          <Input
-                            id="player_name"
-                            value={newReport.player_name}
-                            onChange={(e) => setNewReport({ ...newReport, player_name: e.target.value })}
-                            placeholder="Full name"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="position">Position *</Label>
-                          <Select
-                            value={newReport.position}
-                            onValueChange={(value) => setNewReport({ ...newReport, position: value })}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select position" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="GK">Goalkeeper</SelectItem>
-                              <SelectItem value="CB">Centre Back</SelectItem>
-                              <SelectItem value="LB">Left Back</SelectItem>
-                              <SelectItem value="RB">Right Back</SelectItem>
-                              <SelectItem value="CDM">Defensive Midfielder</SelectItem>
-                              <SelectItem value="CM">Central Midfielder</SelectItem>
-                              <SelectItem value="CAM">Attacking Midfielder</SelectItem>
-                              <SelectItem value="LW">Left Winger</SelectItem>
-                              <SelectItem value="RW">Right Winger</SelectItem>
-                              <SelectItem value="ST">Striker</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="age">Age</Label>
-                          <Input
-                            id="age"
-                            type="number"
-                            value={newReport.age}
-                            onChange={(e) => setNewReport({ ...newReport, age: e.target.value })}
-                            placeholder="Age"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="nationality">Nationality</Label>
-                          <Input
-                            id="nationality"
-                            value={newReport.nationality}
-                            onChange={(e) => setNewReport({ ...newReport, nationality: e.target.value })}
-                            placeholder="Nationality"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="current_club">Current Club</Label>
-                          <Input
-                            id="current_club"
-                            value={newReport.current_club}
-                            onChange={(e) => setNewReport({ ...newReport, current_club: e.target.value })}
-                            placeholder="Club name"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="competition">Competition</Label>
-                          <Input
-                            id="competition"
-                            value={newReport.competition}
-                            onChange={(e) => setNewReport({ ...newReport, competition: e.target.value })}
-                            placeholder="League/Competition"
-                          />
-                        </div>
-                      </div>
-                    </div>
+          {/* Drafts Tab */}
+          <TabsContent value="drafts">
+            {!isCreatingNew ? (
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <p className="text-sm text-muted-foreground">
+                    {drafts.length} saved {drafts.length === 1 ? "draft" : "drafts"}
+                  </p>
+                  <Button onClick={handleCreateNew}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    New Report
+                  </Button>
+                </div>
 
-                    {/* Ratings */}
-                    <div className="space-y-4">
-                      <h3 className="font-semibold">Ratings (1-10)</h3>
-                      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="overall_rating">Overall</Label>
-                          <Input
-                            id="overall_rating"
-                            type="number"
-                            min="1"
-                            max="10"
-                            step="0.1"
-                            value={newReport.overall_rating}
-                            onChange={(e) => setNewReport({ ...newReport, overall_rating: e.target.value })}
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="technical_rating">Technical</Label>
-                          <Input
-                            id="technical_rating"
-                            type="number"
-                            min="1"
-                            max="10"
-                            step="0.1"
-                            value={newReport.technical_rating}
-                            onChange={(e) => setNewReport({ ...newReport, technical_rating: e.target.value })}
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="physical_rating">Physical</Label>
-                          <Input
-                            id="physical_rating"
-                            type="number"
-                            min="1"
-                            max="10"
-                            step="0.1"
-                            value={newReport.physical_rating}
-                            onChange={(e) => setNewReport({ ...newReport, physical_rating: e.target.value })}
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="tactical_rating">Tactical</Label>
-                          <Input
-                            id="tactical_rating"
-                            type="number"
-                            min="1"
-                            max="10"
-                            step="0.1"
-                            value={newReport.tactical_rating}
-                            onChange={(e) => setNewReport({ ...newReport, tactical_rating: e.target.value })}
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="mental_rating">Mental</Label>
-                          <Input
-                            id="mental_rating"
-                            type="number"
-                            min="1"
-                            max="10"
-                            step="0.1"
-                            value={newReport.mental_rating}
-                            onChange={(e) => setNewReport({ ...newReport, mental_rating: e.target.value })}
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Analysis */}
-                    <div className="space-y-4">
-                      <h3 className="font-semibold">Analysis</h3>
-                      <div className="space-y-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="strengths">Strengths</Label>
-                          <Textarea
-                            id="strengths"
-                            value={newReport.strengths}
-                            onChange={(e) => setNewReport({ ...newReport, strengths: e.target.value })}
-                            placeholder="Key strengths and attributes..."
-                            rows={3}
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="weaknesses">Weaknesses</Label>
-                          <Textarea
-                            id="weaknesses"
-                            value={newReport.weaknesses}
-                            onChange={(e) => setNewReport({ ...newReport, weaknesses: e.target.value })}
-                            placeholder="Areas for improvement..."
-                            rows={3}
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="summary">Summary</Label>
-                          <Textarea
-                            id="summary"
-                            value={newReport.summary}
-                            onChange={(e) => setNewReport({ ...newReport, summary: e.target.value })}
-                            placeholder="Overall assessment..."
-                            rows={4}
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="recommendation">Recommendation</Label>
-                          <Textarea
-                            id="recommendation"
-                            value={newReport.recommendation}
-                            onChange={(e) => setNewReport({ ...newReport, recommendation: e.target.value })}
-                            placeholder="Your recommendation for the club..."
-                            rows={3}
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="video_url">Video URL (optional)</Label>
-                          <Input
-                            id="video_url"
-                            type="url"
-                            value={newReport.video_url}
-                            onChange={(e) => setNewReport({ ...newReport, video_url: e.target.value })}
-                            placeholder="https://..."
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    <Button
-                      onClick={handleSubmitReport}
-                      disabled={submitReportMutation.isPending}
-                      className="w-full"
-                    >
-                      {submitReportMutation.isPending ? "Submitting..." : "Submit Report"}
-                    </Button>
+                <ScrollArea className="h-[600px]">
+                  <div className="space-y-4">
+                    {drafts.length === 0 ? (
+                      <Card>
+                        <CardContent className="py-12 text-center">
+                          <p className="text-muted-foreground mb-4">No saved drafts</p>
+                          <Button onClick={handleCreateNew}>
+                            <Plus className="h-4 w-4 mr-2" />
+                            Create Your First Draft
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    ) : (
+                      drafts.map((draft) => (
+                        <Card key={draft.id}>
+                          <CardHeader>
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <CardTitle>{draft.player_name || "Untitled Draft"}</CardTitle>
+                                <CardDescription>
+                                  {draft.position && `${draft.position} • `}
+                                  {draft.current_club && `${draft.current_club} • `}
+                                  {draft.nationality}
+                                </CardDescription>
+                              </div>
+                              <div className="flex gap-2">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleEditDraft(draft)}
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => deleteDraftMutation.mutate(draft.id)}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          </CardHeader>
+                          <CardContent>
+                            <p className="text-xs text-muted-foreground">
+                              Last updated: {new Date(draft.updated_at).toLocaleDateString()} at{" "}
+                              {new Date(draft.updated_at).toLocaleTimeString()}
+                            </p>
+                          </CardContent>
+                        </Card>
+                      ))
+                    )}
                   </div>
                 </ScrollArea>
-              </CardContent>
-            </Card>
+              </div>
+            ) : (
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle>
+                        {selectedDraft ? "Edit Draft" : "New Scouting Report"}
+                      </CardTitle>
+                      <CardDescription>
+                        Fill in the details for the player you want to scout
+                      </CardDescription>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      onClick={() => {
+                        setIsCreatingNew(false);
+                        setSelectedDraft(null);
+                        resetForm();
+                      }}
+                    >
+                      Back to Drafts
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <ScrollArea className="h-[600px] pr-4">
+                    <div className="space-y-6">
+                      {/* Basic Info */}
+                      <div className="space-y-4">
+                        <h3 className="font-semibold">Basic Information</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="player_name">Player Name *</Label>
+                            <Input
+                              id="player_name"
+                              value={draftForm.player_name}
+                              onChange={(e) => setDraftForm({ ...draftForm, player_name: e.target.value })}
+                              placeholder="Full name"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="position">Position *</Label>
+                            <Select
+                              value={draftForm.position}
+                              onValueChange={handlePositionChange}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select position" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="GK">Goalkeeper</SelectItem>
+                                <SelectItem value="CB">Centre Back</SelectItem>
+                                <SelectItem value="LB">Left Back</SelectItem>
+                                <SelectItem value="RB">Right Back</SelectItem>
+                                <SelectItem value="CDM">Defensive Midfielder</SelectItem>
+                                <SelectItem value="CM">Central Midfielder</SelectItem>
+                                <SelectItem value="CAM">Attacking Midfielder</SelectItem>
+                                <SelectItem value="LW">Left Winger</SelectItem>
+                                <SelectItem value="RW">Right Winger</SelectItem>
+                                <SelectItem value="ST">Striker</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="age">Age</Label>
+                            <Input
+                              id="age"
+                              type="number"
+                              value={draftForm.age}
+                              onChange={(e) => setDraftForm({ ...draftForm, age: e.target.value })}
+                              placeholder="Age"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="nationality">Nationality</Label>
+                            <Input
+                              id="nationality"
+                              value={draftForm.nationality}
+                              onChange={(e) => setDraftForm({ ...draftForm, nationality: e.target.value })}
+                              placeholder="Nationality"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="current_club">Current Club</Label>
+                            <Input
+                              id="current_club"
+                              value={draftForm.current_club}
+                              onChange={(e) => setDraftForm({ ...draftForm, current_club: e.target.value })}
+                              placeholder="Club name"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="competition">Competition</Label>
+                            <Input
+                              id="competition"
+                              value={draftForm.competition}
+                              onChange={(e) => setDraftForm({ ...draftForm, competition: e.target.value })}
+                              placeholder="League/Competition"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Skill Evaluations - Show when position is selected */}
+                      {draftForm.position && draftForm.skill_evaluations.length > 0 && (
+                        <div className="space-y-4">
+                          <h3 className="font-semibold">Skill Evaluations</h3>
+                          <SkillEvaluationForm
+                            skillEvaluations={draftForm.skill_evaluations}
+                            onChange={(evaluations) => setDraftForm({ ...draftForm, skill_evaluations: evaluations })}
+                          />
+                        </div>
+                      )}
+
+                      {/* Analysis */}
+                      <div className="space-y-4">
+                        <h3 className="font-semibold">Analysis</h3>
+                        <div className="space-y-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="strengths">Strengths</Label>
+                            <Textarea
+                              id="strengths"
+                              value={draftForm.strengths}
+                              onChange={(e) => setDraftForm({ ...draftForm, strengths: e.target.value })}
+                              placeholder="Key strengths and attributes..."
+                              rows={3}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="weaknesses">Weaknesses</Label>
+                            <Textarea
+                              id="weaknesses"
+                              value={draftForm.weaknesses}
+                              onChange={(e) => setDraftForm({ ...draftForm, weaknesses: e.target.value })}
+                              placeholder="Areas for improvement..."
+                              rows={3}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="summary">Summary</Label>
+                            <Textarea
+                              id="summary"
+                              value={draftForm.summary}
+                              onChange={(e) => setDraftForm({ ...draftForm, summary: e.target.value })}
+                              placeholder="Overall assessment..."
+                              rows={4}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="recommendation">Recommendation</Label>
+                            <Textarea
+                              id="recommendation"
+                              value={draftForm.recommendation}
+                              onChange={(e) => setDraftForm({ ...draftForm, recommendation: e.target.value })}
+                              placeholder="Your recommendation for the club..."
+                              rows={3}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="video_url">Video URL (optional)</Label>
+                            <Input
+                              id="video_url"
+                              type="url"
+                              value={draftForm.video_url}
+                              onChange={(e) => setDraftForm({ ...draftForm, video_url: e.target.value })}
+                              placeholder="https://..."
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Action Buttons */}
+                      <div className="flex gap-3">
+                        <Button
+                          onClick={handleSaveDraft}
+                          disabled={saveDraftMutation.isPending}
+                          variant="outline"
+                          className="flex-1"
+                        >
+                          {saveDraftMutation.isPending ? "Saving..." : "Save Draft"}
+                        </Button>
+                        <Button
+                          onClick={handleSubmitReport}
+                          disabled={submitReportMutation.isPending}
+                          className="flex-1"
+                        >
+                          {submitReportMutation.isPending ? "Submitting..." : "Submit Report"}
+                        </Button>
+                      </div>
+                    </div>
+                  </ScrollArea>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
 
           {/* Messages Tab */}
