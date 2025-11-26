@@ -6,23 +6,15 @@ export const PageTransition = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [prevPath, setPrevPath] = useState(location.pathname);
-  
+
   // Refs to capture old and new page content
   const prevChildrenRef = useRef(children);
   const nextChildrenRef = useRef(children);
   const isTransitioningRef = useRef(false);
+
   const [displayChildren, setDisplayChildren] = useState(children);
 
-  // Capture children on every render
-  useEffect(() => {
-    if (!isTransitioningRef.current) {
-      // Not transitioning - update the "previous" ref with current content
-      prevChildrenRef.current = children;
-    }
-    // Always update next ref with the latest children (the new page)
-    nextChildrenRef.current = children;
-  });
-
+  // Handle route changes and drive transition timing
   useEffect(() => {
     // Only trigger transition if path actually changed
     if (location.pathname === prevPath) {
@@ -30,19 +22,23 @@ export const PageTransition = ({ children }: { children: React.ReactNode }) => {
     }
 
     // Start transition - lock in the old content
-    setIsTransitioning(true);
     isTransitioningRef.current = true;
+    setIsTransitioning(true);
+
+    // Ensure prevChildrenRef holds whatever is currently on screen (old page)
+    prevChildrenRef.current = displayChildren;
+
     setPrevPath(location.pathname);
-    
-    // Keep showing old page content during transition
+
+    // Keep showing old page content during transition-out
     setDisplayChildren(prevChildrenRef.current);
-    
-    // Swap to new page content after black circle fully covers screen
+
+    // Swap to new page content after black circle fully covers the screen
     const updateTimer = setTimeout(() => {
       setDisplayChildren(nextChildrenRef.current);
-    }, 5200); // After 5s circle expand + buffer
+    }, 5200); // After 5s circle expand + small buffer
 
-    // End transition after full cycle
+    // End transition after expand + hold + contract animations
     const endTimer = setTimeout(() => {
       setIsTransitioning(false);
       isTransitioningRef.current = false;
@@ -52,7 +48,19 @@ export const PageTransition = ({ children }: { children: React.ReactNode }) => {
       clearTimeout(updateTimer);
       clearTimeout(endTimer);
     };
-  }, [location.pathname, prevPath]);
+  }, [location.pathname, prevPath, displayChildren]);
+
+  // Keep refs in sync with the latest routed children
+  useEffect(() => {
+    // Always track the latest routed children as the next page
+    nextChildrenRef.current = children;
+
+    // When we're not in a transition, keep prev in sync and render normally
+    if (!isTransitioningRef.current) {
+      prevChildrenRef.current = children;
+      setDisplayChildren(children);
+    }
+  }, [children]);
 
   return (
     <>
@@ -66,29 +74,29 @@ export const PageTransition = ({ children }: { children: React.ReactNode }) => {
                 width: "200vmax",
                 height: "200vmax",
                 transform: "scale(0)",
-                animation: "circleExpand 5s ease-in-out 0s forwards, circleContract 5s ease-in-out 6s forwards",
+                animation:
+                  "circleExpand 5s ease-in-out 0s forwards, circleContract 5s ease-in-out 6s forwards",
               }}
             />
           </div>
 
           {/* Logo on top of black overlay */}
           <div className="absolute inset-0 flex items-center justify-center z-20">
-            <img 
-              src={logo} 
-              alt="RISE" 
+            <img
+              src={logo}
+              alt="RISE"
               className="h-16 md:h-20"
               style={{
-                animation: "logoFadeIn 0.6s ease-out forwards, logoPulse 0.4s ease-out 1.2s forwards, logoFadeOut 0.6s ease-out 2s forwards",
+                animation:
+                  "logoFadeIn 0.6s ease-out forwards, logoPulse 0.4s ease-out 1.2s forwards, logoFadeOut 0.6s ease-out 2s forwards",
                 opacity: 0,
               }}
             />
           </div>
         </div>
       )}
-      
-      <div className="opacity-100 transition-opacity duration-300">
-        {displayChildren}
-      </div>
+
+      <div className="opacity-100 transition-opacity duration-300">{displayChildren}</div>
 
       <style>{`
         @keyframes logoFadeIn {
