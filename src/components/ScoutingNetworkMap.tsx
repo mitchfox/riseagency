@@ -688,39 +688,39 @@ const ScoutingNetworkMap = () => {
     "Belarus": belarusFlag,
   };
 
-  // Country centers with flag markers and leagues
+  // Country centers with flag markers and leagues - ordered by UEFA Coefficient
   const countryMarkers = [
     { country: "England", x: 315, y: 375, leagues: ["Premier League", "Championship", "League One", "League Two"] },
-    { country: "Scotland", x: 282, y: 310, leagues: ["Scottish Premiership", "Scottish Championship"] },
-    { country: "Ireland", x: 250, y: 355, leagues: ["League of Ireland Premier Division"] },
-    { country: "Iceland", x: 225, y: 110, leagues: ["Úrvalsdeild karla"] },
-    { country: "Portugal", x: 250, y: 525, leagues: ["Primeira Liga", "Liga Portugal 2"] },
-    { country: "Spain", x: 295, y: 525, leagues: ["La Liga", "La Liga 2", "Primera RFEF"] },
-    { country: "France", x: 350, y: 450, leagues: ["Ligue 1", "Ligue 2", "National"] },
-    { country: "Norway", x: 400, y: 250, leagues: ["Eliteserien", "1. divisjon"] },
-    { country: "Sweden", x: 450, y: 280, leagues: ["Allsvenskan", "Superettan"] },
-    { country: "Denmark", x: 410, y: 315, leagues: ["Danish Superliga", "1st Division"] },
-    { country: "Netherlands", x: 380, y: 355, leagues: ["Eredivisie", "Eerste Divisie"] },
-    { country: "Belgium", x: 370, y: 385, leagues: ["Pro League", "Challenger Pro League"] },
-    { country: "Germany", x: 425, y: 375, leagues: ["Bundesliga", "2. Bundesliga", "3. Liga"] },
-    { country: "Switzerland", x: 400, y: 445, leagues: ["Super League", "Challenge League"] },
-    { country: "Austria", x: 500, y: 435, leagues: ["Austrian Bundesliga", "2. Liga"] },
-    { country: "Czech Republic", x: 460, y: 410, leagues: ["Czech First League", "Czech National Football League"] },
-    { country: "Poland", x: 500, y: 375, leagues: ["Ekstraklasa", "I Liga"] },
     { country: "Italy", x: 445, y: 500, leagues: ["Serie A", "Serie B", "Serie C"] },
-    { country: "Greece", x: 525, y: 530, leagues: ["Super League Greece", "Super League 2"] },
+    { country: "Spain", x: 295, y: 525, leagues: ["La Liga", "La Liga 2", "Primera RFEF"] },
+    { country: "Germany", x: 425, y: 375, leagues: ["Bundesliga", "2. Bundesliga", "3. Liga"] },
+    { country: "France", x: 350, y: 450, leagues: ["Ligue 1", "Ligue 2", "National"] },
+    { country: "Netherlands", x: 380, y: 355, leagues: ["Eredivisie", "Eerste Divisie"] },
+    { country: "Portugal", x: 250, y: 525, leagues: ["Primeira Liga", "Liga Portugal 2"] },
+    { country: "Belgium", x: 370, y: 385, leagues: ["Pro League", "Challenger Pro League"] },
+    { country: "Czech Republic", x: 460, y: 410, leagues: ["Czech First League", "Czech National Football League"] },
+    { country: "Scotland", x: 282, y: 310, leagues: ["Scottish Premiership", "Scottish Championship"] },
     { country: "Turkey", x: 650, y: 540, leagues: ["Süper Lig", "TFF First League"] },
-    { country: "Romania", x: 555, y: 455, leagues: ["Liga I", "Liga II"] },
-    { country: "Serbia", x: 525, y: 485, leagues: ["Serbian SuperLiga", "Serbian First League"] },
+    { country: "Austria", x: 500, y: 435, leagues: ["Austrian Bundesliga", "2. Liga"] },
+    { country: "Greece", x: 525, y: 530, leagues: ["Super League Greece", "Super League 2"] },
+    { country: "Switzerland", x: 400, y: 445, leagues: ["Super League", "Challenge League"] },
+    { country: "Norway", x: 400, y: 250, leagues: ["Eliteserien", "1. divisjon"] },
+    { country: "Denmark", x: 410, y: 315, leagues: ["Danish Superliga", "1st Division"] },
     { country: "Croatia", x: 490, y: 485, leagues: ["Croatian First Football League", "Croatian Second Football League"] },
+    { country: "Poland", x: 500, y: 375, leagues: ["Ekstraklasa", "I Liga"] },
+    { country: "Serbia", x: 525, y: 485, leagues: ["Serbian SuperLiga", "Serbian First League"] },
+    { country: "Sweden", x: 450, y: 280, leagues: ["Allsvenskan", "Superettan"] },
     { country: "Ukraine", x: 620, y: 400, leagues: ["Ukrainian Premier League", "Ukrainian First League"] },
     { country: "Russia", x: 650, y: 300, leagues: ["Russian Premier League", "FNL"] },
+    { country: "Romania", x: 555, y: 455, leagues: ["Liga I", "Liga II"] },
+    { country: "Ireland", x: 250, y: 355, leagues: ["League of Ireland Premier Division"] },
+    { country: "Iceland", x: 225, y: 110, leagues: ["Úrvalsdeild karla"] },
+    { country: "Bulgaria", x: 560, y: 500, leagues: ["First Professional Football League", "Second Professional Football League"] },
+    { country: "Belarus", x: 590, y: 290, leagues: ["Belarusian Premier League", "Belarusian First League"] },
     { country: "Finland", x: 575, y: 200, leagues: ["Veikkausliiga", "Ykkönen"] },
     { country: "Estonia", x: 570, y: 240, leagues: ["Meistriliiga", "Esiliiga"] },
     { country: "Latvia", x: 570, y: 270, leagues: ["Virslīga", "1. līga"] },
     { country: "Lithuania", x: 550, y: 300, leagues: ["A Lyga", "I Lyga"] },
-    { country: "Bulgaria", x: 560, y: 500, leagues: ["First Professional Football League", "Second Professional Football League"] },
-    { country: "Belarus", x: 590, y: 290, leagues: ["Belarusian Premier League", "Belarusian First League"] },
   ];
 
   const handleCountryClick = (country: string, x: number, y: number, event: React.MouseEvent) => {
@@ -1299,7 +1299,31 @@ const ScoutingNetworkMap = () => {
                   onClick={() => handleCountryListClick(country.country, country.x, country.y)}
                 >
                   <div className="flex items-center gap-3">
-                    <MapPin className="h-4 w-4 text-primary flex-shrink-0" />
+                    <div className="relative w-6 h-6 flex-shrink-0">
+                      <svg width="24" height="24" viewBox="0 0 24 24">
+                        <defs>
+                          <clipPath id={`list-flag-clip-${idx}`}>
+                            <circle cx="12" cy="12" r="10" />
+                          </clipPath>
+                        </defs>
+                        <image
+                          href={flagImages[country.country]}
+                          x="2"
+                          y="2"
+                          width="20"
+                          height="20"
+                          clipPath={`url(#list-flag-clip-${idx})`}
+                        />
+                        <circle
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          fill="none"
+                          stroke="hsl(var(--primary))"
+                          strokeWidth="1.5"
+                        />
+                      </svg>
+                    </div>
                     <div className="flex-1">
                       <div className="font-medium">{country.country}</div>
                     </div>
