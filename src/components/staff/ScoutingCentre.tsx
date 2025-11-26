@@ -45,6 +45,7 @@ interface ScoutingReport {
   height_cm: number | null;
   preferred_foot: string | null;
   scout_name: string | null;
+  scout_id: string | null;
   scouting_date: string;
   location: string | null;
   competition: string | null;
@@ -82,8 +83,26 @@ interface ScoutingCentreProps {
   onOpenChange: (open: boolean) => void;
 }
 
+interface Scout {
+  id: string;
+  name: string;
+  email: string;
+  phone: string | null;
+  country: string | null;
+  regions: string[] | null;
+  commission_rate: number | null;
+  status: string;
+  total_submissions: number;
+  successful_signings: number;
+  profile_image_url: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export const ScoutingCentre = ({ open, onOpenChange }: ScoutingCentreProps) => {
   const [reports, setReports] = useState<ScoutingReport[]>([]);
+  const [scouts, setScouts] = useState<Scout[]>([]);
   const [loading, setLoading] = useState(false);
   const [isAddingNew, setIsAddingNew] = useState(false);
   const [editingReport, setEditingReport] = useState<ScoutingReport | null>(null);
@@ -98,6 +117,16 @@ export const ScoutingCentre = ({ open, onOpenChange }: ScoutingCentreProps) => {
   const [viewingProspectTable, setViewingProspectTable] = useState<ScoutingPosition | null>(null);
   const [prospectReports, setProspectReports] = useState<ScoutingReport[]>([]);
   const [sortField, setSortField] = useState<string>("overall_rating");
+  const [isAddingScout, setIsAddingScout] = useState(false);
+  const [newScoutData, setNewScoutData] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    country: "",
+    regions: [] as string[],
+    commission_rate: "",
+    notes: ""
+  });
   const [players, setPlayers] = useState<{ id: string; name: string }[]>([]);
   const [mainTab, setMainTab] = useState<"reports" | "all-players" | "network" | "scouts">("reports");
   const [groupBy, setGroupBy] = useState<"country" | "club" | "scout">("country");
@@ -131,6 +160,7 @@ export const ScoutingCentre = ({ open, onOpenChange }: ScoutingCentreProps) => {
     if (open) {
       fetchReports();
       fetchPlayers();
+      fetchScouts();
     }
   }, [open]);
 
@@ -145,6 +175,21 @@ export const ScoutingCentre = ({ open, onOpenChange }: ScoutingCentreProps) => {
       setPlayers(data || []);
     } catch (error) {
       console.error("Error fetching players:", error);
+    }
+  };
+
+  const fetchScouts = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('scouts')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      setScouts(data || []);
+    } catch (error) {
+      console.error('Error fetching scouts:', error);
+      toast.error('Failed to load scouts');
     }
   };
 
@@ -949,80 +994,97 @@ export const ScoutingCentre = ({ open, onOpenChange }: ScoutingCentreProps) => {
               <ScrollArea className="h-[calc(98vh-200px)]">
                 <div className="space-y-4 pr-4">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold">Scout Performance</h3>
+                    <h3 className="text-lg font-semibold">Scout Management</h3>
+                    <Button onClick={() => setIsAddingScout(true)} size="sm">
+                      <UserPlus className="h-4 w-4 mr-2" />
+                      Add Scout
+                    </Button>
                   </div>
 
-                  {(() => {
-                    // Get unique scouts and their report counts
-                    const scoutStats = reports.reduce((acc, report) => {
-                      const scoutName = report.scout_name || 'Unknown Scout';
-                      if (!acc[scoutName]) {
-                        acc[scoutName] = {
-                          name: scoutName,
-                          reports: [],
-                          totalReports: 0,
-                          recommended: 0,
-                          monitoring: 0,
-                          pending: 0,
-                          rejected: 0
-                        };
-                      }
-                      acc[scoutName].reports.push(report);
-                      acc[scoutName].totalReports++;
-                      
-                      // Count by status
-                      if (report.status === 'recommended') acc[scoutName].recommended++;
-                      else if (report.status === 'monitoring') acc[scoutName].monitoring++;
-                      else if (report.status === 'pending') acc[scoutName].pending++;
-                      else if (report.status === 'rejected') acc[scoutName].rejected++;
-                      
-                      return acc;
-                    }, {} as Record<string, { 
-                      name: string; 
-                      reports: ScoutingReport[]; 
-                      totalReports: number;
-                      recommended: number;
-                      monitoring: number;
-                      pending: number;
-                      rejected: number;
-                    }>);
+                  {scouts.map((scout) => {
+                    // Get reports for this scout
+                    const scoutReports = reports.filter(r => r.scout_id === scout.id);
+                    const statusCounts = {
+                      recommended: scoutReports.filter(r => r.status === 'recommended').length,
+                      monitoring: scoutReports.filter(r => r.status === 'monitoring').length,
+                      pending: scoutReports.filter(r => r.status === 'pending').length,
+                      rejected: scoutReports.filter(r => r.status === 'rejected').length,
+                    };
 
-                    return Object.values(scoutStats)
-                      .sort((a, b) => b.totalReports - a.totalReports)
-                      .map((scout) => (
-                        <Card key={scout.name}>
-                          <CardHeader>
-                            <div className="flex items-center justify-between">
+                    return (
+                      <Card key={scout.id}>
+                        <CardHeader>
+                          <div className="flex items-center justify-between">
+                            <div>
                               <CardTitle className="text-lg">{scout.name}</CardTitle>
-                              <Badge variant="secondary">{scout.totalReports} {scout.totalReports === 1 ? 'report' : 'reports'}</Badge>
+                              <p className="text-sm text-muted-foreground">{scout.email}</p>
+                              {scout.country && (
+                                <p className="text-xs text-muted-foreground mt-1">📍 {scout.country}</p>
+                              )}
                             </div>
-                          </CardHeader>
-                          <CardContent className="space-y-4">
-                            {/* Stats */}
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                              <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/20">
-                                <div className="text-2xl font-bold text-green-500">{scout.recommended}</div>
-                                <div className="text-xs text-muted-foreground">Recommended</div>
-                              </div>
-                              <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
-                                <div className="text-2xl font-bold text-blue-500">{scout.monitoring}</div>
-                                <div className="text-xs text-muted-foreground">Monitoring</div>
-                              </div>
-                              <div className="p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/20">
-                                <div className="text-2xl font-bold text-yellow-500">{scout.pending}</div>
-                                <div className="text-xs text-muted-foreground">Pending</div>
-                              </div>
-                              <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20">
-                                <div className="text-2xl font-bold text-red-500">{scout.rejected}</div>
-                                <div className="text-xs text-muted-foreground">Rejected</div>
-                              </div>
+                            <div className="flex items-center gap-2">
+                              <Badge 
+                                variant={scout.status === 'active' ? 'default' : 'secondary'}
+                              >
+                                {scout.status}
+                              </Badge>
+                              <Badge variant="secondary">
+                                {scoutReports.length} {scoutReports.length === 1 ? 'report' : 'reports'}
+                              </Badge>
                             </div>
+                          </div>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                          {/* Scout Info */}
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            <div>
+                              <p className="text-xs text-muted-foreground">Commission</p>
+                              <p className="font-semibold">{scout.commission_rate || 0}%</p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-muted-foreground">Signings</p>
+                              <p className="font-semibold">{scout.successful_signings || 0}</p>
+                            </div>
+                            {scout.phone && (
+                              <div>
+                                <p className="text-xs text-muted-foreground">Phone</p>
+                                <p className="font-semibold text-xs">{scout.phone}</p>
+                              </div>
+                            )}
+                            {scout.regions && scout.regions.length > 0 && (
+                              <div>
+                                <p className="text-xs text-muted-foreground">Regions</p>
+                                <p className="font-semibold text-xs">{scout.regions.join(', ')}</p>
+                              </div>
+                            )}
+                          </div>
 
-                            {/* Recent Reports */}
+                          {/* Stats */}
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                            <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/20">
+                              <div className="text-2xl font-bold text-green-500">{statusCounts.recommended}</div>
+                              <div className="text-xs text-muted-foreground">Recommended</div>
+                            </div>
+                            <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
+                              <div className="text-2xl font-bold text-blue-500">{statusCounts.monitoring}</div>
+                              <div className="text-xs text-muted-foreground">Monitoring</div>
+                            </div>
+                            <div className="p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/20">
+                              <div className="text-2xl font-bold text-yellow-500">{statusCounts.pending}</div>
+                              <div className="text-xs text-muted-foreground">Pending</div>
+                            </div>
+                            <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20">
+                              <div className="text-2xl font-bold text-red-500">{statusCounts.rejected}</div>
+                              <div className="text-xs text-muted-foreground">Rejected</div>
+                            </div>
+                          </div>
+
+                          {/* Recent Reports */}
+                          {scoutReports.length > 0 && (
                             <div>
                               <h4 className="font-semibold mb-2 text-sm">Recent Reports</h4>
                               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                                {scout.reports.slice(0, 6).map((report) => (
+                                {scoutReports.slice(0, 6).map((report) => (
                                   <Card 
                                     key={report.id} 
                                     className="cursor-pointer hover:border-primary transition-colors" 
@@ -1046,20 +1108,21 @@ export const ScoutingCentre = ({ open, onOpenChange }: ScoutingCentreProps) => {
                                   </Card>
                                 ))}
                               </div>
-                              {scout.reports.length > 6 && (
+                              {scoutReports.length > 6 && (
                                 <p className="text-xs text-muted-foreground mt-2">
-                                  +{scout.reports.length - 6} more reports
+                                  +{scoutReports.length - 6} more reports
                                 </p>
                               )}
                             </div>
-                          </CardContent>
-                        </Card>
-                      ));
-                  })()}
+                          )}
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
 
-                  {reports.length === 0 && (
+                  {scouts.length === 0 && (
                     <div className="text-center py-12 text-muted-foreground">
-                      No scouting reports found
+                      No scouts added yet. Click "Add Scout" to create a new scout account.
                     </div>
                   )}
                 </div>
@@ -1696,6 +1759,141 @@ export const ScoutingCentre = ({ open, onOpenChange }: ScoutingCentreProps) => {
                 </Table>
               </div>
             )}
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Scout Dialog */}
+      <Dialog open={isAddingScout} onOpenChange={setIsAddingScout}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Add New Scout</DialogTitle>
+          </DialogHeader>
+          <ScrollArea className="max-h-[70vh] pr-4">
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="scout_name">Name *</Label>
+                  <Input
+                    id="scout_name"
+                    value={newScoutData.name}
+                    onChange={(e) => setNewScoutData({ ...newScoutData, name: e.target.value })}
+                    placeholder="Full name"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="scout_email">Email *</Label>
+                  <Input
+                    id="scout_email"
+                    type="email"
+                    value={newScoutData.email}
+                    onChange={(e) => setNewScoutData({ ...newScoutData, email: e.target.value })}
+                    placeholder="email@example.com"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="scout_phone">Phone</Label>
+                  <Input
+                    id="scout_phone"
+                    value={newScoutData.phone}
+                    onChange={(e) => setNewScoutData({ ...newScoutData, phone: e.target.value })}
+                    placeholder="+1234567890"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="scout_country">Country</Label>
+                  <Input
+                    id="scout_country"
+                    value={newScoutData.country}
+                    onChange={(e) => setNewScoutData({ ...newScoutData, country: e.target.value })}
+                    placeholder="Country"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="scout_commission">Commission Rate (%)</Label>
+                  <Input
+                    id="scout_commission"
+                    type="number"
+                    step="0.1"
+                    value={newScoutData.commission_rate}
+                    onChange={(e) => setNewScoutData({ ...newScoutData, commission_rate: e.target.value })}
+                    placeholder="10"
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="scout_notes">Notes</Label>
+                <Textarea
+                  id="scout_notes"
+                  value={newScoutData.notes}
+                  onChange={(e) => setNewScoutData({ ...newScoutData, notes: e.target.value })}
+                  placeholder="Additional notes about this scout..."
+                  rows={3}
+                />
+              </div>
+              <div className="flex justify-end gap-2 pt-4">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setIsAddingScout(false);
+                    setNewScoutData({
+                      name: "",
+                      email: "",
+                      phone: "",
+                      country: "",
+                      regions: [],
+                      commission_rate: "",
+                      notes: ""
+                    });
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={async () => {
+                    if (!newScoutData.name || !newScoutData.email) {
+                      toast.error("Name and email are required");
+                      return;
+                    }
+
+                    try {
+                      const { error } = await supabase
+                        .from('scouts')
+                        .insert({
+                          name: newScoutData.name,
+                          email: newScoutData.email,
+                          phone: newScoutData.phone || null,
+                          country: newScoutData.country || null,
+                          regions: newScoutData.regions.length > 0 ? newScoutData.regions : null,
+                          commission_rate: newScoutData.commission_rate ? parseFloat(newScoutData.commission_rate) : null,
+                          notes: newScoutData.notes || null,
+                          status: 'active'
+                        });
+
+                      if (error) throw error;
+
+                      toast.success("Scout added successfully!");
+                      setIsAddingScout(false);
+                      setNewScoutData({
+                        name: "",
+                        email: "",
+                        phone: "",
+                        country: "",
+                        regions: [],
+                        commission_rate: "",
+                        notes: ""
+                      });
+                      fetchScouts();
+                    } catch (error: any) {
+                      console.error("Error adding scout:", error);
+                      toast.error(error.message || "Failed to add scout");
+                    }
+                  }}
+                >
+                  Add Scout
+                </Button>
+              </div>
+            </div>
           </ScrollArea>
         </DialogContent>
       </Dialog>
