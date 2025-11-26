@@ -95,6 +95,13 @@ const PlayersDraft = () => {
             {/* Goal areas */}
             <div className="absolute top-1/2 left-0 -translate-y-1/2 w-16 h-32 border-2 border-white border-l-0" />
             <div className="absolute top-1/2 right-0 -translate-y-1/2 w-16 h-32 border-2 border-white border-r-0" />
+            {/* Penalty arcs (D) */}
+            <svg className="absolute top-1/2 left-32 -translate-y-1/2 w-20 h-64" viewBox="0 0 100 200">
+              <path d="M 100 40 A 60 60 0 0 0 100 160" fill="none" stroke="white" strokeWidth="2" />
+            </svg>
+            <svg className="absolute top-1/2 right-32 -translate-y-1/2 w-20 h-64" viewBox="0 0 100 200">
+              <path d="M 0 40 A 60 60 0 0 1 0 160" fill="none" stroke="white" strokeWidth="2" />
+            </svg>
             {/* Corner arcs */}
             <svg className="absolute top-0 left-0 w-16 h-16" viewBox="0 0 100 100">
               <path d="M 100 0 A 100 100 0 0 0 0 100" fill="none" stroke="white" strokeWidth="2" />
@@ -119,22 +126,30 @@ const PlayersDraft = () => {
               transform: 'translate(-50%, -50%)',
             }}
           >
-            {/* Football SVG with proper pentagon pattern */}
+            {/* Football SVG with clearer classic pattern */}
             <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-xl">
               {/* White base */}
-              <circle cx="50" cy="50" r="48" fill="white" stroke="#000" strokeWidth="1" />
+              <circle cx="50" cy="50" r="48" fill="white" stroke="#000" strokeWidth="2" />
               
-              {/* Black pentagons pattern */}
-              <path d="M 50 10 L 60 30 L 52 45 L 38 45 L 30 30 Z" fill="black" />
-              <path d="M 60 30 L 80 30 L 75 48 L 60 48 L 52 45 Z" fill="black" />
-              <path d="M 20 30 L 30 30 L 38 45 L 25 48 L 15 35 Z" fill="black" />
-              <path d="M 38 45 L 52 45 L 60 60 L 50 72 L 40 60 Z" fill="black" />
-              <path d="M 60 48 L 75 48 L 80 65 L 70 75 L 60 60 Z" fill="black" />
-              <path d="M 25 48 L 38 45 L 40 60 L 30 75 L 20 65 Z" fill="black" />
+              {/* Central black pentagon */}
+              <path
+                d="M 50 22 L 63 32 L 58 48 L 42 48 L 37 32 Z"
+                fill="black"
+              />
               
-              {/* White hexagons between black pentagons */}
-              <path d="M 60 48 L 60 60 L 50 72 L 52 45 Z" fill="white" stroke="black" strokeWidth="0.5" />
-              <path d="M 40 60 L 50 72 L 38 45 L 25 48 Z" fill="white" stroke="black" strokeWidth="0.5" />
+              {/* Surrounding black patches */}
+              <path d="M 63 32 L 78 34 L 72 48 L 58 48 Z" fill="black" />
+              <path d="M 37 32 L 22 34 L 28 48 L 42 48 Z" fill="black" />
+              <path d="M 58 48 L 72 48 L 68 64 L 56 70 Z" fill="black" />
+              <path d="M 42 48 L 28 48 L 32 64 L 44 70 Z" fill="black" />
+              
+              {/* Panel outlines to suggest hex pattern */}
+              <path
+                d="M 50 22 L 63 32 L 78 34 L 72 48 L 68 64 L 56 70 L 44 70 L 32 64 L 28 48 L 22 34 L 37 32 Z"
+                fill="none"
+                stroke="#000"
+                strokeWidth="1"
+              />
             </svg>
           </div>
         </div>
