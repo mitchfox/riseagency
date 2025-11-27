@@ -357,8 +357,8 @@ export const MapCoordinatesManager = () => {
           No contacts found for this country.
         </div>
       ) : (
-        <Card className="flex-1 min-h-0">
-          <ScrollArea className="h-[300px]">
+        <Card>
+          <ScrollArea className="max-h-[500px]">
             <Table>
               <TableHeader>
                 <TableRow>
