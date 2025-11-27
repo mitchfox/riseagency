@@ -44,9 +44,10 @@ import belarusFlag from "@/assets/flags/belarus.png";
 
 interface ScoutingNetworkMapProps {
   initialCountry?: string;
+  hideStats?: boolean;
 }
 
-const ScoutingNetworkMap = ({ initialCountry }: ScoutingNetworkMapProps = {}) => {
+const ScoutingNetworkMap = ({ initialCountry, hideStats = false }: ScoutingNetworkMapProps = {}) => {
   const [viewBox, setViewBox] = useState("0 0 1000 600");
   const [zoomLevel, setZoomLevel] = useState(0); // 0 = out, 1 = medium, 2 = fully zoomed
   const [showGrid, setShowGrid] = useState(true);
@@ -81,10 +82,59 @@ const ScoutingNetworkMap = ({ initialCountry }: ScoutingNetworkMapProps = {}) =>
     loadClubPositions();
   }, []);
 
-  // Handle initialCountry prop changes
+  // Handle initialCountry prop changes - zoom to country
   useEffect(() => {
     if (initialCountry) {
       setSelectedCountry(initialCountry);
+      // Find country marker coordinates
+      const countryData = [
+        { country: "England", x: 315, y: 375 },
+        { country: "Italy", x: 445, y: 500 },
+        { country: "Spain", x: 295, y: 525 },
+        { country: "Germany", x: 425, y: 375 },
+        { country: "France", x: 350, y: 450 },
+        { country: "Netherlands", x: 380, y: 355 },
+        { country: "Portugal", x: 250, y: 525 },
+        { country: "Belgium", x: 370, y: 385 },
+        { country: "Czech Republic", x: 460, y: 410 },
+        { country: "Scotland", x: 282, y: 310 },
+        { country: "Turkey", x: 650, y: 540 },
+        { country: "Austria", x: 500, y: 435 },
+        { country: "Greece", x: 525, y: 530 },
+        { country: "Switzerland", x: 400, y: 445 },
+        { country: "Norway", x: 400, y: 250 },
+        { country: "Denmark", x: 410, y: 315 },
+        { country: "Croatia", x: 490, y: 485 },
+        { country: "Poland", x: 500, y: 375 },
+        { country: "Serbia", x: 525, y: 485 },
+        { country: "Sweden", x: 450, y: 280 },
+        { country: "Ukraine", x: 620, y: 400 },
+        { country: "Russia", x: 650, y: 300 },
+        { country: "Romania", x: 555, y: 455 },
+        { country: "Ireland", x: 250, y: 355 },
+        { country: "Iceland", x: 225, y: 110 },
+        { country: "Bulgaria", x: 560, y: 500 },
+        { country: "Belarus", x: 590, y: 290 },
+        { country: "Finland", x: 575, y: 200 },
+        { country: "Estonia", x: 570, y: 240 },
+        { country: "Latvia", x: 570, y: 270 },
+        { country: "Lithuania", x: 550, y: 300 },
+      ];
+      const marker = countryData.find(c => c.country === initialCountry);
+      if (marker) {
+        const zoom = 3;
+        const newWidth = 1000 / zoom;
+        const newHeight = 600 / zoom;
+        const newX = Math.max(0, Math.min(1000 - newWidth, marker.x - newWidth / 2));
+        const newY = Math.max(0, Math.min(600 - newHeight, marker.y - newHeight / 2));
+        setViewBox(`${newX} ${newY} ${newWidth} ${newHeight}`);
+        setZoomLevel(1);
+      }
+    } else {
+      // Reset to default view
+      setSelectedCountry(null);
+      setViewBox("0 0 1000 600");
+      setZoomLevel(0);
     }
   }, [initialCountry]);
   
@@ -814,10 +864,10 @@ const ScoutingNetworkMap = ({ initialCountry }: ScoutingNetworkMapProps = {}) =>
   };
 
   return (
-    <div className="w-full space-y-6">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div className="w-full h-full">
+      <div className={hideStats ? "h-full" : "grid grid-cols-1 lg:grid-cols-3 gap-6"}>
         {/* Map Section */}
-        <div className="lg:col-span-2 bg-card rounded-lg p-6 border relative">
+        <div className={`${hideStats ? "h-full" : "lg:col-span-2"} bg-card rounded-lg p-4 border relative`}>
           {/* Country Flag Overlay when zoomed */}
           {selectedCountry && (
             <div className="absolute top-6 left-6 z-10 bg-card/95 backdrop-blur-sm border border-primary/20 rounded-lg p-4 shadow-xl">
@@ -1223,7 +1273,8 @@ const ScoutingNetworkMap = ({ initialCountry }: ScoutingNetworkMapProps = {}) =>
           </div>
         </div>
 
-        {/* Stats & Details Section */}
+        {/* Stats & Details Section - only show when hideStats is false */}
+        {!hideStats && (
         <div className="space-y-4">
           <div className="bg-card rounded-lg p-4 border">
             <h4 className="font-bebas text-xl mb-3">NETWORK COVERAGE</h4>
@@ -1303,6 +1354,7 @@ const ScoutingNetworkMap = ({ initialCountry }: ScoutingNetworkMapProps = {}) =>
             </div>
           </div>
         </div>
+        )}
       </div>
     </div>
   );
