@@ -198,7 +198,7 @@ export const Header = () => {
                     </DrawerClose>
                   </div>
                   
-                  <div className="flex-1 flex flex-col justify-between px-4 md:px-6 lg:px-8 xl:px-12 py-8 md:py-12 lg:py-16 overflow-y-auto">
+                  <div className="flex-1 flex flex-col justify-between px-4 md:px-6 lg:px-8 xl:px-12 py-8 md:py-12 lg:py-16 overflow-y-auto max-h-[calc(100vh-8rem)] border-t-[2rem] border-b-[2rem] border-transparent">
                     <nav className="flex flex-col gap-1 md:gap-1.5 max-w-md lg:max-w-xl xl:max-w-2xl transform -translate-y-[105px] translate-x-[5px]">
                       <DrawerClose asChild>
                         <Link to="/" className={`text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bebas uppercase text-white hover:text-primary hover:bg-white/5 transition-all tracking-wider py-1 px-2 rounded flex items-center gap-2 ${isActive("/") ? "text-primary" : ""}`}>
