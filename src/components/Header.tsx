@@ -177,12 +177,12 @@ export const Header = () => {
             <div className="flex flex-wrap items-center gap-2 md:gap-4 transition-all duration-500">
               <Link to="/contact" className="text-xs md:text-sm font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500 flex items-center gap-1.5">
                 <MessageCircle className="w-3 h-3 md:w-3.5 md:h-3.5 hidden sm:block" />
-                <HoverText text="Contact Us" />
+                <span>Contact Us</span>
               </Link>
               <div className="w-px h-4 bg-white/20" />
               <button onClick={() => setDeclareInterestOpen(true)} className="text-xs md:text-sm font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500 flex items-center gap-1.5">
                 <Users className="w-3 h-3 md:w-3.5 md:h-3.5 hidden sm:block" />
-                <HoverText text="Declare Interest In A Star" />
+                <span>Declare Interest In A Star</span>
               </button>
             </div>
             {/* Language Selector - Centered */}
@@ -192,12 +192,12 @@ export const Header = () => {
             <div className="flex flex-wrap items-center gap-2 md:gap-4 transition-all duration-500">
               <button onClick={() => setRepresentationOpen(true)} className="text-xs md:text-sm font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500 flex items-center gap-1.5">
                 <Handshake className="w-3 h-3 md:w-3.5 md:h-3.5 hidden sm:block" />
-                <HoverText text="Request Representation" />
+                <span>Request Representation</span>
               </button>
               <div className="w-px h-4 bg-white/20" />
               <Link to="/login" className="text-xs md:text-sm font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500 flex items-center gap-1.5">
                 <LogIn className="w-3 h-3 md:w-3.5 md:h-3.5 hidden sm:block" />
-                <HoverText text="Portal" />
+                <span>Portal</span>
               </Link>
             </div>
           </div>
