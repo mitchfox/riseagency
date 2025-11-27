@@ -42,11 +42,15 @@ import lithuaniaFlag from "@/assets/flags/lithuania.png";
 import bulgariaFlag from "@/assets/flags/bulgaria.png";
 import belarusFlag from "@/assets/flags/belarus.png";
 
-const ScoutingNetworkMap = () => {
+interface ScoutingNetworkMapProps {
+  initialCountry?: string;
+}
+
+const ScoutingNetworkMap = ({ initialCountry }: ScoutingNetworkMapProps = {}) => {
   const [viewBox, setViewBox] = useState("0 0 1000 600");
   const [zoomLevel, setZoomLevel] = useState(0); // 0 = out, 1 = medium, 2 = fully zoomed
   const [showGrid, setShowGrid] = useState(true);
-  const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
+  const [selectedCountry, setSelectedCountry] = useState<string | null>(initialCountry || null);
   const [selectedCluster, setSelectedCluster] = useState<{x: number, y: number} | null>(null);
   const [expandedCity, setExpandedCity] = useState<string | null>(null);
   const [draggingClub, setDraggingClub] = useState<string | null>(null);
@@ -76,6 +80,13 @@ const ScoutingNetworkMap = () => {
     
     loadClubPositions();
   }, []);
+
+  // Handle initialCountry prop changes
+  useEffect(() => {
+    if (initialCountry) {
+      setSelectedCountry(initialCountry);
+    }
+  }, [initialCountry]);
   
   // Sync hardcoded positions to database for clubs that don't have positions yet
   useEffect(() => {

@@ -8,8 +8,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Plus, Trash2, Save } from "lucide-react";
+import { Plus, Trash2, Save, RefreshCw } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import ScoutingNetworkMap from "@/components/ScoutingNetworkMap";
 
 interface MapContact {
   id: string;
@@ -28,6 +29,7 @@ export const MapCoordinatesManager = () => {
   const [saving, setSaving] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedCountry, setSelectedCountry] = useState<string>("all");
+  const [mapKey, setMapKey] = useState(0); // Key to force map refresh
   const [formData, setFormData] = useState({
     name: "",
     club_name: "",
@@ -82,6 +84,7 @@ export const MapCoordinatesManager = () => {
       setDialogOpen(false);
       resetForm();
       fetchContacts();
+      setMapKey(prev => prev + 1); // Refresh map
     } catch (error: any) {
       console.error("Error saving contact:", error);
       toast.error("Failed to save contact");
@@ -139,6 +142,7 @@ export const MapCoordinatesManager = () => {
       toast.success(`Updated ${updates.length} contact${updates.length > 1 ? 's' : ''}`);
       setEditedContacts({});
       fetchContacts();
+      setMapKey(prev => prev + 1); // Refresh map after saving
     } catch (error: any) {
       console.error("Error saving changes:", error);
       toast.error("Failed to save changes");
@@ -159,6 +163,7 @@ export const MapCoordinatesManager = () => {
       if (error) throw error;
       toast.success("Contact removed from map");
       fetchContacts();
+      setMapKey(prev => prev + 1); // Refresh map
     } catch (error: any) {
       console.error("Error deleting contact:", error);
       toast.error("Failed to remove contact");
@@ -176,6 +181,11 @@ export const MapCoordinatesManager = () => {
     });
   };
 
+  const refreshMap = () => {
+    setMapKey(prev => prev + 1);
+    toast.success("Map refreshed");
+  };
+
   const hasChanges = Object.keys(editedContacts).length > 0;
 
   const uniqueCountries = Array.from(new Set(contacts.map(c => c.country).filter(Boolean))).sort();
@@ -185,7 +195,26 @@ export const MapCoordinatesManager = () => {
     : contacts.filter(c => c.country === selectedCountry);
 
   return (
-    <div className="space-y-4">
+    <div className="flex flex-col h-full gap-4">
+      {/* Map Preview Section */}
+      <div className="relative border border-border rounded-lg overflow-hidden bg-card" style={{ height: "300px" }}>
+        <div className="absolute top-2 left-2 z-10 bg-background/80 backdrop-blur-sm px-3 py-1.5 rounded-md border border-border">
+          <span className="text-xs font-medium text-muted-foreground">
+            Map Preview {selectedCountry !== "all" && `• ${selectedCountry}`}
+          </span>
+        </div>
+        <div className="absolute top-2 right-2 z-10">
+          <Button variant="outline" size="sm" onClick={refreshMap} className="h-8 gap-2 bg-background/80 backdrop-blur-sm">
+            <RefreshCw className="h-3 w-3" />
+            Refresh
+          </Button>
+        </div>
+        <div className="h-full w-full">
+          <ScoutingNetworkMap key={mapKey} initialCountry={selectedCountry !== "all" ? selectedCountry : undefined} />
+        </div>
+      </div>
+
+      {/* Controls */}
       <div className="flex items-center justify-between gap-4">
         <div className="flex-1">
           <h3 className="text-lg font-semibold">Europe Map Coordinates</h3>
@@ -316,6 +345,7 @@ export const MapCoordinatesManager = () => {
         </div>
       </div>
 
+      {/* Table */}
       {loading ? (
         <div className="text-center py-12">Loading contacts...</div>
       ) : contacts.length === 0 ? (
@@ -327,8 +357,8 @@ export const MapCoordinatesManager = () => {
           No contacts found for this country.
         </div>
       ) : (
-        <Card>
-          <ScrollArea className="h-[calc(100vh-300px)]">
+        <Card className="flex-1">
+          <ScrollArea className="h-[calc(100vh-580px)]">
             <Table>
               <TableHeader>
                 <TableRow>
