@@ -171,26 +171,23 @@ export const Header = () => {
             <div className="flex flex-wrap items-center gap-2 md:gap-4 transition-all duration-500">
               <Link to="/contact" className="text-xs md:text-sm font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500 flex items-center gap-1.5">
                 <MessageCircle className="w-3 h-3 md:w-3.5 md:h-3.5 hidden sm:block" />
-                <span className="hidden lg:inline">Contact Us</span>
-                <span className="lg:hidden">Contact</span>
+                <span>Contact Us</span>
               </Link>
-              <div className="w-px h-4 bg-white/20 lg:hidden" />
+              <div className="w-px h-4 bg-white/20" />
               <button onClick={() => setDeclareInterestOpen(true)} className="text-xs md:text-sm font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500 flex items-center gap-1.5">
                 <Users className="w-3 h-3 md:w-3.5 md:h-3.5 hidden sm:block" />
-                <span className="hidden lg:inline">Declare Interest In A Star</span>
-                <span className="lg:hidden">Declare</span>
+                <span>Declare Interest In A Star</span>
               </button>
             </div>
             <div className="flex flex-wrap items-center gap-2 md:gap-4 transition-all duration-500">
               <button onClick={() => setRepresentationOpen(true)} className="text-xs md:text-sm font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500 flex items-center gap-1.5">
                 <Handshake className="w-3 h-3 md:w-3.5 md:h-3.5 hidden sm:block" />
-                <span className="hidden lg:inline">Request Representation</span>
-                <span className="lg:hidden">Represent</span>
+                <span>Request Representation</span>
               </button>
-              <div className="w-px h-4 bg-white/20 lg:hidden" />
+              <div className="w-px h-4 bg-white/20" />
               <Link to="/login" className="text-xs md:text-sm font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500 flex items-center gap-1.5">
                 <LogIn className="w-3 h-3 md:w-3.5 md:h-3.5 hidden sm:block" />
-                <span>PORTAL</span>
+                <span>Portal</span>
               </Link>
             </div>
           </div>
@@ -408,12 +405,12 @@ export const Header = () => {
                     </DrawerClose>
                   </nav>
 
-                  {/* Request Representation card image: 50, 525 to 250, 650 (200x125) */}
+                  {/* Request Representation card image: 50, 525 to 350, 650 (300x125) */}
                   <DrawerClose asChild>
                     <button
                       onClick={() => setRepresentationOpen(true)}
                       className="absolute group"
-                      style={{ left: "50px", top: "525px", width: "200px", height: "125px" }}
+                      style={{ left: "50px", top: "525px", width: "300px", height: "125px" }}
                     >
                       <div className="relative w-full h-full rounded overflow-hidden border-2 border-primary">
                         <img
@@ -431,12 +428,12 @@ export const Header = () => {
                     </button>
                   </DrawerClose>
 
-                  {/* Portal card image: 300, 525 to 500, 650 (200x125) */}
+                  {/* Portal card image: 400, 525 to 700, 650 (300x125) */}
                   <DrawerClose asChild>
                     <Link
                       to="/login"
                       className="absolute group"
-                      style={{ left: "300px", top: "525px", width: "200px", height: "125px" }}
+                      style={{ left: "400px", top: "525px", width: "300px", height: "125px" }}
                     >
                       <div className="relative w-full h-full rounded overflow-hidden border-2 border-primary">
                         <img
