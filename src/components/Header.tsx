@@ -296,6 +296,15 @@ export const Header = () => {
                     </DrawerClose>
                     <div className="h-px bg-white/20 my-1" />
 
+                    {/* Decorative vertical rectangle - Our Work */}
+                    <div className="my-4 flex justify-start">
+                      <div className="w-10 h-32 rounded-lg border-2 border-primary bg-primary/10 flex items-center justify-center">
+                        <span className="text-white/80 font-bebas text-sm italic tracking-wider" style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>
+                          OUR WORK
+                        </span>
+                      </div>
+                    </div>
+
                     <DrawerClose asChild>
                       <Link
                         to="/performance"
@@ -351,6 +360,15 @@ export const Header = () => {
                       </Link>
                     </DrawerClose>
                     <div className="h-px bg-white/20 my-1" />
+
+                    {/* Decorative vertical rectangle - Learn More */}
+                    <div className="my-4 flex justify-start">
+                      <div className="w-10 h-32 rounded-lg border-2 border-primary bg-primary/10 flex items-center justify-center">
+                        <span className="text-white/80 font-bebas text-sm italic tracking-wider" style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>
+                          LEARN MORE
+                        </span>
+                      </div>
+                    </div>
 
                     <DrawerClose asChild>
                       <Link
