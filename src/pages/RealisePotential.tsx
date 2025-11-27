@@ -1,0 +1,195 @@
+import { Header } from "@/components/Header";
+import { Footer } from "@/components/Footer";
+import { SEO } from "@/components/SEO";
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
+import { WorkWithUsDialog } from "@/components/WorkWithUsDialog";
+
+const RealisePotential = () => {
+  const journeySteps = [
+    {
+      number: "01",
+      title: "Training",
+      subtitle: "Physical & Technical Development",
+      description: "Science-backed training protocols tailored to each player. Building physical capacity, technical excellence, and tactical understanding.",
+      items: ["Strength & conditioning", "Technical drills", "Recovery protocols"],
+      icon: (
+        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
+        </svg>
+      ),
+    },
+    {
+      number: "02",
+      title: "Pre-Match Analysis",
+      subtitle: "Tactical Preparation",
+      description: "Detailed video analysis breaking down opposition tactics, identifying key matchups, and developing game plans.",
+      items: ["Opposition scouting", "Tactical schemes", "Strategic insights"],
+      icon: (
+        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+        </svg>
+      ),
+    },
+    {
+      number: "03",
+      title: "Performance Reports",
+      subtitle: "Match-Day Analytics",
+      description: "Comprehensive data analysis tracking every action and decision. Quantifiable metrics on performance and development.",
+      items: ["Action scoring", "R90 metrics", "Statistical analysis"],
+      icon: (
+        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+        </svg>
+      ),
+    },
+    {
+      number: "04",
+      title: "Post-Match Analysis",
+      subtitle: "Review & Reflection",
+      description: "In-depth video review sessions identifying areas of excellence and opportunities for growth.",
+      items: ["Key moment breakdowns", "Decision analysis", "Development focus"],
+      icon: (
+        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+        </svg>
+      ),
+    },
+    {
+      number: "05",
+      title: "Highlights",
+      subtitle: "Showcasing Excellence",
+      description: "Professional highlight reels for club presentations, transfer negotiations, and personal brand development.",
+      items: ["Edited reels", "Skills showcase", "Marketing materials"],
+      icon: (
+        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      ),
+    },
+  ];
+
+  return (
+    <>
+      <SEO
+        title="Realise Potential - RISE Football Agency"
+        description="Discover how RISE optimizes player development through a comprehensive match week approach - from training to highlights."
+        url="/realise-potential"
+      />
+      <Header />
+      <div className="bg-background min-h-screen">
+        {/* Hero Section */}
+        <section className="pt-32 pb-20 px-4 relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-transparent to-transparent" />
+          <div className="container mx-auto max-w-6xl relative z-10">
+            <div className="text-center space-y-6">
+              <span className="inline-block text-sm font-bebas uppercase tracking-widest text-primary border border-primary/30 px-6 py-2">
+                Our Approach
+              </span>
+              <h1 className="text-5xl md:text-7xl lg:text-8xl font-bebas uppercase tracking-wider leading-none">
+                <span className="text-foreground">A Match Week</span>
+                <br />
+                <span className="text-primary">With RISE</span>
+              </h1>
+              <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto font-light">
+                From training ground to match day and beyond—optimizing every aspect of player development and performance.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* Journey Grid */}
+        <section className="py-16 px-4">
+          <div className="container mx-auto max-w-7xl">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {journeySteps.map((step, index) => (
+                <div
+                  key={step.number}
+                  className={`group relative ${index === 4 ? 'md:col-span-2 lg:col-span-1' : ''}`}
+                >
+                  <div className="h-full p-8 border border-border/50 bg-card/50 backdrop-blur-sm hover:border-primary/50 transition-all duration-500 hover:bg-primary/5">
+                    {/* Number */}
+                    <div className="absolute top-6 right-6 text-7xl font-bebas text-primary/10 group-hover:text-primary/20 transition-colors">
+                      {step.number}
+                    </div>
+
+                    {/* Icon */}
+                    <div className="text-primary mb-6 opacity-80 group-hover:opacity-100 transition-opacity">
+                      {step.icon}
+                    </div>
+
+                    {/* Content */}
+                    <div className="relative z-10 space-y-4">
+                      <div>
+                        <h3 className="text-2xl md:text-3xl font-bebas uppercase tracking-wider text-foreground">
+                          {step.title}
+                        </h3>
+                        <p className="text-sm text-primary font-medium uppercase tracking-wider">
+                          {step.subtitle}
+                        </p>
+                      </div>
+
+                      <p className="text-muted-foreground text-sm leading-relaxed">
+                        {step.description}
+                      </p>
+
+                      <ul className="space-y-2 pt-2">
+                        {step.items.map((item, i) => (
+                          <li key={i} className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <span className="w-1 h-1 bg-primary rounded-full" />
+                            {item}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Summary Statement */}
+        <section className="py-20 px-4">
+          <div className="container mx-auto max-w-4xl text-center">
+            <div className="border border-primary/20 bg-primary/5 p-12">
+              <p className="text-xl md:text-2xl text-foreground leading-relaxed font-light">
+                This comprehensive approach ensures our players are{" "}
+                <span className="text-primary font-medium">prepared</span>,{" "}
+                <span className="text-primary font-medium">performing</span>, and{" "}
+                <span className="text-primary font-medium">progressing</span> at the highest level—week after week, season after season.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* CTA Section */}
+        <section className="py-16 px-4 bg-muted/30">
+          <div className="container mx-auto max-w-4xl text-center space-y-8">
+            <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider text-foreground">
+              Ready To <span className="text-primary">RISE</span>?
+            </h2>
+            <p className="text-muted-foreground max-w-xl mx-auto">
+              Start your journey with elite football representation and performance optimization.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <WorkWithUsDialog>
+                <Button size="lg" className="btn-shine text-lg font-bebas uppercase tracking-wider px-10 py-6">
+                  Work With Us
+                </Button>
+              </WorkWithUsDialog>
+              <Button asChild variant="outline" size="lg" className="text-lg font-bebas uppercase tracking-wider px-10 py-6">
+                <Link to="/">Back to Home</Link>
+              </Button>
+            </div>
+          </div>
+        </section>
+      </div>
+      <Footer />
+    </>
+  );
+};
+
+export default RealisePotential;
