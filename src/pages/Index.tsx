@@ -88,7 +88,7 @@ const Index = () => {
           <div className="container mx-auto max-w-7xl relative z-10">
             <VideoPortfolio />
             
-            <div className="text-center mt-12 space-y-6">
+            <div className="text-center space-y-6" style={{ marginTop: "58px" }}>
               <h2 className="text-4xl md:text-6xl lg:text-7xl font-bebas uppercase tracking-wider">
                 <span className="text-foreground">REALISE </span>
                 <span className="text-primary">POTENTIAL</span>
