@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useLocation, type Location } from "react-router-dom";
 import logo from "@/assets/logo.png";
+import { ShaderAnimation } from "@/components/ui/shader-animation";
 
 interface PageTransitionProps {
   children: (displayLocation: Location) => React.ReactNode;
@@ -38,137 +39,21 @@ export const PageTransition = ({ children }: PageTransitionProps) => {
       {/* Render routes based on the queued displayLocation */}
       {children(displayLocation)}
 
-      {/* Branching roots transition overlay */}
+      {/* Shader transition overlay */}
       {isTransitioning && (
-        <div className="fixed inset-0 z-[200] pointer-events-none" key={location.pathname}>
-          {/* Multiple branching shapes expanding from center */}
+        <div 
+          className="fixed inset-0 z-[200] pointer-events-none" 
+          key={location.pathname}
+          style={{
+            animation: "overlayFadeIn 0.5s ease-out forwards, overlayFadeOut 0.5s ease-out 2.5s forwards",
+          }}
+        >
+          {/* Shader background */}
           <div className="absolute inset-0 z-10">
-            {/* Center root */}
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div
-                className="bg-black"
-                style={{
-                  width: "150vmax",
-                  height: "150vmax",
-                  clipPath: "polygon(45% 0%, 55% 0%, 55% 100%, 45% 100%)",
-                  transform: "scale(0)",
-                  animation: "branchExpand 1.5s cubic-bezier(0.16, 1, 0.3, 1) 0s forwards, branchContract 1.5s cubic-bezier(0.7, 0, 0.84, 0) 1.5s forwards",
-                }}
-              />
-            </div>
-            
-            {/* Left upper branch */}
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div
-                className="bg-black"
-                style={{
-                  width: "150vmax",
-                  height: "150vmax",
-                  clipPath: "polygon(50% 50%, 0% 20%, 0% 40%, 50% 60%)",
-                  transform: "scale(0)",
-                  animation: "branchExpand 1.5s cubic-bezier(0.16, 1, 0.3, 1) 0.1s forwards, branchContract 1.5s cubic-bezier(0.7, 0, 0.84, 0) 1.6s forwards",
-                }}
-              />
-            </div>
-            
-            {/* Left lower branch */}
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div
-                className="bg-black"
-                style={{
-                  width: "150vmax",
-                  height: "150vmax",
-                  clipPath: "polygon(50% 50%, 0% 60%, 0% 80%, 50% 60%)",
-                  transform: "scale(0)",
-                  animation: "branchExpand 1.5s cubic-bezier(0.16, 1, 0.3, 1) 0.15s forwards, branchContract 1.5s cubic-bezier(0.7, 0, 0.84, 0) 1.65s forwards",
-                }}
-              />
-            </div>
-            
-            {/* Right upper branch */}
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div
-                className="bg-black"
-                style={{
-                  width: "150vmax",
-                  height: "150vmax",
-                  clipPath: "polygon(50% 50%, 100% 20%, 100% 40%, 50% 60%)",
-                  transform: "scale(0)",
-                  animation: "branchExpand 1.5s cubic-bezier(0.16, 1, 0.3, 1) 0.12s forwards, branchContract 1.5s cubic-bezier(0.7, 0, 0.84, 0) 1.62s forwards",
-                }}
-              />
-            </div>
-            
-            {/* Right lower branch */}
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div
-                className="bg-black"
-                style={{
-                  width: "150vmax",
-                  height: "150vmax",
-                  clipPath: "polygon(50% 50%, 100% 60%, 100% 80%, 50% 60%)",
-                  transform: "scale(0)",
-                  animation: "branchExpand 1.5s cubic-bezier(0.16, 1, 0.3, 1) 0.18s forwards, branchContract 1.5s cubic-bezier(0.7, 0, 0.84, 0) 1.68s forwards",
-                }}
-              />
-            </div>
-            
-            {/* Top branches */}
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div
-                className="bg-black"
-                style={{
-                  width: "150vmax",
-                  height: "150vmax",
-                  clipPath: "polygon(40% 50%, 20% 0%, 40% 0%, 50% 40%)",
-                  transform: "scale(0)",
-                  animation: "branchExpand 1.5s cubic-bezier(0.16, 1, 0.3, 1) 0.2s forwards, branchContract 1.5s cubic-bezier(0.7, 0, 0.84, 0) 1.7s forwards",
-                }}
-              />
-            </div>
-            
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div
-                className="bg-black"
-                style={{
-                  width: "150vmax",
-                  height: "150vmax",
-                  clipPath: "polygon(60% 50%, 80% 0%, 60% 0%, 50% 40%)",
-                  transform: "scale(0)",
-                  animation: "branchExpand 1.5s cubic-bezier(0.16, 1, 0.3, 1) 0.22s forwards, branchContract 1.5s cubic-bezier(0.7, 0, 0.84, 0) 1.72s forwards",
-                }}
-              />
-            </div>
-            
-            {/* Bottom branches */}
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div
-                className="bg-black"
-                style={{
-                  width: "150vmax",
-                  height: "150vmax",
-                  clipPath: "polygon(40% 50%, 20% 100%, 40% 100%, 50% 60%)",
-                  transform: "scale(0)",
-                  animation: "branchExpand 1.5s cubic-bezier(0.16, 1, 0.3, 1) 0.25s forwards, branchContract 1.5s cubic-bezier(0.7, 0, 0.84, 0) 1.75s forwards",
-                }}
-              />
-            </div>
-            
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div
-                className="bg-black"
-                style={{
-                  width: "150vmax",
-                  height: "150vmax",
-                  clipPath: "polygon(60% 50%, 80% 100%, 60% 100%, 50% 60%)",
-                  transform: "scale(0)",
-                  animation: "branchExpand 1.5s cubic-bezier(0.16, 1, 0.3, 1) 0.27s forwards, branchContract 1.5s cubic-bezier(0.7, 0, 0.84, 0) 1.77s forwards",
-                }}
-              />
-            </div>
+            <ShaderAnimation />
           </div>
 
-          {/* Logo on top of black overlay */}
+          {/* Logo on top of shader */}
           <div className="absolute inset-0 flex items-center justify-center z-20">
             <img
               src={logo}
@@ -185,6 +70,24 @@ export const PageTransition = ({ children }: PageTransitionProps) => {
       )}
 
       <style>{`
+        @keyframes overlayFadeIn {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
+        
+        @keyframes overlayFadeOut {
+          from {
+            opacity: 1;
+          }
+          to {
+            opacity: 0;
+          }
+        }
+        
         @keyframes logoFadeIn {
           from {
             opacity: 0;
@@ -216,28 +119,6 @@ export const PageTransition = ({ children }: PageTransitionProps) => {
           to {
             opacity: 0;
             transform: scale(0.95);
-          }
-        }
-        
-        @keyframes branchExpand {
-          from {
-            transform: scale(0);
-            opacity: 0;
-          }
-          to {
-            transform: scale(1);
-            opacity: 1;
-          }
-        }
-        
-        @keyframes branchContract {
-          from {
-            transform: scale(1);
-            opacity: 1;
-          }
-          to {
-            transform: scale(0);
-            opacity: 0;
           }
         }
       `}</style>
