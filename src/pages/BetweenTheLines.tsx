@@ -4,6 +4,7 @@ import { Footer } from "@/components/Footer";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { HoverText } from "@/components/HoverText";
 import {
   Carousel,
   CarouselContent,
@@ -268,7 +269,7 @@ export default function BetweenTheLines() {
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 px-8 py-4 bg-primary text-background font-bebas uppercase tracking-wider text-lg hover:bg-primary/90 hover:scale-105 transition-all rounded shadow-lg"
                 >
-                  Join the Channel
+                  <HoverText text="Join the Channel" />
                 </a>
               </div>
             </div>

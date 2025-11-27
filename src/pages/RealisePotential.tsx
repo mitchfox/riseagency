@@ -4,6 +4,7 @@ import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { WorkWithUsDialog } from "@/components/WorkWithUsDialog";
+import { HoverText } from "@/components/HoverText";
 
 const RealisePotential = () => {
   const journeySteps = [
@@ -177,11 +178,11 @@ const RealisePotential = () => {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <WorkWithUsDialog>
                 <Button size="lg" className="btn-shine text-lg font-bebas uppercase tracking-wider px-10 py-6">
-                  Work With Us
+                  <HoverText text="Work With Us" />
                 </Button>
               </WorkWithUsDialog>
               <Button asChild variant="outline" size="lg" className="text-lg font-bebas uppercase tracking-wider px-10 py-6">
-                <Link to="/">Back to Home</Link>
+                <Link to="/"><HoverText text="Back to Home" /></Link>
               </Button>
             </div>
           </div>
