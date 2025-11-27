@@ -19,8 +19,9 @@ export const TransitionProvider = ({ children }: { children: ReactNode }) => {
 
 export const useTransition = () => {
   const context = useContext(TransitionContext);
+  // Return default values if context is not available (for components rendered before provider)
   if (!context) {
-    throw new Error('useTransition must be used within a TransitionProvider');
+    return { isTransitioning: false, setIsTransitioning: () => {} };
   }
   return context;
 };
