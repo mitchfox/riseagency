@@ -275,6 +275,8 @@ export const Header = () => {
                     <DrawerClose asChild>
                       <Link
                         to="/stars"
+                        onMouseEnter={() => setStarsHovered(true)}
+                        onMouseLeave={() => setStarsHovered(false)}
                         className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all tracking-wider py-2 ${
                           isActive("/stars") || location.pathname.startsWith("/stars/")
                             ? "text-primary"
@@ -289,6 +291,8 @@ export const Header = () => {
                     <DrawerClose asChild>
                       <Link
                         to="/performance"
+                        onMouseEnter={() => setRealisePotentialHovered(true)}
+                        onMouseLeave={() => setRealisePotentialHovered(false)}
                         className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all tracking-wider py-2 ${
                           isActive("/performance") ? "text-primary" : ""
                         }`}
@@ -301,6 +305,8 @@ export const Header = () => {
                     <DrawerClose asChild>
                       <Link
                         to="/between-the-lines"
+                        onMouseEnter={() => setBetweenLinesHovered(true)}
+                        onMouseLeave={() => setBetweenLinesHovered(false)}
                         className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all tracking-wider py-2 ${
                           isActive("/between-the-lines") ? "text-primary" : ""
                         }`}
