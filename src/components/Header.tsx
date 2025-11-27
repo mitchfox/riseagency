@@ -161,41 +161,41 @@ export const Header = () => {
       {showTopBar && !isScrolled && (
         <div className="fixed top-14 md:top-16 left-0 right-0 z-50 bg-background/95 backdrop-blur-md transition-all duration-500 border-b-2 border-primary">
           <div className="container mx-auto px-2 md:px-4">
-          <div className="flex items-center justify-between h-9 md:h-10">
-            <div className="flex flex-wrap items-center gap-1 md:gap-4 transition-all duration-500">
+          <div className="flex items-center justify-between h-8 md:h-10">
+            <div className="flex flex-wrap items-center gap-2 md:gap-4 transition-all duration-500">
               <Link
                 to="/contact"
                 className="text-xs md:text-sm font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500 flex items-center gap-1.5"
               >
-                <MessageCircle className="w-3.5 h-3.5 hidden sm:block" />
-                <span className="hidden md:inline">Contact Us</span>
-                <span className="md:hidden">Contact</span>
+                <MessageCircle className="w-3 h-3 md:w-3.5 md:h-3.5 hidden sm:block" />
+                <span className="hidden lg:inline">Contact Us</span>
+                <span className="lg:hidden">Contact</span>
               </Link>
-              <div className="w-px h-4 bg-white/20 md:hidden" />
+              <div className="w-px h-4 bg-white/20 lg:hidden" />
               <button
                 onClick={() => setDeclareInterestOpen(true)}
                 className="text-xs md:text-sm font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500 flex items-center gap-1.5"
               >
-                <Users className="w-3.5 h-3.5 hidden sm:block" />
-                <span className="hidden md:inline">Declare Interest In A Star</span>
-                <span className="md:hidden">Declare Interest</span>
+                <Users className="w-3 h-3 md:w-3.5 md:h-3.5 hidden sm:block" />
+                <span className="hidden lg:inline">Declare Interest In A Star</span>
+                <span className="lg:hidden">Declare</span>
               </button>
             </div>
-            <div className="flex flex-wrap items-center gap-1 md:gap-4 transition-all duration-500">
+            <div className="flex flex-wrap items-center gap-2 md:gap-4 transition-all duration-500">
               <button
                 onClick={() => setRepresentationOpen(true)}
                 className="text-xs md:text-sm font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500 flex items-center gap-1.5"
               >
-                <MessageCircle className="w-3.5 h-3.5 hidden sm:block" />
-                <span className="hidden md:inline">Request Representation</span>
-                <span className="md:hidden">Represent Me</span>
+                <Handshake className="w-3 h-3 md:w-3.5 md:h-3.5 hidden sm:block" />
+                <span className="hidden lg:inline">Request Representation</span>
+                <span className="lg:hidden">Represent</span>
               </button>
-              <div className="w-px h-4 bg-white/20 md:hidden" />
+              <div className="w-px h-4 bg-white/20 lg:hidden" />
               <Link
                 to="/login"
                 className="text-xs md:text-sm font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500 flex items-center gap-1.5"
               >
-                <LogIn className="w-3.5 h-3.5 hidden sm:block" />
+                <LogIn className="w-3 h-3 md:w-3.5 md:h-3.5 hidden sm:block" />
                 <span>PORTAL</span>
               </Link>
             </div>
@@ -749,8 +749,8 @@ export const Header = () => {
               <div
                 className="fixed flex items-center gap-1 md:gap-2 z-[90]"
                 style={{
-                  left: isScrolled ? "8.56rem" : "3.25rem",
-                  top: isScrolled ? "10px" : "82px",
+                  left: isScrolled ? "clamp(3.5rem, 8vw, 8.56rem)" : "3.25rem",
+                  top: isScrolled ? "10px" : "clamp(56px, 15vw, 82px)",
                   opacity: isScrolled ? 1 : 0,
                   pointerEvents: isScrolled ? "auto" : "none",
                   transition: "all 0.5s cubic-bezier(0.4, 0, 0.2, 1)",
@@ -782,8 +782,8 @@ export const Header = () => {
               <div
                 className="fixed flex items-center gap-1 md:gap-2 z-[90]"
                 style={{
-                  right: isScrolled ? "10.56rem" : "2.5rem",
-                  top: isScrolled ? "10px" : "82px",
+                  right: isScrolled ? "clamp(4rem, 10vw, 10.56rem)" : "2.5rem",
+                  top: isScrolled ? "10px" : "clamp(56px, 15vw, 82px)",
                   opacity: isScrolled ? 1 : 0,
                   pointerEvents: isScrolled ? "auto" : "none",
                   transition: "all 0.5s cubic-bezier(0.4, 0, 0.2, 1)",
