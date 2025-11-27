@@ -717,7 +717,32 @@ export const Header = () => {
             </DrawerContent>
           </Drawer>
 
-          {/* Logo - Center */}
+          {showTopBar && isScrolled && (
+            <div className="ml-2 flex items-center gap-1 md:gap-2 transition-all duration-300 ease-out">
+              <Link
+                to="/contact"
+                className="group p-1.5 md:p-2 rounded-full hover:bg-primary/10 transition-all duration-300 flex items-center gap-1.5 overflow-hidden"
+                title="Contact Us"
+              >
+                <MessageCircle className="w-4 h-4 md:w-5 md:h-5 text-white/80 group-hover:text-primary transition-colors flex-shrink-0" />
+                <span className="max-w-0 group-hover:max-w-xs transition-all duration-300 text-xs font-bebas uppercase tracking-wider text-white/80 group-hover:text-primary whitespace-nowrap overflow-hidden">
+                  Contact Us
+                </span>
+              </Link>
+              <button
+                onClick={() => setDeclareInterestOpen(true)}
+                className="group p-1.5 md:p-2 rounded-full hover:bg-primary/10 transition-all duration-300 flex items-center gap-1.5 overflow-hidden"
+                title="Declare Interest"
+              >
+                <Users className="w-4 h-4 md:w-5 md:h-5 text-white/80 group-hover:text-primary transition-colors flex-shrink-0" />
+                <span className="max-w-0 group-hover:max-w-xs transition-all duration-300 text-xs font-bebas uppercase tracking-wider text-white/80 group-hover:text-primary whitespace-nowrap overflow-hidden">
+                  Declare Interest
+                </span>
+              </button>
+            </div>
+          )}
+
+          {/* Logo - Center */
           <Link to="/" className="absolute left-1/2 transform -translate-x-1/2 z-10">
             <img src={logo} alt="RISE Football Agency" className={`transition-all duration-500 ease-out ${isScrolled ? 'h-9 md:h-11' : 'h-7 md:h-10'}`} />
           </Link>
@@ -728,8 +753,8 @@ export const Header = () => {
               <div className="fixed flex items-center gap-1 md:gap-2 z-[90]" style={{
               left: isScrolled ? "4rem" : "3.25rem",
               top: isScrolled ? "1rem" : "clamp(56px, 15vw, 82px)",
-              opacity: isScrolled ? 1 : 0,
-              pointerEvents: isScrolled ? "auto" : "none",
+              opacity: isScrolled ? 0 : 1,
+              pointerEvents: isScrolled ? "none" : "auto",
               transition: "all 0.5s cubic-bezier(0.4, 0, 0.2, 1)"
             }}>
                 <Link to="/contact" className="group p-1.5 md:p-2 rounded-full hover:bg-primary/10 transition-all duration-300 flex items-center gap-1.5 overflow-hidden" title="Contact Us">
