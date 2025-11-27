@@ -30,26 +30,32 @@ export const PlayerDatabase = () => {
 
   const fetchPlayerReports = async () => {
     try {
-      const { data: reports, error } = await supabase
-        .from('scouting_reports')
-        .select('*')
-        .order('player_name', { ascending: true });
+      // Fetch from all sources: scouting_reports, youth outreach, and pro outreach
+      const [scoutingResult, youthResult, proResult] = await Promise.all([
+        supabase.from('scouting_reports').select('*').order('player_name', { ascending: true }),
+        supabase.from('player_outreach_youth').select('*').order('player_name', { ascending: true }),
+        supabase.from('player_outreach_pro').select('*').order('player_name', { ascending: true })
+      ]);
 
-      if (error) throw error;
+      if (scoutingResult.error) throw scoutingResult.error;
+      if (youthResult.error) throw youthResult.error;
+      if (proResult.error) throw proResult.error;
 
-      // Group reports by player name
-      const grouped = reports?.reduce((acc: Record<string, PlayerReport>, report) => {
+      const grouped: Record<string, PlayerReport> = {};
+
+      // Add scouting reports
+      scoutingResult.data?.forEach(report => {
         const name = report.player_name;
-        if (!acc[name]) {
-          acc[name] = {
+        if (!grouped[name]) {
+          grouped[name] = {
             player_name: name,
             position: report.position,
             report_count: 0,
             reports: []
           };
         }
-        acc[name].report_count++;
-        acc[name].reports.push({
+        grouped[name].report_count++;
+        grouped[name].reports.push({
           id: report.id,
           current_club: report.current_club,
           nationality: report.nationality,
@@ -59,10 +65,58 @@ export const PlayerDatabase = () => {
           status: report.status,
           summary: report.summary
         });
-        return acc;
-      }, {});
+      });
 
-      setPlayerReports(Object.values(grouped || {}));
+      // Add youth outreach players (if not already in scouting reports)
+      youthResult.data?.forEach(outreach => {
+        const name = outreach.player_name;
+        if (!grouped[name]) {
+          grouped[name] = {
+            player_name: name,
+            position: null,
+            report_count: 1,
+            reports: [{
+              id: outreach.id,
+              current_club: null,
+              nationality: null,
+              scouting_date: outreach.created_at?.split('T')[0] || new Date().toISOString().split('T')[0],
+              scout_name: null,
+              overall_rating: null,
+              status: 'outreach',
+              summary: `Youth outreach${outreach.notes ? ': ' + outreach.notes : ''}`
+            }]
+          };
+        }
+      });
+
+      // Add pro outreach players (if not already in scouting reports)
+      proResult.data?.forEach(outreach => {
+        const name = outreach.player_name;
+        if (!grouped[name]) {
+          grouped[name] = {
+            player_name: name,
+            position: null,
+            report_count: 1,
+            reports: [{
+              id: outreach.id,
+              current_club: null,
+              nationality: null,
+              scouting_date: outreach.created_at?.split('T')[0] || new Date().toISOString().split('T')[0],
+              scout_name: null,
+              overall_rating: null,
+              status: 'outreach',
+              summary: `Pro outreach${outreach.notes ? ': ' + outreach.notes : ''}`
+            }]
+          };
+        }
+      });
+
+      // Sort by player name
+      const sortedPlayers = Object.values(grouped).sort((a, b) => 
+        a.player_name.localeCompare(b.player_name)
+      );
+
+      setPlayerReports(sortedPlayers);
     } catch (error) {
       console.error('Error fetching player reports:', error);
       toast.error('Failed to load player database');
