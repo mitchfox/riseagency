@@ -21,16 +21,16 @@ export const PageTransition = ({ children }: PageTransitionProps) => {
     setIsTransitioning(true);
     setGlobalTransitioning(true);
 
-    // After 0.5s (quick transition out), switch the rendered route
+    // After 1s (transition out), switch the rendered route
     const showNewTimer = setTimeout(() => {
       setDisplayLocation(location);
-    }, 500);
+    }, 1000);
 
-    // After 1s total, end the overlay
+    // After 2s total, end the overlay
     const endTimer = setTimeout(() => {
       setIsTransitioning(false);
       setGlobalTransitioning(false);
-    }, 1000);
+    }, 2000);
 
     return () => {
       clearTimeout(showNewTimer);
@@ -49,7 +49,7 @@ export const PageTransition = ({ children }: PageTransitionProps) => {
           className="fixed inset-0 z-[200] pointer-events-none" 
           key={location.pathname}
           style={{
-            animation: "overlayFadeIn 0.15s ease-out forwards, overlayFadeOut 0.2s ease-out 0.8s forwards",
+            animation: "overlayFadeIn 0.3s ease-out forwards, overlayFadeOut 0.3s ease-out 1.7s forwards",
           }}
         >
           {/* Shader background */}
@@ -65,7 +65,7 @@ export const PageTransition = ({ children }: PageTransitionProps) => {
               className="h-16 md:h-20"
               style={{
                 animation:
-                  "logoFadeIn 0.2s ease-out forwards, logoPulse 0.15s ease-out 0.35s forwards, logoFadeOut 0.2s ease-out 0.6s forwards",
+                  "logoFadeIn 0.4s ease-out forwards, logoPulse 0.3s ease-out 0.8s forwards, logoFadeOut 0.4s ease-out 1.3s forwards",
                 opacity: 0,
               }}
             />
