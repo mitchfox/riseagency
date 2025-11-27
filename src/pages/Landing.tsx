@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { LanguageSelector } from "@/components/LanguageSelector";
 import { HoverText } from "@/components/HoverText";
+import { MatrixPlayerEffect } from "@/components/MatrixPlayerEffect";
 import logo from "@/assets/logo.png";
 
 export default function Landing() {
@@ -14,11 +15,13 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen bg-black flex flex-col items-center relative overflow-hidden">
-      {/* Subtle glow effect behind center */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-primary/5 blur-[120px] pointer-events-none" />
+      {/* Matrix Player Effect - Full Background */}
+      <div className="absolute inset-0">
+        <MatrixPlayerEffect />
+      </div>
       
       {/* Logo - Top Center */}
-      <div className="pt-8 md:pt-12">
+      <div className="pt-8 md:pt-12 z-10 relative">
         <img 
           src={logo} 
           alt="Rise Logo" 
@@ -27,15 +30,15 @@ export default function Landing() {
       </div>
 
       {/* Main Content - Centered */}
-      <div className="flex flex-col items-center justify-center flex-1 gap-6 px-4">
+      <div className="flex flex-col items-center justify-center flex-1 gap-6 px-4 z-10 relative">
         {/* REALISE POTENTIAL Text */}
-        <h1 className="text-4xl md:text-6xl lg:text-7xl font-bebas uppercase tracking-[0.3em] text-white/90 text-center">
+        <h1 className="text-4xl md:text-6xl lg:text-7xl font-bebas uppercase tracking-[0.3em] text-white/90 text-center drop-shadow-[0_0_30px_rgba(0,255,0,0.3)]">
           <HoverText text="REALISE POTENTIAL" />
         </h1>
       </div>
 
       {/* Bottom Section - Language Selector + Navigation */}
-      <div className="pb-12 flex flex-col items-center gap-6">
+      <div className="pb-12 flex flex-col items-center gap-6 z-10 relative">
         {/* Language Selector - Above HOME */}
         <LanguageSelector />
         
