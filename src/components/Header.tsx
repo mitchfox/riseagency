@@ -749,8 +749,8 @@ export const Header = () => {
               <div
                 className="fixed flex items-center gap-1 md:gap-2 z-[90]"
                 style={{
-                  left: isScrolled ? "9.5rem" : "3.25rem",
-                  top: isScrolled ? "11px" : "82px",
+                  left: isScrolled ? "8.56rem" : "3.25rem",
+                  top: isScrolled ? "10px" : "82px",
                   opacity: isScrolled ? 1 : 0,
                   pointerEvents: isScrolled ? "auto" : "none",
                   transition: "all 0.5s cubic-bezier(0.4, 0, 0.2, 1)",
@@ -782,8 +782,8 @@ export const Header = () => {
               <div
                 className="fixed flex items-center gap-1 md:gap-2 z-[90]"
                 style={{
-                  right: isScrolled ? "11rem" : "2.5rem",
-                  top: isScrolled ? "11px" : "82px",
+                  right: isScrolled ? "10.56rem" : "2.5rem",
+                  top: isScrolled ? "10px" : "82px",
                   opacity: isScrolled ? 1 : 0,
                   pointerEvents: isScrolled ? "auto" : "none",
                   transition: "all 0.5s cubic-bezier(0.4, 0, 0.2, 1)",
