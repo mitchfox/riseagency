@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import logo from "@/assets/logo.png";
 import riseStar from "@/assets/rise-star.png";
-import { X, MessageCircle, Users, LogIn } from "lucide-react";
+import { X, MessageCircle, Users, LogIn, Handshake } from "lucide-react";
 import workingTogether from "@/assets/menu-working-together.jpg";
 import playerPortalImage from "@/assets/menu-player-portal.png";
 import blackMarbleBg from "@/assets/black-marble-smudged.png";
@@ -750,9 +750,9 @@ export const Header = () => {
                 className="fixed flex items-center gap-1 md:gap-2 z-[90]"
                 style={{
                   left: isScrolled ? "9.5rem" : "3.25rem",
-                  top: isScrolled ? "5px" : "82px",
-                  opacity: 1,
-                  pointerEvents: "auto",
+                  top: isScrolled ? "8px" : "82px",
+                  opacity: isScrolled ? 1 : 0,
+                  pointerEvents: isScrolled ? "auto" : "none",
                   transition: "all 0.5s cubic-bezier(0.4, 0, 0.2, 1)",
                 }}
               >
@@ -783,9 +783,9 @@ export const Header = () => {
                 className="fixed flex items-center gap-1 md:gap-2 z-[90]"
                 style={{
                   right: isScrolled ? "11rem" : "2.5rem",
-                  top: isScrolled ? "5px" : "82px",
-                  opacity: 1,
-                  pointerEvents: "auto",
+                  top: isScrolled ? "8px" : "82px",
+                  opacity: isScrolled ? 1 : 0,
+                  pointerEvents: isScrolled ? "auto" : "none",
                   transition: "all 0.5s cubic-bezier(0.4, 0, 0.2, 1)",
                 }}
               >
@@ -794,7 +794,7 @@ export const Header = () => {
                   className="group p-1.5 md:p-2 rounded-full hover:bg-primary/10 transition-all duration-300 flex items-center gap-1.5 overflow-hidden"
                   title="Request Representation"
                 >
-                  <MessageCircle className="w-4 h-4 md:w-5 md:h-5 text-white/80 group-hover:text-primary transition-colors flex-shrink-0" />
+                  <Handshake className="w-4 h-4 md:w-5 md:h-5 text-white/80 group-hover:text-primary transition-colors flex-shrink-0" />
                   <span className="max-w-0 group-hover:max-w-xs transition-all duration-300 text-xs font-bebas uppercase tracking-wider text-white/80 group-hover:text-primary whitespace-nowrap overflow-hidden">
                     Request Representation
                   </span>
