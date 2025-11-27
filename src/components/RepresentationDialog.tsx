@@ -169,6 +169,7 @@ export const RepresentationDialog = ({ open, onOpenChange }: RepresentationDialo
           <div className="flex flex-col sm:flex-row gap-3 pt-2">
             <Button 
               type="submit" 
+              hoverEffect
               className="flex-1 btn-shine font-bebas uppercase tracking-wider"
             >
               Submit Request
@@ -176,6 +177,7 @@ export const RepresentationDialog = ({ open, onOpenChange }: RepresentationDialo
             <Button
               type="button"
               variant="outline"
+              hoverEffect
               onClick={handleWhatsApp}
               className="flex-1 font-bebas uppercase tracking-wider gap-2"
             >

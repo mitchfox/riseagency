@@ -71,6 +71,7 @@ export const Footer = () => {
             <WorkWithUsDialog>
               <Button 
                 size="lg"
+                hoverEffect
                 className="w-full btn-shine font-bebas uppercase tracking-wider text-lg"
               >
                 Contact Us
