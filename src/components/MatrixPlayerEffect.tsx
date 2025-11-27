@@ -199,15 +199,15 @@ export const MatrixPlayerEffect = ({ className = "" }: MatrixPlayerEffectProps) 
         const imgWidth = baseImage.width * scale;
         const imgHeight = baseImage.height * scale;
         const imgX = (canvas.width - imgWidth) / 2;
-        const imgY = (canvas.height - imgHeight) / 2 + 10;
+        const imgY = (canvas.height - imgHeight) / 2 + 100;
 
         const playerCenterX = imgX + imgWidth / 2;
         const playerCenterY = imgY + imgHeight / 2;
         const xrayRadius = 180;
 
-        // 1. ALWAYS draw the natural base image first
+        // Draw single image (x-ray version)
         ctx.globalCompositeOperation = "source-over";
-        ctx.drawImage(baseImage, imgX, imgY, imgWidth, imgHeight);
+        ctx.drawImage(xrayImage, imgX, imgY, imgWidth, imgHeight);
 
         // Calculate distance from mouse to player
         const distFromMouse = Math.sqrt(
@@ -215,29 +215,11 @@ export const MatrixPlayerEffect = ({ className = "" }: MatrixPlayerEffectProps) 
           Math.pow(mousePos.y - playerCenterY, 2)
         );
 
-        // 2. X-RAY REVEAL - only when mouse is close AND valid position
+        // Show 5D lines when mouse is close
         const isMouseValid = mousePos.x > 0 && mousePos.y > 0;
         const isNearPlayer = distFromMouse < xrayRadius + imgWidth / 3;
         
         if (isMouseValid && isNearPlayer) {
-          // Draw x-ray image ONLY within the circular clip
-          ctx.save();
-          ctx.beginPath();
-          ctx.arc(mousePos.x, mousePos.y, xrayRadius, 0, Math.PI * 2);
-          ctx.clip();
-          
-          // Draw the transformed x-ray version
-          ctx.drawImage(xrayImage, imgX, imgY, imgWidth, imgHeight);
-          
-          // Add scan lines effect inside x-ray area
-          ctx.globalCompositeOperation = "overlay";
-          for (let y = 0; y < canvas.height; y += 4) {
-            const scanAlpha = 0.02 + Math.sin(y * 0.15 + timeRef.current * 6) * 0.015;
-            ctx.fillStyle = `rgba(0, 255, 200, ${scanAlpha})`;
-            ctx.fillRect(0, y, canvas.width, 2);
-          }
-          
-          ctx.restore();
 
           // 3. Draw 5D MATRIX LINES emanating from player center
           const baseLengthMin = 140;
