@@ -36,6 +36,7 @@ import { StaffAvailabilityManagement } from "@/components/staff/StaffAvailabilit
 import { MarketingManagement } from "@/components/staff/MarketingManagement";
 import { RecruitmentManagement } from "@/components/staff/RecruitmentManagement";
 import { ScoutingCentreManagement } from "@/components/staff/ScoutingCentreManagement";
+import { ScoutsManagement } from "@/components/staff/ScoutsManagement";
 import { PlayerDatabaseManagement } from "@/components/staff/PlayerDatabaseManagement";
 import { StaffAccountManagement } from "@/components/staff/StaffAccountManagement";
 import { PlayerPasswordManagement } from "@/components/staff/PlayerPasswordManagement";
@@ -851,7 +852,7 @@ const Staff = () => {
                   {expandedSection === 'players' && <PlayerManagement isAdmin={isAdmin} />}
                   {expandedSection === 'recruitment' && <RecruitmentManagement isAdmin={isAdmin} />}
                   {expandedSection === 'playerdatabase' && <PlayerDatabaseManagement isAdmin={isAdmin} />}
-                  {expandedSection === 'scouts' && <RecruitmentManagement isAdmin={isAdmin} initialTab="scouts" />}
+                  {expandedSection === 'scouts' && <ScoutsManagement isAdmin={isAdmin} />}
                   {expandedSection === 'scoutingcentre' && <ScoutingCentreManagement isAdmin={isAdmin} />}
                   {expandedSection === 'coaching' && <CoachingDatabase isAdmin={isAdmin} />}
                   {expandedSection === 'analysis' && <AnalysisManagement isAdmin={isAdmin} />}
