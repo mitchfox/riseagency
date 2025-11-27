@@ -38,6 +38,9 @@ export default function TermsOfService() {
                 <li>Club and scout networking opportunities</li>
                 <li>Coaching and tactical analysis resources</li>
               </ul>
+              <p className="text-muted-foreground leading-relaxed mt-6">
+                All services are conducted in accordance with the regulatory frameworks established by FIFA and UEFA. Our processes adhere to the standards required for player representation, ensuring compliance with governance requirements and maintaining the integrity of football operations.
+              </p>
             </section>
 
             <section>
