@@ -197,7 +197,7 @@ export const MapCoordinatesManager = () => {
   return (
     <div className="flex flex-col h-full gap-4">
       {/* Map Preview Section */}
-      <div className="relative border border-border rounded-lg overflow-hidden bg-card" style={{ aspectRatio: '1000/600' }}>
+      <div className="relative border border-border rounded-lg overflow-hidden bg-card" style={{ aspectRatio: '10/9' }}>
         <div className="absolute top-2 left-2 z-10 bg-background/80 backdrop-blur-sm px-3 py-1.5 rounded-md border border-border">
           <span className="text-xs font-medium text-muted-foreground">
             Map Preview {selectedCountry !== "all" && `• ${selectedCountry}`}
