@@ -160,6 +160,10 @@ export default {
           "0%": { stroke: "currentColor" },
           "100%": { stroke: "hsl(var(--primary))" },
         },
+        "shine": {
+          "0%": { left: "-100%" },
+          "100%": { left: "100%" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -179,6 +183,7 @@ export default {
         "menu-open-line-2": "menu-open-line-2 0.6s ease-out forwards",
         "color-to-gold": "color-to-gold 0.3s ease-out 0.6s forwards",
         "diagonal-to-x-2": "diagonal-to-x-2 0.4s ease-out forwards",
+        "shine": "shine 0.6s ease-in-out",
       },
     },
   },

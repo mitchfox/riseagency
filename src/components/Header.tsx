@@ -271,11 +271,12 @@ export const Header = () => {
                     <DrawerClose asChild>
                       <Link
                         to="/"
-                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all duration-300 tracking-wider py-1 hover:scale-105 ${
+                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all duration-300 tracking-wider py-1 relative overflow-hidden group ${
                           isActive("/") ? "text-primary" : ""
                         }`}
                       >
-                        HOME
+                        <span className="relative z-10">HOME</span>
+                        <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-primary/30 to-transparent -translate-x-full group-hover:animate-shine"></span>
                       </Link>
                     </DrawerClose>
                     <div className="h-px bg-primary my-1" />
@@ -285,13 +286,14 @@ export const Header = () => {
                         to="/stars"
                         onMouseEnter={() => setStarsHovered(true)}
                         onMouseLeave={() => setStarsHovered(false)}
-                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all duration-300 tracking-wider py-1 hover:scale-105 ${
+                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all duration-300 tracking-wider py-1 relative overflow-hidden group ${
                           isActive("/stars") || location.pathname.startsWith("/stars/")
                             ? "text-primary"
                             : ""
                         }`}
                       >
-                        STARS
+                        <span className="relative z-10">STARS</span>
+                        <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-primary/30 to-transparent -translate-x-full group-hover:animate-shine"></span>
                       </Link>
                     </DrawerClose>
                     <div className="h-px bg-white/20 my-1" />
@@ -301,11 +303,12 @@ export const Header = () => {
                         to="/performance"
                         onMouseEnter={() => setRealisePotentialHovered(true)}
                         onMouseLeave={() => setRealisePotentialHovered(false)}
-                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all duration-300 tracking-wider py-1 hover:scale-105 ${
+                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all duration-300 tracking-wider py-1 relative overflow-hidden group ${
                           isActive("/performance") ? "text-primary" : ""
                         }`}
                       >
-                        REALISE POTENTIAL
+                        <span className="relative z-10">REALISE POTENTIAL</span>
+                        <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-primary/30 to-transparent -translate-x-full group-hover:animate-shine"></span>
                       </Link>
                     </DrawerClose>
                     <div className="h-px bg-white/20 my-1" />
@@ -315,11 +318,12 @@ export const Header = () => {
                         to="/between-the-lines"
                         onMouseEnter={() => setBetweenLinesHovered(true)}
                         onMouseLeave={() => setBetweenLinesHovered(false)}
-                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all duration-300 tracking-wider py-1 hover:scale-105 ${
+                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all duration-300 tracking-wider py-1 relative overflow-hidden group ${
                           isActive("/between-the-lines") ? "text-primary" : ""
                         }`}
                       >
-                        BETWEEN THE LINES
+                        <span className="relative z-10">BETWEEN THE LINES</span>
+                        <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-primary/30 to-transparent -translate-x-full group-hover:animate-shine"></span>
                       </Link>
                     </DrawerClose>
                     <div className="h-px bg-white/20 my-1" />
@@ -329,11 +333,12 @@ export const Header = () => {
                         to="/news"
                         onMouseEnter={() => setNewsHovered(true)}
                         onMouseLeave={() => setNewsHovered(false)}
-                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all duration-300 tracking-wider py-1 hover:scale-105 ${
+                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all duration-300 tracking-wider py-1 relative overflow-hidden group ${
                           isActive("/news") ? "text-primary" : ""
                         }`}
                       >
-                        NEWS
+                        <span className="relative z-10">NEWS</span>
+                        <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-primary/30 to-transparent -translate-x-full group-hover:animate-shine"></span>
                       </Link>
                     </DrawerClose>
                     <div className="h-px bg-primary my-1" />
@@ -341,13 +346,14 @@ export const Header = () => {
                     <DrawerClose asChild>
                       <Link
                         to="/players"
-                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all duration-300 tracking-wider py-1 hover:scale-105 ${
+                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all duration-300 tracking-wider py-1 relative overflow-hidden group ${
                           isActive("/players") || location.pathname.startsWith("/players/")
                             ? "text-primary"
                             : ""
                         }`}
                       >
-                        PLAYERS
+                        <span className="relative z-10">PLAYERS</span>
+                        <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-primary/30 to-transparent -translate-x-full group-hover:animate-shine"></span>
                       </Link>
                     </DrawerClose>
                     <div className="h-px bg-white/20 my-1" />
@@ -355,11 +361,12 @@ export const Header = () => {
                     <DrawerClose asChild>
                       <Link
                         to="/clubs"
-                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all duration-300 tracking-wider py-1 hover:scale-105 ${
+                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all duration-300 tracking-wider py-1 relative overflow-hidden group ${
                           isActive("/clubs") ? "text-primary" : ""
                         }`}
                       >
-                        CLUBS
+                        <span className="relative z-10">CLUBS</span>
+                        <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-primary/30 to-transparent -translate-x-full group-hover:animate-shine"></span>
                       </Link>
                     </DrawerClose>
                     <div className="h-px bg-white/20 my-1" />
@@ -367,11 +374,12 @@ export const Header = () => {
                     <DrawerClose asChild>
                       <Link
                         to="/coaches"
-                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all duration-300 tracking-wider py-1 hover:scale-105 ${
+                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all duration-300 tracking-wider py-1 relative overflow-hidden group ${
                           isActive("/coaches") ? "text-primary" : ""
                         }`}
                       >
-                        COACHES
+                        <span className="relative z-10">COACHES</span>
+                        <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-primary/30 to-transparent -translate-x-full group-hover:animate-shine"></span>
                       </Link>
                     </DrawerClose>
                     <div className="h-px bg-white/20 my-1" />
@@ -379,11 +387,12 @@ export const Header = () => {
                     <DrawerClose asChild>
                       <Link
                         to="/scouts"
-                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all duration-300 tracking-wider py-1 hover:scale-105 ${
+                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all duration-300 tracking-wider py-1 relative overflow-hidden group ${
                           isActive("/scouts") ? "text-primary" : ""
                         }`}
                       >
-                        SCOUTS
+                        <span className="relative z-10">SCOUTS</span>
+                        <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-primary/30 to-transparent -translate-x-full group-hover:animate-shine"></span>
                       </Link>
                     </DrawerClose>
                   </nav>
@@ -480,6 +489,9 @@ export const Header = () => {
                             : "border border-white/20 grayscale"
                         }`}
                       >
+                        {starsHovered && (
+                          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/20 to-transparent animate-shine z-10"></div>
+                        )}
                         {/* Player Images with Dark Overlay */}
                         {starPlayers.map((player, index) => (
                           <div
@@ -629,6 +641,9 @@ export const Header = () => {
                               : "border-white/20"
                           }`}
                         >
+                          {realisePotentialHovered && (
+                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/20 to-transparent animate-shine z-10"></div>
+                          )}
                           <div className="relative w-full h-full">
                           <img
                             src={realisePotentialImages[rpIndex]}
@@ -684,6 +699,9 @@ export const Header = () => {
                               : "border-white/20"
                           }`}
                         >
+                          {betweenLinesHovered && (
+                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/20 to-transparent animate-shine z-10"></div>
+                          )}
                           <div className="relative w-full h-full">
                           {betweenLinesPosts.length > 0 && betweenLinesPosts[btlIndex]?.image_url && (
                             <img
