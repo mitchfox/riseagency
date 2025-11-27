@@ -11,7 +11,7 @@ export const HoverText: React.FC<HoverTextProps> = ({ text, className = "" }) =>
       <span
         key={`${isClone ? 'clone-' : ''}${index}`}
         className={isClone ? "hover-text-letter-clone" : "hover-text-letter"}
-        style={{ transitionDelay: `${index * 25}ms` }}
+        style={{ transitionDelay: `${index * 50}ms` }}
       >
         {letter === " " ? "\u00A0" : letter}
       </span>
