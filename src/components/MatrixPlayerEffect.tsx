@@ -155,9 +155,9 @@ export const MatrixPlayerEffect = ({ className = "" }: MatrixPlayerEffectProps) 
 
         if (distance < xrayRadius) {
           const intensity = 1 - distance / xrayRadius;
-          ctx.fillStyle = `rgba(0, 255, 0, ${0.1 + intensity * 0.5})`;
+          ctx.fillStyle = `rgba(200, 170, 90, ${0.1 + intensity * 0.5})`;
         } else {
-          ctx.fillStyle = "rgba(0, 255, 0, 0.08)";
+          ctx.fillStyle = "rgba(200, 170, 90, 0.08)";
         }
 
         ctx.fillText(text, x, y);
@@ -262,9 +262,9 @@ export const MatrixPlayerEffect = ({ className = "" }: MatrixPlayerEffectProps) 
             mousePos.x, mousePos.y, 0,
             mousePos.x, mousePos.y, xrayRadius
           );
-          gradient.addColorStop(0, "rgba(0, 255, 0, 0.08)");
-          gradient.addColorStop(0.7, "rgba(0, 255, 0, 0.02)");
-          gradient.addColorStop(1, "rgba(0, 255, 0, 0)");
+          gradient.addColorStop(0, "rgba(200, 170, 90, 0.08)");
+          gradient.addColorStop(0.7, "rgba(200, 170, 90, 0.02)");
+          gradient.addColorStop(1, "rgba(200, 170, 90, 0)");
 
           ctx.globalCompositeOperation = "overlay";
           ctx.fillStyle = gradient;
