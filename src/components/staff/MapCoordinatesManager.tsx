@@ -197,7 +197,7 @@ export const MapCoordinatesManager = () => {
   return (
     <div className="flex flex-col h-full gap-4">
       {/* Map Preview Section */}
-      <div className="relative border border-border rounded-lg overflow-hidden bg-card" style={{ height: "300px" }}>
+      <div className="relative border border-border rounded-lg overflow-hidden bg-card flex-1 min-h-[400px]">
         <div className="absolute top-2 left-2 z-10 bg-background/80 backdrop-blur-sm px-3 py-1.5 rounded-md border border-border">
           <span className="text-xs font-medium text-muted-foreground">
             Map Preview {selectedCountry !== "all" && `• ${selectedCountry}`}
@@ -210,7 +210,7 @@ export const MapCoordinatesManager = () => {
           </Button>
         </div>
         <div className="h-full w-full">
-          <ScoutingNetworkMap key={mapKey} initialCountry={selectedCountry !== "all" ? selectedCountry : undefined} />
+          <ScoutingNetworkMap key={mapKey} initialCountry={selectedCountry !== "all" ? selectedCountry : undefined} hideStats={true} />
         </div>
       </div>
 
@@ -357,8 +357,8 @@ export const MapCoordinatesManager = () => {
           No contacts found for this country.
         </div>
       ) : (
-        <Card className="flex-1">
-          <ScrollArea className="h-[calc(100vh-580px)]">
+        <Card className="flex-1 min-h-0">
+          <ScrollArea className="h-[300px]">
             <Table>
               <TableHeader>
                 <TableRow>
