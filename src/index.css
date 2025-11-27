@@ -492,12 +492,14 @@ All colors MUST be HSL.
 }
 
 .hover-text-wrapper:hover .hover-text-letter,
-button:hover .hover-text-wrapper .hover-text-letter {
+button:hover .hover-text-wrapper .hover-text-letter,
+a:hover .hover-text-wrapper .hover-text-letter {
   transform: translateY(-100%);
 }
 
 .hover-text-wrapper:hover .hover-text-letter-clone,
-button:hover .hover-text-wrapper .hover-text-letter-clone {
+button:hover .hover-text-wrapper .hover-text-letter-clone,
+a:hover .hover-text-wrapper .hover-text-letter-clone {
   transform: translateY(-100%);
 }
 
