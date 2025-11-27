@@ -82,18 +82,16 @@ const Index = () => {
       <IntroModal open={showIntroModal} onOpenChange={setShowIntroModal} />
       {!showIntroModal && <Header />}
       <div className="bg-background min-h-screen">
-        {/* Video Portfolio Section - Moved to top */}
-        <section className="pt-16 md:pt-14 py-12 md:py-20 px-4 bg-background relative overflow-hidden">
+        {/* Hero Section */}
+        <section className="pt-28 md:pt-32 pb-12 md:pb-20 px-4 bg-background relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-transparent to-primary/5"></div>
           <div className="container mx-auto max-w-7xl relative z-10">
-            <VideoPortfolio />
-            
-            <div className="text-center space-y-6" style={{ marginTop: "58px" }}>
-              <h2 className="text-4xl md:text-6xl lg:text-7xl font-bebas uppercase tracking-wider">
+            <div className="text-center space-y-6">
+              <h1 className="text-5xl md:text-7xl lg:text-8xl font-bebas uppercase tracking-wider">
                 <span className="text-foreground">REALISE </span>
                 <span className="text-primary">POTENTIAL</span>
-              </h2>
-              <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto font-light tracking-wide italic mt-[15px]">
+              </h1>
+              <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto font-light tracking-wide italic">
                 Elite Football Representation & Performance Optimisation
               </p>
             </div>
