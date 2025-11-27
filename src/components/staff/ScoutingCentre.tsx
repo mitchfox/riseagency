@@ -9,9 +9,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Plus, Edit2, Trash2, UserPlus, Eye, Filter, Search, Sparkles, FileText, Target, Users, Globe, MapPin } from "lucide-react";
+import { Plus, Edit2, Trash2, UserPlus, Eye, Filter, Search, Sparkles, FileText, Target, Users, Globe, MapPin, ChevronDown } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { format } from "date-fns";
 import { SkillEvaluationForm } from "./SkillEvaluationForm";
@@ -131,6 +132,7 @@ export const ScoutingCentre = ({ open, onOpenChange }: ScoutingCentreProps) => {
   const [players, setPlayers] = useState<{ id: string; name: string }[]>([]);
   const [mainTab, setMainTab] = useState<"reports" | "all-players" | "network" | "scouts" | "map-coords">("reports");
   const [groupBy, setGroupBy] = useState<"country" | "club" | "scout">("country");
+  const [openGroup, setOpenGroup] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     player_name: "",
     age: "",
@@ -945,45 +947,58 @@ export const ScoutingCentre = ({ open, onOpenChange }: ScoutingCentreProps) => {
                   </div>
 
                   {Object.entries(groupedReports).sort(([a], [b]) => a.localeCompare(b)).map(([group, groupReports]) => (
-                    <Card key={group}>
-                      <CardHeader>
-                        <CardTitle className="text-lg flex items-center justify-between">
-                          <span>{group}</span>
-                          <Badge variant="secondary">{groupReports.length} {groupReports.length === 1 ? 'player' : 'players'}</Badge>
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                          {groupReports.map((report) => (
-                            <Card key={report.id} className="cursor-pointer hover:border-primary transition-colors" onClick={() => setViewingReport(report)}>
-                              <CardHeader className="pb-2">
-                                <CardTitle className="text-sm">{report.player_name}</CardTitle>
-                                <p className="text-xs text-muted-foreground">{report.position}</p>
-                              </CardHeader>
-                              <CardContent className="space-y-2">
-                                {report.current_club && (
-                                  <p className="text-xs"><span className="text-muted-foreground">Club:</span> {report.current_club}</p>
-                                )}
-                                {report.nationality && (
-                                  <p className="text-xs"><span className="text-muted-foreground">Nationality:</span> {report.nationality}</p>
-                                )}
-                                {report.scout_name && (
-                                  <p className="text-xs"><span className="text-muted-foreground">Scout:</span> {report.scout_name}</p>
-                                )}
-                                <div className="flex gap-2 flex-wrap">
-                                  <Badge variant="outline" className={getStatusColor(report.status)}>
-                                    {report.status}
-                                  </Badge>
-                                  {report.overall_rating && (
-                                    <Badge variant="outline">{report.overall_rating}/10</Badge>
-                                  )}
-                                </div>
-                              </CardContent>
-                            </Card>
-                          ))}
-                        </div>
-                      </CardContent>
-                    </Card>
+                    <Collapsible 
+                      key={group}
+                      open={openGroup === group}
+                      onOpenChange={(isOpen) => setOpenGroup(isOpen ? group : null)}
+                    >
+                      <Card>
+                        <CollapsibleTrigger asChild>
+                          <CardHeader className="cursor-pointer hover:bg-accent/50 transition-colors">
+                            <CardTitle className="text-lg flex items-center justify-between">
+                              <span className="flex items-center gap-2">
+                                {group}
+                                <ChevronDown className={`h-4 w-4 transition-transform ${openGroup === group ? 'rotate-180' : ''}`} />
+                              </span>
+                              <Badge variant="secondary">{groupReports.length} {groupReports.length === 1 ? 'player' : 'players'}</Badge>
+                            </CardTitle>
+                          </CardHeader>
+                        </CollapsibleTrigger>
+                        <CollapsibleContent>
+                          <CardContent>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                              {groupReports.map((report) => (
+                                <Card key={report.id} className="cursor-pointer hover:border-primary transition-colors" onClick={() => setViewingReport(report)}>
+                                  <CardHeader className="pb-2">
+                                    <CardTitle className="text-sm">{report.player_name}</CardTitle>
+                                    <p className="text-xs text-muted-foreground">{report.position}</p>
+                                  </CardHeader>
+                                  <CardContent className="space-y-2">
+                                    {report.current_club && (
+                                      <p className="text-xs"><span className="text-muted-foreground">Club:</span> {report.current_club}</p>
+                                    )}
+                                    {report.nationality && (
+                                      <p className="text-xs"><span className="text-muted-foreground">Nationality:</span> {report.nationality}</p>
+                                    )}
+                                    {report.scout_name && (
+                                      <p className="text-xs"><span className="text-muted-foreground">Scout:</span> {report.scout_name}</p>
+                                    )}
+                                    <div className="flex gap-2 flex-wrap">
+                                      <Badge variant="outline" className={getStatusColor(report.status)}>
+                                        {report.status}
+                                      </Badge>
+                                      {report.overall_rating && (
+                                        <Badge variant="outline">{report.overall_rating}/10</Badge>
+                                      )}
+                                    </div>
+                                  </CardContent>
+                                </Card>
+                              ))}
+                            </div>
+                          </CardContent>
+                        </CollapsibleContent>
+                      </Card>
+                    </Collapsible>
                   ))}
 
                   {Object.keys(groupedReports).length === 0 && (
