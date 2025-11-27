@@ -866,8 +866,8 @@ export const Header = () => {
 
           {/* RISE WITH US Button - Right */}
           <Button onClick={() => setWorkWithUsOpen(true)} size="sm" className={`btn-shine font-bebas uppercase tracking-wider transition-all duration-500 ease-out ${isScrolled ? 'text-xs md:text-sm px-3 md:px-5 h-8 md:h-9' : 'text-sm md:text-base px-4 md:px-6 h-9 md:h-10'}`}>
-            <span className="hidden sm:inline">RISE WITH US</span>
-            <span className="sm:hidden">RISE</span>
+            <span className="hidden sm:inline"><HoverText text="RISE WITH US" /></span>
+            <span className="sm:hidden"><HoverText text="RISE" /></span>
           </Button>
         </div>
       </div>

@@ -226,6 +226,7 @@ export const DeclareInterestDialog = ({ open, onOpenChange }: DeclareInterestDia
               <div className="flex flex-col sm:flex-row gap-3 pt-2">
                 <Button 
                   type="submit" 
+                  hoverEffect
                   className="flex-1 btn-shine font-bebas uppercase tracking-wider"
                 >
                   Submit Interest
@@ -233,6 +234,7 @@ export const DeclareInterestDialog = ({ open, onOpenChange }: DeclareInterestDia
                 <Button
                   type="button"
                   variant="outline"
+                  hoverEffect
                   onClick={handleWhatsApp}
                   className="flex-1 font-bebas uppercase tracking-wider gap-2"
                 >

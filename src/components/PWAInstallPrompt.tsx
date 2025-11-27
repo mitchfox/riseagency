@@ -169,7 +169,7 @@ export const PWAInstallPrompt = () => {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Button onClick={handleUpdateClick} className="font-bebas uppercase">
+              <Button onClick={handleUpdateClick} hoverEffect className="font-bebas uppercase">
                 Update Now
               </Button>
               <Button 
@@ -213,7 +213,7 @@ export const PWAInstallPrompt = () => {
                 </p>
               </div>
             </div>
-            <Button onClick={handleInstallClick} className="font-bebas uppercase">
+            <Button onClick={handleInstallClick} hoverEffect className="font-bebas uppercase">
               Install App
             </Button>
           </div>

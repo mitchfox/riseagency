@@ -154,7 +154,7 @@ export const WorkWithUsDialog = ({ children, open, onOpenChange }: WorkWithUsDia
                 className="min-h-[100px]"
               />
             </div>
-            <Button type="submit" size="lg" className="w-full btn-shine font-bebas uppercase tracking-wider">
+            <Button type="submit" size="lg" hoverEffect className="w-full btn-shine font-bebas uppercase tracking-wider">
               Submit Application
             </Button>
           </form>
@@ -194,7 +194,7 @@ export const WorkWithUsDialog = ({ children, open, onOpenChange }: WorkWithUsDia
                 className="min-h-[100px]"
               />
             </div>
-            <Button type="submit" size="lg" className="w-full btn-shine font-bebas uppercase tracking-wider">
+            <Button type="submit" size="lg" hoverEffect className="w-full btn-shine font-bebas uppercase tracking-wider">
               Submit Application
             </Button>
           </form>
@@ -241,7 +241,7 @@ export const WorkWithUsDialog = ({ children, open, onOpenChange }: WorkWithUsDia
                 className="min-h-[100px]"
               />
             </div>
-            <Button type="submit" size="lg" className="w-full btn-shine font-bebas uppercase tracking-wider">
+            <Button type="submit" size="lg" hoverEffect className="w-full btn-shine font-bebas uppercase tracking-wider">
               Submit Inquiry
             </Button>
           </form>
@@ -277,7 +277,7 @@ export const WorkWithUsDialog = ({ children, open, onOpenChange }: WorkWithUsDia
                 className="min-h-[100px]"
               />
             </div>
-            <Button type="submit" size="lg" className="w-full btn-shine font-bebas uppercase tracking-wider">
+            <Button type="submit" size="lg" hoverEffect className="w-full btn-shine font-bebas uppercase tracking-wider">
               Submit Inquiry
             </Button>
           </form>
@@ -321,7 +321,7 @@ export const WorkWithUsDialog = ({ children, open, onOpenChange }: WorkWithUsDia
                 className="min-h-[100px]"
               />
             </div>
-            <Button type="submit" size="lg" className="w-full btn-shine font-bebas uppercase tracking-wider">
+            <Button type="submit" size="lg" hoverEffect className="w-full btn-shine font-bebas uppercase tracking-wider">
               Submit Application
             </Button>
           </form>
@@ -357,7 +357,7 @@ export const WorkWithUsDialog = ({ children, open, onOpenChange }: WorkWithUsDia
                 className="min-h-[100px]"
               />
             </div>
-            <Button type="submit" size="lg" className="w-full btn-shine font-bebas uppercase tracking-wider">
+            <Button type="submit" size="lg" hoverEffect className="w-full btn-shine font-bebas uppercase tracking-wider">
               Submit Inquiry
             </Button>
           </form>
@@ -390,7 +390,7 @@ export const WorkWithUsDialog = ({ children, open, onOpenChange }: WorkWithUsDia
                 required
               />
             </div>
-            <Button type="submit" size="lg" className="w-full btn-shine font-bebas uppercase tracking-wider">
+            <Button type="submit" size="lg" hoverEffect className="w-full btn-shine font-bebas uppercase tracking-wider">
               Submit Inquiry
             </Button>
           </form>
