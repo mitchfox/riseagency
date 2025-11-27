@@ -773,7 +773,7 @@ export const Header = () => {
               {/* Left side icons - positioned relative to menu button */}
               <div className="fixed flex items-center gap-1 md:gap-2 z-[90]" style={{
               left: getLeftIconOffset(),
-              top: isScrolled ? "calc(0.75rem - 3px)" : "clamp(56px, 15vw, 82px)",
+              top: isScrolled ? "calc(0.75rem - 2px)" : "clamp(56px, 15vw, 82px)",
               opacity: isScrolled ? 1 : 0,
               pointerEvents: isScrolled ? "auto" : "none",
               transition: "all 0.5s cubic-bezier(0.4, 0, 0.2, 1)"
@@ -795,7 +795,7 @@ export const Header = () => {
               {/* Right side icons - positioned relative to RISE WITH US button */}
               <div className="fixed flex items-center gap-1 md:gap-2 z-[90]" style={{
               right: getRightIconOffset(),
-              top: isScrolled ? "calc(0.75rem - 3px)" : "clamp(56px, 15vw, 82px)",
+              top: isScrolled ? "calc(0.75rem - 2px)" : "clamp(56px, 15vw, 82px)",
               opacity: isScrolled ? 1 : 0,
               pointerEvents: isScrolled ? "auto" : "none",
               transition: "all 0.5s cubic-bezier(0.4, 0, 0.2, 1)"
