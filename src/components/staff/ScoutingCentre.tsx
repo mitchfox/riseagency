@@ -81,8 +81,8 @@ interface ScoutingReport {
 }
 
 interface ScoutingCentreProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 interface Scout {
@@ -102,7 +102,7 @@ interface Scout {
   updated_at: string;
 }
 
-export const ScoutingCentre = ({ open, onOpenChange }: ScoutingCentreProps) => {
+export const ScoutingCentre = ({ open = true, onOpenChange }: ScoutingCentreProps) => {
   const [reports, setReports] = useState<ScoutingReport[]>([]);
   const [scouts, setScouts] = useState<Scout[]>([]);
   const [loading, setLoading] = useState(false);
@@ -564,13 +564,12 @@ export const ScoutingCentre = ({ open, onOpenChange }: ScoutingCentreProps) => {
 
   return (
     <>
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-[98vw] max-h-[98vh] w-full h-full p-0">
-          <DialogHeader className="px-6 pt-6 pb-4">
-            <DialogTitle className="text-2xl">Scouting Centre</DialogTitle>
-          </DialogHeader>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-bold">Scouting Centre</h2>
+        </div>
           
-          <Tabs value={mainTab} onValueChange={(v) => setMainTab(v as any)} className="flex-1 flex flex-col px-6 pb-6">
+        <Tabs value={mainTab} onValueChange={(v) => setMainTab(v as any)} className="flex-1 flex flex-col">
             <TabsList className="grid w-full grid-cols-5 mb-4">
               <TabsTrigger value="reports" className="gap-2">
                 <FileText className="h-4 w-4" />
@@ -595,7 +594,7 @@ export const ScoutingCentre = ({ open, onOpenChange }: ScoutingCentreProps) => {
             </TabsList>
 
             <TabsContent value="reports" className="flex-1 mt-0">
-              <ScrollArea className="h-[calc(98vh-200px)]">
+              <ScrollArea className="h-[calc(100vh-350px)]">
                 <div className="space-y-6 pr-4">
         {viewMode === "positions" ? (
           <>
@@ -930,7 +929,7 @@ export const ScoutingCentre = ({ open, onOpenChange }: ScoutingCentreProps) => {
             </TabsContent>
 
             <TabsContent value="all-players" className="flex-1 mt-0">
-              <ScrollArea className="h-[calc(98vh-200px)]">
+              <ScrollArea className="h-[calc(100vh-350px)]">
                 <div className="space-y-4 pr-4">
                   <div className="flex items-center justify-between">
                     <h3 className="text-lg font-semibold">All Scouted Players</h3>
@@ -1011,7 +1010,7 @@ export const ScoutingCentre = ({ open, onOpenChange }: ScoutingCentreProps) => {
             </TabsContent>
 
             <TabsContent value="scouts" className="flex-1 mt-0">
-              <ScrollArea className="h-[calc(98vh-200px)]">
+              <ScrollArea className="h-[calc(100vh-350px)]">
                 <div className="space-y-4 pr-4">
                   <div className="flex items-center justify-between">
                     <h3 className="text-lg font-semibold">Scout Management</h3>
@@ -1150,19 +1149,18 @@ export const ScoutingCentre = ({ open, onOpenChange }: ScoutingCentreProps) => {
             </TabsContent>
 
             <TabsContent value="network" className="flex-1 mt-0">
-              <div className="h-[calc(98vh-200px)]">
+              <div className="h-[calc(100vh-350px)]">
                 <ScoutingNetworkMap />
               </div>
             </TabsContent>
 
             <TabsContent value="map-coords" className="flex-1 mt-0">
-              <div className="h-[calc(98vh-200px)]">
+              <div className="h-[calc(100vh-350px)]">
                 <MapCoordinatesManager />
               </div>
             </TabsContent>
           </Tabs>
-        </DialogContent>
-      </Dialog>
+        </div>
 
 
       {/* Add/Edit Dialog */}

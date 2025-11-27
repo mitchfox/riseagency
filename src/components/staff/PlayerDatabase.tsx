@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Search, Edit, ChevronDown } from 'lucide-react';
-
+import { getCountryFlagUrl } from '@/lib/countryFlags';
 interface PlayerData {
   id: string;
   player_name: string;
@@ -233,6 +233,7 @@ export const PlayerDatabase = () => {
           <TableHeader>
             <TableRow className="bg-muted/50">
               <TableHead className="font-semibold">NAME</TableHead>
+              <TableHead className="font-semibold">NATIONALITY</TableHead>
               <TableHead className="font-semibold">POSITION</TableHead>
               <TableHead className="font-semibold">AGE</TableHead>
               <TableHead className="font-semibold">CLUB</TableHead>
@@ -245,6 +246,19 @@ export const PlayerDatabase = () => {
             {visiblePlayers.map((player) => (
               <TableRow key={`${player.source}-${player.id}`} className="hover:bg-muted/30">
                 <TableCell className="font-medium">{player.player_name}</TableCell>
+                <TableCell>
+                  {player.nationality ? (
+                    <div className="flex items-center gap-2">
+                      <img 
+                        src={getCountryFlagUrl(player.nationality)} 
+                        alt={player.nationality}
+                        className="w-5 h-auto rounded-sm"
+                        onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                      />
+                      <span className="text-sm">{player.nationality}</span>
+                    </div>
+                  ) : '-'}
+                </TableCell>
                 <TableCell>{player.position || '-'}</TableCell>
                 <TableCell>{player.age || '-'}</TableCell>
                 <TableCell>{player.current_club || '-'}</TableCell>
