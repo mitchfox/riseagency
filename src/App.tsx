@@ -36,6 +36,7 @@ import ClubNetwork from "./pages/ClubNetwork";
 import PDFViewer from "./pages/PDFViewer";
 import ScoutPortal from "./pages/ScoutPortal";
 import Potential from "./pages/Potential";
+import RealisePotential from "./pages/RealisePotential";
 
 const queryClient = new QueryClient();
 
@@ -76,6 +77,7 @@ const App = () => {
                 <Route path="/portal" element={<Dashboard />} />
                 <Route path="/scout-portal" element={<ScoutPortal />} />
                 <Route path="/potential" element={<Potential />} />
+                <Route path="/realise-potential" element={<RealisePotential />} />
                 <Route path="/performance-report/:slug" element={<PerformanceReport />} />
                 <Route path="/analysis/:analysisId" element={<AnalysisViewer />} />
                 <Route path="/import-program" element={<ImportProgramCSV />} />
