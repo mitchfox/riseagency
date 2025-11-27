@@ -837,7 +837,7 @@ const Staff = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {expandedSection === 'overview' && <StaffOverview isAdmin={isAdmin} />}
+                  {expandedSection === 'overview' && <StaffOverview isAdmin={isAdmin} userId={user?.id} />}
                   {expandedSection === 'schedule' && (
                     <div className="space-y-6">
                       <div className="mb-6">
