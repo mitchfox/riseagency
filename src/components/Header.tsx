@@ -39,11 +39,29 @@ export const Header = () => {
   const [newsHovered, setNewsHovered] = useState(false);
   const [newsArticles, setNewsArticles] = useState<any[]>([]);
   const [newsIndex, setNewsIndex] = useState(0);
+  const [viewport, setViewport] = useState<"mobile" | "tablet" | "desktop">("desktop");
   const realisePotentialImages = [realisePotentialSessions, realisePotentialPaos, realisePotentialReport, realisePotentialAnalysis];
   
   useEffect(() => {
     setShowTopBar(location.pathname === '/');
   }, [location.pathname]);
+  
+  useEffect(() => {
+    const updateViewport = () => {
+      const width = window.innerWidth;
+      if (width < 768) {
+        setViewport("mobile");
+      } else if (width < 1024) {
+        setViewport("tablet");
+      } else {
+        setViewport("desktop");
+      }
+    };
+
+    updateViewport();
+    window.addEventListener("resize", updateViewport);
+    return () => window.removeEventListener("resize", updateViewport);
+  }, []);
   
   useEffect(() => {
     const fetchStarPlayers = async () => {
@@ -124,8 +142,27 @@ export const Header = () => {
     handleScroll();
     return () => window.removeEventListener('scroll', handleScroll);
   }, [location.pathname]);
-  
+
   const isActive = (path: string) => location.pathname === path;
+
+  const getLeftIconOffset = () => {
+    if (!isScrolled) return "3rem";
+
+    if (viewport === "desktop") return "5.75rem"; // desktop: further right
+    if (viewport === "tablet") return "4.75rem"; // iPad: a bit to the right
+
+    return "3.5rem"; // mobile: keep close to current
+  };
+
+  const getRightIconOffset = () => {
+    if (!isScrolled) return "2.5rem";
+
+    if (viewport === "desktop") return "clamp(7rem, 15vw, 11.5rem)"; // desktop: keep as is (perfect)
+    if (viewport === "tablet") return "9rem"; // iPad: a bit to the left (towards centre)
+
+    return "1.25rem"; // mobile: closer to right edge
+  };
+
   return <>
       {/* Top Utility Bar - only on homepage and only when not scrolled */}
       {showTopBar && !isScrolled && <div className="fixed top-14 md:top-16 left-0 right-0 z-50 bg-background/95 backdrop-blur-md transition-all duration-500 border-b-2 border-primary">
@@ -735,7 +772,7 @@ export const Header = () => {
           {showTopBar && <>
               {/* Left side icons - positioned relative to menu button */}
               <div className="fixed flex items-center gap-1 md:gap-2 z-[90]" style={{
-              left: isScrolled ? "4.5rem" : "3rem", // Desktop: further right
+              left: getLeftIconOffset(),
               top: isScrolled ? "0.75rem" : "clamp(56px, 15vw, 82px)",
               opacity: isScrolled ? 1 : 0,
               pointerEvents: isScrolled ? "auto" : "none",
@@ -757,7 +794,7 @@ export const Header = () => {
               
               {/* Right side icons - positioned relative to RISE WITH US button */}
               <div className="fixed flex items-center gap-1 md:gap-2 z-[90]" style={{
-              right: isScrolled ? "clamp(7rem, 15vw, 11.5rem)" : "2.5rem", // Desktop: perfect, iPad: bit left, Mobile: further right
+              right: getRightIconOffset(),
               top: isScrolled ? "0.75rem" : "clamp(56px, 15vw, 82px)",
               opacity: isScrolled ? 1 : 0,
               pointerEvents: isScrolled ? "auto" : "none",
