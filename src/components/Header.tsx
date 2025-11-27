@@ -760,6 +760,9 @@ export const Header = () => {
                               : "border-white/20"
                           }`}
                         >
+                          {newsHovered && (
+                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/20 to-transparent animate-shine z-10"></div>
+                          )}
                           <div className="relative w-full h-full">
                           {newsArticles.length > 0 && newsArticles[newsIndex]?.image_url && (
                             <img
