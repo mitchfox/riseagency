@@ -231,7 +231,7 @@ export const Header = () => {
                     {/* Decorative vertical rectangle - "Our Work" spanning from Stars to News */}
                     <div 
                       className="absolute w-8 border-2 border-primary bg-primary/10 flex items-center justify-center"
-                      style={{ left: "50px", top: "95px", height: "160px", borderRadius: "24px" }}
+                      style={{ left: "50px", top: "95px", height: "250px", borderRadius: "24px" }}
                     >
                       <span className="text-white/80 font-bebas text-sm italic tracking-wider" style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>
                         OUR WORK
@@ -241,7 +241,7 @@ export const Header = () => {
                     {/* Decorative vertical rectangle - "Learn More" spanning from Players to Scouts */}
                     <div 
                       className="absolute w-8 border-2 border-primary bg-primary/10 flex items-center justify-center"
-                      style={{ left: "50px", top: "375px", height: "160px", borderRadius: "24px" }}
+                      style={{ left: "50px", top: "402px", height: "200px", borderRadius: "24px" }}
                     >
                       <span className="text-white/80 font-bebas text-sm italic tracking-wider" style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>
                         LEARN MORE
