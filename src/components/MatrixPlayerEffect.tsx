@@ -144,7 +144,7 @@ export const MatrixPlayerEffect = ({ className = "" }: MatrixPlayerEffectProps) 
         const imgWidth = baseImage.width * scale;
         const imgHeight = baseImage.height * scale;
         const imgX = (canvas.width - imgWidth) / 2;
-        const imgY = (canvas.height - imgHeight) / 2 + 10;
+        const imgY = (canvas.height - imgHeight) / 2 - 50; // Moved up 60px
 
         const playerCenterX = imgX + imgWidth / 2;
         const playerCenterY = imgY + imgHeight / 2;
@@ -165,13 +165,17 @@ export const MatrixPlayerEffect = ({ className = "" }: MatrixPlayerEffectProps) 
         const isNearPlayer = distFromMouse < xrayRadius + imgWidth / 3;
         
         if (isMouseValid && isNearPlayer && xrayImage) {
-          // Everything inside x-ray circle is clipped
+          // Clear the x-ray circle area first (remove base image inside circle)
           ctx.save();
           ctx.beginPath();
           ctx.arc(mousePos.x, mousePos.y, xrayRadius, 0, Math.PI * 2);
           ctx.clip();
           
-          // Draw the x-ray image (image 11) - only visible within clip
+          // Fill with black to hide base image
+          ctx.fillStyle = "#000000";
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          
+          // Draw only image 11 inside the x-ray circle
           ctx.drawImage(xrayImage, imgX, imgY, imgWidth, imgHeight);
           
           // Draw 5D MATRIX LINES - only within x-ray circle
