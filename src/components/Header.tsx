@@ -420,6 +420,18 @@ export const Header = () => {
                         <HoverText text="SCOUTS" />
                       </Link>
                     </DrawerClose>
+                    <div className="h-px bg-white/20 my-1" />
+
+                    <DrawerClose asChild>
+                      <Link
+                        to="/agents"
+                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-colors duration-300 tracking-wider py-1 whitespace-nowrap ${
+                          isActive("/agents") ? "text-primary" : ""
+                        }`}
+                      >
+                        <HoverText text="AGENTS" />
+                      </Link>
+                    </DrawerClose>
                   </nav>
 
                   {/* Request Representation card image: 50, 525 to 350, 650 (300x125) */}
