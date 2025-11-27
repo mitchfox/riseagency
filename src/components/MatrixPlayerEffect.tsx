@@ -26,48 +26,17 @@ export const MatrixPlayerEffect = ({ className = "" }: MatrixPlayerEffectProps) 
 
         zip.forEach((relativePath, file) => {
           if (relativePath.endsWith(".png") && !relativePath.startsWith("__MACOSX")) {
-            console.log("Found PNG in zip:", relativePath);
+            console.log("Loading image:", relativePath);
             const promise = file.async("blob").then((blob) => {
               return new Promise<void>((resolve) => {
                 const img = new Image();
                 img.onload = () => {
-                  // Check if image has transparency by sampling multiple points
-                  const testCanvas = document.createElement("canvas");
-                  testCanvas.width = img.width;
-                  testCanvas.height = img.height;
-                  const testCtx = testCanvas.getContext("2d");
-                  if (testCtx) {
-                    testCtx.drawImage(img, 0, 0);
-                    const imageData = testCtx.getImageData(0, 0, img.width, img.height);
-                    const data = imageData.data;
-                    
-                    // Count transparent pixels - if more than 10% are transparent, it's a cutout
-                    let transparentCount = 0;
-                    const totalPixels = img.width * img.height;
-                    const sampleRate = Math.max(1, Math.floor(totalPixels / 10000)); // Sample up to 10k pixels
-                    
-                    for (let i = 0; i < data.length; i += 4 * sampleRate) {
-                      if (data[i + 3] < 250) { // Alpha channel
-                        transparentCount++;
-                      }
-                    }
-                    
-                    const sampledPixels = Math.ceil(totalPixels / sampleRate);
-                    const transparencyRatio = transparentCount / sampledPixels;
-                    console.log(`Image ${relativePath}: ${(transparencyRatio * 100).toFixed(1)}% transparent pixels`);
-                    
-                    // If more than 5% of pixels are transparent, it's likely a cutout image
-                    if (transparencyRatio > 0.05) {
-                      console.log(`Including: ${relativePath}`);
-                      images.push(img);
-                    } else {
-                      console.log(`Excluding (no transparency): ${relativePath}`);
-                    }
-                  }
+                  console.log(`Loaded: ${relativePath} (${img.width}x${img.height})`);
+                  images.push(img);
                   resolve();
                 };
                 img.onerror = () => {
-                  console.log("Error loading image:", relativePath);
+                  console.log("Error loading:", relativePath);
                   resolve();
                 };
                 img.src = URL.createObjectURL(blob);
