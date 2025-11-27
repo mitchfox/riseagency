@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { LanguageSelector } from "@/components/LanguageSelector";
+import { HoverText } from "@/components/HoverText";
 import logo from "@/assets/logo.png";
 
 export default function Landing() {
@@ -32,7 +33,7 @@ export default function Landing() {
         
         {/* REALISE POTENTIAL Text */}
         <h1 className="text-4xl md:text-6xl lg:text-7xl font-bebas uppercase tracking-[0.3em] text-white/90 text-center">
-          REALISE POTENTIAL
+          <HoverText text="REALISE POTENTIAL" />
         </h1>
       </div>
 
@@ -44,7 +45,7 @@ export default function Landing() {
             to={link.to}
             className="text-sm md:text-base font-bebas uppercase tracking-[0.2em] text-white/60 hover:text-primary transition-colors duration-300"
           >
-            {link.label}
+            <HoverText text={link.label} />
           </Link>
         ))}
       </nav>
