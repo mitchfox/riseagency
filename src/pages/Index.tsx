@@ -100,101 +100,236 @@ const Index = () => {
           </div>
         </section>
 
-        {/* Agency Overview Section */}
-        <section className="py-12 md:py-16 px-4 bg-background relative">
+        {/* Match Week Journey Section */}
+        <section className="py-16 md:py-24 px-4 bg-background relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-b from-transparent via-primary/5 to-transparent"></div>
-          <div className="container mx-auto max-w-5xl relative z-10">
-            <div className="text-center space-y-6 animate-fade-in">
+          <div className="container mx-auto max-w-7xl relative z-10">
+            <div className="text-center mb-16 space-y-6">
               <div className="inline-block">
                 <span className="text-sm font-bebas uppercase tracking-widest text-primary border border-primary/30 px-6 py-2 rounded-full">
-                  Why RISE?
+                  Our Process
                 </span>
               </div>
               <h2 className="text-4xl md:text-6xl lg:text-7xl font-bebas uppercase tracking-wider text-foreground leading-tight">
-                Performance-First <span className="text-primary">Agency</span>
+                A Match Week <span className="text-primary">With RISE</span>
               </h2>
-              <p className="text-base md:text-xl lg:text-2xl text-muted-foreground leading-relaxed max-w-4xl lg:max-w-6xl mx-auto font-light">
-                RISE Football is the performance-first agency, ensuring our players, coaches and clubs develop optimally on the pitch, as well as off. To reach their potential, we provide our clients with an extensive training, analysis and recovery protocol while utilising our network to put them in a position to succeed.
+              <p className="text-base md:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed font-light">
+                From training ground to match day and beyond, we optimize every aspect of player development and performance
               </p>
-              <div className="flex justify-center gap-8 md:gap-12 pt-8 max-w-3xl mx-auto">
-                <div className="flex flex-col items-center text-center">
-                  <div className="text-5xl font-bebas text-primary mb-2">15+</div>
-                  <div className="text-sm uppercase tracking-wider text-muted-foreground">Countries</div>
+            </div>
+
+            {/* Journey Timeline */}
+            <div className="relative">
+              {/* Vertical Line - Desktop */}
+              <div className="hidden md:block absolute left-1/2 top-0 bottom-0 w-0.5 bg-gradient-to-b from-primary/20 via-primary to-primary/20 transform -translate-x-1/2"></div>
+
+              {/* Journey Steps */}
+              <div className="space-y-12 md:space-y-24">
+                {/* Step 1 - Training */}
+                <div className="relative flex flex-col md:flex-row items-center md:items-start gap-8">
+                  <div className="w-full md:w-1/2 md:pr-12 md:text-right order-2 md:order-1">
+                    <div className="group p-8 rounded-lg border border-primary/30 bg-background/80 backdrop-blur-sm hover:border-primary/60 transition-all duration-300 hover:shadow-xl hover:shadow-primary/10">
+                      <div className="text-6xl font-bebas text-primary mb-4">01</div>
+                      <h3 className="text-3xl md:text-4xl font-bebas uppercase tracking-wider text-foreground mb-4">Training</h3>
+                      <p className="text-muted-foreground leading-relaxed mb-4">
+                        Structured, science-backed training protocols tailored to each player's needs. Our comprehensive approach ensures physical development, technical excellence, and tactical understanding.
+                      </p>
+                      <ul className="space-y-2 text-sm text-muted-foreground">
+                        <li className="flex items-center md:justify-end gap-2">
+                          <span>Strength & conditioning programs</span>
+                          <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                        </li>
+                        <li className="flex items-center md:justify-end gap-2">
+                          <span>Technical skill development</span>
+                          <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                        </li>
+                        <li className="flex items-center md:justify-end gap-2">
+                          <span>Recovery & nutrition guidance</span>
+                          <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                  <div className="hidden md:flex w-12 h-12 rounded-full bg-primary border-4 border-background flex-shrink-0 items-center justify-center z-10 order-2">
+                    <svg className="w-6 h-6 text-background" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                  </div>
+                  <div className="w-full md:w-1/2 order-1 md:order-3"></div>
                 </div>
-                <div className="flex flex-col items-center text-center">
-                  <div className="text-5xl font-bebas text-primary mb-2">25+</div>
-                  <div className="text-sm uppercase tracking-wider text-muted-foreground">Premier League Players</div>
+
+                {/* Step 2 - Pre-Match Analysis */}
+                <div className="relative flex flex-col md:flex-row items-center md:items-start gap-8">
+                  <div className="w-full md:w-1/2 order-1"></div>
+                  <div className="hidden md:flex w-12 h-12 rounded-full bg-primary border-4 border-background flex-shrink-0 items-center justify-center z-10 order-2">
+                    <svg className="w-6 h-6 text-background" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                  </div>
+                  <div className="w-full md:w-1/2 md:pl-12 order-2 md:order-3">
+                    <div className="group p-8 rounded-lg border border-primary/30 bg-background/80 backdrop-blur-sm hover:border-primary/60 transition-all duration-300 hover:shadow-xl hover:shadow-primary/10">
+                      <div className="text-6xl font-bebas text-primary mb-4">02</div>
+                      <h3 className="text-3xl md:text-4xl font-bebas uppercase tracking-wider text-foreground mb-4">Pre-Match Analysis</h3>
+                      <p className="text-muted-foreground leading-relaxed mb-4">
+                        Detailed tactical preparation using advanced video analysis. We break down opposition tactics, identify key matchups, and develop game plans that maximize player strengths.
+                      </p>
+                      <ul className="space-y-2 text-sm text-muted-foreground">
+                        <li className="flex items-center gap-2">
+                          <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          <span>Opposition scouting reports</span>
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          <span>Tactical scheme breakdowns</span>
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          <span>Strategic positioning insights</span>
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex flex-col items-center text-center">
-                  <div className="text-5xl font-bebas text-primary mb-2">50+</div>
-                  <div className="text-sm uppercase tracking-wider text-muted-foreground">International Players</div>
+
+                {/* Step 3 - Performance Reports */}
+                <div className="relative flex flex-col md:flex-row items-center md:items-start gap-8">
+                  <div className="w-full md:w-1/2 md:pr-12 md:text-right order-2 md:order-1">
+                    <div className="group p-8 rounded-lg border border-primary/30 bg-background/80 backdrop-blur-sm hover:border-primary/60 transition-all duration-300 hover:shadow-xl hover:shadow-primary/10">
+                      <div className="text-6xl font-bebas text-primary mb-4">03</div>
+                      <h3 className="text-3xl md:text-4xl font-bebas uppercase tracking-wider text-foreground mb-4">Performance Reports</h3>
+                      <p className="text-muted-foreground leading-relaxed mb-4">
+                        Comprehensive match-day data analysis tracking every action, decision, and movement. Our detailed reports provide quantifiable metrics on player performance and development.
+                      </p>
+                      <ul className="space-y-2 text-sm text-muted-foreground">
+                        <li className="flex items-center md:justify-end gap-2">
+                          <span>Action-by-action scoring</span>
+                          <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                        </li>
+                        <li className="flex items-center md:justify-end gap-2">
+                          <span>R90 performance metrics</span>
+                          <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                        </li>
+                        <li className="flex items-center md:justify-end gap-2">
+                          <span>Statistical comparisons</span>
+                          <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                  <div className="hidden md:flex w-12 h-12 rounded-full bg-primary border-4 border-background flex-shrink-0 items-center justify-center z-10 order-2">
+                    <svg className="w-6 h-6 text-background" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                  </div>
+                  <div className="w-full md:w-1/2 order-1 md:order-3"></div>
+                </div>
+
+                {/* Step 4 - Post-Match Analysis */}
+                <div className="relative flex flex-col md:flex-row items-center md:items-start gap-8">
+                  <div className="w-full md:w-1/2 order-1"></div>
+                  <div className="hidden md:flex w-12 h-12 rounded-full bg-primary border-4 border-background flex-shrink-0 items-center justify-center z-10 order-2">
+                    <svg className="w-6 h-6 text-background" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                  </div>
+                  <div className="w-full md:w-1/2 md:pl-12 order-2 md:order-3">
+                    <div className="group p-8 rounded-lg border border-primary/30 bg-background/80 backdrop-blur-sm hover:border-primary/60 transition-all duration-300 hover:shadow-xl hover:shadow-primary/10">
+                      <div className="text-6xl font-bebas text-primary mb-4">04</div>
+                      <h3 className="text-3xl md:text-4xl font-bebas uppercase tracking-wider text-foreground mb-4">Post-Match Analysis</h3>
+                      <p className="text-muted-foreground leading-relaxed mb-4">
+                        In-depth video review sessions breaking down individual performance. We identify areas of excellence and opportunities for growth, ensuring continuous improvement.
+                      </p>
+                      <ul className="space-y-2 text-sm text-muted-foreground">
+                        <li className="flex items-center gap-2">
+                          <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          <span>Key moment breakdowns</span>
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          <span>Tactical decision analysis</span>
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          <span>Development focus areas</span>
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Step 5 - Highlights */}
+                <div className="relative flex flex-col md:flex-row items-center md:items-start gap-8">
+                  <div className="w-full md:w-1/2 md:pr-12 md:text-right order-2 md:order-1">
+                    <div className="group p-8 rounded-lg border border-primary/30 bg-background/80 backdrop-blur-sm hover:border-primary/60 transition-all duration-300 hover:shadow-xl hover:shadow-primary/10">
+                      <div className="text-6xl font-bebas text-primary mb-4">05</div>
+                      <h3 className="text-3xl md:text-4xl font-bebas uppercase tracking-wider text-foreground mb-4">Highlights</h3>
+                      <p className="text-muted-foreground leading-relaxed mb-4">
+                        Professional highlight reels showcasing player abilities. These materials support club presentations, transfer negotiations, and personal brand development.
+                      </p>
+                      <ul className="space-y-2 text-sm text-muted-foreground">
+                        <li className="flex items-center md:justify-end gap-2">
+                          <span>Professionally edited reels</span>
+                          <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                        </li>
+                        <li className="flex items-center md:justify-end gap-2">
+                          <span>Skills showcase videos</span>
+                          <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                        </li>
+                        <li className="flex items-center md:justify-end gap-2">
+                          <span>Marketing materials</span>
+                          <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                  <div className="hidden md:flex w-12 h-12 rounded-full bg-primary border-4 border-background flex-shrink-0 items-center justify-center z-10 order-2">
+                    <svg className="w-6 h-6 text-background" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <div className="w-full md:w-1/2 order-1 md:order-3"></div>
                 </div>
               </div>
-              
-              {/* Flip Cards */}
-              <div className="grid md:grid-cols-3 gap-6 mt-12 max-w-5xl mx-auto">
-                {/* Card 1 - Founder's Background */}
-                <div className="flip-card-container group cursor-pointer" onClick={(e) => e.currentTarget.classList.toggle('flipped')}>
-                  <div className="flip-card relative w-full h-64">
-                    {/* Front */}
-                    <div className="flip-card-front absolute inset-0 rounded-lg border border-primary/30 bg-background/80 backdrop-blur-sm p-6 flex flex-col items-center justify-center">
-                      <svg className="w-12 h-12 text-primary mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      <div className="text-4xl font-bebas text-primary mb-3">EXPERTISE</div>
-                      <div className="text-sm uppercase tracking-wider text-muted-foreground text-center">Click to learn more</div>
-                    </div>
-                    {/* Back */}
-                    <div className="flip-card-back absolute inset-0 rounded-lg border border-primary/30 bg-background/95 backdrop-blur-sm p-6 flex flex-col justify-center">
-                      <div className="text-2xl font-bebas text-primary mb-4 text-center">ELITE EXPERIENCE</div>
-                      <p className="text-sm text-foreground text-center leading-relaxed">
-                        Our founder's background includes personal training elite players across Europe's biggest leagues, bringing world-class expertise to every client.
-                      </p>
-                    </div>
-                  </div>
-                </div>
+            </div>
 
-                {/* Card 2 - FIFA Licenses */}
-                <div className="flip-card-container group cursor-pointer" onClick={(e) => e.currentTarget.classList.toggle('flipped')}>
-                  <div className="flip-card relative w-full h-64">
-                    {/* Front */}
-                    <div className="flip-card-front absolute inset-0 rounded-lg border border-primary/30 bg-background/80 backdrop-blur-sm p-6 flex flex-col items-center justify-center">
-                      <svg className="w-12 h-12 text-primary mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
-                      </svg>
-                      <div className="text-4xl font-bebas text-primary mb-3">LICENSED</div>
-                      <div className="text-sm uppercase tracking-wider text-muted-foreground text-center">Click to learn more</div>
-                    </div>
-                    {/* Back */}
-                    <div className="flip-card-back absolute inset-0 rounded-lg border border-primary/30 bg-background/95 backdrop-blur-sm p-6 flex flex-col justify-center">
-                      <div className="text-2xl font-bebas text-primary mb-4 text-center">CERTIFIED & APPROVED</div>
-                      <p className="text-sm text-foreground text-center leading-relaxed">
-                        FIFA licensed intermediaries and approved by football's governing bodies, ensuring full compliance and professional representation.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Card 3 - Club Network */}
-                <div className="flip-card-container group cursor-pointer" onClick={(e) => e.currentTarget.classList.toggle('flipped')}>
-                  <div className="flip-card relative w-full h-64">
-                    {/* Front */}
-                    <div className="flip-card-front absolute inset-0 rounded-lg border border-primary/30 bg-background/80 backdrop-blur-sm p-6 flex flex-col items-center justify-center">
-                      <svg className="w-12 h-12 text-primary mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      <div className="text-4xl font-bebas text-primary mb-3">CONNECTED</div>
-                      <div className="text-sm uppercase tracking-wider text-muted-foreground text-center">Click to learn more</div>
-                    </div>
-                    {/* Back */}
-                    <div className="flip-card-back absolute inset-0 rounded-lg border border-primary/30 bg-background/95 backdrop-blur-sm p-6 flex flex-col justify-center">
-                      <div className="text-2xl font-bebas text-primary mb-4 text-center">GLOBAL NETWORK</div>
-                      <p className="text-sm text-foreground text-center leading-relaxed">
-                        Extensive club network spanning top European leagues and beyond, providing unparalleled access and opportunities for our clients.
-                      </p>
-                    </div>
-                  </div>
-                </div>
+            {/* Closing Statement */}
+            <div className="mt-20 text-center">
+              <div className="inline-block p-8 rounded-lg border border-primary/30 bg-background/80 backdrop-blur-sm max-w-3xl">
+                <p className="text-xl md:text-2xl text-foreground leading-relaxed font-light">
+                  This comprehensive approach ensures our players are prepared, performing, and progressing at the highest level—week after week, season after season.
+                </p>
               </div>
             </div>
           </div>
