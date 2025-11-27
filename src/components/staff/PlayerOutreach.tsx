@@ -7,11 +7,12 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Edit, Trash2, Users } from "lucide-react";
+import { Plus, Edit, Users, Save } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface YouthOutreach {
   id: string;
@@ -43,6 +44,7 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<YouthOutreach | ProOutreach | null>(null);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [youthFormData, setYouthFormData] = useState({
     player_name: "",
     ig_handle: "",
@@ -142,19 +144,54 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
     }
   };
 
-  const handleDelete = async (id: string, type: 'youth' | 'pro') => {
-    if (!confirm("Are you sure you want to delete this entry?")) return;
-
+  const handleSaveAll = async () => {
     try {
-      const table = type === 'youth' ? 'player_outreach_youth' : 'player_outreach_pro';
-      const { error } = await supabase.from(table).delete().eq("id", id);
-      if (error) throw error;
-      toast.success("Entry deleted");
+      // Save all youth changes
+      for (const item of youthData) {
+        const { error } = await supabase
+          .from("player_outreach_youth")
+          .update({
+            messaged: item.messaged,
+            response_received: item.response_received,
+            parent_approval: item.parent_approval
+          })
+          .eq("id", item.id);
+        if (error) throw error;
+      }
+
+      // Save all pro changes
+      for (const item of proData) {
+        const { error } = await supabase
+          .from("player_outreach_pro")
+          .update({
+            messaged: item.messaged,
+            response_received: item.response_received
+          })
+          .eq("id", item.id);
+        if (error) throw error;
+      }
+
+      toast.success("All changes saved successfully");
+      setHasUnsavedChanges(false);
       fetchData();
     } catch (error: any) {
-      console.error("Error deleting entry:", error);
-      toast.error("Failed to delete");
+      console.error("Error saving changes:", error);
+      toast.error("Failed to save changes");
     }
+  };
+
+  const toggleYouthField = (id: string, field: keyof Pick<YouthOutreach, 'messaged' | 'response_received' | 'parent_approval'>) => {
+    setYouthData(prev => prev.map(item => 
+      item.id === id ? { ...item, [field]: !item[field] } : item
+    ));
+    setHasUnsavedChanges(true);
+  };
+
+  const toggleProField = (id: string, field: keyof Pick<ProOutreach, 'messaged' | 'response_received'>) => {
+    setProData(prev => prev.map(item => 
+      item.id === id ? { ...item, [field]: !item[field] } : item
+    ));
+    setHasUnsavedChanges(true);
   };
 
   const handleEdit = (item: YouthOutreach | ProOutreach, type: 'youth' | 'pro') => {
@@ -241,9 +278,9 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
                 <TableHead>IG Handle</TableHead>
                 <TableHead>Parents Name</TableHead>
                 <TableHead>Parent Contact</TableHead>
-                <TableHead>Parent Approval</TableHead>
-                <TableHead>Messaged</TableHead>
-                <TableHead>Response</TableHead>
+                <TableHead className="text-center">Parent Approval</TableHead>
+                <TableHead className="text-center">Messaged</TableHead>
+                <TableHead className="text-center">Response</TableHead>
                 {canEdit && <TableHead>Actions</TableHead>}
               </TableRow>
             </TableHeader>
@@ -257,23 +294,45 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
               ) : (
                 data.map((item) => (
                   <TableRow key={item.id}>
-                    <TableCell className="font-medium">{item.player_name}</TableCell>
+                    <TableCell className="bg-muted/30 font-bold">{item.player_name}</TableCell>
                     <TableCell>{item.ig_handle || "-"}</TableCell>
                     <TableCell>{item.parents_name || "-"}</TableCell>
                     <TableCell>{item.parent_contact || "-"}</TableCell>
-                    <TableCell>{item.parent_approval ? "✓" : "-"}</TableCell>
-                    <TableCell>{item.messaged ? "✓" : "-"}</TableCell>
-                    <TableCell>{item.response_received ? "✓" : "-"}</TableCell>
+                    <TableCell className="text-center">
+                      {canEdit ? (
+                        <Checkbox
+                          checked={item.parent_approval}
+                          onCheckedChange={() => toggleYouthField(item.id, 'parent_approval')}
+                        />
+                      ) : (
+                        item.parent_approval ? "✓" : "-"
+                      )}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {canEdit ? (
+                        <Checkbox
+                          checked={item.messaged}
+                          onCheckedChange={() => toggleYouthField(item.id, 'messaged')}
+                        />
+                      ) : (
+                        item.messaged ? "✓" : "-"
+                      )}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {canEdit ? (
+                        <Checkbox
+                          checked={item.response_received}
+                          onCheckedChange={() => toggleYouthField(item.id, 'response_received')}
+                        />
+                      ) : (
+                        item.response_received ? "✓" : "-"
+                      )}
+                    </TableCell>
                     {canEdit && (
                       <TableCell>
-                        <div className="flex gap-2">
-                          <Button size="sm" variant="ghost" onClick={() => handleEdit(item, 'youth')}>
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button size="sm" variant="ghost" onClick={() => handleDelete(item.id, 'youth')}>
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
+                        <Button size="sm" variant="ghost" onClick={() => handleEdit(item, 'youth')}>
+                          <Edit className="h-4 w-4" />
+                        </Button>
                       </TableCell>
                     )}
                   </TableRow>
@@ -291,19 +350,14 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
             data.map((item) => (
               <Card key={item.id} className="p-4 space-y-3">
                 <div className="flex justify-between items-start">
-                  <div>
-                    <h3 className="font-semibold text-base">{item.player_name}</h3>
+                  <div className="bg-muted/30 px-2 py-1 rounded">
+                    <h3 className="font-bold text-base">{item.player_name}</h3>
                     {item.ig_handle && <p className="text-sm text-muted-foreground">@{item.ig_handle}</p>}
                   </div>
                   {canEdit && (
-                    <div className="flex gap-1">
-                      <Button size="sm" variant="ghost" onClick={() => handleEdit(item, 'youth')}>
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button size="sm" variant="ghost" onClick={() => handleDelete(item.id, 'youth')}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
+                    <Button size="sm" variant="ghost" onClick={() => handleEdit(item, 'youth')}>
+                      <Edit className="h-4 w-4" />
+                    </Button>
                   )}
                 </div>
                 <div className="space-y-1.5 text-sm">
@@ -320,11 +374,31 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
                     </div>
                   )}
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  {item.messaged && <Badge variant="secondary">Messaged</Badge>}
-                  {item.response_received && <Badge variant="default">Responded</Badge>}
-                  {item.parent_approval && <Badge variant="outline">Parent Approved</Badge>}
-                </div>
+                {canEdit && (
+                  <div className="space-y-2 pt-2 border-t">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">Parent Approval</span>
+                      <Checkbox
+                        checked={item.parent_approval}
+                        onCheckedChange={() => toggleYouthField(item.id, 'parent_approval')}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">Messaged</span>
+                      <Checkbox
+                        checked={item.messaged}
+                        onCheckedChange={() => toggleYouthField(item.id, 'messaged')}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">Response Received</span>
+                      <Checkbox
+                        checked={item.response_received}
+                        onCheckedChange={() => toggleYouthField(item.id, 'response_received')}
+                      />
+                    </div>
+                  </div>
+                )}
               </Card>
             ))
           )}
@@ -346,8 +420,8 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
               <TableRow>
                 <TableHead>Player Name</TableHead>
                 <TableHead>IG Handle</TableHead>
-                <TableHead>Messaged</TableHead>
-                <TableHead>Response</TableHead>
+                <TableHead className="text-center">Messaged</TableHead>
+                <TableHead className="text-center">Response</TableHead>
                 {canEdit && <TableHead>Actions</TableHead>}
               </TableRow>
             </TableHeader>
@@ -361,20 +435,33 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
               ) : (
                 data.map((item) => (
                   <TableRow key={item.id}>
-                    <TableCell className="font-medium">{item.player_name}</TableCell>
+                    <TableCell className="bg-muted/30 font-bold">{item.player_name}</TableCell>
                     <TableCell>{item.ig_handle || "-"}</TableCell>
-                    <TableCell>{item.messaged ? "✓" : "-"}</TableCell>
-                    <TableCell>{item.response_received ? "✓" : "-"}</TableCell>
+                    <TableCell className="text-center">
+                      {canEdit ? (
+                        <Checkbox
+                          checked={item.messaged}
+                          onCheckedChange={() => toggleProField(item.id, 'messaged')}
+                        />
+                      ) : (
+                        item.messaged ? "✓" : "-"
+                      )}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {canEdit ? (
+                        <Checkbox
+                          checked={item.response_received}
+                          onCheckedChange={() => toggleProField(item.id, 'response_received')}
+                        />
+                      ) : (
+                        item.response_received ? "✓" : "-"
+                      )}
+                    </TableCell>
                     {canEdit && (
                       <TableCell>
-                        <div className="flex gap-2">
-                          <Button size="sm" variant="ghost" onClick={() => handleEdit(item, 'pro')}>
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button size="sm" variant="ghost" onClick={() => handleDelete(item.id, 'pro')}>
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
+                        <Button size="sm" variant="ghost" onClick={() => handleEdit(item, 'pro')}>
+                          <Edit className="h-4 w-4" />
+                        </Button>
                       </TableCell>
                     )}
                   </TableRow>
@@ -392,25 +479,34 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
             data.map((item) => (
               <Card key={item.id} className="p-4 space-y-3">
                 <div className="flex justify-between items-start">
-                  <div>
-                    <h3 className="font-semibold text-base">{item.player_name}</h3>
+                  <div className="bg-muted/30 px-2 py-1 rounded">
+                    <h3 className="font-bold text-base">{item.player_name}</h3>
                     {item.ig_handle && <p className="text-sm text-muted-foreground">@{item.ig_handle}</p>}
                   </div>
                   {canEdit && (
-                    <div className="flex gap-1">
-                      <Button size="sm" variant="ghost" onClick={() => handleEdit(item, 'pro')}>
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button size="sm" variant="ghost" onClick={() => handleDelete(item.id, 'pro')}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
+                    <Button size="sm" variant="ghost" onClick={() => handleEdit(item, 'pro')}>
+                      <Edit className="h-4 w-4" />
+                    </Button>
                   )}
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  {item.messaged && <Badge variant="secondary">Messaged</Badge>}
-                  {item.response_received && <Badge variant="default">Responded</Badge>}
-                </div>
+                {canEdit && (
+                  <div className="space-y-2 pt-2 border-t">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">Messaged</span>
+                      <Checkbox
+                        checked={item.messaged}
+                        onCheckedChange={() => toggleProField(item.id, 'messaged')}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">Response Received</span>
+                      <Checkbox
+                        checked={item.response_received}
+                        onCheckedChange={() => toggleProField(item.id, 'response_received')}
+                      />
+                    </div>
+                  </div>
+                )}
               </Card>
             ))
           )}
@@ -427,16 +523,23 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
           Player Outreach
         </h2>
         {canEdit && (
-          <Dialog open={dialogOpen} onOpenChange={(open) => {
-            setDialogOpen(open);
-            if (!open) resetForms();
-          }}>
-            <DialogTrigger asChild>
-              <Button size="sm" className="w-full sm:w-auto">
-                <Plus className="w-4 h-4 mr-2" />
-                Add Entry
+          <div className="flex gap-2 w-full sm:w-auto">
+            {hasUnsavedChanges && (
+              <Button size="sm" onClick={handleSaveAll} className="w-full sm:w-auto">
+                <Save className="w-4 h-4 mr-2" />
+                Save Changes
               </Button>
-            </DialogTrigger>
+            )}
+            <Dialog open={dialogOpen} onOpenChange={(open) => {
+              setDialogOpen(open);
+              if (!open) resetForms();
+            }}>
+              <DialogTrigger asChild>
+                <Button size="sm" variant="outline" className="w-full sm:w-auto">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Entry
+                </Button>
+              </DialogTrigger>
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full">
               <DialogHeader>
                 <DialogTitle>
@@ -594,6 +697,7 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
               )}
             </DialogContent>
           </Dialog>
+          </div>
         )}
       </div>
 
