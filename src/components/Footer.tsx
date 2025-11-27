@@ -4,6 +4,9 @@ import logo from "@/assets/logo.png";
 import { WorkWithUsDialog } from "@/components/WorkWithUsDialog";
 import { Button } from "@/components/ui/button";
 
+// Build version - update this to verify deployments
+const BUILD_VERSION = "v2024.11.27.001";
+
 export const Footer = () => {
   return (
     <footer className="bg-muted/20 border-t border-primary/10">
@@ -173,6 +176,10 @@ export const Footer = () => {
               </a>
             </div>
           </div>
+          {/* Version indicator for deployment debugging */}
+          <p className="text-[10px] text-muted-foreground/40 text-center mt-4">
+            Build: {BUILD_VERSION}
+          </p>
         </div>
       </div>
     </footer>
