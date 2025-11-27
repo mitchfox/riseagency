@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useTransition } from '@/contexts/TransitionContext';
 
 interface Node {
@@ -23,6 +24,10 @@ const FluidCursor = () => {
   const linesRef = useRef<Line[]>([]);
   const frameRef = useRef(0);
   const { isTransitioning } = useTransition();
+  const location = useLocation();
+  
+  // Don't show FluidCursor on landing page - it has its own x-ray cursor effect
+  const isLandingPage = location.pathname === '/';
 
   useEffect(() => {
     // Only enable on desktop (non-touch devices with screen width > 768px)
@@ -167,8 +172,8 @@ const FluidCursor = () => {
     };
   }, []);
 
-  // Hide cursor during page transitions
-  if (isTransitioning) {
+  // Hide cursor during page transitions or on landing page
+  if (isTransitioning || isLandingPage) {
     return null;
   }
 
