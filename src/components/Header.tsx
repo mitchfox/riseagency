@@ -235,7 +235,7 @@ export const Header = () => {
               </button>
             </DrawerTrigger>
             <DrawerContent 
-              className="fixed inset-0 h-screen w-full !mt-0 rounded-none bg-black animate-slide-in-left transition-all duration-300 ease-out overflow-hidden"
+              className="fixed inset-0 h-screen w-full !mt-0 rounded-none bg-black animate-slide-in-left transition-all duration-300 ease-out z-[200] overflow-hidden"
             >
               {/* Full screen grid layout */}
               <div className="grid lg:grid-cols-2 h-full w-full overflow-hidden">
@@ -292,7 +292,7 @@ export const Header = () => {
                           }`}
                         >
                           Home
-                          {isActive("/") && <img src={riseStar} alt="" className="w-5 h-5 inline-block" />}
+                          {isActive("/") && <img src={riseStar} alt="" className="w-6 h-6 inline-block" />}
                         </Link>
                       </DrawerClose>
                       
@@ -308,7 +308,7 @@ export const Header = () => {
                           }`}
                         >
                           Stars
-                          {(isActive("/stars") || location.pathname.startsWith("/stars/")) && <img src={riseStar} alt="" className="w-5 h-5 inline-block" />}
+                          {(isActive("/stars") || location.pathname.startsWith("/stars/")) && <img src={riseStar} alt="" className="w-6 h-6 inline-block" />}
                         </Link>
                       </DrawerClose>
                       
@@ -322,7 +322,7 @@ export const Header = () => {
                           }`}
                         >
                           Realise Potential
-                          {isActive("/performance") && <img src={riseStar} alt="" className="w-5 h-5 inline-block" />}
+                          {isActive("/performance") && <img src={riseStar} alt="" className="w-6 h-6 inline-block" />}
                         </Link>
                       </DrawerClose>
                       
@@ -336,7 +336,7 @@ export const Header = () => {
                           }`}
                         >
                           Between The Lines
-                          {isActive("/between-the-lines") && <img src={riseStar} alt="" className="w-5 h-5 inline-block" />}
+                          {isActive("/between-the-lines") && <img src={riseStar} alt="" className="w-6 h-6 inline-block" />}
                         </Link>
                       </DrawerClose>
                       
@@ -350,7 +350,7 @@ export const Header = () => {
                           }`}
                         >
                           Players
-                          {(isActive("/players") || location.pathname.startsWith("/players/")) && <img src={riseStar} alt="" className="w-5 h-5 inline-block" />}
+                          {(isActive("/players") || location.pathname.startsWith("/players/")) && <img src={riseStar} alt="" className="w-6 h-6 inline-block" />}
                         </Link>
                       </DrawerClose>
                       
@@ -362,7 +362,7 @@ export const Header = () => {
                           }`}
                         >
                           Clubs
-                          {isActive("/clubs") && <img src={riseStar} alt="" className="w-5 h-5 inline-block" />}
+                          {isActive("/clubs") && <img src={riseStar} alt="" className="w-6 h-6 inline-block" />}
                         </Link>
                       </DrawerClose>
                       
@@ -374,7 +374,7 @@ export const Header = () => {
                           }`}
                         >
                           Coaches
-                          {isActive("/coaches") && <img src={riseStar} alt="" className="w-5 h-5 inline-block" />}
+                          {isActive("/coaches") && <img src={riseStar} alt="" className="w-6 h-6 inline-block" />}
                         </Link>
                       </DrawerClose>
                       
@@ -386,7 +386,7 @@ export const Header = () => {
                           }`}
                         >
                           Scouts
-                          {isActive("/scouts") && <img src={riseStar} alt="" className="w-5 h-5 inline-block" />}
+                          {isActive("/scouts") && <img src={riseStar} alt="" className="w-6 h-6 inline-block" />}
                         </Link>
                       </DrawerClose>
                     </nav>
