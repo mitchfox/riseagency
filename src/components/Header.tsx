@@ -25,6 +25,8 @@ export const Header = () => {
   const [workWithUsOpen, setWorkWithUsOpen] = useState(false);
   const [declareInterestOpen, setDeclareInterestOpen] = useState(false);
   const [introModalOpen, setIntroModalOpen] = useState(false);
+  const [showTopBar, setShowTopBar] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
   const [starsHovered, setStarsHovered] = useState(false);
   const [starPlayers, setStarPlayers] = useState<any[]>([]);
   const [starIndex, setStarIndex] = useState(0);
@@ -38,6 +40,10 @@ export const Header = () => {
   const [newsArticles, setNewsArticles] = useState<any[]>([]);
   const [newsIndex, setNewsIndex] = useState(0);
   const realisePotentialImages = [realisePotentialSessions, realisePotentialPaos, realisePotentialReport, realisePotentialAnalysis];
+  
+  useEffect(() => {
+    setShowTopBar(location.pathname === '/');
+  }, [location.pathname]);
   
   useEffect(() => {
     const fetchStarPlayers = async () => {
@@ -106,12 +112,58 @@ export const Header = () => {
     }
   }, [newsArticles.length]);
   
+  useEffect(() => {
+    const handleScroll = () => {
+      if (location.pathname === '/') {
+        setIsScrolled(window.scrollY > 50);
+      } else {
+        setIsScrolled(false);
+      }
+    };
+    window.addEventListener('scroll', handleScroll);
+    handleScroll();
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [location.pathname]);
+  
   const isActive = (path: string) => location.pathname === path;
   return <>
+      {/* Top Utility Bar - only on homepage and only when not scrolled */}
+      {showTopBar && !isScrolled && <div className="fixed top-14 md:top-16 left-0 right-0 z-50 bg-background/95 backdrop-blur-md transition-all duration-500 border-b-2 border-primary">
+          <div className="container mx-auto px-2 md:px-4">
+          <div className="flex items-center justify-between h-8 md:h-10">
+            <div className="flex flex-wrap items-center gap-2 md:gap-4 transition-all duration-500">
+              <Link to="/contact" className="text-xs md:text-sm font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500 flex items-center gap-1.5">
+                <MessageCircle className="w-3 h-3 md:w-3.5 md:h-3.5 hidden sm:block" />
+                <span className="hidden lg:inline">Contact Us</span>
+                <span className="lg:hidden">Contact</span>
+              </Link>
+              <div className="w-px h-4 bg-white/20 lg:hidden" />
+              <button onClick={() => setDeclareInterestOpen(true)} className="text-xs md:text-sm font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500 flex items-center gap-1.5">
+                <Users className="w-3 h-3 md:w-3.5 md:h-3.5 hidden sm:block" />
+                <span className="hidden lg:inline">Declare Interest In A Star</span>
+                <span className="lg:hidden">Declare</span>
+              </button>
+            </div>
+            <div className="flex flex-wrap items-center gap-2 md:gap-4 transition-all duration-500">
+              <button onClick={() => setRepresentationOpen(true)} className="text-xs md:text-sm font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500 flex items-center gap-1.5">
+                <Handshake className="w-3 h-3 md:w-3.5 md:h-3.5 hidden sm:block" />
+                <span className="hidden lg:inline">Request Representation</span>
+                <span className="lg:hidden">Represent</span>
+              </button>
+              <div className="w-px h-4 bg-white/20 lg:hidden" />
+              <Link to="/login" className="text-xs md:text-sm font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500 flex items-center gap-1.5">
+                <LogIn className="w-3 h-3 md:w-3.5 md:h-3.5 hidden sm:block" />
+                <span>PORTAL</span>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>}
+
       {/* Main Header */}
-      <header className={`fixed top-0 left-0 right-0 z-[100] bg-background/95 backdrop-blur-md w-full transition-all duration-500 ease-out border-b-2 border-primary`}>
+      <header className={`fixed top-0 left-0 right-0 z-[100] bg-background/95 backdrop-blur-md w-full transition-all duration-500 ease-out ${showTopBar && isScrolled ? 'border-b-2 border-primary' : 'border-b border-white/10'}`}>
         <div className="container mx-auto px-2 md:px-4">
-        <div className="flex items-center justify-between h-14 md:h-16">
+        <div className={`flex items-center justify-between transition-all duration-500 ease-out ${isScrolled ? 'h-12 md:h-14' : 'h-14 md:h-16'}`}>
           {/* Drawer Menu - Left */}
           <Drawer direction="left" preventScrollRestoration={false}>
             <DrawerTrigger asChild>
@@ -676,43 +728,58 @@ export const Header = () => {
 
           {/* Logo - Center */}
           <Link to="/" className="absolute left-1/2 transform -translate-x-1/2 z-10">
-            <img src={logo} alt="RISE Football Agency" className="h-10 md:h-12" />
+            <img src={logo} alt="RISE Football Agency" className={`transition-all duration-500 ease-out ${isScrolled ? 'h-9 md:h-11' : 'h-10 md:h-12'}`} />
           </Link>
 
-          {/* Left side icons - positioned relative to menu button */}
-          <div className="absolute left-14 md:left-16 flex items-center gap-1 md:gap-2 z-[90]">
-            <Link to="/contact" className="group p-1.5 md:p-2 rounded-full hover:bg-primary/10 transition-all duration-300 flex items-center gap-1.5 overflow-hidden" title="Contact Us">
-              <MessageCircle className="w-4 h-4 md:w-5 md:h-5 text-white/80 group-hover:text-primary transition-colors flex-shrink-0" />
-              <span className="max-w-0 group-hover:max-w-xs transition-all duration-300 text-xs font-bebas uppercase tracking-wider text-white/80 group-hover:text-primary whitespace-nowrap overflow-hidden">
-                Contact Us
-              </span>
-            </Link>
-            <button onClick={() => setDeclareInterestOpen(true)} className="group p-1.5 md:p-2 rounded-full hover:bg-primary/10 transition-all duration-300 flex items-center gap-1.5 overflow-hidden" title="Declare Interest">
-              <Users className="w-4 h-4 md:w-5 md:h-5 text-white/80 group-hover:text-primary transition-colors flex-shrink-0" />
-              <span className="max-w-0 group-hover:max-w-xs transition-all duration-300 text-xs font-bebas uppercase tracking-wider text-white/80 group-hover:text-primary whitespace-nowrap overflow-hidden">
-                Declare Interest
-              </span>
-            </button>
-          </div>
-          
-          {/* Right side icons - positioned relative to RISE WITH US button */}
-          <div className="absolute right-24 md:right-32 flex items-center gap-1 md:gap-2 z-[90]">
-            <button onClick={() => setRepresentationOpen(true)} className="group p-1.5 md:p-2 rounded-full hover:bg-primary/10 transition-all duration-300 flex items-center gap-1.5 overflow-hidden" title="Request Representation">
-              <Handshake className="w-4 h-4 md:w-5 md:h-5 text-white/80 group-hover:text-primary transition-colors flex-shrink-0" />
-              <span className="max-w-0 group-hover:max-w-xs transition-all duration-300 text-xs font-bebas uppercase tracking-wider text-white/80 group-hover:text-primary whitespace-nowrap overflow-hidden">
-                Request Representation
-              </span>
-            </button>
-            <Link to="/login" className="group p-1.5 md:p-2 rounded-full hover:bg-primary/10 transition-all duration-300 flex items-center gap-1.5 overflow-hidden" title="Portal">
-              <LogIn className="w-4 h-4 md:w-5 md:h-5 text-white/80 group-hover:text-primary transition-colors flex-shrink-0" />
-              <span className="max-w-0 group-hover:max-w-xs transition-all duration-300 text-xs font-bebas uppercase tracking-wider text-white/80 group-hover:text-primary whitespace-nowrap overflow-hidden">
-                Portal
-              </span>
-            </Link>
-          </div>
+          {/* Utility icons - animate from top bar into header */}
+          {showTopBar && <>
+              {/* Left side icons - positioned relative to menu button */}
+              <div className="fixed flex items-center gap-1 md:gap-2 z-[90]" style={{
+              left: isScrolled ? "3.5rem" : "3rem",
+              top: isScrolled ? "0.75rem" : "clamp(56px, 15vw, 82px)",
+              opacity: isScrolled ? 1 : 0,
+              pointerEvents: isScrolled ? "auto" : "none",
+              transition: "all 0.5s cubic-bezier(0.4, 0, 0.2, 1)"
+            }}>
+                <Link to="/contact" className="group p-1.5 md:p-2 rounded-full hover:bg-primary/10 transition-all duration-300 flex items-center gap-1.5 overflow-hidden" title="Contact Us">
+                  <MessageCircle className="w-4 h-4 md:w-5 md:h-5 text-white/80 group-hover:text-primary transition-colors flex-shrink-0" />
+                  <span className="max-w-0 group-hover:max-w-xs transition-all duration-300 text-xs font-bebas uppercase tracking-wider text-white/80 group-hover:text-primary whitespace-nowrap overflow-hidden">
+                    Contact Us
+                  </span>
+                </Link>
+                <button onClick={() => setDeclareInterestOpen(true)} className="group p-1.5 md:p-2 rounded-full hover:bg-primary/10 transition-all duration-300 flex items-center gap-1.5 overflow-hidden" title="Declare Interest">
+                  <Users className="w-4 h-4 md:w-5 md:h-5 text-white/80 group-hover:text-primary transition-colors flex-shrink-0" />
+                  <span className="max-w-0 group-hover:max-w-xs transition-all duration-300 text-xs font-bebas uppercase tracking-wider text-white/80 group-hover:text-primary whitespace-nowrap overflow-hidden">
+                    Declare Interest
+                  </span>
+                </button>
+              </div>
+              
+              {/* Right side icons - positioned relative to RISE WITH US button */}
+              <div className="fixed flex items-center gap-1 md:gap-2 z-[90]" style={{
+              right: isScrolled ? "clamp(6.5rem, 15vw, 12rem)" : "2.5rem",
+              top: isScrolled ? "0.75rem" : "clamp(56px, 15vw, 82px)",
+              opacity: isScrolled ? 1 : 0,
+              pointerEvents: isScrolled ? "auto" : "none",
+              transition: "all 0.5s cubic-bezier(0.4, 0, 0.2, 1)"
+            }}>
+                <button onClick={() => setRepresentationOpen(true)} className="group p-1.5 md:p-2 rounded-full hover:bg-primary/10 transition-all duration-300 flex items-center gap-1.5 overflow-hidden" title="Request Representation">
+                  <Handshake className="w-4 h-4 md:w-5 md:h-5 text-white/80 group-hover:text-primary transition-colors flex-shrink-0" />
+                  <span className="max-w-0 group-hover:max-w-xs transition-all duration-300 text-xs font-bebas uppercase tracking-wider text-white/80 group-hover:text-primary whitespace-nowrap overflow-hidden">
+                    Request Representation
+                  </span>
+                </button>
+                <Link to="/login" className="group p-1.5 md:p-2 rounded-full hover:bg-primary/10 transition-all duration-300 flex items-center gap-1.5 overflow-hidden" title="Portal">
+                  <LogIn className="w-4 h-4 md:w-5 md:h-5 text-white/80 group-hover:text-primary transition-colors flex-shrink-0" />
+                  <span className="max-w-0 group-hover:max-w-xs transition-all duration-300 text-xs font-bebas uppercase tracking-wider text-white/80 group-hover:text-primary whitespace-nowrap overflow-hidden">
+                    Portal
+                  </span>
+                </Link>
+              </div>
+            </>}
 
           {/* RISE WITH US Button - Right */}
-          <Button onClick={() => setWorkWithUsOpen(true)} size="sm" className="btn-shine font-bebas uppercase tracking-wider text-sm md:text-base px-4 md:px-6 h-9 md:h-10">
+          <Button onClick={() => setWorkWithUsOpen(true)} size="sm" className={`btn-shine font-bebas uppercase tracking-wider transition-all duration-500 ease-out ${isScrolled ? 'text-xs md:text-sm px-3 md:px-5 h-8 md:h-9' : 'text-sm md:text-base px-4 md:px-6 h-9 md:h-10'}`}>
             <span className="hidden sm:inline">RISE WITH US</span>
             <span className="sm:hidden">RISE</span>
           </Button>
