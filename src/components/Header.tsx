@@ -19,6 +19,7 @@ import { WorkWithUsDialog } from "@/components/WorkWithUsDialog";
 import { RepresentationDialog } from "@/components/RepresentationDialog";
 import { DeclareInterestDialog } from "@/components/DeclareInterestDialog";
 import { IntroModal } from "@/components/IntroModal";
+import { HoverText } from "@/components/HoverText";
 
 // NOTE: GridLines component is available at src/components/GridLines.tsx 
 // for coordinate-based positioning during design. Import and add it when needed.
@@ -299,11 +300,11 @@ export const Header = () => {
                     <DrawerClose asChild>
                       <Link
                         to="/"
-                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all duration-300 tracking-wider py-1 hover:scale-105 whitespace-nowrap ${
+                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-colors duration-300 tracking-wider py-1 whitespace-nowrap ${
                           isActive("/") ? "text-primary" : ""
                         }`}
                       >
-                        HOME
+                        <HoverText text="HOME" />
                       </Link>
                     </DrawerClose>
                     <div className="h-px bg-primary my-1" />
@@ -313,13 +314,13 @@ export const Header = () => {
                         to="/stars"
                         onMouseEnter={() => setStarsHovered(true)}
                         onMouseLeave={() => setStarsHovered(false)}
-                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all duration-300 tracking-wider py-1 hover:scale-105 whitespace-nowrap ${
+                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-colors duration-300 tracking-wider py-1 whitespace-nowrap ${
                           isActive("/stars") || location.pathname.startsWith("/stars/")
                             ? "text-primary"
                             : ""
                         }`}
                       >
-                        STARS
+                        <HoverText text="STARS" />
                       </Link>
                     </DrawerClose>
                     <div className="h-px bg-white/20 my-1" />
@@ -329,11 +330,11 @@ export const Header = () => {
                         to="/performance"
                         onMouseEnter={() => setRealisePotentialHovered(true)}
                         onMouseLeave={() => setRealisePotentialHovered(false)}
-                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all duration-300 tracking-wider py-1 hover:scale-105 whitespace-nowrap ${
+                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-colors duration-300 tracking-wider py-1 whitespace-nowrap ${
                           isActive("/performance") ? "text-primary" : ""
                         }`}
                       >
-                        REALISE POTENTIAL
+                        <HoverText text="REALISE POTENTIAL" />
                       </Link>
                     </DrawerClose>
                     <div className="h-px bg-white/20 my-1" />
@@ -343,11 +344,11 @@ export const Header = () => {
                         to="/between-the-lines"
                         onMouseEnter={() => setBetweenLinesHovered(true)}
                         onMouseLeave={() => setBetweenLinesHovered(false)}
-                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all duration-300 tracking-wider py-1 hover:scale-105 whitespace-nowrap ${
+                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-colors duration-300 tracking-wider py-1 whitespace-nowrap ${
                           isActive("/between-the-lines") ? "text-primary" : ""
                         }`}
                       >
-                        BETWEEN THE LINES
+                        <HoverText text="BETWEEN THE LINES" />
                       </Link>
                     </DrawerClose>
                     <div className="h-px bg-white/20 my-1" />
@@ -357,11 +358,11 @@ export const Header = () => {
                         to="/news"
                         onMouseEnter={() => setNewsHovered(true)}
                         onMouseLeave={() => setNewsHovered(false)}
-                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all duration-300 tracking-wider py-1 hover:scale-105 whitespace-nowrap ${
+                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-colors duration-300 tracking-wider py-1 whitespace-nowrap ${
                           isActive("/news") ? "text-primary" : ""
                         }`}
                       >
-                        NEWS
+                        <HoverText text="NEWS" />
                       </Link>
                     </DrawerClose>
                     <div className="h-px bg-primary my-1" />
@@ -369,13 +370,13 @@ export const Header = () => {
                     <DrawerClose asChild>
                       <Link
                         to="/players"
-                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all duration-300 tracking-wider py-1 hover:scale-105 whitespace-nowrap ${
+                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-colors duration-300 tracking-wider py-1 whitespace-nowrap ${
                           isActive("/players") || location.pathname.startsWith("/players/")
                             ? "text-primary"
                             : ""
                         }`}
                       >
-                        PLAYERS
+                        <HoverText text="PLAYERS" />
                       </Link>
                     </DrawerClose>
                     <div className="h-px bg-white/20 my-1" />
@@ -383,11 +384,11 @@ export const Header = () => {
                     <DrawerClose asChild>
                       <Link
                         to="/clubs"
-                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all duration-300 tracking-wider py-1 hover:scale-105 whitespace-nowrap ${
+                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-colors duration-300 tracking-wider py-1 whitespace-nowrap ${
                           isActive("/clubs") ? "text-primary" : ""
                         }`}
                       >
-                        CLUBS
+                        <HoverText text="CLUBS" />
                       </Link>
                     </DrawerClose>
                     <div className="h-px bg-white/20 my-1" />
@@ -395,11 +396,11 @@ export const Header = () => {
                     <DrawerClose asChild>
                       <Link
                         to="/coaches"
-                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all duration-300 tracking-wider py-1 hover:scale-105 whitespace-nowrap ${
+                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-colors duration-300 tracking-wider py-1 whitespace-nowrap ${
                           isActive("/coaches") ? "text-primary" : ""
                         }`}
                       >
-                        COACHES
+                        <HoverText text="COACHES" />
                       </Link>
                     </DrawerClose>
                     <div className="h-px bg-white/20 my-1" />
@@ -407,11 +408,11 @@ export const Header = () => {
                     <DrawerClose asChild>
                       <Link
                         to="/scouts"
-                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all duration-300 tracking-wider py-1 hover:scale-105 whitespace-nowrap ${
+                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-colors duration-300 tracking-wider py-1 whitespace-nowrap ${
                           isActive("/scouts") ? "text-primary" : ""
                         }`}
                       >
-                        SCOUTS
+                        <HoverText text="SCOUTS" />
                       </Link>
                     </DrawerClose>
                   </nav>
