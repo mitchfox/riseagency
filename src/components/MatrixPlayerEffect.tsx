@@ -5,21 +5,17 @@ interface MatrixPlayerEffectProps {
   className?: string;
 }
 
-interface LayerImage {
-  img: HTMLImageElement;
-  name: string;
-}
-
 export const MatrixPlayerEffect = ({ className = "" }: MatrixPlayerEffectProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [baseImage, setBaseImage] = useState<HTMLImageElement | null>(null);
-  const [overlayImage, setOverlayImage] = useState<HTMLImageElement | null>(null);
+  const [xrayImage, setXrayImage] = useState<HTMLImageElement | null>(null);
   const [mousePos, setMousePos] = useState({ x: -1000, y: -1000 });
   const [isLoading, setIsLoading] = useState(true);
   const animationRef = useRef<number>();
+  const timeRef = useRef(0);
 
-  // Load images from zip - separate base and overlay
+  // Load images from zip and create both base and xray versions
   useEffect(() => {
     const loadZip = async () => {
       try {
@@ -27,7 +23,7 @@ export const MatrixPlayerEffect = ({ className = "" }: MatrixPlayerEffectProps) 
         const zipData = await response.arrayBuffer();
         const zip = await JSZip.loadAsync(zipData);
         
-        const layers: LayerImage[] = [];
+        const images: HTMLImageElement[] = [];
         const imagePromises: Promise<void>[] = [];
 
         zip.forEach((relativePath, file) => {
@@ -38,7 +34,7 @@ export const MatrixPlayerEffect = ({ className = "" }: MatrixPlayerEffectProps) 
                 const img = new Image();
                 img.onload = () => {
                   console.log(`Loaded: ${relativePath} (${img.width}x${img.height})`);
-                  layers.push({ img, name: relativePath });
+                  images.push(img);
                   resolve();
                 };
                 img.onerror = () => {
@@ -54,69 +50,63 @@ export const MatrixPlayerEffect = ({ className = "" }: MatrixPlayerEffectProps) 
 
         await Promise.all(imagePromises);
         
-        if (layers.length > 0) {
-          // Sort layers by name to ensure consistent ordering
-          layers.sort((a, b) => a.name.localeCompare(b.name));
+        if (images.length > 0) {
+          const maxWidth = Math.max(...images.map(img => img.width));
+          const maxHeight = Math.max(...images.map(img => img.height));
           
-          const maxWidth = Math.max(...layers.map(l => l.img.width));
-          const maxHeight = Math.max(...layers.map(l => l.img.height));
-          
-          // Create base composite (all layers combined normally)
+          // Create base composite
           const baseCanvas = document.createElement("canvas");
           baseCanvas.width = maxWidth;
           baseCanvas.height = maxHeight;
           const baseCtx = baseCanvas.getContext("2d");
           
-          // Create overlay composite (with different coloring for x-ray reveal)
-          const overlayCanvas = document.createElement("canvas");
-          overlayCanvas.width = maxWidth;
-          overlayCanvas.height = maxHeight;
-          const overlayCtx = overlayCanvas.getContext("2d");
+          // Create x-ray composite with different coloring
+          const xrayCanvas = document.createElement("canvas");
+          xrayCanvas.width = maxWidth;
+          xrayCanvas.height = maxHeight;
+          const xrayCtx = xrayCanvas.getContext("2d");
           
-          if (baseCtx && overlayCtx) {
-            // Draw all layers to base - centered
-            layers.forEach(layer => {
-              const x = (maxWidth - layer.img.width) / 2;
-              const y = (maxHeight - layer.img.height) / 2;
-              baseCtx.drawImage(layer.img, x, y);
+          if (baseCtx && xrayCtx) {
+            // Draw all images centered
+            images.forEach(img => {
+              const x = (maxWidth - img.width) / 2;
+              const y = (maxHeight - img.height) / 2;
+              baseCtx.drawImage(img, x, y);
+              xrayCtx.drawImage(img, x, y);
             });
             
-            // Draw layers to overlay with gold tint effect
-            layers.forEach(layer => {
-              const x = (maxWidth - layer.img.width) / 2;
-              const y = (maxHeight - layer.img.height) / 2;
-              overlayCtx.drawImage(layer.img, x, y);
-            });
+            // Apply x-ray transformation - dramatic thermal/tech look
+            xrayCtx.globalCompositeOperation = "source-atop";
+            xrayCtx.fillStyle = "rgba(0, 0, 0, 0.4)";
+            xrayCtx.fillRect(0, 0, maxWidth, maxHeight);
             
-            // Apply gold color overlay effect
-            overlayCtx.globalCompositeOperation = "source-atop";
-            overlayCtx.fillStyle = "rgba(200, 170, 90, 0.4)";
-            overlayCtx.fillRect(0, 0, maxWidth, maxHeight);
+            xrayCtx.globalCompositeOperation = "overlay";
+            xrayCtx.fillStyle = "rgba(0, 255, 200, 0.35)";
+            xrayCtx.fillRect(0, 0, maxWidth, maxHeight);
             
-            // Add glow effect
-            overlayCtx.globalCompositeOperation = "lighter";
-            overlayCtx.fillStyle = "rgba(255, 215, 100, 0.15)";
-            overlayCtx.fillRect(0, 0, maxWidth, maxHeight);
+            xrayCtx.globalCompositeOperation = "color-dodge";
+            xrayCtx.fillStyle = "rgba(200, 170, 90, 0.25)";
+            xrayCtx.fillRect(0, 0, maxWidth, maxHeight);
             
             // Create final images
             const baseImg = new Image();
-            const overlayImg = new Image();
+            const xrayImg = new Image();
             
             let loadedCount = 0;
             const checkComplete = () => {
               loadedCount++;
               if (loadedCount === 2) {
                 setBaseImage(baseImg);
-                setOverlayImage(overlayImg);
+                setXrayImage(xrayImg);
                 setIsLoading(false);
               }
             };
             
             baseImg.onload = checkComplete;
-            overlayImg.onload = checkComplete;
+            xrayImg.onload = checkComplete;
             
             baseImg.src = baseCanvas.toDataURL("image/png");
-            overlayImg.src = overlayCanvas.toDataURL("image/png");
+            xrayImg.src = xrayCanvas.toDataURL("image/png");
           }
         } else {
           setIsLoading(false);
@@ -164,42 +154,34 @@ export const MatrixPlayerEffect = ({ className = "" }: MatrixPlayerEffectProps) 
     window.addEventListener("resize", resizeCanvas);
 
     // Matrix binary characters
-    const fontSize = 12;
+    const fontSize = 14;
     const columns = Math.floor(canvas.width / fontSize);
     const drops: number[] = new Array(columns).fill(1);
 
-    // 5 Dimension lines - key performance dimensions
+    // 5 Dimension lines configuration
     const dimensionLines = [
-      { label: "PHYSICAL", angle: -90, color: "rgba(255, 100, 100, 0.9)" },
-      { label: "TECHNICAL", angle: -162, color: "rgba(100, 255, 100, 0.9)" },
-      { label: "TACTICAL", angle: -234, color: "rgba(100, 100, 255, 0.9)" },
-      { label: "MENTAL", angle: -306, color: "rgba(255, 200, 100, 0.9)" },
-      { label: "SOCIAL", angle: -18, color: "rgba(200, 100, 255, 0.9)" },
+      { label: "PHYSICAL", angle: -90 },
+      { label: "TECHNICAL", angle: -162 },
+      { label: "TACTICAL", angle: -234 },
+      { label: "MENTAL", angle: -306 },
+      { label: "SOCIAL", angle: -18 },
     ];
 
     const animate = () => {
-      // Clear with black
-      ctx.fillStyle = "rgba(0, 0, 0, 0.92)";
+      timeRef.current += 0.016;
+      
+      // Clear with pure black
+      ctx.fillStyle = "#000000";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Draw Matrix binary rain (subtle, in background)
+      // Draw subtle Matrix binary rain in background
       ctx.font = `${fontSize}px monospace`;
+      ctx.fillStyle = "rgba(200, 170, 90, 0.04)";
 
       for (let i = 0; i < drops.length; i++) {
         const text = Math.random() > 0.5 ? "1" : "0";
         const x = i * fontSize;
         const y = drops[i] * fontSize;
-
-        const distance = Math.sqrt(Math.pow(x - mousePos.x, 2) + Math.pow(y - mousePos.y, 2));
-        const xrayRadius = 200;
-
-        if (distance < xrayRadius) {
-          const intensity = 1 - distance / xrayRadius;
-          ctx.fillStyle = `rgba(200, 170, 90, ${0.1 + intensity * 0.5})`;
-        } else {
-          ctx.fillStyle = "rgba(200, 170, 90, 0.06)";
-        }
-
         ctx.fillText(text, x, y);
 
         if (y > canvas.height && Math.random() > 0.98) {
@@ -208,126 +190,190 @@ export const MatrixPlayerEffect = ({ className = "" }: MatrixPlayerEffectProps) 
         drops[i]++;
       }
 
-      // Draw player image
-      if (baseImage) {
+      // Draw player images
+      if (baseImage && xrayImage) {
         const scale = Math.min(
-          (canvas.height * 0.85) / baseImage.height,
-          (canvas.width * 0.7) / baseImage.width
+          (canvas.height * 0.88) / baseImage.height,
+          (canvas.width * 0.75) / baseImage.width
         );
         const imgWidth = baseImage.width * scale;
         const imgHeight = baseImage.height * scale;
         const imgX = (canvas.width - imgWidth) / 2;
-        const imgY = (canvas.height - imgHeight) / 2 + 20;
+        const imgY = (canvas.height - imgHeight) / 2 + 10;
 
         const playerCenterX = imgX + imgWidth / 2;
         const playerCenterY = imgY + imgHeight / 2;
-        const xrayRadius = 200;
+        const xrayRadius = 180;
 
-        // Draw base player image
+        // 1. ALWAYS draw the natural base image first
         ctx.globalCompositeOperation = "source-over";
         ctx.drawImage(baseImage, imgX, imgY, imgWidth, imgHeight);
 
-        // Check if mouse is within x-ray range
-        const distFromPlayer = Math.sqrt(
+        // Calculate distance from mouse to player
+        const distFromMouse = Math.sqrt(
           Math.pow(mousePos.x - playerCenterX, 2) + 
           Math.pow(mousePos.y - playerCenterY, 2)
         );
 
-        if (distFromPlayer < xrayRadius + imgWidth / 2 && overlayImage) {
-          // Create circular reveal mask for overlay
+        // 2. X-RAY REVEAL - only when mouse is close AND valid position
+        const isMouseValid = mousePos.x > 0 && mousePos.y > 0;
+        const isNearPlayer = distFromMouse < xrayRadius + imgWidth / 3;
+        
+        if (isMouseValid && isNearPlayer) {
+          // Draw x-ray image ONLY within the circular clip
           ctx.save();
           ctx.beginPath();
           ctx.arc(mousePos.x, mousePos.y, xrayRadius, 0, Math.PI * 2);
           ctx.clip();
           
-          // Draw overlay image (gold tinted version)
-          ctx.drawImage(overlayImage, imgX, imgY, imgWidth, imgHeight);
+          // Draw the transformed x-ray version
+          ctx.drawImage(xrayImage, imgX, imgY, imgWidth, imgHeight);
           
-          // Add glow effect in the reveal area
-          const gradient = ctx.createRadialGradient(
-            mousePos.x, mousePos.y, 0,
-            mousePos.x, mousePos.y, xrayRadius
-          );
-          gradient.addColorStop(0, "rgba(200, 170, 90, 0.15)");
-          gradient.addColorStop(0.5, "rgba(200, 170, 90, 0.08)");
-          gradient.addColorStop(1, "rgba(200, 170, 90, 0)");
-          ctx.globalCompositeOperation = "lighter";
-          ctx.fillStyle = gradient;
-          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          // Add scan lines effect inside x-ray area
+          ctx.globalCompositeOperation = "overlay";
+          for (let y = 0; y < canvas.height; y += 4) {
+            const scanAlpha = 0.02 + Math.sin(y * 0.15 + timeRef.current * 6) * 0.015;
+            ctx.fillStyle = `rgba(0, 255, 200, ${scanAlpha})`;
+            ctx.fillRect(0, y, canvas.width, 2);
+          }
           
           ctx.restore();
 
-          // Draw 5 dimension lines from player center
-          const lineLength = 120;
+          // 3. Draw 5D MATRIX LINES emanating from player center
+          const baseLengthMin = 140;
+          const baseLengthMax = 260;
+          
           dimensionLines.forEach((dim, index) => {
             const angleRad = (dim.angle * Math.PI) / 180;
+            
+            // Pulsing animation
+            const pulse = Math.sin(timeRef.current * 2.5 + index * 1.2) * 0.2 + 0.8;
+            const lineLength = baseLengthMin + (baseLengthMax - baseLengthMin) * pulse;
+            
             const endX = playerCenterX + Math.cos(angleRad) * lineLength;
             const endY = playerCenterY + Math.sin(angleRad) * lineLength;
 
-            // Calculate opacity based on distance from mouse to line endpoint
-            const distToEnd = Math.sqrt(
-              Math.pow(mousePos.x - endX, 2) + 
-              Math.pow(mousePos.y - endY, 2)
+            // Calculate visibility based on proximity
+            const midX = playerCenterX + Math.cos(angleRad) * (lineLength / 2);
+            const midY = playerCenterY + Math.sin(angleRad) * (lineLength / 2);
+            const distToLine = Math.sqrt(
+              Math.pow(mousePos.x - midX, 2) + 
+              Math.pow(mousePos.y - midY, 2)
             );
-            const alpha = Math.max(0, Math.min(1, (1 - distToEnd / (xrayRadius * 1.5)) * 1.2));
+            
+            const alpha = Math.max(0.15, Math.min(1, 1.2 - distToLine / (xrayRadius * 1.8)));
+            
+            // Main glowing line
+            ctx.strokeStyle = `rgba(0, 255, 200, ${alpha * 0.85})`;
+            ctx.lineWidth = 2.5;
+            ctx.shadowColor = "rgba(0, 255, 200, 1)";
+            ctx.shadowBlur = 25 * alpha;
+            
+            ctx.beginPath();
+            ctx.moveTo(playerCenterX, playerCenterY);
+            ctx.lineTo(endX, endY);
+            ctx.stroke();
+            
+            // Inner gold line
+            ctx.strokeStyle = `rgba(200, 170, 90, ${alpha * 0.5})`;
+            ctx.lineWidth = 1;
+            ctx.shadowBlur = 10 * alpha;
+            ctx.beginPath();
+            ctx.moveTo(playerCenterX, playerCenterY);
+            ctx.lineTo(endX, endY);
+            ctx.stroke();
 
-            if (alpha > 0.1) {
-              // Draw line
-              ctx.strokeStyle = dim.color.replace("0.9", String(alpha * 0.9));
-              ctx.lineWidth = 2;
-              ctx.shadowColor = dim.color;
-              ctx.shadowBlur = 10 * alpha;
+            // Data particles streaming along line
+            for (let p = 0; p < 10; p++) {
+              const particleProgress = ((timeRef.current * 0.6 + p * 0.1 + index * 0.15) % 1);
+              const px = playerCenterX + Math.cos(angleRad) * lineLength * particleProgress;
+              const py = playerCenterY + Math.sin(angleRad) * lineLength * particleProgress;
               
+              const particleAlpha = alpha * Math.sin(particleProgress * Math.PI) * 0.9;
+              ctx.fillStyle = `rgba(0, 255, 200, ${particleAlpha})`;
+              ctx.shadowColor = "rgba(0, 255, 200, 1)";
+              ctx.shadowBlur = 10;
               ctx.beginPath();
-              ctx.moveTo(playerCenterX, playerCenterY);
-              ctx.lineTo(endX, endY);
-              ctx.stroke();
-
-              // Draw endpoint node
-              ctx.fillStyle = dim.color.replace("0.9", String(alpha));
-              ctx.beginPath();
-              ctx.arc(endX, endY, 6, 0, Math.PI * 2);
+              ctx.arc(px, py, 2.5, 0, Math.PI * 2);
               ctx.fill();
-
-              // Draw label
-              ctx.font = "bold 10px 'Bebas Neue', sans-serif";
-              ctx.fillStyle = `rgba(255, 255, 255, ${alpha * 0.9})`;
-              ctx.textAlign = "center";
-              
-              const labelX = playerCenterX + Math.cos(angleRad) * (lineLength + 20);
-              const labelY = playerCenterY + Math.sin(angleRad) * (lineLength + 20);
-              ctx.fillText(dim.label, labelX, labelY);
-
-              ctx.shadowBlur = 0;
             }
+
+            // End node - hexagonal
+            ctx.fillStyle = `rgba(0, 255, 200, ${alpha})`;
+            ctx.shadowColor = "rgba(0, 255, 200, 1)";
+            ctx.shadowBlur = 20 * alpha;
+            
+            ctx.beginPath();
+            for (let i = 0; i < 6; i++) {
+              const hexAngle = (i * Math.PI) / 3 - Math.PI / 6;
+              const hexRadius = 10 + pulse * 5;
+              const hx = endX + Math.cos(hexAngle) * hexRadius;
+              const hy = endY + Math.sin(hexAngle) * hexRadius;
+              if (i === 0) ctx.moveTo(hx, hy);
+              else ctx.lineTo(hx, hy);
+            }
+            ctx.closePath();
+            ctx.fill();
+            ctx.strokeStyle = `rgba(200, 170, 90, ${alpha * 0.7})`;
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            // Label
+            ctx.font = "bold 12px 'Bebas Neue', monospace";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            
+            const labelDist = lineLength + 30;
+            const labelX = playerCenterX + Math.cos(angleRad) * labelDist;
+            const labelY = playerCenterY + Math.sin(angleRad) * labelDist;
+            
+            // Label bg
+            const textWidth = ctx.measureText(dim.label).width;
+            ctx.fillStyle = `rgba(0, 0, 0, ${alpha * 0.8})`;
+            ctx.shadowBlur = 0;
+            ctx.fillRect(labelX - textWidth / 2 - 8, labelY - 10, textWidth + 16, 20);
+            
+            // Label border
+            ctx.strokeStyle = `rgba(0, 255, 200, ${alpha * 0.6})`;
+            ctx.lineWidth = 1;
+            ctx.strokeRect(labelX - textWidth / 2 - 8, labelY - 10, textWidth + 16, 20);
+            
+            // Label text
+            ctx.fillStyle = `rgba(0, 255, 200, ${alpha})`;
+            ctx.shadowColor = "rgba(0, 255, 200, 0.8)";
+            ctx.shadowBlur = 6;
+            ctx.fillText(dim.label, labelX, labelY);
+            ctx.shadowBlur = 0;
           });
 
-          // Draw center node
-          const centerDist = Math.sqrt(
-            Math.pow(mousePos.x - playerCenterX, 2) + 
-            Math.pow(mousePos.y - playerCenterY, 2)
-          );
-          const centerAlpha = Math.max(0, 1 - centerDist / xrayRadius);
+          // Center core node
+          const corePulse = Math.sin(timeRef.current * 3) * 0.3 + 0.7;
           
-          if (centerAlpha > 0.1) {
-            ctx.fillStyle = `rgba(200, 170, 90, ${centerAlpha * 0.8})`;
-            ctx.shadowColor = "rgba(200, 170, 90, 0.8)";
-            ctx.shadowBlur = 15 * centerAlpha;
-            ctx.beginPath();
-            ctx.arc(playerCenterX, playerCenterY, 8, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.shadowBlur = 0;
-          }
-        }
+          ctx.strokeStyle = `rgba(0, 255, 200, ${0.6 * corePulse})`;
+          ctx.lineWidth = 2;
+          ctx.shadowColor = "rgba(0, 255, 200, 1)";
+          ctx.shadowBlur = 30;
+          ctx.beginPath();
+          ctx.arc(playerCenterX, playerCenterY, 18 + corePulse * 6, 0, Math.PI * 2);
+          ctx.stroke();
+          
+          ctx.fillStyle = `rgba(200, 170, 90, 0.9)`;
+          ctx.shadowColor = "rgba(200, 170, 90, 1)";
+          ctx.shadowBlur = 25;
+          ctx.beginPath();
+          ctx.arc(playerCenterX, playerCenterY, 10, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.shadowBlur = 0;
 
-        // Draw subtle x-ray cursor circle
-        ctx.strokeStyle = "rgba(200, 170, 90, 0.3)";
-        ctx.lineWidth = 1;
-        ctx.setLineDash([5, 5]);
-        ctx.beginPath();
-        ctx.arc(mousePos.x, mousePos.y, xrayRadius, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.setLineDash([]);
+          // X-ray circle indicator
+          ctx.strokeStyle = "rgba(0, 255, 200, 0.3)";
+          ctx.lineWidth = 1;
+          ctx.setLineDash([10, 10]);
+          ctx.beginPath();
+          ctx.arc(mousePos.x, mousePos.y, xrayRadius, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
       }
 
       animationRef.current = requestAnimationFrame(animate);
@@ -341,7 +387,7 @@ export const MatrixPlayerEffect = ({ className = "" }: MatrixPlayerEffectProps) 
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [baseImage, overlayImage, mousePos]);
+  }, [baseImage, xrayImage, mousePos]);
 
   return (
     <div 
