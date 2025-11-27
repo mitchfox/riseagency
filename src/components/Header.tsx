@@ -409,32 +409,23 @@ export const Header = () => {
                   </DrawerClose>
                 </div>
 
-                {/* Right side - 4-card grid (desktop only) */}
+                {/* Right side - Stars Card (desktop only) */}
                 <div
-                  className="hidden lg:grid grid-cols-2 grid-rows-2 gap-4 p-8 bg-cover bg-center"
+                  className="hidden lg:flex items-center justify-center p-8 bg-cover bg-center"
                   style={{
                     backgroundImage: `url(${whiteMarbleBg})`,
                     backgroundSize: "cover",
                     backgroundPosition: "center",
                   }}
                 >
-                  {/* Top-left: Stars card */}
                   {starPlayers.length > 0 && (
                     <div
-                      className="w-full transition-transform duration-300"
+                      className="w-full max-w-sm transition-transform duration-300"
                       onMouseEnter={() => setHoveredCard("top-left")}
                       onMouseLeave={() => setHoveredCard(null)}
                       style={{
                         transform:
-                          hoveredCard === "top-left"
-                            ? "translateY(20px)"
-                            : hoveredCard === "bottom-left"
-                            ? "translateY(20px)"
-                            : hoveredCard === "top-right"
-                            ? "translateY(-20px)"
-                            : hoveredCard === "bottom-right"
-                            ? "translateY(20px)"
-                            : "translateY(0)",
+                          hoveredCard === "top-left" ? "translateY(20px)" : "translateY(0)",
                       }}
                     >
                       <div
@@ -563,155 +554,6 @@ export const Header = () => {
                       </div>
                     </div>
                   )}
-
-                  {/* Top-right: Realise Potential card */}
-                  <div
-                    className="w-full transition-transform duration-300"
-                    onMouseEnter={() => setHoveredCard("top-right")}
-                    onMouseLeave={() => setHoveredCard(null)}
-                    style={{
-                      transform:
-                        hoveredCard === "top-right"
-                          ? "translateY(-20px)"
-                          : hoveredCard === "top-left"
-                          ? "translateY(-20px)"
-                          : hoveredCard === "bottom-right"
-                          ? "translateY(20px)"
-                          : hoveredCard === "bottom-left"
-                          ? "translateY(20px)"
-                          : "translateY(0)",
-                    }}
-                  >
-                    <DrawerClose asChild>
-                      <Link
-                        to="/performance"
-                        className={`relative block w-full h-full rounded-lg overflow-hidden border transition-all duration-300 ${
-                          realisePotentialHovered
-                            ? "border-primary shadow-[0_0_20px_rgba(184,165,116,0.6)]"
-                            : "border-white/20"
-                        }`}
-                      >
-                        <div className="relative w-full h-full min-h-[220px]">
-                          <img
-                            src={realisePotentialImages[rpIndex]}
-                            alt="Realise Potential"
-                            className="absolute inset-0 w-full h-full object-cover"
-                          />
-                          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/80" />
-                          <div className="absolute inset-0 flex flex-col justify-between p-4">
-                            <div className="space-y-1">
-                              <p className="text-xs text-white/70 uppercase tracking-[0.2em]">
-                                Performance Programmes
-                              </p>
-                              <h3 className="text-xl font-bebas tracking-[0.25em] text-white">
-                                REALISE POTENTIAL
-                              </h3>
-                            </div>
-                            <p className="text-[11px] text-white/80 max-w-xs leading-snug">
-                              From tailored training blocks to in-depth analysis, build the habits that
-                              separate the very best.
-                            </p>
-                          </div>
-                        </div>
-                      </Link>
-                    </DrawerClose>
-                  </div>
-
-                  {/* Bottom-left: Between The Lines card */}
-                  <div
-                    className="w-full transition-transform duration-300"
-                    onMouseEnter={() => setHoveredCard("bottom-left")}
-                    onMouseLeave={() => setHoveredCard(null)}
-                    style={{
-                      transform:
-                        hoveredCard === "bottom-left"
-                          ? "translateY(20px)"
-                          : hoveredCard === "top-left"
-                          ? "translateY(20px)"
-                          : hoveredCard === "bottom-right"
-                          ? "translateY(20px)"
-                          : hoveredCard === "top-right"
-                          ? "translateY(-20px)"
-                          : "translateY(0)",
-                    }}
-                  >
-                    <DrawerClose asChild>
-                      <Link
-                        to="/between-the-lines"
-                        className={`relative block w-full h-full rounded-lg overflow-hidden border transition-all duration-300 ${
-                          betweenLinesHovered
-                            ? "border-primary shadow-[0_0_20px_rgba(184,165,116,0.6)]"
-                            : "border-white/20"
-                        }`}
-                      >
-                        <div className="relative w-full h-full min-h-[220px] bg-black/60">
-                          {betweenLinesPosts.length > 0 && (
-                            <div className="absolute inset-0 flex flex-col justify-between p-4">
-                              <div className="space-y-1">
-                                <p className="text-xs text-white/70 uppercase tracking-[0.2em]">
-                                  Between The Lines
-                                </p>
-                                <h3 className="text-xl font-bebas tracking-[0.25em] text-white">
-                                  {betweenLinesPosts[btlIndex]?.title}
-                                </h3>
-                              </div>
-                              <p className="text-[11px] text-white/80 max-w-xs leading-snug line-clamp-3">
-                                {betweenLinesPosts[btlIndex]?.excerpt}
-                              </p>
-                            </div>
-                          )}
-                        </div>
-                      </Link>
-                    </DrawerClose>
-                  </div>
-
-                  {/* Bottom-right: News card */}
-                  <div
-                    className="w-full transition-transform duration-300"
-                    onMouseEnter={() => setHoveredCard("bottom-right")}
-                    onMouseLeave={() => setHoveredCard(null)}
-                    style={{
-                      transform:
-                        hoveredCard === "bottom-right"
-                          ? "translateY(20px)"
-                          : hoveredCard === "top-right"
-                          ? "translateY(-20px)"
-                          : hoveredCard === "bottom-left"
-                          ? "translateY(20px)"
-                          : hoveredCard === "top-left"
-                          ? "translateY(20px)"
-                          : "translateY(0)",
-                    }}
-                  >
-                    <DrawerClose asChild>
-                      <Link
-                        to="/news"
-                        className={`relative block w-full h-full rounded-lg overflow-hidden border transition-all duration-300 ${
-                          newsHovered
-                            ? "border-primary shadow-[0_0_20px_rgba(184,165,116,0.6)]"
-                            : "border-white/20"
-                        }`}
-                      >
-                        <div className="relative w-full h-full min-h-[220px] bg-black/60">
-                          {newsArticles.length > 0 && (
-                            <div className="absolute inset-0 flex flex-col justify-between p-4">
-                              <div className="space-y-1">
-                                <p className="text-xs text-white/70 uppercase tracking-[0.2em]">
-                                  Player News
-                                </p>
-                                <h3 className="text-xl font-bebas tracking-[0.25em] text-white">
-                                  {newsArticles[newsIndex]?.title}
-                                </h3>
-                              </div>
-                              <p className="text-[11px] text-white/80 max-w-xs leading-snug line-clamp-3">
-                                {newsArticles[newsIndex]?.excerpt}
-                              </p>
-                            </div>
-                          )}
-                        </div>
-                      </Link>
-                    </DrawerClose>
-                  </div>
                 </div>
               </div>
             </DrawerContent>
