@@ -127,10 +127,8 @@ const FluidCursor = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.globalCompositeOperation = 'lighter';
       
-      // Use gold/amber hue (around 40-50) to match the site's gold accent
-      hueRef.current = (hueRef.current + 0.5) % 360;
-      const hue = 45; // Fixed gold hue to match site theme
-      ctx.strokeStyle = `hsla(${hue}, 70%, 50%, 0.15)`;
+      // RISEgold: 43 49% 61%
+      ctx.strokeStyle = `hsla(43, 49%, 61%, 0.2)`;
       ctx.lineWidth = 1;
 
       for (const line of linesRef.current) {
