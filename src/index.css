@@ -462,8 +462,9 @@ All colors MUST be HSL.
     -webkit-backface-visibility: hidden;
   }
 
-.flip-card-back {
-  transform: rotateY(180deg);
+  .flip-card-back {
+    transform: rotateY(180deg);
+  }
 }
 
 /* Hover Text Animation - Staggered Letter Effect */
@@ -501,6 +502,4 @@ a:hover .hover-text-wrapper .hover-text-letter {
 button:hover .hover-text-wrapper .hover-text-letter-clone,
 a:hover .hover-text-wrapper .hover-text-letter-clone {
   transform: translateY(-100%);
-}
-
 }
