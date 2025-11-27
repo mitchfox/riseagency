@@ -656,7 +656,7 @@ export const Header = () => {
                           className={`relative block w-full h-full rounded-lg overflow-hidden border transition-all duration-300 ${
                             realisePotentialHovered
                               ? "border-primary shadow-[0_0_20px_rgba(184,165,116,0.6)] scale-105"
-                              : "border-white/20"
+                              : "border-white/20 grayscale"
                           }`}
                         >
                           <div className="relative w-full h-full">
@@ -711,7 +711,7 @@ export const Header = () => {
                           className={`relative block w-full h-full rounded-lg overflow-hidden border transition-all duration-300 ${
                             betweenLinesHovered
                               ? "border-primary shadow-[0_0_20px_rgba(184,165,116,0.6)] scale-105"
-                              : "border-white/20"
+                              : "border-white/20 grayscale"
                           }`}
                         >
                           <div className="relative w-full h-full">
@@ -769,7 +769,7 @@ export const Header = () => {
                           className={`relative block w-full h-full rounded-lg overflow-hidden border transition-all duration-300 ${
                             newsHovered
                               ? "border-primary shadow-[0_0_20px_rgba(184,165,116,0.6)] scale-105"
-                              : "border-white/20"
+                              : "border-white/20 grayscale"
                           }`}
                         >
                           <div className="relative w-full h-full">
