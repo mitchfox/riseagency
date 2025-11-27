@@ -248,10 +248,10 @@ export const Header = () => {
                     backgroundPosition: 'center'
                   }}
                 >
-                  <div className={`flex items-center transition-all duration-300 ease-out px-2 md:px-4 ${isScrolled ? 'h-7 md:h-8 pt-2' : 'h-14 md:h-16'}`}>
+                  <div className={`flex items-center transition-all duration-300 ease-out px-4 md:px-6 lg:px-8 xl:px-12 ${isScrolled ? 'h-7 md:h-8 pt-2' : 'h-14 md:h-16 lg:h-20 xl:h-24'}`}>
                     <DrawerClose asChild>
                       <button
-                        className="group relative flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-primary transition-all duration-300 ease-out w-10 h-10 md:w-12 md:h-12 pointer-events-none [&>svg]:animate-color-to-gold"
+                        className="group relative flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-primary transition-all duration-300 ease-out w-10 h-10 md:w-12 md:h-12 lg:w-14 lg:h-14 xl:w-16 xl:h-16 pointer-events-none [&>svg]:animate-color-to-gold"
                         aria-label="Close menu"
                         style={{ pointerEvents: 'none' }}
                         onAnimationEnd={(e) => {
@@ -262,7 +262,7 @@ export const Header = () => {
                         }}
                       >
                         <svg 
-                          className="h-6 w-6 md:h-7 md:w-7 text-white"
+                          className="h-6 w-6 md:h-7 md:w-7 lg:h-8 lg:w-8 xl:h-10 xl:w-10 text-white"
                           viewBox="0 0 24 24"
                           fill="none"
                           stroke="currentColor"
@@ -282,17 +282,17 @@ export const Header = () => {
                     </DrawerClose>
                   </div>
                   
-                  <div className="flex-1 flex flex-col justify-between px-2 md:px-4 py-12 overflow-y-auto">
-                    <nav className="flex flex-col gap-1 max-w-md transform -translate-y-[10px] translate-x-[5px]">
+                  <div className="flex-1 flex flex-col justify-between px-4 md:px-6 lg:px-8 xl:px-12 py-8 md:py-12 lg:py-16 overflow-y-auto">
+                    <nav className="flex flex-col gap-1 md:gap-1.5 max-w-md lg:max-w-xl xl:max-w-2xl transform -translate-y-[10px] translate-x-[5px]">
                       <DrawerClose asChild>
                         <Link
                           to="/"
-                          className={`text-2xl md:text-3xl font-bebas uppercase text-white hover:text-primary hover:bg-white/5 transition-all tracking-wider py-1 px-2 rounded flex items-center gap-2 ${
+                          className={`text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bebas uppercase text-white hover:text-primary hover:bg-white/5 transition-all tracking-wider py-1 px-2 rounded flex items-center gap-2 ${
                             isActive("/") ? "text-primary" : ""
                           }`}
                         >
                           Home
-                          {isActive("/") && <img src={riseStar} alt="" className="w-6 h-6 inline-block" />}
+                          {isActive("/") && <img src={riseStar} alt="" className="w-6 h-6 lg:w-7 lg:h-7 xl:w-8 xl:h-8 inline-block" />}
                         </Link>
                       </DrawerClose>
                       
@@ -303,12 +303,12 @@ export const Header = () => {
                           to="/stars"
                           onMouseEnter={() => setStarsHovered(true)}
                           onMouseLeave={() => setStarsHovered(false)}
-                          className={`text-2xl md:text-3xl font-bebas uppercase text-white hover:text-primary hover:bg-white/5 transition-all tracking-wider py-1 px-2 rounded flex items-center gap-2 ${
+                          className={`text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bebas uppercase text-white hover:text-primary hover:bg-white/5 transition-all tracking-wider py-1 px-2 rounded flex items-center gap-2 ${
                             isActive("/stars") || location.pathname.startsWith("/stars/") ? "text-primary" : ""
                           }`}
                         >
                           Stars
-                          {(isActive("/stars") || location.pathname.startsWith("/stars/")) && <img src={riseStar} alt="" className="w-6 h-6 inline-block" />}
+                          {(isActive("/stars") || location.pathname.startsWith("/stars/")) && <img src={riseStar} alt="" className="w-6 h-6 lg:w-7 lg:h-7 xl:w-8 xl:h-8 inline-block" />}
                         </Link>
                       </DrawerClose>
                       
@@ -317,12 +317,12 @@ export const Header = () => {
                           to="/performance"
                           onMouseEnter={() => setRealisePotentialHovered(true)}
                           onMouseLeave={() => setRealisePotentialHovered(false)}
-                          className={`text-2xl md:text-3xl font-bebas uppercase text-white hover:text-primary hover:bg-white/5 transition-all tracking-wider py-1 px-2 rounded flex items-center gap-2 ${
+                          className={`text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bebas uppercase text-white hover:text-primary hover:bg-white/5 transition-all tracking-wider py-1 px-2 rounded flex items-center gap-2 ${
                             isActive("/performance") ? "text-primary" : ""
                           }`}
                         >
                           Realise Potential
-                          {isActive("/performance") && <img src={riseStar} alt="" className="w-6 h-6 inline-block" />}
+                          {isActive("/performance") && <img src={riseStar} alt="" className="w-6 h-6 lg:w-7 lg:h-7 xl:w-8 xl:h-8 inline-block" />}
                         </Link>
                       </DrawerClose>
                       
@@ -331,12 +331,12 @@ export const Header = () => {
                           to="/between-the-lines"
                           onMouseEnter={() => setBetweenLinesHovered(true)}
                           onMouseLeave={() => setBetweenLinesHovered(false)}
-                          className={`text-2xl md:text-3xl font-bebas uppercase text-white hover:text-primary hover:bg-white/5 transition-all tracking-wider py-1 px-2 rounded flex items-center gap-2 ${
+                          className={`text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bebas uppercase text-white hover:text-primary hover:bg-white/5 transition-all tracking-wider py-1 px-2 rounded flex items-center gap-2 ${
                             isActive("/between-the-lines") ? "text-primary" : ""
                           }`}
                         >
                           Between The Lines
-                          {isActive("/between-the-lines") && <img src={riseStar} alt="" className="w-6 h-6 inline-block" />}
+                          {isActive("/between-the-lines") && <img src={riseStar} alt="" className="w-6 h-6 lg:w-7 lg:h-7 xl:w-8 xl:h-8 inline-block" />}
                         </Link>
                       </DrawerClose>
                       
@@ -345,58 +345,58 @@ export const Header = () => {
                       <DrawerClose asChild>
                         <Link
                           to="/players"
-                          className={`text-2xl md:text-3xl font-bebas uppercase text-white hover:text-primary hover:bg-white/5 transition-all tracking-wider py-1 px-2 rounded flex items-center gap-2 ${
+                          className={`text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bebas uppercase text-white hover:text-primary hover:bg-white/5 transition-all tracking-wider py-1 px-2 rounded flex items-center gap-2 ${
                             isActive("/players") || location.pathname.startsWith("/players/") ? "text-primary" : ""
                           }`}
                         >
                           Players
-                          {(isActive("/players") || location.pathname.startsWith("/players/")) && <img src={riseStar} alt="" className="w-6 h-6 inline-block" />}
+                          {(isActive("/players") || location.pathname.startsWith("/players/")) && <img src={riseStar} alt="" className="w-6 h-6 lg:w-7 lg:h-7 xl:w-8 xl:h-8 inline-block" />}
                         </Link>
                       </DrawerClose>
                       
                       <DrawerClose asChild>
                         <Link
                           to="/clubs"
-                          className={`text-2xl md:text-3xl font-bebas uppercase text-white hover:text-primary hover:bg-white/5 transition-all tracking-wider py-1 px-2 rounded flex items-center gap-2 ${
+                          className={`text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bebas uppercase text-white hover:text-primary hover:bg-white/5 transition-all tracking-wider py-1 px-2 rounded flex items-center gap-2 ${
                             isActive("/clubs") ? "text-primary" : ""
                           }`}
                         >
                           Clubs
-                          {isActive("/clubs") && <img src={riseStar} alt="" className="w-6 h-6 inline-block" />}
+                          {isActive("/clubs") && <img src={riseStar} alt="" className="w-6 h-6 lg:w-7 lg:h-7 xl:w-8 xl:h-8 inline-block" />}
                         </Link>
                       </DrawerClose>
                       
                       <DrawerClose asChild>
                         <Link
                           to="/coaches"
-                          className={`text-2xl md:text-3xl font-bebas uppercase text-white hover:text-primary hover:bg-white/5 transition-all tracking-wider py-1 px-2 rounded flex items-center gap-2 ${
+                          className={`text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bebas uppercase text-white hover:text-primary hover:bg-white/5 transition-all tracking-wider py-1 px-2 rounded flex items-center gap-2 ${
                             isActive("/coaches") ? "text-primary" : ""
                           }`}
                         >
                           Coaches
-                          {isActive("/coaches") && <img src={riseStar} alt="" className="w-6 h-6 inline-block" />}
+                          {isActive("/coaches") && <img src={riseStar} alt="" className="w-6 h-6 lg:w-7 lg:h-7 xl:w-8 xl:h-8 inline-block" />}
                         </Link>
                       </DrawerClose>
                       
                       <DrawerClose asChild>
                         <Link
                           to="/scouts"
-                          className={`text-2xl md:text-3xl font-bebas uppercase text-white hover:text-primary hover:bg-white/5 transition-all tracking-wider py-1 px-2 rounded flex items-center gap-2 ${
+                          className={`text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bebas uppercase text-white hover:text-primary hover:bg-white/5 transition-all tracking-wider py-1 px-2 rounded flex items-center gap-2 ${
                             isActive("/scouts") ? "text-primary" : ""
                           }`}
                         >
                           Scouts
-                          {isActive("/scouts") && <img src={riseStar} alt="" className="w-6 h-6 inline-block" />}
+                          {isActive("/scouts") && <img src={riseStar} alt="" className="w-6 h-6 lg:w-7 lg:h-7 xl:w-8 xl:h-8 inline-block" />}
                         </Link>
                       </DrawerClose>
                     </nav>
 
                     {/* Bottom action cards */}
-                    <div className="grid grid-cols-2 gap-4 max-w-2xl mt-8">
+                    <div className="grid grid-cols-2 gap-3 md:gap-4 lg:gap-6 max-w-full lg:max-w-2xl xl:max-w-3xl mt-6 md:mt-8">
                       <DrawerClose asChild>
                         <Link
                           to="/login"
-                          className="relative group h-[70px] md:h-[102px]"
+                          className="relative group h-[70px] md:h-[102px] lg:h-[120px] xl:h-[140px]"
                         >
                           <div className="relative h-full rounded overflow-hidden">
                             <img 
@@ -406,7 +406,7 @@ export const Header = () => {
                             />
                             <div className="absolute inset-0 bg-black/30" />
                             <div className="absolute inset-0 flex items-center justify-center p-4 md:p-6">
-                              <div className="bg-primary text-black font-bebas uppercase tracking-widest text-sm md:text-base py-1 md:py-2 px-6 md:px-8 text-center group-hover:brightness-110 transition-all w-full">
+                              <div className="bg-primary text-black font-bebas uppercase tracking-widest text-sm md:text-base lg:text-lg xl:text-xl py-1 md:py-2 lg:py-3 px-6 md:px-8 lg:px-10 text-center group-hover:brightness-110 transition-all w-full">
                                 Portal
                               </div>
                             </div>
@@ -417,7 +417,7 @@ export const Header = () => {
                       <DrawerClose asChild>
                         <button
                           onClick={() => setRepresentationOpen(true)}
-                          className="relative group h-[70px] md:h-[102px]"
+                          className="relative group h-[70px] md:h-[102px] lg:h-[120px] xl:h-[140px]"
                         >
                           <div className="relative h-full rounded overflow-hidden">
                             <img 
@@ -427,7 +427,7 @@ export const Header = () => {
                             />
                             <div className="absolute inset-0 bg-black/30" />
                             <div className="absolute inset-0 flex items-center justify-center p-4 md:p-6">
-                              <div className="bg-primary text-black font-bebas uppercase tracking-widest text-sm md:text-base py-1 md:py-2 px-4 md:px-6 text-center group-hover:brightness-110 transition-all w-full whitespace-nowrap">
+                              <div className="bg-primary text-black font-bebas uppercase tracking-widest text-xs md:text-sm lg:text-base xl:text-lg py-1 md:py-2 lg:py-3 px-3 md:px-4 lg:px-6 text-center group-hover:brightness-110 transition-all w-full whitespace-nowrap">
                                 Request Representation
                               </div>
                             </div>
