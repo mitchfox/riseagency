@@ -143,15 +143,15 @@ export const MatrixPlayerEffect = ({ className = "" }: MatrixPlayerEffectProps) 
         );
         const imgWidth = baseImage.width * scale;
         const imgHeight = baseImage.height * scale;
-        const imgX = (canvas.width - imgWidth) / 2 - 45; // Moved left 45px
+        const imgX = (canvas.width - imgWidth) / 2 - 65; // Moved left 65px total
         const imgY = (canvas.height - imgHeight) / 2 - 50; // Moved up 60px
 
-        // Image 11 is 1.1x larger
+        // Image 11 (xray) is 1.1x larger than image 7
         const xrayScale = 1.1;
-        const xrayWidth = imgWidth * xrayScale;
-        const xrayHeight = imgHeight * xrayScale;
-        const xrayX = imgX - (xrayWidth - imgWidth) / 2;
-        const xrayY = imgY - (xrayHeight - imgHeight) / 2;
+        const xrayWidth = xrayImage ? xrayImage.width * scale * xrayScale : imgWidth;
+        const xrayHeight = xrayImage ? xrayImage.height * scale * xrayScale : imgHeight;
+        const xrayX = (canvas.width - xrayWidth) / 2 - 65; // Same horizontal offset
+        const xrayY = (canvas.height - xrayHeight) / 2 - 50; // Same vertical offset
 
         const playerCenterX = imgX + imgWidth / 2;
         const playerCenterY = imgY + imgHeight / 2;
