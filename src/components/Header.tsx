@@ -355,6 +355,20 @@ export const Header = () => {
 
                     <DrawerClose asChild>
                       <Link
+                        to="/news"
+                        onMouseEnter={() => setNewsHovered(true)}
+                        onMouseLeave={() => setNewsHovered(false)}
+                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all tracking-wider py-2 ${
+                          isActive("/news") ? "text-primary" : ""
+                        }`}
+                      >
+                        NEWS
+                      </Link>
+                    </DrawerClose>
+                    <div className="h-px bg-white/20 my-2" />
+
+                    <DrawerClose asChild>
+                      <Link
                         to="/players"
                         className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all tracking-wider py-2 ${
                           isActive("/players") || location.pathname.startsWith("/players/")
@@ -393,14 +407,12 @@ export const Header = () => {
 
                     <DrawerClose asChild>
                       <Link
-                        to="/news"
-                        onMouseEnter={() => setNewsHovered(true)}
-                        onMouseLeave={() => setNewsHovered(false)}
+                        to="/scouts"
                         className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all tracking-wider py-2 ${
-                          isActive("/news") ? "text-primary" : ""
+                          isActive("/scouts") ? "text-primary" : ""
                         }`}
                       >
-                        NEWS
+                        SCOUTS
                       </Link>
                     </DrawerClose>
                   </nav>
@@ -464,7 +476,7 @@ export const Header = () => {
                   {/* Constrained grid container - fits between close button and bottom cards */}
                   <div className="grid grid-cols-2 grid-rows-2 gap-4" style={{
                     maxHeight: "590px",
-                    marginTop: "50px",
+                    marginTop: "60px",
                     marginBottom: "auto"
                   }}
                 >
