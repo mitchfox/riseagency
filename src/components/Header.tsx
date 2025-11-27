@@ -172,6 +172,24 @@ export const Header = () => {
               </button>
             </DrawerTrigger>
             <DrawerContent className="fixed inset-0 h-screen w-full !mt-0 rounded-none bg-black animate-slide-in-left transition-all duration-300 ease-out z-[200] overflow-hidden">
+              {/* Grid overlay for positioning */}
+              <div className="absolute inset-0 pointer-events-none z-[300]" style={{
+                backgroundImage: `
+                  linear-gradient(to right, rgba(184,165,116,0.2) 1px, transparent 1px),
+                  linear-gradient(to bottom, rgba(184,165,116,0.2) 1px, transparent 1px)
+                `,
+                backgroundSize: '50px 50px'
+              }}>
+                {/* 100px markers */}
+                <div className="absolute inset-0" style={{
+                  backgroundImage: `
+                    linear-gradient(to right, rgba(184,165,116,0.4) 2px, transparent 2px),
+                    linear-gradient(to bottom, rgba(184,165,116,0.4) 2px, transparent 2px)
+                  `,
+                  backgroundSize: '100px 100px'
+                }} />
+              </div>
+              
               {/* Full screen grid layout */}
               <div className="grid lg:grid-cols-2 h-full w-full overflow-hidden">
                 {/* Left side - Navigation */}
