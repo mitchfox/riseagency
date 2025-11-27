@@ -20,6 +20,7 @@ import { RepresentationDialog } from "@/components/RepresentationDialog";
 import { DeclareInterestDialog } from "@/components/DeclareInterestDialog";
 import { IntroModal } from "@/components/IntroModal";
 import { HoverText } from "@/components/HoverText";
+import { LanguageSelector } from "@/components/LanguageSelector";
 
 // NOTE: GridLines component is available at src/components/GridLines.tsx 
 // for coordinate-based positioning during design. Import and add it when needed.
@@ -183,6 +184,10 @@ export const Header = () => {
                 <Users className="w-3 h-3 md:w-3.5 md:h-3.5 hidden sm:block" />
                 <span>Declare Interest In A Star</span>
               </button>
+            </div>
+            {/* Language Selector - Centered */}
+            <div className="absolute left-1/2 -translate-x-1/2">
+              <LanguageSelector />
             </div>
             <div className="flex flex-wrap items-center gap-2 md:gap-4 transition-all duration-500">
               <button onClick={() => setRepresentationOpen(true)} className="text-xs md:text-sm font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500 flex items-center gap-1.5">
