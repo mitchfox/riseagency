@@ -438,7 +438,7 @@ export const Header = () => {
                         <div className="absolute inset-0 bg-black/30" />
                         <div className="absolute inset-0 flex items-center justify-center p-3">
                           <div className="bg-primary text-black font-bebas uppercase tracking-widest text-xs md:text-sm py-2 px-3 text-center group-hover:brightness-110 transition-all w-full whitespace-nowrap">
-                            Request Representation
+                            <HoverText text="Request Representation" />
                           </div>
                         </div>
                       </div>
@@ -461,7 +461,7 @@ export const Header = () => {
                         <div className="absolute inset-0 bg-black/30" />
                         <div className="absolute inset-0 flex items-center justify-center p-3">
                           <div className="bg-primary text-black font-bebas uppercase tracking-widest text-xs md:text-sm py-2 px-3 text-center group-hover:brightness-110 transition-all w-full whitespace-nowrap">
-                            Portal
+                            <HoverText text="Portal" />
                           </div>
                         </div>
                       </div>

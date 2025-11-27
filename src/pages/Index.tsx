@@ -10,6 +10,7 @@ import { VideoScene3D } from "@/components/VideoScene3D";
 import ScoutingNetworkMap from "@/components/ScoutingNetworkMap";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { HoverText } from "@/components/HoverText";
 import marbleBg from "@/assets/marble-bg.png";
 import riseStarIcon from "@/assets/rise-star-icon.png";
 import marbleTexture from "@/assets/marble-texture.png";
@@ -301,7 +302,7 @@ const Index = () => {
                   size="lg" 
                   className="btn-shine text-xl font-bebas uppercase tracking-wider px-12 py-7 hover:scale-105 transition-transform shadow-xl"
                 >
-                  Work With Us
+                  <HoverText text="Work With Us" />
                 </Button>
               </WorkWithUsDialog>
               <Button 
@@ -311,7 +312,7 @@ const Index = () => {
                 className="text-xl font-bebas uppercase tracking-wider px-12 py-7 hover:scale-105 transition-transform"
               >
                 <a href="mailto:jolon.levene@risefootballagency.com?subject=Portfolio%20Request">
-                  Request Our Portfolio
+                  <HoverText text="Request Our Portfolio" />
                 </a>
               </Button>
             </div>
@@ -340,7 +341,7 @@ const Index = () => {
                   variant="outline"
                   className="font-bebas uppercase tracking-wider border-primary/30 text-foreground hover:bg-primary/10"
                 >
-                  All News →
+                  <HoverText text="All News →" />
                 </Button>
               </Link>
             </div>
@@ -524,7 +525,7 @@ const Index = () => {
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 px-8 py-4 bg-primary text-background font-bebas uppercase tracking-wider text-lg hover:bg-primary/90 hover:scale-105 transition-all rounded shadow-lg"
                 >
-                  Join the Channel
+                  <HoverText text="Join the Channel" />
                 </a>
               </div>
             </div>

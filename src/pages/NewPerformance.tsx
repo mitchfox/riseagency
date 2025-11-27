@@ -3,6 +3,7 @@ import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { SEO } from "@/components/SEO";
+import { HoverText } from "@/components/HoverText";
 import bannerHero from "@/assets/banner-hero.jpg";
 
 const NewPerformance = () => {
@@ -117,7 +118,7 @@ const NewPerformance = () => {
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 px-8 py-4 bg-primary text-background font-bebas uppercase tracking-wider text-lg hover:bg-primary/90 hover:scale-105 transition-all rounded shadow-lg"
                 >
-                  Join the Channel
+                  <HoverText text="Join the Channel" />
                 </a>
               </div>
             </div>
