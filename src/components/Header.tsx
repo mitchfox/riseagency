@@ -256,8 +256,10 @@ export const Header = () => {
                     backgroundPosition: "center",
                   }}
                 >
-                  {/* Close button at 100, 50 (move by +5, -20) */}
-                  <DrawerClose asChild>
+                  {/* Constraint container for menu area: 0 to 1500 on x, 0 to 670 on y */}
+                  <div className="absolute inset-0" style={{ maxWidth: "1500px", maxHeight: "670px", overflow: "hidden" }}>
+                    {/* Close button at 100, 50 (move by +5, -20) */}
+                    <DrawerClose asChild>
                     <button
                       className="absolute z-50 group flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-primary transition-all duration-300 ease-out w-12 h-12 pointer-events-none [&>svg]:animate-color-to-gold"
                       aria-label="Close menu"
@@ -462,6 +464,7 @@ export const Header = () => {
                       </div>
                     </Link>
                   </DrawerClose>
+                  </div>
                 </div>
 
                 {/* Right side - 4-card grid (desktop only) */}
@@ -476,7 +479,7 @@ export const Header = () => {
                   {/* Constrained grid container - fits between close button and bottom cards */}
                   <div className="grid grid-cols-2 grid-rows-2 gap-4" style={{
                     maxHeight: "590px",
-                    marginTop: "60px",
+                    marginTop: "50px",
                     marginBottom: "auto"
                   }}
                 >
