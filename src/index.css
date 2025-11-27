@@ -491,11 +491,13 @@ All colors MUST be HSL.
   transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.hover-text-wrapper:hover .hover-text-letter {
+.hover-text-wrapper:hover .hover-text-letter,
+button:hover .hover-text-wrapper .hover-text-letter {
   transform: translateY(-100%);
 }
 
-.hover-text-wrapper:hover .hover-text-letter-clone {
+.hover-text-wrapper:hover .hover-text-letter-clone,
+button:hover .hover-text-wrapper .hover-text-letter-clone {
   transform: translateY(-100%);
 }
 
