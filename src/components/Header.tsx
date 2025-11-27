@@ -744,19 +744,18 @@ export const Header = () => {
 
           {/* Logo - Center */
           <Link to="/" className="absolute left-1/2 transform -translate-x-1/2 z-10">
-            <img src={logo} alt="RISE Football Agency" className={`transition-all duration-500 ease-out ${isScrolled ? 'h-9 md:h-11' : 'h-7 md:h-10'}`} />
+            <img src={logo} alt="RISE Football Agency" className={isScrolled ? "h-9 md:h-11 transition-all duration-500 ease-out" : "h-7 md:h-10 transition-all duration-500 ease-out"} />
           </Link>
 
-
-          {showTopBar && (
+          {showTopBar ? (
+            <div
             <div 
-              className="fixed flex items-center gap-1 md:gap-2 z-[90]" 
+              className="fixed flex items-center gap-1 md:gap-2 z-[90] transition-all duration-500"
               style={{
                 left: isScrolled ? "4rem" : "3.25rem",
                 top: isScrolled ? "1rem" : "clamp(56px, 15vw, 82px)",
                 opacity: isScrolled ? 0 : 1,
-                pointerEvents: isScrolled ? "none" : "auto",
-                transition: "all 0.5s cubic-bezier(0.4, 0, 0.2, 1)"
+                pointerEvents: isScrolled ? "none" : "auto"
               }}
             >
               <Link to="/contact" className="group p-1.5 md:p-2 rounded-full hover:bg-primary/10 transition-all duration-300 flex items-center gap-1.5 overflow-hidden" title="Contact Us">
@@ -772,17 +771,14 @@ export const Header = () => {
                 </span>
               </button>
             </div>
-          )}
-          
-          {showTopBar && (
+            
             <div 
-              className="fixed flex items-center gap-1 md:gap-2 z-[90]" 
+              className="fixed flex items-center gap-1 md:gap-2 z-[90] transition-all duration-500"
               style={{
                 right: isScrolled ? "clamp(4rem, 10vw, 10.56rem)" : "2.5rem",
                 top: isScrolled ? "10px" : "clamp(56px, 15vw, 82px)",
                 opacity: isScrolled ? 1 : 0,
-                pointerEvents: isScrolled ? "auto" : "none",
-                transition: "all 0.5s cubic-bezier(0.4, 0, 0.2, 1)"
+                pointerEvents: isScrolled ? "auto" : "none"
               }}
             >
               <button onClick={() => setRepresentationOpen(true)} className="group p-1.5 md:p-2 rounded-full hover:bg-primary/10 transition-all duration-300 flex items-center gap-1.5 overflow-hidden" title="Request Representation">
@@ -798,6 +794,7 @@ export const Header = () => {
                 </span>
               </Link>
             </div>
+            </>
           )}
 
           {/* RISE WITH US Button - Right */}
