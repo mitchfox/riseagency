@@ -747,52 +747,58 @@ export const Header = () => {
             <img src={logo} alt="RISE Football Agency" className={`transition-all duration-500 ease-out ${isScrolled ? 'h-9 md:h-11' : 'h-7 md:h-10'}`} />
           </Link>
 
-          {/* Utility icons - smoothly reposition between top bar and header */}
-          {showTopBar && <>
-              {/* Left side icons - move from top bar into header next to menu */}
-              <div className="fixed flex items-center gap-1 md:gap-2 z-[90]" style={{
-              left: isScrolled ? "4rem" : "3.25rem",
-              top: isScrolled ? "1rem" : "clamp(56px, 15vw, 82px)",
-              opacity: isScrolled ? 0 : 1,
-              pointerEvents: isScrolled ? "none" : "auto",
-              transition: "all 0.5s cubic-bezier(0.4, 0, 0.2, 1)"
-            }}>
-                <Link to="/contact" className="group p-1.5 md:p-2 rounded-full hover:bg-primary/10 transition-all duration-300 flex items-center gap-1.5 overflow-hidden" title="Contact Us">
-                  <MessageCircle className="w-4 h-4 md:w-5 md:h-5 text-white/80 group-hover:text-primary transition-colors flex-shrink-0" />
-                  <span className="max-w-0 group-hover:max-w-xs transition-all duration-300 text-xs font-bebas uppercase tracking-wider text-white/80 group-hover:text-primary whitespace-nowrap overflow-hidden">
-                    Contact Us
-                  </span>
-                </Link>
-                <button onClick={() => setDeclareInterestOpen(true)} className="group p-1.5 md:p-2 rounded-full hover:bg-primary/10 transition-all duration-300 flex items-center gap-1.5 overflow-hidden" title="Declare Interest">
-                  <Users className="w-4 h-4 md:w-5 md:h-5 text-white/80 group-hover:text-primary transition-colors flex-shrink-0" />
-                  <span className="max-w-0 group-hover:max-w-xs transition-all duration-300 text-xs font-bebas uppercase tracking-wider text-white/80 group-hover:text-primary whitespace-nowrap overflow-hidden">
-                    Declare Interest
-                  </span>
-                </button>
-              </div>
-              
-              {/* Right side icons - move from top bar into header next to RISE WITH US */}
-              <div className="fixed flex items-center gap-1 md:gap-2 z-[90]" style={{
-              right: isScrolled ? "clamp(4rem, 10vw, 10.56rem)" : "2.5rem",
-              top: isScrolled ? "10px" : "clamp(56px, 15vw, 82px)",
-              opacity: isScrolled ? 1 : 0,
-              pointerEvents: isScrolled ? "auto" : "none",
-              transition: "all 0.5s cubic-bezier(0.4, 0, 0.2, 1)"
-            }}>
-                <button onClick={() => setRepresentationOpen(true)} className="group p-1.5 md:p-2 rounded-full hover:bg-primary/10 transition-all duration-300 flex items-center gap-1.5 overflow-hidden" title="Request Representation">
-                  <Handshake className="w-4 h-4 md:w-5 md:h-5 text-white/80 group-hover:text-primary transition-colors flex-shrink-0" />
-                  <span className="max-w-0 group-hover:max-w-xs transition-all duration-300 text-xs font-bebas uppercase tracking-wider text-white/80 group-hover:text-primary whitespace-nowrap overflow-hidden">
-                    Request Representation
-                  </span>
-                </button>
-                <Link to="/login" className="group p-1.5 md:p-2 rounded-full hover:bg-primary/10 transition-all duration-300 flex items-center gap-1.5 overflow-hidden" title="Portal">
-                  <LogIn className="w-4 h-4 md:w-5 md:h-5 text-white/80 group-hover:text-primary transition-colors flex-shrink-0" />
-                  <span className="max-w-0 group-hover:max-w-xs transition-all duration-300 text-xs font-bebas uppercase tracking-wider text-white/80 group-hover:text-primary whitespace-nowrap overflow-hidden">
-                    Portal
-                  </span>
-                </Link>
-              </div>
-            </>}
+
+          {showTopBar && (
+            <div 
+              className="fixed flex items-center gap-1 md:gap-2 z-[90]" 
+              style={{
+                left: isScrolled ? "4rem" : "3.25rem",
+                top: isScrolled ? "1rem" : "clamp(56px, 15vw, 82px)",
+                opacity: isScrolled ? 0 : 1,
+                pointerEvents: isScrolled ? "none" : "auto",
+                transition: "all 0.5s cubic-bezier(0.4, 0, 0.2, 1)"
+              }}
+            >
+              <Link to="/contact" className="group p-1.5 md:p-2 rounded-full hover:bg-primary/10 transition-all duration-300 flex items-center gap-1.5 overflow-hidden" title="Contact Us">
+                <MessageCircle className="w-4 h-4 md:w-5 md:h-5 text-white/80 group-hover:text-primary transition-colors flex-shrink-0" />
+                <span className="max-w-0 group-hover:max-w-xs transition-all duration-300 text-xs font-bebas uppercase tracking-wider text-white/80 group-hover:text-primary whitespace-nowrap overflow-hidden">
+                  Contact Us
+                </span>
+              </Link>
+              <button onClick={() => setDeclareInterestOpen(true)} className="group p-1.5 md:p-2 rounded-full hover:bg-primary/10 transition-all duration-300 flex items-center gap-1.5 overflow-hidden" title="Declare Interest">
+                <Users className="w-4 h-4 md:w-5 md:h-5 text-white/80 group-hover:text-primary transition-colors flex-shrink-0" />
+                <span className="max-w-0 group-hover:max-w-xs transition-all duration-300 text-xs font-bebas uppercase tracking-wider text-white/80 group-hover:text-primary whitespace-nowrap overflow-hidden">
+                  Declare Interest
+                </span>
+              </button>
+            </div>
+          )}
+          
+          {showTopBar && (
+            <div 
+              className="fixed flex items-center gap-1 md:gap-2 z-[90]" 
+              style={{
+                right: isScrolled ? "clamp(4rem, 10vw, 10.56rem)" : "2.5rem",
+                top: isScrolled ? "10px" : "clamp(56px, 15vw, 82px)",
+                opacity: isScrolled ? 1 : 0,
+                pointerEvents: isScrolled ? "auto" : "none",
+                transition: "all 0.5s cubic-bezier(0.4, 0, 0.2, 1)"
+              }}
+            >
+              <button onClick={() => setRepresentationOpen(true)} className="group p-1.5 md:p-2 rounded-full hover:bg-primary/10 transition-all duration-300 flex items-center gap-1.5 overflow-hidden" title="Request Representation">
+                <Handshake className="w-4 h-4 md:w-5 md:h-5 text-white/80 group-hover:text-primary transition-colors flex-shrink-0" />
+                <span className="max-w-0 group-hover:max-w-xs transition-all duration-300 text-xs font-bebas uppercase tracking-wider text-white/80 group-hover:text-primary whitespace-nowrap overflow-hidden">
+                  Request Representation
+                </span>
+              </button>
+              <Link to="/login" className="group p-1.5 md:p-2 rounded-full hover:bg-primary/10 transition-all duration-300 flex items-center gap-1.5 overflow-hidden" title="Portal">
+                <LogIn className="w-4 h-4 md:w-5 md:h-5 text-white/80 group-hover:text-primary transition-colors flex-shrink-0" />
+                <span className="max-w-0 group-hover:max-w-xs transition-all duration-300 text-xs font-bebas uppercase tracking-wider text-white/80 group-hover:text-primary whitespace-nowrap overflow-hidden">
+                  Portal
+                </span>
+              </Link>
+            </div>
+          )}
 
           {/* RISE WITH US Button - Right */}
           <Button onClick={() => setWorkWithUsOpen(true)} size="sm" className={`btn-shine font-bebas uppercase tracking-wider transition-all duration-500 ease-out translate-x-[1px] ${isScrolled ? 'text-xs md:text-sm px-3 md:px-5 h-8 md:h-9' : 'text-xs md:text-base px-3 md:px-6 h-8 md:h-10'}`}>
