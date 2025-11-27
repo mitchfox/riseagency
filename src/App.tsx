@@ -9,6 +9,7 @@ import { PageTransition } from "@/components/PageTransition";
 import { TransitionProvider } from "@/contexts/TransitionContext";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { useSubdomainRouter } from "@/hooks/useSubdomainRouter";
+import Landing from "./pages/Landing";
 import Index from "./pages/Index";
 import Stars from "./pages/Stars";
 import Players from "./pages/Performance"; // Old Performance content now becomes Players
@@ -66,7 +67,8 @@ const App = () => {
             <PageTransition>
               {(displayLocation) => (
                 <Routes location={displayLocation}>
-                  <Route path="/" element={<Index />} />
+                  <Route path="/" element={<Landing />} />
+                  <Route path="/home" element={<Index />} />
                   <Route path="/intro" element={<Intro />} />
                   <Route path="/stars" element={<Stars />} />
                   <Route path="/stars/:playername" element={<PlayerDetail />} />
