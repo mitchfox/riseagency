@@ -219,12 +219,12 @@ export const Header = () => {
                     backgroundPosition: "center",
                   }}
                 >
-                  {/* Close button at 100, 50 */}
+                  {/* Close button at 100, 50 (adjusted for overlay offset) */}
                   <DrawerClose asChild>
                     <button
                       className="absolute z-50 group flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-primary transition-all duration-300 ease-out w-12 h-12 pointer-events-none [&>svg]:animate-color-to-gold"
                       aria-label="Close menu"
-                      style={{ left: "100px", top: "50px", pointerEvents: "none" }}
+                      style={{ left: "80px", top: "25px", pointerEvents: "none" }}
                       onAnimationEnd={(e) => {
                         if (e.animationName.includes("color-to-gold")) {
                           (e.currentTarget as HTMLButtonElement).style.pointerEvents = "auto";
@@ -258,8 +258,8 @@ export const Header = () => {
                     </button>
                   </DrawerClose>
 
-                  {/* Navigation starting at 100, 75 going to 100, 500 */}
-                  <nav className="absolute" style={{ left: "100px", top: "75px" }}>
+                  {/* Navigation starting at 100, 75 going to 100, 500 (adjusted) */}
+                  <nav className="absolute" style={{ left: "100px", top: "60px" }}>
                     <DrawerClose asChild>
                       <Link
                         to="/"
@@ -369,7 +369,7 @@ export const Header = () => {
                       className="absolute group"
                       style={{ left: "50px", top: "525px", width: "200px", height: "125px" }}
                     >
-                      <div className="relative w-full h-full rounded overflow-hidden">
+                      <div className="relative w-full h-full rounded overflow-hidden border-2 border-primary">
                         <img
                           src={workingTogether}
                           alt="Request Representation"
@@ -382,30 +382,7 @@ export const Header = () => {
                           </div>
                         </div>
                       </div>
-                    </button>
-                  </DrawerClose>
-
-                  {/* Portal card image: 300, 525 to 500, 650 (200x125) */}
-                  <DrawerClose asChild>
-                    <Link
-                      to="/login"
-                      className="absolute group"
-                      style={{ left: "300px", top: "525px", width: "200px", height: "125px" }}
-                    >
-                      <div className="relative w-full h-full rounded overflow-hidden">
-                        <img
-                          src={playerPortalImage}
-                          alt="Portal"
-                          className="w-full h-full object-cover"
-                        />
-                        <div className="absolute inset-0 bg-black/30" />
-                        <div className="absolute inset-0 flex items-center justify-center p-3">
-                          <div className="bg-primary text-black font-bebas uppercase tracking-widest text-xs md:text-sm py-2 px-3 text-center group-hover:brightness-110 transition-all w-full whitespace-nowrap">
-                            Portal
-                          </div>
-                        </div>
-                      </div>
-                    </Link>
+                      </button>
                   </DrawerClose>
                 </div>
 
