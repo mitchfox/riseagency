@@ -103,11 +103,23 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
         if (error) throw error;
         toast.success("Youth outreach updated");
       } else {
-        const { error } = await supabase
+        // Insert into player_outreach_youth
+        const { error: outreachError } = await supabase
           .from("player_outreach_youth")
           .insert([youthFormData]);
-        if (error) throw error;
-        toast.success("Youth outreach added");
+        if (outreachError) throw outreachError;
+        
+        // Also add to scouting_reports
+        const { error: scoutingError } = await supabase
+          .from("scouting_reports")
+          .insert([{
+            player_name: youthFormData.player_name,
+            summary: `Youth outreach contact${youthFormData.notes ? ': ' + youthFormData.notes : ''}`,
+            status: 'pending'
+          }]);
+        if (scoutingError) throw scoutingError;
+        
+        toast.success("Youth outreach added to database");
       }
       setDialogOpen(false);
       resetForms();
@@ -129,11 +141,23 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
         if (error) throw error;
         toast.success("Pro outreach updated");
       } else {
-        const { error } = await supabase
+        // Insert into player_outreach_pro
+        const { error: outreachError } = await supabase
           .from("player_outreach_pro")
           .insert([proFormData]);
-        if (error) throw error;
-        toast.success("Pro outreach added");
+        if (outreachError) throw outreachError;
+        
+        // Also add to scouting_reports
+        const { error: scoutingError } = await supabase
+          .from("scouting_reports")
+          .insert([{
+            player_name: proFormData.player_name,
+            summary: `Pro outreach contact${proFormData.notes ? ': ' + proFormData.notes : ''}`,
+            status: 'pending'
+          }]);
+        if (scoutingError) throw scoutingError;
+        
+        toast.success("Pro outreach added to database");
       }
       setDialogOpen(false);
       resetForms();
