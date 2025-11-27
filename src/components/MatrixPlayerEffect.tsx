@@ -143,8 +143,15 @@ export const MatrixPlayerEffect = ({ className = "" }: MatrixPlayerEffectProps) 
         );
         const imgWidth = baseImage.width * scale;
         const imgHeight = baseImage.height * scale;
-        const imgX = (canvas.width - imgWidth) / 2;
+        const imgX = (canvas.width - imgWidth) / 2 - 45; // Moved left 45px
         const imgY = (canvas.height - imgHeight) / 2 - 50; // Moved up 60px
+
+        // Image 11 is 1.1x larger
+        const xrayScale = 1.1;
+        const xrayWidth = imgWidth * xrayScale;
+        const xrayHeight = imgHeight * xrayScale;
+        const xrayX = imgX - (xrayWidth - imgWidth) / 2;
+        const xrayY = imgY - (xrayHeight - imgHeight) / 2;
 
         const playerCenterX = imgX + imgWidth / 2;
         const playerCenterY = imgY + imgHeight / 2;
@@ -175,8 +182,8 @@ export const MatrixPlayerEffect = ({ className = "" }: MatrixPlayerEffectProps) 
           ctx.fillStyle = "#000000";
           ctx.fillRect(0, 0, canvas.width, canvas.height);
           
-          // Draw only image 11 inside the x-ray circle
-          ctx.drawImage(xrayImage, imgX, imgY, imgWidth, imgHeight);
+          // Draw only image 11 inside the x-ray circle (1.1x larger)
+          ctx.drawImage(xrayImage, xrayX, xrayY, xrayWidth, xrayHeight);
           
           // Draw 5D MATRIX LINES - only within x-ray circle
           const baseLengthMin = 180;

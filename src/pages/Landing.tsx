@@ -37,11 +37,8 @@ export default function Landing() {
         </h1>
       </div>
 
-      {/* Bottom Section - Language Selector + Navigation */}
+      {/* Bottom Section - Navigation + Language Selector */}
       <div className="pb-12 flex flex-col items-center gap-6 z-10 relative">
-        {/* Language Selector - Above HOME */}
-        <LanguageSelector />
-        
         {/* Navigation Links */}
         <nav className="flex items-center justify-center gap-8 md:gap-16 px-4">
           {navLinks.map((link) => (
@@ -54,6 +51,11 @@ export default function Landing() {
             </Link>
           ))}
         </nav>
+        
+        {/* Language Selector - Below HOME, offset 25px right */}
+        <div className="ml-[25px]">
+          <LanguageSelector />
+        </div>
       </div>
     </div>
   );
