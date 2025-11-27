@@ -271,21 +271,21 @@ export const Header = () => {
                     <DrawerClose asChild>
                       <Link
                         to="/"
-                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all tracking-wider py-1 ${
+                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all duration-300 tracking-wider py-1 hover:scale-105 ${
                           isActive("/") ? "text-primary" : ""
                         }`}
                       >
                         HOME
                       </Link>
                     </DrawerClose>
-                    <div className="h-px bg-white/20 my-1" />
+                    <div className="h-px bg-primary my-1" />
 
                     <DrawerClose asChild>
                       <Link
                         to="/stars"
                         onMouseEnter={() => setStarsHovered(true)}
                         onMouseLeave={() => setStarsHovered(false)}
-                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all tracking-wider py-1 ${
+                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all duration-300 tracking-wider py-1 hover:scale-105 ${
                           isActive("/stars") || location.pathname.startsWith("/stars/")
                             ? "text-primary"
                             : ""
@@ -301,7 +301,7 @@ export const Header = () => {
                         to="/performance"
                         onMouseEnter={() => setRealisePotentialHovered(true)}
                         onMouseLeave={() => setRealisePotentialHovered(false)}
-                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all tracking-wider py-1 ${
+                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all duration-300 tracking-wider py-1 hover:scale-105 ${
                           isActive("/performance") ? "text-primary" : ""
                         }`}
                       >
@@ -315,7 +315,7 @@ export const Header = () => {
                         to="/between-the-lines"
                         onMouseEnter={() => setBetweenLinesHovered(true)}
                         onMouseLeave={() => setBetweenLinesHovered(false)}
-                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all tracking-wider py-1 ${
+                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all duration-300 tracking-wider py-1 hover:scale-105 ${
                           isActive("/between-the-lines") ? "text-primary" : ""
                         }`}
                       >
@@ -329,19 +329,19 @@ export const Header = () => {
                         to="/news"
                         onMouseEnter={() => setNewsHovered(true)}
                         onMouseLeave={() => setNewsHovered(false)}
-                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all tracking-wider py-1 ${
+                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all duration-300 tracking-wider py-1 hover:scale-105 ${
                           isActive("/news") ? "text-primary" : ""
                         }`}
                       >
                         NEWS
                       </Link>
                     </DrawerClose>
-                    <div className="h-px bg-white/20 my-1" />
+                    <div className="h-px bg-primary my-1" />
 
                     <DrawerClose asChild>
                       <Link
                         to="/players"
-                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all tracking-wider py-1 ${
+                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all duration-300 tracking-wider py-1 hover:scale-105 ${
                           isActive("/players") || location.pathname.startsWith("/players/")
                             ? "text-primary"
                             : ""
@@ -355,7 +355,7 @@ export const Header = () => {
                     <DrawerClose asChild>
                       <Link
                         to="/clubs"
-                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all tracking-wider py-1 ${
+                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all duration-300 tracking-wider py-1 hover:scale-105 ${
                           isActive("/clubs") ? "text-primary" : ""
                         }`}
                       >
@@ -367,7 +367,7 @@ export const Header = () => {
                     <DrawerClose asChild>
                       <Link
                         to="/coaches"
-                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all tracking-wider py-1 ${
+                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all duration-300 tracking-wider py-1 hover:scale-105 ${
                           isActive("/coaches") ? "text-primary" : ""
                         }`}
                       >
@@ -379,7 +379,7 @@ export const Header = () => {
                     <DrawerClose asChild>
                       <Link
                         to="/scouts"
-                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all tracking-wider py-1 ${
+                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all duration-300 tracking-wider py-1 hover:scale-105 ${
                           isActive("/scouts") ? "text-primary" : ""
                         }`}
                       >
@@ -455,7 +455,7 @@ export const Header = () => {
                     {/* Top-left: Stars card */}
                     {starPlayers.length > 0 && (
                       <div
-                        className="transition-transform duration-300"
+                        className="transition-all duration-300"
                         onMouseEnter={() => setHoveredCard("top-left")}
                         onMouseLeave={() => setHoveredCard(null)}
                         style={{
@@ -476,7 +476,7 @@ export const Header = () => {
                         <div
                           className={`relative w-full h-full rounded-lg overflow-hidden transition-all duration-300 ${
                           starsHovered
-                            ? "border-2 border-primary shadow-[0_0_20px_rgba(184,165,116,0.6)]"
+                            ? "border-2 border-primary shadow-[0_0_20px_rgba(184,165,116,0.6)] scale-105"
                             : "border border-white/20 grayscale"
                         }`}
                       >
@@ -602,7 +602,7 @@ export const Header = () => {
 
                     {/* Top-right: Realise Potential card */}
                     <div
-                      className="transition-transform duration-300"
+                      className="transition-all duration-300"
                       onMouseEnter={() => setHoveredCard("top-right")}
                       onMouseLeave={() => setHoveredCard(null)}
                       style={{
@@ -625,7 +625,7 @@ export const Header = () => {
                           to="/performance"
                           className={`relative block w-full h-full rounded-lg overflow-hidden border transition-all duration-300 ${
                             realisePotentialHovered
-                              ? "border-primary shadow-[0_0_20px_rgba(184,165,116,0.6)]"
+                              ? "border-primary shadow-[0_0_20px_rgba(184,165,116,0.6)] scale-105"
                               : "border-white/20"
                           }`}
                         >
@@ -657,7 +657,7 @@ export const Header = () => {
 
                     {/* Bottom-left: Between The Lines card */}
                     <div
-                      className="transition-transform duration-300"
+                      className="transition-all duration-300"
                       onMouseEnter={() => setHoveredCard("bottom-left")}
                       onMouseLeave={() => setHoveredCard(null)}
                       style={{
@@ -680,7 +680,7 @@ export const Header = () => {
                           to="/between-the-lines"
                           className={`relative block w-full h-full rounded-lg overflow-hidden border transition-all duration-300 ${
                             betweenLinesHovered
-                              ? "border-primary shadow-[0_0_20px_rgba(184,165,116,0.6)]"
+                              ? "border-primary shadow-[0_0_20px_rgba(184,165,116,0.6)] scale-105"
                               : "border-white/20"
                           }`}
                         >
@@ -715,7 +715,7 @@ export const Header = () => {
 
                     {/* Bottom-right: News card */}
                     <div
-                      className="transition-transform duration-300"
+                      className="transition-all duration-300"
                       onMouseEnter={() => setHoveredCard("bottom-right")}
                       onMouseLeave={() => setHoveredCard(null)}
                       style={{
@@ -738,7 +738,7 @@ export const Header = () => {
                           to="/news"
                           className={`relative block w-full h-full rounded-lg overflow-hidden border transition-all duration-300 ${
                             newsHovered
-                              ? "border-primary shadow-[0_0_20px_rgba(184,165,116,0.6)]"
+                              ? "border-primary shadow-[0_0_20px_rgba(184,165,116,0.6)] scale-105"
                               : "border-white/20"
                           }`}
                         >
