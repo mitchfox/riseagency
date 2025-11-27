@@ -30,7 +30,36 @@ export const MatrixPlayerEffect = ({ className = "" }: MatrixPlayerEffectProps) 
               return new Promise<void>((resolve) => {
                 const img = new Image();
                 img.onload = () => {
-                  images.push(img);
+                  // Check if image has transparency
+                  const testCanvas = document.createElement("canvas");
+                  testCanvas.width = img.width;
+                  testCanvas.height = img.height;
+                  const testCtx = testCanvas.getContext("2d");
+                  if (testCtx) {
+                    testCtx.drawImage(img, 0, 0);
+                    const imageData = testCtx.getImageData(0, 0, img.width, img.height);
+                    const data = imageData.data;
+                    
+                    // Check corners and edges for transparency
+                    let hasTransparency = false;
+                    const checkPoints = [
+                      0, // top-left
+                      (img.width - 1) * 4, // top-right
+                      (img.height - 1) * img.width * 4, // bottom-left
+                      ((img.height - 1) * img.width + img.width - 1) * 4, // bottom-right
+                    ];
+                    
+                    for (const point of checkPoints) {
+                      if (data[point + 3] < 250) { // Alpha channel
+                        hasTransparency = true;
+                        break;
+                      }
+                    }
+                    
+                    if (hasTransparency) {
+                      images.push(img);
+                    }
+                  }
                   resolve();
                 };
                 img.onerror = () => resolve();
