@@ -299,7 +299,7 @@ export const Header = () => {
                     <DrawerClose asChild>
                       <Link
                         to="/"
-                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all duration-300 tracking-wider py-1 hover:scale-105 ${
+                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all duration-300 tracking-wider py-1 hover:scale-105 whitespace-nowrap ${
                           isActive("/") ? "text-primary" : ""
                         }`}
                       >
@@ -313,7 +313,7 @@ export const Header = () => {
                         to="/stars"
                         onMouseEnter={() => setStarsHovered(true)}
                         onMouseLeave={() => setStarsHovered(false)}
-                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all duration-300 tracking-wider py-1 hover:scale-105 ${
+                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all duration-300 tracking-wider py-1 hover:scale-105 whitespace-nowrap ${
                           isActive("/stars") || location.pathname.startsWith("/stars/")
                             ? "text-primary"
                             : ""
@@ -329,7 +329,7 @@ export const Header = () => {
                         to="/performance"
                         onMouseEnter={() => setRealisePotentialHovered(true)}
                         onMouseLeave={() => setRealisePotentialHovered(false)}
-                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all duration-300 tracking-wider py-1 hover:scale-105 ${
+                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all duration-300 tracking-wider py-1 hover:scale-105 whitespace-nowrap ${
                           isActive("/performance") ? "text-primary" : ""
                         }`}
                       >
@@ -343,7 +343,7 @@ export const Header = () => {
                         to="/between-the-lines"
                         onMouseEnter={() => setBetweenLinesHovered(true)}
                         onMouseLeave={() => setBetweenLinesHovered(false)}
-                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all duration-300 tracking-wider py-1 hover:scale-105 ${
+                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all duration-300 tracking-wider py-1 hover:scale-105 whitespace-nowrap ${
                           isActive("/between-the-lines") ? "text-primary" : ""
                         }`}
                       >
@@ -357,7 +357,7 @@ export const Header = () => {
                         to="/news"
                         onMouseEnter={() => setNewsHovered(true)}
                         onMouseLeave={() => setNewsHovered(false)}
-                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all duration-300 tracking-wider py-1 hover:scale-105 ${
+                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all duration-300 tracking-wider py-1 hover:scale-105 whitespace-nowrap ${
                           isActive("/news") ? "text-primary" : ""
                         }`}
                       >
@@ -369,7 +369,7 @@ export const Header = () => {
                     <DrawerClose asChild>
                       <Link
                         to="/players"
-                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all duration-300 tracking-wider py-1 hover:scale-105 ${
+                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all duration-300 tracking-wider py-1 hover:scale-105 whitespace-nowrap ${
                           isActive("/players") || location.pathname.startsWith("/players/")
                             ? "text-primary"
                             : ""
@@ -383,7 +383,7 @@ export const Header = () => {
                     <DrawerClose asChild>
                       <Link
                         to="/clubs"
-                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all duration-300 tracking-wider py-1 hover:scale-105 ${
+                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all duration-300 tracking-wider py-1 hover:scale-105 whitespace-nowrap ${
                           isActive("/clubs") ? "text-primary" : ""
                         }`}
                       >
@@ -395,7 +395,7 @@ export const Header = () => {
                     <DrawerClose asChild>
                       <Link
                         to="/coaches"
-                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all duration-300 tracking-wider py-1 hover:scale-105 ${
+                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all duration-300 tracking-wider py-1 hover:scale-105 whitespace-nowrap ${
                           isActive("/coaches") ? "text-primary" : ""
                         }`}
                       >
@@ -407,7 +407,7 @@ export const Header = () => {
                     <DrawerClose asChild>
                       <Link
                         to="/scouts"
-                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all duration-300 tracking-wider py-1 hover:scale-105 ${
+                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all duration-300 tracking-wider py-1 hover:scale-105 whitespace-nowrap ${
                           isActive("/scouts") ? "text-primary" : ""
                         }`}
                       >
