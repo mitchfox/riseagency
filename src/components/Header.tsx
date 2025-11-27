@@ -148,7 +148,7 @@ export const Header = () => {
   const getLeftIconOffset = () => {
     if (!isScrolled) return "3rem";
 
-    if (viewport === "desktop") return "6.5rem"; // desktop: further right
+    if (viewport === "desktop") return "7.5rem"; // desktop: much further right
     if (viewport === "tablet") return "4.75rem"; // iPad: perfect
 
     return "3.5rem"; // mobile: great
@@ -160,7 +160,7 @@ export const Header = () => {
     if (viewport === "desktop") return "clamp(7rem, 15vw, 11.5rem)"; // desktop: perfect
     if (viewport === "tablet") return "9rem"; // iPad: perfect
 
-    return "2rem"; // mobile: bit to the left
+    return "3rem"; // mobile: more to the left
   };
 
   return <>
