@@ -6,7 +6,8 @@ const subdomainRoutes: Record<string, string> = {
   'scouts': '/scout-portal',
   'potential': '/potential',
   'players': '/players',
-  'clubs': '/clubs'
+  'clubs': '/clubs',
+  'agents': '/agents'
 };
 
 // Subdomains to ignore (treat as main domain)

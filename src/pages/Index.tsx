@@ -156,7 +156,7 @@ const Index = () => {
 
                   {/* Agents */}
                   <Link 
-                    to="/contact" 
+                    to="/agents" 
                     className="group relative p-4 md:p-6 border border-border/50 bg-background/50 hover:border-primary/50 hover:bg-primary/5 transition-all duration-300"
                   >
                     <div className="space-y-2 md:space-y-3">
@@ -167,7 +167,7 @@ const Index = () => {
                         Collaborate on player opportunities and career management.
                       </p>
                       <span className="inline-flex items-center text-xs text-primary opacity-0 group-hover:opacity-100 transition-opacity">
-                        Get In Touch →
+                        Learn More →
                       </span>
                     </div>
                   </Link>
