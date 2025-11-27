@@ -115,9 +115,8 @@ export const MatrixPlayerEffect = ({ className = "" }: MatrixPlayerEffectProps) 
     const animate = () => {
       timeRef.current += 0.016;
       
-      // Clear with pure black
-      ctx.fillStyle = "#000000";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      // Clear canvas (transparent to show video behind)
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       // Draw subtle Matrix binary rain in background
       ctx.font = `${fontSize}px monospace`;
@@ -243,6 +242,22 @@ export const MatrixPlayerEffect = ({ className = "" }: MatrixPlayerEffectProps) 
           ctx.beginPath();
           ctx.arc(playerCenterX, playerCenterY, 8 + corePulse * 4, 0, Math.PI * 2);
           ctx.fill();
+
+          // Small circle at exact mouse pointer position
+          const pointerPulse = Math.sin(timeRef.current * 5) * 0.2 + 0.8;
+          ctx.fillStyle = `rgba(200, 170, 90, ${0.9 * pointerPulse})`;
+          ctx.shadowColor = "rgba(200, 170, 90, 1)";
+          ctx.shadowBlur = 12;
+          ctx.beginPath();
+          ctx.arc(mousePos.x, mousePos.y, 8, 0, Math.PI * 2);
+          ctx.fill();
+          
+          // Inner ring around pointer
+          ctx.strokeStyle = `rgba(200, 170, 90, ${0.6 * pointerPulse})`;
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(mousePos.x, mousePos.y, 14, 0, Math.PI * 2);
+          ctx.stroke();
           
           ctx.restore();
 

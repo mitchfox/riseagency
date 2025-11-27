@@ -15,7 +15,18 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen bg-black flex flex-col items-center relative overflow-hidden cursor-none">
-      {/* Matrix Player Effect - Full Background */}
+      {/* Video Background - Full Screen */}
+      <video
+        autoPlay
+        loop
+        muted
+        playsInline
+        className="absolute inset-0 w-full h-full object-cover"
+      >
+        <source src="/assets/hero-background.mp4" type="video/mp4" />
+      </video>
+      
+      {/* Matrix Player Effect - Over Video */}
       <div className="absolute inset-0">
         <MatrixPlayerEffect />
       </div>
