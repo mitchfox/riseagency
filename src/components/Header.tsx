@@ -743,7 +743,7 @@ export const Header = () => {
           </Link>
 
           {/* Utility icons - smoothly reposition between top bar and header */}
-          {showTopBar && isScrolled && (
+          {showTopBar && (
             <>
               {/* Left side icons - move from top bar into header next to menu */}
               <div
