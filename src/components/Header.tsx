@@ -160,7 +160,7 @@ export const Header = () => {
       {/* Main Header */}
       <header className={`fixed top-0 left-0 right-0 z-[100] bg-background/95 backdrop-blur-md w-full transition-all duration-500 ease-out ${showTopBar && isScrolled ? 'border-b-2 border-primary' : 'border-b border-white/10'}`}>
         <div className="container mx-auto px-2 md:px-4">
-        <div className={`flex items-center justify-between transition-all duration-500 ease-out ${isScrolled ? 'h-12 md:h-14' : 'h-14 md:h-16'}`}>
+          <div className={`flex items-center justify-between transition-all duration-500 ease-out ${isScrolled ? 'h-12 md:h-14' : 'h-14 md:h-16'}`}>
           {/* Drawer Menu - Left */}
           <Drawer direction="left" preventScrollRestoration={false}>
             <DrawerTrigger asChild>
@@ -748,62 +748,62 @@ export const Header = () => {
           </Link>
 
           {showTopBar ? (
-            <div
-            <div 
-              className="fixed flex items-center gap-1 md:gap-2 z-[90] transition-all duration-500"
-              style={{
-                left: isScrolled ? "4rem" : "3.25rem",
-                top: isScrolled ? "1rem" : "clamp(56px, 15vw, 82px)",
-                opacity: isScrolled ? 0 : 1,
-                pointerEvents: isScrolled ? "none" : "auto"
-              }}
-            >
-              <Link to="/contact" className="group p-1.5 md:p-2 rounded-full hover:bg-primary/10 transition-all duration-300 flex items-center gap-1.5 overflow-hidden" title="Contact Us">
-                <MessageCircle className="w-4 h-4 md:w-5 md:h-5 text-white/80 group-hover:text-primary transition-colors flex-shrink-0" />
-                <span className="max-w-0 group-hover:max-w-xs transition-all duration-300 text-xs font-bebas uppercase tracking-wider text-white/80 group-hover:text-primary whitespace-nowrap overflow-hidden">
-                  Contact Us
-                </span>
-              </Link>
-              <button onClick={() => setDeclareInterestOpen(true)} className="group p-1.5 md:p-2 rounded-full hover:bg-primary/10 transition-all duration-300 flex items-center gap-1.5 overflow-hidden" title="Declare Interest">
-                <Users className="w-4 h-4 md:w-5 md:h-5 text-white/80 group-hover:text-primary transition-colors flex-shrink-0" />
-                <span className="max-w-0 group-hover:max-w-xs transition-all duration-300 text-xs font-bebas uppercase tracking-wider text-white/80 group-hover:text-primary whitespace-nowrap overflow-hidden">
-                  Declare Interest
-                </span>
-              </button>
-            </div>
-            
-            <div 
-              className="fixed flex items-center gap-1 md:gap-2 z-[90] transition-all duration-500"
-              style={{
-                right: isScrolled ? "clamp(4rem, 10vw, 10.56rem)" : "2.5rem",
-                top: isScrolled ? "10px" : "clamp(56px, 15vw, 82px)",
-                opacity: isScrolled ? 1 : 0,
-                pointerEvents: isScrolled ? "auto" : "none"
-              }}
-            >
-              <button onClick={() => setRepresentationOpen(true)} className="group p-1.5 md:p-2 rounded-full hover:bg-primary/10 transition-all duration-300 flex items-center gap-1.5 overflow-hidden" title="Request Representation">
-                <Handshake className="w-4 h-4 md:w-5 md:h-5 text-white/80 group-hover:text-primary transition-colors flex-shrink-0" />
-                <span className="max-w-0 group-hover:max-w-xs transition-all duration-300 text-xs font-bebas uppercase tracking-wider text-white/80 group-hover:text-primary whitespace-nowrap overflow-hidden">
-                  Request Representation
-                </span>
-              </button>
-              <Link to="/login" className="group p-1.5 md:p-2 rounded-full hover:bg-primary/10 transition-all duration-300 flex items-center gap-1.5 overflow-hidden" title="Portal">
-                <LogIn className="w-4 h-4 md:w-5 md:h-5 text-white/80 group-hover:text-primary transition-colors flex-shrink-0" />
-                <span className="max-w-0 group-hover:max-w-xs transition-all duration-300 text-xs font-bebas uppercase tracking-wider text-white/80 group-hover:text-primary whitespace-nowrap overflow-hidden">
-                  Portal
-                </span>
-              </Link>
-            </div>
+            <>
+              <div
+                className="fixed flex items-center gap-1 md:gap-2 z-[90] transition-all duration-500"
+                style={{
+                  left: isScrolled ? "4rem" : "3.25rem",
+                  top: isScrolled ? "1rem" : "clamp(56px, 15vw, 82px)",
+                  opacity: isScrolled ? 0 : 1,
+                  pointerEvents: isScrolled ? "none" : "auto"
+                }}
+              >
+                <Link to="/contact" className="group p-1.5 md:p-2 rounded-full hover:bg-primary/10 transition-all duration-300 flex items-center gap-1.5 overflow-hidden" title="Contact Us">
+                  <MessageCircle className="w-4 h-4 md:w-5 md:h-5 text-white/80 group-hover:text-primary transition-colors flex-shrink-0" />
+                  <span className="max-w-0 group-hover:max-w-xs transition-all duration-300 text-xs font-bebas uppercase tracking-wider text-white/80 group-hover:text-primary whitespace-nowrap overflow-hidden">
+                    Contact Us
+                  </span>
+                </Link>
+                <button onClick={() => setDeclareInterestOpen(true)} className="group p-1.5 md:p-2 rounded-full hover:bg-primary/10 transition-all duration-300 flex items-center gap-1.5 overflow-hidden" title="Declare Interest">
+                  <Users className="w-4 h-4 md:w-5 md:h-5 text-white/80 group-hover:text-primary transition-colors flex-shrink-0" />
+                  <span className="max-w-0 group-hover:max-w-xs transition-all duration-300 text-xs font-bebas uppercase tracking-wider text-white/80 group-hover:text-primary whitespace-nowrap overflow-hidden">
+                    Declare Interest
+                  </span>
+                </button>
+              </div>
+              
+              <div 
+                className="fixed flex items-center gap-1 md:gap-2 z-[90] transition-all duration-500"
+                style={{
+                  right: isScrolled ? "clamp(4rem, 10vw, 10.56rem)" : "2.5rem",
+                  top: isScrolled ? "10px" : "clamp(56px, 15vw, 82px)",
+                  opacity: isScrolled ? 1 : 0,
+                  pointerEvents: isScrolled ? "auto" : "none"
+                }}
+              >
+                <button onClick={() => setRepresentationOpen(true)} className="group p-1.5 md:p-2 rounded-full hover:bg-primary/10 transition-all duration-300 flex items-center gap-1.5 overflow-hidden" title="Request Representation">
+                  <Handshake className="w-4 h-4 md:w-5 md:h-5 text-white/80 group-hover:text-primary transition-colors flex-shrink-0" />
+                  <span className="max-w-0 group-hover:max-w-xs transition-all duration-300 text-xs font-bebas uppercase tracking-wider text-white/80 group-hover:text-primary whitespace-nowrap overflow-hidden">
+                    Request Representation
+                  </span>
+                </button>
+                <Link to="/login" className="group p-1.5 md:p-2 rounded-full hover:bg-primary/10 transition-all duration-300 flex items-center gap-1.5 overflow-hidden" title="Portal">
+                  <LogIn className="w-4 h-4 md:w-5 md:h-5 text-white/80 group-hover:text-primary transition-colors flex-shrink-0" />
+                  <span className="max-w-0 group-hover:max-w-xs transition-all duration-300 text-xs font-bebas uppercase tracking-wider text-white/80 group-hover:text-primary whitespace-nowrap overflow-hidden">
+                    Portal
+                  </span>
+                </Link>
+              </div>
             </>
-          )}
+          ) : null}
 
           {/* RISE WITH US Button - Right */}
           <Button onClick={() => setWorkWithUsOpen(true)} size="sm" className={`btn-shine font-bebas uppercase tracking-wider transition-all duration-500 ease-out translate-x-[1px] ${isScrolled ? 'text-xs md:text-sm px-3 md:px-5 h-8 md:h-9' : 'text-xs md:text-base px-3 md:px-6 h-8 md:h-10'}`}>
             <span className="hidden sm:inline">RISE WITH US</span>
             <span className="sm:hidden">RISE</span>
           </Button>
+          </div>
         </div>
-      </div>
       </header>
       
       <WorkWithUsDialog open={workWithUsOpen} onOpenChange={setWorkWithUsOpen} />
