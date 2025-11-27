@@ -126,6 +126,10 @@ export const Footer = () => {
 
         {/* Bottom Bar */}
         <div className="pt-8 border-t border-primary/10">
+          <p className="text-xs text-muted-foreground/80 text-center max-w-3xl mx-auto mb-6 px-4">
+            RISE Agency operates in accordance with the regulatory frameworks established by FIFA and UEFA. 
+            Our work follows the standards required for player representation, governance and integrity.
+          </p>
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-sm text-muted-foreground">
               © {new Date().getFullYear()} RISE Football Agency. All rights reserved.
@@ -149,6 +153,22 @@ export const Footer = () => {
                 className="text-sm text-muted-foreground hover:text-primary transition-colors font-bebas uppercase tracking-wider"
               >
                 REGULATIONS
+              </a>
+              <a 
+                href="https://www.fifa.com/legal/football-regulatory/agents" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-xs text-muted-foreground hover:text-primary transition-colors"
+              >
+                FIFA Framework
+              </a>
+              <a 
+                href="https://www.uefa.com/insideuefa/protecting-the-game/football-regulatory" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-xs text-muted-foreground hover:text-primary transition-colors"
+              >
+                UEFA Framework
               </a>
             </div>
           </div>

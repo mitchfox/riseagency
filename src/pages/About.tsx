@@ -52,6 +52,9 @@ const About = () => {
                 <p>
                   We understand that success in football extends beyond what happens on the pitch. That's why we provide comprehensive support covering all aspects of a player's career—from contract negotiations and transfer dealings to personal development and brand management.
                 </p>
+                <p className="text-base text-muted-foreground/90 pt-4">
+                  Our services operate within the regulatory frameworks established by FIFA and UEFA. We align our processes with the standards required for player representation and governance, contributing to the broader football ecosystem with professionalism and integrity.
+                </p>
               </div>
             </div>
           </div>
@@ -70,6 +73,9 @@ const About = () => {
                 </p>
                 <p>
                   Through our extensive network of clubs, scouts, and industry professionals, we create pathways for players to achieve their dreams. We pride ourselves on building lasting relationships based on trust, transparency, and mutual respect.
+                </p>
+                <p className="text-base text-muted-foreground/90 pt-4">
+                  Our work supports player development within the governance structures that maintain football's integrity. We operate as responsible participants in the regulatory environment, ensuring our services complement and respect the frameworks set by football's governing bodies.
                 </p>
               </div>
             </div>
