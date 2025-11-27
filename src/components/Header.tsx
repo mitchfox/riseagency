@@ -495,11 +495,11 @@ export const Header = () => {
                             hoveredCard === "top-left"
                               ? "translateY(20px)"
                               : hoveredCard === "bottom-left"
-                              ? "translateY(20px)"
-                              : hoveredCard === "top-right"
                               ? "translateY(-20px)"
+                              : hoveredCard === "top-right"
+                              ? "translateY(0)"
                               : hoveredCard === "bottom-right"
-                              ? "translateY(20px)"
+                              ? "translateY(0)"
                               : "translateY(0)",
                         }}
                       >
@@ -640,13 +640,13 @@ export const Header = () => {
                         height: "300px",
                         transform:
                           hoveredCard === "top-right"
-                            ? "translateY(-20px)"
+                            ? "translateY(20px)"
                             : hoveredCard === "top-left"
-                            ? "translateY(-20px)"
+                            ? "translateY(0)"
                             : hoveredCard === "bottom-right"
-                            ? "translateY(20px)"
+                            ? "translateY(-20px)"
                             : hoveredCard === "bottom-left"
-                            ? "translateY(20px)"
+                            ? "translateY(0)"
                             : "translateY(0)",
                       }}
                     >
@@ -695,13 +695,13 @@ export const Header = () => {
                         height: "300px",
                         transform:
                           hoveredCard === "bottom-left"
-                            ? "translateY(20px)"
-                            : hoveredCard === "top-left"
-                            ? "translateY(20px)"
-                            : hoveredCard === "bottom-right"
-                            ? "translateY(20px)"
-                            : hoveredCard === "top-right"
                             ? "translateY(-20px)"
+                            : hoveredCard === "top-left"
+                            ? "translateY(0)"
+                            : hoveredCard === "bottom-right"
+                            ? "translateY(0)"
+                            : hoveredCard === "top-right"
+                            ? "translateY(0)"
                             : "translateY(0)",
                       }}
                     >
@@ -753,13 +753,13 @@ export const Header = () => {
                         height: "300px",
                         transform:
                           hoveredCard === "bottom-right"
-                            ? "translateY(20px)"
-                            : hoveredCard === "top-right"
                             ? "translateY(-20px)"
+                            : hoveredCard === "top-right"
+                            ? "translateY(20px)"
                             : hoveredCard === "bottom-left"
-                            ? "translateY(20px)"
+                            ? "translateY(0)"
                             : hoveredCard === "top-left"
-                            ? "translateY(20px)"
+                            ? "translateY(-20px)"
                             : "translateY(0)",
                       }}
                     >
