@@ -209,7 +209,7 @@ export const Header = () => {
         <div className="container mx-auto px-2 md:px-4">
         <div className={`flex items-center justify-between transition-all duration-500 ease-out ${isScrolled ? 'h-12 md:h-14' : 'h-14 md:h-16'}`}>
           {/* Drawer Menu - Left */}
-          <Drawer direction="left" modal={false} preventScrollRestoration={false}>
+          <Drawer direction="left" preventScrollRestoration={false}>
             <DrawerTrigger asChild>
               <button
                 className="group relative flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-primary transition-all duration-300 ease-out w-12 h-12 md:w-14 md:h-14"
@@ -235,7 +235,7 @@ export const Header = () => {
               </button>
             </DrawerTrigger>
             <DrawerContent 
-              className="fixed inset-0 h-screen w-full !mt-0 rounded-none bg-black animate-slide-in-left transition-all duration-300 ease-out z-[200] overflow-hidden"
+              className="fixed inset-0 h-screen w-full !mt-0 rounded-none bg-black animate-slide-in-left transition-all duration-300 ease-out overflow-hidden"
             >
               {/* Full screen grid layout */}
               <div className="grid lg:grid-cols-2 h-full w-full overflow-hidden">
