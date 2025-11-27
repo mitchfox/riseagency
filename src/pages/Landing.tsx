@@ -14,7 +14,7 @@ export default function Landing() {
   ];
 
   return (
-    <div className="min-h-screen bg-black flex flex-col items-center relative overflow-hidden">
+    <div className="min-h-screen bg-black flex flex-col items-center relative overflow-hidden cursor-none">
       {/* Matrix Player Effect - Full Background */}
       <div className="absolute inset-0">
         <MatrixPlayerEffect />
