@@ -8,6 +8,7 @@ import { PageTracker } from "@/components/PageTracker";
 import { PageTransition } from "@/components/PageTransition";
 import { TransitionProvider } from "@/contexts/TransitionContext";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
+import { useSubdomainRouter } from "@/hooks/useSubdomainRouter";
 import Index from "./pages/Index";
 import Stars from "./pages/Stars";
 import Players from "./pages/Performance"; // Old Performance content now becomes Players
@@ -42,6 +43,11 @@ import FluidCursor from "./components/FluidCursor";
 
 const queryClient = new QueryClient();
 
+const SubdomainRouter = () => {
+  useSubdomainRouter();
+  return null;
+};
+
 const App = () => {
   usePushNotifications();
   
@@ -51,6 +57,7 @@ const App = () => {
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          <SubdomainRouter />
           <TransitionProvider>
             <FluidCursor />
             <PageTracker />
