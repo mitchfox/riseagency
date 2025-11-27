@@ -1274,35 +1274,50 @@ export type Database = {
       }
       player_outreach_pro: {
         Row: {
+          age: number | null
           created_at: string | null
+          current_club: string | null
+          date_of_birth: string | null
           id: string
           ig_handle: string | null
           initial_message: string | null
           messaged: boolean | null
+          nationality: string | null
           notes: string | null
           player_name: string
+          position: string | null
           response_received: boolean | null
           updated_at: string | null
         }
         Insert: {
+          age?: number | null
           created_at?: string | null
+          current_club?: string | null
+          date_of_birth?: string | null
           id?: string
           ig_handle?: string | null
           initial_message?: string | null
           messaged?: boolean | null
+          nationality?: string | null
           notes?: string | null
           player_name: string
+          position?: string | null
           response_received?: boolean | null
           updated_at?: string | null
         }
         Update: {
+          age?: number | null
           created_at?: string | null
+          current_club?: string | null
+          date_of_birth?: string | null
           id?: string
           ig_handle?: string | null
           initial_message?: string | null
           messaged?: boolean | null
+          nationality?: string | null
           notes?: string | null
           player_name?: string
+          position?: string | null
           response_received?: boolean | null
           updated_at?: string | null
         }
@@ -1310,44 +1325,59 @@ export type Database = {
       }
       player_outreach_youth: {
         Row: {
+          age: number | null
           created_at: string | null
+          current_club: string | null
+          date_of_birth: string | null
           id: string
           ig_handle: string | null
           initial_message: string | null
           messaged: boolean | null
+          nationality: string | null
           notes: string | null
           parent_approval: boolean | null
           parent_contact: string | null
           parents_name: string | null
           player_name: string
+          position: string | null
           response_received: boolean | null
           updated_at: string | null
         }
         Insert: {
+          age?: number | null
           created_at?: string | null
+          current_club?: string | null
+          date_of_birth?: string | null
           id?: string
           ig_handle?: string | null
           initial_message?: string | null
           messaged?: boolean | null
+          nationality?: string | null
           notes?: string | null
           parent_approval?: boolean | null
           parent_contact?: string | null
           parents_name?: string | null
           player_name: string
+          position?: string | null
           response_received?: boolean | null
           updated_at?: string | null
         }
         Update: {
+          age?: number | null
           created_at?: string | null
+          current_club?: string | null
+          date_of_birth?: string | null
           id?: string
           ig_handle?: string | null
           initial_message?: string | null
           messaged?: boolean | null
+          nationality?: string | null
           notes?: string | null
           parent_approval?: boolean | null
           parent_contact?: string | null
           parents_name?: string | null
           player_name?: string
+          position?: string | null
           response_received?: boolean | null
           updated_at?: string | null
         }
