@@ -188,6 +188,24 @@ export const Header = () => {
                   `,
                   backgroundSize: '100px 100px'
                 }} />
+                
+                {/* X-axis labels */}
+                <div className="absolute top-0 left-0 right-0 h-8 flex">
+                  {Array.from({ length: 20 }).map((_, i) => (
+                    <div key={`x-${i}`} className="text-primary text-xs font-mono bg-black/50 px-1" style={{ position: 'absolute', left: `${i * 100}px`, top: '2px' }}>
+                      {i * 100}
+                    </div>
+                  ))}
+                </div>
+                
+                {/* Y-axis labels */}
+                <div className="absolute top-0 left-0 bottom-0 w-12 flex flex-col">
+                  {Array.from({ length: 20 }).map((_, i) => (
+                    <div key={`y-${i}`} className="text-primary text-xs font-mono bg-black/50 px-1" style={{ position: 'absolute', top: `${i * 100}px`, left: '2px' }}>
+                      {i * 100}
+                    </div>
+                  ))}
+                </div>
               </div>
               
               {/* Full screen grid layout */}
