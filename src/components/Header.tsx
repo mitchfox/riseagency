@@ -190,7 +190,7 @@ export const Header = () => {
                           e.currentTarget.classList.remove('pointer-events-none');
                         }
                       }}>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" className="h-6 w-6 md:h-7 md:w-7 lg:h-8 lg:w-8 xl:h-10 xl:w-10 text-white mx-0 my-[5px]">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" className="h-6 w-6 md:h-7 md:w-7 lg:h-8 lg:w-8 xl:h-10 xl:w-10 text-white translate-x-[5px] translate-y-[-2px]">
                           <line x1="4" y1="8" x2="20" y2="16" className="origin-center animate-menu-open-line-1" />
                           <line x1="2" y1="16" x2="18" y2="8" className="origin-center animate-menu-open-line-2" />
                         </svg>
