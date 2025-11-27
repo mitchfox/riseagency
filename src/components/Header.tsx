@@ -568,8 +568,8 @@ export const Header = () => {
           {showTopBar && <>
               {/* Left side icons - move from top bar into header next to menu */}
               <div className="fixed flex items-center gap-1 md:gap-2 z-[90]" style={{
-              left: isScrolled ? "clamp(3.5rem, 8vw, 8.56rem)" : "3.25rem",
-              top: isScrolled ? "10px" : "clamp(56px, 15vw, 82px)",
+              left: isScrolled ? "4rem" : "3.25rem",
+              top: isScrolled ? "1rem" : "clamp(56px, 15vw, 82px)",
               opacity: isScrolled ? 1 : 0,
               pointerEvents: isScrolled ? "auto" : "none",
               transition: "all 0.5s cubic-bezier(0.4, 0, 0.2, 1)"
