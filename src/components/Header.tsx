@@ -735,7 +735,7 @@ export const Header = () => {
           {showTopBar && <>
               {/* Left side icons - positioned relative to menu button */}
               <div className="fixed flex items-center gap-1 md:gap-2 z-[90]" style={{
-              left: isScrolled ? "3.5rem" : "3rem",
+              left: isScrolled ? "4.5rem" : "3rem", // Desktop: further right
               top: isScrolled ? "0.75rem" : "clamp(56px, 15vw, 82px)",
               opacity: isScrolled ? 1 : 0,
               pointerEvents: isScrolled ? "auto" : "none",
@@ -743,13 +743,13 @@ export const Header = () => {
             }}>
                 <Link to="/contact" className="group p-1.5 md:p-2 rounded-full hover:bg-primary/10 transition-all duration-300 flex items-center gap-1.5 overflow-hidden" title="Contact Us">
                   <MessageCircle className="w-4 h-4 md:w-5 md:h-5 text-white/80 group-hover:text-primary transition-colors flex-shrink-0" />
-                  <span className="max-w-0 group-hover:max-w-xs transition-all duration-300 text-xs font-bebas uppercase tracking-wider text-white/80 group-hover:text-primary whitespace-nowrap overflow-hidden">
+                  <span className="max-w-0 md:group-hover:max-w-xs transition-all duration-300 text-xs font-bebas uppercase tracking-wider text-white/80 group-hover:text-primary whitespace-nowrap overflow-hidden">
                     Contact Us
                   </span>
                 </Link>
                 <button onClick={() => setDeclareInterestOpen(true)} className="group p-1.5 md:p-2 rounded-full hover:bg-primary/10 transition-all duration-300 flex items-center gap-1.5 overflow-hidden" title="Declare Interest">
                   <Users className="w-4 h-4 md:w-5 md:h-5 text-white/80 group-hover:text-primary transition-colors flex-shrink-0" />
-                  <span className="max-w-0 group-hover:max-w-xs transition-all duration-300 text-xs font-bebas uppercase tracking-wider text-white/80 group-hover:text-primary whitespace-nowrap overflow-hidden">
+                  <span className="max-w-0 md:group-hover:max-w-xs transition-all duration-300 text-xs font-bebas uppercase tracking-wider text-white/80 group-hover:text-primary whitespace-nowrap overflow-hidden">
                     Declare Interest
                   </span>
                 </button>
@@ -757,7 +757,7 @@ export const Header = () => {
               
               {/* Right side icons - positioned relative to RISE WITH US button */}
               <div className="fixed flex items-center gap-1 md:gap-2 z-[90]" style={{
-              right: isScrolled ? "clamp(6.5rem, 15vw, 12rem)" : "2.5rem",
+              right: isScrolled ? "clamp(7rem, 15vw, 11.5rem)" : "2.5rem", // Desktop: perfect, iPad: bit left, Mobile: further right
               top: isScrolled ? "0.75rem" : "clamp(56px, 15vw, 82px)",
               opacity: isScrolled ? 1 : 0,
               pointerEvents: isScrolled ? "auto" : "none",
@@ -765,13 +765,13 @@ export const Header = () => {
             }}>
                 <button onClick={() => setRepresentationOpen(true)} className="group p-1.5 md:p-2 rounded-full hover:bg-primary/10 transition-all duration-300 flex items-center gap-1.5 overflow-hidden" title="Request Representation">
                   <Handshake className="w-4 h-4 md:w-5 md:h-5 text-white/80 group-hover:text-primary transition-colors flex-shrink-0" />
-                  <span className="max-w-0 group-hover:max-w-xs transition-all duration-300 text-xs font-bebas uppercase tracking-wider text-white/80 group-hover:text-primary whitespace-nowrap overflow-hidden">
+                  <span className="max-w-0 md:group-hover:max-w-xs transition-all duration-300 text-xs font-bebas uppercase tracking-wider text-white/80 group-hover:text-primary whitespace-nowrap overflow-hidden">
                     Request Representation
                   </span>
                 </button>
                 <Link to="/login" className="group p-1.5 md:p-2 rounded-full hover:bg-primary/10 transition-all duration-300 flex items-center gap-1.5 overflow-hidden" title="Portal">
                   <LogIn className="w-4 h-4 md:w-5 md:h-5 text-white/80 group-hover:text-primary transition-colors flex-shrink-0" />
-                  <span className="max-w-0 group-hover:max-w-xs transition-all duration-300 text-xs font-bebas uppercase tracking-wider text-white/80 group-hover:text-primary whitespace-nowrap overflow-hidden">
+                  <span className="max-w-0 md:group-hover:max-w-xs transition-all duration-300 text-xs font-bebas uppercase tracking-wider text-white/80 group-hover:text-primary whitespace-nowrap overflow-hidden">
                     Portal
                   </span>
                 </Link>
