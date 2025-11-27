@@ -228,11 +228,19 @@ export const Header = () => {
                   {/* Constraint container for menu area: 0 to 1500 on x, 0 to 670 on y */}
                   <div className="absolute inset-0" style={{ maxWidth: "1500px", maxHeight: "670px", overflow: "hidden" }}>
                     
-                    {/* Decorative vertical rectangle - "Our Work" spanning from Stars to News */}
+                    {/* Scalable wrapper to maintain proportions at all zoom levels */}
                     <div 
-                      className="absolute w-8 border-2 border-primary bg-primary/10 flex items-center justify-center"
-                      style={{ left: "50px", top: "98px", height: "210px", borderRadius: "24px" }}
+                      className="absolute origin-top-left"
+                      style={{ 
+                        transform: 'scale(var(--menu-scale, 1))',
+                        '--menu-scale': 'clamp(0.5, calc(100vw / 1920), 2)' 
+                      } as React.CSSProperties}
                     >
+                      {/* Decorative vertical rectangle - "Our Work" spanning from Stars to News */}
+                      <div 
+                        className="absolute w-8 border-2 border-primary bg-primary/10 flex items-center justify-center"
+                        style={{ left: "50px", top: "98px", height: "210px", borderRadius: "24px" }}
+                      >
                       <span className="text-white/80 font-bebas text-sm italic tracking-wider" style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>
                         OUR WORK
                       </span>
@@ -453,6 +461,8 @@ export const Header = () => {
                       </div>
                     </Link>
                   </DrawerClose>
+                  
+                  </div> {/* End scalable wrapper */}
                   </div>
                 </div>
 
