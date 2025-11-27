@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useLocation, type Location } from "react-router-dom";
 import logo from "@/assets/logo.png";
 import { ShaderAnimation } from "@/components/ui/shader-animation";
+import { useTransition } from "@/contexts/TransitionContext";
 
 interface PageTransitionProps {
   children: (displayLocation: Location) => React.ReactNode;
@@ -11,12 +12,14 @@ export const PageTransition = ({ children }: PageTransitionProps) => {
   const location = useLocation();
   const [displayLocation, setDisplayLocation] = useState(location);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const { setIsTransitioning: setGlobalTransitioning } = useTransition();
 
   useEffect(() => {
     // If the URL changed but our displayed location hasn't, start a queued transition
     if (location.pathname === displayLocation.pathname) return;
 
     setIsTransitioning(true);
+    setGlobalTransitioning(true);
 
     // After 1.5s (transition out), actually switch the rendered route
     const showNewTimer = setTimeout(() => {
@@ -26,13 +29,14 @@ export const PageTransition = ({ children }: PageTransitionProps) => {
     // After another 1.5s (transition in), end the overlay
     const endTimer = setTimeout(() => {
       setIsTransitioning(false);
+      setGlobalTransitioning(false);
     }, 3000);
 
     return () => {
       clearTimeout(showNewTimer);
       clearTimeout(endTimer);
     };
-  }, [location, displayLocation]);
+  }, [location, displayLocation, setGlobalTransitioning]);
 
   return (
     <>

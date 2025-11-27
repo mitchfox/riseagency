@@ -1,6 +1,7 @@
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 
 interface PlayerProfileModalProps {
   open: boolean;
@@ -34,6 +35,9 @@ const PlayerProfileModal = ({ open, onOpenChange, playerData }: PlayerProfileMod
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-screen h-screen max-w-none p-0 gap-0 border-0 rounded-none">
+        <VisuallyHidden>
+          <DialogTitle>{playerData.name} Profile</DialogTitle>
+        </VisuallyHidden>
         <Button
           variant="ghost"
           onClick={() => onOpenChange(false)}

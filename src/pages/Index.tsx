@@ -6,7 +6,6 @@ import { WorkWithUsDialog } from "@/components/WorkWithUsDialog";
 import { IntroModal } from "@/components/IntroModal";
 import { SEO } from "@/components/SEO";
 import { VideoPortfolio } from "@/components/VideoPortfolio";
-import { VideoScene3D } from "@/components/VideoScene3D";
 import ScoutingNetworkMap from "@/components/ScoutingNetworkMap";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";

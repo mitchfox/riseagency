@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { useTransition } from '@/contexts/TransitionContext';
 
 interface Node {
   x: number;
@@ -21,7 +22,7 @@ const FluidCursor = () => {
   const posRef = useRef({ x: 0, y: 0 });
   const linesRef = useRef<Line[]>([]);
   const frameRef = useRef(0);
-  const hueRef = useRef(0);
+  const { isTransitioning } = useTransition();
 
   useEffect(() => {
     // Only enable on desktop (non-touch devices with screen width > 768px)
@@ -165,6 +166,11 @@ const FluidCursor = () => {
       document.removeEventListener('mousemove', handleMouseMove);
     };
   }, []);
+
+  // Hide cursor during page transitions
+  if (isTransitioning) {
+    return null;
+  }
 
   return (
     <canvas
