@@ -159,7 +159,7 @@ export const Footer = () => {
                 href="https://www.fifa.com/legal/football-regulatory/agents" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="text-xs text-muted-foreground hover:text-primary transition-colors"
+                className="text-sm text-muted-foreground hover:text-primary transition-colors font-bebas uppercase tracking-wider"
               >
                 FIFA Framework
               </a>
@@ -167,7 +167,7 @@ export const Footer = () => {
                 href="https://www.uefa.com/insideuefa/protecting-the-game/football-regulatory" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="text-xs text-muted-foreground hover:text-primary transition-colors"
+                className="text-sm text-muted-foreground hover:text-primary transition-colors font-bebas uppercase tracking-wider"
               >
                 UEFA Framework
               </a>
