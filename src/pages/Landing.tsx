@@ -2,7 +2,6 @@ import { Link } from "react-router-dom";
 import { LanguageSelector } from "@/components/LanguageSelector";
 import { HoverText } from "@/components/HoverText";
 import { MatrixPlayerEffect } from "@/components/MatrixPlayerEffect";
-import logo from "@/assets/logo.png";
 
 export default function Landing() {
   const navLinks = [
@@ -14,7 +13,7 @@ export default function Landing() {
   ];
 
   return (
-    <div className="min-h-screen bg-black flex flex-col items-center relative overflow-hidden cursor-none">
+    <div className="min-h-screen bg-black flex flex-col items-center justify-end relative overflow-hidden cursor-none">
       {/* Video Background - Full Screen */}
       <video
         autoPlay
@@ -30,42 +29,31 @@ export default function Landing() {
       <div className="absolute inset-0">
         <MatrixPlayerEffect />
       </div>
-      
-      {/* Logo - Top Center */}
-      <div className="pt-8 md:pt-12 z-10 relative">
-        <img 
-          src={logo} 
-          alt="Rise Logo" 
-          className="w-20 md:w-24 h-auto"
-        />
-      </div>
 
-      {/* Main Content - Centered */}
-      <div className="flex flex-col items-center justify-center flex-1 gap-6 px-4 z-10 relative">
-        {/* REALISE POTENTIAL Text */}
-        <h1 className="text-4xl md:text-6xl lg:text-7xl font-bebas uppercase tracking-[0.3em] text-white/90 text-center drop-shadow-[0_0_30px_rgba(0,255,0,0.3)]">
-          <HoverText text="REALISE POTENTIAL" />
-        </h1>
-      </div>
-
-      {/* Bottom Section - Navigation + Language Selector */}
-      <div className="pb-12 flex flex-col items-center gap-6 z-10 relative">
-        {/* Navigation Links */}
-        <nav className="flex items-center justify-center gap-8 md:gap-16 px-4">
-          {navLinks.map((link) => (
-            <Link
-              key={link.to}
-              to={link.to}
-              className="text-sm md:text-base font-bebas uppercase tracking-[0.2em] text-white/60 hover:text-primary transition-colors duration-300"
-            >
-              <HoverText text={link.label} />
-            </Link>
-          ))}
-        </nav>
-        
-        {/* Language Selector - Below HOME, offset 33px right */}
-        <div className="ml-[33px]">
-          <LanguageSelector />
+      {/* Bottom Section - Navigation + Language Selector in Golden Box */}
+      <div className="pb-12 z-10 relative">
+        <div className="border-2 border-primary/60 bg-black/40 backdrop-blur-sm px-2 py-3">
+          {/* Navigation Links with Dividers */}
+          <nav className="flex items-center justify-center">
+            {navLinks.map((link, index) => (
+              <div key={link.to} className="flex items-center">
+                <Link
+                  to={link.to}
+                  className="px-6 md:px-8 text-sm md:text-base font-bebas uppercase tracking-[0.2em] text-white/80 hover:text-primary transition-colors duration-300"
+                >
+                  <HoverText text={link.label} />
+                </Link>
+                {index < navLinks.length - 1 && (
+                  <div className="w-px h-4 bg-primary/50" />
+                )}
+              </div>
+            ))}
+          </nav>
+          
+          {/* Language Selector - Below with divider */}
+          <div className="border-t border-primary/40 mt-3 pt-3 flex justify-center ml-[33px]">
+            <LanguageSelector />
+          </div>
         </div>
       </div>
     </div>
