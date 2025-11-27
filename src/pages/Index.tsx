@@ -230,6 +230,51 @@ const Index = () => {
               </h2>
             </div>
             <ScoutingNetworkMap />
+
+            {/* Scouting Philosophy Points */}
+            <div className="mt-12 grid md:grid-cols-3 gap-6">
+              <div className="p-6 border border-border/50 bg-card/30">
+                <div className="flex items-start gap-4">
+                  <span className="text-4xl font-bebas text-primary/30">01</span>
+                  <div className="space-y-2">
+                    <h3 className="text-xl font-bebas uppercase tracking-wider text-foreground">
+                      Deep European Network
+                    </h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      We have built an extensive scouting network across Europe, with eyes at every level of the professional game.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-6 border border-border/50 bg-card/30">
+                <div className="flex items-start gap-4">
+                  <span className="text-4xl font-bebas text-primary/30">02</span>
+                  <div className="space-y-2">
+                    <h3 className="text-xl font-bebas uppercase tracking-wider text-foreground">
+                      Future-Focused Scouting
+                    </h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      Novel scouting based on qualities that level up through the game—not just what works now, but what scales with a player's career.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-6 border border-border/50 bg-card/30">
+                <div className="flex items-start gap-4">
+                  <span className="text-4xl font-bebas text-primary/30">03</span>
+                  <div className="space-y-2">
+                    <h3 className="text-xl font-bebas uppercase tracking-wider text-foreground">
+                      Complete Player Knowledge
+                    </h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      For any professional or academy player, we intend to know not just who they are—but how they play, what makes them tick, and what qualities they have that level up.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </section>
 
