@@ -462,8 +462,41 @@ All colors MUST be HSL.
     -webkit-backface-visibility: hidden;
   }
 
-  .flip-card-back {
-    transform: rotateY(180deg);
-  }
+.flip-card-back {
+  transform: rotateY(180deg);
+}
+
+/* Hover Text Animation - Staggered Letter Effect */
+.hover-text-wrapper {
+  position: relative;
+  display: inline-block;
+  overflow: hidden;
+  line-height: 1.2;
+}
+
+.hover-text-original,
+.hover-text-clone {
+  display: inline-flex;
+}
+
+.hover-text-clone {
+  position: absolute;
+  top: 100%;
+  left: 0;
+}
+
+.hover-text-letter,
+.hover-text-letter-clone {
+  display: inline-block;
+  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hover-text-wrapper:hover .hover-text-letter {
+  transform: translateY(-100%);
+}
+
+.hover-text-wrapper:hover .hover-text-letter-clone {
+  transform: translateY(-100%);
+}
 
 }
