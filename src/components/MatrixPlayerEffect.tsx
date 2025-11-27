@@ -246,7 +246,60 @@ export const MatrixPlayerEffect = ({ className = "" }: MatrixPlayerEffectProps) 
           
           ctx.restore();
 
-          // X-ray circle indicator - GOLD color, outside clip
+          // Rust/gold particles falling off the x-ray circle edge
+          for (let i = 0; i < 25; i++) {
+            const particleAngle = (i / 25) * Math.PI * 2 + timeRef.current * 0.3;
+            const fallProgress = ((timeRef.current * 0.8 + i * 0.15) % 1);
+            const fallDistance = fallProgress * 80;
+            
+            // Start position on circle edge
+            const startX = mousePos.x + Math.cos(particleAngle) * xrayRadius;
+            const startY = mousePos.y + Math.sin(particleAngle) * xrayRadius;
+            
+            // Fall downward with slight drift
+            const px = startX + Math.sin(timeRef.current * 2 + i) * 8;
+            const py = startY + fallDistance;
+            
+            // Fade out as they fall
+            const alpha = (1 - fallProgress) * 0.7;
+            const size = (1 - fallProgress) * 3 + 1;
+            
+            ctx.fillStyle = `rgba(200, 170, 90, ${alpha})`;
+            ctx.shadowColor = "rgba(200, 170, 90, 0.5)";
+            ctx.shadowBlur = 8;
+            ctx.beginPath();
+            ctx.arc(px, py, size, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          
+          // Animated glow ring around x-ray circle
+          const glowPulse = Math.sin(timeRef.current * 4) * 0.3 + 0.7;
+          ctx.strokeStyle = `rgba(200, 170, 90, ${0.3 * glowPulse})`;
+          ctx.lineWidth = 8;
+          ctx.shadowColor = "rgba(200, 170, 90, 1)";
+          ctx.shadowBlur = 30 * glowPulse;
+          ctx.beginPath();
+          ctx.arc(mousePos.x, mousePos.y, xrayRadius + 5, 0, Math.PI * 2);
+          ctx.stroke();
+          
+          // Rotating spark particles around circle
+          for (let i = 0; i < 12; i++) {
+            const sparkAngle = (i / 12) * Math.PI * 2 + timeRef.current * 2;
+            const sparkRadius = xrayRadius + 10 + Math.sin(timeRef.current * 5 + i) * 5;
+            const sx = mousePos.x + Math.cos(sparkAngle) * sparkRadius;
+            const sy = mousePos.y + Math.sin(sparkAngle) * sparkRadius;
+            
+            const sparkAlpha = 0.6 + Math.sin(timeRef.current * 8 + i * 2) * 0.4;
+            ctx.fillStyle = `rgba(200, 170, 90, ${sparkAlpha})`;
+            ctx.shadowColor = "rgba(200, 170, 90, 1)";
+            ctx.shadowBlur = 15;
+            ctx.beginPath();
+            ctx.arc(sx, sy, 2.5, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          ctx.shadowBlur = 0;
+
+          // X-ray circle indicator - GOLD color
           ctx.strokeStyle = "rgba(200, 170, 90, 0.6)";
           ctx.lineWidth = 2;
           ctx.shadowColor = "rgba(200, 170, 90, 0.8)";
