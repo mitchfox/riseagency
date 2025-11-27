@@ -52,8 +52,8 @@ export default function Landing() {
           ))}
         </nav>
         
-        {/* Language Selector - Below HOME, offset 31px right */}
-        <div className="ml-[31px]">
+        {/* Language Selector - Below HOME, offset 33px right */}
+        <div className="ml-[33px]">
           <LanguageSelector />
         </div>
       </div>
