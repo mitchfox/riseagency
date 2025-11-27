@@ -30,6 +30,7 @@ export const MapCoordinatesManager = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedCountry, setSelectedCountry] = useState<string>("all");
   const [mapKey, setMapKey] = useState(0); // Key to force map refresh
+  const [visibleCount, setVisibleCount] = useState(20);
   const [formData, setFormData] = useState({
     name: "",
     club_name: "",
@@ -193,6 +194,22 @@ export const MapCoordinatesManager = () => {
   const filteredContacts = selectedCountry === "all" 
     ? contacts 
     : contacts.filter(c => c.country === selectedCountry);
+  
+  // For "all" filter, limit to visibleCount; for specific country, show all
+  const displayedContacts = selectedCountry === "all" 
+    ? filteredContacts.slice(0, visibleCount)
+    : filteredContacts;
+  
+  const hasMoreToLoad = selectedCountry === "all" && filteredContacts.length > visibleCount;
+
+  const handleCountryChange = (value: string) => {
+    setSelectedCountry(value);
+    setVisibleCount(20); // Reset pagination when changing filter
+  };
+
+  const loadMore = () => {
+    setVisibleCount(prev => prev + 20);
+  };
 
   return (
     <div className="flex flex-col h-full gap-4">
@@ -223,7 +240,7 @@ export const MapCoordinatesManager = () => {
           </p>
         </div>
         <div className="flex gap-2 items-center">
-          <Select value={selectedCountry} onValueChange={setSelectedCountry}>
+          <Select value={selectedCountry} onValueChange={handleCountryChange}>
             <SelectTrigger className="w-[200px]">
               <SelectValue placeholder="Filter by country" />
             </SelectTrigger>
@@ -371,7 +388,7 @@ export const MapCoordinatesManager = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredContacts.map((contact) => (
+                {displayedContacts.map((contact) => (
                   <TableRow key={contact.id}>
                     <TableCell className="font-medium">{contact.name}</TableCell>
                     <TableCell className="text-muted-foreground">{contact.club_name || "—"}</TableCell>
@@ -411,6 +428,13 @@ export const MapCoordinatesManager = () => {
               </TableBody>
             </Table>
           </ScrollArea>
+          {hasMoreToLoad && (
+            <div className="p-4 border-t border-border">
+              <Button variant="outline" onClick={loadMore} className="w-full">
+                Load More ({filteredContacts.length - visibleCount} remaining)
+              </Button>
+            </div>
+          )}
         </Card>
       )}
     </div>
