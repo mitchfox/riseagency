@@ -208,283 +208,113 @@ export const Header = () => {
                 </div>
               </div>
               
-              {/* Full screen grid layout */}
-              <div className="grid lg:grid-cols-2 h-full w-full overflow-hidden">
-                {/* Left side - Navigation */}
-                <div className="h-full flex flex-col bg-cover bg-center relative" style={{
-                  backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url(${blackMarbleBg})`,
-                  backgroundSize: 'cover',
-                  backgroundPosition: 'center'
-                }}>
-                  <div className={`flex items-center transition-all duration-300 ease-out px-4 md:px-6 lg:px-8 xl:px-12 ${isScrolled ? 'h-7 md:h-8 pt-2' : 'h-14 md:h-16 lg:h-20 xl:h-24'}`}>
-                    <DrawerClose asChild>
-                      <button className="group relative flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-primary transition-all duration-300 ease-out w-10 h-10 md:w-12 md:h-12 lg:w-14 lg:h-14 xl:w-16 xl:h-16 pointer-events-none [&>svg]:animate-color-to-gold" aria-label="Close menu" style={{
-                        pointerEvents: 'none'
-                      }} onAnimationEnd={e => {
-                        if (e.animationName.includes('color-to-gold')) {
-                          (e.currentTarget as HTMLButtonElement).style.pointerEvents = 'auto';
-                          e.currentTarget.classList.remove('pointer-events-none');
-                        }
-                      }}>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" className="h-6 w-6 md:h-7 md:w-7 lg:h-8 lg:w-8 xl:h-10 xl:w-10 text-white translate-x-[5px] translate-y-[-2px]">
-                          <line x1="4" y1="8" x2="20" y2="16" className="origin-center animate-menu-open-line-1" />
-                          <line x1="2" y1="16" x2="18" y2="8" className="origin-center animate-menu-open-line-2" />
-                        </svg>
-                      </button>
-                    </DrawerClose>
-                  </div>
-                  
-                  <div className="flex-1 flex flex-col justify-between px-4 md:px-6 lg:px-8 xl:px-12 py-8 md:py-12 lg:py-16 overflow-y-auto max-h-[calc(100vh-8rem)] border-t-[2rem] border-b-[2rem] border-transparent">
-                    <nav className="flex flex-col gap-1 md:gap-1.5 max-w-md lg:max-w-xl xl:max-w-2xl transform -translate-y-[105px] translate-x-[5px]">
-                      <DrawerClose asChild>
-                        <Link to="/" className={`text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bebas uppercase text-white hover:text-primary hover:bg-white/5 transition-all tracking-wider py-1 px-2 rounded flex items-center gap-2 ${isActive("/") ? "text-primary" : ""}`}>
-                          Home
-                          {isActive("/") && <img src={riseStar} alt="" className="w-6 h-6 lg:w-7 lg:h-7 xl:w-8 xl:h-8 inline-block" />}
-                        </Link>
-                      </DrawerClose>
-                      
-                      <div className="h-px bg-white/20 my-2" />
-                      
-                      <DrawerClose asChild>
-                        <Link to="/stars" onMouseEnter={() => setStarsHovered(true)} onMouseLeave={() => setStarsHovered(false)} className={`text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bebas uppercase text-white hover:text-primary hover:bg-white/5 transition-all tracking-wider py-1 px-2 rounded flex items-center gap-2 ${isActive("/stars") || location.pathname.startsWith("/stars/") ? "text-primary" : ""}`}>
-                          Stars
-                          {(isActive("/stars") || location.pathname.startsWith("/stars/")) && <img src={riseStar} alt="" className="w-6 h-6 lg:w-7 lg:h-7 xl:w-8 xl:h-8 inline-block" />}
-                        </Link>
-                      </DrawerClose>
-                      
-                      <DrawerClose asChild>
-                        <Link to="/performance" onMouseEnter={() => setRealisePotentialHovered(true)} onMouseLeave={() => setRealisePotentialHovered(false)} className={`text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bebas uppercase text-white hover:text-primary hover:bg-white/5 transition-all tracking-wider py-1 px-2 rounded flex items-center gap-2 ${isActive("/performance") ? "text-primary" : ""}`}>
-                          Realise Potential
-                          {isActive("/performance") && <img src={riseStar} alt="" className="w-6 h-6 lg:w-7 lg:h-7 xl:w-8 xl:h-8 inline-block" />}
-                        </Link>
-                      </DrawerClose>
-                      
-                      <DrawerClose asChild>
-                        <Link to="/between-the-lines" onMouseEnter={() => setBetweenLinesHovered(true)} onMouseLeave={() => setBetweenLinesHovered(false)} className={`text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bebas uppercase text-white hover:text-primary hover:bg-white/5 transition-all tracking-wider py-1 px-2 rounded flex items-center gap-2 ${isActive("/between-the-lines") ? "text-primary" : ""}`}>
-                          Between The Lines
-                          {isActive("/between-the-lines") && <img src={riseStar} alt="" className="w-6 h-6 lg:w-7 lg:h-7 xl:w-8 xl:h-8 inline-block" />}
-                        </Link>
-                      </DrawerClose>
-                      
-                      <div className="h-px bg-white/20 my-2" />
-                      
-                      <DrawerClose asChild>
-                        <Link to="/players" className={`text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bebas uppercase text-white hover:text-primary hover:bg-white/5 transition-all tracking-wider py-1 px-2 rounded flex items-center gap-2 ${isActive("/players") || location.pathname.startsWith("/players/") ? "text-primary" : ""}`}>
-                          Players
-                          {(isActive("/players") || location.pathname.startsWith("/players/")) && <img src={riseStar} alt="" className="w-6 h-6 lg:w-7 lg:h-7 xl:w-8 xl:h-8 inline-block" />}
-                        </Link>
-                      </DrawerClose>
-                      
-                      <DrawerClose asChild>
-                        <Link to="/clubs" className={`text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bebas uppercase text-white hover:text-primary hover:bg-white/5 transition-all tracking-wider py-1 px-2 rounded flex items-center gap-2 ${isActive("/clubs") ? "text-primary" : ""}`}>
-                          Clubs
-                          {isActive("/clubs") && <img src={riseStar} alt="" className="w-6 h-6 lg:w-7 lg:h-7 xl:w-8 xl:h-8 inline-block" />}
-                        </Link>
-                      </DrawerClose>
-                      
-                      <DrawerClose asChild>
-                        <Link to="/coaches" className={`text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bebas uppercase text-white hover:text-primary hover:bg-white/5 transition-all tracking-wider py-1 px-2 rounded flex items-center gap-2 ${isActive("/coaches") ? "text-primary" : ""}`}>
-                          Coaches
-                          {isActive("/coaches") && <img src={riseStar} alt="" className="w-6 h-6 lg:w-7 lg:h-7 xl:w-8 xl:h-8 inline-block" />}
-                        </Link>
-                      </DrawerClose>
-                      
-                      <DrawerClose asChild>
-                        <Link to="/scouts" className={`text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bebas uppercase text-white hover:text-primary hover:bg-white/5 transition-all tracking-wider py-1 px-2 rounded flex items-center gap-2 ${isActive("/scouts") ? "text-primary" : ""}`}>
-                          Scouts
-                          {isActive("/scouts") && <img src={riseStar} alt="" className="w-6 h-6 lg:w-7 lg:h-7 xl:w-8 xl:h-8 inline-block" />}
-                        </Link>
-                      </DrawerClose>
-                    </nav>
+              {/* Full screen grid layout - Absolute positioned */}
+              <div className="h-full w-full relative bg-cover bg-center" style={{
+                backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url(${blackMarbleBg})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center'
+              }}>
+                {/* Close button at 100, 50 */}
+                <DrawerClose asChild>
+                  <button 
+                    className="absolute z-50 group flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-primary transition-all duration-300 ease-out w-12 h-12 pointer-events-none [&>svg]:animate-color-to-gold" 
+                    aria-label="Close menu" 
+                    style={{ left: '100px', top: '50px', pointerEvents: 'none' }}
+                    onAnimationEnd={e => {
+                      if (e.animationName.includes('color-to-gold')) {
+                        (e.currentTarget as HTMLButtonElement).style.pointerEvents = 'auto';
+                        e.currentTarget.classList.remove('pointer-events-none');
+                      }
+                    }}
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" className="h-8 w-8 text-white">
+                      <line x1="4" y1="8" x2="20" y2="16" className="origin-center animate-menu-open-line-1" />
+                      <line x1="2" y1="16" x2="18" y2="8" className="origin-center animate-menu-open-line-2" />
+                    </svg>
+                  </button>
+                </DrawerClose>
 
-                    {/* Bottom action cards */}
-                    <div className="grid grid-cols-2 gap-3 md:gap-4 lg:gap-6 max-w-full lg:max-w-2xl xl:max-w-3xl mt-6 md:mt-8">
-                      <DrawerClose asChild>
-                        <Link to="/login" className="relative group h-[70px] md:h-[102px] lg:h-[120px] xl:h-[140px]">
-                          <div className="relative h-full rounded overflow-hidden">
-                            <img src={playerPortalImage} alt="Portal" className="w-full h-full object-cover" />
-                            <div className="absolute inset-0 bg-black/30" />
-                            <div className="absolute inset-0 flex items-center justify-center p-4 md:p-6">
-                              <div className="bg-primary text-black font-bebas uppercase tracking-widest text-sm md:text-base lg:text-lg xl:text-xl py-1 md:py-2 lg:py-3 px-6 md:px-8 lg:px-10 text-center group-hover:brightness-110 transition-all w-full">
-                                Portal
-                              </div>
-                            </div>
-                          </div>
-                        </Link>
-                      </DrawerClose>
-                      
-                      <DrawerClose asChild>
-                        <button onClick={() => setRepresentationOpen(true)} className="relative group h-[70px] md:h-[102px] lg:h-[120px] xl:h-[140px]">
-                          <div className="relative h-full rounded overflow-hidden">
-                            <img src={workingTogether} alt="Request Representation" className="w-full h-full object-cover" />
-                            <div className="absolute inset-0 bg-black/30" />
-                            <div className="absolute inset-0 flex items-center justify-center p-4 md:p-6">
-                              <div className="bg-primary text-black font-bebas uppercase tracking-widest text-xs md:text-sm lg:text-base xl:text-lg py-1 md:py-2 lg:py-3 px-3 md:px-4 lg:px-6 text-center group-hover:brightness-110 transition-all w-full whitespace-nowrap">
-                                Request Representation
-                              </div>
-                            </div>
-                          </div>
-                        </button>
-                      </DrawerClose>
-                    </div>
-                  </div>
-                </div>
+                {/* Navigation starting at 100, 75 going to 100, 500 */}
+                <nav className="absolute" style={{ left: '100px', top: '75px' }}>
+                  <DrawerClose asChild>
+                    <Link to="/" className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all tracking-wider py-2 ${isActive("/") ? "text-primary" : ""}`}>
+                      HOME
+                    </Link>
+                  </DrawerClose>
+                  <div className="h-px bg-white/20 my-2" />
+                  
+                  <DrawerClose asChild>
+                    <Link to="/stars" className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all tracking-wider py-2 ${isActive("/stars") || location.pathname.startsWith("/stars/") ? "text-primary" : ""}`}>
+                      STARS
+                    </Link>
+                  </DrawerClose>
+                  <div className="h-px bg-white/20 my-2" />
+                  
+                  <DrawerClose asChild>
+                    <Link to="/performance" className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all tracking-wider py-2 ${isActive("/performance") ? "text-primary" : ""}`}>
+                      REALISE POTENTIAL
+                    </Link>
+                  </DrawerClose>
+                  <div className="h-px bg-white/20 my-2" />
+                  
+                  <DrawerClose asChild>
+                    <Link to="/between-the-lines" className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all tracking-wider py-2 ${isActive("/between-the-lines") ? "text-primary" : ""}`}>
+                      BETWEEN THE LINES
+                    </Link>
+                  </DrawerClose>
+                  <div className="h-px bg-white/20 my-2" />
+                  
+                  <DrawerClose asChild>
+                    <Link to="/players" className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all tracking-wider py-2 ${isActive("/players") || location.pathname.startsWith("/players/") ? "text-primary" : ""}`}>
+                      PLAYERS
+                    </Link>
+                  </DrawerClose>
+                  <div className="h-px bg-white/20 my-2" />
+                  
+                  <DrawerClose asChild>
+                    <Link to="/clubs" className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all tracking-wider py-2 ${isActive("/clubs") ? "text-primary" : ""}`}>
+                      CLUBS
+                    </Link>
+                  </DrawerClose>
+                  <div className="h-px bg-white/20 my-2" />
+                  
+                  <DrawerClose asChild>
+                    <Link to="/coaches" className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all tracking-wider py-2 ${isActive("/coaches") ? "text-primary" : ""}`}>
+                      COACHES
+                    </Link>
+                  </DrawerClose>
+                  <div className="h-px bg-white/20 my-2" />
+                  
+                  <DrawerClose asChild>
+                    <Link to="/news" onMouseEnter={() => setNewsHovered(true)} onMouseLeave={() => setNewsHovered(false)} className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all tracking-wider py-2 ${isActive("/news") ? "text-primary" : ""}`}>
+                      NEWS
+                    </Link>
+                  </DrawerClose>
+                </nav>
 
-                {/* Right side - Stars Card (desktop only) */}
-                <div className="hidden lg:grid grid-cols-2 grid-rows-2 gap-4 p-8 bg-cover bg-center" style={{
-                  backgroundImage: `url(${whiteMarbleBg})`,
-                  backgroundSize: 'cover',
-                  backgroundPosition: 'center'
-                }}>
-                  {starPlayers.length > 0 && <div className="w-full transition-transform duration-300" onMouseEnter={() => setHoveredCard('top-left')} onMouseLeave={() => setHoveredCard(null)} style={{
-                    transform: hoveredCard === 'top-left' ? 'translateY(20px)' : hoveredCard === 'bottom-left' ? 'translateY(20px)' : hoveredCard === 'top-right' ? 'translateY(-20px)' : hoveredCard === 'bottom-right' ? 'translateY(20px)' : 'translateY(0)'
-                  }}>
-                      <div className={`relative w-full aspect-[3/4] rounded-lg overflow-hidden transition-all duration-300 ${starsHovered ? 'border-2 border-primary shadow-[0_0_20px_rgba(184,165,116,0.6)]' : 'border border-white/20 grayscale'}`}>
-                        {/* Player Images with Dark Overlay */}
-                        {starPlayers.map((player, index) => <div key={player.id} className="absolute inset-0 transition-opacity duration-1000 ease-in-out" style={{
-                        opacity: index === starIndex ? 1 : 0
-                      }}>
-                            <img src={player.image_url} alt={player.name} className="w-full h-full object-cover" />
-                            <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/80" />
-                          </div>)}
-                      
-                        {/* Age - Top Left */}
-                        <div className="absolute top-2 left-2 flex flex-col items-center min-w-[30px]">
-                          {starPlayers.map((player, index) => <div key={`age-${player.id}`} className="transition-opacity duration-1000 ease-in-out" style={{
-                          opacity: index === starIndex ? 1 : 0,
-                          position: index === starIndex ? 'relative' : 'absolute',
-                          visibility: index === starIndex ? 'visible' : 'hidden'
-                        }}>
-                              <div className="text-2xl font-bold text-white font-bebas leading-none text-center">{player.age}</div>
-                              <div className="text-[7px] text-white/80 uppercase tracking-wider mt-0.5 text-center">Age</div>
-                            </div>)}
-                        </div>
-                        
-                        {/* Nationality Flag - Top Right */}
-                        <div className="absolute top-2 right-2 flex flex-col items-center min-w-[30px]">
-                          {starPlayers.map((player, index) => {
-                          const nat = player.nationality;
-                          if (!nat) return null;
-                          const normalizedNat = nat === 'Cape Verdean' ? 'Cape Verde' : nat;
-                          const flagUrl = getCountryFlagUrl(normalizedNat);
-                          return <div key={`nat-${player.id}`} className="flex flex-col items-center transition-opacity duration-1000 ease-in-out" style={{
-                            opacity: index === starIndex ? 1 : 0,
-                            position: index === starIndex ? 'relative' : 'absolute',
-                            visibility: index === starIndex ? 'visible' : 'hidden'
-                          }}>
-                                <img src={flagUrl} alt={`${normalizedNat} flag`} className="w-6 h-5 object-contain mb-0.5" />
-                                <div className="text-[7px] text-white/80 uppercase tracking-wider text-center">Nationality</div>
-                              </div>;
-                        })}
-                        </div>
-                        
-                        {/* Position - Bottom Left */}
-                        <div className="absolute bottom-2 left-2 flex flex-col items-center min-w-[30px]">
-                          {starPlayers.map((player, index) => <div key={`pos-${player.id}`} className="transition-opacity duration-1000 ease-in-out" style={{
-                          opacity: index === starIndex ? 1 : 0,
-                          position: index === starIndex ? 'relative' : 'absolute',
-                          visibility: index === starIndex ? 'visible' : 'hidden'
-                        }}>
-                              <div className="text-xl font-bold text-white font-bebas leading-none text-center">{player.position}</div>
-                              <div className="text-[7px] text-white/80 uppercase tracking-wider mt-0.5 text-center">Position</div>
-                            </div>)}
-                        </div>
-                        
-                        {/* Club Logo - Bottom Right */}
-                        <div className="absolute bottom-2 right-2 flex flex-col items-center min-w-[30px]">
-                          {starPlayers.map((player, index) => {
-                          const clubLogo = player.club_logo;
-                          return clubLogo ? <div key={`club-${player.id}`} className="flex flex-col items-center transition-opacity duration-1000 ease-in-out" style={{
-                            opacity: index === starIndex ? 1 : 0,
-                            position: index === starIndex ? 'relative' : 'absolute',
-                            visibility: index === starIndex ? 'visible' : 'hidden'
-                          }}>
-                                <img src={clubLogo} alt="Club" className="w-7 h-7 object-contain mb-0.5" />
-                                <div className="text-[7px] text-white/80 uppercase tracking-wider text-center">Club</div>
-                              </div> : null;
-                        })}
-                        </div>
-                      </div>
-                    </div>}
-                  
-                  {/* Between The Lines Card */}
-                  {betweenLinesPosts.length > 0 && <div className="w-full transition-transform duration-300" onMouseEnter={() => setHoveredCard('bottom-left')} onMouseLeave={() => setHoveredCard(null)} style={{
-                    transform: hoveredCard === 'bottom-left' ? 'translateY(-20px)' : hoveredCard === 'top-left' ? 'translateY(20px)' : hoveredCard === 'top-right' ? 'translateY(-20px)' : hoveredCard === 'bottom-right' ? 'translateY(20px)' : 'translateY(0)'
-                  }}>
-                      <div className={`relative w-full aspect-[3/4] rounded-lg overflow-hidden transition-all duration-300 ${betweenLinesHovered ? 'border-2 border-primary shadow-[0_0_20px_rgba(184,165,116,0.6)]' : 'border border-white/20 grayscale'}`}>
-                        {/* Post Images */}
-                        {betweenLinesPosts.map((post, index) => <div key={post.id} className="absolute inset-0 transition-opacity duration-1000 ease-in-out" style={{
-                        opacity: index === btlIndex ? 1 : 0
-                      }}>
-                            <img src={post.image_url} alt={post.title} className="w-full h-full object-cover" />
-                            <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/80" />
-                          </div>)}
-                        
-                        {/* Title Overlay */}
-                        <div className="absolute bottom-2 left-2 right-2">
-                          {betweenLinesPosts.map((post, index) => <div key={`title-${post.id}`} className="transition-opacity duration-1000 ease-in-out" style={{
-                          opacity: index === btlIndex ? 1 : 0,
-                          position: index === btlIndex ? 'relative' : 'absolute',
-                          visibility: index === btlIndex ? 'visible' : 'hidden'
-                        }}>
-                              <h4 className="text-white font-bebas text-sm uppercase tracking-wider line-clamp-2">
-                                {post.title}
-                              </h4>
-                            </div>)}
-                        </div>
-                      </div>
-                    </div>}
-                  
-                  {/* Realise Potential Card */}
-                  <div className="w-full transition-transform duration-300" onMouseEnter={() => setHoveredCard('top-right')} onMouseLeave={() => setHoveredCard(null)} style={{
-                    transform: hoveredCard === 'top-right' ? 'translateY(20px)' : hoveredCard === 'bottom-right' ? 'translateY(20px)' : hoveredCard === 'top-left' ? 'translateY(-20px)' : hoveredCard === 'bottom-left' ? 'translateY(20px)' : 'translateY(0)'
-                  }}>
-                    <div className={`relative w-full aspect-[3/4] rounded-lg overflow-hidden transition-all duration-300 ${realisePotentialHovered ? 'border-2 border-primary shadow-[0_0_20px_rgba(184,165,116,0.6)]' : 'border border-white/20 grayscale'}`}>
-                      {/* Cycling Images with pan animation */}
-                      {realisePotentialImages.map((image, index) => <div key={index} className="absolute inset-0 transition-opacity duration-1000 ease-in-out" style={{
-                        opacity: index === rpIndex ? 1 : 0
-                      }}>
-                          <img src={image} alt={`Realise Potential ${index + 1}`} className="h-full w-auto min-w-[120%] object-cover animate-pan-right" style={{
-                          objectPosition: 'left center'
-                        }} />
-                        </div>)}
-                    </div>
-                  </div>
-                  
-                  {/* News Articles Card */}
-                  {newsArticles.length > 0 && <div className="w-full transition-transform duration-300" onMouseEnter={() => {
-                    setHoveredCard('bottom-right');
-                    setNewsHovered(true);
-                  }} onMouseLeave={() => {
-                    setHoveredCard(null);
-                    setNewsHovered(false);
-                  }} style={{
-                    transform: hoveredCard === 'bottom-right' ? 'translateY(-20px)' : hoveredCard === 'top-right' ? 'translateY(20px)' : hoveredCard === 'top-left' ? 'translateY(-20px)' : hoveredCard === 'bottom-left' ? 'translateY(20px)' : 'translateY(0)'
-                  }}>
-                      <div className={`relative w-full aspect-[3/4] rounded-lg overflow-hidden transition-all duration-300 ${newsHovered ? 'border-2 border-primary shadow-[0_0_20px_rgba(184,165,116,0.6)]' : 'border border-white/20 grayscale'}`}>
-                        {/* News Images */}
-                        {newsArticles.map((article, index) => <div key={article.id} className="absolute inset-0 transition-opacity duration-1000 ease-in-out" style={{
-                        opacity: index === newsIndex ? 1 : 0
-                      }}>
-                            <img src={article.image_url} alt={article.title} className="w-full h-full object-cover" />
-                            <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/80" />
-                          </div>)}
-                        
-                        {/* Title Overlay */}
-                        <div className="absolute bottom-2 left-2 right-2">
-                          {newsArticles.map((article, index) => <div key={`title-${article.id}`} className="transition-opacity duration-1000 ease-in-out" style={{
-                          opacity: index === newsIndex ? 1 : 0,
-                          position: index === newsIndex ? 'relative' : 'absolute',
-                          visibility: index === newsIndex ? 'visible' : 'hidden'
-                        }}>
-                              <h4 className="text-white font-bebas text-sm uppercase tracking-wider line-clamp-2">
-                                {article.title}
-                              </h4>
-                            </div>)}
-                        </div>
-                      </div>
-                    </div>}
-                </div>
+                {/* Request Representation: 50, 525 to 250, 650 (200x125) */}
+                <DrawerClose asChild>
+                  <button 
+                    onClick={() => setRepresentationOpen(true)}
+                    className="absolute bg-primary text-background font-bebas text-xl uppercase tracking-wider hover:bg-primary/90 transition-all flex items-center justify-center rounded"
+                    style={{ left: '50px', top: '525px', width: '200px', height: '125px' }}
+                  >
+                    Request Representation
+                  </button>
+                </DrawerClose>
+                
+                {/* Portal: 300, 525 to 500, 650 (200x125) */}
+                <DrawerClose asChild>
+                  <a 
+                    href="https://scoutcircle.vercel.app/" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="absolute bg-primary text-background font-bebas text-xl uppercase tracking-wider hover:bg-primary/90 transition-all flex items-center justify-center rounded"
+                    style={{ left: '300px', top: '525px', width: '200px', height: '125px' }}
+                  >
+                    Agent / Scout Portal
+                  </a>
+                </DrawerClose>
               </div>
             </DrawerContent>
           </Drawer>
