@@ -227,6 +227,26 @@ export const Header = () => {
                 >
                   {/* Constraint container for menu area: 0 to 1500 on x, 0 to 670 on y */}
                   <div className="absolute inset-0" style={{ maxWidth: "1500px", maxHeight: "670px", overflow: "hidden" }}>
+                    
+                    {/* Decorative vertical rectangle - "Our Work" spanning from Stars to News */}
+                    <div 
+                      className="absolute w-10 rounded-lg border-2 border-primary bg-primary/10 flex items-center justify-center"
+                      style={{ left: "50px", top: "95px", height: "180px" }}
+                    >
+                      <span className="text-white/80 font-bebas text-sm italic tracking-wider" style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>
+                        OUR WORK
+                      </span>
+                    </div>
+
+                    {/* Decorative vertical rectangle - "Learn More" spanning from Players to Scouts */}
+                    <div 
+                      className="absolute w-10 rounded-lg border-2 border-primary bg-primary/10 flex items-center justify-center"
+                      style={{ left: "50px", top: "333px", height: "170px" }}
+                    >
+                      <span className="text-white/80 font-bebas text-sm italic tracking-wider" style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>
+                        LEARN MORE
+                      </span>
+                    </div>
                     {/* Close button at 100, 50 (move by +5, -20) */}
                     <DrawerClose asChild>
                     <button
@@ -296,15 +316,6 @@ export const Header = () => {
                     </DrawerClose>
                     <div className="h-px bg-white/20 my-1" />
 
-                    {/* Decorative vertical rectangle - Our Work */}
-                    <div className="my-4 flex justify-start">
-                      <div className="w-10 h-32 rounded-lg border-2 border-primary bg-primary/10 flex items-center justify-center">
-                        <span className="text-white/80 font-bebas text-sm italic tracking-wider" style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>
-                          OUR WORK
-                        </span>
-                      </div>
-                    </div>
-
                     <DrawerClose asChild>
                       <Link
                         to="/performance"
@@ -360,15 +371,6 @@ export const Header = () => {
                       </Link>
                     </DrawerClose>
                     <div className="h-px bg-white/20 my-1" />
-
-                    {/* Decorative vertical rectangle - Learn More */}
-                    <div className="my-4 flex justify-start">
-                      <div className="w-10 h-32 rounded-lg border-2 border-primary bg-primary/10 flex items-center justify-center">
-                        <span className="text-white/80 font-bebas text-sm italic tracking-wider" style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>
-                          LEARN MORE
-                        </span>
-                      </div>
-                    </div>
 
                     <DrawerClose asChild>
                       <Link
