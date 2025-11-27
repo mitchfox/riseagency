@@ -454,34 +454,43 @@ export const Header = () => {
 
                 {/* Right side - 4-card grid (desktop only) */}
                 <div
-                  className="hidden lg:grid grid-cols-2 grid-rows-2 gap-4 p-8 bg-cover bg-center"
+                  className="hidden lg:flex items-center justify-center bg-cover bg-center relative"
                   style={{
                     backgroundImage: `url(${whiteMarbleBg})`,
                     backgroundSize: "cover",
                     backgroundPosition: "center",
                   }}
                 >
-                  {/* Top-left: Stars card */}
-                  {starPlayers.length > 0 && (
-                    <div
-                      className="w-full transition-transform duration-300"
-                      onMouseEnter={() => setHoveredCard("top-left")}
-                      onMouseLeave={() => setHoveredCard(null)}
-                      style={{
-                        transform:
-                          hoveredCard === "top-left"
-                            ? "translateY(20px)"
-                            : hoveredCard === "bottom-left"
-                            ? "translateY(20px)"
-                            : hoveredCard === "top-right"
-                            ? "translateY(-20px)"
-                            : hoveredCard === "bottom-right"
-                            ? "translateY(20px)"
-                            : "translateY(0)",
-                      }}
-                    >
+                  {/* Constrained grid container - fits between close button and bottom cards */}
+                  <div className="grid grid-cols-2 grid-rows-2 gap-4" style={{
+                    maxHeight: "590px",
+                    marginTop: "60px",
+                    marginBottom: "auto"
+                  }}
+                >
+                    {/* Top-left: Stars card */}
+                    {starPlayers.length > 0 && (
                       <div
-                        className={`relative w-full aspect-[3/4] rounded-lg overflow-hidden transition-all duration-300 ${
+                        className="transition-transform duration-300"
+                        onMouseEnter={() => setHoveredCard("top-left")}
+                        onMouseLeave={() => setHoveredCard(null)}
+                        style={{
+                          width: "200px",
+                          height: "300px",
+                          transform:
+                            hoveredCard === "top-left"
+                              ? "translateY(20px)"
+                              : hoveredCard === "bottom-left"
+                              ? "translateY(20px)"
+                              : hoveredCard === "top-right"
+                              ? "translateY(-20px)"
+                              : hoveredCard === "bottom-right"
+                              ? "translateY(20px)"
+                              : "translateY(0)",
+                        }}
+                      >
+                        <div
+                          className={`relative w-full h-full rounded-lg overflow-hidden transition-all duration-300 ${
                           starsHovered
                             ? "border-2 border-primary shadow-[0_0_20px_rgba(184,165,116,0.6)]"
                             : "border border-white/20 grayscale"
@@ -603,38 +612,40 @@ export const Header = () => {
                             ) : null;
                           })}
                         </div>
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
 
-                  {/* Top-right: Realise Potential card */}
-                  <div
-                    className="w-full transition-transform duration-300"
-                    onMouseEnter={() => setHoveredCard("top-right")}
-                    onMouseLeave={() => setHoveredCard(null)}
-                    style={{
-                      transform:
-                        hoveredCard === "top-right"
-                          ? "translateY(-20px)"
-                          : hoveredCard === "top-left"
-                          ? "translateY(-20px)"
-                          : hoveredCard === "bottom-right"
-                          ? "translateY(20px)"
-                          : hoveredCard === "bottom-left"
-                          ? "translateY(20px)"
-                          : "translateY(0)",
-                    }}
-                  >
-                    <DrawerClose asChild>
-                      <Link
-                        to="/performance"
-                        className={`relative block w-full h-full rounded-lg overflow-hidden border transition-all duration-300 ${
-                          realisePotentialHovered
-                            ? "border-primary shadow-[0_0_20px_rgba(184,165,116,0.6)]"
-                            : "border-white/20"
-                        }`}
-                      >
-                        <div className="relative w-full h-full min-h-[220px]">
+                    {/* Top-right: Realise Potential card */}
+                    <div
+                      className="transition-transform duration-300"
+                      onMouseEnter={() => setHoveredCard("top-right")}
+                      onMouseLeave={() => setHoveredCard(null)}
+                      style={{
+                        width: "200px",
+                        height: "300px",
+                        transform:
+                          hoveredCard === "top-right"
+                            ? "translateY(-20px)"
+                            : hoveredCard === "top-left"
+                            ? "translateY(-20px)"
+                            : hoveredCard === "bottom-right"
+                            ? "translateY(20px)"
+                            : hoveredCard === "bottom-left"
+                            ? "translateY(20px)"
+                            : "translateY(0)",
+                      }}
+                    >
+                      <DrawerClose asChild>
+                        <Link
+                          to="/performance"
+                          className={`relative block w-full h-full rounded-lg overflow-hidden border transition-all duration-300 ${
+                            realisePotentialHovered
+                              ? "border-primary shadow-[0_0_20px_rgba(184,165,116,0.6)]"
+                              : "border-white/20"
+                          }`}
+                        >
+                          <div className="relative w-full h-full">
                           <img
                             src={realisePotentialImages[rpIndex]}
                             alt="Realise Potential"
@@ -655,39 +666,41 @@ export const Header = () => {
                               separate the very best.
                             </p>
                           </div>
-                        </div>
-                      </Link>
-                    </DrawerClose>
-                  </div>
+                          </div>
+                        </Link>
+                      </DrawerClose>
+                    </div>
 
-                  {/* Bottom-left: Between The Lines card */}
-                  <div
-                    className="w-full transition-transform duration-300"
-                    onMouseEnter={() => setHoveredCard("bottom-left")}
-                    onMouseLeave={() => setHoveredCard(null)}
-                    style={{
-                      transform:
-                        hoveredCard === "bottom-left"
-                          ? "translateY(20px)"
-                          : hoveredCard === "top-left"
-                          ? "translateY(20px)"
-                          : hoveredCard === "bottom-right"
-                          ? "translateY(20px)"
-                          : hoveredCard === "top-right"
-                          ? "translateY(-20px)"
-                          : "translateY(0)",
-                    }}
-                  >
-                    <DrawerClose asChild>
-                      <Link
-                        to="/between-the-lines"
-                        className={`relative block w-full h-full rounded-lg overflow-hidden border transition-all duration-300 ${
-                          betweenLinesHovered
-                            ? "border-primary shadow-[0_0_20px_rgba(184,165,116,0.6)]"
-                            : "border-white/20"
-                        }`}
-                      >
-                        <div className="relative w-full h-full min-h-[220px] bg-black/60">
+                    {/* Bottom-left: Between The Lines card */}
+                    <div
+                      className="transition-transform duration-300"
+                      onMouseEnter={() => setHoveredCard("bottom-left")}
+                      onMouseLeave={() => setHoveredCard(null)}
+                      style={{
+                        width: "200px",
+                        height: "300px",
+                        transform:
+                          hoveredCard === "bottom-left"
+                            ? "translateY(20px)"
+                            : hoveredCard === "top-left"
+                            ? "translateY(20px)"
+                            : hoveredCard === "bottom-right"
+                            ? "translateY(20px)"
+                            : hoveredCard === "top-right"
+                            ? "translateY(-20px)"
+                            : "translateY(0)",
+                      }}
+                    >
+                      <DrawerClose asChild>
+                        <Link
+                          to="/between-the-lines"
+                          className={`relative block w-full h-full rounded-lg overflow-hidden border transition-all duration-300 ${
+                            betweenLinesHovered
+                              ? "border-primary shadow-[0_0_20px_rgba(184,165,116,0.6)]"
+                              : "border-white/20"
+                          }`}
+                        >
+                          <div className="relative w-full h-full bg-black/60">
                           {betweenLinesPosts.length > 0 && (
                             <div className="absolute inset-0 flex flex-col justify-between p-4">
                               <div className="space-y-1">
@@ -703,39 +716,41 @@ export const Header = () => {
                               </p>
                             </div>
                           )}
-                        </div>
-                      </Link>
-                    </DrawerClose>
-                  </div>
+                          </div>
+                        </Link>
+                      </DrawerClose>
+                    </div>
 
-                  {/* Bottom-right: News card */}
-                  <div
-                    className="w-full transition-transform duration-300"
-                    onMouseEnter={() => setHoveredCard("bottom-right")}
-                    onMouseLeave={() => setHoveredCard(null)}
-                    style={{
-                      transform:
-                        hoveredCard === "bottom-right"
-                          ? "translateY(20px)"
-                          : hoveredCard === "top-right"
-                          ? "translateY(-20px)"
-                          : hoveredCard === "bottom-left"
-                          ? "translateY(20px)"
-                          : hoveredCard === "top-left"
-                          ? "translateY(20px)"
-                          : "translateY(0)",
-                    }}
-                  >
-                    <DrawerClose asChild>
-                      <Link
-                        to="/news"
-                        className={`relative block w-full h-full rounded-lg overflow-hidden border transition-all duration-300 ${
-                          newsHovered
-                            ? "border-primary shadow-[0_0_20px_rgba(184,165,116,0.6)]"
-                            : "border-white/20"
-                        }`}
-                      >
-                        <div className="relative w-full h-full min-h-[220px] bg-black/60">
+                    {/* Bottom-right: News card */}
+                    <div
+                      className="transition-transform duration-300"
+                      onMouseEnter={() => setHoveredCard("bottom-right")}
+                      onMouseLeave={() => setHoveredCard(null)}
+                      style={{
+                        width: "200px",
+                        height: "300px",
+                        transform:
+                          hoveredCard === "bottom-right"
+                            ? "translateY(20px)"
+                            : hoveredCard === "top-right"
+                            ? "translateY(-20px)"
+                            : hoveredCard === "bottom-left"
+                            ? "translateY(20px)"
+                            : hoveredCard === "top-left"
+                            ? "translateY(20px)"
+                            : "translateY(0)",
+                      }}
+                    >
+                      <DrawerClose asChild>
+                        <Link
+                          to="/news"
+                          className={`relative block w-full h-full rounded-lg overflow-hidden border transition-all duration-300 ${
+                            newsHovered
+                              ? "border-primary shadow-[0_0_20px_rgba(184,165,116,0.6)]"
+                              : "border-white/20"
+                          }`}
+                        >
+                          <div className="relative w-full h-full bg-black/60">
                           {newsArticles.length > 0 && (
                             <div className="absolute inset-0 flex flex-col justify-between p-4">
                               <div className="space-y-1">
@@ -754,6 +769,7 @@ export const Header = () => {
                         </div>
                       </Link>
                     </DrawerClose>
+                  </div>
                   </div>
                 </div>
               </div>
