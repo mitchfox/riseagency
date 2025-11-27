@@ -37,6 +37,7 @@ import PDFViewer from "./pages/PDFViewer";
 import ScoutPortal from "./pages/ScoutPortal";
 import Potential from "./pages/Potential";
 import RealisePotential from "./pages/RealisePotential";
+import FluidCursor from "./components/FluidCursor";
 
 const queryClient = new QueryClient();
 
@@ -49,6 +50,7 @@ const App = () => {
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          <FluidCursor />
           <PageTracker />
           <ScrollToTop />
           <PageTransition>
