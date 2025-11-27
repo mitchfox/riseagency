@@ -203,7 +203,7 @@ export const Header = () => {
         <div className="container mx-auto px-2 md:px-4">
         <div className={`flex items-center justify-between transition-all duration-500 ease-out ${isScrolled ? 'h-12 md:h-14' : 'h-14 md:h-16'}`}>
           {/* Drawer Menu - Left */}
-          <Drawer direction="left" preventScrollRestoration={false}>
+          <Drawer direction="top" preventScrollRestoration={false}>
             <DrawerTrigger asChild>
               <button className="group relative flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-primary transition-all duration-300 ease-out w-12 h-12 md:w-14 md:h-14" aria-label="Toggle menu">
                 <svg className="text-primary group-hover:text-foreground transition-all duration-300 ease-out w-7 h-7 md:w-8 md:h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
@@ -212,7 +212,7 @@ export const Header = () => {
                 </svg>
               </button>
             </DrawerTrigger>
-            <DrawerContent className="fixed inset-0 h-screen w-full !mt-0 rounded-none bg-black animate-slide-in-left transition-all duration-300 ease-out z-[200] overflow-hidden">
+            <DrawerContent className="fixed inset-0 h-screen w-full !mt-0 rounded-none bg-black animate-slide-down-fade-in transition-all duration-300 ease-out z-[200] overflow-hidden">
               
               {/* Full screen grid layout with left grid-aligned menu and right content */}
               <div className="grid lg:grid-cols-2 h-full w-full overflow-hidden">
