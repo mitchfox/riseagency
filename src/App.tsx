@@ -22,6 +22,7 @@ import About from "./pages/About";
 import Clubs from "./pages/Clubs";
 import Coaches from "./pages/Coaches";
 import Scouts from "./pages/Scouts";
+import Agents from "./pages/Agents";
 import Performance from "./pages/NewPerformance";
 import BetweenTheLines from "./pages/BetweenTheLines";
 import PerformanceReport from "./pages/PerformanceReport";
@@ -76,6 +77,7 @@ const App = () => {
                   <Route path="/club-network" element={<ClubNetwork />} />
                   <Route path="/coaches" element={<Coaches />} />
                   <Route path="/scouts" element={<Scouts />} />
+                  <Route path="/agents" element={<Agents />} />
                   <Route path="/performance" element={<Performance />} />
                   <Route path="/news" element={<News />} />
                   <Route path="/news/:articleId" element={<News />} />
