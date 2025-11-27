@@ -19,6 +19,10 @@ import { WorkWithUsDialog } from "@/components/WorkWithUsDialog";
 import { RepresentationDialog } from "@/components/RepresentationDialog";
 import { DeclareInterestDialog } from "@/components/DeclareInterestDialog";
 import { IntroModal } from "@/components/IntroModal";
+
+// NOTE: GridLines component is available at src/components/GridLines.tsx 
+// for coordinate-based positioning during design. Import and add it when needed.
+
 export const Header = () => {
   const location = useLocation();
   const [representationOpen, setRepresentationOpen] = useState(false);
@@ -430,7 +434,7 @@ export const Header = () => {
                         <img
                           src={workingTogether}
                           alt="Request Representation"
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-cover object-top"
                         />
                         <div className="absolute inset-0 bg-black/30" />
                         <div className="absolute inset-0 flex items-center justify-center p-3">
@@ -453,7 +457,7 @@ export const Header = () => {
                         <img
                           src={playerPortalImage}
                           alt="Portal"
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-cover object-top"
                         />
                         <div className="absolute inset-0 bg-black/30" />
                         <div className="absolute inset-0 flex items-center justify-center p-3">
@@ -715,7 +719,15 @@ export const Header = () => {
                               : "border-white/20"
                           }`}
                         >
-                          <div className="relative w-full h-full bg-black/60">
+                          <div className="relative w-full h-full">
+                          {betweenLinesPosts.length > 0 && betweenLinesPosts[btlIndex]?.image_url && (
+                            <img
+                              src={betweenLinesPosts[btlIndex].image_url}
+                              alt="Between The Lines"
+                              className="absolute inset-0 w-full h-full object-cover"
+                            />
+                          )}
+                          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/80" />
                           {betweenLinesPosts.length > 0 && (
                             <div className="absolute inset-0 flex flex-col justify-between p-4">
                               <div className="space-y-1">
@@ -765,7 +777,15 @@ export const Header = () => {
                               : "border-white/20"
                           }`}
                         >
-                          <div className="relative w-full h-full bg-black/60">
+                          <div className="relative w-full h-full">
+                          {newsArticles.length > 0 && newsArticles[newsIndex]?.image_url && (
+                            <img
+                              src={newsArticles[newsIndex].image_url}
+                              alt="Player News"
+                              className="absolute inset-0 w-full h-full object-cover"
+                            />
+                          )}
+                          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/80" />
                           {newsArticles.length > 0 && (
                             <div className="absolute inset-0 flex flex-col justify-between p-4">
                               <div className="space-y-1">
