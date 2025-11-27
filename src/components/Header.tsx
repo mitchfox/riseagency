@@ -434,12 +434,12 @@ export const Header = () => {
                     </DrawerClose>
                   </nav>
 
-                  {/* Request Representation card image: 50, 525 to 350, 650 (300x125) */}
+                  {/* Request Representation card - positioned beside OUR WORK section */}
                   <DrawerClose asChild>
                     <button
                       onClick={() => setRepresentationOpen(true)}
                       className="absolute group"
-                      style={{ left: "50px", top: "525px", width: "300px", height: "125px" }}
+                      style={{ left: "450px", top: "110px", width: "280px", height: "100px" }}
                     >
                       <div className="relative w-full h-full rounded overflow-hidden border-2 border-primary">
                         <img
@@ -457,12 +457,12 @@ export const Header = () => {
                     </button>
                   </DrawerClose>
 
-                  {/* Portal card image: 400, 525 to 700, 650 (300x125) */}
+                  {/* Portal card - positioned beside OUR WORK section */}
                   <DrawerClose asChild>
                     <Link
                       to="/login"
                       className="absolute group"
-                      style={{ left: "400px", top: "525px", width: "300px", height: "125px" }}
+                      style={{ left: "450px", top: "220px", width: "280px", height: "100px" }}
                     >
                       <div className="relative w-full h-full rounded overflow-hidden border-2 border-primary">
                         <img
