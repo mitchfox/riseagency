@@ -295,26 +295,26 @@ export const Header = () => {
                     </button>
                   </DrawerClose>
 
-                  {/* Navigation starting at 100, 50 with total height to last item of 425px */}
+                  {/* Navigation starting at 100, 50 with bottom of last item at 500px */}
                   <nav className="absolute" style={{ left: "100px", top: "50px" }}>
                     <DrawerClose asChild>
                       <Link
                         to="/"
-                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all tracking-wider py-1 ${
+                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all tracking-wider py-2 ${
                           isActive("/") ? "text-primary" : ""
                         }`}
                       >
                         HOME
                       </Link>
                     </DrawerClose>
-                    <div className="h-px bg-white/20 my-1" />
+                    <div className="h-px bg-white/20 my-2" />
 
                     <DrawerClose asChild>
                       <Link
                         to="/stars"
                         onMouseEnter={() => setStarsHovered(true)}
                         onMouseLeave={() => setStarsHovered(false)}
-                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all tracking-wider py-1 ${
+                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all tracking-wider py-2 ${
                           isActive("/stars") || location.pathname.startsWith("/stars/")
                             ? "text-primary"
                             : ""
@@ -323,40 +323,40 @@ export const Header = () => {
                         STARS
                       </Link>
                     </DrawerClose>
-                    <div className="h-px bg-white/20 my-1" />
+                    <div className="h-px bg-white/20 my-2" />
 
                     <DrawerClose asChild>
                       <Link
                         to="/performance"
                         onMouseEnter={() => setRealisePotentialHovered(true)}
                         onMouseLeave={() => setRealisePotentialHovered(false)}
-                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all tracking-wider py-1 ${
+                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all tracking-wider py-2 ${
                           isActive("/performance") ? "text-primary" : ""
                         }`}
                       >
                         REALISE POTENTIAL
                       </Link>
                     </DrawerClose>
-                    <div className="h-px bg-white/20 my-1" />
+                    <div className="h-px bg-white/20 my-2" />
 
                     <DrawerClose asChild>
                       <Link
                         to="/between-the-lines"
                         onMouseEnter={() => setBetweenLinesHovered(true)}
                         onMouseLeave={() => setBetweenLinesHovered(false)}
-                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all tracking-wider py-1 ${
+                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all tracking-wider py-2 ${
                           isActive("/between-the-lines") ? "text-primary" : ""
                         }`}
                       >
                         BETWEEN THE LINES
                       </Link>
                     </DrawerClose>
-                    <div className="h-px bg-white/20 my-1" />
+                    <div className="h-px bg-white/20 my-2" />
 
                     <DrawerClose asChild>
                       <Link
                         to="/players"
-                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all tracking-wider py-1 ${
+                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all tracking-wider py-2 ${
                           isActive("/players") || location.pathname.startsWith("/players/")
                             ? "text-primary"
                             : ""
@@ -365,38 +365,38 @@ export const Header = () => {
                         PLAYERS
                       </Link>
                     </DrawerClose>
-                    <div className="h-px bg-white/20 my-1" />
+                    <div className="h-px bg-white/20 my-2" />
 
                     <DrawerClose asChild>
                       <Link
                         to="/clubs"
-                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all tracking-wider py-1 ${
+                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all tracking-wider py-2 ${
                           isActive("/clubs") ? "text-primary" : ""
                         }`}
                       >
                         CLUBS
                       </Link>
                     </DrawerClose>
-                    <div className="h-px bg-white/20 my-1" />
+                    <div className="h-px bg-white/20 my-2" />
 
                     <DrawerClose asChild>
                       <Link
                         to="/coaches"
-                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all tracking-wider py-1 ${
+                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all tracking-wider py-2 ${
                           isActive("/coaches") ? "text-primary" : ""
                         }`}
                       >
                         COACHES
                       </Link>
                     </DrawerClose>
-                    <div className="h-px bg-white/20 my-1" />
+                    <div className="h-px bg-white/20 my-2" />
 
                     <DrawerClose asChild>
                       <Link
                         to="/news"
                         onMouseEnter={() => setNewsHovered(true)}
                         onMouseLeave={() => setNewsHovered(false)}
-                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all tracking-wider py-1 ${
+                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-all tracking-wider py-2 ${
                           isActive("/news") ? "text-primary" : ""
                         }`}
                       >
@@ -464,7 +464,7 @@ export const Header = () => {
                   {/* Constrained grid container - fits between close button and bottom cards */}
                   <div className="grid grid-cols-2 grid-rows-2 gap-4" style={{
                     maxHeight: "590px",
-                    marginTop: "60px",
+                    marginTop: "50px",
                     marginBottom: "auto"
                   }}
                 >
