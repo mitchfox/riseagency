@@ -188,8 +188,8 @@ export const MatrixPlayerEffect = ({ className = "" }: MatrixPlayerEffectProps) 
           
           // Draw the xray overlay image on top (offset from xray image position)
           if (xrayOverlay) {
-            const overlayX = xrayX + 10; // 10px right
-            const overlayY = xrayY - 20; // 20px up
+            const overlayX = xrayX + 50; // 50px right (scaled)
+            const overlayY = xrayY - 100; // 100px up (scaled)
             ctx.drawImage(xrayOverlay, overlayX, overlayY, xrayWidth, xrayHeight);
           }
           
