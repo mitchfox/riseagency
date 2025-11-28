@@ -169,17 +169,10 @@ export const MatrixPlayerEffect = ({ className = "" }: MatrixPlayerEffectProps) 
         ctx.globalCompositeOperation = "source-over";
         ctx.drawImage(baseImage, imgX, imgY, imgWidth, imgHeight);
 
-        // Calculate distance from mouse to player
-        const distFromMouse = Math.sqrt(
-          Math.pow(mousePos.x - playerCenterX, 2) + 
-          Math.pow(mousePos.y - playerCenterY, 2)
-        );
-
-        // 2. X-RAY REVEAL - only when mouse is close AND valid position
+        // 2. X-RAY REVEAL - works across entire page
         const isMouseValid = mousePos.x > 0 && mousePos.y > 0;
-        const isNearPlayer = distFromMouse < xrayRadius + imgWidth / 3;
         
-        if (isMouseValid && isNearPlayer && xrayImage) {
+        if (isMouseValid && xrayImage) {
           // Clear the x-ray circle area first (remove base image inside circle)
           ctx.save();
           ctx.beginPath();
@@ -193,14 +186,9 @@ export const MatrixPlayerEffect = ({ className = "" }: MatrixPlayerEffectProps) 
           // Draw only image 11 inside the x-ray circle (1.1x larger)
           ctx.drawImage(xrayImage, xrayX, xrayY, xrayWidth, xrayHeight);
           
-          // Draw the xray overlay image on top (same positioning as xray image)
+          // Draw the xray overlay image on top (exact same position as xray image)
           if (xrayOverlay) {
-            const overlayScale = scale * xrayScale;
-            const overlayWidth = xrayOverlay.width * overlayScale;
-            const overlayHeight = xrayOverlay.height * overlayScale;
-            const overlayX = (canvas.width - overlayWidth) / 2 - 65;
-            const overlayY = (canvas.height - overlayHeight) / 2 - 50;
-            ctx.drawImage(xrayOverlay, overlayX, overlayY, overlayWidth, overlayHeight);
+            ctx.drawImage(xrayOverlay, xrayX, xrayY, xrayWidth, xrayHeight);
           }
           
           // Draw 5D MATRIX LINES - only within x-ray circle
