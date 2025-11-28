@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { LanguageSelector } from "@/components/LanguageSelector";
 import { HoverText } from "@/components/HoverText";
 import { MatrixPlayerEffect } from "@/components/MatrixPlayerEffect";
+import blackMarble from "@/assets/black-marble-smudged.png";
 
 export default function Landing() {
   const navLinks = [
@@ -14,16 +15,11 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen bg-black flex flex-col items-center justify-end relative overflow-hidden cursor-none">
-      {/* Video Background - Full Screen */}
-      <video
-        autoPlay
-        loop
-        muted
-        playsInline
-        className="absolute inset-0 w-full h-full object-cover"
-      >
-        <source src="/assets/hero-background.mp4" type="video/mp4" />
-      </video>
+      {/* Marble Background - Full Screen */}
+      <div 
+        className="absolute inset-0 w-full h-full bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: `url(${blackMarble})` }}
+      />
       
       {/* Matrix Player Effect - Over Video */}
       <div className="absolute inset-0">

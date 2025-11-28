@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import JSZip from "jszip";
+import xrayOverlayImg from "@/assets/xray-overlay.png";
 
 interface MatrixPlayerEffectProps {
   className?: string;
@@ -10,10 +11,18 @@ export const MatrixPlayerEffect = ({ className = "" }: MatrixPlayerEffectProps) 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [baseImage, setBaseImage] = useState<HTMLImageElement | null>(null);
   const [xrayImage, setXrayImage] = useState<HTMLImageElement | null>(null);
+  const [xrayOverlay, setXrayOverlay] = useState<HTMLImageElement | null>(null);
   const [mousePos, setMousePos] = useState({ x: -1000, y: -1000 });
   const [isLoading, setIsLoading] = useState(true);
   const animationRef = useRef<number>();
   const timeRef = useRef(0);
+
+  // Load the xray overlay image
+  useEffect(() => {
+    const img = new Image();
+    img.onload = () => setXrayOverlay(img);
+    img.src = xrayOverlayImg;
+  }, []);
 
   // Load specific images from zip - image 7 as base, image 11 as x-ray
   useEffect(() => {
@@ -184,6 +193,16 @@ export const MatrixPlayerEffect = ({ className = "" }: MatrixPlayerEffectProps) 
           // Draw only image 11 inside the x-ray circle (1.1x larger)
           ctx.drawImage(xrayImage, xrayX, xrayY, xrayWidth, xrayHeight);
           
+          // Draw the xray overlay image on top (same positioning as xray image)
+          if (xrayOverlay) {
+            const overlayScale = scale * xrayScale;
+            const overlayWidth = xrayOverlay.width * overlayScale;
+            const overlayHeight = xrayOverlay.height * overlayScale;
+            const overlayX = (canvas.width - overlayWidth) / 2 - 65;
+            const overlayY = (canvas.height - overlayHeight) / 2 - 50;
+            ctx.drawImage(xrayOverlay, overlayX, overlayY, overlayWidth, overlayHeight);
+          }
+          
           // Draw 5D MATRIX LINES - only within x-ray circle
           const baseLengthMin = 180;
           const baseLengthMax = 350;
@@ -337,7 +356,7 @@ export const MatrixPlayerEffect = ({ className = "" }: MatrixPlayerEffectProps) 
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [baseImage, xrayImage, mousePos]);
+  }, [baseImage, xrayImage, xrayOverlay, mousePos]);
 
   return (
     <div 
