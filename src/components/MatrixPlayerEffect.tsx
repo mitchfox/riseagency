@@ -71,7 +71,7 @@ export const MatrixPlayerEffect = ({ className = "" }: MatrixPlayerEffectProps) 
     loadZip();
   }, []);
 
-  // Handle mouse movement
+  // Handle mouse and touch movement
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (containerRef.current) {
@@ -83,8 +83,37 @@ export const MatrixPlayerEffect = ({ className = "" }: MatrixPlayerEffectProps) 
       }
     };
 
+    const handleTouchMove = (e: TouchEvent) => {
+      if (containerRef.current && e.touches.length > 0) {
+        const rect = containerRef.current.getBoundingClientRect();
+        const touch = e.touches[0];
+        setMousePos({
+          x: touch.clientX - rect.left,
+          y: touch.clientY - rect.top,
+        });
+      }
+    };
+
+    const handleTouchStart = (e: TouchEvent) => {
+      if (containerRef.current && e.touches.length > 0) {
+        const rect = containerRef.current.getBoundingClientRect();
+        const touch = e.touches[0];
+        setMousePos({
+          x: touch.clientX - rect.left,
+          y: touch.clientY - rect.top,
+        });
+      }
+    };
+
     window.addEventListener("mousemove", handleMouseMove);
-    return () => window.removeEventListener("mousemove", handleMouseMove);
+    window.addEventListener("touchmove", handleTouchMove, { passive: true });
+    window.addEventListener("touchstart", handleTouchStart, { passive: true });
+    
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("touchmove", handleTouchMove);
+      window.removeEventListener("touchstart", handleTouchStart);
+    };
   }, []);
 
   // Animation
@@ -142,15 +171,17 @@ export const MatrixPlayerEffect = ({ className = "" }: MatrixPlayerEffectProps) 
         );
         const imgWidth = baseImage.width * scale;
         const imgHeight = baseImage.height * scale;
-        const imgX = (canvas.width - imgWidth) / 2 - 65; // Moved left 65px total
-        const imgY = (canvas.height - imgHeight) / 2 - 80; // Moved up 90px total
+        // On mobile (narrow screens), center horizontally and position at top
+        const isMobile = canvas.width < 768;
+        const imgX = isMobile ? (canvas.width - imgWidth) / 2 : (canvas.width - imgWidth) / 2 - 65;
+        const imgY = isMobile ? 20 : (canvas.height - imgHeight) / 2 - 80;
 
         // Image 11 (xray) is 1.1x larger than image 7
         const xrayScale = 1.1;
         const xrayWidth = xrayImage ? xrayImage.width * scale * xrayScale : imgWidth;
         const xrayHeight = xrayImage ? xrayImage.height * scale * xrayScale : imgHeight;
-        const xrayX = (canvas.width - xrayWidth) / 2 - 65; // Same horizontal offset
-        const xrayY = (canvas.height - xrayHeight) / 2 - 50; // Same vertical offset
+        const xrayX = isMobile ? (canvas.width - xrayWidth) / 2 : (canvas.width - xrayWidth) / 2 - 65;
+        const xrayY = isMobile ? 20 - (xrayHeight - imgHeight) / 2 : (canvas.height - xrayHeight) / 2 - 50;
 
         const playerCenterX = imgX + imgWidth / 2;
         const playerCenterY = imgY + imgHeight / 2;
