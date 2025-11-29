@@ -52,7 +52,8 @@ function isPreviewOrLocalEnvironment(): boolean {
   const hostname = window.location.hostname;
   return hostname === 'localhost' || 
          /^\d+\.\d+\.\d+\.\d+$/.test(hostname) ||
-         hostname.includes('lovable.app');
+         hostname.includes('lovable.app') ||
+         hostname.includes('lovableproject.com');
 }
 
 function detectLanguageFromSubdomain(): LanguageCode {
