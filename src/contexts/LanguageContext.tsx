@@ -27,6 +27,16 @@ const languageSubdomains: Record<string, LanguageCode> = {
   'es': 'es',
   'pt': 'pt',
   'cs': 'cs',
+  'cz': 'cs', // DNS uses 'cz' for Czech
+  'ru': 'ru',
+};
+
+// URL subdomains to use (matching DNS records)
+const languageUrlSubdomains: Record<LanguageCode, string> = {
+  'en': '',
+  'es': 'es',
+  'pt': 'pt',
+  'cs': 'cz', // DNS uses 'cz' for Czech
   'ru': 'ru',
 };
 
@@ -59,15 +69,7 @@ function detectLanguageFromSubdomain(): LanguageCode {
   
   const parts = hostname.split('.');
   
-  // Check for format: www.es.risefootballagency.com
-  if (parts.length >= 3 && parts[0].toLowerCase() === 'www') {
-    const potentialLang = parts[1].toLowerCase();
-    if (languageSubdomains[potentialLang]) {
-      return languageSubdomains[potentialLang];
-    }
-  }
-  
-  // Also check format without www: es.risefootballagency.com
+  // Check format: es.risefootballagency.com (language subdomain first)
   if (parts.length >= 2) {
     const potentialLang = parts[0].toLowerCase();
     if (languageSubdomains[potentialLang]) {
@@ -136,32 +138,23 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     const parts = hostname.split('.');
     let baseDomain: string;
 
-    // Check if hostname starts with www
-    const hasWww = parts[0].toLowerCase() === 'www';
-    
-    // Check if second part (after www) is a language subdomain
-    if (hasWww && parts.length >= 3 && languageSubdomains[parts[1].toLowerCase()]) {
-      // Format: www.es.domain.com -> remove the language part
-      baseDomain = 'www.' + parts.slice(2).join('.');
-    } else if (!hasWww && languageSubdomains[parts[0].toLowerCase()]) {
+    // Check if first part is a language subdomain
+    if (languageSubdomains[parts[0].toLowerCase()]) {
       // Format: es.domain.com -> remove the language part
       baseDomain = parts.slice(1).join('.');
     } else {
       baseDomain = hostname;
     }
 
-    // Build new URL - format: www.es.domain.com
+    // Build new URL - format: es.risefootballagency.com (matching DNS records)
     let newHostname: string;
     if (lang === 'en') {
       // English uses the base domain (no language subdomain)
       newHostname = baseDomain;
     } else {
-      // Other languages: www.es.risefootballagency.com
-      if (baseDomain.startsWith('www.')) {
-        newHostname = `www.${lang}.${baseDomain.slice(4)}`;
-      } else {
-        newHostname = `${lang}.${baseDomain}`;
-      }
+      // Other languages: es.risefootballagency.com
+      const urlSubdomain = languageUrlSubdomains[lang];
+      newHostname = `${urlSubdomain}.${baseDomain}`;
     }
 
     const newUrl = `${protocol}//${newHostname}${pathname}`;
