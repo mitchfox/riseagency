@@ -10,9 +10,8 @@ const subdomainRoutes: Record<string, string> = {
   'agents': '/agents'
 };
 
-// Subdomains to ignore (treat as main domain)
-// Include language subdomains so they don't trigger route redirects
-const ignoredSubdomains = ['www', 'localhost', '', 'es', 'pt', 'cs', 'ru'];
+// Language subdomains (don't trigger route redirects)
+const languageSubdomains = ['es', 'pt', 'cs', 'ru'];
 
 export const useSubdomainRouter = () => {
   const navigate = useNavigate();
@@ -20,9 +19,6 @@ export const useSubdomainRouter = () => {
 
   useEffect(() => {
     const hostname = window.location.hostname;
-    
-    // Extract subdomain from hostname
-    // e.g., "portal.risefootballagency.com" → "portal"
     const parts = hostname.split('.');
     
     // For localhost or IP addresses, skip subdomain routing
@@ -30,22 +26,31 @@ export const useSubdomainRouter = () => {
       return;
     }
     
-    // Get the subdomain (first part if there are 3+ parts)
-    // risefootballagency.com = 2 parts (no subdomain)
-    // portal.risefootballagency.com = 3 parts (subdomain = "portal")
-    // es.risefootballagency.com = 3 parts (subdomain = "es" - language)
-    const subdomain = parts.length >= 3 ? parts[0] : '';
+    // Determine the functional subdomain based on format:
+    // www.portal.risefootballagency.com -> portal (parts[1])
+    // www.es.risefootballagency.com -> es (language, ignore)
+    // portal.risefootballagency.com -> portal (parts[0])
+    // www.risefootballagency.com -> no subdomain
     
-    // Skip if no subdomain or it's an ignored subdomain (including language subdomains)
-    if (ignoredSubdomains.includes(subdomain)) {
+    let functionalSubdomain = '';
+    
+    if (parts[0].toLowerCase() === 'www' && parts.length >= 4) {
+      // Format: www.{subdomain}.domain.com
+      functionalSubdomain = parts[1].toLowerCase();
+    } else if (parts[0].toLowerCase() !== 'www' && parts.length >= 3) {
+      // Format: {subdomain}.domain.com
+      functionalSubdomain = parts[0].toLowerCase();
+    }
+    
+    // Skip if no subdomain or it's a language subdomain
+    if (!functionalSubdomain || languageSubdomains.includes(functionalSubdomain)) {
       return;
     }
     
     // Check if this subdomain has a mapped route
-    const targetRoute = subdomainRoutes[subdomain];
+    const targetRoute = subdomainRoutes[functionalSubdomain];
     
     if (targetRoute && location.pathname !== targetRoute) {
-      // Only redirect if we're not already on the target route
       navigate(targetRoute, { replace: true });
     }
   }, [navigate, location.pathname]);
