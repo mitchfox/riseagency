@@ -2,15 +2,18 @@ import { Link } from "react-router-dom";
 import { LanguageSelector } from "@/components/LanguageSelector";
 import { HoverText } from "@/components/HoverText";
 import { MatrixPlayerEffect } from "@/components/MatrixPlayerEffect";
+import { useLanguage } from "@/contexts/LanguageContext";
 import blackMarble from "@/assets/black-marble-smudged.png";
 
 export default function Landing() {
+  const { t } = useLanguage();
+  
   const navLinks = [
-    { to: "/stars", label: "PLAYERS" },
-    { to: "/coaches", label: "COACHES" },
-    { to: "/home", label: "HOME" },
-    { to: "/clubs", label: "CLUBS" },
-    { to: "/agents", label: "AGENTS" },
+    { to: "/stars", labelKey: "landing.nav_players", fallback: "PLAYERS" },
+    { to: "/coaches", labelKey: "landing.nav_coaches", fallback: "COACHES" },
+    { to: "/home", labelKey: "landing.nav_home", fallback: "HOME" },
+    { to: "/clubs", labelKey: "landing.nav_clubs", fallback: "CLUBS" },
+    { to: "/agents", labelKey: "landing.nav_agents", fallback: "AGENTS" },
   ];
 
   return (
@@ -37,7 +40,7 @@ export default function Landing() {
                   to={link.to}
                   className="px-2 md:px-8 py-1 md:py-0 text-xs md:text-base font-bebas uppercase tracking-[0.1em] md:tracking-[0.2em] text-white/80 hover:text-primary transition-colors duration-300"
                 >
-                  <HoverText text={link.label} />
+                  <HoverText text={t(link.labelKey, link.fallback)} />
                 </Link>
                 {index < navLinks.length - 1 && (
                   <div className="hidden md:block w-px h-4 bg-primary/50" />
