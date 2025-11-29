@@ -3,11 +3,14 @@ import { FaInstagram, FaTwitter, FaLinkedin, FaYoutube } from "react-icons/fa";
 import logo from "@/assets/logo.png";
 import { WorkWithUsDialog } from "@/components/WorkWithUsDialog";
 import { Button } from "@/components/ui/button";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 // Build version - update this to verify deployments
 const BUILD_VERSION = "v2024.11.27.001";
 
 export const Footer = () => {
+  const { t } = useLanguage();
+
   return (
     <footer className="bg-muted/20 border-t border-primary/10">
       <div className="container mx-auto px-4 py-16">
@@ -15,7 +18,7 @@ export const Footer = () => {
         <div className="max-w-4xl mx-auto text-center mb-16">
           <img src={logo} alt="RISE Football Agency" className="h-16 mx-auto mb-6" />
           <p className="text-lg text-muted-foreground leading-relaxed max-w-2xl mx-auto">
-            Performance-first football representation helping players, coaches, and clubs reach their full potential through data-driven insights and professional development.
+            {t("footer.description", "Performance-first football representation helping players, coaches, and clubs reach their full potential through data-driven insights and professional development.")}
           </p>
         </div>
 
@@ -24,44 +27,44 @@ export const Footer = () => {
           {/* Quick Links */}
           <div>
             <h3 className="font-bebas text-2xl uppercase tracking-wider text-foreground mb-6">
-              Quick Links
+              {t("footer.quick_links", "Quick Links")}
             </h3>
             <div className="grid grid-cols-2 gap-x-6 gap-y-3">
               <Link to="/" className="text-muted-foreground hover:text-primary transition-colors">
-                Home
+                {t("footer.home", "Home")}
               </Link>
               <Link to="/stars" className="text-muted-foreground hover:text-primary transition-colors">
-                Stars
+                {t("footer.stars", "Stars")}
               </Link>
               <Link to="/players" className="text-muted-foreground hover:text-primary transition-colors">
-                Players
+                {t("footer.players", "Players")}
               </Link>
               <Link to="/clubs" className="text-muted-foreground hover:text-primary transition-colors">
-                Clubs
+                {t("footer.clubs", "Clubs")}
               </Link>
               <Link to="/coaches" className="text-muted-foreground hover:text-primary transition-colors">
-                Coaches
+                {t("footer.coaches", "Coaches")}
               </Link>
               <Link to="/scouts" className="text-muted-foreground hover:text-primary transition-colors">
-                Scouts
+                {t("footer.scouts", "Scouts")}
               </Link>
               <Link to="/performance" className="text-muted-foreground hover:text-primary transition-colors">
-                Realise Potential
+                {t("footer.realise_potential", "Realise Potential")}
               </Link>
               <Link to="/about" className="text-muted-foreground hover:text-primary transition-colors">
-                About
+                {t("footer.about", "About")}
               </Link>
               <Link to="/news" className="text-muted-foreground hover:text-primary transition-colors">
-                News
+                {t("footer.news", "News")}
               </Link>
               <Link to="/between-the-lines" className="text-muted-foreground hover:text-primary transition-colors">
-                Between The Lines
+                {t("footer.between_the_lines", "Between The Lines")}
               </Link>
               <Link to="/staff" className="text-muted-foreground hover:text-primary transition-colors">
-                Staff
+                {t("footer.staff", "Staff")}
               </Link>
               <Link to="/contact" className="text-muted-foreground hover:text-primary transition-colors">
-                Contact
+                {t("footer.contact", "Contact")}
               </Link>
             </div>
           </div>
@@ -69,7 +72,7 @@ export const Footer = () => {
           {/* Contact */}
           <div>
             <h3 className="font-bebas text-2xl uppercase tracking-wider text-foreground mb-6">
-              Get In Touch
+              {t("footer.get_in_touch", "Get In Touch")}
             </h3>
             <WorkWithUsDialog>
               <Button 
@@ -77,7 +80,7 @@ export const Footer = () => {
                 hoverEffect
                 className="w-full btn-shine font-bebas uppercase tracking-wider text-lg"
               >
-                Contact Us
+                {t("footer.contact_us", "Contact Us")}
               </Button>
             </WorkWithUsDialog>
           </div>
@@ -85,7 +88,7 @@ export const Footer = () => {
           {/* Social Media */}
           <div>
             <h3 className="font-bebas text-2xl uppercase tracking-wider text-foreground mb-6">
-              Follow Us
+              {t("footer.follow_us", "Follow Us")}
             </h3>
             <div className="grid grid-cols-2 gap-4">
               <a
@@ -131,12 +134,11 @@ export const Footer = () => {
         {/* Bottom Bar */}
         <div className="pt-8 border-t border-primary/10">
           <p className="text-xs text-muted-foreground/80 text-center max-w-3xl mx-auto mb-6 px-4">
-            RISE Agency operates in accordance with the regulatory frameworks established by FIFA and UEFA. 
-            Our work follows the standards required for player representation, governance and integrity.
+            {t("footer.regulatory_text", "RISE Agency operates in accordance with the regulatory frameworks established by FIFA and UEFA. Our work follows the standards required for player representation, governance and integrity.")}
           </p>
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-sm text-muted-foreground">
-              © {new Date().getFullYear()} RISE Football Agency. All rights reserved.
+              © {new Date().getFullYear()} RISE Football Agency. {t("footer.all_rights_reserved", "All rights reserved.")}
             </p>
             <div className="flex flex-wrap justify-center gap-6">
               <a 
@@ -145,10 +147,10 @@ export const Footer = () => {
                 rel="noopener noreferrer"
                 className="text-sm text-muted-foreground hover:text-primary transition-colors font-bebas uppercase tracking-wider"
               >
-                RISE Podcast
+                {t("footer.podcast", "RISE Podcast")}
               </a>
               <Link to="/privacy-policy" className="text-sm text-muted-foreground hover:text-primary transition-colors font-bebas uppercase tracking-wider">
-                Privacy Policy
+                {t("footer.privacy_policy", "Privacy Policy")}
               </Link>
               <a 
                 href="/FIFA_Football_Agent_Regulations.pdf" 
@@ -156,7 +158,7 @@ export const Footer = () => {
                 rel="noopener noreferrer"
                 className="text-sm text-muted-foreground hover:text-primary transition-colors font-bebas uppercase tracking-wider"
               >
-                REGULATIONS
+                {t("footer.regulations", "REGULATIONS")}
               </a>
               <a 
                 href="https://www.fifa.com/legal/football-regulatory/agents" 
@@ -164,7 +166,7 @@ export const Footer = () => {
                 rel="noopener noreferrer"
                 className="text-sm text-muted-foreground hover:text-primary transition-colors font-bebas uppercase tracking-wider"
               >
-                FIFA Framework
+                {t("footer.fifa_framework", "FIFA Framework")}
               </a>
               <a 
                 href="https://www.uefa.com/insideuefa/protecting-the-game/football-regulatory" 
@@ -172,7 +174,7 @@ export const Footer = () => {
                 rel="noopener noreferrer"
                 className="text-sm text-muted-foreground hover:text-primary transition-colors font-bebas uppercase tracking-wider"
               >
-                UEFA Framework
+                {t("footer.uefa_framework", "UEFA Framework")}
               </a>
             </div>
           </div>
