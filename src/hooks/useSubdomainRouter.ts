@@ -11,7 +11,7 @@ const subdomainRoutes: Record<string, string> = {
 };
 
 // Language subdomains (don't trigger route redirects)
-const languageSubdomains = ['es', 'pt', 'cs', 'ru'];
+const languageSubdomains = ['es', 'pt', 'cs', 'cz', 'ru'];
 
 export const useSubdomainRouter = () => {
   const navigate = useNavigate();
