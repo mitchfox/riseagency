@@ -2359,6 +2359,45 @@ export type Database = {
         }
         Relationships: []
       }
+      translations: {
+        Row: {
+          created_at: string
+          czech: string | null
+          english: string
+          id: string
+          page_name: string
+          portuguese: string | null
+          russian: string | null
+          spanish: string | null
+          text_key: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          czech?: string | null
+          english: string
+          id?: string
+          page_name: string
+          portuguese?: string | null
+          russian?: string | null
+          spanish?: string | null
+          text_key: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          czech?: string | null
+          english?: string
+          id?: string
+          page_name?: string
+          portuguese?: string | null
+          russian?: string | null
+          spanish?: string | null
+          text_key?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       updates: {
         Row: {
           content: string

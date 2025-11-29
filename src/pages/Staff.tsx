@@ -42,6 +42,7 @@ import { StaffAccountManagement } from "@/components/staff/StaffAccountManagemen
 import { PlayerPasswordManagement } from "@/components/staff/PlayerPasswordManagement";
 import ClubNetworkManagement from "@/components/staff/ClubNetworkManagement";
 import LegalManagement from "@/components/staff/LegalManagement";
+import { LanguagesManagement } from "@/components/staff/LanguagesManagement";
 import { SiteManagement } from "@/components/staff/SiteManagement";
 import { StaffPWAInstall } from "@/components/staff/StaffPWAInstall";
 import { StaffOfflineManager } from "@/components/staff/StaffOfflineManager";
@@ -74,7 +75,8 @@ import {
   HardDrive,
   Bell,
   ClipboardList,
-  Settings
+  Settings,
+  Languages
 } from "lucide-react";
 
 const Staff = () => {
@@ -87,7 +89,7 @@ const Staff = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [isMarketeer, setIsMarketeer] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-  const [expandedSection, setExpandedSection] = useState<'overview' | 'schedule' | 'goalstasks' | 'staffaccounts' | 'passwords' | 'pwainstall' | 'offlinemanager' | 'pushnotifications' | 'players' | 'playerlist' | 'recruitment' | 'playerdatabase' | 'scouts' | 'scoutingcentre' | 'blog' | 'betweenthelines' | 'coaching' | 'analysis' | 'marketing' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'legal' | 'sitemanagement' | null>('overview');
+  const [expandedSection, setExpandedSection] = useState<'overview' | 'schedule' | 'goalstasks' | 'staffaccounts' | 'passwords' | 'pwainstall' | 'offlinemanager' | 'pushnotifications' | 'players' | 'playerlist' | 'recruitment' | 'playerdatabase' | 'scouts' | 'scoutingcentre' | 'blog' | 'betweenthelines' | 'coaching' | 'analysis' | 'marketing' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'legal' | 'languages' | 'sitemanagement' | null>('overview');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   
   // Enable staff notifications
@@ -565,6 +567,7 @@ const Staff = () => {
       locked: isMarketeer,
       sections: [
         { id: 'legal', title: 'Legal', icon: Scale },
+        { id: 'languages', title: 'Languages', icon: Languages },
         { id: 'invoices', title: 'Invoices', icon: FileCheck },
         ...(isAdmin ? [
           { id: 'sitemanagement', title: 'Site Management', icon: Settings },
@@ -865,6 +868,7 @@ const Staff = () => {
                   {expandedSection === 'updates' && <UpdatesManagement isAdmin={isAdmin} />}
                   {expandedSection === 'clubnetwork' && <ClubNetworkManagement />}
                   {expandedSection === 'legal' && <LegalManagement isAdmin={isAdmin} />}
+                  {expandedSection === 'languages' && <LanguagesManagement isAdmin={isAdmin} />}
                   {expandedSection === 'sitemanagement' && isAdmin && <SiteManagement isAdmin={isAdmin} />}
                   {expandedSection === 'passwords' && isAdmin && <PlayerPasswordManagement />}
                   {expandedSection === 'staffaccounts' && isAdmin && <StaffAccountManagement />}
