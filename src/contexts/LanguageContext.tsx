@@ -38,18 +38,29 @@ const languageColumns: Record<LanguageCode, keyof Translation> = {
   'ru': 'russian',
 };
 
+function isPreviewOrLocalEnvironment(): boolean {
+  const hostname = window.location.hostname;
+  return hostname === 'localhost' || 
+         /^\d+\.\d+\.\d+\.\d+$/.test(hostname) ||
+         hostname.includes('lovable.app');
+}
+
 function detectLanguageFromSubdomain(): LanguageCode {
   const hostname = window.location.hostname;
   
-  // For localhost or IP addresses, default to English
-  if (hostname === 'localhost' || /^\d+\.\d+\.\d+\.\d+$/.test(hostname)) {
+  // For localhost, IP addresses, or preview environments, check localStorage
+  if (isPreviewOrLocalEnvironment()) {
+    const stored = localStorage.getItem('preferred_language');
+    if (stored && ['en', 'es', 'pt', 'cs', 'ru'].includes(stored)) {
+      return stored as LanguageCode;
+    }
     return 'en';
   }
   
   const parts = hostname.split('.');
   
   // Check if first part is a language subdomain
-  // e.g., es.risefootballagency.com or es.preview--xxx.lovable.app
+  // e.g., es.risefootballagency.com
   if (parts.length >= 2) {
     const potentialLang = parts[0].toLowerCase();
     if (languageSubdomains[potentialLang]) {
@@ -108,8 +119,9 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     const pathname = window.location.pathname;
     const protocol = window.location.protocol;
     
-    // For localhost, just update state (can't use subdomains)
-    if (hostname === 'localhost' || /^\d+\.\d+\.\d+\.\d+$/.test(hostname)) {
+    // For preview/localhost environments, use localStorage and update state
+    if (isPreviewOrLocalEnvironment()) {
+      localStorage.setItem('preferred_language', lang);
       setLanguage(lang);
       return;
     }
