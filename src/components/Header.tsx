@@ -21,12 +21,14 @@ import { DeclareInterestDialog } from "@/components/DeclareInterestDialog";
 import { IntroModal } from "@/components/IntroModal";
 import { HoverText } from "@/components/HoverText";
 import { LanguageSelector } from "@/components/LanguageSelector";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 // NOTE: GridLines component is available at src/components/GridLines.tsx 
 // for coordinate-based positioning during design. Import and add it when needed.
 
 export const Header = () => {
   const location = useLocation();
+  const { t } = useLanguage();
   const [representationOpen, setRepresentationOpen] = useState(false);
   const [workWithUsOpen, setWorkWithUsOpen] = useState(false);
   const [declareInterestOpen, setDeclareInterestOpen] = useState(false);
@@ -177,12 +179,12 @@ export const Header = () => {
             <div className="flex flex-wrap items-center gap-2 md:gap-4 transition-all duration-500">
               <Link to="/contact" className="text-xs md:text-sm font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500 flex items-center gap-1.5">
                 <MessageCircle className="w-3 h-3 md:w-3.5 md:h-3.5 hidden sm:block" />
-                <HoverText text="Contact Us" />
+                <HoverText text={t("header.contact_us", "Contact Us")} />
               </Link>
               <div className="w-px h-4 bg-white/20" />
               <button onClick={() => setDeclareInterestOpen(true)} className="text-xs md:text-sm font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500 flex items-center gap-1.5">
                 <Users className="w-3 h-3 md:w-3.5 md:h-3.5 hidden sm:block" />
-                <HoverText text="Declare Interest In A Star" />
+                <HoverText text={t("header.declare_interest", "Declare Interest In A Star")} />
               </button>
             </div>
             {/* Language Selector - Centered */}
@@ -192,12 +194,12 @@ export const Header = () => {
             <div className="flex flex-wrap items-center gap-2 md:gap-4 transition-all duration-500">
               <button onClick={() => setRepresentationOpen(true)} className="text-xs md:text-sm font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500 flex items-center gap-1.5">
                 <Handshake className="w-3 h-3 md:w-3.5 md:h-3.5 hidden sm:block" />
-                <HoverText text="Request Representation" />
+                <HoverText text={t("header.request_representation", "Request Representation")} />
               </button>
               <div className="w-px h-4 bg-white/20" />
               <Link to="/login" className="text-xs md:text-sm font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500 flex items-center gap-1.5">
                 <LogIn className="w-3 h-3 md:w-3.5 md:h-3.5 hidden sm:block" />
-                <HoverText text="Portal" />
+                <HoverText text={t("header.portal", "Portal")} />
               </Link>
             </div>
           </div>
@@ -309,7 +311,7 @@ export const Header = () => {
                           isActive("/") ? "text-primary" : ""
                         }`}
                       >
-                        <HoverText text="HOME" />
+                        <HoverText text={t("header.home", "HOME")} />
                       </Link>
                     </DrawerClose>
                     <div className="h-px bg-primary my-1" />
@@ -325,7 +327,7 @@ export const Header = () => {
                             : ""
                         }`}
                       >
-                        <HoverText text="STARS" />
+                        <HoverText text={t("header.stars", "STARS")} />
                       </Link>
                     </DrawerClose>
                     <div className="h-px bg-white/20 my-1" />
@@ -339,7 +341,7 @@ export const Header = () => {
                           isActive("/performance") ? "text-primary" : ""
                         }`}
                       >
-                        <HoverText text="REALISE POTENTIAL" />
+                        <HoverText text={t("header.realise_potential", "REALISE POTENTIAL")} />
                       </Link>
                     </DrawerClose>
                     <div className="h-px bg-white/20 my-1" />
@@ -353,7 +355,7 @@ export const Header = () => {
                           isActive("/between-the-lines") ? "text-primary" : ""
                         }`}
                       >
-                        <HoverText text="BETWEEN THE LINES" />
+                        <HoverText text={t("header.between_the_lines", "BETWEEN THE LINES")} />
                       </Link>
                     </DrawerClose>
                     <div className="h-px bg-white/20 my-1" />
@@ -367,7 +369,7 @@ export const Header = () => {
                           isActive("/news") ? "text-primary" : ""
                         }`}
                       >
-                        <HoverText text="NEWS" />
+                        <HoverText text={t("header.news", "NEWS")} />
                       </Link>
                     </DrawerClose>
                     <div className="h-px bg-primary my-1" />
@@ -381,7 +383,7 @@ export const Header = () => {
                             : ""
                         }`}
                       >
-                        <HoverText text="PLAYERS" />
+                        <HoverText text={t("header.players", "PLAYERS")} />
                       </Link>
                     </DrawerClose>
                     <div className="h-px bg-white/20 my-1" />
@@ -393,7 +395,7 @@ export const Header = () => {
                           isActive("/clubs") ? "text-primary" : ""
                         }`}
                       >
-                        <HoverText text="CLUBS" />
+                        <HoverText text={t("header.clubs", "CLUBS")} />
                       </Link>
                     </DrawerClose>
                     <div className="h-px bg-white/20 my-1" />
@@ -405,7 +407,7 @@ export const Header = () => {
                           isActive("/coaches") ? "text-primary" : ""
                         }`}
                       >
-                        <HoverText text="COACHES" />
+                        <HoverText text={t("header.coaches", "COACHES")} />
                       </Link>
                     </DrawerClose>
                     <div className="h-px bg-white/20 my-1" />
@@ -417,7 +419,7 @@ export const Header = () => {
                           isActive("/scouts") ? "text-primary" : ""
                         }`}
                       >
-                        <HoverText text="SCOUTS" />
+                        <HoverText text={t("header.scouts", "SCOUTS")} />
                       </Link>
                     </DrawerClose>
                     <div className="h-px bg-white/20 my-1" />
@@ -429,7 +431,7 @@ export const Header = () => {
                           isActive("/agents") ? "text-primary" : ""
                         }`}
                       >
-                        <HoverText text="AGENTS" />
+                        <HoverText text={t("header.agents", "AGENTS")} />
                       </Link>
                     </DrawerClose>
                   </nav>
@@ -444,13 +446,13 @@ export const Header = () => {
                       <div className="relative w-full h-full rounded overflow-hidden border-2 border-primary">
                         <img
                           src={workingTogether}
-                          alt="Request Representation"
+                          alt={t("header.request_representation", "Request Representation")}
                           className="w-full h-full object-cover object-top"
                         />
                         <div className="absolute inset-0 bg-black/30" />
                         <div className="absolute inset-0 flex items-center justify-center p-3">
                           <div className="bg-primary text-black font-bebas uppercase tracking-widest text-xs md:text-sm py-2 px-3 text-center group-hover:brightness-110 transition-all w-full whitespace-nowrap">
-                            <HoverText text="Request Representation" />
+                            <HoverText text={t("header.request_representation", "Request Representation")} />
                           </div>
                         </div>
                       </div>
@@ -467,13 +469,13 @@ export const Header = () => {
                       <div className="relative w-full h-full rounded overflow-hidden border-2 border-primary">
                         <img
                           src={playerPortalImage}
-                          alt="Portal"
+                          alt={t("header.portal", "Portal")}
                           className="w-full h-full object-cover object-top"
                         />
                         <div className="absolute inset-0 bg-black/30" />
                         <div className="absolute inset-0 flex items-center justify-center p-3">
                           <div className="bg-primary text-black font-bebas uppercase tracking-widest text-xs md:text-sm py-2 px-3 text-center group-hover:brightness-110 transition-all w-full whitespace-nowrap">
-                            <HoverText text="Portal" />
+                            <HoverText text={t("header.portal", "Portal")} />
                           </div>
                         </div>
                       </div>
@@ -839,16 +841,16 @@ export const Header = () => {
               pointerEvents: isScrolled ? "auto" : "none",
               transition: "all 0.5s cubic-bezier(0.4, 0, 0.2, 1)"
             }}>
-                <Link to="/contact" className="group p-1.5 md:p-2 rounded-full hover:bg-primary/10 transition-all duration-300 flex items-center gap-1.5 overflow-hidden" title="Contact Us">
+                <Link to="/contact" className="group p-1.5 md:p-2 rounded-full hover:bg-primary/10 transition-all duration-300 flex items-center gap-1.5 overflow-hidden" title={t("header.contact_us", "Contact Us")}>
                   <MessageCircle className="w-4 h-4 md:w-5 md:h-5 text-white/80 group-hover:text-primary transition-colors flex-shrink-0" />
                   <span className="max-w-0 md:group-hover:max-w-xs transition-all duration-300 text-xs font-bebas uppercase tracking-wider text-white/80 group-hover:text-primary whitespace-nowrap overflow-hidden">
-                    Contact Us
+                    {t("header.contact_us", "Contact Us")}
                   </span>
                 </Link>
-                <button onClick={() => setDeclareInterestOpen(true)} className="group p-1.5 md:p-2 rounded-full hover:bg-primary/10 transition-all duration-300 flex items-center gap-1.5 overflow-hidden" title="Declare Interest">
+                <button onClick={() => setDeclareInterestOpen(true)} className="group p-1.5 md:p-2 rounded-full hover:bg-primary/10 transition-all duration-300 flex items-center gap-1.5 overflow-hidden" title={t("header.declare_interest_short", "Declare Interest")}>
                   <Users className="w-4 h-4 md:w-5 md:h-5 text-white/80 group-hover:text-primary transition-colors flex-shrink-0" />
                   <span className="max-w-0 md:group-hover:max-w-xs transition-all duration-300 text-xs font-bebas uppercase tracking-wider text-white/80 group-hover:text-primary whitespace-nowrap overflow-hidden">
-                    Declare Interest
+                    {t("header.declare_interest_short", "Declare Interest")}
                   </span>
                 </button>
               </div>
@@ -861,16 +863,16 @@ export const Header = () => {
               pointerEvents: isScrolled ? "auto" : "none",
               transition: "all 0.5s cubic-bezier(0.4, 0, 0.2, 1)"
             }}>
-                <button onClick={() => setRepresentationOpen(true)} className="group p-1.5 md:p-2 rounded-full hover:bg-primary/10 transition-all duration-300 flex items-center gap-1.5 overflow-hidden" title="Request Representation">
+                <button onClick={() => setRepresentationOpen(true)} className="group p-1.5 md:p-2 rounded-full hover:bg-primary/10 transition-all duration-300 flex items-center gap-1.5 overflow-hidden" title={t("header.request_representation", "Request Representation")}>
                   <Handshake className="w-4 h-4 md:w-5 md:h-5 text-white/80 group-hover:text-primary transition-colors flex-shrink-0" />
                   <span className="max-w-0 md:group-hover:max-w-xs transition-all duration-300 text-xs font-bebas uppercase tracking-wider text-white/80 group-hover:text-primary whitespace-nowrap overflow-hidden">
-                    Request Representation
+                    {t("header.request_representation", "Request Representation")}
                   </span>
                 </button>
-                <Link to="/login" className="group p-1.5 md:p-2 rounded-full hover:bg-primary/10 transition-all duration-300 flex items-center gap-1.5 overflow-hidden" title="Portal">
+                <Link to="/login" className="group p-1.5 md:p-2 rounded-full hover:bg-primary/10 transition-all duration-300 flex items-center gap-1.5 overflow-hidden" title={t("header.portal", "Portal")}>
                   <LogIn className="w-4 h-4 md:w-5 md:h-5 text-white/80 group-hover:text-primary transition-colors flex-shrink-0" />
                   <span className="max-w-0 md:group-hover:max-w-xs transition-all duration-300 text-xs font-bebas uppercase tracking-wider text-white/80 group-hover:text-primary whitespace-nowrap overflow-hidden">
-                    Portal
+                    {t("header.portal", "Portal")}
                   </span>
                 </Link>
               </div>
@@ -878,8 +880,8 @@ export const Header = () => {
 
           {/* RISE WITH US Button - Right */}
           <Button onClick={() => setWorkWithUsOpen(true)} size="sm" className={`btn-shine font-bebas uppercase tracking-wider transition-all duration-500 ease-out ${isScrolled ? 'text-xs md:text-sm px-3 md:px-5 h-8 md:h-9' : 'text-sm md:text-base px-4 md:px-6 h-9 md:h-10'}`}>
-            <span className="hidden sm:inline"><HoverText text="RISE WITH US" /></span>
-            <span className="sm:hidden"><HoverText text="RISE" /></span>
+            <span className="hidden sm:inline"><HoverText text={t("header.rise_with_us", "RISE WITH US")} /></span>
+            <span className="sm:hidden"><HoverText text={t("header.rise", "RISE")} /></span>
           </Button>
         </div>
       </div>

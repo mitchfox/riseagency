@@ -10,6 +10,7 @@ import ScoutingNetworkMap from "@/components/ScoutingNetworkMap";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { HoverText } from "@/components/HoverText";
+import { useLanguage } from "@/contexts/LanguageContext";
 import marbleBg from "@/assets/marble-bg.png";
 import riseStarIcon from "@/assets/rise-star-icon.png";
 import marbleTexture from "@/assets/marble-texture.png";
@@ -27,6 +28,7 @@ interface NewsArticle {
 }
 
 const Index = () => {
+  const { t } = useLanguage();
   const [showIntroModal, setShowIntroModal] = useState(false);
   const [newsArticles, setNewsArticles] = useState<NewsArticle[]>([]);
   const [insideAccessArticles, setInsideAccessArticles] = useState<NewsArticle[]>([]);
@@ -88,11 +90,11 @@ const Index = () => {
           <div className="container mx-auto max-w-7xl relative z-10">
             <div className="text-center space-y-6">
               <h1 className="text-5xl md:text-7xl lg:text-8xl font-bebas uppercase tracking-wider">
-                <span className="text-foreground">REALISE </span>
-                <span className="text-primary">POTENTIAL</span>
+                <span className="text-foreground">{t("home.hero_title_1", "REALISE")} </span>
+                <span className="text-primary">{t("home.hero_title_2", "POTENTIAL")}</span>
               </h1>
               <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto font-light tracking-wide italic">
-                Elite Football Representation & Performance Optimisation
+                {t("home.hero_subtitle", "Elite Football Representation & Performance Optimisation")}
               </p>
             </div>
 
@@ -107,7 +109,7 @@ const Index = () => {
               <div className="text-center mb-6 space-y-3">
               <div className="inline-block">
                 <span className="text-sm font-bebas uppercase tracking-widest text-primary border border-primary/30 px-6 py-2 rounded-full">
-                  Exclusive
+                  {t("home.exclusive", "Exclusive")}
                 </span>
               </div>
                 <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-foreground">
@@ -144,11 +146,11 @@ const Index = () => {
             <div className="text-center mb-8 space-y-3">
               <div className="inline-block">
                 <span className="text-sm font-bebas uppercase tracking-widest text-primary border border-primary/30 px-6 py-2 rounded-full">
-                  Eyes Across The Game
+                  {t("home.eyes_across_game", "Eyes Across The Game")}
                 </span>
               </div>
               <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-foreground">
-                SCOUTING <span className="text-primary">NETWORK</span>
+                {t("home.scouting", "SCOUTING")} <span className="text-primary">{t("home.network", "NETWORK")}</span>
               </h2>
             </div>
             <ScoutingNetworkMap />
@@ -160,10 +162,10 @@ const Index = () => {
                   <span className="text-4xl font-bebas text-primary/30">01</span>
                   <div className="space-y-2">
                     <h3 className="text-xl font-bebas uppercase tracking-wider text-foreground">
-                      Deep European Network
+                      {t("home.scouting_point_1_title", "Deep European Network")}
                     </h3>
                     <p className="text-sm text-muted-foreground leading-relaxed">
-                      We have built an extensive scouting network across Europe, with eyes at every level of the professional game.
+                      {t("home.scouting_point_1_desc", "We have built an extensive scouting network across Europe, with eyes at every level of the professional game.")}
                     </p>
                   </div>
                 </div>
@@ -174,10 +176,10 @@ const Index = () => {
                   <span className="text-4xl font-bebas text-primary/30">02</span>
                   <div className="space-y-2">
                     <h3 className="text-xl font-bebas uppercase tracking-wider text-foreground">
-                      Future-Focused Scouting
+                      {t("home.scouting_point_2_title", "Future-Focused Scouting")}
                     </h3>
                     <p className="text-sm text-muted-foreground leading-relaxed">
-                      Novel scouting based on qualities that level up through the game—not just what works now, but what scales with a player's career.
+                      {t("home.scouting_point_2_desc", "Novel scouting based on qualities that level up through the game—not just what works now, but what scales with a player's career.")}
                     </p>
                   </div>
                 </div>
@@ -188,10 +190,10 @@ const Index = () => {
                   <span className="text-4xl font-bebas text-primary/30">03</span>
                   <div className="space-y-2">
                     <h3 className="text-xl font-bebas uppercase tracking-wider text-foreground">
-                      Complete Player Knowledge
+                      {t("home.scouting_point_3_title", "Complete Player Knowledge")}
                     </h3>
                     <p className="text-sm text-muted-foreground leading-relaxed">
-                      For any professional or academy player, we intend to know not just who they are—but how they play, what makes them tick, and what qualities they have that level up.
+                      {t("home.scouting_point_3_desc", "For any professional or academy player, we intend to know not just who they are—but how they play, what makes them tick, and what qualities they have that level up.")}
                     </p>
                   </div>
                 </div>
@@ -207,14 +209,14 @@ const Index = () => {
             <div className="space-y-4">
               <div className="inline-block">
                 <span className="text-sm font-bebas uppercase tracking-widest text-primary border border-primary/30 px-6 py-2 rounded-full">
-                  RISE WITH US
+                  {t("home.rise_with_us", "RISE WITH US")}
                 </span>
               </div>
               <h2 className="text-4xl md:text-6xl lg:text-7xl font-bebas uppercase tracking-wider text-foreground leading-tight">
-                Take The <span className="text-primary">1st Step</span>
+                {t("home.take_the", "Take The")} <span className="text-primary">{t("home.first_step", "1st Step")}</span>
               </h2>
               <p className="text-base md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-                Reach out to one of our representatives for a direct 1:1 conversation about yourself, or a player under your care.
+                {t("home.cta_description", "Reach out to one of our representatives for a direct 1:1 conversation about yourself, or a player under your care.")}
               </p>
             </div>
             <div className="flex flex-col sm:flex-row gap-6 justify-center items-center pt-4">
@@ -223,7 +225,7 @@ const Index = () => {
                   size="lg" 
                   className="btn-shine text-xl font-bebas uppercase tracking-wider px-12 py-7 hover:scale-105 transition-transform shadow-xl"
                 >
-                  <HoverText text="Work With Us" />
+                  <HoverText text={t("home.work_with_us", "Work With Us")} />
                 </Button>
               </WorkWithUsDialog>
               <Button 
@@ -233,12 +235,12 @@ const Index = () => {
                 className="text-xl font-bebas uppercase tracking-wider px-12 py-7 hover:scale-105 transition-transform"
               >
                 <a href="mailto:jolon.levene@risefootballagency.com?subject=Portfolio%20Request">
-                  <HoverText text="Request Our Portfolio" />
+                  <HoverText text={t("home.request_portfolio", "Request Our Portfolio")} />
                 </a>
               </Button>
             </div>
             <p className="text-sm text-muted-foreground italic">
-              Learn more about our portfolio, including how we work and with whom we work.
+              {t("home.portfolio_description", "Learn more about our portfolio, including how we work and with whom we work.")}
             </p>
           </div>
         </section>
@@ -249,20 +251,20 @@ const Index = () => {
             <div className="text-center mb-8 space-y-3">
               <div className="inline-block">
                 <span className="text-sm font-bebas uppercase tracking-widest text-primary border border-primary/30 px-6 py-2 rounded-full">
-                  Latest Updates
+                  {t("home.latest_updates", "Latest Updates")}
                 </span>
               </div>
             </div>
             <div className="flex items-center justify-between mb-8">
               <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-foreground">
-                News
+                {t("home.news", "News")}
               </h2>
               <Link to="/news">
                 <Button 
                   variant="outline"
                   className="font-bebas uppercase tracking-wider border-primary/30 text-foreground hover:bg-primary/10"
                 >
-                  <HoverText text="All News →" />
+                  <HoverText text={t("home.all_news", "All News →")} />
                 </Button>
               </Link>
             </div>
@@ -309,7 +311,7 @@ const Index = () => {
                   {/* Read Article button - fades in where title was */}
                   <div className="absolute bottom-6 left-6 opacity-0 group-hover:opacity-100 transition-all duration-300 delay-100">
                     <button className="px-4 py-2 text-sm font-bebas uppercase tracking-wider text-white bg-white/10 backdrop-blur-sm border border-white/30 rounded hover:bg-white/20 transition-colors">
-                      Read Article
+                      {t("home.read_article", "Read Article")}
                     </button>
                   </div>
                 </Link>
@@ -324,11 +326,11 @@ const Index = () => {
             <div className="text-center mb-6 space-y-3">
               <div className="inline-block">
                 <span className="text-sm font-bebas uppercase tracking-widest text-primary border border-primary/30 px-6 py-2 rounded-full">
-                  OUR WORK
+                  {t("home.our_work", "OUR WORK")}
                 </span>
               </div>
               <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-foreground">
-                WATCH <span className="text-primary">NOW</span>
+                {t("home.watch", "WATCH")} <span className="text-primary">{t("home.now", "NOW")}</span>
               </h2>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -373,10 +375,10 @@ const Index = () => {
               <div className="group relative overflow-hidden rounded-lg border border-primary/20 hover:border-primary transition-all">
                 <div className="p-8 space-y-4">
                   <h3 className="text-4xl font-bebas uppercase tracking-wider text-primary">
-                    Develop
+                    {t("home.develop", "Develop")}
                   </h3>
                   <p className="text-muted-foreground leading-relaxed">
-                    Receive expert training to maximise your physical capacity for performance. Push the limits of your body and mind to truly know how far you can go in your career.
+                    {t("home.develop_desc", "Receive expert training to maximise your physical capacity for performance. Push the limits of your body and mind to truly know how far you can go in your career.")}
                   </p>
                 </div>
               </div>
@@ -385,10 +387,10 @@ const Index = () => {
               <div className="group relative overflow-hidden rounded-lg border border-primary/20 hover:border-primary transition-all">
                 <div className="p-8 space-y-4">
                   <h3 className="text-4xl font-bebas uppercase tracking-wider text-primary">
-                    Perform
+                    {t("home.perform", "Perform")}
                   </h3>
                   <p className="text-muted-foreground leading-relaxed">
-                    Play your best on a consistent basis through smart preparation, including psychological training sessions and pre-match analysis specific to your individual matchups.
+                    {t("home.perform_desc", "Play your best on a consistent basis through smart preparation, including psychological training sessions and pre-match analysis specific to your individual matchups.")}
                   </p>
                 </div>
               </div>
@@ -397,10 +399,10 @@ const Index = () => {
               <div className="group relative overflow-hidden rounded-lg border border-primary/20 hover:border-primary transition-all">
                 <div className="p-8 space-y-4">
                   <h3 className="text-4xl font-bebas uppercase tracking-wider text-primary">
-                    Attract
+                    {t("home.attract", "Attract")}
                   </h3>
                   <p className="text-muted-foreground leading-relaxed">
-                    Through our vast scouting network, we maximise visibility across the footballing world to ensure player interest and demand.
+                    {t("home.attract_desc", "Through our vast scouting network, we maximise visibility across the footballing world to ensure player interest and demand.")}
                   </p>
                 </div>
               </div>
@@ -409,10 +411,10 @@ const Index = () => {
               <div className="group relative overflow-hidden rounded-lg border border-primary/20 hover:border-primary transition-all">
                 <div className="p-8 space-y-4">
                   <h3 className="text-4xl font-bebas uppercase tracking-wider text-primary">
-                    Sign
+                    {t("home.sign", "Sign")}
                   </h3>
                   <p className="text-muted-foreground leading-relaxed">
-                    Sign the dotted line after our team of intermediaries negotiate new and improved contracts. Retain confidence knowing your career opportunities are being created and finalised.
+                    {t("home.sign_desc", "Sign the dotted line after our team of intermediaries negotiate new and improved contracts. Retain confidence knowing your career opportunities are being created and finalised.")}
                   </p>
                 </div>
               </div>
@@ -431,14 +433,14 @@ const Index = () => {
               <div className="text-center relative z-10 space-y-4">
                 <div className="inline-block">
                   <span className="text-sm font-bebas uppercase tracking-widest text-primary border border-primary/30 px-6 py-2 rounded-full">
-                    STAY UP TO DATE
+                    {t("home.stay_up_to_date", "STAY UP TO DATE")}
                   </span>
                 </div>
                 <h2 className="text-2xl md:text-3xl font-bebas uppercase tracking-wider text-primary">
-                  Join RISE Broadcast on Instagram
+                  {t("home.join_broadcast", "Join RISE Broadcast on Instagram")}
                 </h2>
                 <p className="text-foreground mb-6 text-base md:text-lg leading-relaxed">
-                  Get daily updates on agency insights, performance optimization, coaching systems, and player development strategies
+                  {t("home.broadcast_desc", "Get daily updates on agency insights, performance optimization, coaching systems, and player development strategies")}
                 </p>
                 <a
                   href="https://www.instagram.com/channel/AbY33s3ZhuxaNwuo/"
@@ -446,7 +448,7 @@ const Index = () => {
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 px-8 py-4 bg-primary text-background font-bebas uppercase tracking-wider text-lg hover:bg-primary/90 hover:scale-105 transition-all rounded shadow-lg"
                 >
-                  <HoverText text="Join the Channel" />
+                  <HoverText text={t("home.join_channel", "Join the Channel")} />
                 </a>
               </div>
             </div>
