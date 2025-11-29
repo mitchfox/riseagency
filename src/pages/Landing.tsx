@@ -30,7 +30,7 @@ export default function Landing() {
       </div>
 
       {/* Bottom Section - Navigation + Language Selector in Golden Box */}
-      <div className="pb-4 md:pb-12 z-10 relative px-2 md:px-0 w-full md:w-auto">
+      <div className="pb-4 md:pb-12 z-50 relative px-2 md:px-0 w-full md:w-auto pointer-events-auto">
         <div className="border-2 border-primary/60 bg-black/40 backdrop-blur-sm px-2 py-2 md:py-3">
           {/* Navigation Links - Grid on mobile, row on desktop */}
           <nav className="grid grid-cols-3 md:flex md:flex-row items-center justify-center gap-1 md:gap-0">
