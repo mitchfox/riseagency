@@ -1,0 +1,156 @@
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+
+type LanguageCode = 'en' | 'es' | 'pt' | 'cs' | 'ru';
+
+interface Translation {
+  page_name: string;
+  text_key: string;
+  english: string | null;
+  spanish: string | null;
+  portuguese: string | null;
+  czech: string | null;
+  russian: string | null;
+}
+
+interface LanguageContextType {
+  language: LanguageCode;
+  translations: Map<string, string>;
+  t: (key: string, fallback?: string) => string;
+  isLoading: boolean;
+  switchLanguage: (lang: LanguageCode) => void;
+}
+
+const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
+
+const languageSubdomains: Record<string, LanguageCode> = {
+  'es': 'es',
+  'pt': 'pt',
+  'cs': 'cs',
+  'ru': 'ru',
+};
+
+const languageColumns: Record<LanguageCode, keyof Translation> = {
+  'en': 'english',
+  'es': 'spanish',
+  'pt': 'portuguese',
+  'cs': 'czech',
+  'ru': 'russian',
+};
+
+function detectLanguageFromSubdomain(): LanguageCode {
+  const hostname = window.location.hostname;
+  
+  // For localhost or IP addresses, default to English
+  if (hostname === 'localhost' || /^\d+\.\d+\.\d+\.\d+$/.test(hostname)) {
+    return 'en';
+  }
+  
+  const parts = hostname.split('.');
+  
+  // Check if first part is a language subdomain
+  // e.g., es.risefootballagency.com or es.preview--xxx.lovable.app
+  if (parts.length >= 2) {
+    const potentialLang = parts[0].toLowerCase();
+    if (languageSubdomains[potentialLang]) {
+      return languageSubdomains[potentialLang];
+    }
+  }
+  
+  return 'en';
+}
+
+export function LanguageProvider({ children }: { children: React.ReactNode }) {
+  const [language, setLanguage] = useState<LanguageCode>(() => detectLanguageFromSubdomain());
+  const [translations, setTranslations] = useState<Map<string, string>>(new Map());
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchTranslations() {
+      setIsLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('translations')
+          .select('*');
+
+        if (error) {
+          console.error('Error fetching translations:', error);
+          return;
+        }
+
+        const column = languageColumns[language];
+        const translationMap = new Map<string, string>();
+
+        data?.forEach((row: Translation) => {
+          const key = `${row.page_name}.${row.text_key}`;
+          const value = row[column] as string | null;
+          // Fall back to English if translation is missing
+          translationMap.set(key, value || row.english || '');
+        });
+
+        setTranslations(translationMap);
+      } catch (err) {
+        console.error('Failed to fetch translations:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    fetchTranslations();
+  }, [language]);
+
+  const t = useCallback((key: string, fallback?: string): string => {
+    return translations.get(key) || fallback || key;
+  }, [translations]);
+
+  const switchLanguage = useCallback((lang: LanguageCode) => {
+    const hostname = window.location.hostname;
+    const pathname = window.location.pathname;
+    const protocol = window.location.protocol;
+    
+    // For localhost, just update state (can't use subdomains)
+    if (hostname === 'localhost' || /^\d+\.\d+\.\d+\.\d+$/.test(hostname)) {
+      setLanguage(lang);
+      return;
+    }
+
+    const parts = hostname.split('.');
+    let baseDomain: string;
+
+    // Check if current hostname already has a language subdomain
+    const currentLang = parts[0].toLowerCase();
+    if (languageSubdomains[currentLang]) {
+      // Remove the language subdomain to get base domain
+      baseDomain = parts.slice(1).join('.');
+    } else {
+      baseDomain = hostname;
+    }
+
+    // Build new URL
+    let newHostname: string;
+    if (lang === 'en') {
+      // English uses the base domain (no subdomain)
+      newHostname = baseDomain;
+    } else {
+      // Other languages use subdomain
+      newHostname = `${lang}.${baseDomain}`;
+    }
+
+    const newUrl = `${protocol}//${newHostname}${pathname}`;
+    window.location.href = newUrl;
+  }, []);
+
+  return (
+    <LanguageContext.Provider value={{ language, translations, t, isLoading, switchLanguage }}>
+      {children}
+    </LanguageContext.Provider>
+  );
+}
+
+export function useLanguage() {
+  const context = useContext(LanguageContext);
+  if (context === undefined) {
+    throw new Error('useLanguage must be used within a LanguageProvider');
+  }
+  return context;
+}

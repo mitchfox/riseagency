@@ -11,7 +11,8 @@ const subdomainRoutes: Record<string, string> = {
 };
 
 // Subdomains to ignore (treat as main domain)
-const ignoredSubdomains = ['www', 'localhost', ''];
+// Include language subdomains so they don't trigger route redirects
+const ignoredSubdomains = ['www', 'localhost', '', 'es', 'pt', 'cs', 'ru'];
 
 export const useSubdomainRouter = () => {
   const navigate = useNavigate();
@@ -32,9 +33,10 @@ export const useSubdomainRouter = () => {
     // Get the subdomain (first part if there are 3+ parts)
     // risefootballagency.com = 2 parts (no subdomain)
     // portal.risefootballagency.com = 3 parts (subdomain = "portal")
+    // es.risefootballagency.com = 3 parts (subdomain = "es" - language)
     const subdomain = parts.length >= 3 ? parts[0] : '';
     
-    // Skip if no subdomain or it's an ignored subdomain
+    // Skip if no subdomain or it's an ignored subdomain (including language subdomains)
     if (ignoredSubdomains.includes(subdomain)) {
       return;
     }
