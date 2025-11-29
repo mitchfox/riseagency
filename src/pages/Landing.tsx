@@ -25,8 +25,8 @@ export default function Landing() {
       />
       
       {/* Matrix Player Effect - Over Video */}
-      <div className="absolute inset-0">
-        <MatrixPlayerEffect />
+      <div className="absolute inset-0 pointer-events-none">
+        <MatrixPlayerEffect className="pointer-events-auto" />
       </div>
 
       {/* Bottom Section - Navigation + Language Selector in Golden Box */}
