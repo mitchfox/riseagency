@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import {
   DropdownMenu,
@@ -6,17 +5,19 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const languages = [
-  { code: "en", name: "ENG", flag: "🇬🇧" },
-  { code: "es", name: "ESP", flag: "🇪🇸" },
-  { code: "pt", name: "POR", flag: "🇵🇹" },
-  { code: "cs", name: "ČES", flag: "🇨🇿" },
-  { code: "ru", name: "РУС", flag: "🇷🇺" },
+  { code: "en" as const, name: "ENG", flag: "🇬🇧" },
+  { code: "es" as const, name: "ESP", flag: "🇪🇸" },
+  { code: "pt" as const, name: "POR", flag: "🇵🇹" },
+  { code: "cs" as const, name: "ČES", flag: "🇨🇿" },
+  { code: "ru" as const, name: "РУС", flag: "🇷🇺" },
 ];
 
 export const LanguageSelector = () => {
-  const [selectedLanguage, setSelectedLanguage] = useState(languages[0]);
+  const { language, switchLanguage } = useLanguage();
+  const selectedLanguage = languages.find(l => l.code === language) || languages[0];
 
   return (
     <DropdownMenu>
@@ -32,9 +33,9 @@ export const LanguageSelector = () => {
         {languages.map((lang) => (
           <DropdownMenuItem
             key={lang.code}
-            onClick={() => setSelectedLanguage(lang)}
+            onClick={() => switchLanguage(lang.code)}
             className={`flex items-center gap-2 cursor-pointer text-sm font-bebas uppercase tracking-wider ${
-              selectedLanguage.code === lang.code ? "text-primary" : "text-foreground"
+              language === lang.code ? "text-primary" : "text-foreground"
             }`}
           >
             <span className="text-base">{lang.flag}</span>

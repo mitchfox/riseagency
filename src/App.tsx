@@ -7,6 +7,7 @@ import { ScrollToTop } from "@/components/ScrollToTop";
 import { PageTracker } from "@/components/PageTracker";
 import { PageTransition } from "@/components/PageTransition";
 import { TransitionProvider } from "@/contexts/TransitionContext";
+import { LanguageProvider } from "@/contexts/LanguageContext";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { useSubdomainRouter } from "@/hooks/useSubdomainRouter";
 import Landing from "./pages/Landing";
@@ -55,12 +56,13 @@ const App = () => {
   
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <SubdomainRouter />
-          <TransitionProvider>
+      <LanguageProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <SubdomainRouter />
+            <TransitionProvider>
             <FluidCursor />
             <PageTracker />
             <ScrollToTop />
@@ -105,9 +107,10 @@ const App = () => {
                 </Routes>
               )}
             </PageTransition>
-          </TransitionProvider>
-        </BrowserRouter>
-      </TooltipProvider>
+            </TransitionProvider>
+          </BrowserRouter>
+        </TooltipProvider>
+      </LanguageProvider>
     </QueryClientProvider>
   );
 };
