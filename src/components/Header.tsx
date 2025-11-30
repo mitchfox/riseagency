@@ -474,7 +474,7 @@ export const Header = () => {
                     <button
                       onClick={() => setRepresentationOpen(true)}
                       className="absolute group"
-                      style={{ left: "450px", top: "110px", width: "280px", height: "100px" }}
+                      style={{ left: "435px", top: "110px", width: "280px", height: "100px" }}
                     >
                       <div className="relative w-full h-full rounded overflow-hidden border-2 border-primary">
                         <img
@@ -484,7 +484,7 @@ export const Header = () => {
                         />
                         <div className="absolute inset-0 bg-black/30" />
                         <div className="absolute inset-0 flex items-center justify-center p-3">
-                          <div className="bg-primary text-black font-bebas uppercase tracking-widest text-xs md:text-sm py-2 px-3 text-center group-hover:brightness-110 transition-all w-full whitespace-nowrap">
+                          <div className="bg-primary text-black font-bebas uppercase tracking-widest text-xs md:text-sm py-2 px-3 text-center group-hover:brightness-110 transition-all w-full whitespace-nowrap flex items-center justify-center leading-none">
                             <HoverText text={t("header.request_representation", "Request Representation")} />
                           </div>
                         </div>
@@ -497,7 +497,7 @@ export const Header = () => {
                     <LocalizedLink
                       to="/login"
                       className="absolute group"
-                      style={{ left: "450px", top: "220px", width: "280px", height: "100px" }}
+                      style={{ left: "435px", top: "220px", width: "280px", height: "100px" }}
                     >
                       <div className="relative w-full h-full rounded overflow-hidden border-2 border-primary">
                         <img
@@ -507,7 +507,7 @@ export const Header = () => {
                         />
                         <div className="absolute inset-0 bg-black/30" />
                         <div className="absolute inset-0 flex items-center justify-center p-3">
-                          <div className="bg-primary text-black font-bebas uppercase tracking-widest text-xs md:text-sm py-2 px-3 text-center group-hover:brightness-110 transition-all w-full whitespace-nowrap">
+                          <div className="bg-primary text-black font-bebas uppercase tracking-widest text-xs md:text-sm py-2 px-3 text-center group-hover:brightness-110 transition-all w-full whitespace-nowrap flex items-center justify-center leading-none">
                             <HoverText text={t("header.portal", "Portal")} />
                           </div>
                         </div>
@@ -519,7 +519,7 @@ export const Header = () => {
                   </div>
                   
                   {/* Bottom bar - Language selector left, Role switchers right */}
-                  <div className="absolute left-6 right-6 flex items-end justify-between" style={{ bottom: "calc(1.5rem + 15px)" }}>
+                  <div className="absolute left-6 right-6 flex items-end justify-between" style={{ bottom: "calc(1.5rem + 30px)" }}>
                     {/* Language Selector - Bottom Left */}
                     <div className="bg-black/60 backdrop-blur-sm rounded-lg px-4 py-3 border border-primary/30">
                       <div className="flex items-center gap-3">
