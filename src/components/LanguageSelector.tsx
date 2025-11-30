@@ -11,6 +11,10 @@ const languages = [
   { code: "en" as const, name: "ENG", flag: "🇬🇧" },
   { code: "es" as const, name: "ESP", flag: "🇪🇸" },
   { code: "pt" as const, name: "POR", flag: "🇵🇹" },
+  { code: "fr" as const, name: "FRA", flag: "🇫🇷" },
+  { code: "de" as const, name: "DEU", flag: "🇩🇪" },
+  { code: "it" as const, name: "ITA", flag: "🇮🇹" },
+  { code: "pl" as const, name: "POL", flag: "🇵🇱" },
   { code: "cs" as const, name: "ČES", flag: "🇨🇿" },
   { code: "ru" as const, name: "РУС", flag: "🇷🇺" },
 ];

@@ -25,7 +25,7 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    const systemPrompt = `You are a professional translator for a football agency website. Translate the given English text into Spanish, Portuguese, Czech, and Russian. 
+    const systemPrompt = `You are a professional translator for a football agency website. Translate the given English text into Spanish, Portuguese, French, German, Italian, Polish, Czech, and Russian. 
 
 Important guidelines:
 - Keep the same tone and style as the original
@@ -36,7 +36,11 @@ Important guidelines:
 Return ONLY a valid JSON object with exactly this structure (no markdown, no code blocks):
 {
   "spanish": "Spanish translation here",
-  "portuguese": "Portuguese translation here", 
+  "portuguese": "Portuguese translation here",
+  "french": "French translation here",
+  "german": "German translation here",
+  "italian": "Italian translation here",
+  "polish": "Polish translation here",
   "czech": "Czech translation here",
   "russian": "Russian translation here"
 }`;
