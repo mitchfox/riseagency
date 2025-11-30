@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
 import { Header } from "@/components/Header";
 import { SEO } from "@/components/SEO";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useParams, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Loader2 } from "lucide-react";
+import { useAutoTranslate } from "@/hooks/useAutoTranslate";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface NewsArticle {
   id: string;
@@ -27,8 +28,91 @@ const createSlug = (title: string): string => {
     .trim();
 };
 
+// Separate component for article view to use hooks properly
+const ArticleView = ({ article }: { article: NewsArticle }) => {
+  const { t, language } = useLanguage();
+  const { translatedContent, isTranslating } = useAutoTranslate({
+    title: article.title,
+    excerpt: article.excerpt,
+    content: article.content,
+    enabled: language !== 'en'
+  });
+
+  const formatParagraph = (paragraph: string) => {
+    return paragraph.split(/(\*\*.*?\*\*)/).map((part, i) => {
+      if (part.startsWith('**') && part.endsWith('**')) {
+        return <strong key={i}>{part.slice(2, -2)}</strong>;
+      }
+      return part;
+    });
+  };
+
+  return (
+    <>
+      <Link to="/news">
+        <Button variant="ghost" className="mb-6">
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          {t("news.back_to_news", "Back to News")}
+        </Button>
+      </Link>
+      
+      <article>
+        {article.image_url && (
+          <div className="w-full mb-8">
+            <img 
+              src={article.image_url} 
+              alt={translatedContent.title}
+              className="w-full h-auto rounded-lg"
+            />
+          </div>
+        )}
+        
+        <div className="flex items-center justify-between mb-4">
+          <span className="text-sm text-primary font-bebas uppercase tracking-wider">
+            {article.category}
+          </span>
+          <div className="flex items-center gap-2">
+            {isTranslating && (
+              <span className="text-xs text-muted-foreground flex items-center gap-1">
+                <Loader2 className="w-3 h-3 animate-spin" />
+                {t("news.translating", "Translating...")}
+              </span>
+            )}
+            <span className="text-sm text-muted-foreground">
+              {new Date(article.created_at).toLocaleDateString('en-US', { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+              })}
+            </span>
+          </div>
+        </div>
+        
+        <h1 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-foreground mb-6">
+          {translatedContent.title}
+        </h1>
+        
+        {translatedContent.excerpt && (
+          <p className="text-xl text-muted-foreground mb-8 leading-relaxed">
+            {translatedContent.excerpt}
+          </p>
+        )}
+        
+        <div className="prose prose-lg max-w-none text-foreground">
+          {translatedContent.content.split('\n').map((paragraph, index) => (
+            <p key={index} className="mb-4 leading-relaxed">
+              {formatParagraph(paragraph)}
+            </p>
+          ))}
+        </div>
+      </article>
+    </>
+  );
+};
+
 const News = () => {
   const { articleId } = useParams();
+  const { t } = useLanguage();
   const [newsItems, setNewsItems] = useState<NewsArticle[]>([]);
   const [currentArticle, setCurrentArticle] = useState<NewsArticle | null>(null);
   const [loading, setLoading] = useState(true);
@@ -43,7 +127,6 @@ const News = () => {
 
   const fetchArticle = async (slug: string) => {
     try {
-      // Fetch all published articles (both news and between the lines)
       const { data, error } = await supabase
         .from("blog_posts")
         .select("*")
@@ -51,7 +134,6 @@ const News = () => {
 
       if (error) throw error;
 
-      // Find the article that matches the slug
       const article = data?.find(article => createSlug(article.title) === slug);
       
       if (article) {
@@ -95,84 +177,22 @@ const News = () => {
         <div className="container mx-auto px-4 py-24">
           <div className="max-w-4xl mx-auto">
             {articleId && currentArticle ? (
-              // Individual Article View
-              <>
-                <Link to="/news">
-                  <Button variant="ghost" className="mb-6">
-                    <ArrowLeft className="mr-2 h-4 w-4" />
-                    Back to News
-                  </Button>
-                </Link>
-                
-                {loading ? (
-                  <Skeleton className="w-full h-96" />
-                ) : (
-                  <article>
-                    {currentArticle.image_url && (
-                      <div className="w-full mb-8">
-                        <img 
-                          src={currentArticle.image_url} 
-                          alt={currentArticle.title}
-                          className="w-full h-auto rounded-lg"
-                        />
-                      </div>
-                    )}
-                    
-                    <div className="flex items-center justify-between mb-4">
-                      <span className="text-sm text-primary font-bebas uppercase tracking-wider">
-                        {currentArticle.category}
-                      </span>
-                      <span className="text-sm text-muted-foreground">
-                        {new Date(currentArticle.created_at).toLocaleDateString('en-US', { 
-                          year: 'numeric', 
-                          month: 'long', 
-                          day: 'numeric' 
-                        })}
-                      </span>
-                    </div>
-                    
-                    <h1 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-foreground mb-6">
-                      {currentArticle.title}
-                    </h1>
-                    
-                    {currentArticle.excerpt && (
-                      <p className="text-xl text-muted-foreground mb-8 leading-relaxed">
-                        {currentArticle.excerpt}
-                      </p>
-                    )}
-                    
-                    <div className="prose prose-lg max-w-none text-foreground">
-                      {currentArticle.content.split('\n').map((paragraph, index) => {
-                        // Handle bold text wrapped in **
-                        const formattedParagraph = paragraph.split(/(\*\*.*?\*\*)/).map((part, i) => {
-                          if (part.startsWith('**') && part.endsWith('**')) {
-                            // Remove the ** and make it bold
-                            return <strong key={i}>{part.slice(2, -2)}</strong>;
-                          }
-                          return part;
-                        });
-                        
-                        return (
-                          <p key={index} className="mb-4 leading-relaxed">
-                            {formattedParagraph}
-                          </p>
-                        );
-                      })}
-                    </div>
-                  </article>
-                )}
-              </>
+              loading ? (
+                <Skeleton className="w-full h-96" />
+              ) : (
+                <ArticleView article={currentArticle} />
+              )
             ) : (
               // News List View
               <>
                 <div className="text-center mb-12 space-y-3 animate-fade-in">
                   <div className="inline-block">
                     <span className="text-sm font-bebas uppercase tracking-widest text-primary border border-primary/30 px-6 py-2 rounded-full">
-                      Latest Updates
+                      {t("news.latest_updates", "Latest Updates")}
                     </span>
                   </div>
                   <h1 className="text-5xl md:text-7xl lg:text-8xl font-bebas uppercase tracking-wider text-foreground">
-                    Latest <span className="text-primary">News</span>
+                    {t("news.latest", "Latest")} <span className="text-primary">{t("news.news", "News")}</span>
                   </h1>
                 </div>
                 
@@ -190,7 +210,7 @@ const News = () => {
                 ) : newsItems.length === 0 ? (
                   <div className="text-center py-20">
                     <p className="text-xl text-muted-foreground">
-                      No news articles available at this time
+                      {t("news.no_articles", "No news articles available at this time")}
                     </p>
                   </div>
                 ) : (
@@ -207,7 +227,6 @@ const News = () => {
                               />
                               <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent opacity-60 group-hover:opacity-80 transition-opacity" />
                               
-                              {/* Date Badge */}
                               <div className="absolute top-4 left-4">
                                 <span className="text-xs font-bebas uppercase tracking-wider text-white bg-primary/90 px-3 py-1 rounded shadow-lg">
                                   {new Date(item.created_at).toLocaleDateString('en-GB', { 
