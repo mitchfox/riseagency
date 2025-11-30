@@ -166,22 +166,22 @@ export const MatrixPlayerEffect = ({ className = "" }: MatrixPlayerEffectProps) 
       // Draw player images
       if (baseImage && xrayImage) {
         const scale = Math.min(
-          (canvas.height * 0.88) / baseImage.height,
-          (canvas.width * 0.75) / baseImage.width
+          (canvas.height * 0.72) / baseImage.height,
+          (canvas.width * 0.60) / baseImage.width
         );
         const imgWidth = baseImage.width * scale;
         const imgHeight = baseImage.height * scale;
         // On mobile (narrow screens), center horizontally and position at top
         const isMobile = canvas.width < 768;
-        const imgX = isMobile ? (canvas.width - imgWidth) / 2 : (canvas.width - imgWidth) / 2 - 65;
-        const imgY = isMobile ? 20 : (canvas.height - imgHeight) / 2 - 80;
+        const imgX = isMobile ? (canvas.width - imgWidth) / 2 : (canvas.width - imgWidth) / 2;
+        const imgY = isMobile ? 80 : (canvas.height - imgHeight) / 2 + 30;
 
         // Image 11 (xray) is 1.1x larger than image 7
         const xrayScale = 1.1;
         const xrayWidth = xrayImage ? xrayImage.width * scale * xrayScale : imgWidth;
         const xrayHeight = xrayImage ? xrayImage.height * scale * xrayScale : imgHeight;
-        const xrayX = isMobile ? (canvas.width - xrayWidth) / 2 : (canvas.width - xrayWidth) / 2 - 65;
-        const xrayY = isMobile ? 20 - (xrayHeight - imgHeight) / 2 : (canvas.height - xrayHeight) / 2 - 50;
+        const xrayX = isMobile ? (canvas.width - xrayWidth) / 2 : (canvas.width - xrayWidth) / 2;
+        const xrayY = isMobile ? 80 - (xrayHeight - imgHeight) / 2 : (canvas.height - xrayHeight) / 2 + 60;
 
         const playerCenterX = imgX + imgWidth / 2;
         const playerCenterY = imgY + imgHeight / 2;

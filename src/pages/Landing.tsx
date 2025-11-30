@@ -4,6 +4,7 @@ import { HoverText } from "@/components/HoverText";
 import { MatrixPlayerEffect } from "@/components/MatrixPlayerEffect";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { HomeBackground } from "@/components/HomeBackground";
+import riseLogoWhite from "@/assets/logo.png";
 
 export default function Landing() {
   const { t } = useLanguage();
@@ -34,6 +35,15 @@ export default function Landing() {
     <div className="min-h-screen bg-black flex flex-col items-center justify-end relative overflow-hidden cursor-none md:cursor-none">
       {/* Data-driven Background */}
       <HomeBackground />
+      
+      {/* RISE Logo at top center */}
+      <div className="absolute top-6 md:top-8 left-1/2 -translate-x-1/2 z-50">
+        <img 
+          src={riseLogoWhite} 
+          alt="RISE Football Agency" 
+          className="h-12 md:h-16 w-auto"
+        />
+      </div>
       
       {/* Matrix Player Effect - Over Video */}
       <div className="absolute inset-0 pointer-events-none">
