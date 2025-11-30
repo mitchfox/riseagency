@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 
-export type RoleSubdomain = 'players' | 'clubs' | 'agents' | 'coaches' | 'scouts' | null;
+export type RoleSubdomain = 'players' | 'clubs' | 'agents' | 'coaches' | 'scouts' | 'business' | 'media' | null;
 
 interface RoleConfig {
   name: string;
@@ -14,6 +14,8 @@ export const roleConfigs: Record<Exclude<RoleSubdomain, null>, RoleConfig> = {
   agents: { name: 'AGENTS', subdomain: 'agents', route: '/agents' },
   coaches: { name: 'COACHES', subdomain: 'coaches', route: '/coaches' },
   scouts: { name: 'SCOUTS', subdomain: 'scouts', route: '/scouts' },
+  business: { name: 'BUSINESS', subdomain: 'business', route: '/business' },
+  media: { name: 'MEDIA', subdomain: 'media', route: '/media' },
 };
 
 export const useRoleSubdomain = () => {
@@ -40,7 +42,7 @@ export const useRoleSubdomain = () => {
       }
       
       // Check if this is a role subdomain
-      const roleSubdomains: RoleSubdomain[] = ['players', 'clubs', 'agents', 'coaches', 'scouts'];
+      const roleSubdomains: RoleSubdomain[] = ['players', 'clubs', 'agents', 'coaches', 'scouts', 'business', 'media'];
       if (roleSubdomains.includes(functionalSubdomain as RoleSubdomain)) {
         return functionalSubdomain as RoleSubdomain;
       }

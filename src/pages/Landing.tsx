@@ -17,12 +17,22 @@ export default function Landing() {
     { to: "/agents", labelKey: "landing.nav_agents", fallback: "AGENTS" },
   ];
 
-  // Mobile order (HOME first, then 2x2 grid)
+  // Secondary row links for desktop
+  const secondaryNavLinks = [
+    { to: "/scouts", labelKey: "landing.nav_scouts", fallback: "SCOUTS" },
+    { to: "/business", labelKey: "landing.nav_business", fallback: "BUSINESS" },
+    { to: "/media", labelKey: "landing.nav_media", fallback: "MEDIA" },
+  ];
+
+  // Mobile order (HOME first, then grid)
   const mobileNavLinks = [
     { to: "/stars", labelKey: "landing.nav_players", fallback: "PLAYERS" },
     { to: "/coaches", labelKey: "landing.nav_coaches", fallback: "COACHES" },
     { to: "/clubs", labelKey: "landing.nav_clubs", fallback: "CLUBS" },
     { to: "/agents", labelKey: "landing.nav_agents", fallback: "AGENTS" },
+    { to: "/scouts", labelKey: "landing.nav_scouts", fallback: "SCOUTS" },
+    { to: "/business", labelKey: "landing.nav_business", fallback: "BUSINESS" },
+    { to: "/media", labelKey: "landing.nav_media", fallback: "MEDIA" },
   ];
   const homeLink = { to: "/home", labelKey: "landing.nav_home", fallback: "HOME" };
 
@@ -58,13 +68,13 @@ export default function Landing() {
               <HoverText text={t(homeLink.labelKey, homeLink.fallback)} />
             </Link>
             
-            {/* 2x2 Grid for remaining 4 links */}
-            <nav className="grid grid-cols-2 gap-x-4 gap-y-1">
+            {/* Grid for remaining links */}
+            <nav className="grid grid-cols-3 gap-x-2 gap-y-1">
               {mobileNavLinks.map((link) => (
                 <Link
                   key={link.to}
                   to={link.to}
-                  className="px-2 py-1 text-xs font-bebas uppercase tracking-[0.1em] text-white/80 hover:text-primary transition-colors duration-300 text-center"
+                  className="px-2 py-1 text-[10px] font-bebas uppercase tracking-[0.1em] text-white/80 hover:text-primary transition-colors duration-300 text-center"
                 >
                   <HoverText text={t(link.labelKey, link.fallback)} />
                 </Link>
@@ -85,6 +95,23 @@ export default function Landing() {
                   </Link>
                   {index < desktopNavLinks.length - 1 && (
                     <div className="w-px h-4 bg-primary/50" />
+                  )}
+                </div>
+              ))}
+            </nav>
+            
+            {/* Secondary Navigation Row */}
+            <nav className="flex flex-row items-center justify-center mt-2 pt-2 border-t border-primary/20">
+              {secondaryNavLinks.map((link, index) => (
+                <div key={link.to} className="flex items-center justify-center">
+                  <Link
+                    to={link.to}
+                    className="px-6 text-sm font-bebas uppercase tracking-[0.15em] text-white/60 hover:text-primary transition-colors duration-300"
+                  >
+                    <HoverText text={t(link.labelKey, link.fallback)} />
+                  </Link>
+                  {index < secondaryNavLinks.length - 1 && (
+                    <div className="w-px h-3 bg-primary/30" />
                   )}
                 </div>
               ))}
