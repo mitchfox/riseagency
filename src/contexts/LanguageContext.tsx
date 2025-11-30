@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { getEnglishPath, getLocalizedPath } from '@/lib/localizedRoutes';
 
 type LanguageCode = 'en' | 'es' | 'pt' | 'fr' | 'de' | 'it' | 'pl' | 'cs' | 'ru' | 'tr';
 
@@ -218,11 +219,20 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     const pathname = window.location.pathname;
     const protocol = window.location.protocol;
     
-    // For preview/localhost environments, use localStorage and update state
+    // Convert current path to English, then to the target language
+    const englishPath = getEnglishPath(pathname);
+    const localizedPath = getLocalizedPath(englishPath, lang);
+    
+    // For preview/localhost environments, use localStorage and navigate
     if (isPreviewOrLocalEnvironment()) {
       localStorage.setItem('preferred_language', lang);
       sessionStorage.setItem('ip_language_detected', lang); // Override IP detection
-      setLanguage(lang);
+      // Use window.location to ensure full page reload with new language
+      if (pathname !== localizedPath) {
+        window.location.href = localizedPath;
+      } else {
+        setLanguage(lang);
+      }
       return;
     }
 
@@ -248,7 +258,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
       newHostname = `${urlSubdomain}.${baseDomain}`;
     }
 
-    const newUrl = `${protocol}//${newHostname}${pathname}`;
+    const newUrl = `${protocol}//${newHostname}${localizedPath}`;
     window.location.href = newUrl;
   }, []);
 
