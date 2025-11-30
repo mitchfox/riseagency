@@ -7,7 +7,8 @@ const subdomainRoutes: Record<string, string> = {
   'potential': '/potential',
   'players': '/players',
   'clubs': '/clubs',
-  'agents': '/agents'
+  'agents': '/agents',
+  'coaches': '/coaches'
 };
 
 // Language subdomains (don't trigger route redirects)
