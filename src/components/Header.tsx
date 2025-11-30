@@ -262,16 +262,6 @@ export const Header = () => {
                         {t("header.our_work", "OUR WORK")}
                       </span>
                     </div>
-
-                    {/* Decorative vertical rectangle - "Learn More" spanning from Players to Scouts */}
-                    <div 
-                      className="absolute w-8 border-2 border-primary bg-primary/10 flex items-center justify-center"
-                      style={{ left: "50px", top: "310px", height: "210px", borderRadius: "24px" }}
-                    >
-                      <span className="text-white/80 font-bebas text-sm italic tracking-wider" style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>
-                        {t("header.learn_more", "LEARN MORE")}
-                      </span>
-                    </div>
                     {/* Close button at 100, 50 (move by +5, -20) */}
                     <DrawerClose asChild>
                     <button
@@ -392,66 +382,6 @@ export const Header = () => {
                             }`}
                           >
                             <HoverText text={t("header.news", "NEWS")} />
-                          </LocalizedLink>
-                        </DrawerClose>
-                        <div className="h-px bg-primary my-1" />
-
-                        <DrawerClose asChild>
-                          <Link
-                            to="/players"
-                            className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-colors duration-300 tracking-wider py-1 whitespace-nowrap ${
-                              isActive("/players") ? "text-primary" : ""
-                            }`}
-                          >
-                            <HoverText text={t("header.players", "PLAYERS")} />
-                          </Link>
-                        </DrawerClose>
-                        <div className="h-px bg-white/20 my-1" />
-
-                        <DrawerClose asChild>
-                          <LocalizedLink
-                            to="/clubs"
-                            className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-colors duration-300 tracking-wider py-1 whitespace-nowrap ${
-                              isActive("/clubs") ? "text-primary" : ""
-                            }`}
-                          >
-                            <HoverText text={t("header.clubs", "CLUBS")} />
-                          </LocalizedLink>
-                        </DrawerClose>
-                        <div className="h-px bg-white/20 my-1" />
-
-                        <DrawerClose asChild>
-                          <LocalizedLink
-                            to="/coaches"
-                            className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-colors duration-300 tracking-wider py-1 whitespace-nowrap ${
-                              isActive("/coaches") ? "text-primary" : ""
-                            }`}
-                          >
-                            <HoverText text={t("header.coaches", "COACHES")} />
-                          </LocalizedLink>
-                        </DrawerClose>
-                        <div className="h-px bg-white/20 my-1" />
-
-                        <DrawerClose asChild>
-                          <LocalizedLink
-                            to="/scouts"
-                            className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-colors duration-300 tracking-wider py-1 whitespace-nowrap ${
-                              isActive("/scouts") ? "text-primary" : ""
-                            }`}
-                          >
-                            <HoverText text={t("header.scouts", "SCOUTS")} />
-                          </LocalizedLink>
-                        </DrawerClose>
-                        <div className="h-px bg-white/20 my-1" />
-
-                        <DrawerClose asChild>
-                          <LocalizedLink
-                            to="/agents"
-                            className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-colors duration-300 tracking-wider py-1 whitespace-nowrap ${
-                              isActive("/agents") ? "text-primary" : ""
-                            }`}
-                          >
-                            <HoverText text={t("header.agents", "AGENTS")} />
                           </LocalizedLink>
                         </DrawerClose>
                       </>
@@ -597,13 +527,27 @@ export const Header = () => {
                   </div> {/* End scalable wrapper */}
                   </div>
                   
-                  {/* Language Selector - Fixed at bottom of menu */}
-                  <div className="absolute bottom-6 left-6 right-6 flex items-center justify-center">
+                  {/* Bottom bar - Language selector left, Role switchers right */}
+                  <div className="absolute bottom-6 left-6 right-6 flex items-end justify-between">
+                    {/* Language Selector - Bottom Left */}
                     <div className="bg-black/60 backdrop-blur-sm rounded-lg px-4 py-3 border border-primary/30">
                       <div className="flex items-center gap-3">
                         <span className="text-xs font-bebas uppercase tracking-wider text-white/60">{t("header.language", "Language")}:</span>
                         <LanguageSelector />
                       </div>
+                    </div>
+
+                    {/* Role Switchers - Bottom Right */}
+                    <div className="flex flex-wrap gap-x-4 gap-y-1 justify-end">
+                      {(Object.keys(roleConfigs) as Exclude<RoleSubdomain, null>[]).map((role) => (
+                        <a
+                          key={role}
+                          href={getRoleUrl(role)}
+                          className="text-xs font-bebas uppercase tracking-wider text-white/50 hover:text-primary transition-colors duration-300"
+                        >
+                          {roleConfigs[role].name}
+                        </a>
+                      ))}
                     </div>
                   </div>
                 </div>
