@@ -96,11 +96,11 @@ export const HomeBackground = () => {
 
   return (
     <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
-      {/* Subtle gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-b from-background/80 via-background/60 to-background/80 z-10" />
+      {/* Subtle gradient overlay - behind data */}
+      <div className="absolute inset-0 bg-gradient-to-b from-background/60 via-background/40 to-background/60 z-0" />
       
       {/* Form Chart - Top Left */}
-      <div className="absolute top-20 left-8 opacity-[0.15] transform -rotate-6">
+      <div className="absolute top-20 left-8 opacity-[0.25] transform -rotate-6 z-[1]">
         <div className="font-bebas text-xs uppercase tracking-widest text-primary mb-2">R90 Form</div>
         <div className="flex items-end gap-3 h-32">
           {formData.reverse().map((match, i) => (
@@ -120,7 +120,7 @@ export const HomeBackground = () => {
       </div>
 
       {/* Form Chart - Top Right */}
-      <div className="absolute top-32 right-12 opacity-[0.12] transform rotate-3">
+      <div className="absolute top-32 right-12 opacity-[0.20] transform rotate-3 z-[1]">
         <div className="font-bebas text-sm uppercase tracking-widest text-primary mb-3">Performance Trend</div>
         <div className="flex items-end gap-4 h-40">
           {formData.map((match, i) => (
@@ -142,7 +142,7 @@ export const HomeBackground = () => {
       {actions.map((action, i) => (
         <div
           key={i}
-          className="absolute opacity-[0.12] transform"
+          className="absolute opacity-[0.20] transform z-[1]"
           style={{
             top: `${20 + (i * 7) % 60}%`,
             left: i % 2 === 0 ? `${5 + (i * 8) % 30}%` : `${60 + (i * 5) % 30}%`,
@@ -170,7 +170,7 @@ export const HomeBackground = () => {
       ))}
 
       {/* Program Session - Bottom Left */}
-      <div className="absolute bottom-32 left-6 opacity-[0.12] transform rotate-2">
+      <div className="absolute bottom-32 left-6 opacity-[0.20] transform rotate-2 z-[1]">
         <div className="font-bebas text-xs uppercase tracking-widest text-primary mb-2">Training Program</div>
         <div className="space-y-2 max-w-[200px]">
           {sessionExercises.slice(0, 4).map((exercise, i) => (
@@ -185,7 +185,7 @@ export const HomeBackground = () => {
       </div>
 
       {/* Program Session - Bottom Right */}
-      <div className="absolute bottom-20 right-8 opacity-[0.10] transform -rotate-3">
+      <div className="absolute bottom-20 right-8 opacity-[0.18] transform -rotate-3 z-[1]">
         <div className="font-bebas text-sm uppercase tracking-widest text-primary mb-3">Session C</div>
         <div className="grid grid-cols-2 gap-2 max-w-[280px]">
           {sessionExercises.slice(4, 8).map((exercise, i) => (
@@ -200,19 +200,19 @@ export const HomeBackground = () => {
       </div>
 
       {/* Floating R90 scores */}
-      <div className="absolute top-1/2 left-1/4 opacity-[0.08] transform -translate-y-1/2">
+      <div className="absolute top-1/2 left-1/4 opacity-[0.15] transform -translate-y-1/2 z-[1]">
         <span className="text-8xl font-bebas text-primary">1.74</span>
       </div>
-      <div className="absolute top-1/3 right-1/4 opacity-[0.06] transform">
+      <div className="absolute top-1/3 right-1/4 opacity-[0.12] transform z-[1]">
         <span className="text-6xl font-bebas text-foreground">R90</span>
       </div>
 
       {/* Additional scattered metrics */}
-      <div className="absolute top-[60%] left-[15%] opacity-[0.08]">
+      <div className="absolute top-[60%] left-[15%] opacity-[0.15] z-[1]">
         <div className="font-mono text-2xl text-green-500">+0.28</div>
         <div className="text-[8px] text-muted-foreground uppercase">Shot xG</div>
       </div>
-      <div className="absolute top-[45%] right-[20%] opacity-[0.08]">
+      <div className="absolute top-[45%] right-[20%] opacity-[0.15] z-[1]">
         <div className="font-mono text-xl text-lime-400">+0.22</div>
         <div className="text-[8px] text-muted-foreground uppercase">Triple Threat</div>
       </div>
