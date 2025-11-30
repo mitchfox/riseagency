@@ -5,15 +5,17 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { WorkWithUsDialog } from "@/components/WorkWithUsDialog";
 import { HoverText } from "@/components/HoverText";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const RealisePotential = () => {
+  const { t } = useLanguage();
   const journeySteps = [
     {
       number: "01",
-      title: "Training",
-      subtitle: "Physical & Technical Development",
-      description: "Science-backed training protocols tailored to each player. Building physical capacity, technical excellence, and tactical understanding.",
-      items: ["Strength & conditioning", "Technical drills", "Recovery protocols"],
+      titleKey: "realise.step1_title",
+      subtitleKey: "realise.step1_subtitle",
+      descriptionKey: "realise.step1_description",
+      itemKeys: ["realise.step1_item1", "realise.step1_item2", "realise.step1_item3"],
       icon: (
         <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
@@ -22,10 +24,10 @@ const RealisePotential = () => {
     },
     {
       number: "02",
-      title: "Pre-Match Analysis",
-      subtitle: "Tactical Preparation",
-      description: "Detailed video analysis breaking down opposition tactics, identifying key matchups, and developing game plans.",
-      items: ["Opposition scouting", "Tactical schemes", "Strategic insights"],
+      titleKey: "realise.step2_title",
+      subtitleKey: "realise.step2_subtitle",
+      descriptionKey: "realise.step2_description",
+      itemKeys: ["realise.step2_item1", "realise.step2_item2", "realise.step2_item3"],
       icon: (
         <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
@@ -34,10 +36,10 @@ const RealisePotential = () => {
     },
     {
       number: "03",
-      title: "Performance Reports",
-      subtitle: "Match-Day Analytics",
-      description: "Comprehensive data analysis tracking every action and decision. Quantifiable metrics on performance and development.",
-      items: ["Action scoring", "R90 metrics", "Statistical analysis"],
+      titleKey: "realise.step3_title",
+      subtitleKey: "realise.step3_subtitle",
+      descriptionKey: "realise.step3_description",
+      itemKeys: ["realise.step3_item1", "realise.step3_item2", "realise.step3_item3"],
       icon: (
         <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
@@ -46,10 +48,10 @@ const RealisePotential = () => {
     },
     {
       number: "04",
-      title: "Post-Match Analysis",
-      subtitle: "Review & Reflection",
-      description: "In-depth video review sessions identifying areas of excellence and opportunities for growth.",
-      items: ["Key moment breakdowns", "Decision analysis", "Development focus"],
+      titleKey: "realise.step4_title",
+      subtitleKey: "realise.step4_subtitle",
+      descriptionKey: "realise.step4_description",
+      itemKeys: ["realise.step4_item1", "realise.step4_item2", "realise.step4_item3"],
       icon: (
         <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -59,10 +61,10 @@ const RealisePotential = () => {
     },
     {
       number: "05",
-      title: "Highlights",
-      subtitle: "Showcasing Excellence",
-      description: "Professional highlight reels for club presentations, transfer negotiations, and personal brand development.",
-      items: ["Edited reels", "Skills showcase", "Marketing materials"],
+      titleKey: "realise.step5_title",
+      subtitleKey: "realise.step5_subtitle",
+      descriptionKey: "realise.step5_description",
+      itemKeys: ["realise.step5_item1", "realise.step5_item2", "realise.step5_item3"],
       icon: (
         <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
@@ -87,15 +89,15 @@ const RealisePotential = () => {
           <div className="container mx-auto max-w-6xl relative z-10">
             <div className="text-center space-y-6">
               <span className="inline-block text-sm font-bebas uppercase tracking-widest text-primary border border-primary/30 px-6 py-2">
-                Our Approach
+                {t('realise.badge')}
               </span>
               <h1 className="text-5xl md:text-7xl lg:text-8xl font-bebas uppercase tracking-wider leading-none">
-                <span className="text-foreground">A Match Week</span>
+                <span className="text-foreground">{t('realise.title_line1')}</span>
                 <br />
-                <span className="text-primary">With RISE</span>
+                <span className="text-primary">{t('realise.title_line2')}</span>
               </h1>
               <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto font-light">
-                From training ground to match day and beyond—optimizing every aspect of player development and performance.
+                {t('realise.subtitle')}
               </p>
             </div>
           </div>
@@ -125,22 +127,22 @@ const RealisePotential = () => {
                     <div className="relative z-10 space-y-4">
                       <div>
                         <h3 className="text-2xl md:text-3xl font-bebas uppercase tracking-wider text-foreground">
-                          {step.title}
+                          {t(step.titleKey)}
                         </h3>
                         <p className="text-sm text-primary font-medium uppercase tracking-wider">
-                          {step.subtitle}
+                          {t(step.subtitleKey)}
                         </p>
                       </div>
 
                       <p className="text-muted-foreground text-sm leading-relaxed">
-                        {step.description}
+                        {t(step.descriptionKey)}
                       </p>
 
                       <ul className="space-y-2 pt-2">
-                        {step.items.map((item, i) => (
+                        {step.itemKeys.map((itemKey, i) => (
                           <li key={i} className="flex items-center gap-2 text-sm text-muted-foreground">
                             <span className="w-1 h-1 bg-primary rounded-full" />
-                            {item}
+                            {t(itemKey)}
                           </li>
                         ))}
                       </ul>
@@ -157,10 +159,7 @@ const RealisePotential = () => {
           <div className="container mx-auto max-w-4xl text-center">
             <div className="border border-primary/20 bg-primary/5 p-12">
               <p className="text-xl md:text-2xl text-foreground leading-relaxed font-light">
-                This comprehensive approach ensures our players are{" "}
-                <span className="text-primary font-medium">prepared</span>,{" "}
-                <span className="text-primary font-medium">performing</span>, and{" "}
-                <span className="text-primary font-medium">progressing</span> at the highest level—week after week, season after season.
+                {t('realise.summary')}
               </p>
             </div>
           </div>
@@ -170,19 +169,19 @@ const RealisePotential = () => {
         <section className="py-16 px-4 bg-muted/30">
           <div className="container mx-auto max-w-4xl text-center space-y-8">
             <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider text-foreground">
-              Ready To <span className="text-primary">RISE</span>?
+              {t('realise.cta_title')}
             </h2>
             <p className="text-muted-foreground max-w-xl mx-auto">
-              Start your journey with elite football representation and performance optimization.
+              {t('realise.cta_subtitle')}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <WorkWithUsDialog>
                 <Button size="lg" className="btn-shine text-lg font-bebas uppercase tracking-wider px-10 py-6">
-                  <HoverText text="Work With Us" />
+                  <HoverText text={t('realise.work_with_us')} />
                 </Button>
               </WorkWithUsDialog>
               <Button asChild variant="outline" size="lg" className="text-lg font-bebas uppercase tracking-wider px-10 py-6">
-                <Link to="/"><HoverText text="Back to Home" /></Link>
+                <Link to="/"><HoverText text={t('realise.back_to_home')} /></Link>
               </Button>
             </div>
           </div>
