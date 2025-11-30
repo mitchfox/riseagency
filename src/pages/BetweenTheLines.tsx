@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { supabase } from "@/integrations/supabase/client";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { HoverText } from "@/components/HoverText";
@@ -55,6 +56,7 @@ const createSlug = (title: string): string => {
 };
 
 export default function BetweenTheLines() {
+  const { t } = useLanguage();
   const [articles, setArticles] = useState<Article[]>([]);
   const [filteredArticles, setFilteredArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
@@ -128,14 +130,14 @@ export default function BetweenTheLines() {
           <div className="text-center mb-12 space-y-3 animate-fade-in">
             <div className="inline-block">
               <span className="text-sm font-bebas uppercase tracking-widest text-primary border border-primary/30 px-6 py-2 rounded-full">
-                Expert Content
+                {t('btl.badge')}
               </span>
             </div>
             <h1 className="text-5xl md:text-7xl lg:text-8xl font-bebas uppercase tracking-wider text-foreground mb-4">
-              Between <span className="text-primary">The Lines</span>
+              {t('btl.title_part1')} <span className="text-primary">{t('btl.title_part2')}</span>
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-              Expert insights, tactical analysis, and professional development content for football players and coaches
+              {t('btl.subtitle')}
             </p>
           </div>
 
@@ -191,7 +193,7 @@ export default function BetweenTheLines() {
           ) : filteredArticles.length === 0 ? (
             <div className="text-center py-20">
               <p className="text-xl text-muted-foreground">
-                No articles found for the selected filters
+                {t('btl.no_articles')}
               </p>
             </div>
           ) : (
@@ -258,10 +260,10 @@ export default function BetweenTheLines() {
               <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent"></div>
               <div className="text-center relative z-10">
                 <h2 className="text-2xl md:text-3xl font-bebas uppercase tracking-wider text-primary mb-3">
-                  Join RISE Broadcast on Instagram
+                  {t('btl.broadcast_title')}
                 </h2>
                 <p className="text-foreground mb-6 text-base md:text-lg leading-relaxed">
-                  Get daily updates on agency insights, performance optimization, coaching systems, and player development strategies
+                  {t('btl.broadcast_description')}
                 </p>
                 <a
                   href="https://www.instagram.com/channel/AbY33s3ZhuxaNwuo/"
@@ -269,7 +271,7 @@ export default function BetweenTheLines() {
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 px-8 py-4 bg-primary text-background font-bebas uppercase tracking-wider text-lg hover:bg-primary/90 hover:scale-105 transition-all rounded shadow-lg"
                 >
-                  <HoverText text="Join the Channel" />
+                  <HoverText text={t('btl.join_channel')} />
                 </a>
               </div>
             </div>

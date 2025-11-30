@@ -2,6 +2,7 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { PlayerCard } from "@/components/PlayerCard";
 import { SEO } from "@/components/SEO";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -16,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { ChevronDown } from "lucide-react";
 
 const Stars = () => {
+  const { t } = useLanguage();
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [players, setPlayers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -150,7 +152,7 @@ const Stars = () => {
         <Header />
         <main className="pt-16">
           <div className="container mx-auto px-4 py-24 text-center">
-            <p className="text-xl text-muted-foreground">Loading players...</p>
+            <p className="text-xl text-muted-foreground">{t('stars.loading')}</p>
           </div>
         </main>
         <Footer />
@@ -174,10 +176,10 @@ const Stars = () => {
           <div className="container mx-auto">
             <div className="text-center mb-12">
               <h1 className="text-6xl md:text-8xl font-bebas uppercase tracking-wider text-foreground mb-4">
-                Our Stars
+                {t('stars.title')}
               </h1>
               <p className="text-xl text-muted-foreground max-w-3xl lg:max-w-5xl mx-auto">
-                Meet our talented roster of professional footballers
+                {t('stars.subtitle')}
               </p>
             </div>
 
@@ -191,7 +193,7 @@ const Stars = () => {
                     : "bg-secondary text-foreground hover:bg-secondary/80"
                 }`}
               >
-                Grid View
+                {t('stars.grid_view')}
               </button>
               <button
                 onClick={() => setViewMode("list")}
@@ -201,7 +203,7 @@ const Stars = () => {
                     : "bg-secondary text-foreground hover:bg-secondary/80"
                 }`}
               >
-                List View
+                {t('stars.list_view')}
               </button>
             </div>
 
@@ -214,7 +216,7 @@ const Stars = () => {
                     variant="outline" 
                     className="font-bebas uppercase tracking-wider border-primary/30 hover:bg-primary/10"
                   >
-                    Filter by Position
+                    {t('stars.filter_position')}
                     {selectedPositions.length > 0 && (
                       <span className="ml-2 bg-primary text-black rounded-full px-2 py-0.5 text-xs">
                         {selectedPositions.length}
@@ -225,7 +227,7 @@ const Stars = () => {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-56 max-h-96 overflow-y-auto bg-background">
                   <DropdownMenuLabel className="font-bebas uppercase tracking-wider">
-                    Select Positions
+                    {t('stars.select_positions')}
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   {positions.map((position) => (
@@ -248,7 +250,7 @@ const Stars = () => {
                     variant="outline" 
                     className="font-bebas uppercase tracking-wider border-primary/30 hover:bg-primary/10"
                   >
-                    Filter by Age
+                    {t('stars.filter_age')}
                     {selectedAgeRanges.length > 0 && (
                       <span className="ml-2 bg-primary text-black rounded-full px-2 py-0.5 text-xs">
                         {selectedAgeRanges.length}
@@ -259,7 +261,7 @@ const Stars = () => {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-56 bg-background">
                   <DropdownMenuLabel className="font-bebas uppercase tracking-wider">
-                    Select Age Ranges
+                    {t('stars.select_age_ranges')}
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   {ageRanges.map((range) => (
@@ -285,7 +287,7 @@ const Stars = () => {
                   }}
                   className="font-bebas uppercase tracking-wider text-muted-foreground hover:text-foreground"
                 >
-                  Clear All Filters
+                  {t('stars.clear_filters')}
                 </Button>
               )}
             </div>
@@ -309,7 +311,7 @@ const Stars = () => {
 
             {filteredPlayers.length === 0 && (
               <div className="text-center py-12">
-                <p className="text-xl text-muted-foreground">No players match the selected filters</p>
+                <p className="text-xl text-muted-foreground">{t('stars.no_players')}</p>
               </div>
             )}
           </div>
