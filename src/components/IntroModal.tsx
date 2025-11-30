@@ -8,13 +8,14 @@ import introImage from "@/assets/intro-modal-background.png";
 import riseLogo from "@/assets/logo.png";
 import { supabase } from "@/integrations/supabase/client";
 import { getCountryFlagUrl } from "@/lib/countryFlags";
-
+import { useLanguage } from "@/contexts/LanguageContext";
 interface IntroModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
 export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
+  const { t } = useLanguage();
   const [showRepresentation, setShowRepresentation] = useState(false);
   const [newsIndex, setNewsIndex] = useState(0);
   const [starIndex, setStarIndex] = useState(0);
@@ -119,7 +120,7 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
             {/* Overlay Content - Top Left, using all black space */}
             <div className="absolute top-[8px] left-3 right-[35%] pr-3 space-y-1.5 sm:top-[9px] sm:left-6 sm:right-[calc(35%-5px)] sm:pr-6 sm:space-y-1.5">
               <p id="intro-modal-description" className="text-[11px] text-white leading-tight sm:text-sm sm:leading-relaxed">
-                At <strong>RISE</strong>, we scout across the entirety of professional football in Europe and have guided many Premier League players to success through their development journey to <strong>RISE</strong> through the game and <strong>Realise Potential</strong>.
+                {t("intro.description", "At RISE, we scout across the entirety of professional football in Europe and have guided many Premier League players to success through their development journey to RISE through the game and Realise Potential.")}
               </p>
               
               {/* Buttons */}
@@ -129,14 +130,14 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
                   hoverEffect
                   className="bg-gray-300 text-black hover:bg-gray-400 font-bebas uppercase tracking-wider px-3 py-1.5 text-xs w-[180px] border-0 h-7 sm:px-4 sm:py-2 sm:text-base sm:w-full sm:h-auto focus-visible:ring-0 focus-visible:ring-offset-0"
                 >
-                  Request Representation
+                  {t("intro.request_representation", "Request Representation")}
                 </Button>
                 <Button 
                   onClick={handleEnterSite}
                   hoverEffect
                   className="btn-shine font-bebas uppercase tracking-wider px-3 py-1.5 text-xs w-[180px] h-7 sm:px-4 sm:py-2 sm:text-base sm:w-full sm:h-auto focus-visible:ring-0 focus-visible:ring-offset-0"
                 >
-                  Enter Site
+                  {t("intro.enter_site", "Enter Site")}
                 </Button>
               </div>
             </div>
@@ -172,7 +173,7 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
                         visibility: index === newsIndex ? 'visible' : 'hidden'
                       }}
                     >
-                      <h3 className="text-white font-bebas text-[10px] uppercase tracking-wider mb-0.5 sm:text-base sm:mb-1">Latest News</h3>
+                      <h3 className="text-white font-bebas text-[10px] uppercase tracking-wider mb-0.5 sm:text-base sm:mb-1">{t("intro.latest_news", "Latest News")}</h3>
                       <p className="text-white/80 text-[8px] line-clamp-2 sm:text-xs">{item.title}</p>
                     </div>
                   ))}
@@ -215,7 +216,7 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
                         }}
                       >
                         <div className="text-xl font-bold text-white font-bebas leading-none text-center sm:text-4xl">{player.age}</div>
-                        <div className="text-[6px] text-white/80 uppercase tracking-wider mt-0.5 text-center sm:text-[9px]">Age</div>
+                        <div className="text-[6px] text-white/80 uppercase tracking-wider mt-0.5 text-center sm:text-[9px]">{t("intro.age", "Age")}</div>
                       </div>
                     ))}
                   </div>
@@ -242,7 +243,7 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
                             alt={`${normalizedNat} flag`}
                             className="w-6 h-4 object-contain mb-0.5 sm:w-10 sm:h-8 sm:mb-1"
                           />
-                          <div className="text-[6px] text-white/80 uppercase tracking-wider text-center sm:text-[9px]">Nationality</div>
+                          <div className="text-[6px] text-white/80 uppercase tracking-wider text-center sm:text-[9px]">{t("intro.nationality", "Nationality")}</div>
                         </div>
                       );
                     })}
@@ -261,7 +262,7 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
                         }}
                       >
                         <div className="text-lg font-bold text-white font-bebas leading-none text-center sm:text-3xl">{player.position}</div>
-                        <div className="text-[6px] text-white/80 uppercase tracking-wider mt-0.5 text-center sm:text-[9px]">Position</div>
+                        <div className="text-[6px] text-white/80 uppercase tracking-wider mt-0.5 text-center sm:text-[9px]">{t("intro.position", "Position")}</div>
                       </div>
                     ))}
                   </div>
@@ -281,7 +282,7 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
                           }}
                         >
                           <img src={clubLogo} alt="Club" className="w-6 h-6 object-contain mb-0.5 sm:w-12 sm:h-12 sm:mb-1" />
-                          <div className="text-[6px] text-white/80 uppercase tracking-wider text-center sm:text-[9px]">Club</div>
+                          <div className="text-[6px] text-white/80 uppercase tracking-wider text-center sm:text-[9px]">{t("intro.club", "Club")}</div>
                         </div>
                       ) : null;
                     })}
