@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { RepresentationDialog } from "@/components/RepresentationDialog";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import blackMarbleSmudged from "@/assets/black-marble-smudged.png";
 import introImage from "@/assets/intro-modal-background.png";
 import riseLogo from "@/assets/logo.png";
 import { supabase } from "@/integrations/supabase/client";
