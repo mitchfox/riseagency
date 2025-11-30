@@ -887,8 +887,21 @@ export const Header = () => {
             </DrawerContent>
           </Drawer>
 
-          {/* Logo - Center */}
-          <Link to="/" className="absolute left-1/2 transform -translate-x-1/2 z-10">
+          {/* Logo - Center - navigates to role-specific page */}
+          <Link 
+            to={(() => {
+              const path = location.pathname;
+              if (path.startsWith('/clubs')) return '/clubs';
+              if (path.startsWith('/coaches')) return '/coaches';
+              if (path.startsWith('/scouts')) return '/scouts';
+              if (path.startsWith('/agents')) return '/agents';
+              if (path.startsWith('/business')) return '/business';
+              if (path.startsWith('/media')) return '/media';
+              if (path.startsWith('/home') || path.startsWith('/stars') || path.startsWith('/performance') || path.startsWith('/news') || path.startsWith('/between-the-lines')) return '/home';
+              return '/';
+            })()}
+            className="absolute left-1/2 transform -translate-x-1/2 z-10"
+          >
             <img src={logo} alt="RISE Football Agency" className={`transition-all duration-500 ease-out ${isScrolled ? 'h-9 md:h-11' : 'h-10 md:h-12'}`} />
           </Link>
 

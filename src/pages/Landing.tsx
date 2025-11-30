@@ -8,25 +8,20 @@ import { HomeBackground } from "@/components/HomeBackground";
 export default function Landing() {
   const { t } = useLanguage();
   
-  // Desktop order (HOME in middle)
+  // Desktop navigation (PLAYERS goes to /home, no HOME option)
   const desktopNavLinks = [
-    { to: "/stars", labelKey: "landing.nav_players", fallback: "PLAYERS" },
+    { to: "/home", labelKey: "landing.nav_players", fallback: "PLAYERS" },
     { to: "/coaches", labelKey: "landing.nav_coaches", fallback: "COACHES" },
-    { to: "/home", labelKey: "landing.nav_home", fallback: "HOME" },
     { to: "/clubs", labelKey: "landing.nav_clubs", fallback: "CLUBS" },
     { to: "/agents", labelKey: "landing.nav_agents", fallback: "AGENTS" },
-  ];
-
-  // Secondary row links for desktop
-  const secondaryNavLinks = [
     { to: "/scouts", labelKey: "landing.nav_scouts", fallback: "SCOUTS" },
     { to: "/business", labelKey: "landing.nav_business", fallback: "BUSINESS" },
     { to: "/media", labelKey: "landing.nav_media", fallback: "MEDIA" },
   ];
 
-  // Mobile order (HOME first, then grid)
+  // Mobile navigation
   const mobileNavLinks = [
-    { to: "/stars", labelKey: "landing.nav_players", fallback: "PLAYERS" },
+    { to: "/home", labelKey: "landing.nav_players", fallback: "PLAYERS" },
     { to: "/coaches", labelKey: "landing.nav_coaches", fallback: "COACHES" },
     { to: "/clubs", labelKey: "landing.nav_clubs", fallback: "CLUBS" },
     { to: "/agents", labelKey: "landing.nav_agents", fallback: "AGENTS" },
@@ -34,7 +29,6 @@ export default function Landing() {
     { to: "/business", labelKey: "landing.nav_business", fallback: "BUSINESS" },
     { to: "/media", labelKey: "landing.nav_media", fallback: "MEDIA" },
   ];
-  const homeLink = { to: "/home", labelKey: "landing.nav_home", fallback: "HOME" };
 
   return (
     <div className="min-h-screen bg-black flex flex-col items-center justify-end relative overflow-hidden cursor-none md:cursor-none">
@@ -57,15 +51,7 @@ export default function Landing() {
               <LanguageSelector />
             </div>
             
-            {/* HOME link on its own line */}
-            <Link
-              to={homeLink.to}
-              className="px-4 py-1 text-sm font-bebas uppercase tracking-[0.15em] text-white/80 hover:text-primary transition-colors duration-300"
-            >
-              <HoverText text={t(homeLink.labelKey, homeLink.fallback)} />
-            </Link>
-            
-            {/* Grid for remaining links */}
+            {/* Grid for all links */}
             <nav className="grid grid-cols-3 gap-x-2 gap-y-1">
               {mobileNavLinks.map((link) => (
                 <Link
@@ -81,12 +67,12 @@ export default function Landing() {
 
           {/* Desktop Layout */}
           <div className="hidden md:block">
-            <nav className="flex flex-row items-center justify-center">
+            <nav className="flex flex-row items-center justify-center flex-wrap gap-y-2">
               {desktopNavLinks.map((link, index) => (
                 <div key={link.to} className="flex items-center justify-center">
                   <Link
                     to={link.to}
-                    className="px-8 text-base font-bebas uppercase tracking-[0.2em] text-white/80 hover:text-primary transition-colors duration-300"
+                    className="px-6 text-base font-bebas uppercase tracking-[0.2em] text-white/80 hover:text-primary transition-colors duration-300"
                   >
                     <HoverText text={t(link.labelKey, link.fallback)} />
                   </Link>
@@ -97,25 +83,8 @@ export default function Landing() {
               ))}
             </nav>
             
-            {/* Secondary Navigation Row */}
-            <nav className="flex flex-row items-center justify-center mt-2 pt-2 border-t border-primary/20">
-              {secondaryNavLinks.map((link, index) => (
-                <div key={link.to} className="flex items-center justify-center">
-                  <Link
-                    to={link.to}
-                    className="px-6 text-sm font-bebas uppercase tracking-[0.15em] text-white/60 hover:text-primary transition-colors duration-300"
-                  >
-                    <HoverText text={t(link.labelKey, link.fallback)} />
-                  </Link>
-                  {index < secondaryNavLinks.length - 1 && (
-                    <div className="w-px h-3 bg-primary/30" />
-                  )}
-                </div>
-              ))}
-            </nav>
-            
             {/* Language Selector - Below with divider on desktop */}
-            <div className="border-t border-primary/40 mt-3 pt-3 flex justify-center ml-[33px]">
+            <div className="border-t border-primary/40 mt-3 pt-3 flex justify-center">
               <LanguageSelector />
             </div>
           </div>
