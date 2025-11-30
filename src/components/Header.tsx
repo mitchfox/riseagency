@@ -250,7 +250,7 @@ export const Header = () => {
                         style={{ left: "50px", top: "98px", height: "210px", borderRadius: "24px" }}
                       >
                       <span className="text-white/80 font-bebas text-sm italic tracking-wider" style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>
-                        OUR WORK
+                        {t("header.our_work", "OUR WORK")}
                       </span>
                     </div>
 
@@ -260,7 +260,7 @@ export const Header = () => {
                       style={{ left: "50px", top: "310px", height: "210px", borderRadius: "24px" }}
                     >
                       <span className="text-white/80 font-bebas text-sm italic tracking-wider" style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>
-                        LEARN MORE
+                        {t("header.learn_more", "LEARN MORE")}
                       </span>
                     </div>
                     {/* Close button at 100, 50 (move by +5, -20) */}

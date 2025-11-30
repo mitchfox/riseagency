@@ -1335,7 +1335,7 @@ const ScoutingNetworkMap = ({ initialCountry, hideStats = false }: ScoutingNetwo
                         </svg>
                       </div>
                       <div className="flex-1">
-                        <div className="font-medium">{country.country}</div>
+                        <div className="font-medium">{t(`countries.${country.country.toLowerCase().replace(/ /g, '_')}`, country.country)}</div>
                       </div>
                     </div>
                     {selectedCountry === country.country && (
