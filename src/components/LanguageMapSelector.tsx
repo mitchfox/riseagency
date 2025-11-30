@@ -6,6 +6,7 @@ import {
   DialogContent,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import europeMap from "@/assets/europe-outline.gif";
 
 type LanguageCode = 'en' | 'es' | 'pt' | 'fr' | 'de' | 'it' | 'pl' | 'cs' | 'ru' | 'tr';
 
@@ -54,73 +55,16 @@ export const LanguageMapSelector = () => {
       </DialogTrigger>
       
       <DialogContent className="bg-black/95 border border-primary/30 max-w-4xl p-0 overflow-hidden">
-        <div className="relative w-full aspect-[16/9]">
-          {/* Europe SVG Map */}
-          <svg 
-            viewBox="0 0 800 600" 
-            className="w-full h-full"
-            style={{ background: 'radial-gradient(ellipse at center, #1a1a1a 0%, #0a0a0a 100%)' }}
-          >
-            {/* Europe map paths - simplified outline */}
-            <g fill="rgba(200,170,90,0.15)" stroke="rgba(200,170,90,0.4)" strokeWidth="1">
-              {/* Iceland */}
-              <path d="M280,80 L310,75 L330,85 L320,100 L290,105 L275,95 Z" />
-              
-              {/* UK & Ireland */}
-              <path d="M310,180 L340,160 L360,170 L355,200 L340,220 L320,230 L305,210 L310,190 Z" />
-              <path d="M290,200 L310,190 L305,220 L285,230 L275,215 Z" />
-              
-              {/* Norway, Sweden, Finland */}
-              <path d="M420,50 L450,40 L480,50 L510,80 L520,120 L510,160 L490,180 L470,170 L460,140 L440,110 L420,80 Z" />
-              <path d="M520,60 L560,50 L600,70 L620,100 L610,150 L580,180 L550,160 L530,120 Z" />
-              
-              {/* Spain & Portugal */}
-              <path d="M280,350 L350,340 L380,360 L390,400 L370,440 L320,450 L280,430 L260,390 L270,360 Z" />
-              <path d="M250,370 L275,360 L270,410 L250,420 L240,400 Z" />
-              
-              {/* France */}
-              <path d="M350,250 L400,240 L430,270 L420,320 L380,350 L340,340 L320,300 L330,260 Z" />
-              
-              {/* Germany */}
-              <path d="M430,220 L480,210 L510,240 L500,290 L460,300 L430,280 L420,250 Z" />
-              
-              {/* Poland */}
-              <path d="M490,200 L550,190 L580,220 L570,260 L530,270 L500,250 L490,220 Z" />
-              
-              {/* Italy */}
-              <path d="M440,320 L470,310 L490,340 L480,400 L450,430 L430,410 L440,360 Z" />
-              <path d="M450,440 L480,430 L500,450 L480,470 L455,460 Z" />
-              
-              {/* Czech Republic */}
-              <path d="M460,260 L500,250 L510,280 L490,300 L460,295 L455,275 Z" />
-              
-              {/* Balkans */}
-              <path d="M500,320 L550,310 L580,350 L560,400 L520,410 L490,380 L495,340 Z" />
-              
-              {/* Greece */}
-              <path d="M530,420 L560,410 L580,440 L570,480 L540,490 L520,460 L525,430 Z" />
-              
-              {/* Turkey (European part + Anatolia) */}
-              <path d="M580,380 L650,370 L720,390 L750,420 L730,460 L680,470 L620,450 L590,420 Z" />
-              
-              {/* Russia (western portion) */}
-              <path d="M580,100 L700,80 L780,120 L790,200 L750,280 L680,300 L620,260 L590,200 L580,150 Z" />
-              
-              {/* Baltic states */}
-              <path d="M530,160 L570,150 L590,180 L580,210 L550,220 L530,200 Z" />
-              
-              {/* Ukraine, Belarus */}
-              <path d="M580,220 L680,210 L720,260 L700,320 L640,340 L590,310 L570,270 Z" />
-            </g>
-            
-            {/* Grid overlay */}
-            <defs>
-              <pattern id="mapGrid" width="40" height="40" patternUnits="userSpaceOnUse">
-                <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(200,170,90,0.08)" strokeWidth="0.5"/>
-              </pattern>
-            </defs>
-            <rect width="800" height="600" fill="url(#mapGrid)" />
-          </svg>
+        <div className="relative w-full aspect-[16/10]">
+          {/* Europe Map Image */}
+          <img 
+            src={europeMap} 
+            alt="Europe Map"
+            className="absolute inset-0 w-full h-full object-contain opacity-60"
+          />
+          
+          {/* Overlay gradient */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60" />
           
           {/* Language markers */}
           {languageRegions.map((region) => {
