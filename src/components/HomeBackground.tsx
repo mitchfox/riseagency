@@ -28,6 +28,7 @@ export const HomeBackground = () => {
   const [formData, setFormData] = useState<FormData[]>([]);
   const [actions, setActions] = useState<ActionData[]>([]);
   const [sessionExercises, setSessionExercises] = useState<SessionExercise[]>([]);
+  const [sessionName, setSessionName] = useState<string>("");
 
   useEffect(() => {
     const fetchData = async () => {
@@ -57,13 +58,13 @@ export const HomeBackground = () => {
         .eq("player_analysis.player_id", TYRESE_ID)
         .gt("action_score", 0)
         .order("action_score", { ascending: false })
-        .limit(12);
+        .limit(8);
 
       if (actionData) {
         setActions(actionData as unknown as ActionData[]);
       }
 
-      // Fetch current program session
+      // Fetch current program session - find first session with exercises
       const { data: programData } = await supabase
         .from("player_programs")
         .select("sessions")
@@ -73,13 +74,14 @@ export const HomeBackground = () => {
 
       if (programData?.sessions) {
         const sessions = programData.sessions as Record<string, { exercises?: SessionExercise[] }>;
-        const allExercises: SessionExercise[] = [];
-        Object.values(sessions).forEach(session => {
-          if (session?.exercises) {
-            allExercises.push(...session.exercises.slice(0, 2));
+        // Find first session with actual exercises
+        for (const [name, session] of Object.entries(sessions)) {
+          if (session?.exercises && session.exercises.length > 0) {
+            setSessionExercises(session.exercises.slice(0, 6));
+            setSessionName(`Session ${name}`);
+            break;
           }
-        });
-        setSessionExercises(allExercises.slice(0, 8));
+        }
       }
     };
 
@@ -94,127 +96,125 @@ export const HomeBackground = () => {
     return "hsl(142, 76%, 36%)";
   };
 
+  const reversedFormData = [...formData].reverse();
+
   return (
     <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
-      {/* Subtle gradient overlay - behind data */}
-      <div className="absolute inset-0 bg-gradient-to-b from-background/60 via-background/40 to-background/60 z-0" />
+      {/* Subtle gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-b from-background/50 via-background/30 to-background/50 z-0" />
       
-      {/* Form Chart - Top Left */}
-      <div className="absolute top-20 left-8 opacity-[0.25] transform -rotate-6 z-[1]">
-        <div className="font-bebas text-xs uppercase tracking-widest text-primary mb-2">R90 Form</div>
-        <div className="flex items-end gap-3 h-32">
-          {formData.reverse().map((match, i) => (
-            <div key={i} className="flex flex-col items-center gap-1">
-              <div 
-                className="w-8 rounded-t"
-                style={{ 
-                  height: `${Math.max(match.r90_score * 60, 10)}px`,
-                  backgroundColor: getR90Color(match.r90_score)
-                }}
-              />
-              <span className="text-[8px] text-foreground/60 font-mono">{match.r90_score.toFixed(2)}</span>
-              <span className="text-[7px] text-muted-foreground max-w-[40px] truncate">{match.opponent}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Form Chart - Top Right */}
-      <div className="absolute top-32 right-12 opacity-[0.20] transform rotate-3 z-[1]">
-        <div className="font-bebas text-sm uppercase tracking-widest text-primary mb-3">Performance Trend</div>
-        <div className="flex items-end gap-4 h-40">
-          {formData.map((match, i) => (
-            <div key={i} className="flex flex-col items-center gap-1">
-              <div 
-                className="w-10 rounded-t transition-all"
-                style={{ 
-                  height: `${Math.max(match.r90_score * 70, 15)}px`,
-                  backgroundColor: getR90Color(match.r90_score)
-                }}
-              />
-              <span className="text-[10px] text-foreground/60 font-mono font-bold">{match.r90_score.toFixed(2)}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Action Scores - Scattered across middle */}
-      {actions.map((action, i) => (
-        <div
-          key={i}
-          className="absolute opacity-[0.20] transform z-[1]"
-          style={{
-            top: `${20 + (i * 7) % 60}%`,
-            left: i % 2 === 0 ? `${5 + (i * 8) % 30}%` : `${60 + (i * 5) % 30}%`,
-            transform: `rotate(${(i - 6) * 3}deg)`,
-          }}
-        >
-          <div className="bg-card/50 border border-primary/20 rounded p-3 max-w-[220px]">
-            <div className="flex items-center gap-2 mb-1">
-              <span 
-                className="text-lg font-bold font-mono"
-                style={{ color: action.action_score > 0.15 ? "hsl(142, 76%, 36%)" : "hsl(82, 84%, 67%)" }}
-              >
-                +{action.action_score.toFixed(2)}
-              </span>
-              <span className="text-[8px] text-muted-foreground">{action.minute}'</span>
-            </div>
-            <div className="text-[9px] text-foreground/70 font-medium uppercase tracking-wide">
-              {action.action_type}
-            </div>
-            <div className="text-[8px] text-muted-foreground line-clamp-2 mt-1">
-              {action.action_description}
-            </div>
+      {/* LEFT COLUMN - R90 & Actions */}
+      <div className="absolute left-4 md:left-8 top-24 bottom-32 w-[200px] md:w-[280px] flex flex-col gap-8 z-[1]">
+        {/* R90 Form Chart */}
+        <div className="opacity-[0.35]">
+          <div className="font-bebas text-sm uppercase tracking-widest text-primary mb-3 border-b border-primary/30 pb-1">
+            R90 Form
+          </div>
+          <div className="flex items-end gap-2 h-28">
+            {reversedFormData.map((match, i) => (
+              <div key={i} className="flex flex-col items-center gap-1 flex-1">
+                <div 
+                  className="w-full max-w-[32px] rounded-t"
+                  style={{ 
+                    height: `${Math.max(match.r90_score * 55, 12)}px`,
+                    backgroundColor: getR90Color(match.r90_score)
+                  }}
+                />
+                <span className="text-[9px] text-foreground/70 font-mono font-bold">{match.r90_score.toFixed(2)}</span>
+                <span className="text-[7px] text-muted-foreground truncate max-w-[40px]">{match.opponent?.split(' ')[0]}</span>
+              </div>
+            ))}
           </div>
         </div>
-      ))}
 
-      {/* Program Session - Bottom Left */}
-      <div className="absolute bottom-32 left-6 opacity-[0.20] transform rotate-2 z-[1]">
-        <div className="font-bebas text-xs uppercase tracking-widest text-primary mb-2">Training Program</div>
-        <div className="space-y-2 max-w-[200px]">
-          {sessionExercises.slice(0, 4).map((exercise, i) => (
-            <div key={i} className="bg-card/30 border border-border/30 rounded p-2">
-              <div className="text-[9px] font-medium text-foreground/80 truncate">{exercise.name}</div>
-              <div className="text-[8px] text-muted-foreground">
-                {exercise.sets} × {exercise.repetitions} {exercise.load && `@ ${exercise.load}`}
+        {/* Action Highlights */}
+        <div className="opacity-[0.30]">
+          <div className="font-bebas text-sm uppercase tracking-widest text-primary mb-3 border-b border-primary/30 pb-1">
+            Positive Actions
+          </div>
+          <div className="space-y-2">
+            {actions.slice(0, 4).map((action, i) => (
+              <div key={i} className="flex items-center gap-2 bg-card/40 border border-primary/20 rounded px-2 py-1.5">
+                <span 
+                  className="text-base font-bold font-mono"
+                  style={{ color: action.action_score > 0.15 ? "hsl(142, 76%, 36%)" : "hsl(82, 84%, 67%)" }}
+                >
+                  +{action.action_score.toFixed(2)}
+                </span>
+                <span className="text-[8px] text-foreground/60 uppercase tracking-wide truncate flex-1">
+                  {action.action_type}
+                </span>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
 
-      {/* Program Session - Bottom Right */}
-      <div className="absolute bottom-20 right-8 opacity-[0.18] transform -rotate-3 z-[1]">
-        <div className="font-bebas text-sm uppercase tracking-widest text-primary mb-3">Session C</div>
-        <div className="grid grid-cols-2 gap-2 max-w-[280px]">
-          {sessionExercises.slice(4, 8).map((exercise, i) => (
-            <div key={i} className="bg-card/30 border border-border/30 rounded p-2">
-              <div className="text-[8px] font-medium text-foreground/80 truncate">{exercise.name}</div>
-              <div className="text-[7px] text-muted-foreground">
-                {exercise.sets}×{exercise.repetitions}
-              </div>
+      {/* RIGHT COLUMN - Programming & Stats */}
+      <div className="absolute right-4 md:right-8 top-24 bottom-32 w-[200px] md:w-[280px] flex flex-col gap-8 z-[1]">
+        {/* Gym Program */}
+        {sessionExercises.length > 0 && (
+          <div className="opacity-[0.35]">
+            <div className="font-bebas text-sm uppercase tracking-widest text-primary mb-3 border-b border-primary/30 pb-1">
+              {sessionName || "Training Program"}
             </div>
-          ))}
+            <div className="space-y-2">
+              {sessionExercises.slice(0, 5).map((exercise, i) => (
+                <div key={i} className="bg-card/40 border border-border/40 rounded px-2 py-1.5">
+                  <div className="text-[9px] font-medium text-foreground/80 truncate">{exercise.name}</div>
+                  <div className="text-[8px] text-muted-foreground flex gap-2">
+                    <span>{exercise.sets} × {exercise.repetitions}</span>
+                    {exercise.load && <span className="text-primary/80">{exercise.load}</span>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* More Actions */}
+        <div className="opacity-[0.25]">
+          <div className="font-bebas text-xs uppercase tracking-widest text-primary/80 mb-2">
+            More Highlights
+          </div>
+          <div className="grid grid-cols-2 gap-1.5">
+            {actions.slice(4, 8).map((action, i) => (
+              <div key={i} className="bg-card/30 border border-primary/10 rounded px-2 py-1 text-center">
+                <span 
+                  className="text-sm font-bold font-mono"
+                  style={{ color: action.action_score > 0.15 ? "hsl(142, 76%, 36%)" : "hsl(82, 84%, 67%)" }}
+                >
+                  +{action.action_score.toFixed(2)}
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
-      {/* Floating R90 scores */}
-      <div className="absolute top-1/2 left-1/4 opacity-[0.15] transform -translate-y-1/2 z-[1]">
-        <span className="text-8xl font-bebas text-primary">1.74</span>
-      </div>
-      <div className="absolute top-1/3 right-1/4 opacity-[0.12] transform z-[1]">
-        <span className="text-6xl font-bebas text-foreground">R90</span>
+      {/* CENTER - Large R90 badge */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-[0.08] z-[1]">
+        <div className="text-center">
+          <div className="text-[120px] md:text-[180px] font-bebas text-primary leading-none">R90</div>
+          <div className="text-2xl md:text-4xl font-bebas text-foreground/50 tracking-[0.3em]">PERFORMANCE</div>
+        </div>
       </div>
 
-      {/* Additional scattered metrics */}
-      <div className="absolute top-[60%] left-[15%] opacity-[0.15] z-[1]">
-        <div className="font-mono text-2xl text-green-500">+0.28</div>
-        <div className="text-[8px] text-muted-foreground uppercase">Shot xG</div>
-      </div>
-      <div className="absolute top-[45%] right-[20%] opacity-[0.15] z-[1]">
-        <div className="font-mono text-xl text-lime-400">+0.22</div>
-        <div className="text-[8px] text-muted-foreground uppercase">Triple Threat</div>
+      {/* BOTTOM - Stats bar */}
+      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-6 md:gap-12 opacity-[0.25] z-[1]">
+        {reversedFormData.slice(0, 3).map((match, i) => (
+          <div key={i} className="text-center">
+            <div 
+              className="text-2xl md:text-3xl font-bebas"
+              style={{ color: getR90Color(match.r90_score) }}
+            >
+              {match.r90_score.toFixed(2)}
+            </div>
+            <div className="text-[8px] text-muted-foreground uppercase tracking-wider">
+              vs {match.opponent?.split(' ')[0]}
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );
