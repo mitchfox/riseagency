@@ -3,7 +3,7 @@ import { LanguageSelector } from "@/components/LanguageSelector";
 import { HoverText } from "@/components/HoverText";
 import { MatrixPlayerEffect } from "@/components/MatrixPlayerEffect";
 import { useLanguage } from "@/contexts/LanguageContext";
-import blackMarble from "@/assets/black-marble-smudged.png";
+import { HomeBackground } from "@/components/HomeBackground";
 
 export default function Landing() {
   const { t } = useLanguage();
@@ -38,11 +38,8 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen bg-black flex flex-col items-center justify-end relative overflow-hidden cursor-none md:cursor-none">
-      {/* Marble Background - Full Screen */}
-      <div 
-        className="absolute inset-0 w-full h-full bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: `url(${blackMarble})` }}
-      />
+      {/* Data-driven Background */}
+      <HomeBackground />
       
       {/* Matrix Player Effect - Over Video */}
       <div className="absolute inset-0 pointer-events-none">
