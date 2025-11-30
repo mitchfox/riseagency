@@ -3,9 +3,11 @@ import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { SEO } from "@/components/SEO";
+import { useLanguage } from "@/contexts/LanguageContext";
 import bannerHero from "@/assets/banner-hero.jpg";
 
 const About = () => {
+  const { t } = useLanguage();
   return (
     <div className="min-h-screen bg-background">
       <SEO 
@@ -27,10 +29,10 @@ const About = () => {
           
           <div className="relative container mx-auto px-4 text-center z-10">
             <h1 className="text-5xl md:text-7xl font-bebas uppercase tracking-wider text-white mb-6">
-              About Rise
+              {t('about.title')}
             </h1>
             <p className="text-xl md:text-2xl text-white/90 max-w-3xl mx-auto">
-              Dedicated to elevating football careers through expert representation and comprehensive player development
+              {t('about.subtitle')}
             </p>
           </div>
         </section>
@@ -40,7 +42,7 @@ const About = () => {
           <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto">
               <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider mb-8">
-                Who We Are
+                {t('about.who_we_are')}
               </h2>
               <div className="space-y-6 text-lg text-muted-foreground">
                 <p>
@@ -65,7 +67,7 @@ const About = () => {
           <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto">
               <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider mb-8">
-                Our Mission
+                {t('about.our_mission')}
               </h2>
               <div className="space-y-6 text-lg text-muted-foreground">
                 <p>
@@ -87,39 +89,39 @@ const About = () => {
           <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto">
               <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider mb-12">
-                What We Do
+                {t('about.what_we_do')}
               </h2>
               <div className="grid md:grid-cols-2 gap-8">
                 <div className="space-y-4">
                   <h3 className="text-2xl font-bebas uppercase tracking-wider text-primary">
-                    Player Representation
+                    {t('about.representation')}
                   </h3>
                   <p className="text-muted-foreground">
-                    Expert contract negotiation, transfer management, and career planning tailored to each player's unique goals and circumstances.
+                    {t('about.representation_desc')}
                   </p>
                 </div>
                 <div className="space-y-4">
                   <h3 className="text-2xl font-bebas uppercase tracking-wider text-primary">
-                    Career Development
+                    {t('about.career_dev')}
                   </h3>
                   <p className="text-muted-foreground">
-                    Comprehensive support including performance analysis, training programs, and strategic career planning to maximize potential.
+                    {t('about.career_dev_desc')}
                   </p>
                 </div>
                 <div className="space-y-4">
                   <h3 className="text-2xl font-bebas uppercase tracking-wider text-primary">
-                    Global Network
+                    {t('about.global_network')}
                   </h3>
                   <p className="text-muted-foreground">
-                    Access to an extensive network of clubs, scouts, coaches, and industry professionals across multiple leagues and countries.
+                    {t('about.global_network_desc')}
                   </p>
                 </div>
                 <div className="space-y-4">
                   <h3 className="text-2xl font-bebas uppercase tracking-wider text-primary">
-                    Personal Support
+                    {t('about.personal_support')}
                   </h3>
                   <p className="text-muted-foreground">
-                    Holistic care covering media training, financial guidance, lifestyle management, and personal brand development.
+                    {t('about.personal_support_desc')}
                   </p>
                 </div>
               </div>
@@ -131,13 +133,13 @@ const About = () => {
         <section className="py-12 md:py-16 bg-muted/30">
           <div className="container mx-auto px-4 text-center">
             <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider mb-6">
-              Ready to Rise?
+              {t('about.cta_title')}
             </h2>
             <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-              Join our roster of talented players and take your career to the next level
+              {t('about.cta_subtitle')}
             </p>
             <Button asChild size="lg" className="btn-shine font-bebas uppercase tracking-wider">
-              <Link to="/contact">Get In Touch</Link>
+              <Link to="/contact">{t('about.cta_button')}</Link>
             </Button>
           </div>
         </section>
