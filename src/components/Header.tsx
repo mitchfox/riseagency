@@ -253,15 +253,6 @@ export const Header = () => {
                         '--menu-scale': 'clamp(0.5, calc(100vw / 1920), 2)' 
                       } as React.CSSProperties}
                     >
-                      {/* Decorative vertical rectangle - "Our Work" spanning from Stars to News */}
-                      <div 
-                        className="absolute w-8 border-2 border-primary bg-primary/10 flex items-center justify-center"
-                        style={{ left: "50px", top: "98px", height: "210px", borderRadius: "24px" }}
-                      >
-                      <span className="text-white/80 font-bebas text-sm italic tracking-wider" style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>
-                        {t("header.our_work", "OUR WORK")}
-                      </span>
-                    </div>
                     {/* Close button at 100, 50 (move by +5, -20) */}
                     <DrawerClose asChild>
                     <button
@@ -528,7 +519,7 @@ export const Header = () => {
                   </div>
                   
                   {/* Bottom bar - Language selector left, Role switchers right */}
-                  <div className="absolute bottom-6 left-6 right-6 flex items-end justify-between">
+                  <div className="absolute left-6 right-6 flex items-end justify-between" style={{ bottom: "calc(1.5rem + 15px)" }}>
                     {/* Language Selector - Bottom Left */}
                     <div className="bg-black/60 backdrop-blur-sm rounded-lg px-4 py-3 border border-primary/30">
                       <div className="flex items-center gap-3">
@@ -543,7 +534,11 @@ export const Header = () => {
                         <a
                           key={role}
                           href={getRoleUrl(role)}
-                          className="text-xs font-bebas uppercase tracking-wider text-white/50 hover:text-primary transition-colors duration-300"
+                          className={`text-xs font-bebas uppercase tracking-wider transition-colors duration-300 ${
+                            currentRole === role 
+                              ? 'text-primary' 
+                              : 'text-white/50 hover:text-primary'
+                          }`}
                         >
                           {roleConfigs[role].name}
                         </a>
