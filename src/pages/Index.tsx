@@ -11,7 +11,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { HoverText } from "@/components/HoverText";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { HomeBackground } from "@/components/HomeBackground";
+import { useTranslatedNews } from "@/hooks/useTranslateContent";
 import riseStarIcon from "@/assets/rise-star-icon.png";
 import playersNetwork from "@/assets/players-network.jpg";
 import clubsNetwork from "@/assets/clubs-network.jpg";
@@ -31,6 +31,10 @@ const Index = () => {
   const [showIntroModal, setShowIntroModal] = useState(false);
   const [newsArticles, setNewsArticles] = useState<NewsArticle[]>([]);
   const [insideAccessArticles, setInsideAccessArticles] = useState<NewsArticle[]>([]);
+  
+  // Auto-translate news articles based on current language
+  const { translatedArticles: translatedNews } = useTranslatedNews(newsArticles);
+  const { translatedArticles: translatedInsideAccess } = useTranslatedNews(insideAccessArticles);
 
   useEffect(() => {
     const hasSeenIntro = localStorage.getItem("intro-modal-seen");
@@ -82,8 +86,7 @@ const Index = () => {
       />
       <IntroModal open={showIntroModal} onOpenChange={setShowIntroModal} />
       {!showIntroModal && <Header />}
-      <HomeBackground />
-      <div className="bg-transparent min-h-screen relative z-10">
+      <div className="bg-background min-h-screen relative z-10">
         {/* Hero Section */}
         <section className="pt-28 md:pt-32 pb-12 md:pb-20 px-4 relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-b from-background via-background/90 to-background/80"></div>
@@ -103,7 +106,7 @@ const Index = () => {
 
 
         {/* INSIDE:ACCESS Section */}
-        {insideAccessArticles.length > 0 && (
+        {translatedInsideAccess.length > 0 && (
           <section className="py-12 md:py-16 px-4 bg-background/80 backdrop-blur-sm">
             <div className="container mx-auto max-w-7xl w-full">
               <div className="text-center mb-6 space-y-3">
@@ -117,7 +120,7 @@ const Index = () => {
                 </h2>
               </div>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {insideAccessArticles.map((article, index) => (
+                {translatedInsideAccess.map((article, index) => (
                   article.image_url && (
                     <Link
                       key={article.id}
@@ -269,7 +272,7 @@ const Index = () => {
               </Link>
             </div>
             <div className="grid md:grid-cols-3 gap-6">
-              {newsArticles.map((article) => (
+              {translatedNews.map((article) => (
                 <Link
                   key={article.id}
                   to={`/news/${article.id}`}
