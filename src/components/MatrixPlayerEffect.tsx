@@ -165,16 +165,23 @@ export const MatrixPlayerEffect = ({ className = "" }: MatrixPlayerEffectProps) 
 
       // Draw player images
       if (baseImage && xrayImage) {
-        const scale = Math.min(
-          (canvas.height * 0.72) / baseImage.height,
-          (canvas.width * 0.60) / baseImage.width
-        );
+        const isMobile = canvas.width < 768;
+        
+        // On mobile, make player images the MAIN feature - much larger
+        const scale = isMobile 
+          ? Math.min(
+              (canvas.height * 0.65) / baseImage.height,
+              (canvas.width * 0.95) / baseImage.width
+            )
+          : Math.min(
+              (canvas.height * 0.72) / baseImage.height,
+              (canvas.width * 0.60) / baseImage.width
+            );
         const imgWidth = baseImage.width * scale;
         const imgHeight = baseImage.height * scale;
-        // On mobile (narrow screens), center horizontally and position at top
-        const isMobile = canvas.width < 768;
-        const imgX = isMobile ? (canvas.width - imgWidth) / 2 : (canvas.width - imgWidth) / 2;
-        const imgY = isMobile ? 80 : (canvas.height - imgHeight) / 2 + 30;
+        const imgX = (canvas.width - imgWidth) / 2;
+        // On mobile, position higher to leave room for nav at bottom
+        const imgY = isMobile ? 70 : (canvas.height - imgHeight) / 2 + 30;
 
         // Image 11 (xray) is 1.1x larger than image 7
         const xrayScale = 1.1;
