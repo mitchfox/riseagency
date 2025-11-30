@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import logo from "@/assets/logo.png";
 import riseStar from "@/assets/rise-star.png";
-import { X, MessageCircle, Users, LogIn, Handshake } from "lucide-react";
+import { X, MessageCircle, Users, LogIn, Handshake, ArrowRight } from "lucide-react";
 import workingTogether from "@/assets/menu-working-together.jpg";
 import playerPortalImage from "@/assets/menu-player-portal.png";
 import blackMarbleBg from "@/assets/black-marble-smudged.png";
@@ -24,6 +24,7 @@ import { LanguageSelector } from "@/components/LanguageSelector";
 import { LocalizedLink } from "@/components/LocalizedLink";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { getEnglishPath, getAllPathVariants } from "@/lib/localizedRoutes";
+import { useRoleSubdomain, roleConfigs, RoleSubdomain } from "@/hooks/useRoleSubdomain";
 
 // NOTE: GridLines component is available at src/components/GridLines.tsx 
 // for coordinate-based positioning during design. Import and add it when needed.
@@ -31,6 +32,7 @@ import { getEnglishPath, getAllPathVariants } from "@/lib/localizedRoutes";
 export const Header = () => {
   const location = useLocation();
   const { t } = useLanguage();
+  const { currentRole, getRoleUrl, otherRoles, isRoleSubdomain } = useRoleSubdomain();
   const [representationOpen, setRepresentationOpen] = useState(false);
   const [workWithUsOpen, setWorkWithUsOpen] = useState(false);
   const [declareInterestOpen, setDeclareInterestOpen] = useState(false);
@@ -311,132 +313,239 @@ export const Header = () => {
 
                   {/* Navigation starting at 100, 50 with bottom of last item at 500px */}
                   <nav className="absolute" style={{ left: "100px", top: "50px" }}>
-                    <DrawerClose asChild>
-                      <Link
-                        to="/"
-                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-colors duration-300 tracking-wider py-1 whitespace-nowrap ${
-                          isActive("/") ? "text-primary" : ""
-                        }`}
-                      >
-                        <HoverText text={t("header.home", "HOME")} />
-                      </Link>
-                    </DrawerClose>
-                    <div className="h-px bg-primary my-1" />
+                    {/* Role Title - Show when on a role subdomain */}
+                    {isRoleSubdomain && currentRole && (
+                      <>
+                        <div className="mb-2">
+                          <span className="text-4xl font-bebas uppercase text-primary tracking-[0.3em]">
+                            {t(`header.for_${currentRole}`, `FOR ${roleConfigs[currentRole].name}`)}
+                          </span>
+                        </div>
+                        <div className="h-px bg-primary my-1" />
+                      </>
+                    )}
 
-                    <DrawerClose asChild>
-                      <LocalizedLink
-                        to="/stars"
-                        onMouseEnter={() => setStarsHovered(true)}
-                        onMouseLeave={() => setStarsHovered(false)}
-                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-colors duration-300 tracking-wider py-1 whitespace-nowrap ${
-                          isActive("/stars") ? "text-primary" : ""
-                        }`}
-                      >
-                        <HoverText text={t("header.stars", "STARS")} />
-                      </LocalizedLink>
-                    </DrawerClose>
-                    <div className="h-px bg-white/20 my-1" />
+                    {/* Main Navigation - shown when NOT on a role subdomain */}
+                    {!isRoleSubdomain && (
+                      <>
+                        <DrawerClose asChild>
+                          <Link
+                            to="/"
+                            className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-colors duration-300 tracking-wider py-1 whitespace-nowrap ${
+                              isActive("/") ? "text-primary" : ""
+                            }`}
+                          >
+                            <HoverText text={t("header.home", "HOME")} />
+                          </Link>
+                        </DrawerClose>
+                        <div className="h-px bg-primary my-1" />
 
-                    <DrawerClose asChild>
-                      <LocalizedLink
-                        to="/performance"
-                        onMouseEnter={() => setRealisePotentialHovered(true)}
-                        onMouseLeave={() => setRealisePotentialHovered(false)}
-                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-colors duration-300 tracking-wider py-1 whitespace-nowrap ${
-                          isActive("/performance") ? "text-primary" : ""
-                        }`}
-                      >
-                        <HoverText text={t("header.realise_potential", "REALISE POTENTIAL")} />
-                      </LocalizedLink>
-                    </DrawerClose>
-                    <div className="h-px bg-white/20 my-1" />
+                        <DrawerClose asChild>
+                          <LocalizedLink
+                            to="/stars"
+                            onMouseEnter={() => setStarsHovered(true)}
+                            onMouseLeave={() => setStarsHovered(false)}
+                            className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-colors duration-300 tracking-wider py-1 whitespace-nowrap ${
+                              isActive("/stars") ? "text-primary" : ""
+                            }`}
+                          >
+                            <HoverText text={t("header.stars", "STARS")} />
+                          </LocalizedLink>
+                        </DrawerClose>
+                        <div className="h-px bg-white/20 my-1" />
 
-                    <DrawerClose asChild>
-                      <LocalizedLink
-                        to="/between-the-lines"
-                        onMouseEnter={() => setBetweenLinesHovered(true)}
-                        onMouseLeave={() => setBetweenLinesHovered(false)}
-                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-colors duration-300 tracking-wider py-1 whitespace-nowrap ${
-                          isActive("/between-the-lines") ? "text-primary" : ""
-                        }`}
-                      >
-                        <HoverText text={t("header.between_the_lines", "BETWEEN THE LINES")} />
-                      </LocalizedLink>
-                    </DrawerClose>
-                    <div className="h-px bg-white/20 my-1" />
+                        <DrawerClose asChild>
+                          <LocalizedLink
+                            to="/performance"
+                            onMouseEnter={() => setRealisePotentialHovered(true)}
+                            onMouseLeave={() => setRealisePotentialHovered(false)}
+                            className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-colors duration-300 tracking-wider py-1 whitespace-nowrap ${
+                              isActive("/performance") ? "text-primary" : ""
+                            }`}
+                          >
+                            <HoverText text={t("header.realise_potential", "REALISE POTENTIAL")} />
+                          </LocalizedLink>
+                        </DrawerClose>
+                        <div className="h-px bg-white/20 my-1" />
 
-                    <DrawerClose asChild>
-                      <LocalizedLink
-                        to="/news"
-                        onMouseEnter={() => setNewsHovered(true)}
-                        onMouseLeave={() => setNewsHovered(false)}
-                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-colors duration-300 tracking-wider py-1 whitespace-nowrap ${
-                          isActive("/news") ? "text-primary" : ""
-                        }`}
-                      >
-                        <HoverText text={t("header.news", "NEWS")} />
-                      </LocalizedLink>
-                    </DrawerClose>
-                    <div className="h-px bg-primary my-1" />
+                        <DrawerClose asChild>
+                          <LocalizedLink
+                            to="/between-the-lines"
+                            onMouseEnter={() => setBetweenLinesHovered(true)}
+                            onMouseLeave={() => setBetweenLinesHovered(false)}
+                            className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-colors duration-300 tracking-wider py-1 whitespace-nowrap ${
+                              isActive("/between-the-lines") ? "text-primary" : ""
+                            }`}
+                          >
+                            <HoverText text={t("header.between_the_lines", "BETWEEN THE LINES")} />
+                          </LocalizedLink>
+                        </DrawerClose>
+                        <div className="h-px bg-white/20 my-1" />
 
-                    <DrawerClose asChild>
-                      <Link
-                        to="/players"
-                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-colors duration-300 tracking-wider py-1 whitespace-nowrap ${
-                          isActive("/players") ? "text-primary" : ""
-                        }`}
-                      >
-                        <HoverText text={t("header.players", "PLAYERS")} />
-                      </Link>
-                    </DrawerClose>
-                    <div className="h-px bg-white/20 my-1" />
+                        <DrawerClose asChild>
+                          <LocalizedLink
+                            to="/news"
+                            onMouseEnter={() => setNewsHovered(true)}
+                            onMouseLeave={() => setNewsHovered(false)}
+                            className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-colors duration-300 tracking-wider py-1 whitespace-nowrap ${
+                              isActive("/news") ? "text-primary" : ""
+                            }`}
+                          >
+                            <HoverText text={t("header.news", "NEWS")} />
+                          </LocalizedLink>
+                        </DrawerClose>
+                        <div className="h-px bg-primary my-1" />
 
-                    <DrawerClose asChild>
-                      <LocalizedLink
-                        to="/clubs"
-                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-colors duration-300 tracking-wider py-1 whitespace-nowrap ${
-                          isActive("/clubs") ? "text-primary" : ""
-                        }`}
-                      >
-                        <HoverText text={t("header.clubs", "CLUBS")} />
-                      </LocalizedLink>
-                    </DrawerClose>
-                    <div className="h-px bg-white/20 my-1" />
+                        <DrawerClose asChild>
+                          <Link
+                            to="/players"
+                            className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-colors duration-300 tracking-wider py-1 whitespace-nowrap ${
+                              isActive("/players") ? "text-primary" : ""
+                            }`}
+                          >
+                            <HoverText text={t("header.players", "PLAYERS")} />
+                          </Link>
+                        </DrawerClose>
+                        <div className="h-px bg-white/20 my-1" />
 
-                    <DrawerClose asChild>
-                      <LocalizedLink
-                        to="/coaches"
-                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-colors duration-300 tracking-wider py-1 whitespace-nowrap ${
-                          isActive("/coaches") ? "text-primary" : ""
-                        }`}
-                      >
-                        <HoverText text={t("header.coaches", "COACHES")} />
-                      </LocalizedLink>
-                    </DrawerClose>
-                    <div className="h-px bg-white/20 my-1" />
+                        <DrawerClose asChild>
+                          <LocalizedLink
+                            to="/clubs"
+                            className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-colors duration-300 tracking-wider py-1 whitespace-nowrap ${
+                              isActive("/clubs") ? "text-primary" : ""
+                            }`}
+                          >
+                            <HoverText text={t("header.clubs", "CLUBS")} />
+                          </LocalizedLink>
+                        </DrawerClose>
+                        <div className="h-px bg-white/20 my-1" />
 
-                    <DrawerClose asChild>
-                      <LocalizedLink
-                        to="/scouts"
-                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-colors duration-300 tracking-wider py-1 whitespace-nowrap ${
-                          isActive("/scouts") ? "text-primary" : ""
-                        }`}
-                      >
-                        <HoverText text={t("header.scouts", "SCOUTS")} />
-                      </LocalizedLink>
-                    </DrawerClose>
-                    <div className="h-px bg-white/20 my-1" />
+                        <DrawerClose asChild>
+                          <LocalizedLink
+                            to="/coaches"
+                            className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-colors duration-300 tracking-wider py-1 whitespace-nowrap ${
+                              isActive("/coaches") ? "text-primary" : ""
+                            }`}
+                          >
+                            <HoverText text={t("header.coaches", "COACHES")} />
+                          </LocalizedLink>
+                        </DrawerClose>
+                        <div className="h-px bg-white/20 my-1" />
 
-                    <DrawerClose asChild>
-                      <LocalizedLink
-                        to="/agents"
-                        className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-colors duration-300 tracking-wider py-1 whitespace-nowrap ${
-                          isActive("/agents") ? "text-primary" : ""
-                        }`}
-                      >
-                        <HoverText text={t("header.agents", "AGENTS")} />
-                      </LocalizedLink>
-                    </DrawerClose>
+                        <DrawerClose asChild>
+                          <LocalizedLink
+                            to="/scouts"
+                            className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-colors duration-300 tracking-wider py-1 whitespace-nowrap ${
+                              isActive("/scouts") ? "text-primary" : ""
+                            }`}
+                          >
+                            <HoverText text={t("header.scouts", "SCOUTS")} />
+                          </LocalizedLink>
+                        </DrawerClose>
+                        <div className="h-px bg-white/20 my-1" />
+
+                        <DrawerClose asChild>
+                          <LocalizedLink
+                            to="/agents"
+                            className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-colors duration-300 tracking-wider py-1 whitespace-nowrap ${
+                              isActive("/agents") ? "text-primary" : ""
+                            }`}
+                          >
+                            <HoverText text={t("header.agents", "AGENTS")} />
+                          </LocalizedLink>
+                        </DrawerClose>
+                      </>
+                    )}
+
+                    {/* Role-specific Navigation - shown when on a role subdomain */}
+                    {isRoleSubdomain && currentRole && (
+                      <>
+                        <DrawerClose asChild>
+                          <Link
+                            to="/"
+                            className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-colors duration-300 tracking-wider py-1 whitespace-nowrap ${
+                              isActive("/") ? "text-primary" : ""
+                            }`}
+                          >
+                            <HoverText text={t("header.home", "HOME")} />
+                          </Link>
+                        </DrawerClose>
+                        <div className="h-px bg-white/20 my-1" />
+
+                        <DrawerClose asChild>
+                          <LocalizedLink
+                            to="/stars"
+                            onMouseEnter={() => setStarsHovered(true)}
+                            onMouseLeave={() => setStarsHovered(false)}
+                            className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-colors duration-300 tracking-wider py-1 whitespace-nowrap ${
+                              isActive("/stars") ? "text-primary" : ""
+                            }`}
+                          >
+                            <HoverText text={t("header.stars", "STARS")} />
+                          </LocalizedLink>
+                        </DrawerClose>
+                        <div className="h-px bg-white/20 my-1" />
+
+                        <DrawerClose asChild>
+                          <LocalizedLink
+                            to="/performance"
+                            onMouseEnter={() => setRealisePotentialHovered(true)}
+                            onMouseLeave={() => setRealisePotentialHovered(false)}
+                            className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-colors duration-300 tracking-wider py-1 whitespace-nowrap ${
+                              isActive("/performance") ? "text-primary" : ""
+                            }`}
+                          >
+                            <HoverText text={t("header.realise_potential", "REALISE POTENTIAL")} />
+                          </LocalizedLink>
+                        </DrawerClose>
+                        <div className="h-px bg-white/20 my-1" />
+
+                        <DrawerClose asChild>
+                          <LocalizedLink
+                            to="/news"
+                            onMouseEnter={() => setNewsHovered(true)}
+                            onMouseLeave={() => setNewsHovered(false)}
+                            className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-colors duration-300 tracking-wider py-1 whitespace-nowrap ${
+                              isActive("/news") ? "text-primary" : ""
+                            }`}
+                          >
+                            <HoverText text={t("header.news", "NEWS")} />
+                          </LocalizedLink>
+                        </DrawerClose>
+                        <div className="h-px bg-white/20 my-1" />
+
+                        <DrawerClose asChild>
+                          <LocalizedLink
+                            to="/contact"
+                            className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-colors duration-300 tracking-wider py-1 whitespace-nowrap ${
+                              isActive("/contact") ? "text-primary" : ""
+                            }`}
+                          >
+                            <HoverText text={t("header.contact_us", "CONTACT US")} />
+                          </LocalizedLink>
+                        </DrawerClose>
+                        <div className="h-px bg-primary my-1" />
+
+                        {/* Role Switcher Section */}
+                        <div className="mt-4">
+                          <span className="text-xs font-bebas uppercase tracking-wider text-white/50 block mb-2">
+                            {t("header.switch_to", "SWITCH TO")}:
+                          </span>
+                          <div className="flex flex-wrap gap-2">
+                            {otherRoles.map((role) => (
+                              <a
+                                key={role}
+                                href={getRoleUrl(role)}
+                                className="group inline-flex items-center gap-1 text-sm font-bebas uppercase tracking-wider text-white/70 hover:text-primary transition-colors duration-300"
+                              >
+                                <span>{roleConfigs[role].name}</span>
+                                <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                              </a>
+                            ))}
+                          </div>
+                        </div>
+                      </>
+                    )}
                   </nav>
 
                   {/* Request Representation card - positioned beside OUR WORK section */}
