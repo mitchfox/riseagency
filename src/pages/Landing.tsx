@@ -54,25 +54,29 @@ export default function Landing() {
       <div className="pb-4 md:pb-12 z-50 relative px-2 md:px-0 w-full md:w-auto pointer-events-auto">
         <div className="border-2 border-primary/60 bg-black/40 backdrop-blur-sm px-2 py-2 md:py-3">
           
-          {/* Mobile Layout */}
-          <div className="md:hidden flex flex-col items-center gap-2">
-            {/* Language Selector - Above on mobile */}
-            <div className="pb-2 border-b border-primary/40 w-full flex justify-center">
-              <LanguageSelector />
-            </div>
-            
-            {/* Grid for all links */}
-            <nav className="grid grid-cols-3 gap-x-2 gap-y-1">
-              {mobileNavLinks.map((link) => (
-                <Link
-                  key={link.to}
-                  to={link.to}
-                  className="px-2 py-1 text-[10px] font-bebas uppercase tracking-[0.1em] text-white/80 hover:text-primary transition-colors duration-300 text-center"
-                >
-                  <HoverText text={t(link.labelKey, link.fallback)} />
-                </Link>
+          {/* Mobile Layout - Compact horizontal scroll */}
+          <div className="md:hidden flex flex-col items-center gap-1.5">
+            {/* Navigation - horizontal scroll */}
+            <nav className="flex items-center justify-center gap-1 flex-wrap px-1">
+              {mobileNavLinks.map((link, index) => (
+                <div key={link.to} className="flex items-center">
+                  <Link
+                    to={link.to}
+                    className="px-2 py-1 text-xs font-bebas uppercase tracking-[0.15em] text-white/80 hover:text-primary transition-colors duration-300 whitespace-nowrap"
+                  >
+                    <HoverText text={t(link.labelKey, link.fallback)} />
+                  </Link>
+                  {index < mobileNavLinks.length - 1 && (
+                    <div className="w-px h-3 bg-primary/40" />
+                  )}
+                </div>
               ))}
             </nav>
+            
+            {/* Language Selector - Below with divider */}
+            <div className="pt-1.5 border-t border-primary/40 w-full flex justify-center">
+              <LanguageSelector />
+            </div>
           </div>
 
           {/* Desktop Layout */}
