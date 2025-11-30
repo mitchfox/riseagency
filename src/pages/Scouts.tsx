@@ -10,6 +10,7 @@ import { MessageCircle, Mail, MapPin, Users, TrendingUp, Award, Database, BarCha
 import { SCOUTING_POSITIONS, POSITION_SKILLS, ScoutingPosition } from "@/data/scoutingSkills";
 import useEmblaCarousel from "embla-carousel-react";
 import ScoutingNetworkMap from "@/components/ScoutingNetworkMap";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const domainConfig = {
   Physical: {
@@ -54,6 +55,7 @@ const positionInitials: Record<ScoutingPosition, string> = {
 };
 
 const Scouts = () => {
+  const { t } = useLanguage();
   const [selectedPosition, setSelectedPosition] = useState<ScoutingPosition>(SCOUTING_POSITIONS[0]);
   const [expandedDomain, setExpandedDomain] = useState<keyof typeof domainConfig | null>(null);
   const [selectedSlide, setSelectedSlide] = useState(0);
@@ -108,15 +110,14 @@ const Scouts = () => {
             <div className="text-center py-8 px-4">
               <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 backdrop-blur-sm rounded-full border border-primary/20 mb-3">
                 <Target className="h-4 w-4 text-primary" />
-                <span className="text-sm font-semibold">Position-Specific Scouting Criteria</span>
+                <span className="text-sm font-semibold">{t('scouts.criteria_badge')}</span>
               </div>
               
               <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider mb-3 bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent">
-                What We Look For
+                {t('scouts.what_we_look')}
               </h2>
               <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto font-light">
-                Four key domains assessed for each position based on{" "}
-                <span className="text-foreground font-semibold">thousands of professional reports</span>
+                {t('scouts.criteria_desc')}
               </p>
             </div>
 
@@ -330,16 +331,14 @@ const Scouts = () => {
             <div className="text-center mb-8">
               <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 backdrop-blur-sm rounded-full border border-primary/20 mb-3">
                 <Database className="h-4 w-4 text-primary" />
-                <span className="text-sm font-semibold">Advanced Technology</span>
+                <span className="text-sm font-semibold">{t('scouts.tech_badge')}</span>
               </div>
               
               <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider mb-3 bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent">
-                Our Scouting Database
+                {t('scouts.database_title')}
               </h2>
               <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto font-light">
-                Comprehensive player tracking with{" "}
-                <span className="text-foreground font-semibold">advanced analytics</span>{" "}
-                and position-specific metrics
+                {t('scouts.database_desc')}
               </p>
             </div>
 
@@ -406,20 +405,18 @@ const Scouts = () => {
             <div className="text-center mb-8">
               <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 backdrop-blur-sm rounded-full border border-primary/20 mb-3">
                 <Globe className="h-4 w-4 text-primary" />
-                <span className="text-sm font-semibold">Global Network</span>
+                <span className="text-sm font-semibold">{t('scouts.network_badge')}</span>
               </div>
               
               <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider mb-3 leading-none">
-                Scouting Across
+                {t('scouts.scouting_across')}
                 <br />
                 <span className="bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent">
-                  Europe
+                  {t('scouts.europe')}
                 </span>
               </h2>
               <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto font-light">
-                Covering major leagues and discovering{" "}
-                <span className="text-foreground font-semibold">hidden gems</span>{" "}
-                across the continent
+                {t('scouts.europe_desc')}
               </p>
             </div>
 
@@ -493,18 +490,14 @@ const Scouts = () => {
             <div className="text-center mb-8">
               <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 backdrop-blur-sm rounded-full border border-primary/20 mb-3">
                 <Award className="h-4 w-4 text-primary" />
-                <span className="text-sm font-semibold">Industry-Leading Benefits</span>
+                <span className="text-sm font-semibold">{t('scouts.benefits_badge')}</span>
               </div>
               
               <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider mb-3 bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent">
-                Competitive
-                <br />
-                Incentive Structure
+                {t('scouts.incentive_title')}
               </h2>
               <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto font-light">
-                We reward quality scouting with{" "}
-                <span className="text-foreground font-semibold">industry-leading</span>{" "}
-                commission rates
+                {t('scouts.incentive_desc')}
               </p>
             </div>
 
@@ -631,20 +624,19 @@ const Scouts = () => {
           <div className="relative container mx-auto px-4 text-center z-10 space-y-4 animate-fade-in-up">
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 backdrop-blur-sm rounded-full border border-primary/20 mb-2">
               <Sparkles className="h-4 w-4 text-primary" />
-              <span className="text-sm font-semibold">Elite Scouting Network</span>
+              <span className="text-sm font-semibold">{t('scouts.elite_badge')}</span>
             </div>
             
             <h2 className="text-5xl md:text-7xl font-bebas uppercase tracking-wider mb-3 leading-none">
               <span className="bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent">
-                Scout With
+                {t('scouts.scout_with')}
               </span>
               <br />
               <span className="text-primary">RISE</span>
             </h2>
             
             <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto font-light leading-relaxed">
-              Join our elite scouting network with competitive incentives and{" "}
-              <span className="text-primary font-semibold">forever commission</span>
+              {t('scouts.scout_with_desc')}
             </p>
             
             <div className="flex gap-4 justify-center flex-wrap pt-2">
@@ -654,7 +646,7 @@ const Scouts = () => {
                 onClick={handleWhatsApp}
               >
                 <MessageCircle className="mr-2 h-5 w-5 group-hover:scale-110 transition-transform" />
-                Contact via WhatsApp
+                {t('scouts.whatsapp')}
               </Button>
               <Button 
                 size="lg" 
@@ -664,7 +656,7 @@ const Scouts = () => {
               >
                 <a href="mailto:contact@riseagency.com">
                   <Mail className="mr-2 h-5 w-5" />
-                  Email Us
+                  {t('scouts.email_us')}
                 </a>
               </Button>
             </div>
@@ -679,20 +671,19 @@ const Scouts = () => {
             <div className="max-w-4xl mx-auto space-y-4">
               <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 backdrop-blur-sm rounded-full border border-primary/20 mb-3">
                 <Sparkles className="h-4 w-4 text-primary" />
-                <span className="text-sm font-semibold">Join The Network</span>
+                <span className="text-sm font-semibold">{t('scouts.join_badge')}</span>
               </div>
               
               <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider leading-none">
-                Ready to
+                {t('scouts.ready_to')}
                 <br />
                 <span className="bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent">
-                  Join Our Team?
+                  {t('scouts.join_team')}
                 </span>
               </h2>
               
               <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto font-light leading-relaxed">
-                Get in touch to discuss how you can become part of our{" "}
-                <span className="text-foreground font-semibold">elite scouting network</span>
+                {t('scouts.join_desc')}
               </p>
               
               <div className="flex gap-4 justify-center flex-wrap pt-2">
@@ -702,7 +693,7 @@ const Scouts = () => {
                   onClick={handleWhatsApp}
                 >
                   <MessageCircle className="mr-2 h-5 w-5 group-hover:scale-110 transition-transform" />
-                  WhatsApp Us
+                  {t('scouts.whatsapp_us')}
                 </Button>
                 <Button 
                   size="lg" 
@@ -712,7 +703,7 @@ const Scouts = () => {
                 >
                   <a href="mailto:contact@riseagency.com">
                     <Mail className="mr-2 h-5 w-5" />
-                    Email Contact
+                    {t('scouts.email_contact')}
                   </a>
                 </Button>
               </div>

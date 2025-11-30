@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import { SEO } from "@/components/SEO";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ChevronDown } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
 import bannerHero from "@/assets/banner-hero.jpg";
 import blackMarble from "@/assets/black-marble-smudged.png";
 import coachesSection from "@/assets/coaches-section.png";
@@ -12,6 +13,7 @@ import coachesSection2 from "@/assets/coaches-section-2.png";
 import coachesNetwork from "@/assets/coaches-network.jpg";
 
 const Coaches = () => {
+  const { t } = useLanguage();
   return (
     <div className="min-h-screen bg-background" key="coaches-page">
       <SEO 
@@ -33,10 +35,10 @@ const Coaches = () => {
           
           <div className="relative container mx-auto px-4 text-center z-10">
             <h1 className="text-6xl md:text-8xl font-bebas uppercase tracking-wider text-white mb-4">
-              For Coaches
+              {t('coaches.title')}
             </h1>
             <p className="text-xl md:text-2xl text-white/90 max-w-3xl mx-auto">
-              Professional representation for coaching excellence
+              {t('coaches.subtitle')}
             </p>
           </div>
         </section>
@@ -50,15 +52,15 @@ const Coaches = () => {
             <div className="max-w-xl space-y-6">
               <div>
                 <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-[--gold] mb-6">
-                  Results
+                  {t('coaches.results')}
                 </h2>
                 <p className="text-base md:text-xl text-white/90 leading-relaxed">
-                  We showcase your coaching achievements and philosophy to clubs seeking experienced leadership. Your track record speaks volumes through our professional presentation.
+                  {t('coaches.results_desc')}
                 </p>
               </div>
               <Collapsible>
                 <CollapsibleTrigger className="group flex items-center gap-3 px-4 py-2.5 bg-[--gold]/10 hover:bg-[--gold]/20 border border-[--gold]/30 rounded-md transition-all">
-                  <span className="text-sm uppercase tracking-wider text-[--gold] font-medium">Learn More</span>
+                  <span className="text-sm uppercase tracking-wider text-[--gold] font-medium">{t('coaches.learn_more')}</span>
                   <ChevronDown className="h-4 w-4 text-[--gold] transition-transform group-data-[state=open]:rotate-180" />
                 </CollapsibleTrigger>
                 <CollapsibleContent className="mt-6 space-y-4 text-sm md:text-base text-white/80 leading-relaxed">
@@ -94,15 +96,15 @@ const Coaches = () => {
             <div className="max-w-xl space-y-6">
               <div>
                 <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-[--gold] mb-6">
-                  Foster
+                  {t('coaches.foster')}
                 </h2>
                 <p className="text-base md:text-xl text-white/90 leading-relaxed">
-                  Build lasting relationships within the footballing community. We connect you with clubs, players, and industry professionals who value your coaching expertise.
+                  {t('coaches.foster_desc')}
                 </p>
               </div>
               <Collapsible>
                 <CollapsibleTrigger className="group flex items-center gap-3 px-4 py-2.5 bg-[--gold]/10 hover:bg-[--gold]/20 border border-[--gold]/30 rounded-md transition-all">
-                  <span className="text-sm uppercase tracking-wider text-[--gold] font-medium">Learn More</span>
+                  <span className="text-sm uppercase tracking-wider text-[--gold] font-medium">{t('coaches.learn_more')}</span>
                   <ChevronDown className="h-4 w-4 text-[--gold] transition-transform group-data-[state=open]:rotate-180" />
                 </CollapsibleTrigger>
                 <CollapsibleContent className="mt-6 space-y-4 text-sm md:text-base text-white/80 leading-relaxed">
@@ -130,15 +132,15 @@ const Coaches = () => {
             <div className="max-w-xl space-y-6">
               <div>
                 <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-[--gold] mb-6">
-                  Allure
+                  {t('coaches.allure')}
                 </h2>
                 <p className="text-base md:text-xl text-white/90 leading-relaxed">
-                  Position yourself for career advancement with strategic representation. We create opportunities that align with your ambitions and coaching philosophy.
+                  {t('coaches.allure_desc')}
                 </p>
               </div>
               <Collapsible>
                 <CollapsibleTrigger className="group flex items-center gap-3 px-4 py-2.5 bg-[--gold]/10 hover:bg-[--gold]/20 border border-[--gold]/30 rounded-md transition-all">
-                  <span className="text-sm uppercase tracking-wider text-[--gold] font-medium">Learn More</span>
+                  <span className="text-sm uppercase tracking-wider text-[--gold] font-medium">{t('coaches.learn_more')}</span>
                   <ChevronDown className="h-4 w-4 text-[--gold] transition-transform group-data-[state=open]:rotate-180" />
                 </CollapsibleTrigger>
                 <CollapsibleContent className="mt-6 space-y-4 text-sm md:text-base text-white/80 leading-relaxed">
@@ -174,15 +176,15 @@ const Coaches = () => {
             <div className="max-w-xl space-y-6">
               <div>
                 <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-[--gold] mb-6">
-                  Progress
+                  {t('coaches.progress')}
                 </h2>
                 <p className="text-base md:text-xl text-white/90 leading-relaxed">
-                  Secure the best opportunities and contracts that reflect your value and expertise in the coaching profession.
+                  {t('coaches.progress_desc')}
                 </p>
               </div>
               <Collapsible>
                 <CollapsibleTrigger className="group flex items-center gap-3 px-4 py-2.5 bg-[--gold]/10 hover:bg-[--gold]/20 border border-[--gold]/30 rounded-md transition-all">
-                  <span className="text-sm uppercase tracking-wider text-[--gold] font-medium">Learn More</span>
+                  <span className="text-sm uppercase tracking-wider text-[--gold] font-medium">{t('coaches.learn_more')}</span>
                   <ChevronDown className="h-4 w-4 text-[--gold] transition-transform group-data-[state=open]:rotate-180" />
                 </CollapsibleTrigger>
                 <CollapsibleContent className="mt-6 space-y-4 text-sm md:text-base text-white/80 leading-relaxed">
@@ -208,13 +210,13 @@ const Coaches = () => {
         <section className="py-12 md:py-16 bg-background">
           <div className="container mx-auto px-4 text-center">
             <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider mb-6">
-              Advance Your Coaching Career
+              {t('coaches.cta_title')}
             </h2>
             <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-              Let us help you reach the next level in your coaching journey
+              {t('coaches.cta_subtitle')}
             </p>
             <Button asChild size="lg" className="btn-shine font-bebas uppercase tracking-wider">
-              <Link to="/contact">Connect With Us</Link>
+              <Link to="/contact">{t('coaches.cta_button')}</Link>
             </Button>
           </div>
         </section>

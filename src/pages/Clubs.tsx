@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import { SEO } from "@/components/SEO";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ChevronDown } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
 import bannerHero from "@/assets/banner-hero.jpg";
 import blackMarble from "@/assets/black-marble-smudged.png";
 import clubsSection from "@/assets/clubs-section.png";
@@ -12,6 +13,7 @@ import clubsSection2 from "@/assets/clubs-section-2.png";
 import clubsNetwork from "@/assets/clubs-network.jpg";
 
 const Clubs = () => {
+  const { t } = useLanguage();
   return (
     <div className="min-h-screen bg-background" key="clubs-page">
       <SEO 
@@ -33,10 +35,10 @@ const Clubs = () => {
           
           <div className="relative container mx-auto px-4 text-center z-10">
             <h1 className="text-6xl md:text-8xl font-bebas uppercase tracking-wider text-white mb-4">
-              For Clubs
+              {t('clubs.title')}
             </h1>
             <p className="text-xl md:text-2xl text-white/90 max-w-3xl mx-auto">
-              Strategic partnerships for competitive advantage
+              {t('clubs.subtitle')}
             </p>
           </div>
         </section>
@@ -50,15 +52,15 @@ const Clubs = () => {
             <div className="max-w-xl space-y-6">
               <div>
                 <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-[--gold] mb-6">
-                  Strategise
+                  {t('clubs.strategise')}
                 </h2>
                 <p className="text-base md:text-xl text-white/90 leading-relaxed">
-                  Work alongside our recruitment team to identify talent that fits your club's philosophy and tactical needs. We provide comprehensive player analysis and market intelligence.
+                  {t('clubs.strategise_desc')}
                 </p>
               </div>
               <Collapsible>
                 <CollapsibleTrigger className="group flex items-center gap-3 px-4 py-2.5 bg-[--gold]/10 hover:bg-[--gold]/20 border border-[--gold]/30 rounded-md transition-all">
-                  <span className="text-sm uppercase tracking-wider text-[--gold] font-medium">Learn More</span>
+                  <span className="text-sm uppercase tracking-wider text-[--gold] font-medium">{t('clubs.learn_more')}</span>
                   <ChevronDown className="h-4 w-4 text-[--gold] transition-transform group-data-[state=open]:rotate-180" />
                 </CollapsibleTrigger>
                 <CollapsibleContent className="mt-6 space-y-4 text-sm md:text-base text-white/80 leading-relaxed">
@@ -94,15 +96,15 @@ const Clubs = () => {
             <div className="max-w-xl space-y-6">
               <div>
                 <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-[--gold] mb-6">
-                  Recruit
+                  {t('clubs.recruit')}
                 </h2>
                 <p className="text-base md:text-xl text-white/90 leading-relaxed">
-                  Access our extensive network of talented players across all levels. Our professional intermediaries facilitate seamless negotiations and contract discussions.
+                  {t('clubs.recruit_desc')}
                 </p>
               </div>
               <Collapsible>
                 <CollapsibleTrigger className="group flex items-center gap-3 px-4 py-2.5 bg-[--gold]/10 hover:bg-[--gold]/20 border border-[--gold]/30 rounded-md transition-all">
-                  <span className="text-sm uppercase tracking-wider text-[--gold] font-medium">Learn More</span>
+                  <span className="text-sm uppercase tracking-wider text-[--gold] font-medium">{t('clubs.learn_more')}</span>
                   <ChevronDown className="h-4 w-4 text-[--gold] transition-transform group-data-[state=open]:rotate-180" />
                 </CollapsibleTrigger>
                 <CollapsibleContent className="mt-6 space-y-4 text-sm md:text-base text-white/80 leading-relaxed">
@@ -130,15 +132,15 @@ const Clubs = () => {
             <div className="max-w-xl space-y-6">
               <div>
                 <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-[--gold] mb-6">
-                  Optimise
+                  {t('clubs.optimise')}
                 </h2>
                 <p className="text-base md:text-xl text-white/90 leading-relaxed">
-                  Enhance your squad's performance through our player development programs. We provide physical and psychological support to maximize your team's potential.
+                  {t('clubs.optimise_desc')}
                 </p>
               </div>
               <Collapsible>
                 <CollapsibleTrigger className="group flex items-center gap-3 px-4 py-2.5 bg-[--gold]/10 hover:bg-[--gold]/20 border border-[--gold]/30 rounded-md transition-all">
-                  <span className="text-sm uppercase tracking-wider text-[--gold] font-medium">Learn More</span>
+                  <span className="text-sm uppercase tracking-wider text-[--gold] font-medium">{t('clubs.learn_more')}</span>
                   <ChevronDown className="h-4 w-4 text-[--gold] transition-transform group-data-[state=open]:rotate-180" />
                 </CollapsibleTrigger>
                 <CollapsibleContent className="mt-6 space-y-4 text-sm md:text-base text-white/80 leading-relaxed">
@@ -165,13 +167,13 @@ const Clubs = () => {
         <section className="py-12 md:py-16 bg-background">
           <div className="container mx-auto px-4 text-center">
             <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider mb-6">
-              Partner With Us
+              {t('clubs.cta_title')}
             </h2>
             <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-              Discover how we can help strengthen your squad with exceptional talent
+              {t('clubs.cta_subtitle')}
             </p>
             <Button asChild size="lg" className="btn-shine font-bebas uppercase tracking-wider">
-              <Link to="/contact">Get In Touch</Link>
+              <Link to="/contact">{t('clubs.cta_button')}</Link>
             </Button>
           </div>
         </section>
