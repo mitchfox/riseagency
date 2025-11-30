@@ -50,13 +50,21 @@ export const LanguageMapSelector = () => {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger className="flex items-center gap-1.5 text-xs md:text-sm font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-300 focus:outline-none">
-        <span className="text-base">{selectedLanguage.flag}</span>
-        <span>{selectedLanguage.code.toUpperCase()}</span>
-        <Globe className="w-3 h-3 ml-0.5" />
+      <DialogTrigger asChild>
+        <button 
+          type="button"
+          className="flex items-center gap-1.5 text-xs md:text-sm font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-300 focus:outline-none cursor-pointer"
+        >
+          <span className="text-base">{selectedLanguage.flag}</span>
+          <span>{selectedLanguage.code.toUpperCase()}</span>
+          <Globe className="w-3 h-3 ml-0.5" />
+        </button>
       </DialogTrigger>
       
-      <DialogContent className="bg-black/95 border border-primary/30 max-w-4xl p-0 overflow-hidden">
+      <DialogContent 
+        className="bg-black/95 border border-primary/30 max-w-4xl p-0 overflow-hidden z-[100]"
+        aria-describedby={undefined}
+      >
         <VisuallyHidden>
           <DialogTitle>Select Language</DialogTitle>
         </VisuallyHidden>
