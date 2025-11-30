@@ -5,7 +5,9 @@ import {
   Dialog,
   DialogContent,
   DialogTrigger,
+  DialogTitle,
 } from "@/components/ui/dialog";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import europeMap from "@/assets/europe-outline.gif";
 
 type LanguageCode = 'en' | 'es' | 'pt' | 'fr' | 'de' | 'it' | 'pl' | 'cs' | 'ru' | 'tr';
@@ -55,6 +57,9 @@ export const LanguageMapSelector = () => {
       </DialogTrigger>
       
       <DialogContent className="bg-black/95 border border-primary/30 max-w-4xl p-0 overflow-hidden">
+        <VisuallyHidden>
+          <DialogTitle>Select Language</DialogTitle>
+        </VisuallyHidden>
         <div className="relative w-full aspect-[16/10]">
           {/* Europe Map Image */}
           <img 
