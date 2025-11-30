@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { LanguageSelector } from "@/components/LanguageSelector";
+import { LanguageMapSelector } from "@/components/LanguageMapSelector";
 import { HoverText } from "@/components/HoverText";
 import { MatrixPlayerEffect } from "@/components/MatrixPlayerEffect";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -75,7 +75,7 @@ export default function Landing() {
             
             {/* Language Selector - Below with divider */}
             <div className="pt-1.5 border-t border-primary/40 w-full flex justify-center">
-              <LanguageSelector />
+              <LanguageMapSelector />
             </div>
           </div>
 
@@ -99,7 +99,7 @@ export default function Landing() {
             
             {/* Language Selector - Below with divider on desktop */}
             <div className="border-t border-primary/40 mt-3 pt-3 flex justify-center">
-              <LanguageSelector />
+              <LanguageMapSelector />
             </div>
           </div>
         </div>
