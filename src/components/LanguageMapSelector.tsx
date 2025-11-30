@@ -17,11 +17,11 @@ interface LanguageRegion {
 
 // Positions are percentages - will adjust based on feedback
 const languageRegions: LanguageRegion[] = [
-  { code: "en", name: "English", nativeName: "English", flag: "🇬🇧", x: 42, y: 28 },
+  { code: "en", name: "English", nativeName: "English", flag: "🇬🇧", x: 30, y: 60 },
   { code: "es", name: "Spanish", nativeName: "Español", flag: "🇪🇸", x: 38, y: 52 },
-  { code: "pt", name: "Portuguese", nativeName: "Português", flag: "🇵🇹", x: 32, y: 55 },
+  { code: "pt", name: "Portuguese", nativeName: "Português", flag: "🇵🇹", x: 25, y: 90 },
   { code: "fr", name: "French", nativeName: "Français", flag: "🇫🇷", x: 45, y: 42 },
-  { code: "de", name: "German", nativeName: "Deutsch", flag: "🇩🇪", x: 52, y: 35 },
+  { code: "de", name: "German", nativeName: "Deutsch", flag: "🇩🇪", x: 40, y: 35 },
   { code: "it", name: "Italian", nativeName: "Italiano", flag: "🇮🇹", x: 53, y: 50 },
   { code: "pl", name: "Polish", nativeName: "Polski", flag: "🇵🇱", x: 58, y: 32 },
   { code: "cs", name: "Czech", nativeName: "Čeština", flag: "🇨🇿", x: 55, y: 38 },
