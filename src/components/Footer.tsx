@@ -4,6 +4,7 @@ import logo from "@/assets/logo.png";
 import { WorkWithUsDialog } from "@/components/WorkWithUsDialog";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { LocalizedLink } from "@/components/LocalizedLink";
 
 // Build version - update this to verify deployments
 const BUILD_VERSION = "v2024.11.27.001";
@@ -33,39 +34,39 @@ export const Footer = () => {
               <Link to="/" className="text-muted-foreground hover:text-primary transition-colors">
                 {t("footer.home", "Home")}
               </Link>
-              <Link to="/stars" className="text-muted-foreground hover:text-primary transition-colors">
+              <LocalizedLink to="/stars" className="text-muted-foreground hover:text-primary transition-colors">
                 {t("footer.stars", "Stars")}
-              </Link>
+              </LocalizedLink>
               <Link to="/players" className="text-muted-foreground hover:text-primary transition-colors">
                 {t("footer.players", "Players")}
               </Link>
-              <Link to="/clubs" className="text-muted-foreground hover:text-primary transition-colors">
+              <LocalizedLink to="/clubs" className="text-muted-foreground hover:text-primary transition-colors">
                 {t("footer.clubs", "Clubs")}
-              </Link>
-              <Link to="/coaches" className="text-muted-foreground hover:text-primary transition-colors">
+              </LocalizedLink>
+              <LocalizedLink to="/coaches" className="text-muted-foreground hover:text-primary transition-colors">
                 {t("footer.coaches", "Coaches")}
-              </Link>
-              <Link to="/scouts" className="text-muted-foreground hover:text-primary transition-colors">
+              </LocalizedLink>
+              <LocalizedLink to="/scouts" className="text-muted-foreground hover:text-primary transition-colors">
                 {t("footer.scouts", "Scouts")}
-              </Link>
-              <Link to="/performance" className="text-muted-foreground hover:text-primary transition-colors">
+              </LocalizedLink>
+              <LocalizedLink to="/performance" className="text-muted-foreground hover:text-primary transition-colors">
                 {t("footer.realise_potential", "Realise Potential")}
-              </Link>
-              <Link to="/about" className="text-muted-foreground hover:text-primary transition-colors">
+              </LocalizedLink>
+              <LocalizedLink to="/about" className="text-muted-foreground hover:text-primary transition-colors">
                 {t("footer.about", "About")}
-              </Link>
-              <Link to="/news" className="text-muted-foreground hover:text-primary transition-colors">
+              </LocalizedLink>
+              <LocalizedLink to="/news" className="text-muted-foreground hover:text-primary transition-colors">
                 {t("footer.news", "News")}
-              </Link>
-              <Link to="/between-the-lines" className="text-muted-foreground hover:text-primary transition-colors">
+              </LocalizedLink>
+              <LocalizedLink to="/between-the-lines" className="text-muted-foreground hover:text-primary transition-colors">
                 {t("footer.between_the_lines", "Between The Lines")}
-              </Link>
+              </LocalizedLink>
               <Link to="/staff" className="text-muted-foreground hover:text-primary transition-colors">
                 {t("footer.staff", "Staff")}
               </Link>
-              <Link to="/contact" className="text-muted-foreground hover:text-primary transition-colors">
+              <LocalizedLink to="/contact" className="text-muted-foreground hover:text-primary transition-colors">
                 {t("footer.contact", "Contact")}
-              </Link>
+              </LocalizedLink>
             </div>
           </div>
 

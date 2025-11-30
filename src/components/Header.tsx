@@ -21,7 +21,9 @@ import { DeclareInterestDialog } from "@/components/DeclareInterestDialog";
 import { IntroModal } from "@/components/IntroModal";
 import { HoverText } from "@/components/HoverText";
 import { LanguageSelector } from "@/components/LanguageSelector";
+import { LocalizedLink } from "@/components/LocalizedLink";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { getEnglishPath, getAllPathVariants } from "@/lib/localizedRoutes";
 
 // NOTE: GridLines component is available at src/components/GridLines.tsx 
 // for coordinate-based positioning during design. Import and add it when needed.
@@ -151,7 +153,12 @@ export const Header = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [location.pathname]);
 
-  const isActive = (path: string) => location.pathname === path;
+  // Check if a path is active (works with localized routes)
+  const isActive = (englishPath: string) => {
+    const currentPath = location.pathname;
+    const variants = getAllPathVariants(englishPath);
+    return variants.some(v => currentPath === v || currentPath.startsWith(v + '/'));
+  };
 
   const getLeftIconOffset = () => {
     if (!isScrolled) return "3rem";
@@ -177,10 +184,10 @@ export const Header = () => {
           <div className="container mx-auto px-2 md:px-4">
           <div className="flex items-center justify-between h-8 md:h-10">
             <div className="flex flex-wrap items-center gap-2 md:gap-4 transition-all duration-500">
-              <Link to="/contact" className="text-xs md:text-sm font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500 flex items-center gap-1.5">
+              <LocalizedLink to="/contact" className="text-xs md:text-sm font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500 flex items-center gap-1.5">
                 <MessageCircle className="w-3 h-3 md:w-3.5 md:h-3.5 hidden sm:block" />
                 <HoverText text={t("header.contact_us", "Contact Us")} />
-              </Link>
+              </LocalizedLink>
               <div className="w-px h-4 bg-white/20" />
               <button onClick={() => setDeclareInterestOpen(true)} className="text-xs md:text-sm font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500 flex items-center gap-1.5">
                 <Users className="w-3 h-3 md:w-3.5 md:h-3.5 hidden sm:block" />
@@ -197,10 +204,10 @@ export const Header = () => {
                 <HoverText text={t("header.request_representation", "Request Representation")} />
               </button>
               <div className="w-px h-4 bg-white/20" />
-              <Link to="/login" className="text-xs md:text-sm font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500 flex items-center gap-1.5">
+              <LocalizedLink to="/login" className="text-xs md:text-sm font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500 flex items-center gap-1.5">
                 <LogIn className="w-3 h-3 md:w-3.5 md:h-3.5 hidden sm:block" />
                 <HoverText text={t("header.portal", "Portal")} />
-              </Link>
+              </LocalizedLink>
             </div>
           </div>
         </div>
@@ -317,23 +324,21 @@ export const Header = () => {
                     <div className="h-px bg-primary my-1" />
 
                     <DrawerClose asChild>
-                      <Link
+                      <LocalizedLink
                         to="/stars"
                         onMouseEnter={() => setStarsHovered(true)}
                         onMouseLeave={() => setStarsHovered(false)}
                         className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-colors duration-300 tracking-wider py-1 whitespace-nowrap ${
-                          isActive("/stars") || location.pathname.startsWith("/stars/")
-                            ? "text-primary"
-                            : ""
+                          isActive("/stars") ? "text-primary" : ""
                         }`}
                       >
                         <HoverText text={t("header.stars", "STARS")} />
-                      </Link>
+                      </LocalizedLink>
                     </DrawerClose>
                     <div className="h-px bg-white/20 my-1" />
 
                     <DrawerClose asChild>
-                      <Link
+                      <LocalizedLink
                         to="/performance"
                         onMouseEnter={() => setRealisePotentialHovered(true)}
                         onMouseLeave={() => setRealisePotentialHovered(false)}
@@ -342,12 +347,12 @@ export const Header = () => {
                         }`}
                       >
                         <HoverText text={t("header.realise_potential", "REALISE POTENTIAL")} />
-                      </Link>
+                      </LocalizedLink>
                     </DrawerClose>
                     <div className="h-px bg-white/20 my-1" />
 
                     <DrawerClose asChild>
-                      <Link
+                      <LocalizedLink
                         to="/between-the-lines"
                         onMouseEnter={() => setBetweenLinesHovered(true)}
                         onMouseLeave={() => setBetweenLinesHovered(false)}
@@ -356,12 +361,12 @@ export const Header = () => {
                         }`}
                       >
                         <HoverText text={t("header.between_the_lines", "BETWEEN THE LINES")} />
-                      </Link>
+                      </LocalizedLink>
                     </DrawerClose>
                     <div className="h-px bg-white/20 my-1" />
 
                     <DrawerClose asChild>
-                      <Link
+                      <LocalizedLink
                         to="/news"
                         onMouseEnter={() => setNewsHovered(true)}
                         onMouseLeave={() => setNewsHovered(false)}
@@ -370,7 +375,7 @@ export const Header = () => {
                         }`}
                       >
                         <HoverText text={t("header.news", "NEWS")} />
-                      </Link>
+                      </LocalizedLink>
                     </DrawerClose>
                     <div className="h-px bg-primary my-1" />
 
@@ -378,9 +383,7 @@ export const Header = () => {
                       <Link
                         to="/players"
                         className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-colors duration-300 tracking-wider py-1 whitespace-nowrap ${
-                          isActive("/players") || location.pathname.startsWith("/players/")
-                            ? "text-primary"
-                            : ""
+                          isActive("/players") ? "text-primary" : ""
                         }`}
                       >
                         <HoverText text={t("header.players", "PLAYERS")} />
@@ -389,50 +392,50 @@ export const Header = () => {
                     <div className="h-px bg-white/20 my-1" />
 
                     <DrawerClose asChild>
-                      <Link
+                      <LocalizedLink
                         to="/clubs"
                         className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-colors duration-300 tracking-wider py-1 whitespace-nowrap ${
                           isActive("/clubs") ? "text-primary" : ""
                         }`}
                       >
                         <HoverText text={t("header.clubs", "CLUBS")} />
-                      </Link>
+                      </LocalizedLink>
                     </DrawerClose>
                     <div className="h-px bg-white/20 my-1" />
 
                     <DrawerClose asChild>
-                      <Link
+                      <LocalizedLink
                         to="/coaches"
                         className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-colors duration-300 tracking-wider py-1 whitespace-nowrap ${
                           isActive("/coaches") ? "text-primary" : ""
                         }`}
                       >
                         <HoverText text={t("header.coaches", "COACHES")} />
-                      </Link>
+                      </LocalizedLink>
                     </DrawerClose>
                     <div className="h-px bg-white/20 my-1" />
 
                     <DrawerClose asChild>
-                      <Link
+                      <LocalizedLink
                         to="/scouts"
                         className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-colors duration-300 tracking-wider py-1 whitespace-nowrap ${
                           isActive("/scouts") ? "text-primary" : ""
                         }`}
                       >
                         <HoverText text={t("header.scouts", "SCOUTS")} />
-                      </Link>
+                      </LocalizedLink>
                     </DrawerClose>
                     <div className="h-px bg-white/20 my-1" />
 
                     <DrawerClose asChild>
-                      <Link
+                      <LocalizedLink
                         to="/agents"
                         className={`block text-3xl font-bebas uppercase text-white hover:text-primary transition-colors duration-300 tracking-wider py-1 whitespace-nowrap ${
                           isActive("/agents") ? "text-primary" : ""
                         }`}
                       >
                         <HoverText text={t("header.agents", "AGENTS")} />
-                      </Link>
+                      </LocalizedLink>
                     </DrawerClose>
                   </nav>
 
@@ -461,7 +464,7 @@ export const Header = () => {
 
                   {/* Portal card - positioned beside OUR WORK section */}
                   <DrawerClose asChild>
-                    <Link
+                    <LocalizedLink
                       to="/login"
                       className="absolute group"
                       style={{ left: "450px", top: "220px", width: "280px", height: "100px" }}
@@ -479,7 +482,7 @@ export const Header = () => {
                           </div>
                         </div>
                       </div>
-                    </Link>
+                    </LocalizedLink>
                   </DrawerClose>
                   
                   </div> {/* End scalable wrapper */}

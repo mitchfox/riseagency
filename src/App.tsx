@@ -10,6 +10,7 @@ import { TransitionProvider } from "@/contexts/TransitionContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { useSubdomainRouter } from "@/hooks/useSubdomainRouter";
+import { getAllPathVariants } from "@/lib/localizedRoutes";
 import Landing from "./pages/Landing";
 import Index from "./pages/Index";
 import Stars from "./pages/Stars";
@@ -51,6 +52,24 @@ const SubdomainRouter = () => {
   return null;
 };
 
+// Helper to create routes for all language variants
+const createLocalizedRoutes = (englishPath: string, element: React.ReactNode) => {
+  const variants = getAllPathVariants(englishPath);
+  return variants.map((path) => (
+    <Route key={path} path={path} element={element} />
+  ));
+};
+
+// Helper for dynamic routes (with parameters)
+const createLocalizedDynamicRoutes = (englishPath: string, element: React.ReactNode) => {
+  const basePath = englishPath.split('/:')[0];
+  const param = englishPath.split('/:')[1];
+  const variants = getAllPathVariants(basePath);
+  return variants.map((path) => (
+    <Route key={`${path}/:${param}`} path={`${path}/:${param}`} element={element} />
+  ));
+};
+
 const App = () => {
   usePushNotifications();
   
@@ -72,26 +91,30 @@ const App = () => {
                   <Route path="/" element={<Landing />} />
                   <Route path="/home" element={<Index />} />
                   <Route path="/intro" element={<Intro />} />
-                  <Route path="/stars" element={<Stars />} />
-                  <Route path="/stars/:playername" element={<PlayerDetail />} />
+                  
+                  {/* Localized routes */}
+                  {createLocalizedRoutes('/stars', <Stars />)}
+                  {createLocalizedDynamicRoutes('/stars/:playername', <PlayerDetail />)}
+                  {createLocalizedRoutes('/clubs', <Clubs />)}
+                  {createLocalizedRoutes('/coaches', <Coaches />)}
+                  {createLocalizedRoutes('/scouts', <Scouts />)}
+                  {createLocalizedRoutes('/agents', <Agents />)}
+                  {createLocalizedRoutes('/performance', <Performance />)}
+                  {createLocalizedRoutes('/news', <News />)}
+                  {createLocalizedDynamicRoutes('/news/:articleId', <News />)}
+                  {createLocalizedRoutes('/between-the-lines', <BetweenTheLines />)}
+                  {createLocalizedDynamicRoutes('/between-the-lines/:articleId', <News />)}
+                  {createLocalizedRoutes('/contact', <Contact />)}
+                  {createLocalizedRoutes('/about', <About />)}
+                  {createLocalizedRoutes('/login', <Login />)}
+                  {createLocalizedRoutes('/portal', <Dashboard />)}
+                  
+                  {/* Non-localized routes */}
                   <Route path="/players" element={<Players />} />
                   <Route path="/players-list" element={<PlayersList />} />
                   <Route path="/players-draft" element={<PlayersDraft />} />
-                  <Route path="/clubs" element={<Clubs />} />
                   <Route path="/club-network" element={<ClubNetwork />} />
-                  <Route path="/coaches" element={<Coaches />} />
-                  <Route path="/scouts" element={<Scouts />} />
-                  <Route path="/agents" element={<Agents />} />
-                  <Route path="/performance" element={<Performance />} />
-                  <Route path="/news" element={<News />} />
-                  <Route path="/news/:articleId" element={<News />} />
-                  <Route path="/between-the-lines" element={<BetweenTheLines />} />
-                  <Route path="/between-the-lines/:articleId" element={<News />} />
-                  <Route path="/contact" element={<Contact />} />
-                  <Route path="/about" element={<About />} />
                   <Route path="/staff" element={<Staff />} />
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/portal" element={<Dashboard />} />
                   <Route path="/scout-portal" element={<ScoutPortal />} />
                   <Route path="/potential" element={<Potential />} />
                   <Route path="/realise-potential" element={<RealisePotential />} />
