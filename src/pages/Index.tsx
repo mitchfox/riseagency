@@ -11,9 +11,8 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { HoverText } from "@/components/HoverText";
 import { useLanguage } from "@/contexts/LanguageContext";
-import marbleBg from "@/assets/marble-bg.png";
+import { HomeBackground } from "@/components/HomeBackground";
 import riseStarIcon from "@/assets/rise-star-icon.png";
-import marbleTexture from "@/assets/marble-texture.png";
 import playersNetwork from "@/assets/players-network.jpg";
 import clubsNetwork from "@/assets/clubs-network.jpg";
 import scoutsNetwork from "@/assets/scouts-network.jpg";
@@ -83,10 +82,11 @@ const Index = () => {
       />
       <IntroModal open={showIntroModal} onOpenChange={setShowIntroModal} />
       {!showIntroModal && <Header />}
-      <div className="bg-background min-h-screen">
+      <HomeBackground />
+      <div className="bg-transparent min-h-screen relative z-10">
         {/* Hero Section */}
-        <section className="pt-28 md:pt-32 pb-12 md:pb-20 px-4 bg-background relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-transparent to-primary/5"></div>
+        <section className="pt-28 md:pt-32 pb-12 md:pb-20 px-4 relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-b from-background via-background/90 to-background/80"></div>
           <div className="container mx-auto max-w-7xl relative z-10">
             <div className="text-center space-y-6">
               <h1 className="text-5xl md:text-7xl lg:text-8xl font-bebas uppercase tracking-wider">
@@ -104,7 +104,7 @@ const Index = () => {
 
         {/* INSIDE:ACCESS Section */}
         {insideAccessArticles.length > 0 && (
-          <section className="py-12 md:py-16 px-4 bg-background">
+          <section className="py-12 md:py-16 px-4 bg-background/80 backdrop-blur-sm">
             <div className="container mx-auto max-w-7xl w-full">
               <div className="text-center mb-6 space-y-3">
               <div className="inline-block">
@@ -141,7 +141,7 @@ const Index = () => {
         )}
 
         {/* Club Network Map Section */}
-        <section className="py-12 md:py-16 px-4 bg-background">
+        <section className="py-12 md:py-16 px-4 bg-background/90 backdrop-blur-sm">
           <div className="container mx-auto max-w-7xl">
             <div className="text-center mb-8 space-y-3">
               <div className="inline-block">
@@ -203,7 +203,7 @@ const Index = () => {
         </section>
 
         {/* CTA Section - moved above News */}
-        <section className="py-12 md:py-16 px-4 bg-background relative overflow-hidden">
+        <section className="py-12 md:py-16 px-4 bg-background/85 backdrop-blur-sm relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-b from-primary/10 via-transparent to-primary/10"></div>
           <div className="container mx-auto max-w-4xl text-center space-y-8 relative z-10">
             <div className="space-y-4">
@@ -246,7 +246,7 @@ const Index = () => {
         </section>
 
         {/* News Section */}
-        <section className="py-12 md:py-16 px-4 bg-background">
+        <section className="py-12 md:py-16 px-4 bg-background/90 backdrop-blur-sm">
           <div className="container mx-auto max-w-7xl w-full">
             <div className="text-center mb-8 space-y-3">
               <div className="inline-block">
@@ -321,7 +321,7 @@ const Index = () => {
         </section>
 
         {/* WATCH NOW Section */}
-        <section className="py-12 md:py-16 px-4 bg-muted/30">
+        <section className="py-12 md:py-16 px-4 bg-background/95 backdrop-blur-sm">
           <div className="container mx-auto max-w-7xl">
             <div className="text-center mb-6 space-y-3">
               <div className="inline-block">
