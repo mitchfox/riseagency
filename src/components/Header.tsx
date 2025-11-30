@@ -484,6 +484,16 @@ export const Header = () => {
                   
                   </div> {/* End scalable wrapper */}
                   </div>
+                  
+                  {/* Language Selector - Fixed at bottom of menu */}
+                  <div className="absolute bottom-6 left-6 right-6 flex items-center justify-center">
+                    <div className="bg-black/60 backdrop-blur-sm rounded-lg px-4 py-3 border border-primary/30">
+                      <div className="flex items-center gap-3">
+                        <span className="text-xs font-bebas uppercase tracking-wider text-white/60">{t("header.language", "Language")}:</span>
+                        <LanguageSelector />
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Right side - 4-card grid (desktop only) */}
