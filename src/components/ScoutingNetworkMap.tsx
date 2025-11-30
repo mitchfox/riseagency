@@ -2,6 +2,7 @@ import { MapPin, ZoomOut } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useLanguage } from "@/contexts/LanguageContext";
 import europeOutline from "@/assets/europe-outline.gif";
 import norwichLogo from "@/assets/clubs/norwich-city-official.png";
 import bohemiansLogo from "@/assets/clubs/bohemians-1905-official.png";
@@ -48,6 +49,7 @@ interface ScoutingNetworkMapProps {
 }
 
 const ScoutingNetworkMap = ({ initialCountry, hideStats = false }: ScoutingNetworkMapProps = {}) => {
+  const { t } = useLanguage();
   const [viewBox, setViewBox] = useState("0 0 1000 600");
   const [zoomLevel, setZoomLevel] = useState(0); // 0 = out, 1 = medium, 2 = fully zoomed
   const [showGrid, setShowGrid] = useState(true);
@@ -1261,13 +1263,13 @@ const ScoutingNetworkMap = ({ initialCountry, hideStats = false }: ScoutingNetwo
               onClick={() => setShowGrid(!showGrid)}
               className="flex items-center gap-2 px-3 py-1 rounded border border-border hover:bg-accent transition-colors"
             >
-              <span>{showGrid ? "Hide" : "Show"} Grid</span>
+              <span>{showGrid ? t("map.hide_grid", "Hide") : t("map.show_grid", "Show")} {t("map.grid", "Grid")}</span>
             </button>
             <div className="flex items-center gap-2 text-muted-foreground">
               <span>
                 {zoomLevel === 0 
-                  ? "Click country flag, list, or gold club cluster to zoom in • Drag club logos in expanded cities to reposition" 
-                  : "Click map to zoom out • Drag club logos to reposition"}
+                  ? t("map.zoom_instructions", "Click country flag, list, or gold club cluster to zoom in • Drag club logos in expanded cities to reposition")
+                  : t("map.zoom_out_instructions", "Click map to zoom out • Drag club logos to reposition")}
               </span>
             </div>
           </div>
@@ -1277,18 +1279,18 @@ const ScoutingNetworkMap = ({ initialCountry, hideStats = false }: ScoutingNetwo
         {!hideStats && (
         <div className="space-y-4">
           <div className="bg-card rounded-lg p-4 border">
-            <h4 className="font-bebas text-xl mb-3">NETWORK COVERAGE</h4>
+            <h4 className="font-bebas text-xl mb-3">{t("map.network_coverage", "NETWORK COVERAGE")}</h4>
             <div className="space-y-3">
               <div className="flex justify-between items-center">
-                <span className="text-muted-foreground">Professional Players</span>
+                <span className="text-muted-foreground">{t("map.professional_players", "Professional Players")}</span>
                 <span className="font-bold text-xl">10,000+</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-muted-foreground">Youth Prospects</span>
+                <span className="text-muted-foreground">{t("map.youth_prospects", "Youth Prospects")}</span>
                 <span className="font-bold text-xl">4,000+</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-muted-foreground">Teams</span>
+                <span className="text-muted-foreground">{t("map.teams", "Teams")}</span>
                 <span className="font-bold text-xl">500+</span>
               </div>
             </div>
@@ -1296,7 +1298,7 @@ const ScoutingNetworkMap = ({ initialCountry, hideStats = false }: ScoutingNetwo
 
           {/* Country List */}
           <div className="bg-card rounded-lg p-4 border max-h-96 overflow-y-auto">
-            <h4 className="font-bebas text-xl mb-3">COVERAGE REGIONS</h4>
+            <h4 className="font-bebas text-xl mb-3">{t("map.coverage_regions", "COVERAGE REGIONS")}</h4>
             <div className="space-y-0">
               {countryMarkers
                 .filter(country => !selectedCountry || country.country === selectedCountry)
