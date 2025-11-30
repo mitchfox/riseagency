@@ -2374,6 +2374,7 @@ export type Database = {
           russian: string | null
           spanish: string | null
           text_key: string
+          turkish: string | null
           updated_at: string
         }
         Insert: {
@@ -2390,6 +2391,7 @@ export type Database = {
           russian?: string | null
           spanish?: string | null
           text_key: string
+          turkish?: string | null
           updated_at?: string
         }
         Update: {
@@ -2406,6 +2408,7 @@ export type Database = {
           russian?: string | null
           spanish?: string | null
           text_key?: string
+          turkish?: string | null
           updated_at?: string
         }
         Relationships: []
