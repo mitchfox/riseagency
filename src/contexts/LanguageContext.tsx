@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
-type LanguageCode = 'en' | 'es' | 'pt' | 'fr' | 'de' | 'it' | 'pl' | 'cs' | 'ru';
+type LanguageCode = 'en' | 'es' | 'pt' | 'fr' | 'de' | 'it' | 'pl' | 'cs' | 'ru' | 'tr';
 
 interface Translation {
   page_name: string;
@@ -15,6 +15,7 @@ interface Translation {
   polish: string | null;
   czech: string | null;
   russian: string | null;
+  turkish: string | null;
 }
 
 interface LanguageContextType {
@@ -37,6 +38,7 @@ const languageSubdomains: Record<string, LanguageCode> = {
   'cs': 'cs',
   'cz': 'cs', // DNS uses 'cz' for Czech
   'ru': 'ru',
+  'tr': 'tr',
 };
 
 // URL subdomains to use (matching DNS records)
@@ -50,6 +52,7 @@ const languageUrlSubdomains: Record<LanguageCode, string> = {
   'pl': 'pl',
   'cs': 'cz', // DNS uses 'cz' for Czech
   'ru': 'ru',
+  'tr': 'tr',
 };
 
 const languageColumns: Record<LanguageCode, keyof Translation> = {
@@ -62,6 +65,7 @@ const languageColumns: Record<LanguageCode, keyof Translation> = {
   'pl': 'polish',
   'cs': 'czech',
   'ru': 'russian',
+  'tr': 'turkish',
 };
 
 function isPreviewOrLocalEnvironment(): boolean {
@@ -78,7 +82,7 @@ function detectLanguageFromSubdomain(): LanguageCode {
   // For localhost, IP addresses, or preview environments, check localStorage
   if (isPreviewOrLocalEnvironment()) {
     const stored = localStorage.getItem('preferred_language');
-    if (stored && ['en', 'es', 'pt', 'fr', 'de', 'it', 'pl', 'cs', 'ru'].includes(stored)) {
+    if (stored && ['en', 'es', 'pt', 'fr', 'de', 'it', 'pl', 'cs', 'ru', 'tr'].includes(stored)) {
       return stored as LanguageCode;
     }
     return 'en';

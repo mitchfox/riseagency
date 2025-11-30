@@ -47,8 +47,13 @@ export function useAutoTranslate({ title, excerpt, content, enabled = true }: Us
         const langMap: Record<string, string> = {
           'es': 'spanish',
           'pt': 'portuguese',
+          'fr': 'french',
+          'de': 'german',
+          'it': 'italian',
+          'pl': 'polish',
           'cs': 'czech',
-          'ru': 'russian'
+          'ru': 'russian',
+          'tr': 'turkish'
         };
         
         const translationKey = langMap[language];

@@ -17,6 +17,7 @@ const languages = [
   { code: "pl" as const, name: "POL", flag: "🇵🇱" },
   { code: "cs" as const, name: "ČES", flag: "🇨🇿" },
   { code: "ru" as const, name: "РУС", flag: "🇷🇺" },
+  { code: "tr" as const, name: "TÜR", flag: "🇹🇷" },
 ];
 
 export const LanguageSelector = () => {

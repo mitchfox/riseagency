@@ -37,8 +37,13 @@ interface Translation {
   english: string;
   spanish: string | null;
   portuguese: string | null;
+  french: string | null;
+  german: string | null;
+  italian: string | null;
+  polish: string | null;
   czech: string | null;
   russian: string | null;
+  turkish: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -47,8 +52,13 @@ const languages = [
   { code: "english", name: "English", flag: "🇬🇧" },
   { code: "spanish", name: "Spanish", flag: "🇪🇸" },
   { code: "portuguese", name: "Portuguese", flag: "🇵🇹" },
+  { code: "french", name: "French", flag: "🇫🇷" },
+  { code: "german", name: "German", flag: "🇩🇪" },
+  { code: "italian", name: "Italian", flag: "🇮🇹" },
+  { code: "polish", name: "Polish", flag: "🇵🇱" },
   { code: "czech", name: "Czech", flag: "🇨🇿" },
   { code: "russian", name: "Russian", flag: "🇷🇺" },
+  { code: "turkish", name: "Turkish", flag: "🇹🇷" },
 ];
 
 const pageOptions = [
@@ -61,7 +71,14 @@ const pageOptions = [
   "scouts",
   "agents",
   "about",
+  "coaches",
   "common",
+  "btl",
+  "realise",
+  "news",
+  "countries",
+  "intro",
+  "map",
 ];
 
 export const LanguagesManagement = ({ isAdmin }: { isAdmin: boolean }) => {
@@ -79,8 +96,13 @@ export const LanguagesManagement = ({ isAdmin }: { isAdmin: boolean }) => {
     english: "",
     spanish: "",
     portuguese: "",
+    french: "",
+    german: "",
+    italian: "",
+    polish: "",
     czech: "",
     russian: "",
+    turkish: "",
   });
 
   useEffect(() => {
@@ -122,8 +144,13 @@ export const LanguagesManagement = ({ isAdmin }: { isAdmin: boolean }) => {
             english: formData.english,
             spanish: formData.spanish || null,
             portuguese: formData.portuguese || null,
+            french: formData.french || null,
+            german: formData.german || null,
+            italian: formData.italian || null,
+            polish: formData.polish || null,
             czech: formData.czech || null,
             russian: formData.russian || null,
+            turkish: formData.turkish || null,
           })
           .eq("id", editingTranslation.id);
 
@@ -136,8 +163,13 @@ export const LanguagesManagement = ({ isAdmin }: { isAdmin: boolean }) => {
           english: formData.english,
           spanish: formData.spanish || null,
           portuguese: formData.portuguese || null,
+          french: formData.french || null,
+          german: formData.german || null,
+          italian: formData.italian || null,
+          polish: formData.polish || null,
           czech: formData.czech || null,
           russian: formData.russian || null,
+          turkish: formData.turkish || null,
         });
 
         if (error) throw error;
@@ -175,8 +207,13 @@ export const LanguagesManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       english: translation.english,
       spanish: translation.spanish || "",
       portuguese: translation.portuguese || "",
+      french: translation.french || "",
+      german: translation.german || "",
+      italian: translation.italian || "",
+      polish: translation.polish || "",
       czech: translation.czech || "",
       russian: translation.russian || "",
+      turkish: translation.turkish || "",
     });
     setIsDialogOpen(true);
   };
@@ -189,8 +226,13 @@ export const LanguagesManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       english: "",
       spanish: "",
       portuguese: "",
+      french: "",
+      german: "",
+      italian: "",
+      polish: "",
       czech: "",
       russian: "",
+      turkish: "",
     });
   };
 
@@ -213,8 +255,13 @@ export const LanguagesManagement = ({ isAdmin }: { isAdmin: boolean }) => {
         ...prev,
         spanish: translations.spanish || prev.spanish,
         portuguese: translations.portuguese || prev.portuguese,
+        french: translations.french || prev.french,
+        german: translations.german || prev.german,
+        italian: translations.italian || prev.italian,
+        polish: translations.polish || prev.polish,
         czech: translations.czech || prev.czech,
         russian: translations.russian || prev.russian,
+        turkish: translations.turkish || prev.turkish,
       }));
       toast.success("Auto-translations generated");
     } catch (error) {
@@ -261,7 +308,7 @@ export const LanguagesManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                   Add Translation
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+              <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>
                     {editingTranslation ? "Edit Translation" : "Add New Translation"}
@@ -327,7 +374,7 @@ export const LanguagesManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                     />
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     <div className="space-y-2">
                       <Label className="flex items-center gap-2">🇪🇸 Spanish</Label>
                       <Textarea
@@ -351,6 +398,50 @@ export const LanguagesManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                       />
                     </div>
                     <div className="space-y-2">
+                      <Label className="flex items-center gap-2">🇫🇷 French</Label>
+                      <Textarea
+                        value={formData.french}
+                        onChange={(e) =>
+                          setFormData((prev) => ({ ...prev, french: e.target.value }))
+                        }
+                        placeholder="French translation"
+                        rows={2}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="flex items-center gap-2">🇩🇪 German</Label>
+                      <Textarea
+                        value={formData.german}
+                        onChange={(e) =>
+                          setFormData((prev) => ({ ...prev, german: e.target.value }))
+                        }
+                        placeholder="German translation"
+                        rows={2}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="flex items-center gap-2">🇮🇹 Italian</Label>
+                      <Textarea
+                        value={formData.italian}
+                        onChange={(e) =>
+                          setFormData((prev) => ({ ...prev, italian: e.target.value }))
+                        }
+                        placeholder="Italian translation"
+                        rows={2}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="flex items-center gap-2">🇵🇱 Polish</Label>
+                      <Textarea
+                        value={formData.polish}
+                        onChange={(e) =>
+                          setFormData((prev) => ({ ...prev, polish: e.target.value }))
+                        }
+                        placeholder="Polish translation"
+                        rows={2}
+                      />
+                    </div>
+                    <div className="space-y-2">
                       <Label className="flex items-center gap-2">🇨🇿 Czech</Label>
                       <Textarea
                         value={formData.czech}
@@ -369,6 +460,17 @@ export const LanguagesManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                           setFormData((prev) => ({ ...prev, russian: e.target.value }))
                         }
                         placeholder="Russian translation"
+                        rows={2}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="flex items-center gap-2">🇹🇷 Turkish</Label>
+                      <Textarea
+                        value={formData.turkish}
+                        onChange={(e) =>
+                          setFormData((prev) => ({ ...prev, turkish: e.target.value }))
+                        }
+                        placeholder="Turkish translation"
                         rows={2}
                       />
                     </div>
@@ -415,12 +517,12 @@ export const LanguagesManagement = ({ isAdmin }: { isAdmin: boolean }) => {
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+          <div className="grid grid-cols-2 md:grid-cols-5 lg:grid-cols-10 gap-2 mb-6">
             {languages.map((lang) => (
               <Card key={lang.code} className="bg-muted/30">
-                <CardContent className="p-4 text-center">
-                  <div className="text-2xl mb-1">{lang.flag}</div>
-                  <div className="text-sm font-medium">{lang.name}</div>
+                <CardContent className="p-3 text-center">
+                  <div className="text-xl mb-1">{lang.flag}</div>
+                  <div className="text-xs font-medium">{lang.name}</div>
                   <div className="text-xs text-muted-foreground">
                     {translations.filter((t) => t[lang.code as keyof Translation]).length} / {translations.length}
                   </div>
@@ -452,11 +554,16 @@ export const LanguagesManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                       <TableHeader>
                         <TableRow>
                           <TableHead className="w-32">Key</TableHead>
-                          <TableHead>🇬🇧 English</TableHead>
-                          <TableHead>🇪🇸 Spanish</TableHead>
-                          <TableHead>🇵🇹 Portuguese</TableHead>
-                          <TableHead>🇨🇿 Czech</TableHead>
-                          <TableHead>🇷🇺 Russian</TableHead>
+                          <TableHead>🇬🇧</TableHead>
+                          <TableHead>🇪🇸</TableHead>
+                          <TableHead>🇵🇹</TableHead>
+                          <TableHead>🇫🇷</TableHead>
+                          <TableHead>🇩🇪</TableHead>
+                          <TableHead>🇮🇹</TableHead>
+                          <TableHead>🇵🇱</TableHead>
+                          <TableHead>🇨🇿</TableHead>
+                          <TableHead>🇷🇺</TableHead>
+                          <TableHead>🇹🇷</TableHead>
                           <TableHead className="w-24">Actions</TableHead>
                         </TableRow>
                       </TableHeader>
@@ -466,28 +573,35 @@ export const LanguagesManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                             <TableCell className="font-mono text-xs">
                               {translation.text_key}
                             </TableCell>
-                            <TableCell className="max-w-40 truncate" title={translation.english}>
+                            <TableCell className="max-w-24 truncate" title={translation.english}>
                               {translation.english}
                             </TableCell>
-                            <TableCell className="max-w-40 truncate" title={translation.spanish || ""}>
-                              {translation.spanish || (
-                                <span className="text-muted-foreground italic">—</span>
-                              )}
+                            <TableCell className="max-w-24 truncate" title={translation.spanish || ""}>
+                              {translation.spanish || <span className="text-muted-foreground">—</span>}
                             </TableCell>
-                            <TableCell className="max-w-40 truncate" title={translation.portuguese || ""}>
-                              {translation.portuguese || (
-                                <span className="text-muted-foreground italic">—</span>
-                              )}
+                            <TableCell className="max-w-24 truncate" title={translation.portuguese || ""}>
+                              {translation.portuguese || <span className="text-muted-foreground">—</span>}
                             </TableCell>
-                            <TableCell className="max-w-40 truncate" title={translation.czech || ""}>
-                              {translation.czech || (
-                                <span className="text-muted-foreground italic">—</span>
-                              )}
+                            <TableCell className="max-w-24 truncate" title={translation.french || ""}>
+                              {translation.french || <span className="text-muted-foreground">—</span>}
                             </TableCell>
-                            <TableCell className="max-w-40 truncate" title={translation.russian || ""}>
-                              {translation.russian || (
-                                <span className="text-muted-foreground italic">—</span>
-                              )}
+                            <TableCell className="max-w-24 truncate" title={translation.german || ""}>
+                              {translation.german || <span className="text-muted-foreground">—</span>}
+                            </TableCell>
+                            <TableCell className="max-w-24 truncate" title={translation.italian || ""}>
+                              {translation.italian || <span className="text-muted-foreground">—</span>}
+                            </TableCell>
+                            <TableCell className="max-w-24 truncate" title={translation.polish || ""}>
+                              {translation.polish || <span className="text-muted-foreground">—</span>}
+                            </TableCell>
+                            <TableCell className="max-w-24 truncate" title={translation.czech || ""}>
+                              {translation.czech || <span className="text-muted-foreground">—</span>}
+                            </TableCell>
+                            <TableCell className="max-w-24 truncate" title={translation.russian || ""}>
+                              {translation.russian || <span className="text-muted-foreground">—</span>}
+                            </TableCell>
+                            <TableCell className="max-w-24 truncate" title={translation.turkish || ""}>
+                              {translation.turkish || <span className="text-muted-foreground">—</span>}
                             </TableCell>
                             <TableCell>
                               <div className="flex items-center gap-1">
@@ -495,6 +609,7 @@ export const LanguagesManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                   variant="ghost"
                                   size="icon"
                                   onClick={() => handleEdit(translation)}
+                                  className="h-8 w-8"
                                 >
                                   <Edit className="h-4 w-4" />
                                 </Button>
@@ -503,7 +618,7 @@ export const LanguagesManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                     variant="ghost"
                                     size="icon"
                                     onClick={() => handleDelete(translation.id)}
-                                    className="text-destructive hover:text-destructive"
+                                    className="h-8 w-8 text-destructive hover:text-destructive"
                                   >
                                     <Trash2 className="h-4 w-4" />
                                   </Button>
@@ -524,3 +639,5 @@ export const LanguagesManagement = ({ isAdmin }: { isAdmin: boolean }) => {
     </div>
   );
 };
+
+export default LanguagesManagement;
