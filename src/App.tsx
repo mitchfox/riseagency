@@ -26,6 +26,8 @@ import Clubs from "./pages/Clubs";
 import Coaches from "./pages/Coaches";
 import Scouts from "./pages/Scouts";
 import Agents from "./pages/Agents";
+import Business from "./pages/Business";
+import Media from "./pages/Media";
 import Performance from "./pages/NewPerformance";
 import BetweenTheLines from "./pages/BetweenTheLines";
 import PerformanceReport from "./pages/PerformanceReport";
@@ -99,6 +101,8 @@ const App = () => {
                   {createLocalizedRoutes('/coaches', <Coaches />)}
                   {createLocalizedRoutes('/scouts', <Scouts />)}
                   {createLocalizedRoutes('/agents', <Agents />)}
+                  {createLocalizedRoutes('/business', <Business />)}
+                  {createLocalizedRoutes('/media', <Media />)}
                   {createLocalizedRoutes('/performance', <Performance />)}
                   {createLocalizedRoutes('/news', <News />)}
                   {createLocalizedDynamicRoutes('/news/:articleId', <News />)}
