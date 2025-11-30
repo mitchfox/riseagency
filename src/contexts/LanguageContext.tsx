@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
-type LanguageCode = 'en' | 'es' | 'pt' | 'cs' | 'ru';
+type LanguageCode = 'en' | 'es' | 'pt' | 'fr' | 'de' | 'it' | 'pl' | 'cs' | 'ru';
 
 interface Translation {
   page_name: string;
@@ -9,6 +9,10 @@ interface Translation {
   english: string | null;
   spanish: string | null;
   portuguese: string | null;
+  french: string | null;
+  german: string | null;
+  italian: string | null;
+  polish: string | null;
   czech: string | null;
   russian: string | null;
 }
@@ -26,6 +30,10 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 const languageSubdomains: Record<string, LanguageCode> = {
   'es': 'es',
   'pt': 'pt',
+  'fr': 'fr',
+  'de': 'de',
+  'it': 'it',
+  'pl': 'pl',
   'cs': 'cs',
   'cz': 'cs', // DNS uses 'cz' for Czech
   'ru': 'ru',
@@ -36,6 +44,10 @@ const languageUrlSubdomains: Record<LanguageCode, string> = {
   'en': '',
   'es': 'es',
   'pt': 'pt',
+  'fr': 'fr',
+  'de': 'de',
+  'it': 'it',
+  'pl': 'pl',
   'cs': 'cz', // DNS uses 'cz' for Czech
   'ru': 'ru',
 };
@@ -44,6 +56,10 @@ const languageColumns: Record<LanguageCode, keyof Translation> = {
   'en': 'english',
   'es': 'spanish',
   'pt': 'portuguese',
+  'fr': 'french',
+  'de': 'german',
+  'it': 'italian',
+  'pl': 'polish',
   'cs': 'czech',
   'ru': 'russian',
 };
@@ -62,7 +78,7 @@ function detectLanguageFromSubdomain(): LanguageCode {
   // For localhost, IP addresses, or preview environments, check localStorage
   if (isPreviewOrLocalEnvironment()) {
     const stored = localStorage.getItem('preferred_language');
-    if (stored && ['en', 'es', 'pt', 'cs', 'ru'].includes(stored)) {
+    if (stored && ['en', 'es', 'pt', 'fr', 'de', 'it', 'pl', 'cs', 'ru'].includes(stored)) {
       return stored as LanguageCode;
     }
     return 'en';

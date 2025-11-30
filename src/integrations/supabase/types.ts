@@ -2364,8 +2364,12 @@ export type Database = {
           created_at: string
           czech: string | null
           english: string
+          french: string | null
+          german: string | null
           id: string
+          italian: string | null
           page_name: string
+          polish: string | null
           portuguese: string | null
           russian: string | null
           spanish: string | null
@@ -2376,8 +2380,12 @@ export type Database = {
           created_at?: string
           czech?: string | null
           english: string
+          french?: string | null
+          german?: string | null
           id?: string
+          italian?: string | null
           page_name: string
+          polish?: string | null
           portuguese?: string | null
           russian?: string | null
           spanish?: string | null
@@ -2388,8 +2396,12 @@ export type Database = {
           created_at?: string
           czech?: string | null
           english?: string
+          french?: string | null
+          german?: string | null
           id?: string
+          italian?: string | null
           page_name?: string
+          polish?: string | null
           portuguese?: string | null
           russian?: string | null
           spanish?: string | null
