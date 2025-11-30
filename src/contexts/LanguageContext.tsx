@@ -68,6 +68,8 @@ const languageColumns: Record<LanguageCode, keyof Translation> = {
   'tr': 'turkish',
 };
 
+const validLanguages: LanguageCode[] = ['en', 'es', 'pt', 'fr', 'de', 'it', 'pl', 'cs', 'ru', 'tr'];
+
 function isPreviewOrLocalEnvironment(): boolean {
   const hostname = window.location.hostname;
   return hostname === 'localhost' || 
@@ -76,16 +78,12 @@ function isPreviewOrLocalEnvironment(): boolean {
          hostname.includes('lovableproject.com');
 }
 
-function detectLanguageFromSubdomain(): LanguageCode {
+function detectLanguageFromSubdomain(): LanguageCode | null {
   const hostname = window.location.hostname;
   
-  // For localhost, IP addresses, or preview environments, check localStorage
+  // For localhost, IP addresses, or preview environments, return null to trigger auto-detection
   if (isPreviewOrLocalEnvironment()) {
-    const stored = localStorage.getItem('preferred_language');
-    if (stored && ['en', 'es', 'pt', 'fr', 'de', 'it', 'pl', 'cs', 'ru', 'tr'].includes(stored)) {
-      return stored as LanguageCode;
-    }
-    return 'en';
+    return null;
   }
   
   const parts = hostname.split('.');
@@ -98,15 +96,86 @@ function detectLanguageFromSubdomain(): LanguageCode {
     }
   }
   
-  return 'en';
+  // No language subdomain found - return null to trigger auto-detection
+  return null;
+}
+
+async function detectLanguageFromIP(): Promise<LanguageCode> {
+  try {
+    const { data, error } = await supabase.functions.invoke('detect-language');
+    
+    if (error) {
+      console.error('Language detection error:', error);
+      return 'en';
+    }
+    
+    const detectedLang = data?.language;
+    if (detectedLang && validLanguages.includes(detectedLang as LanguageCode)) {
+      return detectedLang as LanguageCode;
+    }
+    
+    return 'en';
+  } catch (err) {
+    console.error('Failed to detect language from IP:', err);
+    return 'en';
+  }
 }
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
-  const [language, setLanguage] = useState<LanguageCode>(() => detectLanguageFromSubdomain());
+  const [language, setLanguage] = useState<LanguageCode>('en');
   const [translations, setTranslations] = useState<Map<string, string>>(new Map());
   const [isLoading, setIsLoading] = useState(true);
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  // Initialize language on mount
+  useEffect(() => {
+    async function initializeLanguage() {
+      // First check subdomain
+      const subdomainLang = detectLanguageFromSubdomain();
+      
+      if (subdomainLang) {
+        // Subdomain explicitly sets language
+        setLanguage(subdomainLang);
+        setIsInitialized(true);
+        return;
+      }
+      
+      // For preview/local environments, check stored preference first
+      if (isPreviewOrLocalEnvironment()) {
+        const stored = localStorage.getItem('preferred_language');
+        if (stored && validLanguages.includes(stored as LanguageCode)) {
+          setLanguage(stored as LanguageCode);
+          setIsInitialized(true);
+          return;
+        }
+        
+        // Check if we've already done IP detection this session
+        const sessionDetected = sessionStorage.getItem('ip_language_detected');
+        if (sessionDetected && validLanguages.includes(sessionDetected as LanguageCode)) {
+          setLanguage(sessionDetected as LanguageCode);
+          setIsInitialized(true);
+          return;
+        }
+      }
+      
+      // No subdomain and no stored preference - detect from IP
+      const detectedLang = await detectLanguageFromIP();
+      
+      // Store in session so we don't re-detect on every page load
+      if (isPreviewOrLocalEnvironment()) {
+        sessionStorage.setItem('ip_language_detected', detectedLang);
+      }
+      
+      setLanguage(detectedLang);
+      setIsInitialized(true);
+    }
+    
+    initializeLanguage();
+  }, []);
 
   useEffect(() => {
+    if (!isInitialized) return;
+    
     async function fetchTranslations() {
       setIsLoading(true);
       try {
@@ -138,7 +207,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     }
 
     fetchTranslations();
-  }, [language]);
+  }, [language, isInitialized]);
 
   const t = useCallback((key: string, fallback?: string): string => {
     return translations.get(key) || fallback || key;
@@ -152,6 +221,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     // For preview/localhost environments, use localStorage and update state
     if (isPreviewOrLocalEnvironment()) {
       localStorage.setItem('preferred_language', lang);
+      sessionStorage.setItem('ip_language_detected', lang); // Override IP detection
       setLanguage(lang);
       return;
     }
