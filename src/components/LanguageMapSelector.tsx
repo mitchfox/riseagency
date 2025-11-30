@@ -57,7 +57,7 @@ export const LanguageMapSelector = () => {
       {/* Modal Overlay */}
       {open && (
         <div 
-          className="fixed inset-0 z-[9999] flex items-center justify-center"
+          className="fixed inset-0 z-[9999] flex items-end justify-center pb-20 md:pb-24"
           onClick={() => setOpen(false)}
         >
           {/* Backdrop */}
