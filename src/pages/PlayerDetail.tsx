@@ -558,7 +558,7 @@ const PlayerDetail = () => {
               </div>
             </div>
 
-          {/* Right Column: Scheme History */}
+            {/* Right Column: Scheme History */}
             {player.tacticalFormations && player.tacticalFormations.length > 0 && (
               <div>
                 <h2 className="text-sm font-bebas text-primary uppercase tracking-widest mb-4 text-lg">
