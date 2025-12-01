@@ -340,6 +340,12 @@ export const RadialMenu = () => {
             style={{ transform: 'translateY(-13px)' }}
           />
           
+          {/* Gold divider between logo and dropdown */}
+          <div 
+            className="absolute left-1/2 -translate-x-1/2 w-16 h-[1px] bg-primary z-20"
+            style={{ top: '55%' }}
+          />
+          
           {/* Role/Menu dropdown button */}
           <div
             className="text-center relative z-20"
