@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { LateralFilter } from "@/components/LateralFilter";
 import { Button } from "@/components/ui/button";
 import { DeclareInterestPlayerDialog } from "@/components/DeclareInterestPlayerDialog";
+import { LayoutGrid, List, Users, MessageCircle, ArrowRight } from "lucide-react";
 
 const BATCH_SIZE = 3;
 
@@ -198,44 +199,70 @@ const PlayersList = () => {
         {/* Hero Section */}
         <section className="py-16 md:py-24 px-4">
           <div className="container mx-auto">
-            <div className="flex justify-center gap-4 mb-12">
-              <Button
-                variant="outline"
-                className="font-bebas uppercase tracking-wider border-primary text-primary hover:bg-primary hover:text-black"
+            {/* Action Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+              {/* Declare Interest Card */}
+              <button
                 onClick={() => setDeclareInterestOpen(true)}
+                className="group relative flex items-center gap-6 p-8 border border-border rounded-lg hover:border-primary transition-all duration-300 bg-card"
               >
-                Declare Interest in Player
-              </Button>
-              <Button
-                variant="outline"
-                className="font-bebas uppercase tracking-wider border-primary text-primary hover:bg-primary hover:text-black"
+                <div className="flex-shrink-0 w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                  <Users className="w-7 h-7 text-primary" />
+                </div>
+                <div className="flex-1 text-left">
+                  <h3 className="text-2xl font-bebas uppercase tracking-wider text-foreground group-hover:text-primary transition-colors">
+                    Declare Interest in Player(s)
+                  </h3>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Select players and submit your interest
+                  </p>
+                </div>
+                <ArrowRight className="w-6 h-6 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
+              </button>
+
+              {/* Contact Card */}
+              <button
                 onClick={() => window.location.href = '/contact'}
+                className="group relative flex items-center gap-6 p-8 border border-border rounded-lg hover:border-primary transition-all duration-300 bg-card"
               >
-                Contact
-              </Button>
+                <div className="flex-shrink-0 w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                  <MessageCircle className="w-7 h-7 text-primary" />
+                </div>
+                <div className="flex-1 text-left">
+                  <h3 className="text-2xl font-bebas uppercase tracking-wider text-foreground group-hover:text-primary transition-colors">
+                    Contact
+                  </h3>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Get in touch with us directly
+                  </p>
+                </div>
+                <ArrowRight className="w-6 h-6 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
+              </button>
             </div>
 
-            {/* View Mode Toggle */}
-            <div className="flex justify-center gap-4 mb-12">
+            {/* View Mode Toggle - Icon Only */}
+            <div className="flex justify-center gap-2 mb-12">
               <button
                 onClick={() => setViewMode("grid")}
-                className={`px-6 py-2 font-bebas uppercase tracking-wider transition-colors ${
+                className={`p-3 rounded-lg transition-colors ${
                   viewMode === "grid"
                     ? "bg-primary text-black"
                     : "bg-secondary text-foreground hover:bg-secondary/80"
                 }`}
+                title="Grid View"
               >
-                Grid View
+                <LayoutGrid className="w-5 h-5" />
               </button>
               <button
                 onClick={() => setViewMode("list")}
-                className={`px-6 py-2 font-bebas uppercase tracking-wider transition-colors ${
+                className={`p-3 rounded-lg transition-colors ${
                   viewMode === "list"
                     ? "bg-primary text-black"
                     : "bg-secondary text-foreground hover:bg-secondary/80"
                 }`}
+                title="List View"
               >
-                List View
+                <List className="w-5 h-5" />
               </button>
             </div>
 
