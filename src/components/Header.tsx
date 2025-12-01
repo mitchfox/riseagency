@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import logo from "@/assets/logo.png";
 import riseStar from "@/assets/rise-star.png";
-import { X, MessageCircle, Users, LogIn, Handshake, ArrowRight } from "lucide-react";
+import { X, MessageCircle, Users, LogIn, Handshake, ArrowRight, Compass, FileText, Search, Star, Calendar, Briefcase, Send, BookOpen, Activity, Newspaper, Heart, Package, Phone } from "lucide-react";
 import workingTogether from "@/assets/menu-working-together.jpg";
 import playerPortalImage from "@/assets/menu-player-portal.png";
 import blackMarbleBg from "@/assets/black-marble-smudged.png";
@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { WorkWithUsDialog } from "@/components/WorkWithUsDialog";
 import { RepresentationDialog } from "@/components/RepresentationDialog";
 import { DeclareInterestDialog } from "@/components/DeclareInterestDialog";
+import { ArrangeMeetingDialog } from "@/components/ArrangeMeetingDialog";
 import { IntroModal } from "@/components/IntroModal";
 import { HoverText } from "@/components/HoverText";
 import { LanguageSelector } from "@/components/LanguageSelector";
@@ -29,6 +30,105 @@ import { useRoleSubdomain, roleConfigs, RoleSubdomain } from "@/hooks/useRoleSub
 // NOTE: GridLines component is available at src/components/GridLines.tsx 
 // for coordinate-based positioning during design. Import and add it when needed.
 
+// Subdomain-specific sub-header configuration
+type SubHeaderItem = {
+  type: 'link' | 'button';
+  to?: string;
+  action?: 'declareInterest' | 'representation' | 'workWithUs' | 'arrangeMeeting';
+  label: string;
+  mobileLabel: string;
+  icon: React.ComponentType<{ className?: string }>;
+};
+
+type SubHeaderConfig = {
+  left: [SubHeaderItem, SubHeaderItem];
+  right: [SubHeaderItem, SubHeaderItem];
+};
+
+const defaultSubHeader: SubHeaderConfig = {
+  left: [
+    { type: 'link', to: '/contact', label: 'Contact Us', mobileLabel: 'Contact', icon: MessageCircle },
+    { type: 'button', action: 'declareInterest', label: 'Declare Interest In A Star', mobileLabel: 'Interest', icon: Users },
+  ],
+  right: [
+    { type: 'button', action: 'representation', label: 'Request Representation', mobileLabel: 'Represent', icon: Handshake },
+    { type: 'link', to: '/login', label: 'Portal', mobileLabel: 'Portal', icon: LogIn },
+  ],
+};
+
+const subdomainSubHeaders: Record<string, SubHeaderConfig> = {
+  players: {
+    left: [
+      { type: 'link', to: '/login', label: 'Portal', mobileLabel: 'Portal', icon: LogIn },
+      { type: 'link', to: '/between-the-lines', label: 'Between The Lines', mobileLabel: 'BTL', icon: BookOpen },
+    ],
+    right: [
+      { type: 'link', to: '/playersmore', label: 'What We Look For', mobileLabel: 'Look For', icon: Search },
+      { type: 'button', action: 'representation', label: 'Represent Me', mobileLabel: 'Represent', icon: Handshake },
+    ],
+  },
+  clubs: {
+    left: [
+      { type: 'link', to: '/clubs', label: 'Club Direction', mobileLabel: 'Direction', icon: Compass },
+      { type: 'button', action: 'arrangeMeeting', label: 'Arrange Meeting', mobileLabel: 'Meeting', icon: Calendar },
+    ],
+    right: [
+      { type: 'link', to: '/stars', label: 'Stars', mobileLabel: 'Stars', icon: Star },
+      { type: 'button', action: 'declareInterest', label: 'Declare Interest', mobileLabel: 'Interest', icon: Users },
+    ],
+  },
+  scouts: {
+    left: [
+      { type: 'link', to: '/playersmore', label: 'What We Look For', mobileLabel: 'Look For', icon: Search },
+      { type: 'link', to: '/login', label: 'Portal', mobileLabel: 'Portal', icon: LogIn },
+    ],
+    right: [
+      { type: 'button', action: 'workWithUs', label: 'Scout for RISE', mobileLabel: 'Scout', icon: Send },
+      { type: 'link', to: '/scouts', label: 'Jobs', mobileLabel: 'Jobs', icon: Briefcase },
+    ],
+  },
+  agents: {
+    left: [
+      { type: 'link', to: '/stars', label: 'Stars', mobileLabel: 'Stars', icon: Star },
+      { type: 'link', to: '/contact', label: 'Requests', mobileLabel: 'Requests', icon: FileText },
+    ],
+    right: [
+      { type: 'button', action: 'declareInterest', label: 'Declare Interest', mobileLabel: 'Interest', icon: Users },
+      { type: 'button', action: 'arrangeMeeting', label: 'Arrange Meeting', mobileLabel: 'Meeting', icon: Calendar },
+    ],
+  },
+  coaches: {
+    left: [
+      { type: 'link', to: '/login', label: 'Portal', mobileLabel: 'Portal', icon: LogIn },
+      { type: 'link', to: '/potential', label: 'Performance', mobileLabel: 'Performance', icon: Activity },
+    ],
+    right: [
+      { type: 'button', action: 'representation', label: 'Represent Me', mobileLabel: 'Represent', icon: Handshake },
+      { type: 'button', action: 'arrangeMeeting', label: 'Arrange Meeting', mobileLabel: 'Meeting', icon: Calendar },
+    ],
+  },
+  media: {
+    left: [
+      { type: 'link', to: '/between-the-lines', label: 'Press Release', mobileLabel: 'Press', icon: Newspaper },
+      { type: 'link', to: '/contact', label: 'Collaboration', mobileLabel: 'Collab', icon: Heart },
+    ],
+    right: [
+      { type: 'button', action: 'declareInterest', label: 'Declare Interest in Star', mobileLabel: 'Interest', icon: Users },
+      { type: 'button', action: 'arrangeMeeting', label: 'Arrange Meeting', mobileLabel: 'Meeting', icon: Calendar },
+    ],
+  },
+  business: {
+    left: [
+      { type: 'link', to: '/business', label: 'Packages', mobileLabel: 'Packages', icon: Package },
+      { type: 'button', action: 'declareInterest', label: 'Declare Interest in Package', mobileLabel: 'Interest', icon: Users },
+    ],
+    right: [
+      { type: 'link', to: '/contact', label: 'Connect With Us', mobileLabel: 'Connect', icon: Phone },
+      { type: 'button', action: 'arrangeMeeting', label: 'Arrange Meeting', mobileLabel: 'Meeting', icon: Calendar },
+    ],
+  },
+};
+
 export const Header = () => {
   const location = useLocation();
   const { t } = useLanguage();
@@ -36,6 +136,30 @@ export const Header = () => {
   const [representationOpen, setRepresentationOpen] = useState(false);
   const [workWithUsOpen, setWorkWithUsOpen] = useState(false);
   const [declareInterestOpen, setDeclareInterestOpen] = useState(false);
+  const [arrangeMeetingOpen, setArrangeMeetingOpen] = useState(false);
+  
+  // Get subdomain-specific sub-header config
+  const subHeaderConfig = currentRole && subdomainSubHeaders[currentRole] 
+    ? subdomainSubHeaders[currentRole] 
+    : defaultSubHeader;
+  
+  const handleSubHeaderAction = (action: SubHeaderItem['action']) => {
+    switch (action) {
+      case 'declareInterest':
+        setDeclareInterestOpen(true);
+        break;
+      case 'representation':
+        setRepresentationOpen(true);
+        break;
+      case 'workWithUs':
+        setWorkWithUsOpen(true);
+        break;
+      case 'arrangeMeeting':
+        // For now, use contact page or a new dialog
+        setArrangeMeetingOpen(true);
+        break;
+    }
+  };
   const [introModalOpen, setIntroModalOpen] = useState(false);
   const [showTopBar, setShowTopBar] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -189,37 +313,58 @@ export const Header = () => {
           <div className="flex items-center justify-between h-8 md:h-10 relative">
             {/* Left items - hidden on mobile, shown on tablet+ */}
             <div className="hidden md:flex items-center gap-4 transition-all duration-500">
-              <LocalizedLink to="/contact" className="text-sm font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500 flex items-center gap-1.5">
-                <MessageCircle className="w-3.5 h-3.5" />
-                <HoverText text={t("header.contact_us", "Contact Us")} />
-              </LocalizedLink>
-              <div className="w-px h-4 bg-white/20" />
-              <button onClick={() => setDeclareInterestOpen(true)} className="text-sm font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500 flex items-center gap-1.5">
-                <Users className="w-3.5 h-3.5" />
-                <HoverText text={t("header.declare_interest", "Declare Interest In A Star")} />
-              </button>
+              {subHeaderConfig.left.map((item, index) => (
+                <div key={`left-${index}`} className="flex items-center gap-4">
+                  {index > 0 && <div className="w-px h-4 bg-white/20" />}
+                  {item.type === 'link' ? (
+                    <LocalizedLink to={item.to!} className="text-sm font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500 flex items-center gap-1.5">
+                      <item.icon className="w-3.5 h-3.5" />
+                      <HoverText text={item.label} />
+                    </LocalizedLink>
+                  ) : (
+                    <button onClick={() => handleSubHeaderAction(item.action)} className="text-sm font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500 flex items-center gap-1.5">
+                      <item.icon className="w-3.5 h-3.5" />
+                      <HoverText text={item.label} />
+                    </button>
+                  )}
+                </div>
+              ))}
             </div>
             
-            {/* Mobile: Two items each side like desktop */}
+            {/* Mobile: Left side items */}
             <div className="flex md:hidden items-center gap-2">
-              <LocalizedLink to="/contact" className="text-[10px] font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500">
-                <HoverText text={t("header.contact_us", "Contact")} />
-              </LocalizedLink>
-              <div className="w-px h-3 bg-white/20" />
-              <button onClick={() => setDeclareInterestOpen(true)} className="text-[10px] font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500">
-                <HoverText text={t("header.declare_interest_mobile", "Interest")} />
-              </button>
+              {subHeaderConfig.left.map((item, index) => (
+                <div key={`mobile-left-${index}`} className="flex items-center gap-2">
+                  {index > 0 && <div className="w-px h-3 bg-white/20" />}
+                  {item.type === 'link' ? (
+                    <LocalizedLink to={item.to!} className="text-[10px] font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500">
+                      <HoverText text={item.mobileLabel} />
+                    </LocalizedLink>
+                  ) : (
+                    <button onClick={() => handleSubHeaderAction(item.action)} className="text-[10px] font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500">
+                      <HoverText text={item.mobileLabel} />
+                    </button>
+                  )}
+                </div>
+              ))}
             </div>
             
             {/* Mobile: Right side items */}
             <div className="flex md:hidden items-center gap-2">
-              <button onClick={() => setRepresentationOpen(true)} className="text-[10px] font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500">
-                <HoverText text={t("header.represent_mobile", "Represent")} />
-              </button>
-              <div className="w-px h-3 bg-white/20" />
-              <LocalizedLink to="/login" className="text-[10px] font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500">
-                <HoverText text={t("header.portal", "Portal")} />
-              </LocalizedLink>
+              {subHeaderConfig.right.map((item, index) => (
+                <div key={`mobile-right-${index}`} className="flex items-center gap-2">
+                  {index > 0 && <div className="w-px h-3 bg-white/20" />}
+                  {item.type === 'link' ? (
+                    <LocalizedLink to={item.to!} className="text-[10px] font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500">
+                      <HoverText text={item.mobileLabel} />
+                    </LocalizedLink>
+                  ) : (
+                    <button onClick={() => handleSubHeaderAction(item.action)} className="text-[10px] font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500">
+                      <HoverText text={item.mobileLabel} />
+                    </button>
+                  )}
+                </div>
+              ))}
             </div>
             
             {/* Language Selector - Centered on tablet+ only */}
@@ -229,15 +374,22 @@ export const Header = () => {
             
             {/* Right items - hidden on mobile, shown on tablet+ */}
             <div className="hidden md:flex items-center gap-4 transition-all duration-500">
-              <button onClick={() => setRepresentationOpen(true)} className="text-sm font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500 flex items-center gap-1.5">
-                <Handshake className="w-3.5 h-3.5" />
-                <HoverText text={t("header.request_representation", "Request Representation")} />
-              </button>
-              <div className="w-px h-4 bg-white/20" />
-              <LocalizedLink to="/login" className="text-sm font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500 flex items-center gap-1.5">
-                <LogIn className="w-3.5 h-3.5" />
-                <HoverText text={t("header.portal", "Portal")} />
-              </LocalizedLink>
+              {subHeaderConfig.right.map((item, index) => (
+                <div key={`right-${index}`} className="flex items-center gap-4">
+                  {index > 0 && <div className="w-px h-4 bg-white/20" />}
+                  {item.type === 'link' ? (
+                    <LocalizedLink to={item.to!} className="text-sm font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500 flex items-center gap-1.5">
+                      <item.icon className="w-3.5 h-3.5" />
+                      <HoverText text={item.label} />
+                    </LocalizedLink>
+                  ) : (
+                    <button onClick={() => handleSubHeaderAction(item.action)} className="text-sm font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500 flex items-center gap-1.5">
+                      <item.icon className="w-3.5 h-3.5" />
+                      <HoverText text={item.label} />
+                    </button>
+                  )}
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -991,6 +1143,7 @@ export const Header = () => {
       <WorkWithUsDialog open={workWithUsOpen} onOpenChange={setWorkWithUsOpen} />
       <RepresentationDialog open={representationOpen} onOpenChange={setRepresentationOpen} />
       <DeclareInterestDialog open={declareInterestOpen} onOpenChange={setDeclareInterestOpen} />
+      <ArrangeMeetingDialog open={arrangeMeetingOpen} onOpenChange={setArrangeMeetingOpen} />
       <IntroModal open={introModalOpen} onOpenChange={setIntroModalOpen} />
     </>;
 };
