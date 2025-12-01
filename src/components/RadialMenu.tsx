@@ -84,13 +84,12 @@ export const RadialMenu = () => {
 
   // Default menu for main site
   const defaultMenu: MenuItem[] = [
-    { to: "/", labelKey: "header.home", fallback: "HOME", Icon: Home, angle: -90 },
-    { to: "/stars", labelKey: "header.stars", fallback: "STARS", Icon: Star, angle: -38.6 },
-    { to: "/performance", labelKey: "header.realise_potential", fallback: "PERFORMANCE", Icon: TrendingUp, angle: 12.9 },
-    { to: "/between-the-lines", labelKey: "header.between_the_lines", fallback: "INSIGHTS", Icon: BookOpen, angle: 64.3 },
-    { to: "/news", labelKey: "header.news", fallback: "NEWS", Icon: Newspaper, angle: 115.7 },
-    { to: "/contact", labelKey: "header.contact", fallback: "CONTACT", Icon: MessageCircle, angle: 167.1 },
-    { to: "/potential", labelKey: "header.potential", fallback: "VISION", Icon: Target, angle: 218.6 },
+    { to: "/stars", labelKey: "header.stars", fallback: "STARS", Icon: Star, angle: 0 },
+    { to: "/performance", labelKey: "header.realise_potential", fallback: "PERFORMANCE", Icon: TrendingUp, angle: 60 },
+    { to: "/between-the-lines", labelKey: "header.between_the_lines", fallback: "INSIGHTS", Icon: BookOpen, angle: 120 },
+    { to: "/news", labelKey: "header.news", fallback: "NEWS", Icon: Newspaper, angle: 180 },
+    { to: "/contact", labelKey: "header.contact", fallback: "CONTACT", Icon: MessageCircle, angle: 240 },
+    { to: "/potential", labelKey: "header.potential", fallback: "VISION", Icon: Target, angle: 300 },
   ];
 
   // Select menu based on current role
@@ -157,16 +156,6 @@ export const RadialMenu = () => {
 
       {/* Main radial menu container */}
       <div className="relative">
-        {/* Semi-transparent grey circle */}
-        <div 
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full backdrop-blur-sm border border-primary/20" 
-          style={{
-            width: `${circleSize}px`,
-            height: `${circleSize}px`,
-            backgroundColor: 'rgba(128, 128, 128, 0.2)',
-          }}
-        />
-
         {/* Segment dividers */}
         {menuItems.map((_, index) => {
           const angle = index * segmentAngle;
@@ -279,9 +268,9 @@ export const RadialMenu = () => {
           />
           <div
             className="text-center"
-            style={{ transform: 'translateY(-20px)' }}
+            style={{ transform: 'translateY(-33px)' }}
           >
-            <p className="text-black font-bebas text-2xl md:text-3xl tracking-[0.25em]">
+            <p className="text-black font-bebas text-2xl md:text-3xl tracking-[0.05em]">
               {currentRole && roleConfigs[currentRole]
                 ? roleConfigs[currentRole].name.toUpperCase()
                 : "MENU"}
