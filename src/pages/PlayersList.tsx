@@ -1,7 +1,7 @@
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { PlayerCard } from "@/components/PlayerCard";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -15,12 +15,16 @@ import {
 import { Button } from "@/components/ui/button";
 import { ChevronDown } from "lucide-react";
 
+const BATCH_SIZE = 3;
+
 const PlayersList = () => {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [players, setPlayers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedPositions, setSelectedPositions] = useState<string[]>([]);
   const [selectedAgeRanges, setSelectedAgeRanges] = useState<string[]>([]);
+  const [visibleCount, setVisibleCount] = useState(BATCH_SIZE);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
 
   const positions = [
     "GK",
@@ -142,6 +146,36 @@ const PlayersList = () => {
         : [...prev, range]
     );
   };
+
+  // Reset visible count when filters change
+  useEffect(() => {
+    setVisibleCount(BATCH_SIZE);
+  }, [selectedPositions, selectedAgeRanges]);
+
+  // Intersection Observer for lazy loading
+  const loadMore = useCallback(() => {
+    setVisibleCount(prev => prev + BATCH_SIZE);
+  }, []);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && visibleCount < filteredPlayers.length) {
+          loadMore();
+        }
+      },
+      { threshold: 0.1, rootMargin: '100px' }
+    );
+
+    if (loadMoreRef.current) {
+      observer.observe(loadMoreRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, [loadMore, visibleCount, filteredPlayers.length]);
+
+  // Get only visible players
+  const visiblePlayers = filteredPlayers.slice(0, visibleCount);
 
   if (loading) {
     return (
@@ -298,7 +332,7 @@ const PlayersList = () => {
                   : "flex flex-col divide-y divide-border"
               }
             >
-              {filteredPlayers.map((player) => (
+              {visiblePlayers.map((player) => (
                 <PlayerCard
                   key={player.id}
                   player={player}
@@ -306,6 +340,18 @@ const PlayersList = () => {
                 />
               ))}
             </div>
+
+            {/* Load more trigger */}
+            {visibleCount < filteredPlayers.length && (
+              <div 
+                ref={loadMoreRef} 
+                className="flex justify-center py-8"
+              >
+                <div className="text-muted-foreground animate-pulse font-bebas uppercase tracking-wider">
+                  Loading more players...
+                </div>
+              </div>
+            )}
 
             {filteredPlayers.length === 0 && (
               <div className="text-center py-12">
