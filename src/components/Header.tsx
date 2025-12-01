@@ -184,32 +184,49 @@ export const Header = () => {
 
   return <>
       {/* Top Utility Bar - only on homepage and only when not scrolled */}
-      {showTopBar && !isScrolled && <div className="fixed top-14 md:top-16 left-0 right-0 z-50 bg-background/95 backdrop-blur-md transition-all duration-500 border-b-2 border-primary">
+      {showTopBar && !isScrolled && <div className="fixed top-14 md:top-16 left-0 right-0 z-[99] bg-background/95 backdrop-blur-md transition-all duration-500 border-b-2 border-primary">
           <div className="container mx-auto px-2 md:px-4">
-          <div className="flex items-center justify-between h-8 md:h-10">
-            <div className="flex flex-wrap items-center gap-2 md:gap-4 transition-all duration-500">
-              <LocalizedLink to="/contact" className="text-xs md:text-sm font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500 flex items-center gap-1.5">
-                <MessageCircle className="w-3 h-3 md:w-3.5 md:h-3.5 hidden sm:block" />
+          <div className="flex items-center justify-center md:justify-between h-8 md:h-10 relative">
+            {/* Left items - hidden on mobile, shown on tablet+ */}
+            <div className="hidden md:flex items-center gap-4 transition-all duration-500">
+              <LocalizedLink to="/contact" className="text-sm font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500 flex items-center gap-1.5">
+                <MessageCircle className="w-3.5 h-3.5" />
                 <HoverText text={t("header.contact_us", "Contact Us")} />
               </LocalizedLink>
               <div className="w-px h-4 bg-white/20" />
-              <button onClick={() => setDeclareInterestOpen(true)} className="text-xs md:text-sm font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500 flex items-center gap-1.5">
-                <Users className="w-3 h-3 md:w-3.5 md:h-3.5 hidden sm:block" />
+              <button onClick={() => setDeclareInterestOpen(true)} className="text-sm font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500 flex items-center gap-1.5">
+                <Users className="w-3.5 h-3.5" />
                 <HoverText text={t("header.declare_interest", "Declare Interest In A Star")} />
               </button>
             </div>
-            {/* Language Selector - Centered */}
-            <div className="absolute left-1/2 -translate-x-1/2">
+            
+            {/* Mobile: Simplified centered items */}
+            <div className="flex md:hidden items-center gap-3">
+              <LocalizedLink to="/contact" className="text-[10px] font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500">
+                <HoverText text={t("header.contact_us", "Contact")} />
+              </LocalizedLink>
+              <div className="w-px h-3 bg-white/20" />
+              <LanguageSelector />
+              <div className="w-px h-3 bg-white/20" />
+              <LocalizedLink to="/login" className="text-[10px] font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500">
+                <HoverText text={t("header.portal", "Portal")} />
+              </LocalizedLink>
+            </div>
+            
+            {/* Language Selector - Centered on tablet+ only */}
+            <div className="hidden md:block absolute left-1/2 -translate-x-1/2">
               <LanguageSelector />
             </div>
-            <div className="flex flex-wrap items-center gap-2 md:gap-4 transition-all duration-500">
-              <button onClick={() => setRepresentationOpen(true)} className="text-xs md:text-sm font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500 flex items-center gap-1.5">
-                <Handshake className="w-3 h-3 md:w-3.5 md:h-3.5 hidden sm:block" />
+            
+            {/* Right items - hidden on mobile, shown on tablet+ */}
+            <div className="hidden md:flex items-center gap-4 transition-all duration-500">
+              <button onClick={() => setRepresentationOpen(true)} className="text-sm font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500 flex items-center gap-1.5">
+                <Handshake className="w-3.5 h-3.5" />
                 <HoverText text={t("header.request_representation", "Request Representation")} />
               </button>
               <div className="w-px h-4 bg-white/20" />
-              <LocalizedLink to="/login" className="text-xs md:text-sm font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500 flex items-center gap-1.5">
-                <LogIn className="w-3 h-3 md:w-3.5 md:h-3.5 hidden sm:block" />
+              <LocalizedLink to="/login" className="text-sm font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500 flex items-center gap-1.5">
+                <LogIn className="w-3.5 h-3.5" />
                 <HoverText text={t("header.portal", "Portal")} />
               </LocalizedLink>
             </div>
