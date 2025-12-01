@@ -8,6 +8,7 @@ import { LateralFilter } from "@/components/LateralFilter";
 import { Button } from "@/components/ui/button";
 import { DeclareInterestPlayerDialog } from "@/components/DeclareInterestPlayerDialog";
 import { ContactDialog } from "@/components/ContactDialog";
+import { LanguageSelector } from "@/components/LanguageSelector";
 import { LayoutGrid, List, Users, MessageCircle, ArrowRight } from "lucide-react";
 
 const BATCH_SIZE = 3;
@@ -215,8 +216,12 @@ const PlayersList = () => {
                   <h3 className="text-2xl font-bebas uppercase tracking-wider text-foreground group-hover:text-primary transition-colors">
                     Declare Interest in Player(s)
                   </h3>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Select players and submit your interest
+                  <p className="text-sm text-muted-foreground mt-1 flex items-center gap-2">
+                    <img src="/lovable-uploads/rise-logo-gold.png" alt="RISE" className="h-4 w-4 object-contain" />
+                    <span className="flex flex-col leading-tight">
+                      <span className="font-semibold">RISE Football Agency</span>
+                      <span>Elite Representation</span>
+                    </span>
                   </p>
                 </div>
                 <ArrowRight className="w-6 h-6 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
@@ -234,8 +239,12 @@ const PlayersList = () => {
                   <h3 className="text-2xl font-bebas uppercase tracking-wider text-foreground group-hover:text-primary transition-colors">
                     Contact
                   </h3>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Get in touch with us directly
+                  <p className="text-sm text-muted-foreground mt-1 flex items-center gap-2">
+                    <img src="/lovable-uploads/rise-logo-gold.png" alt="RISE" className="h-4 w-4 object-contain" />
+                    <span className="flex flex-col leading-tight">
+                      <span className="font-semibold">RISE Football Agency</span>
+                      <span>Direct Contact Available</span>
+                    </span>
                   </p>
                 </div>
                 <ArrowRight className="w-6 h-6 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
@@ -268,8 +277,15 @@ const PlayersList = () => {
               </button>
             </div>
 
+            {/* Language Selector */}
+            <div className="flex justify-center mb-4">
+              <div className="px-4 py-2 bg-card/50 backdrop-blur-sm border border-primary/20 rounded-lg">
+                <LanguageSelector />
+              </div>
+            </div>
+
             {/* Filters */}
-            <div className="mb-8 flex flex-wrap items-center gap-3">
+            <div className="mb-8 flex flex-wrap items-center gap-3 justify-center">
               <LateralFilter
                 label="Filter by Position"
                 options={positionOptions}
