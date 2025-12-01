@@ -135,7 +135,7 @@ export const PlayerCard = ({ player, viewMode = "grid" }: PlayerCardProps) => {
           {/* View Profile Button */}
           <div className="mt-2">
             <div className="inline-flex bg-primary rounded-md py-2.5 px-5 items-center gap-2 transition-all group-hover:brightness-110 group-hover:scale-105">
-              <span className="font-bebas uppercase tracking-wider text-black text-base">View Profile</span>
+              <span className="font-bebas uppercase tracking-wider text-black text-base">{t('player_card.view_profile', 'View Profile')}</span>
               <ArrowRight className="w-5 h-5 text-black group-hover:translate-x-1 transition-transform" />
             </div>
           </div>
@@ -196,7 +196,7 @@ export const PlayerCard = ({ player, viewMode = "grid" }: PlayerCardProps) => {
               <div className="h-12 flex items-center">
                 <span className="text-5xl font-bebas text-primary translate-y-[3px]">{player.age}</span>
               </div>
-              <div className="text-sm font-bebas uppercase text-white tracking-wider mt-1">Age</div>
+              <div className="text-sm font-bebas uppercase text-white tracking-wider mt-1">{t('player_card.age_label', 'Age')}</div>
             </div>
             
             {/* Nationality - Top Right */}
@@ -208,7 +208,7 @@ export const PlayerCard = ({ player, viewMode = "grid" }: PlayerCardProps) => {
                   className="w-14 h-10 object-cover rounded"
                 />
               </div>
-              <div className="text-sm font-bebas uppercase text-white tracking-wider mt-1">Nationality</div>
+              <div className="text-sm font-bebas uppercase text-white tracking-wider mt-1">{t('player_card.nationality_label', 'Nationality')}</div>
             </div>
           </div>
 
@@ -219,7 +219,7 @@ export const PlayerCard = ({ player, viewMode = "grid" }: PlayerCardProps) => {
               {/* Position - Bottom Left */}
               <div className="flex flex-col items-center">
                 <div className="text-5xl font-bebas text-primary mb-1 translate-y-1.5">{translatedPosition}</div>
-                <div className="text-sm font-bebas uppercase text-white tracking-wider">Position</div>
+                <div className="text-sm font-bebas uppercase text-white tracking-wider">{t('player_card.position_label', 'Position')}</div>
               </div>
               
               {/* Club - Bottom Right */}
@@ -237,13 +237,13 @@ export const PlayerCard = ({ player, viewMode = "grid" }: PlayerCardProps) => {
                 ) : (
                   <div className="h-12 mb-1" />
                 )}
-                <div className="text-sm font-bebas uppercase text-white tracking-wider">Club</div>
+                <div className="text-sm font-bebas uppercase text-white tracking-wider">{t('player_card.club_label', 'Club')}</div>
               </div>
             </div>
 
             {/* Profile Button */}
             <div className="bg-primary rounded-md py-3 px-4 flex items-center justify-center gap-2 transition-all hover:brightness-110">
-              <span className="font-bebas uppercase tracking-wider text-black">Player Profile</span>
+              <span className="font-bebas uppercase tracking-wider text-black">{t('player_card.player_profile', 'Player Profile')}</span>
               <ArrowRight className="w-5 h-5 text-black" />
             </div>
           </div>
