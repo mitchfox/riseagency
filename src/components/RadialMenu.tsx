@@ -6,9 +6,9 @@ import { useRoleSubdomain } from "@/hooks/useRoleSubdomain";
 import riseLogoBlack from "@/assets/RISEBlack.png";
 import whiteMarbleBg from "@/assets/white-marble.png";
 import smudgedMarbleBg from "@/assets/black-marble-smudged.png";
-import { Home, Star, TrendingUp, BookOpen, Newspaper, MessageCircle, Target, Trophy, Users, Handshake, Briefcase, Search, Calendar, Heart, Package, X } from "lucide-react";
+import { Home, Star, TrendingUp, BookOpen, Newspaper, MessageCircle, Target, Trophy, Users, Handshake, Briefcase, Search, Calendar, Heart, Package, X, ChevronDown } from "lucide-react";
 import { useState, useMemo } from "react";
-import { LanguageSelector } from "@/components/LanguageSelector";
+import ScoutingNetworkMap from "@/components/ScoutingNetworkMap";
 
 interface MenuItem {
   to: string;
@@ -19,10 +19,26 @@ interface MenuItem {
 }
 
 export const RadialMenu = () => {
-  const { t } = useLanguage();
+  const { t, language, switchLanguage } = useLanguage();
   const location = useLocation();
   const { currentRole, isRoleSubdomain, roleConfigs } = useRoleSubdomain();
   const [hoveredItem, setHoveredItem] = useState<number | null>(null);
+  const [showMap, setShowMap] = useState(false);
+
+  const languages = [
+    { code: "en" as const, name: "ENG", flag: "🇬🇧" },
+    { code: "es" as const, name: "ESP", flag: "🇪🇸" },
+    { code: "pt" as const, name: "POR", flag: "🇵🇹" },
+    { code: "fr" as const, name: "FRA", flag: "🇫🇷" },
+    { code: "de" as const, name: "DEU", flag: "🇩🇪" },
+    { code: "it" as const, name: "ITA", flag: "🇮🇹" },
+    { code: "pl" as const, name: "POL", flag: "🇵🇱" },
+    { code: "cs" as const, name: "ČES", flag: "🇨🇿" },
+    { code: "ru" as const, name: "РУС", flag: "🇷🇺" },
+    { code: "tr" as const, name: "TÜR", flag: "🇹🇷" },
+  ];
+
+  const selectedLanguage = languages.find(l => l.code === language) || languages[0];
 
   // Role-specific menu configurations
   const roleMenus: Record<string, MenuItem[]> = {
@@ -297,10 +313,59 @@ export const RadialMenu = () => {
           </div>
           
           {/* Language selector in lower half */}
-          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 z-20">
-            <LanguageSelector />
+          <div className="absolute bottom-1 left-1/2 -translate-x-1/2 z-20">
+            <button
+              onClick={() => setShowMap(!showMap)}
+              className="flex items-center gap-1 text-[10px] font-bebas uppercase tracking-wider text-black hover:text-primary transition-all duration-300 focus:outline-none"
+            >
+              <span className="text-sm">{selectedLanguage.flag}</span>
+              <span>{selectedLanguage.name}</span>
+              <ChevronDown className={`w-2.5 h-2.5 transition-transform duration-300 ${showMap ? 'rotate-180' : ''}`} />
+            </button>
           </div>
         </div>
+
+        {/* Map overlay */}
+        {showMap && (
+          <div className="absolute inset-0 z-30 bg-background/95 backdrop-blur-sm p-8 overflow-hidden">
+            {/* Close map button */}
+            <button
+              onClick={() => setShowMap(false)}
+              className="absolute top-8 right-8 z-40 group flex items-center justify-center focus:outline-none"
+            >
+              <div className="relative w-12 h-12 flex items-center justify-center">
+                <div className="absolute inset-0 bg-primary/20 rounded-full scale-0 group-hover:scale-100 transition-transform duration-500 ease-out" />
+                <div className="absolute inset-0 bg-primary/10 rounded-full scale-0 group-hover:scale-150 transition-transform duration-700 ease-out" />
+                <X className="h-8 w-8 text-white relative z-10 transition-all duration-300 group-hover:text-primary group-hover:rotate-90" />
+              </div>
+            </button>
+
+            {/* Language selector grid */}
+            <div className="absolute top-8 left-8 z-40 grid grid-cols-5 gap-2">
+              {languages.map((lang) => (
+                <button
+                  key={lang.code}
+                  onClick={() => switchLanguage(lang.code)}
+                  className={`flex flex-col items-center gap-1 p-2 rounded transition-colors ${
+                    language === lang.code
+                      ? "bg-primary/20 text-primary"
+                      : "text-foreground/70 hover:bg-foreground/5 hover:text-foreground"
+                  }`}
+                >
+                  <span className="text-xl">{lang.flag}</span>
+                  <span className="text-[10px] font-bebas uppercase tracking-wider">{lang.name}</span>
+                </button>
+              ))}
+            </div>
+
+            {/* Map */}
+            <div className="w-full h-full flex items-center justify-center">
+              <div className="w-full max-w-6xl h-[80vh]">
+                <ScoutingNetworkMap />
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
