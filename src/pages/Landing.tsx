@@ -57,15 +57,23 @@ export default function Landing() {
         </div>
       )}
 
-      {/* Drag Navigator - Center of screen */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full z-40 pointer-events-auto">
-        <DragNavigator options={desktopNavLinks} />
-      </div>
-
-      {/* Bottom Section - Navigation + Language Selector in Golden Box */}
+      {/* Bottom Section - Navigation + Drag Navigator + Language Selector in Golden Box */}
       <div className="pb-4 md:pb-12 z-50 relative px-2 md:px-0 w-full md:w-auto pointer-events-auto">
-        <div className="border-2 border-primary/60 bg-black/40 backdrop-blur-sm px-2 py-2 md:py-3">
+        <div className="border-2 border-primary/60 bg-black/40 backdrop-blur-sm px-4 py-4 md:py-5">
           
+          {/* Desktop Layout */}
+          <div className="hidden md:block">
+            {/* Drag Navigator */}
+            <div className="mb-4">
+              <DragNavigator options={desktopNavLinks} />
+            </div>
+            
+            {/* Language Selector */}
+            <div className="border-t border-primary/40 pt-3 flex justify-center">
+              <LanguageMapSelector onOpenChange={setLanguagePopupOpen} />
+            </div>
+          </div>
+
           {/* Mobile Layout - Compact horizontal scroll */}
           <div className="md:hidden flex flex-col items-center gap-1.5">
             {/* Navigation - horizontal scroll */}
@@ -91,29 +99,6 @@ export default function Landing() {
             </div>
           </div>
 
-          {/* Desktop Layout */}
-          <div className="hidden md:block">
-            <nav className="flex flex-row items-center justify-center flex-wrap gap-y-2">
-              {desktopNavLinks.map((link, index) => (
-                <div key={link.to} className="flex items-center justify-center">
-                  <Link
-                    to={link.to}
-                    className="px-6 text-base font-bebas uppercase tracking-[0.2em] text-white/80 hover:text-primary transition-colors duration-300"
-                  >
-                    <HoverText text={t(link.labelKey, link.fallback)} />
-                  </Link>
-                  {index < desktopNavLinks.length - 1 && (
-                    <div className="w-px h-4 bg-primary/50" />
-                  )}
-                </div>
-              ))}
-            </nav>
-            
-            {/* Language Selector - Below with divider on desktop */}
-            <div className="border-t border-primary/40 mt-3 pt-3 flex justify-center">
-              <LanguageMapSelector onOpenChange={setLanguagePopupOpen} />
-            </div>
-          </div>
         </div>
       </div>
     </div>
