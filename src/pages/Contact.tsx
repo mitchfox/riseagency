@@ -2,60 +2,79 @@ import { Header } from "@/components/Header";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { MessageCircle, Mail } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface ContactSection {
-  title: string;
-  description: string;
+  titleKey: string;
+  titleFallback: string;
+  descKey: string;
+  descFallback: string;
   whatsapp: string;
   email: string;
 }
 
-const contactSections: ContactSection[] = [
-  {
-    title: "Players",
-    description: "Take your career to the next level with professional representation",
-    whatsapp: "+447508342901",
-    email: "jolon.levene@risefootballagency.com"
-  },
-  {
-    title: "Clubs",
-    description: "Discover top talent for your squad through our extensive network",
-    whatsapp: "+447508342901",
-    email: "jolon.levene@risefootballagency.com"
-  },
-  {
-    title: "Media",
-    description: "Press inquiries and media relations",
-    whatsapp: "+447446365438",
-    email: "kuda.butawo@risefootballagency.com"
-  },
-  {
-    title: "Sponsors",
-    description: "Partnership and sponsorship opportunities",
-    whatsapp: "+447446365438",
-    email: "kuda.butawo@risefootballagency.com"
-  },
-  {
-    title: "Agents",
-    description: "Professional collaboration and networking",
-    whatsapp: "+447508342901",
-    email: "jolon.levene@risefootballagency.com"
-  },
-  {
-    title: "Player Parents",
-    description: "Supporting your young player's journey",
-    whatsapp: "+447508342901",
-    email: "jolon.levene@risefootballagency.com"
-  },
-  {
-    title: "Other",
-    description: "General inquiries and other matters",
-    whatsapp: "+447446365438",
-    email: "kuda.butawo@risefootballagency.com"
-  }
-];
-
 const Contact = () => {
+  const { t } = useLanguage();
+
+  const contactSections: ContactSection[] = [
+    {
+      titleKey: "contact.players",
+      titleFallback: "Players",
+      descKey: "contact.players_desc",
+      descFallback: "Take your career to the next level with professional representation",
+      whatsapp: "+447508342901",
+      email: "jolon.levene@risefootballagency.com"
+    },
+    {
+      titleKey: "contact.clubs",
+      titleFallback: "Clubs",
+      descKey: "contact.clubs_desc",
+      descFallback: "Discover top talent for your squad through our extensive network",
+      whatsapp: "+447508342901",
+      email: "jolon.levene@risefootballagency.com"
+    },
+    {
+      titleKey: "contact.media",
+      titleFallback: "Media",
+      descKey: "contact.media_desc",
+      descFallback: "Press inquiries and media relations",
+      whatsapp: "+447446365438",
+      email: "kuda.butawo@risefootballagency.com"
+    },
+    {
+      titleKey: "contact.sponsors",
+      titleFallback: "Sponsors",
+      descKey: "contact.sponsors_desc",
+      descFallback: "Partnership and sponsorship opportunities",
+      whatsapp: "+447446365438",
+      email: "kuda.butawo@risefootballagency.com"
+    },
+    {
+      titleKey: "contact.agents",
+      titleFallback: "Agents",
+      descKey: "contact.agents_desc",
+      descFallback: "Professional collaboration and networking",
+      whatsapp: "+447508342901",
+      email: "jolon.levene@risefootballagency.com"
+    },
+    {
+      titleKey: "contact.parents",
+      titleFallback: "Player Parents",
+      descKey: "contact.parents_desc",
+      descFallback: "Supporting your young player's journey",
+      whatsapp: "+447508342901",
+      email: "jolon.levene@risefootballagency.com"
+    },
+    {
+      titleKey: "contact.other",
+      titleFallback: "Other",
+      descKey: "contact.other_desc",
+      descFallback: "General inquiries and other matters",
+      whatsapp: "+447446365438",
+      email: "kuda.butawo@risefootballagency.com"
+    }
+  ];
+
   return (
     <>
       <SEO 
@@ -70,10 +89,10 @@ const Contact = () => {
         <div className="bg-background border-b border-primary/20">
           <div className="container mx-auto px-4 py-12">
             <h1 className="text-6xl md:text-7xl font-bebas uppercase text-foreground mb-4 tracking-wider">
-              Contact Us
+              {t('contact.title', 'Contact Us')}
             </h1>
             <p className="text-lg text-muted-foreground max-w-2xl">
-              Get in touch with the right team member for your needs
+              {t('contact.subtitle', 'Get in touch with the right team member for your needs')}
             </p>
           </div>
         </div>
@@ -83,15 +102,15 @@ const Contact = () => {
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {contactSections.map((section) => (
               <div 
-                key={section.title}
+                key={section.titleKey}
                 className="bg-secondary/30 backdrop-blur-sm p-8 rounded-lg border border-primary/20 hover:border-primary transition-all space-y-6"
               >
                 <div>
                   <h2 className="text-3xl font-bebas uppercase tracking-wider text-primary mb-3">
-                    {section.title}
+                    {t(section.titleKey, section.titleFallback)}
                   </h2>
                   <p className="text-muted-foreground">
-                    {section.description}
+                    {t(section.descKey, section.descFallback)}
                   </p>
                 </div>
 
@@ -107,7 +126,7 @@ const Contact = () => {
                       rel="noopener noreferrer"
                     >
                       <MessageCircle className="mr-2 h-5 w-5" />
-                      WhatsApp
+                      {t('contact.whatsapp', 'WhatsApp')}
                     </a>
                   </Button>
 
@@ -123,7 +142,7 @@ const Contact = () => {
                       rel="noopener noreferrer"
                     >
                       <Mail className="mr-2 h-5 w-5" />
-                      Email
+                      {t('contact.email', 'Email')}
                     </a>
                   </Button>
                 </div>

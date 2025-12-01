@@ -32,10 +32,10 @@ const Business = () => {
           
           <div className="relative container mx-auto px-4 text-center z-10">
             <h1 className="text-6xl md:text-8xl font-bebas uppercase tracking-wider text-white mb-4">
-              BUSINESS
+              {t('business.title', 'BUSINESS')}
             </h1>
             <p className="text-xl md:text-2xl text-white/90 max-w-3xl mx-auto">
-              Strategic Commercial Partnerships in Football
+              {t('business.subtitle', 'Strategic Commercial Partnerships in Football')}
             </p>
           </div>
         </section>
@@ -47,17 +47,17 @@ const Business = () => {
               <div className="space-y-6">
                 <div className="inline-flex items-center gap-2 text-primary">
                   <Handshake className="h-6 w-6" />
-                  <span className="text-sm font-bebas uppercase tracking-widest">Commercial Growth</span>
+                  <span className="text-sm font-bebas uppercase tracking-widest">{t('business.commercial_growth', 'Commercial Growth')}</span>
                 </div>
                 <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-foreground">
-                  PARTNER<span className="text-primary">SHIPS</span>
+                  {t('business.partnerships', 'PARTNERSHIPS')}
                 </h2>
                 <p className="text-lg text-muted-foreground leading-relaxed">
-                  Connect your brand with elite football talent and unlock new markets through strategic partnerships with RISE and our roster of professional players.
+                  {t('business.partnerships_desc', 'Connect your brand with elite football talent and unlock new markets through strategic partnerships with RISE and our roster of professional players.')}
                 </p>
                 <Collapsible>
                   <CollapsibleTrigger className="group flex items-center gap-3 px-4 py-2.5 bg-primary/10 hover:bg-primary/20 border border-primary/30 rounded-md transition-all">
-                    <span className="text-sm uppercase tracking-wider text-primary font-medium">Learn More</span>
+                    <span className="text-sm uppercase tracking-wider text-primary font-medium">{t('business.learn_more', 'Learn More')}</span>
                     <ChevronDown className="h-4 w-4 text-primary transition-transform group-data-[state=open]:rotate-180" />
                   </CollapsibleTrigger>
                   <CollapsibleContent className="mt-6 space-y-4 text-base text-muted-foreground leading-relaxed">
@@ -71,7 +71,7 @@ const Business = () => {
                 </Collapsible>
               </div>
               <div className="bg-card/50 border border-border rounded-lg p-8 space-y-6">
-                <h3 className="text-2xl font-bebas uppercase tracking-wider text-foreground">Partnership Benefits</h3>
+                <h3 className="text-2xl font-bebas uppercase tracking-wider text-foreground">{t('business.partnership_benefits', 'Partnership Benefits')}</h3>
                 <ul className="space-y-4">
                   <li className="flex items-start gap-3">
                     <div className="w-2 h-2 rounded-full bg-primary mt-2" />
@@ -103,36 +103,36 @@ const Business = () => {
                 <div className="grid grid-cols-2 gap-6">
                   <div className="text-center p-4 border border-border/50 rounded-lg">
                     <div className="text-4xl font-bebas text-primary mb-2">50+</div>
-                    <div className="text-sm text-muted-foreground uppercase tracking-wide">Active Players</div>
+                    <div className="text-sm text-muted-foreground uppercase tracking-wide">{t('business.active_players', 'Active Players')}</div>
                   </div>
                   <div className="text-center p-4 border border-border/50 rounded-lg">
                     <div className="text-4xl font-bebas text-primary mb-2">12</div>
-                    <div className="text-sm text-muted-foreground uppercase tracking-wide">Countries</div>
+                    <div className="text-sm text-muted-foreground uppercase tracking-wide">{t('business.countries', 'Countries')}</div>
                   </div>
                   <div className="text-center p-4 border border-border/50 rounded-lg">
                     <div className="text-4xl font-bebas text-primary mb-2">5M+</div>
-                    <div className="text-sm text-muted-foreground uppercase tracking-wide">Combined Reach</div>
+                    <div className="text-sm text-muted-foreground uppercase tracking-wide">{t('business.combined_reach', 'Combined Reach')}</div>
                   </div>
                   <div className="text-center p-4 border border-border/50 rounded-lg">
                     <div className="text-4xl font-bebas text-primary mb-2">100%</div>
-                    <div className="text-sm text-muted-foreground uppercase tracking-wide">Commitment</div>
+                    <div className="text-sm text-muted-foreground uppercase tracking-wide">{t('business.commitment', 'Commitment')}</div>
                   </div>
                 </div>
               </div>
               <div className="order-1 md:order-2 space-y-6">
                 <div className="inline-flex items-center gap-2 text-primary">
                   <TrendingUp className="h-6 w-6" />
-                  <span className="text-sm font-bebas uppercase tracking-widest">Brand Elevation</span>
+                  <span className="text-sm font-bebas uppercase tracking-widest">{t('business.brand_elevation', 'Brand Elevation')}</span>
                 </div>
                 <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-foreground">
-                  SPONSOR<span className="text-primary">SHIP</span>
+                  {t('business.sponsorship', 'SPONSORSHIP')}
                 </h2>
                 <p className="text-lg text-muted-foreground leading-relaxed">
-                  Elevate your brand through strategic sponsorship opportunities with rising stars and established professionals across European football.
+                  {t('business.sponsorship_desc', 'Elevate your brand through strategic sponsorship opportunities with rising stars and established professionals across European football.')}
                 </p>
                 <Collapsible>
                   <CollapsibleTrigger className="group flex items-center gap-3 px-4 py-2.5 bg-primary/10 hover:bg-primary/20 border border-primary/30 rounded-md transition-all">
-                    <span className="text-sm uppercase tracking-wider text-primary font-medium">Learn More</span>
+                    <span className="text-sm uppercase tracking-wider text-primary font-medium">{t('business.learn_more', 'Learn More')}</span>
                     <ChevronDown className="h-4 w-4 text-primary transition-transform group-data-[state=open]:rotate-180" />
                   </CollapsibleTrigger>
                   <CollapsibleContent className="mt-6 space-y-4 text-base text-muted-foreground leading-relaxed">
@@ -156,17 +156,17 @@ const Business = () => {
               <div className="space-y-6">
                 <div className="inline-flex items-center gap-2 text-primary">
                   <Shield className="h-6 w-6" />
-                  <span className="text-sm font-bebas uppercase tracking-widest">Secure Returns</span>
+                  <span className="text-sm font-bebas uppercase tracking-widest">{t('business.secure_returns', 'Secure Returns')}</span>
                 </div>
                 <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-foreground">
-                  INVEST<span className="text-primary">MENT</span>
+                  {t('business.investment', 'INVESTMENT')}
                 </h2>
                 <p className="text-lg text-muted-foreground leading-relaxed">
-                  Explore investment opportunities in player development, transfers, and football infrastructure with RISE as your trusted partner.
+                  {t('business.investment_desc', 'Explore investment opportunities in player development, transfers, and football infrastructure with RISE as your trusted partner.')}
                 </p>
                 <Collapsible>
                   <CollapsibleTrigger className="group flex items-center gap-3 px-4 py-2.5 bg-primary/10 hover:bg-primary/20 border border-primary/30 rounded-md transition-all">
-                    <span className="text-sm uppercase tracking-wider text-primary font-medium">Learn More</span>
+                    <span className="text-sm uppercase tracking-wider text-primary font-medium">{t('business.learn_more', 'Learn More')}</span>
                     <ChevronDown className="h-4 w-4 text-primary transition-transform group-data-[state=open]:rotate-180" />
                   </CollapsibleTrigger>
                   <CollapsibleContent className="mt-6 space-y-4 text-base text-muted-foreground leading-relaxed">
@@ -180,15 +180,15 @@ const Business = () => {
                 </Collapsible>
               </div>
               <div className="bg-card/50 border border-border rounded-lg p-8 space-y-6">
-                <h3 className="text-2xl font-bebas uppercase tracking-wider text-foreground">Investment Areas</h3>
+                <h3 className="text-2xl font-bebas uppercase tracking-wider text-foreground">{t('business.investment_areas', 'Investment Areas')}</h3>
                 <div className="space-y-4">
                   <div className="flex items-center gap-4 p-4 border border-border/50 rounded-lg">
                     <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center">
                       <Users className="h-6 w-6 text-primary" />
                     </div>
                     <div>
-                      <h4 className="font-bebas uppercase tracking-wide text-foreground">Player Development</h4>
-                      <p className="text-sm text-muted-foreground">Fund the next generation of talent</p>
+                      <h4 className="font-bebas uppercase tracking-wide text-foreground">{t('business.player_development', 'Player Development')}</h4>
+                      <p className="text-sm text-muted-foreground">{t('business.fund_talent', 'Fund the next generation of talent')}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-4 p-4 border border-border/50 rounded-lg">
@@ -196,8 +196,8 @@ const Business = () => {
                       <TrendingUp className="h-6 w-6 text-primary" />
                     </div>
                     <div>
-                      <h4 className="font-bebas uppercase tracking-wide text-foreground">Transfer Rights</h4>
-                      <p className="text-sm text-muted-foreground">Participate in player transactions</p>
+                      <h4 className="font-bebas uppercase tracking-wide text-foreground">{t('business.transfer_rights', 'Transfer Rights')}</h4>
+                      <p className="text-sm text-muted-foreground">{t('business.participate_transactions', 'Participate in player transactions')}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-4 p-4 border border-border/50 rounded-lg">
@@ -205,8 +205,8 @@ const Business = () => {
                       <Shield className="h-6 w-6 text-primary" />
                     </div>
                     <div>
-                      <h4 className="font-bebas uppercase tracking-wide text-foreground">Infrastructure</h4>
-                      <p className="text-sm text-muted-foreground">Support football technology & facilities</p>
+                      <h4 className="font-bebas uppercase tracking-wide text-foreground">{t('business.infrastructure', 'Infrastructure')}</h4>
+                      <p className="text-sm text-muted-foreground">{t('business.support_tech', 'Support football technology & facilities')}</p>
                     </div>
                   </div>
                 </div>
@@ -219,13 +219,13 @@ const Business = () => {
         <section className="py-16 md:py-24 bg-muted/30">
           <div className="container mx-auto px-4 text-center">
             <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider mb-6">
-              Let's Build <span className="text-primary">Together</span>
+              {t('business.lets_build', "Let's Build Together")}
             </h2>
             <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-              Ready to explore commercial opportunities with RISE? Get in touch with our business development team.
+              {t('business.cta_desc', 'Ready to explore commercial opportunities with RISE? Get in touch with our business development team.')}
             </p>
             <Button asChild size="lg" className="btn-shine font-bebas uppercase tracking-wider">
-              <a href="mailto:jolon.levene@risefootballagency.com?subject=Business%20Inquiry">Contact Business Team</a>
+              <a href="mailto:jolon.levene@risefootballagency.com?subject=Business%20Inquiry">{t('business.contact_team', 'Contact Business Team')}</a>
             </Button>
           </div>
         </section>
