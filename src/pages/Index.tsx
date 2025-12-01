@@ -37,11 +37,6 @@ const Index = () => {
   const { translatedArticles: translatedInsideAccess } = useTranslatedNews(insideAccessArticles);
 
   useEffect(() => {
-    const hasSeenIntro = localStorage.getItem("intro-modal-seen");
-    if (!hasSeenIntro) {
-      setShowIntroModal(true);
-    }
-
     // Fetch regular news articles
     const fetchNews = async () => {
       const { data, error } = await supabase

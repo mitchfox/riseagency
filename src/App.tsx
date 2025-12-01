@@ -91,7 +91,7 @@ const App = () => {
               {(displayLocation) => (
                 <Routes location={displayLocation}>
                   <Route path="/" element={<Landing />} />
-                  <Route path="/home" element={<Index />} />
+                  <Route path="/players" element={<Index />} />
                   <Route path="/intro" element={<Intro />} />
                   
                   {/* Localized routes */}
@@ -114,7 +114,7 @@ const App = () => {
                   {createLocalizedRoutes('/portal', <Dashboard />)}
                   
                   {/* Non-localized routes */}
-                  <Route path="/players" element={<Players />} />
+                  <Route path="/playersmore" element={<Players />} />
                   <Route path="/players-list" element={<PlayersList />} />
                   <Route path="/players-draft" element={<PlayersDraft />} />
                   <Route path="/club-network" element={<ClubNetwork />} />

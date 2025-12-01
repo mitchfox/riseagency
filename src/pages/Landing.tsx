@@ -11,9 +11,9 @@ export default function Landing() {
   const { t } = useLanguage();
   const [languagePopupOpen, setLanguagePopupOpen] = useState(false);
   
-  // Desktop navigation (PLAYERS goes to /home, no HOME option)
+  // Desktop navigation (PLAYERS goes to /players)
   const desktopNavLinks = [
-    { to: "/home", labelKey: "landing.nav_players", fallback: "PLAYERS" },
+    { to: "/players", labelKey: "landing.nav_players", fallback: "PLAYERS" },
     { to: "/coaches", labelKey: "landing.nav_coaches", fallback: "COACHES" },
     { to: "/clubs", labelKey: "landing.nav_clubs", fallback: "CLUBS" },
     { to: "/agents", labelKey: "landing.nav_agents", fallback: "AGENTS" },
@@ -24,7 +24,7 @@ export default function Landing() {
 
   // Mobile navigation
   const mobileNavLinks = [
-    { to: "/home", labelKey: "landing.nav_players", fallback: "PLAYERS" },
+    { to: "/players", labelKey: "landing.nav_players", fallback: "PLAYERS" },
     { to: "/coaches", labelKey: "landing.nav_coaches", fallback: "COACHES" },
     { to: "/clubs", labelKey: "landing.nav_clubs", fallback: "CLUBS" },
     { to: "/agents", labelKey: "landing.nav_agents", fallback: "AGENTS" },

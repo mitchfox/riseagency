@@ -37,7 +37,7 @@ export const Footer = () => {
               <LocalizedLink to="/stars" className="text-muted-foreground hover:text-primary transition-colors">
                 {t("footer.stars", "Stars")}
               </LocalizedLink>
-              <Link to="/players" className="text-muted-foreground hover:text-primary transition-colors">
+              <Link to="/playersmore" className="text-muted-foreground hover:text-primary transition-colors">
                 {t("footer.players", "Players")}
               </Link>
               <LocalizedLink to="/clubs" className="text-muted-foreground hover:text-primary transition-colors">
