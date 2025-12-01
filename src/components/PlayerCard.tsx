@@ -181,7 +181,7 @@ export const PlayerCard = ({ player, viewMode = "grid" }: PlayerCardProps) => {
             {/* Age - Top Left */}
             <div className="flex flex-col items-center">
               <div className="h-12 flex items-center">
-                <span className="text-5xl font-bebas text-primary">{player.age}</span>
+                <span className="text-5xl font-bebas text-primary translate-y-[3px]">{player.age}</span>
               </div>
               <div className="text-sm font-bebas uppercase text-white tracking-wider mt-1">Age</div>
             </div>
@@ -205,7 +205,7 @@ export const PlayerCard = ({ player, viewMode = "grid" }: PlayerCardProps) => {
             <div className="flex justify-between mb-6">
               {/* Position - Bottom Left */}
               <div className="flex flex-col items-center">
-                <div className="text-5xl font-bebas text-primary mb-1 translate-y-1">{player.position}</div>
+                <div className="text-5xl font-bebas text-primary mb-1 translate-y-1.5">{player.position}</div>
                 <div className="text-sm font-bebas uppercase text-white tracking-wider">Position</div>
               </div>
               
