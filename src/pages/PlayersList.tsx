@@ -10,10 +10,12 @@ import { DeclareInterestPlayerDialog } from "@/components/DeclareInterestPlayerD
 import { ContactDialog } from "@/components/ContactDialog";
 import { LanguageMapSelector } from "@/components/LanguageMapSelector";
 import { LayoutGrid, List, Users, MessageCircle, ArrowRight } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const BATCH_SIZE = 3;
 
 const PlayersList = () => {
+  const { t } = useLanguage();
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [players, setPlayers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -186,7 +188,7 @@ const PlayersList = () => {
         <Header />
         <main className="pt-16">
           <div className="container mx-auto px-4 py-24 text-center">
-            <p className="text-xl text-muted-foreground">Loading players...</p>
+            <p className="text-xl text-muted-foreground">{t('players_list.loading', 'Loading players...')}</p>
           </div>
         </main>
         <Footer />
@@ -219,10 +221,10 @@ const PlayersList = () => {
                 </div>
                 <div className="flex-1 text-left">
                   <h3 className="text-2xl font-bebas uppercase tracking-wider text-foreground group-hover:text-primary transition-colors">
-                    Declare Interest in Player(s)
+                    {t('players_list.declare_interest', 'Declare Interest in Player(s)')}
                   </h3>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Select players and submit your interest
+                    {t('players_list.declare_interest_desc', 'Select players and submit your interest')}
                   </p>
                 </div>
                 <ArrowRight className="w-6 h-6 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
@@ -238,10 +240,10 @@ const PlayersList = () => {
                 </div>
                 <div className="flex-1 text-left">
                   <h3 className="text-2xl font-bebas uppercase tracking-wider text-foreground group-hover:text-primary transition-colors">
-                    Contact
+                    {t('players_list.contact', 'Contact')}
                   </h3>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Get in touch with us directly
+                    {t('players_list.contact_desc', 'Get in touch with us directly')}
                   </p>
                 </div>
                 <ArrowRight className="w-6 h-6 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
@@ -282,7 +284,7 @@ const PlayersList = () => {
             {/* Filters */}
             <div className="mb-8 flex flex-wrap items-center gap-3 justify-center">
               <LateralFilter
-                label="Filter by Position"
+                label={t('players_list.filter_position', 'Filter by Position')}
                 options={positionOptions}
                 selectedValues={selectedPositions}
                 onToggle={togglePosition}
@@ -290,7 +292,7 @@ const PlayersList = () => {
               />
 
               <LateralFilter
-                label="Filter by Age"
+                label={t('players_list.filter_age', 'Filter by Age')}
                 options={ageRangeOptions}
                 selectedValues={selectedAgeRanges}
                 onToggle={toggleAgeRange}
@@ -308,7 +310,7 @@ const PlayersList = () => {
                   }}
                   className="font-bebas uppercase tracking-wider text-muted-foreground hover:text-foreground"
                 >
-                  Clear All Filters
+                  {t('players_list.clear_filters', 'Clear All Filters')}
                 </Button>
               )}
             </div>
@@ -337,14 +339,14 @@ const PlayersList = () => {
                 className="flex justify-center py-8"
               >
                 <div className="text-muted-foreground animate-pulse font-bebas uppercase tracking-wider">
-                  Loading more players...
+                  {t('players_list.loading_more', 'Loading more players...')}
                 </div>
               </div>
             )}
 
             {filteredPlayers.length === 0 && (
               <div className="text-center py-12">
-                <p className="text-xl text-muted-foreground">No players match the selected filters</p>
+                <p className="text-xl text-muted-foreground">{t('players_list.no_players', 'No players match the selected filters')}</p>
               </div>
             )}
           </div>
