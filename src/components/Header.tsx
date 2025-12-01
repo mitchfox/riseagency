@@ -410,7 +410,7 @@ export const Header = () => {
                 </svg>
               </button>
             </DrawerTrigger>
-            <DrawerContent>
+            <DrawerContent className="fixed inset-0 h-screen w-full !mt-0 rounded-none transition-all duration-300 ease-out z-[200] overflow-hidden">
               <RadialMenu />
             </DrawerContent>
           </Drawer>
