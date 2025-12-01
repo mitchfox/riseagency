@@ -113,7 +113,7 @@ export const RadialMenu = () => {
     };
   };
 
-  const radius = 210; // Distance from center
+  const radius = 180; // Distance from center
   const circleSize = 600; // Main circle diameter
 
   const segmentAngle = 360 / menuItems.length;
@@ -163,7 +163,7 @@ export const RadialMenu = () => {
           return (
             <div
               key={`divider-${index}`}
-              className="absolute top-1/2 left-1/2 origin-left h-[1px] bg-primary/30 pointer-events-none"
+              className="absolute top-1/2 left-1/2 origin-left h-[1px] bg-black pointer-events-none"
               style={{
                 width: `${circleSize / 2.2}px`,
                 transform: `rotate(${angle}deg)`,
@@ -196,8 +196,6 @@ export const RadialMenu = () => {
                   Z
                 `}
                 fill={hovered ? "rgba(255,255,255,1)" : "rgba(128,128,128,0.1)"}
-                stroke="rgba(255,255,255,0.4)"
-                strokeWidth="1.5"
                 onMouseEnter={() => setHoveredItem(index)}
                 onMouseLeave={() => setHoveredItem(null)}
               />
