@@ -23,8 +23,8 @@ interface MapClub {
 }
 
 export const MapCoordinatesManager = () => {
-  const [contacts, setContacts] = useState<MapClub[]>([]);
-  const [editedContacts, setEditedContacts] = useState<Record<string, { x_position: string; y_position: string }>>({});
+  const [clubs, setClubs] = useState<MapClub[]>([]);
+  const [editedClubs, setEditedClubs] = useState<Record<string, { x_position: string; y_position: string }>>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -41,10 +41,10 @@ export const MapCoordinatesManager = () => {
   });
 
   useEffect(() => {
-    fetchContacts();
+    fetchClubs();
   }, []);
 
-  const fetchContacts = async () => {
+  const fetchClubs = async () => {
     try {
       const { data, error } = await supabase
         .from("club_network_contacts")
@@ -53,7 +53,7 @@ export const MapCoordinatesManager = () => {
         .order("name", { ascending: true });
 
       if (error) throw error;
-      setContacts(data || []);
+      setClubs(data || []);
     } catch (error: any) {
       console.error("Error fetching clubs:", error);
       toast.error("Failed to load clubs");
@@ -84,7 +84,7 @@ export const MapCoordinatesManager = () => {
 
       setDialogOpen(false);
       resetForm();
-      fetchContacts();
+      fetchClubs();
       setMapKey(prev => prev + 1); // Refresh map
     } catch (error: any) {
       console.error("Error saving club:", error);
@@ -93,8 +93,8 @@ export const MapCoordinatesManager = () => {
   };
 
   const handleCoordinateChange = (clubId: string, field: 'x_position' | 'y_position', value: string) => {
-    setEditedContacts(prev => {
-      const club = contacts.find(c => c.id === clubId);
+    setEditedClubs(prev => {
+      const club = clubs.find(c => c.id === clubId);
       const existing = prev[clubId];
       
       return {
@@ -108,21 +108,21 @@ export const MapCoordinatesManager = () => {
   };
 
   const getCurrentValue = (club: MapClub, field: 'x_position' | 'y_position') => {
-    if (editedContacts[club.id]?.[field] !== undefined) {
-      return editedContacts[club.id][field];
+    if (editedClubs[club.id]?.[field] !== undefined) {
+      return editedClubs[club.id][field];
     }
     return club[field]?.toString() ?? '';
   };
 
   const handleSaveAll = async () => {
-    if (Object.keys(editedContacts).length === 0) {
+    if (Object.keys(editedClubs).length === 0) {
       toast.info("No changes to save");
       return;
     }
 
     setSaving(true);
     try {
-      const updates = Object.entries(editedContacts).map(([id, coords]) => ({
+      const updates = Object.entries(editedClubs).map(([id, coords]) => ({
         id,
         x_position: coords.x_position ? parseFloat(coords.x_position) : null,
         y_position: coords.y_position ? parseFloat(coords.y_position) : null,
@@ -141,8 +141,8 @@ export const MapCoordinatesManager = () => {
       }
 
       toast.success(`Updated ${updates.length} club${updates.length > 1 ? 's' : ''}`);
-      setEditedContacts({});
-      fetchContacts();
+      setEditedClubs({});
+      fetchClubs();
       setMapKey(prev => prev + 1); // Refresh map after saving
     } catch (error: any) {
       console.error("Error saving changes:", error);
@@ -163,7 +163,7 @@ export const MapCoordinatesManager = () => {
 
       if (error) throw error;
       toast.success("Club removed from map");
-      fetchContacts();
+      fetchClubs();
       setMapKey(prev => prev + 1); // Refresh map
     } catch (error: any) {
       console.error("Error deleting club:", error);
@@ -187,20 +187,20 @@ export const MapCoordinatesManager = () => {
     toast.success("Map refreshed");
   };
 
-  const hasChanges = Object.keys(editedContacts).length > 0;
+  const hasChanges = Object.keys(editedClubs).length > 0;
 
-  const uniqueCountries = Array.from(new Set(contacts.map(c => c.country).filter(Boolean))).sort();
+  const uniqueCountries = Array.from(new Set(clubs.map(c => c.country).filter(Boolean))).sort();
   
-  const filteredContacts = selectedCountry === "all" 
-    ? contacts 
-    : contacts.filter(c => c.country === selectedCountry);
+  const filteredClubs = selectedCountry === "all" 
+    ? clubs 
+    : clubs.filter(c => c.country === selectedCountry);
   
   // For "all" filter, limit to visibleCount; for specific country, show all
-  const displayedContacts = selectedCountry === "all" 
-    ? filteredContacts.slice(0, visibleCount)
-    : filteredContacts;
+  const displayedClubs = selectedCountry === "all" 
+    ? filteredClubs.slice(0, visibleCount)
+    : filteredClubs;
   
-  const hasMoreToLoad = selectedCountry === "all" && filteredContacts.length > visibleCount;
+  const hasMoreToLoad = selectedCountry === "all" && filteredClubs.length > visibleCount;
 
   const handleCountryChange = (value: string) => {
     setSelectedCountry(value);
@@ -256,7 +256,7 @@ export const MapCoordinatesManager = () => {
           {hasChanges && (
             <Button onClick={handleSaveAll} disabled={saving}>
               <Save className="h-4 w-4 mr-2" />
-              {saving ? 'Saving...' : `Save ${Object.keys(editedContacts).length} Change${Object.keys(editedContacts).length > 1 ? 's' : ''}`}
+              {saving ? 'Saving...' : `Save ${Object.keys(editedClubs).length} Change${Object.keys(editedClubs).length > 1 ? 's' : ''}`}
             </Button>
           )}
           <Dialog open={dialogOpen} onOpenChange={(open) => {
@@ -366,11 +366,11 @@ export const MapCoordinatesManager = () => {
       {/* Table */}
       {loading ? (
         <div className="text-center py-12">Loading clubs...</div>
-      ) : contacts.length === 0 ? (
+      ) : clubs.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">
           No clubs on the map yet. Click "Add Club" to begin.
         </div>
-      ) : filteredContacts.length === 0 ? (
+      ) : filteredClubs.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">
           No clubs found for this country.
         </div>
@@ -389,7 +389,7 @@ export const MapCoordinatesManager = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {displayedContacts.map((club) => (
+                {displayedClubs.map((club) => (
                   <TableRow key={club.id}>
                     <TableCell className="font-medium">{club.name}</TableCell>
                     <TableCell className="text-muted-foreground">{club.club_name || "—"}</TableCell>
@@ -432,7 +432,7 @@ export const MapCoordinatesManager = () => {
           {hasMoreToLoad && (
             <div className="p-4 border-t border-border">
               <Button variant="outline" onClick={loadMore} className="w-full">
-                Load More ({filteredContacts.length - visibleCount} remaining)
+                Load More ({filteredClubs.length - visibleCount} remaining)
               </Button>
             </div>
           )}
