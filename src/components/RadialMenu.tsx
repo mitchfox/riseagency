@@ -146,10 +146,10 @@ export const RadialMenu = () => {
         }}
       />
 
-      {/* Close button - top left */}
+      {/* Close button - top right */}
       <DrawerClose asChild>
         <button
-          className="absolute top-8 left-8 z-50 group flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-white transition-all duration-300 ease-out"
+          className="absolute top-8 right-8 z-50 group flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-white transition-all duration-300 ease-out hover:scale-110 hover:rotate-90"
           aria-label="Close menu"
         >
           <X className="h-8 w-8 text-white group-hover:text-primary transition-colors duration-300" />
