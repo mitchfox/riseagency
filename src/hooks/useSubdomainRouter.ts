@@ -3,12 +3,14 @@ import { useNavigate, useLocation } from 'react-router-dom';
 
 const subdomainRoutes: Record<string, string> = {
   'portal': '/portal',
-  'scouts': '/scout-portal',
+  'scouts': '/scouts',
   'potential': '/potential',
   'players': '/playersmore',
   'clubs': '/clubs',
   'agents': '/agents',
-  'coaches': '/coaches'
+  'coaches': '/coaches',
+  'media': '/media',
+  'business': '/business'
 };
 
 // Language subdomains (don't trigger route redirects)
