@@ -6,9 +6,12 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { LateralFilter } from "@/components/LateralFilter";
-import { LayoutGrid, List, Users, MessageCircle, ArrowRight } from "lucide-react";
+import { LayoutGrid, List, Users, MessageCircle, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { parsePlayerBio } from "@/lib/playerDataParser";
+
+const PLAYERS_PER_PAGE = 12;
 
 const Stars = () => {
   const { t } = useLanguage();
@@ -17,6 +20,7 @@ const Stars = () => {
   const [loading, setLoading] = useState(true);
   const [selectedPositions, setSelectedPositions] = useState<string[]>([]);
   const [selectedAgeRanges, setSelectedAgeRanges] = useState<string[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const positionOptions = [
     { label: "#1 - GK", value: "#1 - Goalkeeper" },
@@ -51,51 +55,12 @@ const Stars = () => {
         .order('name');
       
       if (!error && data) {
-        // Parse bio to extract club info for each player
+        // Use optimized parser
         const playersWithParsedData = data.map((player: any) => {
-          let currentClub = '';
-          let clubLogo = '';
-          let currentLeague = '';
-          let tacticalFormations = [];
-          
-          if (player.bio) {
-            try {
-              const parsed = JSON.parse(player.bio);
-              if (typeof parsed === 'object' && parsed !== null) {
-                currentClub = parsed.currentClub || '';
-                currentLeague = parsed.currentLeague || '';
-                
-                // Extract from schemeHistory or tacticalFormations
-                if (parsed.schemeHistory && Array.isArray(parsed.schemeHistory) && parsed.schemeHistory.length > 0) {
-                  clubLogo = parsed.schemeHistory[0].clubLogo || '';
-                  if (!currentLeague) currentLeague = parsed.schemeHistory[0].league || parsed.schemeHistory[0].competition || '';
-                  tacticalFormations = parsed.schemeHistory.map((scheme: any) => ({
-                    formation: scheme.formation,
-                    role: scheme.positions?.[0] || '',
-                    positions: scheme.positions || [],
-                    club: scheme.teamName,
-                    clubLogo: scheme.clubLogo,
-                    playerImage: scheme.playerImage,
-                    appearances: scheme.matches,
-                    matches: scheme.matches
-                  }));
-                } else if (parsed.tacticalFormations && Array.isArray(parsed.tacticalFormations) && parsed.tacticalFormations.length > 0) {
-                  clubLogo = parsed.tacticalFormations[0].clubLogo || '';
-                  if (!currentLeague) currentLeague = parsed.tacticalFormations[0].league || parsed.tacticalFormations[0].competition || '';
-                  tacticalFormations = parsed.tacticalFormations;
-                }
-              }
-            } catch (e) {
-              console.error('Error parsing player bio:', e);
-            }
-          }
-          
+          const parsedData = parsePlayerBio(player.bio);
           return {
             ...player,
-            currentClub,
-            clubLogo,
-            currentLeague,
-            tacticalFormations
+            ...parsedData
           };
         });
         
@@ -128,6 +93,17 @@ const Stars = () => {
     
     return true;
   });
+
+  // Pagination
+  const totalPages = Math.ceil(filteredPlayers.length / PLAYERS_PER_PAGE);
+  const startIndex = (currentPage - 1) * PLAYERS_PER_PAGE;
+  const endIndex = startIndex + PLAYERS_PER_PAGE;
+  const paginatedPlayers = filteredPlayers.slice(startIndex, endIndex);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedPositions, selectedAgeRanges]);
 
   const togglePosition = (position: string) => {
     setSelectedPositions(prev =>
@@ -312,7 +288,7 @@ const Stars = () => {
                   : "flex flex-col divide-y divide-border"
               }
             >
-              {filteredPlayers.map((player) => (
+              {paginatedPlayers.map((player) => (
                 <PlayerCard
                   key={player.id}
                   player={player}
@@ -324,6 +300,37 @@ const Stars = () => {
             {filteredPlayers.length === 0 && (
               <div className="text-center py-12">
                 <p className="text-xl text-muted-foreground">{t('stars.no_players', 'No players match the selected filters')}</p>
+              </div>
+            )}
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex justify-center items-center gap-4 mt-12">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="font-bebas uppercase"
+                >
+                  <ChevronLeft className="w-4 h-4 mr-1" />
+                  Previous
+                </Button>
+                
+                <span className="text-sm text-muted-foreground font-bebas">
+                  Page {currentPage} of {totalPages}
+                </span>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                  className="font-bebas uppercase"
+                >
+                  Next
+                  <ChevronRight className="w-4 h-4 ml-1" />
+                </Button>
               </div>
             )}
           </div>

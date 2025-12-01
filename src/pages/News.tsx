@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useParams, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 import { useAutoTranslate } from "@/hooks/useAutoTranslate";
 import { useLanguage } from "@/contexts/LanguageContext";
 
@@ -110,12 +110,15 @@ const ArticleView = ({ article }: { article: NewsArticle }) => {
   );
 };
 
+const ARTICLES_PER_PAGE = 9;
+
 const News = () => {
   const { articleId } = useParams();
   const { t } = useLanguage();
   const [newsItems, setNewsItems] = useState<NewsArticle[]>([]);
   const [currentArticle, setCurrentArticle] = useState<NewsArticle | null>(null);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     if (articleId) {
@@ -215,7 +218,9 @@ const News = () => {
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {newsItems.map((item) => (
+                    {newsItems
+                      .slice((currentPage - 1) * ARTICLES_PER_PAGE, currentPage * ARTICLES_PER_PAGE)
+                      .map((item) => (
                       <Link key={item.id} to={`/news/${createSlug(item.title)}`}>
                         <div className="group cursor-pointer overflow-hidden rounded-lg border border-border hover:border-primary/50 transition-all hover:shadow-lg">
                           {item.image_url && (
@@ -224,6 +229,7 @@ const News = () => {
                                 src={item.image_url} 
                                 alt={item.title}
                                 className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                                loading="lazy"
                               />
                               <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent opacity-60 group-hover:opacity-80 transition-opacity" />
                               
@@ -256,6 +262,37 @@ const News = () => {
                         </div>
                       </Link>
                     ))}
+                  </div>
+                )}
+                
+                {/* Pagination */}
+                {!loading && newsItems.length > ARTICLES_PER_PAGE && (
+                  <div className="flex justify-center items-center gap-4 mt-12">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                      disabled={currentPage === 1}
+                      className="font-bebas uppercase"
+                    >
+                      <ChevronLeft className="w-4 h-4 mr-1" />
+                      Previous
+                    </Button>
+                    
+                    <span className="text-sm text-muted-foreground font-bebas">
+                      Page {currentPage} of {Math.ceil(newsItems.length / ARTICLES_PER_PAGE)}
+                    </span>
+                    
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(p => Math.min(Math.ceil(newsItems.length / ARTICLES_PER_PAGE), p + 1))}
+                      disabled={currentPage === Math.ceil(newsItems.length / ARTICLES_PER_PAGE)}
+                      className="font-bebas uppercase"
+                    >
+                      Next
+                      <ChevronRight className="w-4 h-4 ml-1" />
+                    </Button>
                   </div>
                 )}
               </>

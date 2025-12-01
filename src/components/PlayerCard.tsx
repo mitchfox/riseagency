@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { getCountryFlagUrl } from "@/lib/countryFlags";
 import { ArrowRight } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { LazyImage } from "@/components/LazyImage";
 
 interface PlayerCardProps {
   player: any; // Changed from Player to any since we're using database structure
@@ -81,7 +82,7 @@ export const PlayerCard = ({ player, viewMode = "grid" }: PlayerCardProps) => {
       >
         {/* Player Image */}
         <div className="relative w-32 h-44 flex-shrink-0 overflow-hidden rounded-lg shadow-lg">
-          <img
+          <LazyImage
             src={player.image_url || `/lovable-uploads/${player.name.toLowerCase().replace(/\s+/g, '-')}.png`}
             alt={player.name}
             className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 ${
@@ -163,7 +164,7 @@ export const PlayerCard = ({ player, viewMode = "grid" }: PlayerCardProps) => {
       {/* Player Image */}
       <div className="relative aspect-[3/4] overflow-hidden">
         {/* Background Layer - base image */}
-        <img
+        <LazyImage
           src={player.image_url || `/lovable-uploads/${player.name.toLowerCase().replace(/\s+/g, '-')}.png`}
           alt={player.name}
           className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 z-0 ${
@@ -185,7 +186,7 @@ export const PlayerCard = ({ player, viewMode = "grid" }: PlayerCardProps) => {
         
         {/* Hover Layer - transparent background image (shown on hover) */}
         {player.hover_image_url && (
-          <img
+          <LazyImage
             src={player.hover_image_url}
             alt={`${player.name} hover`}
             className="absolute inset-0 w-full h-full object-cover transition-all duration-700 z-20 opacity-0 md:group-hover:opacity-100"
