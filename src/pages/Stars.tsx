@@ -144,7 +144,7 @@ const Stars = () => {
         <Header />
         <main className="pt-16">
           <div className="container mx-auto px-4 py-24 text-center">
-            <p className="text-xl text-muted-foreground">{t('stars.loading')}</p>
+            <p className="text-xl text-muted-foreground">{t('stars.loading', 'Loading players...')}</p>
           </div>
         </main>
         <Footer />
@@ -168,10 +168,10 @@ const Stars = () => {
           <div className="container mx-auto">
             <div className="text-center mb-12">
               <h1 className="text-6xl md:text-8xl font-bebas uppercase tracking-wider text-foreground mb-4">
-                {t('stars.title')}
+                {t('stars.title', 'Our Stars')}
               </h1>
               <p className="text-xl text-muted-foreground max-w-3xl lg:max-w-5xl mx-auto">
-                {t('stars.subtitle')}
+                {t('stars.subtitle', 'Meet our talented roster of professional footballers')}
               </p>
             </div>
 
@@ -184,25 +184,25 @@ const Stars = () => {
                     ? "bg-primary text-black"
                     : "bg-secondary text-foreground hover:bg-secondary/80"
                 }`}
-              >
-                {t('stars.grid_view')}
-              </button>
-              <button
-                onClick={() => setViewMode("list")}
-                className={`px-6 py-2 font-bebas uppercase tracking-wider transition-colors ${
-                  viewMode === "list"
-                    ? "bg-primary text-black"
-                    : "bg-secondary text-foreground hover:bg-secondary/80"
-                }`}
-              >
-                {t('stars.list_view')}
-              </button>
+                >
+                  {t('stars.grid_view', 'Grid View')}
+                </button>
+                <button
+                  onClick={() => setViewMode("list")}
+                  className={`px-6 py-2 font-bebas uppercase tracking-wider transition-colors ${
+                    viewMode === "list"
+                      ? "bg-primary text-black"
+                      : "bg-secondary text-foreground hover:bg-secondary/80"
+                  }`}
+                >
+                  {t('stars.list_view', 'List View')}
+                </button>
             </div>
 
             {/* Filters */}
             <div className="mb-8 flex flex-wrap items-center gap-3">
               <LateralFilter
-                label={t('stars.filter_position')}
+                label={t('stars.filter_position', 'Filter by Position')}
                 options={positionOptions}
                 selectedValues={selectedPositions}
                 onToggle={togglePosition}
@@ -210,7 +210,7 @@ const Stars = () => {
               />
 
               <LateralFilter
-                label={t('stars.filter_age')}
+                label={t('stars.filter_age', 'Filter by Age')}
                 options={ageRangeOptions}
                 selectedValues={selectedAgeRanges}
                 onToggle={toggleAgeRange}
@@ -227,7 +227,7 @@ const Stars = () => {
                   }}
                   className="font-bebas uppercase tracking-wider text-muted-foreground hover:text-foreground"
                 >
-                  {t('stars.clear_filters')}
+                  {t('stars.clear_filters', 'Clear All Filters')}
                 </Button>
               )}
             </div>
@@ -251,7 +251,7 @@ const Stars = () => {
 
             {filteredPlayers.length === 0 && (
               <div className="text-center py-12">
-                <p className="text-xl text-muted-foreground">{t('stars.no_players')}</p>
+                <p className="text-xl text-muted-foreground">{t('stars.no_players', 'No players match the selected filters')}</p>
               </div>
             )}
           </div>
