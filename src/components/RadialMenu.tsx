@@ -403,7 +403,7 @@ export const RadialMenu = () => {
           
           {/* Gold divider between logo and dropdown */}
           <div 
-            className="absolute left-1/2 -translate-x-1/2 w-16 h-[2px] bg-primary z-20"
+            className="absolute left-0 w-full h-[2px] bg-primary z-20"
             style={{ top: 'calc(55% - 2px)' }}
           />
           
