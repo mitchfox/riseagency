@@ -403,14 +403,14 @@ export const RadialMenu = () => {
           
           {/* Gold divider between logo and dropdown */}
           <div 
-            className="absolute left-0 w-full h-[2px] bg-primary z-20"
-            style={{ top: 'calc(55% - 2px)' }}
+            className="absolute left-0 w-full h-[1px] bg-primary z-20"
+            style={{ top: 'calc(55% - 1px)' }}
           />
           
           {/* Role/Menu selection button */}
           <div
             className="text-center relative z-20"
-            style={{ transform: 'translateY(-51px)' }}
+            style={{ transform: 'translateY(-50px)' }}
           >
             <button
               onClick={() => setIsSelectingRole(!isSelectingRole)}
