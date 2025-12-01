@@ -20,13 +20,13 @@ const languageRegions: LanguageRegion[] = [
   { code: "en", name: "English", nativeName: "English", flag: "🇬🇧", x: 30, y: 60 },
   { code: "es", name: "Spanish", nativeName: "Español", flag: "🇪🇸", x: 28, y: 85 },
   { code: "pt", name: "Portuguese", nativeName: "Português", flag: "🇵🇹", x: 25, y: 90 },
-  { code: "fr", name: "French", nativeName: "Français", flag: "🇫🇷", x: 36, y: 70 },
-  { code: "de", name: "German", nativeName: "Deutsch", flag: "🇩🇪", x: 43, y: 64 },
-  { code: "it", name: "Italian", nativeName: "Italiano", flag: "🇮🇹", x: 53, y: 50 },
-  { code: "pl", name: "Polish", nativeName: "Polski", flag: "🇵🇱", x: 58, y: 32 },
-  { code: "cs", name: "Czech", nativeName: "Čeština", flag: "🇨🇿", x: 55, y: 38 },
+  { code: "fr", name: "French", nativeName: "Français", flag: "🇫🇷", x: 34, y: 73 },
+  { code: "de", name: "German", nativeName: "Deutsch", flag: "🇩🇪", x: 41, y: 63 },
+  { code: "it", name: "Italian", nativeName: "Italiano", flag: "🇮🇹", x: 43, y: 85 },
+  { code: "pl", name: "Polish", nativeName: "Polski", flag: "🇵🇱", x: 55, y: 60 },
+  { code: "cs", name: "Czech", nativeName: "Čeština", flag: "🇨🇿", x: 47, y: 72 },
   { code: "ru", name: "Russian", nativeName: "Русский", flag: "🇷🇺", x: 67, y: 50 },
-  { code: "tr", name: "Turkish", nativeName: "Türkçe", flag: "🇹🇷", x: 72, y: 55 },
+  { code: "tr", name: "Turkish", nativeName: "Türkçe", flag: "🇹🇷", x: 65, y: 90 },
 ];
 
 export const LanguageMapSelector = () => {
