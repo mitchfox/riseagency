@@ -27,7 +27,7 @@ export const PlayerCard = ({ player, viewMode = "grid" }: PlayerCardProps) => {
   // Extract club info from player data - use correct database field names
   const currentClub = player.club || player.currentClub || "";
   const clubLogo = player.club_logo || player.clubLogo || "";
-  const currentLeague = player.currentLeague || "Professional League";
+  const currentLeague = player.league || "";
   
   // Get translated position abbreviation
   const positionKey = player.position?.toUpperCase() || '';
@@ -107,11 +107,16 @@ export const PlayerCard = ({ player, viewMode = "grid" }: PlayerCardProps) => {
                       className="h-8 w-8 object-contain"
                     />
                   )}
-                  {currentClub && (
+                  <div className="flex flex-col leading-tight">
                     <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
                       {currentClub}
                     </span>
-                  )}
+                    {currentLeague && (
+                      <span className="text-xs text-muted-foreground/70">
+                        {currentLeague}
+                      </span>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
@@ -267,7 +272,9 @@ export const PlayerCard = ({ player, viewMode = "grid" }: PlayerCardProps) => {
             {currentClub && (
               <div className="flex flex-col leading-tight">
                 <span className="text-base font-semibold text-foreground">{currentClub}</span>
-                <span className="text-sm text-muted-foreground">{currentLeague}</span>
+                {currentLeague && (
+                  <span className="text-sm text-muted-foreground">{currentLeague}</span>
+                )}
               </div>
             )}
           </div>

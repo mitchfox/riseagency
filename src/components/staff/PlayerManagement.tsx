@@ -45,6 +45,7 @@ interface Player {
   representation_status: string;
   club: string | null;
   club_logo: string | null;
+  league: string | null;
   links?: any;
 }
 
@@ -105,6 +106,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
     // Club Info
     club: "",
     club_logo: "",
+    league: "",
     
     // Bio JSON fields
     bioText: "",
@@ -582,6 +584,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       // Club Info - read from player table OR bio JSON
       club: player.club || bioData?.currentClub || "",
       club_logo: player.club_logo || bioData?.currentClubLogo || "",
+      league: player.league || "",
       
       // Bio JSON fields - handle both 'bio' and 'text' keys
       bioText: bioData?.bio || bioData?.text || "",
@@ -814,6 +817,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
           position: formData.position,
           club: formData.club || null,
           club_logo: finalClubLogoUrl || null,
+          league: formData.league || null,
           age: formData.age,
           nationality: formData.nationality,
           bio: bioJSON,
@@ -2689,6 +2693,16 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                         </div>
                       )}
                     </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="league">League</Label>
+                    <Input
+                      id="league"
+                      value={formData.league}
+                      onChange={(e) => setFormData({ ...formData, league: e.target.value })}
+                      placeholder="e.g., Premier League, La Liga"
+                    />
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
