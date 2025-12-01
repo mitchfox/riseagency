@@ -185,16 +185,17 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
       }
     `
 
-    // Fragment shader with gold tint x-ray (same image, different treatment)
+    // Fragment shader with gold tint x-ray - supports TWO simultaneous x-ray circles
     const fragmentShader = `
       uniform sampler2D baseTexture;
       uniform sampler2D xrayTexture;
       uniform float time;
       uniform vec2 mousePos;
+      uniform vec2 autoPos;
       uniform vec2 resolution;
       uniform float xrayRadius;
       uniform float roughness;
-      uniform float isAutoReveal;
+      uniform float userActive;
       uniform vec2 xrayOffset;
       uniform float xrayScale;
       
@@ -225,14 +226,18 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         // Discard fully transparent pixels
         if (alpha < 0.01) discard;
         
-        // Calculate mouse position in UV space
-        vec2 mouseUV = mousePos;
-        float distToMouse = length(vUv - mouseUV);
+        // Auto-reveal x-ray circle (always active)
+        float distToAuto = length(vUv - autoPos);
+        float autoMask = 1.0 - smoothstep(xrayRadius - 0.03, xrayRadius + 0.01, distToAuto);
         
-        // X-ray reveal - smooth edge, no border
-        float xrayMask = 1.0 - smoothstep(xrayRadius - 0.03, xrayRadius + 0.01, distToMouse);
+        // User hover x-ray circle (when active)
+        float distToMouse = length(vUv - mousePos);
+        float userMask = (1.0 - smoothstep(xrayRadius - 0.03, xrayRadius + 0.01, distToMouse)) * userActive;
         
-        // Mix base and x-ray based on mouse proximity
+        // Combined x-ray mask (max of both circles)
+        float xrayMask = max(autoMask, userMask);
+        
+        // Mix base and x-ray based on combined mask
         vec4 color = mix(baseColor, xrayColor, xrayMask * xrayValid);
         
         // === LIGHTING & ROUGHNESS for base image ===
@@ -275,11 +280,9 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         }
         
         // Auto-reveal pulsing glow
-        if (isAutoReveal > 0.5) {
-          float pulse = sin(time * 2.0) * 0.1 + 0.9;
-          float autoGlow = xrayMask * pulse * 0.08;
-          litColor += goldColor * autoGlow;
-        }
+        float pulse = sin(time * 2.0) * 0.1 + 0.9;
+        float autoGlow = autoMask * pulse * 0.08;
+        litColor += goldColor * autoGlow;
         
         gl_FragColor = vec4(litColor, alpha);
       }
@@ -297,28 +300,72 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
     const xrayOverlayFragmentShader = `
       uniform float time;
       uniform vec2 mousePos;
+      uniform vec2 autoPos;
       uniform vec2 resolution;
       uniform float xrayRadius;
       uniform vec2 playerCenter;
-      uniform float isAutoReveal;
+      uniform float userActive;
       
       varying vec2 vUv;
       
       const vec3 goldColor = vec3(0.792, 0.694, 0.443);
       const float PI = 3.14159265359;
       
+      // Helper function to draw effects around a position
+      void drawXrayEffects(vec2 center, float mask, float intensity, inout vec3 color, inout float alpha) {
+        // Cursor indicator
+        float cursorDist = length(vUv - center);
+        float cursorPulse = sin(time * 5.0) * 0.2 + 0.8;
+        float cursorGlow = smoothstep(0.018, 0.006, cursorDist) * cursorPulse * intensity;
+        color += goldColor * cursorGlow;
+        alpha = max(alpha, cursorGlow * 0.9);
+        
+        float ringDist = abs(cursorDist - 0.022);
+        float ringGlow = smoothstep(0.004, 0.0, ringDist) * cursorPulse * 0.6 * intensity;
+        color += goldColor * ringGlow;
+        alpha = max(alpha, ringGlow);
+        
+        // Falling particles
+        for (int i = 0; i < 12; i++) {
+          float particleAngle = float(i) / 12.0 * 2.0 * PI + time * 0.3;
+          float fallProgress = fract(time * 0.8 + float(i) * 0.15);
+          vec2 startPos = center + vec2(cos(particleAngle), sin(particleAngle)) * xrayRadius;
+          vec2 fallPos = startPos + vec2(sin(time * 2.0 + float(i)) * 0.02, fallProgress * 0.12);
+          float fallDist = length(vUv - fallPos);
+          float fallAlpha = (1.0 - fallProgress) * 0.6 * intensity;
+          float fallGlow = smoothstep(0.008, 0.0, fallDist) * fallAlpha;
+          color += goldColor * fallGlow;
+          alpha = max(alpha, fallGlow);
+        }
+        
+        // Rotating sparks
+        for (int i = 0; i < 8; i++) {
+          float sparkAngle = float(i) / 8.0 * 2.0 * PI + time * 2.0;
+          float sparkRadius = xrayRadius + 0.012 + sin(time * 5.0 + float(i)) * 0.006;
+          vec2 sparkPos = center + vec2(cos(sparkAngle), sin(sparkAngle)) * sparkRadius;
+          float sparkDist = length(vUv - sparkPos);
+          float sparkAlpha = (0.5 + sin(time * 8.0 + float(i) * 2.0) * 0.4) * intensity;
+          float sparkGlow = smoothstep(0.006, 0.0, sparkDist) * sparkAlpha;
+          color += goldColor * sparkGlow;
+          alpha = max(alpha, sparkGlow);
+        }
+      }
+      
       void main() {
-        vec2 mouseUV = mousePos;
-        float distToMouse = length(vUv - mouseUV);
+        // Check if we're near either circle
+        float distToAuto = length(vUv - autoPos);
+        float distToMouse = length(vUv - mousePos);
+        float maxDist = xrayRadius + 0.15;
         
-        if (distToMouse > xrayRadius + 0.08) discard;
+        if (distToAuto > maxDist && distToMouse > maxDist) discard;
         
-        float xrayMask = 1.0 - smoothstep(xrayRadius - 0.03, xrayRadius, distToMouse);
+        float autoMask = 1.0 - smoothstep(xrayRadius - 0.03, xrayRadius, distToAuto);
+        float userMask = (1.0 - smoothstep(xrayRadius - 0.03, xrayRadius, distToMouse)) * userActive;
         
         vec3 color = vec3(0.0);
         float alpha = 0.0;
         
-        // 5D Matrix lines from player center
+        // 5D Matrix lines from player center (always active with auto)
         float angles[5];
         angles[0] = -90.0 * PI / 180.0;
         angles[1] = -162.0 * PI / 180.0;
@@ -338,8 +385,8 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
           float lineDist = length(pa - ba * h);
           
           float lineGlow = smoothstep(0.006, 0.0, lineDist);
-          color += goldColor * lineGlow * 0.8 * xrayMask;
-          alpha = max(alpha, lineGlow * 0.9 * xrayMask);
+          color += goldColor * lineGlow * 0.8 * autoMask;
+          alpha = max(alpha, lineGlow * 0.9 * autoMask);
           
           for (int p = 0; p < 6; p++) {
             float particleProgress = fract(time * 0.5 + float(p) * 0.12 + float(i) * 0.2);
@@ -347,59 +394,29 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
             float particleDist = length(vUv - particlePos);
             float particleGlow = smoothstep(0.012, 0.0, particleDist);
             float particleAlpha = sin(particleProgress * PI) * 0.9;
-            color += goldColor * particleGlow * particleAlpha * xrayMask;
-            alpha = max(alpha, particleGlow * particleAlpha * xrayMask);
+            color += goldColor * particleGlow * particleAlpha * autoMask;
+            alpha = max(alpha, particleGlow * particleAlpha * autoMask);
           }
           
           float endDist = length(vUv - lineEnd);
           float endGlow = smoothstep(0.018, 0.004, endDist);
-          color += goldColor * endGlow * xrayMask;
-          alpha = max(alpha, endGlow * xrayMask);
+          color += goldColor * endGlow * autoMask;
+          alpha = max(alpha, endGlow * autoMask);
         }
         
         // Center core
         float coreDist = length(vUv - playerCenter);
         float corePulse = sin(time * 3.0) * 0.3 + 0.7;
         float coreGlow = smoothstep(0.022, 0.008, coreDist) * corePulse;
-        color += goldColor * coreGlow * xrayMask;
-        alpha = max(alpha, coreGlow * xrayMask);
+        color += goldColor * coreGlow * autoMask;
+        alpha = max(alpha, coreGlow * autoMask);
         
-        // Cursor indicator
-        float cursorDist = length(vUv - mouseUV);
-        float cursorPulse = sin(time * 5.0) * 0.2 + 0.8;
-        float cursorGlow = smoothstep(0.018, 0.006, cursorDist) * cursorPulse;
-        color += goldColor * cursorGlow;
-        alpha = max(alpha, cursorGlow * 0.9);
+        // Draw effects for auto-reveal circle
+        drawXrayEffects(autoPos, autoMask, 0.6, color, alpha);
         
-        float ringDist = abs(cursorDist - 0.022);
-        float ringGlow = smoothstep(0.004, 0.0, ringDist) * cursorPulse * 0.6;
-        color += goldColor * ringGlow;
-        alpha = max(alpha, ringGlow);
-        
-        // Falling particles
-        float particleIntensity = isAutoReveal > 0.5 ? 0.5 : 1.0;
-        for (int i = 0; i < 12; i++) {
-          float particleAngle = float(i) / 12.0 * 2.0 * PI + time * 0.3;
-          float fallProgress = fract(time * 0.8 + float(i) * 0.15);
-          vec2 startPos = mouseUV + vec2(cos(particleAngle), sin(particleAngle)) * xrayRadius;
-          vec2 fallPos = startPos + vec2(sin(time * 2.0 + float(i)) * 0.02, fallProgress * 0.12);
-          float fallDist = length(vUv - fallPos);
-          float fallAlpha = (1.0 - fallProgress) * 0.6 * particleIntensity;
-          float fallGlow = smoothstep(0.008, 0.0, fallDist) * fallAlpha;
-          color += goldColor * fallGlow;
-          alpha = max(alpha, fallGlow);
-        }
-        
-        // Rotating sparks
-        for (int i = 0; i < 8; i++) {
-          float sparkAngle = float(i) / 8.0 * 2.0 * PI + time * 2.0;
-          float sparkRadius = xrayRadius + 0.012 + sin(time * 5.0 + float(i)) * 0.006;
-          vec2 sparkPos = mouseUV + vec2(cos(sparkAngle), sin(sparkAngle)) * sparkRadius;
-          float sparkDist = length(vUv - sparkPos);
-          float sparkAlpha = 0.5 + sin(time * 8.0 + float(i) * 2.0) * 0.4;
-          float sparkGlow = smoothstep(0.006, 0.0, sparkDist) * sparkAlpha;
-          color += goldColor * sparkGlow;
-          alpha = max(alpha, sparkGlow);
+        // Draw effects for user hover circle (if active)
+        if (userActive > 0.5) {
+          drawXrayEffects(mousePos, userMask, 1.0, color, alpha);
         }
         
         gl_FragColor = vec4(color, alpha);
@@ -456,20 +473,21 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
       let planeHeight = isMobile ? 1.4 : 1.6
       let planeWidth = planeHeight * imgAspect
 
-      // Uniforms with x-ray alignment adjustments
+      // Uniforms with x-ray alignment adjustments - TWO separate positions
       const uniforms = {
         baseTexture: { value: baseTexture },
         xrayTexture: { value: xrayTexture },
         time: { value: 0 },
-        mousePos: { value: new THREE.Vector2(0.5, 0.6) },
+        mousePos: { value: new THREE.Vector2(-1, -1) }, // User hover position
+        autoPos: { value: new THREE.Vector2(0.5, 0.55) }, // Auto-reveal position
         resolution: { value: new THREE.Vector2(container.clientWidth, container.clientHeight) },
         xrayRadius: { value: 0.12 },
         depthScale: { value: 0.12 },
         roughness: { value: 0.5 },
         playerCenter: { value: new THREE.Vector2(0.5, 0.55) },
-        isAutoReveal: { value: 1.0 },
-        xrayOffset: { value: new THREE.Vector2(0.0, 0.02) }, // Offset to align x-ray image
-        xrayScale: { value: 0.88 } // Scale adjustment for x-ray
+        userActive: { value: 0.0 }, // Whether user is hovering
+        xrayOffset: { value: new THREE.Vector2(0.0, -0.03) }, // Adjusted Y offset to align images
+        xrayScale: { value: 0.92 } // Scale adjustment for x-ray
       }
 
       const geometry = new THREE.PlaneGeometry(planeWidth, planeHeight, 128, 128)
@@ -486,7 +504,8 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
       playerMesh.position.y = isMobile ? 0.15 : 0.05
       scene.add(playerMesh)
 
-      const overlayGeometry = new THREE.PlaneGeometry(3, 3)
+      // Full-screen overlay for x-ray effects
+      const overlayGeometry = new THREE.PlaneGeometry(10, 10)
       const overlayMaterial = new THREE.ShaderMaterial({
         uniforms,
         vertexShader: xrayOverlayVertexShader,
@@ -526,35 +545,38 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         const timeSinceInteraction = currentTime - lastInteractionRef.current
         const isUserInteracting = timeSinceInteraction < 2000
         
+        // Auto-reveal ALWAYS continues (Lissajous pattern)
+        const a = 3, b = 2
+        const delta = Math.PI / 4
+        const baseX = 0.5
+        const baseY = 0.55
+        const rangeX = 0.15
+        const rangeY = 0.2
+        
+        const x1 = Math.sin(autoTime * autoRevealSpeed * a + delta) * rangeX
+        const y1 = Math.sin(autoTime * autoRevealSpeed * b) * rangeY
+        const wobbleX = Math.sin(autoTime * 0.7) * 0.03
+        const wobbleY = Math.cos(autoTime * 0.5) * 0.04
+        
+        const autoX = baseX + x1 + wobbleX
+        const autoY = baseY + y1 + wobbleY
+        
+        autoRevealPosRef.current.x += (autoX - autoRevealPosRef.current.x) * 0.05
+        autoRevealPosRef.current.y += (autoY - autoRevealPosRef.current.y) * 0.05
+        
+        // Always update auto position
+        uniforms.autoPos.value.set(autoRevealPosRef.current.x, autoRevealPosRef.current.y)
+        
+        // Handle user interaction separately
         if (isUserInteracting) {
-          uniforms.isAutoReveal.value = 0.0
+          uniforms.userActive.value = Math.min(1, uniforms.userActive.value + 0.1)
           const rect = container.getBoundingClientRect()
           const mouseX = (mouseRef.current.x - rect.left) / rect.width
           const mouseY = 1 - (mouseRef.current.y - rect.top) / rect.height
           uniforms.mousePos.value.set(mouseX, mouseY)
           xrayIntensity = Math.min(1, xrayIntensity + 0.05)
         } else {
-          uniforms.isAutoReveal.value = 1.0
-          
-          const a = 3, b = 2
-          const delta = Math.PI / 4
-          const baseX = 0.5
-          const baseY = 0.55
-          const rangeX = 0.15
-          const rangeY = 0.2
-          
-          const x1 = Math.sin(autoTime * autoRevealSpeed * a + delta) * rangeX
-          const y1 = Math.sin(autoTime * autoRevealSpeed * b) * rangeY
-          const wobbleX = Math.sin(autoTime * 0.7) * 0.03
-          const wobbleY = Math.cos(autoTime * 0.5) * 0.04
-          
-          const autoX = baseX + x1 + wobbleX
-          const autoY = baseY + y1 + wobbleY
-          
-          autoRevealPosRef.current.x += (autoX - autoRevealPosRef.current.x) * 0.05
-          autoRevealPosRef.current.y += (autoY - autoRevealPosRef.current.y) * 0.05
-          
-          uniforms.mousePos.value.set(autoRevealPosRef.current.x, autoRevealPosRef.current.y)
+          uniforms.userActive.value = Math.max(0, uniforms.userActive.value - 0.05)
           xrayIntensity = 0.7 + Math.sin(autoTime * 0.5) * 0.3
         }
         
