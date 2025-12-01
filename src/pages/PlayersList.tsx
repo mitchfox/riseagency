@@ -196,13 +196,21 @@ const PlayersList = () => {
         {/* Hero Section */}
         <section className="py-16 md:py-24 px-4">
           <div className="container mx-auto">
-            <div className="text-center mb-12">
-              <h1 className="text-6xl md:text-8xl font-bebas uppercase tracking-wider text-foreground mb-4">
-                Player List
-              </h1>
-              <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-                Complete roster of all players
-              </p>
+            <div className="flex justify-center gap-4 mb-12">
+              <Button
+                variant="outline"
+                className="font-bebas uppercase tracking-wider border-primary text-primary hover:bg-primary hover:text-black"
+                onClick={() => window.location.href = '/contact?type=interest'}
+              >
+                Declare Interest in Star
+              </Button>
+              <Button
+                variant="outline"
+                className="font-bebas uppercase tracking-wider border-primary text-primary hover:bg-primary hover:text-black"
+                onClick={() => window.location.href = '/contact'}
+              >
+                Contact
+              </Button>
             </div>
 
             {/* View Mode Toggle */}
