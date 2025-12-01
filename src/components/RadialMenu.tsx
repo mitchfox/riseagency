@@ -396,46 +396,47 @@ export const RadialMenu = () => {
           </div>
         )}
 
-        {/* Map overlay */}
-        {showMap && (
-          <div className="absolute inset-0 z-30 bg-background/95 backdrop-blur-sm">
-            {/* Close map button */}
-            <button
-              onClick={() => setShowMap(false)}
-              className="absolute top-8 right-8 z-40 group flex items-center justify-center focus:outline-none"
-            >
-              <div className="relative w-12 h-12 flex items-center justify-center">
-                <div className="absolute inset-0 bg-primary/20 rounded-full scale-0 group-hover:scale-100 transition-transform duration-500 ease-out" />
-                <div className="absolute inset-0 bg-primary/10 rounded-full scale-0 group-hover:scale-150 transition-transform duration-700 ease-out" />
-                <X className="h-8 w-8 text-white relative z-10 transition-all duration-300 group-hover:text-primary group-hover:rotate-90" />
-              </div>
-            </button>
-
-            {/* Language selector grid */}
-            <div className="absolute top-8 left-8 z-40 grid grid-cols-5 gap-2">
-              {languages.map((lang) => (
-                <button
-                  key={lang.code}
-                  onClick={() => switchLanguage(lang.code)}
-                  className={`flex flex-col items-center gap-1 p-2 rounded transition-colors ${
-                    language === lang.code
-                      ? "bg-primary/20 text-primary"
-                      : "text-foreground/70 hover:bg-foreground/5 hover:text-foreground"
-                  }`}
-                >
-                  <span className="text-xl">{lang.flag}</span>
-                  <span className="text-[10px] font-bebas uppercase tracking-wider">{lang.name}</span>
-                </button>
-              ))}
-            </div>
-
-            {/* Map */}
-            <div className="absolute inset-x-0 bottom-0 top-20">
-              <ScoutingNetworkMap />
-            </div>
-          </div>
-        )}
       </div>
+
+      {/* Map overlay - positioned relative to the fixed container */}
+      {showMap && (
+        <div className="absolute inset-0 z-30 bg-background/95 backdrop-blur-sm">
+          {/* Close map button */}
+          <button
+            onClick={() => setShowMap(false)}
+            className="absolute top-8 right-8 z-40 group flex items-center justify-center focus:outline-none"
+          >
+            <div className="relative w-12 h-12 flex items-center justify-center">
+              <div className="absolute inset-0 bg-primary/20 rounded-full scale-0 group-hover:scale-100 transition-transform duration-500 ease-out" />
+              <div className="absolute inset-0 bg-primary/10 rounded-full scale-0 group-hover:scale-150 transition-transform duration-700 ease-out" />
+              <X className="h-8 w-8 text-white relative z-10 transition-all duration-300 group-hover:text-primary group-hover:rotate-90" />
+            </div>
+          </button>
+
+          {/* Language selector grid */}
+          <div className="absolute top-8 left-8 z-40 grid grid-cols-5 gap-2">
+            {languages.map((lang) => (
+              <button
+                key={lang.code}
+                onClick={() => switchLanguage(lang.code)}
+                className={`flex flex-col items-center gap-1 p-2 rounded transition-colors ${
+                  language === lang.code
+                    ? "bg-primary/20 text-primary"
+                    : "text-foreground/70 hover:bg-foreground/5 hover:text-foreground"
+                }`}
+              >
+                <span className="text-xl">{lang.flag}</span>
+                <span className="text-[10px] font-bebas uppercase tracking-wider">{lang.name}</span>
+              </button>
+            ))}
+          </div>
+
+          {/* Map */}
+          <div className="absolute inset-x-0 bottom-0 top-20">
+            <ScoutingNetworkMap />
+          </div>
+        </div>
+      )}
     </div>
   );
 };
