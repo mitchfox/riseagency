@@ -66,6 +66,7 @@ export const PlayerList = ({ isAdmin }: { isAdmin: boolean }) => {
       const { data, error } = await supabase
         .from("players")
         .select("id, name, club, club_logo, league, position, age, nationality, bio, email, image_url, category, representation_status, visible_on_stars_page")
+        .neq("category", "Scouted")
         .order("name");
 
       if (error) throw error;
