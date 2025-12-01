@@ -65,14 +65,14 @@ const ScoutingNetworkMap = ({ initialCountry, hideStats = false, onClubPositionC
   useEffect(() => {
     const loadClubPositions = async () => {
       const { data, error } = await supabase
-        .from('club_network_contacts')
-        .select('name, x_position, y_position');
+        .from('club_map_positions')
+        .select('club_name, x_position, y_position');
       
       if (!error && data) {
         const positions: Record<string, {x: number, y: number}> = {};
         data.forEach(club => {
           if (club.x_position && club.y_position) {
-            positions[club.name] = { 
+            positions[club.club_name] = { 
               x: Number(club.x_position), 
               y: Number(club.y_position) 
             };
@@ -146,18 +146,17 @@ const ScoutingNetworkMap = ({ initialCountry, hideStats = false, onClubPositionC
     const syncPositions = async () => {
       for (const club of footballClubs) {
         const { data: existing } = await supabase
-          .from('club_network_contacts')
+          .from('club_map_positions')
           .select('id, x_position, y_position')
-          .eq('name', club.name)
+          .eq('club_name', club.name)
           .maybeSingle();
         
         if (existing && (!existing.x_position || !existing.y_position)) {
           await supabase
-            .from('club_network_contacts')
+            .from('club_map_positions')
             .update({ 
               x_position: club.x, 
               y_position: club.y,
-              city: club.city,
               country: club.country,
               image_url: club.logo
             })
@@ -165,10 +164,9 @@ const ScoutingNetworkMap = ({ initialCountry, hideStats = false, onClubPositionC
         } else if (!existing) {
           // Insert new club
           await supabase
-            .from('club_network_contacts')
+            .from('club_map_positions')
             .insert({
-              name: club.name,
-              city: club.city,
+              club_name: club.name,
               country: club.country,
               x_position: club.x,
               y_position: club.y,
@@ -218,14 +216,14 @@ const ScoutingNetworkMap = ({ initialCountry, hideStats = false, onClubPositionC
       
       if (club) {
         const { data: existing } = await supabase
-          .from('club_network_contacts')
+          .from('club_map_positions')
           .select('id')
-          .eq('name', club.name)
+          .eq('club_name', club.name)
           .maybeSingle();
         
         if (existing) {
           await supabase
-            .from('club_network_contacts')
+            .from('club_map_positions')
             .update({
               x_position: position.x,
               y_position: position.y

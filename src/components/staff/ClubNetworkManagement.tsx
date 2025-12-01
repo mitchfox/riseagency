@@ -53,6 +53,7 @@ const ClubNetworkManagement = () => {
     const { data, error } = await supabase
       .from('club_network_contacts')
       .select('*')
+      .or('email.not.is.null,phone.not.is.null,position.not.is.null')
       .order('created_at', { ascending: false });
 
     if (error) {
