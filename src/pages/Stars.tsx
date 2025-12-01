@@ -271,7 +271,7 @@ const Stars = () => {
             </div>
 
             {/* Filters */}
-            <div className="mb-6 flex flex-wrap items-center gap-3">
+            <div className="mb-6 flex flex-wrap items-center justify-center gap-3">
               <LateralFilter
                 label={t('stars.filter_position', 'Filter by Position')}
                 options={positionOptions}
