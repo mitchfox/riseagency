@@ -143,21 +143,25 @@ export const PlayerCard = ({ player, viewMode = "grid" }: PlayerCardProps) => {
         {/* Hover Overlay - Key Info (in front of everything) */}
         <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-between p-6 z-30">
           {/* Top Section - Age (left) and Nationality (right) */}
-          <div className="flex justify-between">
+          <div className="flex justify-between items-start">
             {/* Age - Top Left */}
             <div className="flex flex-col items-center">
-              <div className="text-5xl font-bebas text-primary mb-1">{player.age}</div>
-              <div className="text-sm font-bebas uppercase text-white tracking-wider">Age</div>
+              <div className="h-12 flex items-center">
+                <span className="text-5xl font-bebas text-primary">{player.age}</span>
+              </div>
+              <div className="text-sm font-bebas uppercase text-white tracking-wider mt-1">Age</div>
             </div>
             
             {/* Nationality - Top Right */}
             <div className="flex flex-col items-center">
-              <img 
-                src={getCountryFlagUrl(player.nationality)} 
-                alt={player.nationality}
-                className="w-10 h-7 object-cover rounded mb-1"
-              />
-              <div className="text-sm font-bebas uppercase text-white tracking-wider">Nationality</div>
+              <div className="h-12 flex items-center">
+                <img 
+                  src={getCountryFlagUrl(player.nationality)} 
+                  alt={player.nationality}
+                  className="w-14 h-10 object-cover rounded"
+                />
+              </div>
+              <div className="text-sm font-bebas uppercase text-white tracking-wider mt-1">Nationality</div>
             </div>
           </div>
 
@@ -167,7 +171,7 @@ export const PlayerCard = ({ player, viewMode = "grid" }: PlayerCardProps) => {
             <div className="flex justify-between mb-6">
               {/* Position - Bottom Left */}
               <div className="flex flex-col items-center">
-                <div className="text-5xl font-bebas text-primary mb-1">{player.position}</div>
+                <div className="text-5xl font-bebas text-primary mb-1 translate-y-1">{player.position}</div>
                 <div className="text-sm font-bebas uppercase text-white tracking-wider">Position</div>
               </div>
               
