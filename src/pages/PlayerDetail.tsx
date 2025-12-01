@@ -12,6 +12,7 @@ import { getCountryFlagUrl } from "@/lib/countryFlags";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { parsePlayerBio, parsePlayerHighlights } from "@/lib/playerDataParser";
 import { LazyVideo } from "@/components/LazyVideo";
+import { HighlightedMatchDisplay } from "@/components/HighlightedMatchDisplay";
 import blackMarbleBg from "@/assets/black-marble-menu.png";
 
 const PlayerDetail = () => {
@@ -557,7 +558,7 @@ const PlayerDetail = () => {
               </div>
             </div>
 
-            {/* Right Column: Scheme History */}
+          {/* Right Column: Scheme History */}
             {player.tacticalFormations && player.tacticalFormations.length > 0 && (
               <div>
                 <h2 className="text-sm font-bebas text-primary uppercase tracking-widest mb-4 text-lg">
@@ -615,6 +616,11 @@ const PlayerDetail = () => {
             )}
 
           </div>
+
+          {/* Highlighted Match Section - Only for represented/mandated players visible on stars page */}
+          {player.highlighted_match && player.visible_on_stars_page && (
+            <HighlightedMatchDisplay highlightedMatch={player.highlighted_match} />
+          )}
 
           {/* News Section */}
           {player.news && player.news.length > 0 && (

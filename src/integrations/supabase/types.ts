@@ -1551,6 +1551,7 @@ export type Database = {
           club_logo: string | null
           created_at: string | null
           email: string | null
+          highlighted_match: Json | null
           highlights: Json | null
           hover_image_url: string | null
           id: string
@@ -1572,6 +1573,7 @@ export type Database = {
           club_logo?: string | null
           created_at?: string | null
           email?: string | null
+          highlighted_match?: Json | null
           highlights?: Json | null
           hover_image_url?: string | null
           id?: string
@@ -1593,6 +1595,7 @@ export type Database = {
           club_logo?: string | null
           created_at?: string | null
           email?: string | null
+          highlighted_match?: Json | null
           highlights?: Json | null
           hover_image_url?: string | null
           id?: string
