@@ -6,6 +6,8 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { LateralFilter } from "@/components/LateralFilter";
+import { LayoutGrid, List } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
 const Stars = () => {
@@ -162,45 +164,84 @@ const Stars = () => {
       />
       <Header />
       
-      <main className="pt-24 md:pt-16">
+      <main className="pt-16">
         {/* Hero Section */}
-        <section className="py-16 md:py-24 px-4">
+        <section className="py-8 px-4">
           <div className="container mx-auto">
-            <div className="text-center mb-12">
-              <h1 className="text-6xl md:text-8xl font-bebas uppercase tracking-wider text-foreground mb-4">
+            {/* Title - Condensed */}
+            <div className="text-center mb-6">
+              <h1 className="text-6xl md:text-8xl font-bebas uppercase tracking-wider text-foreground">
                 {t('stars.title', 'Our Stars')}
               </h1>
-              <p className="text-xl text-muted-foreground max-w-3xl lg:max-w-5xl mx-auto">
-                {t('stars.subtitle', 'Meet our talented roster of professional footballers')}
-              </p>
             </div>
 
-            {/* View Mode Toggle */}
-            <div className="flex justify-center gap-4 mb-12">
+            {/* Interest Cards */}
+            <div className="grid md:grid-cols-3 gap-4 mb-6">
+              <Card className="bg-card/50 backdrop-blur-sm border-primary/20">
+                <CardContent className="pt-6">
+                  <h3 className="font-bebas uppercase tracking-wider text-xl mb-2">Player Representation</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Looking for professional representation? We work with elite talent across Europe.
+                  </p>
+                  <Button variant="outline" className="w-full font-bebas uppercase tracking-wider">
+                    Enquire Now
+                  </Button>
+                </CardContent>
+              </Card>
+              
+              <Card className="bg-card/50 backdrop-blur-sm border-primary/20">
+                <CardContent className="pt-6">
+                  <h3 className="font-bebas uppercase tracking-wider text-xl mb-2">Club Partnerships</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Clubs interested in our players? Get in touch to discuss opportunities.
+                  </p>
+                  <Button variant="outline" className="w-full font-bebas uppercase tracking-wider">
+                    Contact Us
+                  </Button>
+                </CardContent>
+              </Card>
+              
+              <Card className="bg-card/50 backdrop-blur-sm border-primary/20">
+                <CardContent className="pt-6">
+                  <h3 className="font-bebas uppercase tracking-wider text-xl mb-2">Scout Network</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Join our global scouting network and recommend talented players.
+                  </p>
+                  <Button variant="outline" className="w-full font-bebas uppercase tracking-wider">
+                    Learn More
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* View Mode Toggle - Icons Only */}
+            <div className="flex justify-center gap-2 mb-6">
               <button
                 onClick={() => setViewMode("grid")}
-                className={`px-6 py-2 font-bebas uppercase tracking-wider transition-colors ${
+                className={`p-3 transition-colors rounded ${
                   viewMode === "grid"
                     ? "bg-primary text-black"
                     : "bg-secondary text-foreground hover:bg-secondary/80"
                 }`}
-                >
-                  {t('stars.grid_view', 'Grid View')}
-                </button>
-                <button
-                  onClick={() => setViewMode("list")}
-                  className={`px-6 py-2 font-bebas uppercase tracking-wider transition-colors ${
-                    viewMode === "list"
-                      ? "bg-primary text-black"
-                      : "bg-secondary text-foreground hover:bg-secondary/80"
-                  }`}
-                >
-                  {t('stars.list_view', 'List View')}
-                </button>
+                aria-label="Grid view"
+              >
+                <LayoutGrid className="w-5 h-5" />
+              </button>
+              <button
+                onClick={() => setViewMode("list")}
+                className={`p-3 transition-colors rounded ${
+                  viewMode === "list"
+                    ? "bg-primary text-black"
+                    : "bg-secondary text-foreground hover:bg-secondary/80"
+                }`}
+                aria-label="List view"
+              >
+                <List className="w-5 h-5" />
+              </button>
             </div>
 
             {/* Filters */}
-            <div className="mb-8 flex flex-wrap items-center gap-3">
+            <div className="mb-6 flex flex-wrap items-center gap-3">
               <LateralFilter
                 label={t('stars.filter_position', 'Filter by Position')}
                 options={positionOptions}
