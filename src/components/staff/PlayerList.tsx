@@ -377,13 +377,20 @@ export const PlayerList = ({ isAdmin }: { isAdmin: boolean }) => {
                   </TableCell>
                   <TableCell className="py-2.5">
                     {isAdmin ? (
-                      <Input
-                        type={selectedField === 'age' ? 'number' : 'text'}
-                        value={getFieldValue(player)}
-                        onChange={(e) => handleFieldEdit(player.id, selectedField === 'age' ? parseInt(e.target.value) || 0 : e.target.value)}
-                        className="h-9 max-w-[300px]"
-                        placeholder={`Enter ${getFieldLabel(selectedField).toLowerCase()}`}
-                      />
+                      <div className="space-y-1">
+                        <Input
+                          type={selectedField === 'age' ? 'number' : 'text'}
+                          value={getFieldValue(player)}
+                          onChange={(e) => handleFieldEdit(player.id, selectedField === 'age' ? parseInt(e.target.value) || 0 : e.target.value)}
+                          className="h-9 max-w-[300px]"
+                          placeholder={`Enter ${getFieldLabel(selectedField).toLowerCase()}`}
+                        />
+                        {selectedField === 'league' && player.club && (
+                          <div className="text-xs italic text-muted-foreground">
+                            {player.club}
+                          </div>
+                        )}
+                      </div>
                     ) : (
                       <span className="text-sm text-foreground">{getFieldValue(player) || "—"}</span>
                     )}
