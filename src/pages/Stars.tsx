@@ -52,6 +52,7 @@ const Stars = () => {
         .from('players')
         .select('*')
         .eq('visible_on_stars_page', true)
+        .neq('category', 'Scouted')
         .order('name');
       
       if (!error && data) {
