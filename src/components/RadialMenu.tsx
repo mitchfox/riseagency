@@ -1,8 +1,9 @@
-import { Link, useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { DrawerClose } from "@/components/ui/drawer";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { LocalizedLink } from "@/components/LocalizedLink";
 import { useRoleSubdomain } from "@/hooks/useRoleSubdomain";
+import { useLocalizedNavigate } from "@/hooks/useLocalizedNavigate";
 import riseLogoBlack from "@/assets/RISEBlack.png";
 import whiteMarbleBg from "@/assets/white-marble.png";
 import smudgedMarbleBg from "@/assets/black-marble-smudged.png";
@@ -21,6 +22,7 @@ interface MenuItem {
 export const RadialMenu = () => {
   const { t, language, switchLanguage } = useLanguage();
   const location = useLocation();
+  const navigate = useLocalizedNavigate();
   const { currentRole, isRoleSubdomain, roleConfigs, getRoleUrl, otherRoles } = useRoleSubdomain();
   const [hoveredItem, setHoveredItem] = useState<number | null>(null);
   const [showMap, setShowMap] = useState(false);
@@ -232,76 +234,77 @@ export const RadialMenu = () => {
           );
         })}
 
-        {/* Segment slices with labels */}
+        {/* Single SVG for all segment paths */}
+        <svg
+          viewBox={`0 0 ${circleSize} ${circleSize}`}
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none"
+          style={{
+            width: `${circleSize}px`,
+            height: `${circleSize}px`,
+          }}
+        >
+          {menuItems.map((item, index) => {
+            const startAngle = index * segmentAngle;
+            const endAngle = startAngle + segmentAngle;
+            const hovered = hoveredItem === index;
+
+            return (
+              <DrawerClose key={`path-${item.to}-${index}`} asChild>
+                <path
+                  d={`
+                    M ${circleSize / 2} ${circleSize / 2}
+                    L ${circleSize / 2 + (circleSize / 2.2) * Math.cos((startAngle * Math.PI) / 180)} ${circleSize / 2 + (circleSize / 2.2) * Math.sin((startAngle * Math.PI) / 180)}
+                    A ${circleSize / 2.2} ${circleSize / 2.2} 0 0 1 ${circleSize / 2 + (circleSize / 2.2) * Math.cos(((endAngle) * Math.PI) / 180)} ${circleSize / 2 + (circleSize / 2.2) * Math.sin(((endAngle) * Math.PI) / 180)}
+                    Z
+                  `}
+                  fill={hovered ? "rgba(255,255,255,1)" : "rgba(128,128,128,0.1)"}
+                  className="transition-colors duration-200 cursor-pointer"
+                  style={{ pointerEvents: 'auto' }}
+                  onMouseEnter={() => setHoveredItem(index)}
+                  onMouseLeave={() => setHoveredItem(null)}
+                  onClick={() => navigate(item.to)}
+                />
+              </DrawerClose>
+            );
+          })}
+        </svg>
+
+        {/* Icons and labels positioned separately */}
         {menuItems.map((item, index) => {
-          const startAngle = index * segmentAngle;
-          const endAngle = startAngle + segmentAngle;
-          const centerAngle = startAngle + segmentAngle / 2;
+          const centerAngle = index * segmentAngle + segmentAngle / 2;
           const hovered = hoveredItem === index;
           const pos = getCirclePosition(centerAngle, radius);
 
           return (
-            <DrawerClose key={`segment-${item.to}`} asChild>
-              <Link
-                to={item.to}
-                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 cursor-pointer group"
-                onMouseEnter={() => setHoveredItem(index)}
-                onMouseLeave={() => setHoveredItem(null)}
-                style={{
-                  width: `${circleSize}px`,
-                  height: `${circleSize}px`,
-                }}
-              >
-                {/* SVG segment */}
-                <svg
-                  viewBox={`0 0 ${circleSize} ${circleSize}`}
-                  className="w-full h-full absolute inset-0 pointer-events-auto"
-                >
-                  <path
-                    d={`
-                      M ${circleSize / 2} ${circleSize / 2}
-                      L ${circleSize / 2 + (circleSize / 2.2) * Math.cos((startAngle * Math.PI) / 180)} ${circleSize / 2 + (circleSize / 2.2) * Math.sin((startAngle * Math.PI) / 180)}
-                      A ${circleSize / 2.2} ${circleSize / 2.2} 0 0 1 ${circleSize / 2 + (circleSize / 2.2) * Math.cos(((endAngle) * Math.PI) / 180)} ${circleSize / 2 + (circleSize / 2.2) * Math.sin(((endAngle) * Math.PI) / 180)}
-                      Z
+            <div
+              key={`label-${item.to}-${index}`}
+              className="absolute pointer-events-none"
+              style={{
+                left: `calc(50% + ${pos.x}px)`,
+                top: `calc(50% + ${pos.y}px)`,
+                transform: 'translate(-50%, -50%)',
+              }}
+            >
+              <div className="flex flex-col items-center justify-center">
+                <div className="w-14 h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center mb-2 transition-all duration-300">
+                  <item.Icon
+                    className={`
+                      w-7 h-7 md:w-8 md:h-8 transition-colors duration-300
+                      ${hovered ? 'text-black' : 'text-white/70'}
                     `}
-                    fill={hovered ? "rgba(255,255,255,1)" : "rgba(128,128,128,0.1)"}
-                    className="transition-colors duration-200"
-                    onMouseEnter={() => setHoveredItem(index)}
-                    onMouseLeave={() => setHoveredItem(null)}
                   />
-                </svg>
-
-                {/* Icon and label */}
-                <div
-                  className="absolute pointer-events-none"
-                  style={{
-                    left: `calc(50% + ${pos.x}px)`,
-                    top: `calc(50% + ${pos.y}px)`,
-                    transform: 'translate(-50%, -50%)',
-                  }}
-                >
-                  <div className="flex flex-col items-center justify-center">
-                    <div className="w-14 h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center mb-2 transition-all duration-300">
-                      <item.Icon
-                        className={`
-                          w-7 h-7 md:w-8 md:h-8 transition-colors duration-300
-                          ${hovered ? 'text-black' : 'text-white/70'}
-                        `}
-                      />
-                    </div>
-
-                    <span
-                      className={`
-                        font-bebas text-xs md:text-sm tracking-[0.2em] whitespace-nowrap transition-all duration-300 text-center
-                        ${hovered ? 'text-black' : 'text-white/60'}
-                      `}
-                    >
-                      {t(item.labelKey, item.fallback)}
-                    </span>
-                  </div>
                 </div>
-              </Link>
-            </DrawerClose>
+
+                <span
+                  className={`
+                    font-bebas text-xs md:text-sm tracking-[0.2em] whitespace-nowrap transition-all duration-300 text-center
+                    ${hovered ? 'text-black' : 'text-white/60'}
+                  `}
+                >
+                  {t(item.labelKey, item.fallback)}
+                </span>
+              </div>
+            </div>
           );
         })}
 
