@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { LanguageMapSelector } from "@/components/LanguageMapSelector";
 import { HoverText } from "@/components/HoverText";
-import { MatrixPlayerEffect } from "@/components/MatrixPlayerEffect";
+import { Player3DEffect } from "@/components/Player3DEffect";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { HomeBackground } from "@/components/HomeBackground";
 import riseLogoWhite from "@/assets/logo.png";
@@ -47,10 +47,10 @@ export default function Landing() {
         />
       </div>
       
-      {/* Matrix Player Effect - Over Video (hidden when language popup is open) */}
+      {/* 3D Player Effect - Over Video (hidden when language popup is open) */}
       {!languagePopupOpen && (
         <div className="absolute inset-0 pointer-events-none">
-          <MatrixPlayerEffect className="pointer-events-auto" />
+          <Player3DEffect className="pointer-events-auto" />
         </div>
       )}
 
