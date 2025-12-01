@@ -243,6 +243,11 @@ export const RadialMenu = () => {
             height: `${circleSize}px`,
           }}
         >
+          <defs>
+            <pattern id="whiteMarblePattern" patternUnits="userSpaceOnUse" width="600" height="600">
+              <image href={whiteMarbleBg} width="600" height="600" />
+            </pattern>
+          </defs>
           {menuItems.map((item, index) => {
             const startAngle = index * segmentAngle;
             const endAngle = startAngle + segmentAngle;
@@ -257,7 +262,7 @@ export const RadialMenu = () => {
                     A ${circleSize / 2.2} ${circleSize / 2.2} 0 0 1 ${circleSize / 2 + (circleSize / 2.2) * Math.cos(((endAngle) * Math.PI) / 180)} ${circleSize / 2 + (circleSize / 2.2) * Math.sin(((endAngle) * Math.PI) / 180)}
                     Z
                   `}
-                  fill={hovered ? "rgba(255,255,255,1)" : "rgba(128,128,128,0.1)"}
+                  fill={hovered ? "url(#whiteMarblePattern)" : "rgba(128,128,128,0.1)"}
                   className="transition-colors duration-200 cursor-pointer"
                   style={{ pointerEvents: 'auto' }}
                   onMouseEnter={() => setHoveredItem(index)}
