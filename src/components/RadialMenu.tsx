@@ -397,10 +397,8 @@ export const RadialMenu = () => {
             </div>
 
             {/* Map */}
-            <div className="w-full h-full flex items-center justify-center">
-              <div className="w-full max-w-6xl h-[80vh]">
-                <ScoutingNetworkMap />
-              </div>
+            <div className="w-full h-full pt-20">
+              <ScoutingNetworkMap />
             </div>
           </div>
         )}
