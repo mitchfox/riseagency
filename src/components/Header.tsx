@@ -186,7 +186,7 @@ export const Header = () => {
       {/* Top Utility Bar - only on homepage and only when not scrolled */}
       {showTopBar && !isScrolled && <div className="fixed top-14 md:top-16 left-0 right-0 z-[99] bg-background/95 backdrop-blur-md transition-all duration-500 border-b-2 border-primary">
           <div className="container mx-auto px-2 md:px-4">
-          <div className="flex items-center justify-center md:justify-between h-8 md:h-10 relative">
+          <div className="flex items-center justify-between h-8 md:h-10 relative">
             {/* Left items - hidden on mobile, shown on tablet+ */}
             <div className="hidden md:flex items-center gap-4 transition-all duration-500">
               <LocalizedLink to="/contact" className="text-sm font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500 flex items-center gap-1.5">
@@ -200,7 +200,7 @@ export const Header = () => {
               </button>
             </div>
             
-            {/* Mobile: All four items centered */}
+            {/* Mobile: Two items each side like desktop */}
             <div className="flex md:hidden items-center gap-2">
               <LocalizedLink to="/contact" className="text-[10px] font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500">
                 <HoverText text={t("header.contact_us", "Contact")} />
@@ -209,7 +209,10 @@ export const Header = () => {
               <button onClick={() => setDeclareInterestOpen(true)} className="text-[10px] font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500">
                 <HoverText text={t("header.declare_interest_mobile", "Interest")} />
               </button>
-              <div className="w-px h-3 bg-white/20" />
+            </div>
+            
+            {/* Mobile: Right side items */}
+            <div className="flex md:hidden items-center gap-2">
               <button onClick={() => setRepresentationOpen(true)} className="text-[10px] font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500">
                 <HoverText text={t("header.represent_mobile", "Represent")} />
               </button>
