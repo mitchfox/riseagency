@@ -272,10 +272,22 @@ export const MapCoordinatesManager = () => {
             </SelectContent>
           </Select>
           {hasChanges && (
-            <Button onClick={handleSaveAll} disabled={saving}>
-              <Save className="h-4 w-4 mr-2" />
-              {saving ? 'Saving...' : `Save ${Object.keys(editedClubs).length} Change${Object.keys(editedClubs).length > 1 ? 's' : ''}`}
-            </Button>
+            <>
+              <Button 
+                variant="outline" 
+                onClick={() => { 
+                  setEditedClubs({}); 
+                  setMapKey(prev => prev + 1);
+                  toast.info("Changes cancelled");
+                }}
+              >
+                Cancel
+              </Button>
+              <Button onClick={handleSaveAll} disabled={saving}>
+                <Save className="h-4 w-4 mr-2" />
+                {saving ? 'Saving...' : `Save ${Object.keys(editedClubs).length} Change${Object.keys(editedClubs).length > 1 ? 's' : ''}`}
+              </Button>
+            </>
           )}
           <Dialog open={dialogOpen} onOpenChange={(open) => {
             setDialogOpen(open);

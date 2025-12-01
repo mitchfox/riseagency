@@ -59,6 +59,7 @@ const ScoutingNetworkMap = ({ initialCountry, hideStats = false, onClubPositionC
   const [expandedCity, setExpandedCity] = useState<string | null>(null);
   const [draggingClub, setDraggingClub] = useState<string | null>(null);
   const [clubPositions, setClubPositions] = useState<Record<string, {x: number, y: number}>>({});
+  const [wasDragging, setWasDragging] = useState(false);
   // Europe outline is rendered from raster map image (europe-outline.gif)
   
   // Load club positions from database on mount
@@ -181,6 +182,7 @@ const ScoutingNetworkMap = ({ initialCountry, hideStats = false, onClubPositionC
   
   const handleClubDragStart = (clubName: string, e: React.MouseEvent) => {
     e.stopPropagation();
+    e.preventDefault();
     setDraggingClub(clubName);
   };
   
@@ -231,6 +233,7 @@ const ScoutingNetworkMap = ({ initialCountry, hideStats = false, onClubPositionC
             .eq('id', existing.id);
         }
       }
+      setWasDragging(true);
     }
     setDraggingClub(null);
   };
@@ -769,6 +772,10 @@ const ScoutingNetworkMap = ({ initialCountry, hideStats = false, onClubPositionC
   };
 
   const handleMapClick = () => {
+    if (wasDragging) {
+      setWasDragging(false);
+      return;
+    }
     if (expandedCity) {
       setExpandedCity(null);
     } else if (zoomLevel > 0) {
