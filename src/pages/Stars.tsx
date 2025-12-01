@@ -5,16 +5,8 @@ import { SEO } from "@/components/SEO";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuCheckboxItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { LateralFilter } from "@/components/LateralFilter";
 import { Button } from "@/components/ui/button";
-import { ChevronDown } from "lucide-react";
 
 const Stars = () => {
   const { t } = useLanguage();
@@ -24,28 +16,28 @@ const Stars = () => {
   const [selectedPositions, setSelectedPositions] = useState<string[]>([]);
   const [selectedAgeRanges, setSelectedAgeRanges] = useState<string[]>([]);
 
-  const positions = [
-    "#1 - Goalkeeper",
-    "#2 - Right Back",
-    "#3 - Left Back",
-    "#4 - Right Centre Back",
-    "#5 - Left Centre Back",
-    "#6 - Defensive Midfielder",
-    "#7 - Right Winger",
-    "#8 - Central Midfielder",
-    "#9 - Centre Forward",
-    "#10 - Attacking Midfielder",
-    "#11 - Left Winger"
+  const positionOptions = [
+    { label: "#1 - GK", value: "#1 - Goalkeeper" },
+    { label: "#2 - RB", value: "#2 - Right Back" },
+    { label: "#3 - LB", value: "#3 - Left Back" },
+    { label: "#4 - RCB", value: "#4 - Right Centre Back" },
+    { label: "#5 - LCB", value: "#5 - Left Centre Back" },
+    { label: "#6 - CDM", value: "#6 - Defensive Midfielder" },
+    { label: "#7 - RW", value: "#7 - Right Winger" },
+    { label: "#8 - CM", value: "#8 - Central Midfielder" },
+    { label: "#9 - CF", value: "#9 - Centre Forward" },
+    { label: "#10 - CAM", value: "#10 - Attacking Midfielder" },
+    { label: "#11 - LW", value: "#11 - Left Winger" }
   ];
 
-  const ageRanges = [
-    { label: "15-17", min: 15, max: 17 },
-    { label: "18-21", min: 18, max: 21 },
-    { label: "22-24", min: 22, max: 24 },
-    { label: "25-27", min: 25, max: 27 },
-    { label: "28-30", min: 28, max: 30 },
-    { label: "31-33", min: 31, max: 33 },
-    { label: "34+", min: 34, max: 100 }
+  const ageRangeOptions = [
+    { label: "15-17", value: "15-17", min: 15, max: 17 },
+    { label: "18-21", value: "18-21", min: 18, max: 21 },
+    { label: "22-24", value: "22-24", min: 22, max: 24 },
+    { label: "25-27", value: "25-27", min: 25, max: 27 },
+    { label: "28-30", value: "28-30", min: 28, max: 30 },
+    { label: "31-33", value: "31-33", min: 31, max: 33 },
+    { label: "34+", value: "34+", min: 34, max: 100 }
   ];
 
   useEffect(() => {
@@ -121,7 +113,7 @@ const Stars = () => {
     // Age range filter
     if (selectedAgeRanges.length > 0) {
       const matchesAge = selectedAgeRanges.some(rangeLabel => {
-        const range = ageRanges.find(r => r.label === rangeLabel);
+        const range = ageRangeOptions.find(r => r.value === rangeLabel);
         return range && player.age >= range.min && player.age <= range.max;
       });
       if (!matchesAge) return false;
@@ -208,76 +200,24 @@ const Stars = () => {
             </div>
 
             {/* Filters */}
-            <div className="mb-8 flex flex-wrap gap-4">
-              {/* Position Filter */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button 
-                    variant="outline" 
-                    className="font-bebas uppercase tracking-wider border-primary/30 hover:bg-primary/10"
-                  >
-                    {t('stars.filter_position')}
-                    {selectedPositions.length > 0 && (
-                      <span className="ml-2 bg-primary text-black rounded-full px-2 py-0.5 text-xs">
-                        {selectedPositions.length}
-                      </span>
-                    )}
-                    <ChevronDown className="ml-2 h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56 max-h-96 overflow-y-auto bg-background">
-                  <DropdownMenuLabel className="font-bebas uppercase tracking-wider">
-                    {t('stars.select_positions')}
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  {positions.map((position) => (
-                    <DropdownMenuCheckboxItem
-                      key={position}
-                      checked={selectedPositions.includes(position)}
-                      onCheckedChange={() => togglePosition(position)}
-                      className="cursor-pointer"
-                    >
-                      {position}
-                    </DropdownMenuCheckboxItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
+            <div className="mb-8 space-y-4">
+              <LateralFilter
+                label={t('stars.filter_position')}
+                options={positionOptions}
+                selectedValues={selectedPositions}
+                onToggle={togglePosition}
+                onClear={() => setSelectedPositions([])}
+              />
 
-              {/* Age Range Filter */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button 
-                    variant="outline" 
-                    className="font-bebas uppercase tracking-wider border-primary/30 hover:bg-primary/10"
-                  >
-                    {t('stars.filter_age')}
-                    {selectedAgeRanges.length > 0 && (
-                      <span className="ml-2 bg-primary text-black rounded-full px-2 py-0.5 text-xs">
-                        {selectedAgeRanges.length}
-                      </span>
-                    )}
-                    <ChevronDown className="ml-2 h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56 bg-background">
-                  <DropdownMenuLabel className="font-bebas uppercase tracking-wider">
-                    {t('stars.select_age_ranges')}
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  {ageRanges.map((range) => (
-                    <DropdownMenuCheckboxItem
-                      key={range.label}
-                      checked={selectedAgeRanges.includes(range.label)}
-                      onCheckedChange={() => toggleAgeRange(range.label)}
-                      className="cursor-pointer"
-                    >
-                      {range.label}
-                    </DropdownMenuCheckboxItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <LateralFilter
+                label={t('stars.filter_age')}
+                options={ageRangeOptions}
+                selectedValues={selectedAgeRanges}
+                onToggle={toggleAgeRange}
+                onClear={() => setSelectedAgeRanges([])}
+              />
 
-              {/* Clear Filters */}
+              {/* Clear All Filters */}
               {(selectedPositions.length > 0 || selectedAgeRanges.length > 0) && (
                 <Button
                   variant="ghost"
