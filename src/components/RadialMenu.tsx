@@ -257,9 +257,9 @@ export const RadialMenu = () => {
         <div 
           className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 md:w-40 md:h-40 rounded-full flex flex-col items-center justify-center z-20 border-4 border-black overflow-hidden"
         >
-          {/* Upper half with white marble */}
+          {/* Upper 75% with white marble */}
           <div 
-            className="absolute top-0 left-0 w-full h-1/2"
+            className="absolute top-0 left-0 w-full h-[75%]"
             style={{
               backgroundImage: `url(${whiteMarbleBg})`,
               backgroundSize: 'cover',
@@ -268,11 +268,11 @@ export const RadialMenu = () => {
           />
           
           {/* Black divider line */}
-          <div className="absolute top-1/2 left-0 w-full h-[2px] bg-black z-10" />
+          <div className="absolute left-0 w-full h-[2px] bg-black z-10" style={{ top: '75%' }} />
           
-          {/* Lower half with smudged marble */}
+          {/* Lower 25% with smudged marble */}
           <div 
-            className="absolute bottom-0 left-0 w-full h-1/2"
+            className="absolute bottom-0 left-0 w-full h-[25%]"
             style={{
               backgroundImage: `url(${smudgedMarbleBg})`,
               backgroundSize: 'cover',
