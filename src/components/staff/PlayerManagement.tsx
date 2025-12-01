@@ -18,6 +18,7 @@ import { InlineVideoUpload } from "./InlineVideoUpload";
 import { EditHighlightDialog } from "./EditHighlightDialog";
 import { UploadPlayerImageDialog } from "./UploadPlayerImageDialog";
 import { AddPlayerDialog } from "./AddPlayerDialog";
+import { HighlightedMatchForm } from "./HighlightedMatchForm";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -48,6 +49,7 @@ interface Player {
   club_logo: string | null;
   league: string | null;
   links?: any;
+  highlighted_match?: any;
 }
 
 interface PlayerStats {
@@ -131,6 +133,24 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
     
     // Separate links field
     links: [] as { label: string; url: string }[],
+    
+    // Highlighted Match
+    highlightedMatch: null as {
+      analysis_id?: string | null;
+      home_team: string;
+      home_team_logo: string;
+      away_team: string;
+      away_team_logo: string;
+      score: string;
+      minutes_played: number;
+      match_date: string;
+      competition: string;
+      selected_stats: string[];
+      stats: Record<string, any>;
+      video_url: string;
+      full_match_url: string;
+      r90_report_url: string;
+    } | null,
   });
   const [tacticalAnalyses, setTacticalAnalyses] = useState<Record<string, any[]>>({});
   const [playerPrograms, setPlayerPrograms] = useState<Record<string, any[]>>({});
@@ -611,6 +631,9 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       
       // Separate links field
       links: linksArray,
+      
+      // Highlighted Match
+      highlightedMatch: null,
     });
     setIsEditDialogOpen(true);
   };
@@ -937,6 +960,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
           representation_status: formData.representation_status || null,
           visible_on_stars_page: formData.visible_on_stars_page,
           links: formData.links.length > 0 ? formData.links : null,
+          highlighted_match: formData.highlightedMatch || null,
         })
         .eq("id", editingPlayer.id);
 
@@ -1147,6 +1171,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                   seasonStats: [],
                   topStats: [],
                   links: [],
+                  highlightedMatch: null,
                 });
                 setIsAddPlayerDialogOpen(true);
               }}>
@@ -2605,6 +2630,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                   <TabsTrigger value="tactical" className="flex-shrink-0 whitespace-nowrap text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2">Schemes</TabsTrigger>
                   <TabsTrigger value="stats" className="flex-shrink-0 whitespace-nowrap text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2">Stats</TabsTrigger>
                   <TabsTrigger value="links" className="flex-shrink-0 whitespace-nowrap text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2">Links</TabsTrigger>
+                  <TabsTrigger value="highlight" className="flex-shrink-0 whitespace-nowrap text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2">Highlight</TabsTrigger>
                 </TabsList>
 
                 {/* Basic Info Tab */}
@@ -3349,6 +3375,15 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                       Video highlights are managed through the player's Highlights tab using the file upload system, not through this edit dialog.
                     </p>
                   </div>
+                </TabsContent>
+
+                {/* Highlight Tab */}
+                <TabsContent value="highlight" className="space-y-4">
+                  <HighlightedMatchForm 
+                    value={formData.highlightedMatch}
+                    onChange={(value) => setFormData({ ...formData, highlightedMatch: value })}
+                    playerAnalyses={playerAnalyses[selectedPlayerId || ""] || []}
+                  />
                 </TabsContent>
               </Tabs>
 
