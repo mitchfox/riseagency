@@ -113,8 +113,8 @@ export const RadialMenu = () => {
     };
   };
 
-  const radius = 200; // Distance from center
-  const circleSize = 500; // Main circle diameter
+  const radius = 220; // Distance from center
+  const circleSize = 600; // Main circle diameter
 
   const segmentAngle = 360 / menuItems.length;
 
