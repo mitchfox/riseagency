@@ -661,6 +661,8 @@ const Staff = () => {
                             toast.success(`Opening ${result.section}`);
                           }
                           
+                          // Ensure the opened section is visible at the top of the page
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
                           setSidebarSearchOpen(false);
                         }}
                         className="cursor-pointer"
