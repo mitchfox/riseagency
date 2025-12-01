@@ -55,7 +55,7 @@ export const Header = () => {
   const realisePotentialImages = [realisePotentialSessions, realisePotentialPaos, realisePotentialReport, realisePotentialAnalysis];
   
   useEffect(() => {
-    const topBarPaths = ['/', '/home', '/scouts', '/clubs', '/agents', '/coaches', '/business', '/media'];
+    const topBarPaths = ['/', '/players', '/scouts', '/clubs', '/agents', '/coaches', '/business', '/media'];
     setShowTopBar(topBarPaths.includes(location.pathname));
   }, [location.pathname]);
   
@@ -144,7 +144,7 @@ export const Header = () => {
   }, [newsArticles.length]);
   
   useEffect(() => {
-    const scrollEnabledPaths = ['/', '/home', '/scouts', '/clubs', '/agents', '/coaches', '/business', '/media'];
+    const scrollEnabledPaths = ['/', '/players', '/scouts', '/clubs', '/agents', '/coaches', '/business', '/media'];
     const handleScroll = () => {
       if (scrollEnabledPaths.includes(location.pathname)) {
         setIsScrolled(window.scrollY > 50);
@@ -916,7 +916,7 @@ export const Header = () => {
               if (path.startsWith('/agents')) return '/agents';
               if (path.startsWith('/business')) return '/business';
               if (path.startsWith('/media')) return '/media';
-              if (path.startsWith('/home') || path.startsWith('/stars') || path.startsWith('/performance') || path.startsWith('/news') || path.startsWith('/between-the-lines')) return '/home';
+              if (path.startsWith('/players') || path.startsWith('/stars') || path.startsWith('/performance') || path.startsWith('/news') || path.startsWith('/between-the-lines')) return '/players';
               return '/';
             })()}
             className="absolute left-1/2 transform -translate-x-1/2 z-10"

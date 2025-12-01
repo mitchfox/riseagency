@@ -5,7 +5,7 @@ const subdomainRoutes: Record<string, string> = {
   'portal': '/portal',
   'scouts': '/scout-portal',
   'potential': '/potential',
-  'players': '/players',
+  'players': '/playersmore',
   'clubs': '/clubs',
   'agents': '/agents',
   'coaches': '/coaches'
