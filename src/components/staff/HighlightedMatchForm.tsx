@@ -1,4 +1,5 @@
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -25,6 +26,7 @@ interface HighlightedMatchFormProps {
   value: HighlightedMatchData | null;
   onChange: (value: HighlightedMatchData | null) => void;
   playerAnalyses?: any[];
+  playerHighlights?: any;
 }
 
 const STAT_LABELS: Record<string, string> = {
@@ -49,10 +51,15 @@ const STAT_LABELS: Record<string, string> = {
   shots_on_target: "Shots On Target",
 };
 
-export const HighlightedMatchForm = ({ value, onChange, playerAnalyses = [] }: HighlightedMatchFormProps) => {
+export const HighlightedMatchForm = ({ value, onChange, playerAnalyses = [], playerHighlights }: HighlightedMatchFormProps) => {
   const handleClear = () => {
     onChange(null);
   };
+
+  // Parse player highlights if it's a string
+  const parsedHighlights = typeof playerHighlights === 'string' 
+    ? JSON.parse(playerHighlights) 
+    : playerHighlights;
 
   const toggleStat = (statKey: string) => {
     if (!value) return;
@@ -188,6 +195,63 @@ export const HighlightedMatchForm = ({ value, onChange, playerAnalyses = [] }: H
           </Select>
         </div>
       )}
+
+      {/* Highlight Video Selection */}
+      <div className="space-y-3">
+        <div>
+          <Label className="text-base">Match Highlight Video</Label>
+          <p className="text-sm text-muted-foreground mt-1">
+            Select which highlight video to display from this player's match highlights.
+          </p>
+        </div>
+        
+        {parsedHighlights?.matchHighlights && parsedHighlights.matchHighlights.length > 0 ? (
+          <Select 
+            value={value.video_url || undefined}
+            onValueChange={(videoUrl) => {
+              const selectedHighlight = parsedHighlights.matchHighlights.find((h: any) => h.url === videoUrl);
+              onChange({
+                ...value,
+                video_url: videoUrl,
+                // Optionally update opponent if it matches
+                away_team: selectedHighlight?.opponent || value.away_team,
+              });
+            }}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select highlight video..." />
+            </SelectTrigger>
+            <SelectContent>
+              {parsedHighlights.matchHighlights.map((highlight: any, index: number) => (
+                <SelectItem key={index} value={highlight.url}>
+                  {highlight.clipName || `Highlight ${index + 1}`} 
+                  {highlight.opponent && ` - vs ${highlight.opponent}`}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        ) : (
+          <p className="text-sm text-muted-foreground italic p-4 bg-muted/30 rounded">
+            No match highlight videos available. Add highlights to this player first.
+          </p>
+        )}
+        
+        {value.video_url && (
+          <div className="text-sm text-primary">
+            ✓ Highlight video selected
+          </div>
+        )}
+      </div>
+
+      {/* Full Match URL */}
+      <div className="space-y-2">
+        <Label>Full Match URL (Optional)</Label>
+        <Input
+          value={value.full_match_url}
+          onChange={(e) => onChange({ ...value, full_match_url: e.target.value })}
+          placeholder="https://... (link to watch the full match)"
+        />
+      </div>
 
       {/* Stats Selection */}
       <div className="space-y-3">

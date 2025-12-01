@@ -3383,6 +3383,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                     value={formData.highlightedMatch}
                     onChange={(value) => setFormData({ ...formData, highlightedMatch: value })}
                     playerAnalyses={playerAnalyses[selectedPlayerId || ""] || []}
+                    playerHighlights={editingPlayer?.highlights}
                   />
                 </TabsContent>
               </Tabs>
