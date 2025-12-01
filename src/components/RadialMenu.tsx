@@ -21,9 +21,10 @@ interface MenuItem {
 export const RadialMenu = () => {
   const { t, language, switchLanguage } = useLanguage();
   const location = useLocation();
-  const { currentRole, isRoleSubdomain, roleConfigs } = useRoleSubdomain();
+  const { currentRole, isRoleSubdomain, roleConfigs, getRoleUrl, otherRoles } = useRoleSubdomain();
   const [hoveredItem, setHoveredItem] = useState<number | null>(null);
   const [showMap, setShowMap] = useState(false);
+  const [showRoleDropdown, setShowRoleDropdown] = useState(false);
 
   const languages = [
     { code: "en" as const, name: "ENG", flag: "🇬🇧" },
@@ -39,6 +40,17 @@ export const RadialMenu = () => {
   ];
 
   const selectedLanguage = languages.find(l => l.code === language) || languages[0];
+
+  const allRoles: Array<{ key: string | null; name: string }> = [
+    { key: null, name: "Main" },
+    { key: "players", name: "Players" },
+    { key: "clubs", name: "Clubs" },
+    { key: "scouts", name: "Scouts" },
+    { key: "agents", name: "Agents" },
+    { key: "coaches", name: "Coaches" },
+    { key: "media", name: "Media" },
+    { key: "business", name: "Business" },
+  ];
 
   // Role-specific menu configurations
   const roleMenus: Record<string, MenuItem[]> = {
@@ -300,23 +312,49 @@ export const RadialMenu = () => {
             style={{ transform: 'translateY(-13px)' }}
           />
           
-          {/* Role/Menu text */}
+          {/* Role/Menu dropdown */}
           <div
             className="text-center relative z-20"
             style={{ transform: 'translateY(-51px)' }}
           >
-            <p className="text-black font-bebas text-2xl md:text-3xl tracking-[0.05em]">
-              {currentRole && roleConfigs[currentRole]
-                ? roleConfigs[currentRole].name.toUpperCase()
-                : "MENU"}
-            </p>
+            <button
+              onClick={() => setShowRoleDropdown(!showRoleDropdown)}
+              className="flex items-center justify-center gap-1 text-black font-bebas text-2xl md:text-3xl tracking-[0.05em] hover:text-primary transition-colors duration-300 focus:outline-none"
+            >
+              <span>
+                {currentRole && roleConfigs[currentRole]
+                  ? roleConfigs[currentRole].name.toUpperCase()
+                  : "MENU"}
+              </span>
+              <ChevronDown className={`w-5 h-5 transition-transform duration-300 ${showRoleDropdown ? 'rotate-180' : ''}`} />
+            </button>
+
+            {/* Role dropdown menu */}
+            {showRoleDropdown && (
+              <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 bg-background border border-primary/30 rounded-lg shadow-lg min-w-[120px] z-50">
+                {allRoles.map((role) => (
+                  <a
+                    key={role.key || 'main'}
+                    href={role.key ? getRoleUrl(role.key as any) : '/'}
+                    className={`block px-4 py-2 text-sm font-bebas uppercase tracking-wider transition-colors ${
+                      (currentRole === role.key) || (!currentRole && !role.key)
+                        ? "text-primary bg-primary/10"
+                        : "text-foreground hover:bg-foreground/5 hover:text-primary"
+                    }`}
+                    onClick={() => setShowRoleDropdown(false)}
+                  >
+                    {role.name}
+                  </a>
+                ))}
+              </div>
+            )}
           </div>
           
           {/* Language selector in lower half */}
           <div className="absolute bottom-1 left-1/2 -translate-x-1/2 z-20">
             <button
               onClick={() => setShowMap(!showMap)}
-              className="flex items-center gap-1 text-[10px] font-bebas uppercase tracking-wider text-black hover:text-primary transition-all duration-300 focus:outline-none"
+              className="flex items-center gap-1 text-[10px] font-bebas uppercase tracking-wider text-primary hover:text-primary/80 transition-all duration-300 focus:outline-none"
             >
               <span className="text-sm">{selectedLanguage.flag}</span>
               <span>{selectedLanguage.name}</span>
