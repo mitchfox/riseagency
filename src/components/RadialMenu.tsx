@@ -124,6 +124,7 @@ export const RadialMenu = () => {
   const circleSize = 500; // Main circle diameter
 
   const segmentAngle = 360 / menuItems.length;
+  const baseAngle = -90; // top of circle
 
   return (
     <div className="fixed inset-0 flex items-center justify-center z-[200] overflow-hidden bg-[#0a0a0a]">
@@ -180,9 +181,8 @@ export const RadialMenu = () => {
         />
 
         {/* Segment dividers */}
-        {menuItems.map((item, index) => {
-          const baseAngle = -90; // start at top
-          const angle = baseAngle + index * segmentAngle;
+        {menuItems.map((_, index) => {
+          const angle = baseAngle + index * segmentAngle; // boundary line
           
           return (
             <div
@@ -196,13 +196,13 @@ export const RadialMenu = () => {
           );
         })}
 
-        {/* Segment hover slices and content */}
+        {/* Segment slices and content */}
         {menuItems.map((item, index) => {
-          const baseAngle = -90;
-          const angle = baseAngle + index * segmentAngle;
+          const startAngle = baseAngle + index * segmentAngle; // boundary start
+          const endAngle = startAngle + segmentAngle; // boundary end
+          const centerAngle = startAngle + segmentAngle / 2; // middle of segment
           const hovered = hoveredItem === item.to;
-          const startAngle = angle - segmentAngle / 2;
-          const pos = getCirclePosition(angle, radius);
+          const pos = getCirclePosition(centerAngle, radius);
           
           return (
             <DrawerClose key={`slice-${item.to}`} asChild>
@@ -216,34 +216,21 @@ export const RadialMenu = () => {
                   height: `${circleSize}px`,
                 }}
               >
-                {/* White segment on hover */}
+                {/* Segment fill: grey by default, white on hover */}
                 <svg 
                   viewBox={`0 0 ${circleSize} ${circleSize}`}
-                  className="w-full h-full transition-opacity duration-300 absolute inset-0"
-                  style={{ 
-                    opacity: hovered ? 1 : 0,
-                  }}
+                  className="w-full h-full absolute inset-0 transition-colors duration-200"
                 >
-                  <defs>
-                    <filter id={`glow-${index}`}>
-                      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
-                      <feMerge>
-                        <feMergeNode in="coloredBlur"/>
-                        <feMergeNode in="SourceGraphic"/>
-                      </feMerge>
-                    </filter>
-                  </defs>
                   <path
                     d={`
                       M ${circleSize / 2} ${circleSize / 2}
                       L ${circleSize / 2 + (circleSize / 2.2) * Math.cos((startAngle * Math.PI) / 180)} ${circleSize / 2 + (circleSize / 2.2) * Math.sin((startAngle * Math.PI) / 180)}
-                      A ${circleSize / 2.2} ${circleSize / 2.2} 0 0 1 ${circleSize / 2 + (circleSize / 2.2) * Math.cos(((startAngle + segmentAngle) * Math.PI) / 180)} ${circleSize / 2 + (circleSize / 2.2) * Math.sin(((startAngle + segmentAngle) * Math.PI) / 180)}
+                      A ${circleSize / 2.2} ${circleSize / 2.2} 0 0 1 ${circleSize / 2 + (circleSize / 2.2) * Math.cos(((endAngle) * Math.PI) / 180)} ${circleSize / 2 + (circleSize / 2.2) * Math.sin(((endAngle) * Math.PI) / 180)}
                       Z
                     `}
-                    fill="rgba(255, 255, 255, 1)"
-                    stroke="rgba(255, 255, 255, 0.5)"
-                    strokeWidth="2"
-                    filter={`url(#glow-${index})`}
+                    fill={hovered ? "rgba(255,255,255,1)" : "rgba(128,128,128,0.2)"}
+                    stroke="rgba(255,255,255,0.4)"
+                    strokeWidth="1.5"
                   />
                 </svg>
                 
@@ -280,8 +267,8 @@ export const RadialMenu = () => {
         })}
 
         {/* Center circle with logo */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 md:w-36 md:h-36 rounded-full bg-white flex flex-col items-center justify-center shadow-[0_0_60px_rgba(212,175,55,0.3)] z-20 border-4 border-black">
-          <img src={riseLogoBlack} alt="RISE" className="w-14 h-14 md:w-16 md:h-16 mb-2" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 md:w-40 md:h-40 rounded-full bg-white flex flex-col items-center justify-center shadow-[0_0_60px_rgba(212,175,55,0.3)] z-20 border-4 border-black">
+          <img src={riseLogoBlack} alt="RISE" className="w-20 h-20 md:w-24 md:h-24 mb-1" />
           <div className="text-center">
             <p className="text-black font-bebas text-base md:text-lg tracking-[0.25em]">
               {isRoleSubdomain && currentRole 
