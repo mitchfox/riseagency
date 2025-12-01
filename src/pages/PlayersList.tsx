@@ -230,7 +230,7 @@ const PlayersList = () => {
             </div>
 
             {/* Filters */}
-            <div className="mb-8 space-y-4">
+            <div className="mb-8 flex flex-wrap items-center gap-3">
               <LateralFilter
                 label="Filter by Position"
                 options={positionOptions}
