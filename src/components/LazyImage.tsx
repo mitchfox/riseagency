@@ -4,12 +4,14 @@ interface LazyImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
   src: string;
   alt: string;
   threshold?: number;
+  disableLoadingTransition?: boolean;
 }
 
 export const LazyImage = ({ 
   src, 
   alt, 
   threshold = 0.1, 
+  disableLoadingTransition = false,
   className,
   ...props 
 }: LazyImageProps) => {
@@ -42,7 +44,7 @@ export const LazyImage = ({
       alt={alt}
       className={className}
       onLoad={() => setIsLoaded(true)}
-      style={{
+      style={disableLoadingTransition ? undefined : {
         opacity: isLoaded ? 1 : 0,
         transition: 'opacity 0.3s ease-in-out'
       }}
