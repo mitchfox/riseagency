@@ -340,7 +340,7 @@ export const RadialMenu = () => {
             style={{ transform: 'translateY(-13px)' }}
           />
           
-          {/* Role/Menu dropdown */}
+          {/* Role/Menu dropdown button */}
           <div
             className="text-center relative z-20"
             style={{ transform: 'translateY(-51px)' }}
@@ -352,26 +352,6 @@ export const RadialMenu = () => {
               <span>{displayRoleName}</span>
               <ChevronDown className={`w-5 h-5 transition-transform duration-300 ${showRoleDropdown ? 'rotate-180' : ''}`} />
             </button>
-
-            {/* Role dropdown menu */}
-            {showRoleDropdown && (
-              <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 bg-background border border-primary/30 rounded-lg shadow-lg min-w-[120px] z-50">
-                {allRoles.map((role) => (
-                  <a
-                    key={role.key || 'main'}
-                    href={role.key ? getRoleUrl(role.key as any) : '/'}
-                    className={`block px-4 py-2 text-sm font-bebas uppercase tracking-wider transition-colors ${
-                      (displayRoleKey === role.key) || (!displayRoleKey && !role.key)
-                        ? "text-primary bg-primary/10"
-                        : "text-foreground hover:bg-foreground/5 hover:text-primary"
-                    }`}
-                    onClick={() => setShowRoleDropdown(false)}
-                  >
-                    {role.name}
-                  </a>
-                ))}
-              </div>
-            )}
           </div>
           
           {/* Language selector in lower half */}
@@ -386,6 +366,26 @@ export const RadialMenu = () => {
             </button>
           </div>
         </div>
+
+        {/* Role dropdown menu - positioned outside overflow-hidden container */}
+        {showRoleDropdown && (
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 mt-24 bg-background border border-primary/30 rounded-lg shadow-lg min-w-[140px] z-[100]">
+            {allRoles.map((role) => (
+              <a
+                key={role.key || 'main'}
+                href={role.key ? getRoleUrl(role.key as any) : '/'}
+                className={`block px-4 py-2 text-sm font-bebas uppercase tracking-wider transition-colors ${
+                  (displayRoleKey === role.key) || (!displayRoleKey && !role.key)
+                    ? "text-primary bg-primary/10"
+                    : "text-foreground hover:bg-foreground/5 hover:text-primary"
+                }`}
+                onClick={() => setShowRoleDropdown(false)}
+              >
+                {role.name}
+              </a>
+            ))}
+          </div>
+        )}
 
         {/* Map overlay */}
         {showMap && (
