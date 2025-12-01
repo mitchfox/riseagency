@@ -122,8 +122,30 @@ export const RadialMenu = () => {
 
   const radius = 320; // Distance from center
 
+  const segmentAngle = 360 / menuItems.length;
+
   return (
-    <div className="fixed inset-0 bg-black flex items-center justify-center z-[200] overflow-hidden">
+    <div className="fixed inset-0 flex items-center justify-center z-[200] overflow-hidden bg-[#0a0a0a]">
+      {/* Grid pattern background */}
+      <div 
+        className="absolute inset-0 opacity-20"
+        style={{
+          backgroundImage: `
+            linear-gradient(rgba(212,175,55,0.1) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(212,175,55,0.1) 1px, transparent 1px)
+          `,
+          backgroundSize: '50px 50px',
+        }}
+      />
+      
+      {/* Radial gradient overlay */}
+      <div 
+        className="absolute inset-0"
+        style={{
+          background: 'radial-gradient(circle at center, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.8) 70%, rgba(0,0,0,0.95) 100%)',
+        }}
+      />
+
       {/* Close button - top left */}
       <DrawerClose asChild>
         <button
@@ -144,20 +166,79 @@ export const RadialMenu = () => {
         </button>
       </DrawerClose>
 
-      {/* Central circle with logo */}
+      {/* Main radial menu container */}
       <div className="relative">
-        {/* Center circle */}
-        <div className="w-44 h-44 md:w-56 md:h-56 rounded-full bg-white flex flex-col items-center justify-center shadow-[0_0_80px_rgba(212,175,55,0.4)] relative z-10">
-          <img src={riseLogoWhite} alt="RISE" className="w-20 h-20 md:w-24 md:h-24 mb-3 brightness-0" />
-          <div className="text-center">
-            <p className="text-black font-bebas text-xl md:text-2xl tracking-[0.25em]">
-              {isRoleSubdomain && currentRole 
-                ? roleConfigs[currentRole].name.toUpperCase()
-                : "MENU"
-              }
-            </p>
-          </div>
-        </div>
+        {/* Large semi-transparent black circle */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] md:w-[800px] md:h-[800px] rounded-full bg-black/60 backdrop-blur-sm border border-primary/20" />
+
+        {/* Segment dividers */}
+        {menuItems.map((item, index) => {
+          const angle = item.angle;
+          const rad = (angle * Math.PI) / 180;
+          
+          return (
+            <div
+              key={`divider-${index}`}
+              className="absolute top-1/2 left-1/2 origin-left h-[1px] bg-primary/30 pointer-events-none"
+              style={{
+                width: '400px',
+                transform: `rotate(${angle}deg)`,
+              }}
+            />
+          );
+        })}
+
+        {/* Segment hover slices */}
+        {menuItems.map((item, index) => {
+          const active = isActive(item.to);
+          const hovered = hoveredItem === item.to;
+          const startAngle = item.angle - segmentAngle / 2;
+          
+          return (
+            <DrawerClose key={`slice-${item.to}`} asChild>
+              <Link
+                to={item.to}
+                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-auto"
+                onMouseEnter={() => setHoveredItem(item.to)}
+                onMouseLeave={() => setHoveredItem(null)}
+                style={{
+                  width: '800px',
+                  height: '800px',
+                }}
+              >
+                <svg 
+                  viewBox="0 0 800 800" 
+                  className="w-full h-full transition-opacity duration-300"
+                  style={{ 
+                    opacity: (active || hovered) ? 1 : 0,
+                  }}
+                >
+                  <defs>
+                    <filter id={`glow-${index}`}>
+                      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+                      <feMerge>
+                        <feMergeNode in="coloredBlur"/>
+                        <feMergeNode in="SourceGraphic"/>
+                      </feMerge>
+                    </filter>
+                  </defs>
+                  <path
+                    d={`
+                      M 400 400
+                      L ${400 + 350 * Math.cos((startAngle * Math.PI) / 180)} ${400 + 350 * Math.sin((startAngle * Math.PI) / 180)}
+                      A 350 350 0 0 1 ${400 + 350 * Math.cos(((startAngle + segmentAngle) * Math.PI) / 180)} ${400 + 350 * Math.sin(((startAngle + segmentAngle) * Math.PI) / 180)}
+                      Z
+                    `}
+                    fill="rgba(255, 255, 255, 0.15)"
+                    stroke="rgba(255, 255, 255, 0.3)"
+                    strokeWidth="2"
+                    filter={`url(#glow-${index})`}
+                  />
+                </svg>
+              </Link>
+            </DrawerClose>
+          );
+        })}
 
         {/* Radial menu items */}
         {menuItems.map((item) => {
@@ -166,48 +247,51 @@ export const RadialMenu = () => {
           const hovered = hoveredItem === item.to;
           
           return (
-            <DrawerClose key={item.to} asChild>
-              <Link
-                to={item.to}
-                className="absolute group flex flex-col items-center justify-center transition-all duration-500 ease-out"
-                style={{
-                  left: `calc(50% + ${pos.x}px)`,
-                  top: `calc(50% + ${pos.y}px)`,
-                  transform: 'translate(-50%, -50%)',
-                }}
-                onMouseEnter={() => setHoveredItem(item.to)}
-                onMouseLeave={() => setHoveredItem(null)}
-              >
-                {/* Icon background circle */}
+            <div
+              key={`item-${item.to}`}
+              className="absolute pointer-events-none"
+              style={{
+                left: `calc(50% + ${pos.x}px)`,
+                top: `calc(50% + ${pos.y}px)`,
+                transform: 'translate(-50%, -50%)',
+              }}
+            >
+              <div className="flex flex-col items-center justify-center">
+                {/* Icon */}
                 <div className={`
-                  w-20 h-20 md:w-24 md:h-24 rounded-full flex items-center justify-center mb-3 transition-all duration-500 ease-out relative
-                  ${active || hovered 
-                    ? 'bg-white shadow-[0_0_30px_rgba(255,255,255,0.3)] scale-110' 
-                    : 'bg-black/30 border-2 border-primary/50'
-                  }
+                  w-16 h-16 md:w-20 md:h-20 rounded-full flex items-center justify-center mb-2 transition-all duration-300
+                  ${active || hovered ? 'scale-110' : 'scale-100'}
                 `}>
                   <item.Icon className={`
-                    w-9 h-9 md:w-11 md:h-11 transition-all duration-500 ease-out
-                    ${active || hovered ? 'text-black scale-110' : 'text-primary'}
+                    w-8 h-8 md:w-10 md:h-10 transition-colors duration-300
+                    ${active || hovered ? 'text-white' : 'text-white/70'}
                   `} />
-                  
-                  {/* Glow effect on hover/active */}
-                  {(active || hovered) && (
-                    <div className="absolute inset-0 rounded-full bg-white/20 animate-pulse" />
-                  )}
                 </div>
                 
                 {/* Label */}
                 <span className={`
-                  font-bebas text-base md:text-lg tracking-[0.2em] whitespace-nowrap transition-all duration-500 ease-out text-center
-                  ${active || hovered ? 'text-white scale-105' : 'text-primary/80'}
+                  font-bebas text-sm md:text-base tracking-[0.2em] whitespace-nowrap transition-all duration-300 text-center
+                  ${active || hovered ? 'text-white' : 'text-white/60'}
                 `}>
                   {t(item.labelKey, item.fallback)}
                 </span>
-              </Link>
-            </DrawerClose>
+              </div>
+            </div>
           );
         })}
+
+        {/* Center circle with logo */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-36 h-36 md:w-44 md:h-44 rounded-full bg-white flex flex-col items-center justify-center shadow-[0_0_60px_rgba(212,175,55,0.3)] z-20">
+          <img src={riseLogoWhite} alt="RISE" className="w-16 h-16 md:w-20 md:h-20 mb-2 brightness-0" />
+          <div className="text-center">
+            <p className="text-black font-bebas text-lg md:text-xl tracking-[0.25em]">
+              {isRoleSubdomain && currentRole 
+                ? roleConfigs[currentRole].name.toUpperCase()
+                : "MENU"
+              }
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );
