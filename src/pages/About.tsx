@@ -18,7 +18,7 @@ const About = () => {
       />
       <Header />
       
-      <main className="pt-24 md:pt-16 touch-pan-y overflow-x-hidden">
+      <main className="pt-32 md:pt-24 touch-pan-y overflow-x-hidden">
         {/* Hero Section */}
         <section className="relative h-[60vh] flex items-center justify-center overflow-hidden">
           <div 

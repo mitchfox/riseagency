@@ -100,7 +100,7 @@ const Scouts = () => {
       />
       <Header />
       
-      <main className="pt-24 md:pt-16">
+      <main className="pt-32 md:pt-24">
 
         {/* Scouting Criteria by Position Section */}
         <section className="relative min-h-screen flex flex-col">

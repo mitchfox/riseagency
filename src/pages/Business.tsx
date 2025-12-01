@@ -21,7 +21,7 @@ const Business = () => {
       />
       <Header />
       
-      <main className="pt-24 md:pt-16">
+      <main className="pt-32 md:pt-24">
         {/* Hero Section */}
         <section className="relative h-[50vh] flex items-center justify-center overflow-hidden">
           <div 
