@@ -20,7 +20,7 @@ export const RadialMenu = () => {
   const { t } = useLanguage();
   const location = useLocation();
   const { currentRole, isRoleSubdomain, roleConfigs } = useRoleSubdomain();
-  const [hoveredItem, setHoveredItem] = useState<string | null>(null);
+  const [hoveredItem, setHoveredItem] = useState<number | null>(null);
 
   // Role-specific menu configurations
   const roleMenus: Record<string, MenuItem[]> = {
@@ -183,70 +183,79 @@ export const RadialMenu = () => {
           );
         })}
 
-        {/* Segment slices and content */}
+        {/* Segment slices */}
         {menuItems.map((item, index) => {
           const startAngle = index * segmentAngle;
           const endAngle = startAngle + segmentAngle;
-          const centerAngle = startAngle + segmentAngle / 2;
-          const hovered = hoveredItem === item.to;
-          const pos = getCirclePosition(item.angle, radius);
-          
+          const hovered = hoveredItem === index;
+
           return (
-            <DrawerClose key={`slice-${item.to}`} asChild>
+            <svg
+              key={`slice-${item.to}`}
+              viewBox={`0 0 ${circleSize} ${circleSize}`}
+              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none"
+              style={{
+                width: `${circleSize}px`,
+                height: `${circleSize}px`,
+              }}
+            >
+              <path
+                d={`
+                  M ${circleSize / 2} ${circleSize / 2}
+                  L ${circleSize / 2 + (circleSize / 2.2) * Math.cos((startAngle * Math.PI) / 180)} ${circleSize / 2 + (circleSize / 2.2) * Math.sin((startAngle * Math.PI) / 180)}
+                  A ${circleSize / 2.2} ${circleSize / 2.2} 0 0 1 ${circleSize / 2 + (circleSize / 2.2) * Math.cos(((endAngle) * Math.PI) / 180)} ${circleSize / 2 + (circleSize / 2.2) * Math.sin(((endAngle) * Math.PI) / 180)}
+                  Z
+                `}
+                fill={hovered ? "rgba(255,255,255,1)" : "rgba(128,128,128,0.1)"}
+                stroke="rgba(255,255,255,0.4)"
+                strokeWidth="1.5"
+              />
+            </svg>
+          );
+        })}
+
+        {/* Icons and labels positioned on segments */}
+        {menuItems.map((item, index) => {
+          const startAngle = index * segmentAngle;
+          const centerAngle = startAngle + segmentAngle / 2;
+          const hovered = hoveredItem === index;
+          const pos = getCirclePosition(centerAngle, radius);
+
+          return (
+            <DrawerClose key={`label-${item.to}`} asChild>
               <Link
                 to={item.to}
-                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-auto cursor-pointer group"
-                onMouseEnter={() => setHoveredItem(item.to)}
+                className="absolute pointer-events-auto cursor-pointer group"
+                onMouseEnter={() => setHoveredItem(index)}
                 onMouseLeave={() => setHoveredItem(null)}
                 style={{
-                  width: `${circleSize}px`,
-                  height: `${circleSize}px`,
+                  left: `calc(50% + ${pos.x}px)`,
+                  top: `calc(50% + ${pos.y}px)`,
+                  transform: 'translate(-50%, -50%)',
                 }}
               >
-                {/* Segment fill: grey by default, white on hover */}
-                <svg 
-                  viewBox={`0 0 ${circleSize} ${circleSize}`}
-                  className="w-full h-full absolute inset-0 transition-colors duration-200"
-                >
-                  <path
-                    d={`
-                      M ${circleSize / 2} ${circleSize / 2}
-                      L ${circleSize / 2 + (circleSize / 2.2) * Math.cos((startAngle * Math.PI) / 180)} ${circleSize / 2 + (circleSize / 2.2) * Math.sin((startAngle * Math.PI) / 180)}
-                      A ${circleSize / 2.2} ${circleSize / 2.2} 0 0 1 ${circleSize / 2 + (circleSize / 2.2) * Math.cos(((endAngle) * Math.PI) / 180)} ${circleSize / 2 + (circleSize / 2.2) * Math.sin(((endAngle) * Math.PI) / 180)}
-                      Z
-                    `}
-                    fill={hovered ? "rgba(255,255,255,1)" : "rgba(128,128,128,0.1)"}
-                    stroke="rgba(255,255,255,0.4)"
-                    strokeWidth="1.5"
-                  />
-                </svg>
-                
-                {/* Icon and label positioned on segment */}
-                <div
-                  className="absolute pointer-events-none"
-                  style={{
-                    left: `calc(50% + ${pos.x}px)`,
-                    top: `calc(50% + ${pos.y}px)`,
-                    transform: 'translate(-50%, -50%)',
-                  }}
-                >
-                  <div className="flex flex-col items-center justify-center">
-                    <div className={`
+                <div className="flex flex-col items-center justify-center">
+                  <div
+                    className={`
                       w-14 h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center mb-2 transition-all duration-300
-                    `}>
-                      <item.Icon className={`
+                    `}
+                  >
+                    <item.Icon
+                      className={`
                         w-7 h-7 md:w-8 md:h-8 transition-colors duration-300
                         ${hovered ? 'text-black' : 'text-white/70'}
-                      `} />
-                    </div>
-                    
-                    <span className={`
+                      `}
+                    />
+                  </div>
+
+                  <span
+                    className={`
                       font-bebas text-xs md:text-sm tracking-[0.2em] whitespace-nowrap transition-all duration-300 text-center
                       ${hovered ? 'text-black' : 'text-white/60'}
-                    `}>
-                      {t(item.labelKey, item.fallback)}
-                    </span>
-                  </div>
+                    `}
+                  >
+                    {t(item.labelKey, item.fallback)}
+                  </span>
                 </div>
               </Link>
             </DrawerClose>
@@ -262,13 +271,20 @@ export const RadialMenu = () => {
             backgroundPosition: 'center',
           }}
         >
-          <img src={riseLogoBlack} alt="RISE" className="w-30 h-30 md:w-36 md:h-36 mb-1" />
-          <div className="text-center">
+          <img
+            src={riseLogoBlack}
+            alt="RISE"
+            className="w-28 h-28 md:w-36 md:h-36 mb-1"
+            style={{ transform: 'translateY(-10px)' }}
+          />
+          <div
+            className="text-center"
+            style={{ transform: 'translateY(-20px)' }}
+          >
             <p className="text-black font-bebas text-2xl md:text-3xl tracking-[0.25em]">
-              {currentRole && roleConfigs[currentRole] 
+              {currentRole && roleConfigs[currentRole]
                 ? roleConfigs[currentRole].name.toUpperCase()
-                : "MENU"
-              }
+                : "MENU"}
             </p>
           </div>
         </div>
