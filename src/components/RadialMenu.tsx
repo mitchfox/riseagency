@@ -267,8 +267,8 @@ export const RadialMenu = () => {
             }}
           />
           
-          {/* Black divider line */}
-          <div className="absolute left-0 w-full h-[2px] bg-black z-10" style={{ top: '75%' }} />
+          {/* Gold divider line */}
+          <div className="absolute left-0 w-full h-[1px] bg-primary z-10" style={{ top: '75%' }} />
           
           {/* Lower 25% with smudged marble */}
           <div 
@@ -285,13 +285,13 @@ export const RadialMenu = () => {
             src={riseLogoBlack}
             alt="RISE"
             className="w-28 h-28 md:w-36 md:h-36 mb-1 relative z-20"
-            style={{ transform: 'translateY(-10px)' }}
+            style={{ transform: 'translateY(-13px)' }}
           />
           
           {/* Role/Menu text */}
           <div
             className="text-center relative z-20"
-            style={{ transform: 'translateY(-45px)' }}
+            style={{ transform: 'translateY(-51px)' }}
           >
             <p className="text-black font-bebas text-2xl md:text-3xl tracking-[0.05em]">
               {currentRole && roleConfigs[currentRole]
