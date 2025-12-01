@@ -130,6 +130,18 @@ const subdomainSubHeaders: Record<string, SubHeaderConfig> = {
   },
 };
 
+// Route-to-role mapping for detecting role from current path
+const routeToRole: Record<string, string> = {
+  '/playersmore': 'players',
+  '/players': 'players',
+  '/clubs': 'clubs',
+  '/scouts': 'scouts',
+  '/agents': 'agents',
+  '/coaches': 'coaches',
+  '/business': 'business',
+  '/media': 'media',
+};
+
 export const Header = () => {
   const location = useLocation();
   const { t } = useLanguage();
@@ -139,9 +151,13 @@ export const Header = () => {
   const [declareInterestOpen, setDeclareInterestOpen] = useState(false);
   const [arrangeMeetingOpen, setArrangeMeetingOpen] = useState(false);
   
-  // Get subdomain-specific sub-header config
-  const subHeaderConfig = currentRole && subdomainSubHeaders[currentRole] 
-    ? subdomainSubHeaders[currentRole] 
+  // Detect role from route if no subdomain role
+  const routeRole = routeToRole[location.pathname];
+  const effectiveRole = currentRole || routeRole;
+  
+  // Get subdomain-specific sub-header config based on effective role
+  const subHeaderConfig = effectiveRole && subdomainSubHeaders[effectiveRole] 
+    ? subdomainSubHeaders[effectiveRole] 
     : defaultSubHeader;
   
   const handleSubHeaderAction = (action: SubHeaderItem['action']) => {
