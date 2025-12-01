@@ -3,7 +3,7 @@ import { DrawerClose } from "@/components/ui/drawer";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { LocalizedLink } from "@/components/LocalizedLink";
 import { useRoleSubdomain } from "@/hooks/useRoleSubdomain";
-import riseLogoWhite from "@/assets/logo.png";
+import riseLogoBlack from "@/assets/RISEBlack.png";
 import { Home, Star, TrendingUp, BookOpen, Newspaper, MessageCircle, Target, Trophy, Users, Handshake, Briefcase, Search, Calendar, Heart, Package } from "lucide-react";
 import { useState, useMemo } from "react";
 
@@ -181,7 +181,8 @@ export const RadialMenu = () => {
 
         {/* Segment dividers */}
         {menuItems.map((item, index) => {
-          const angle = item.angle;
+          const baseAngle = -90; // start at top
+          const angle = baseAngle + index * segmentAngle;
           
           return (
             <div
@@ -197,9 +198,11 @@ export const RadialMenu = () => {
 
         {/* Segment hover slices and content */}
         {menuItems.map((item, index) => {
+          const baseAngle = -90;
+          const angle = baseAngle + index * segmentAngle;
           const hovered = hoveredItem === item.to;
-          const startAngle = item.angle - segmentAngle / 2;
-          const pos = getCirclePosition(item.angle, radius);
+          const startAngle = angle - segmentAngle / 2;
+          const pos = getCirclePosition(angle, radius);
           
           return (
             <DrawerClose key={`slice-${item.to}`} asChild>
@@ -278,7 +281,7 @@ export const RadialMenu = () => {
 
         {/* Center circle with logo */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 md:w-36 md:h-36 rounded-full bg-white flex flex-col items-center justify-center shadow-[0_0_60px_rgba(212,175,55,0.3)] z-20 border-4 border-black">
-          <img src={riseLogoWhite} alt="RISE" className="w-14 h-14 md:w-16 md:h-16 mb-2 brightness-0" />
+          <img src={riseLogoBlack} alt="RISE" className="w-14 h-14 md:w-16 md:h-16 mb-2" />
           <div className="text-center">
             <p className="text-black font-bebas text-base md:text-lg tracking-[0.25em]">
               {isRoleSubdomain && currentRole 
