@@ -89,23 +89,23 @@ export const DragNavigator = ({ options }: DragNavigatorProps) => {
 
   return (
     <div className="w-full">
-      <div className="text-center mb-3">
-        <p className="text-white/60 text-xs uppercase tracking-[0.25em] font-bebas mb-1">
+      <div className="text-center mb-4">
+        <p className="text-white/60 text-sm uppercase tracking-[0.25em] font-bebas mb-1">
           {isDragging ? "Release to Navigate" : "Drag & Hold to Enter"}
         </p>
-        <p className="text-primary text-lg font-bebas tracking-[0.2em]">
+        <p className="text-primary text-xl font-bebas tracking-[0.2em]">
           {t(options[currentIndex].labelKey, options[currentIndex].fallback)}
         </p>
       </div>
 
       <div
         ref={containerRef}
-        className="relative h-16 bg-black/20 border border-primary/30 backdrop-blur-sm"
+        className="relative h-24 bg-black/20 border border-primary/30 backdrop-blur-sm"
         onMouseDown={handleDragStart}
         onTouchStart={handleDragStart}
       >
         {/* Snap points with labels */}
-        <div className="absolute inset-0 flex justify-between items-end px-3 pb-2">
+        <div className="absolute inset-0 flex justify-between items-end px-4 md:px-6 pb-2">
           {snapPositions.map((snap) => (
             <div key={snap.index} className="flex flex-col items-center">
               <div
@@ -115,7 +115,7 @@ export const DragNavigator = ({ options }: DragNavigatorProps) => {
                     : "bg-primary/30"
                 }`}
               />
-              <span className={`text-[10px] uppercase tracking-wider font-bebas transition-colors duration-300 ${
+              <span className={`text-xs uppercase tracking-wider font-bebas transition-colors duration-300 whitespace-nowrap ${
                 currentIndex === snap.index ? "text-primary" : "text-white/40"
               }`}>
                 {t(options[snap.index].labelKey, options[snap.index].fallback)}
@@ -126,20 +126,20 @@ export const DragNavigator = ({ options }: DragNavigatorProps) => {
 
         {/* Draggable element */}
         <div
-          className="absolute top-2 transition-all duration-200 cursor-grab active:cursor-grabbing z-10"
+          className="absolute top-3 transition-all duration-200 cursor-grab active:cursor-grabbing z-10"
           style={{
-            left: `calc(${displayPosition * 100}% - 24px)`,
+            left: `calc(${displayPosition * 100}% - 28px)`,
           }}
         >
-          <div className={`w-12 h-12 border-2 border-primary bg-black/80 backdrop-blur-sm flex items-center justify-center transition-all duration-300 ${
+          <div className={`w-14 h-14 border-2 border-primary bg-black/80 backdrop-blur-sm flex items-center justify-center transition-all duration-300 ${
             isDragging ? "scale-110 border-primary shadow-[0_0_20px_rgba(212,175,55,0.5)]" : ""
           }`}>
-            <ArrowRight className="text-primary" size={24} />
+            <ArrowRight className="text-primary" size={28} />
           </div>
         </div>
 
         {/* Track line */}
-        <div className="absolute top-8 left-3 right-3 h-px bg-primary/20" />
+        <div className="absolute top-10 left-4 md:left-6 right-4 md:right-6 h-px bg-primary/20" />
       </div>
     </div>
   );
