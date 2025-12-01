@@ -141,7 +141,7 @@ export const DragNavigator = ({ options }: DragNavigatorProps) => {
 
         {/* Draggable element */}
         <div
-          className="absolute top-3 cursor-grab active:cursor-grabbing z-10"
+          className="absolute top-3 cursor-none z-10"
           style={{
             left: `calc(${displayPosition * 100}% - 28px)`,
             transition: isDragging ? 'none' : 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',

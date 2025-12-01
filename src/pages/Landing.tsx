@@ -7,6 +7,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { HomeBackground } from "@/components/HomeBackground";
 import { XRayProvider } from "@/contexts/XRayContext";
 import { DragNavigator } from "@/components/DragNavigator";
+import { LandingCursor } from "@/components/LandingCursor";
 import riseLogoWhite from "@/assets/logo.png";
 
 export default function Landing() {
@@ -38,6 +39,9 @@ export default function Landing() {
   return (
     <XRayProvider>
     <div className="min-h-screen bg-black flex flex-col items-center justify-end relative overflow-hidden cursor-none md:cursor-none">
+      {/* Custom Landing Page Cursor */}
+      <LandingCursor />
+      
       {/* Data-driven Background */}
       <HomeBackground />
       
