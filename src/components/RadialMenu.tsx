@@ -51,6 +51,7 @@ export const RadialMenu = () => {
   const [hoveredItem, setHoveredItem] = useState<number | null>(null);
   const [showMap, setShowMap] = useState(false);
   const [isSelectingRole, setIsSelectingRole] = useState(false);
+  const [selectedRole, setSelectedRole] = useState<string | null>(null);
   const [hoveredLang, setHoveredLang] = useState<LanguageCode | null>(null);
 
   const languages = [
@@ -79,7 +80,7 @@ export const RadialMenu = () => {
     return null;
   }, [location.pathname]);
 
-  const displayRoleKey = currentRole ?? pathRole;
+  const displayRoleKey = selectedRole || currentRole || pathRole;
   const displayRoleName =
     displayRoleKey && roleConfigs[displayRoleKey as keyof typeof roleConfigs]
       ? roleConfigs[displayRoleKey as keyof typeof roleConfigs].name.toUpperCase()
@@ -167,14 +168,13 @@ export const RadialMenu = () => {
 
   // Role selection menu items
   const roleMenuItems: MenuItem[] = [
-    { to: "/", labelKey: "roles.main", fallback: "MAIN", Icon: Home, angle: 0 },
-    { to: "/players", labelKey: "roles.players", fallback: "PLAYERS", Icon: Users, angle: 45 },
-    { to: "/clubs", labelKey: "roles.clubs", fallback: "CLUBS", Icon: Trophy, angle: 90 },
-    { to: "/scouts", labelKey: "roles.scouts", fallback: "SCOUTS", Icon: Search, angle: 135 },
-    { to: "/agents", labelKey: "roles.agents", fallback: "AGENTS", Icon: Briefcase, angle: 180 },
-    { to: "/coaches", labelKey: "roles.coaches", fallback: "COACHES", Icon: Target, angle: 225 },
-    { to: "/media", labelKey: "roles.media", fallback: "MEDIA", Icon: Newspaper, angle: 270 },
-    { to: "/business", labelKey: "roles.business", fallback: "BUSINESS", Icon: Package, angle: 315 },
+    { to: "/players", labelKey: "roles.players", fallback: "PLAYERS", Icon: Users, angle: 0 },
+    { to: "/clubs", labelKey: "roles.clubs", fallback: "CLUBS", Icon: Trophy, angle: 51.4 },
+    { to: "/scouts", labelKey: "roles.scouts", fallback: "SCOUTS", Icon: Search, angle: 102.8 },
+    { to: "/agents", labelKey: "roles.agents", fallback: "AGENTS", Icon: Briefcase, angle: 154.3 },
+    { to: "/coaches", labelKey: "roles.coaches", fallback: "COACHES", Icon: Target, angle: 205.7 },
+    { to: "/media", labelKey: "roles.media", fallback: "MEDIA", Icon: Newspaper, angle: 257.1 },
+    { to: "/business", labelKey: "roles.business", fallback: "BUSINESS", Icon: Package, angle: 308.5 },
   ];
 
   // Select menu based on current role or selection mode
@@ -182,11 +182,12 @@ export const RadialMenu = () => {
     if (isSelectingRole) {
       return roleMenuItems;
     }
-    if (currentRole && roleMenus[currentRole]) {
-      return roleMenus[currentRole];
+    const activeRole = selectedRole || currentRole;
+    if (activeRole && roleMenus[activeRole]) {
+      return roleMenus[activeRole];
     }
     return defaultMenu;
-  }, [currentRole, isSelectingRole]);
+  }, [currentRole, selectedRole, isSelectingRole]);
 
   const isActive = (path: string) => {
     return location.pathname === path || location.pathname.startsWith(path + '/');
@@ -309,8 +310,10 @@ export const RadialMenu = () => {
                   onMouseLeave={() => setHoveredItem(null)}
                   onClick={() => {
                     if (isSelectingRole) {
-                      // Navigate to role URL and exit selection mode
-                      window.location.href = item.to;
+                      // Set selected role and exit selection mode
+                      const rolePath = item.to.replace('/', '');
+                      setSelectedRole(rolePath);
+                      setIsSelectingRole(false);
                     } else {
                       // Normal navigation
                       navigate(item.to);
@@ -413,7 +416,7 @@ export const RadialMenu = () => {
                 isSelectingRole ? 'text-primary' : 'text-black hover:text-primary'
               }`}
             >
-              <span>{isSelectingRole ? 'SELECT ROLE' : displayRoleName}</span>
+              <span>{isSelectingRole ? 'ROLE' : displayRoleName}</span>
               <ChevronDown className={`w-5 h-5 transition-transform duration-300 ${isSelectingRole ? 'rotate-180' : ''}`} />
             </button>
           </div>
