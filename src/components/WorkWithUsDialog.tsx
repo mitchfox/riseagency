@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -13,9 +13,23 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useRoleSubdomain, RoleSubdomain } from "@/hooks/useRoleSubdomain";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { ChevronDown } from "lucide-react";
 import logo from "@/assets/logo.png";
 
 type Role = "player" | "coach" | "club" | "agent" | "parent" | "media" | "other" | null;
+
+// Map subdomain to role
+const subdomainToRole: Record<Exclude<RoleSubdomain, null>, Role> = {
+  players: "player",
+  clubs: "club",
+  agents: "agent",
+  coaches: "coach",
+  scouts: "other",
+  business: "other",
+  media: "media",
+};
 
 interface WorkWithUsDialogProps {
   children?: React.ReactNode;
@@ -25,9 +39,17 @@ interface WorkWithUsDialogProps {
 
 export const WorkWithUsDialog = ({ children, open, onOpenChange }: WorkWithUsDialogProps) => {
   const { toast } = useToast();
+  const { currentRole: subdomainRole } = useRoleSubdomain();
   const [selectedRole, setSelectedRole] = useState<Role>(null);
+  const [otherRolesOpen, setOtherRolesOpen] = useState(false);
 
-  const resetSelection = () => setSelectedRole(null);
+  // Get the default role based on subdomain
+  const defaultRole = subdomainRole ? subdomainToRole[subdomainRole] : null;
+
+  const resetSelection = () => {
+    setSelectedRole(null);
+    setOtherRolesOpen(false);
+  };
 
   const handleOpenChange = (isOpen: boolean) => {
     if (!isOpen) {
@@ -79,23 +101,74 @@ export const WorkWithUsDialog = ({ children, open, onOpenChange }: WorkWithUsDia
 
   const renderRoleForm = () => {
     if (!selectedRole) {
+      // Filter roles based on subdomain
+      const otherRoles = defaultRole 
+        ? roles.filter(r => r.value !== defaultRole)
+        : roles;
+      const primaryRole = defaultRole 
+        ? roles.find(r => r.value === defaultRole)
+        : null;
+
       return (
         <div className="space-y-4">
           <p className="text-center text-muted-foreground mb-6">
             Please select your role to continue
           </p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {roles.map((role) => (
-              <Button
-                key={role.value}
-                onClick={() => setSelectedRole(role.value)}
-                size="lg"
-                className="font-bebas uppercase tracking-wider text-lg h-16"
-              >
-                {role.label}
-              </Button>
-            ))}
-          </div>
+          
+          {/* Show primary role (from subdomain) prominently */}
+          {primaryRole && (
+            <Button
+              onClick={() => setSelectedRole(primaryRole.value)}
+              size="lg"
+              className="w-full font-bebas uppercase tracking-wider text-lg h-16"
+            >
+              {primaryRole.label}
+            </Button>
+          )}
+          
+          {/* Other roles in collapsible */}
+          {defaultRole ? (
+            <Collapsible open={otherRolesOpen} onOpenChange={setOtherRolesOpen}>
+              <CollapsibleTrigger asChild>
+                <Button 
+                  variant="outline" 
+                  className="w-full font-bebas uppercase tracking-wider justify-between"
+                >
+                  <span>Other Options</span>
+                  <ChevronDown className={`h-4 w-4 transition-transform ${otherRolesOpen ? 'rotate-180' : ''}`} />
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="pt-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {otherRoles.map((role) => (
+                    <Button
+                      key={role.value}
+                      onClick={() => setSelectedRole(role.value)}
+                      variant="secondary"
+                      size="lg"
+                      className="font-bebas uppercase tracking-wider text-lg h-14"
+                    >
+                      {role.label}
+                    </Button>
+                  ))}
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
+          ) : (
+            /* No subdomain - show all roles in grid */
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {roles.map((role) => (
+                <Button
+                  key={role.value}
+                  onClick={() => setSelectedRole(role.value)}
+                  size="lg"
+                  className="font-bebas uppercase tracking-wider text-lg h-16"
+                >
+                  {role.label}
+                </Button>
+              ))}
+            </div>
+          )}
         </div>
       );
     }
