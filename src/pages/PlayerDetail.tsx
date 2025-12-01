@@ -10,6 +10,8 @@ import { ArrowLeft, MessageCircle, ExternalLink, Video, ChevronLeft, ChevronRigh
 import { FormationDisplay } from "@/components/FormationDisplay";
 import { getCountryFlagUrl } from "@/lib/countryFlags";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { parsePlayerBio, parsePlayerHighlights } from "@/lib/playerDataParser";
+import { LazyVideo } from "@/components/LazyVideo";
 import blackMarbleBg from "@/assets/black-marble-menu.png";
 
 const PlayerDetail = () => {
@@ -50,127 +52,30 @@ const PlayerDetail = () => {
               .eq('player_id', data.id)
               .single();
             
-            // Parse bio to get additional data
-            let bioData: any = {};
-            let bioText = '';
-            let tacticalFormations: any[] = [];
+            // Use optimized parsers
+            const bioData = parsePlayerBio(data.bio);
+            const highlights = parsePlayerHighlights(data.highlights);
             
+            // Extract bio text
+            let bioText = '';
             if (data.bio) {
               try {
-                // First parse of the outer JSON
                 const parsed = JSON.parse(data.bio);
-                console.log('Outer bio parsed:', parsed);
-                
-                if (typeof parsed === 'object' && parsed !== null) {
-                  // Get tactical formations from schemeHistory or tacticalFormations
-                  if (parsed.schemeHistory && Array.isArray(parsed.schemeHistory)) {
-                    // Convert schemeHistory to tacticalFormations format
-                    tacticalFormations = parsed.schemeHistory
-                      .filter((scheme: any) => scheme.formation && scheme.teamName) // Only include valid entries
-                      .map((scheme: any) => ({
-                        formation: scheme.formation,
-                        role: scheme.positions?.[0] || '', // Use first position as role for display
-                        positions: (scheme.positions && scheme.positions.length > 0) ? scheme.positions : [], // Only use if not empty
-                        club: scheme.teamName,
-                        clubLogo: scheme.clubLogo,
-                        playerImage: scheme.playerImage,
-                        appearances: scheme.matches,
-                        matches: scheme.matches
-                      }));
-                  } else if (parsed.tacticalFormations) {
-                    tacticalFormations = parsed.tacticalFormations;
-                  }
-                  
-                  // Get other top-level properties
-                  bioData = {
-                    dateOfBirth: parsed.dateOfBirth,
-                    number: parsed.number,
-                    currentClub: parsed.currentClub,
-                    currentClubLogo: parsed.currentClubLogo,
-                    whatsapp: parsed.whatsapp,
-                    externalLinks: parsed.externalLinks,
-                    strengthsAndPlayStyle: parsed.strengthsAndPlayStyle,
-                    topStats: parsed.topStats,
-                    tacticalFormations: tacticalFormations,
-                    seasonStats: parsed.seasonStats
-                  };
-                  
-                  // Check if bio property exists and is a string (might be nested JSON)
-                  if (parsed.bio && typeof parsed.bio === 'string') {
-                    try {
-                      // Try to parse the inner bio JSON
-                      const innerBio = JSON.parse(parsed.bio);
-                      console.log('Inner bio parsed:', innerBio);
-                      if (typeof innerBio === 'object' && innerBio.text) {
-                        bioText = innerBio.text;
-                      } else if (typeof innerBio === 'string') {
-                        bioText = innerBio;
-                      } else {
-                        bioText = parsed.bio;
-                      }
-                    } catch {
-                      // If inner bio is not JSON, use it as-is
-                      bioText = parsed.bio;
-                    }
-                  } else if (parsed.text) {
-                    bioText = parsed.text;
-                  } else if (typeof data.bio === 'string' && !data.bio.startsWith('{')) {
-                    bioText = data.bio;
-                  }
-                } else {
-                  bioText = data.bio;
+                bioText = parsed.bio || parsed.text || '';
+                // Handle nested bio
+                if (bioText && bioText.startsWith('{')) {
+                  const innerBio = JSON.parse(bioText);
+                  bioText = innerBio.text || innerBio.bio || bioText;
                 }
-              } catch (e) {
-                console.error('Error parsing bio:', e);
-                bioText = data.bio;
+              } catch {
+                bioText = typeof data.bio === 'string' ? data.bio : '';
               }
             }
-            
-            // Parse highlights from database column and extract matchHighlights only
-            let highlights: any[] = [];
-            if (data.highlights) {
-              try {
-                console.log('RAW highlights from DB:', typeof data.highlights, data.highlights);
-                let parsedHighlights = typeof data.highlights === 'string' 
-                  ? JSON.parse(data.highlights) 
-                  : data.highlights;
-                
-                console.log('PARSED highlights:', typeof parsedHighlights, Array.isArray(parsedHighlights), parsedHighlights);
-                
-                // Check if it's the new object structure with matchHighlights
-                if (parsedHighlights && typeof parsedHighlights === 'object' && !Array.isArray(parsedHighlights)) {
-                  // Extract matchHighlights array from the object
-                  console.log('Using NEW format - extracting matchHighlights:', parsedHighlights.matchHighlights);
-                  highlights = parsedHighlights.matchHighlights || [];
-                } else if (Array.isArray(parsedHighlights)) {
-                  // Backward compatibility: treat as direct array
-                  console.log('Using OLD format - direct array, length:', parsedHighlights.length);
-                  highlights = parsedHighlights;
-                } else {
-                  console.log('Unknown format, setting empty array');
-                  highlights = [];
-                }
-                console.log('FINAL highlights array length:', highlights.length, highlights);
-              } catch (e) {
-                console.error('Error parsing highlights:', e);
-                highlights = [];
-              }
-            } else {
-              console.log('NO highlights field in data');
-            }
-            
-            console.log('Final player data:', {
-              bioText,
-              bioData,
-              highlights,
-              tacticalFormations
-            });
             
             setPlayer({
               ...data,
               ...bioData,
               bio: bioText,
-              tacticalFormations: tacticalFormations,
               highlightsArray: highlights,
               links: (Array.isArray(data.links) && data.links.length > 0) ? data.links : (bioData.externalLinks || []),
               stats: statsData ? {
@@ -324,15 +229,15 @@ const PlayerDetail = () => {
             <div className="relative aspect-video bg-secondary/30 rounded-lg overflow-hidden border-4 md:border-[6px] border-[hsl(var(--gold))]">
               {dbHighlights.length > 0 && typeof currentVideoType === 'number' && dbHighlights[currentVideoType]?.videoUrl ? (
                 <>
-                  <video 
+                  <LazyVideo 
                     ref={videoRef}
                     key={dbHighlights[currentVideoType].videoUrl}
                     className="w-full h-full object-contain bg-black"
                     controls
-                    autoPlay
                     playsInline
                     preload="metadata"
                     loop={false}
+                    src={dbHighlights[currentVideoType].videoUrl}
                     onError={(e) => {
                       console.error('Video error:', e);
                       console.log('Video URL:', dbHighlights[currentVideoType].videoUrl);
@@ -340,18 +245,9 @@ const PlayerDetail = () => {
                     onLoadStart={() => console.log('Video loading started')}
                     onLoadedData={() => {
                       console.log('Video loaded successfully');
-                      // Re-enter fullscreen if it was in fullscreen before
-                      if (document.fullscreenElement && videoRef.current) {
-                        videoRef.current.requestFullscreen().catch(err => {
-                          console.log('Failed to re-enter fullscreen:', err);
-                        });
-                      }
                     }}
                     onEnded={() => {
                       console.log('Video ended, current index:', currentVideoType, 'total videos:', dbHighlights.length);
-                      // Check if video is in fullscreen before switching
-                      const wasFullscreen = document.fullscreenElement === videoRef.current;
-                      
                       // Auto-play next video when current one ends
                       if (typeof currentVideoType === 'number') {
                         const nextIndex = currentVideoType + 1;
@@ -365,9 +261,8 @@ const PlayerDetail = () => {
                       }
                     }}
                   >
-                    <source src={dbHighlights[currentVideoType].videoUrl} type="video/mp4" />
                     Your browser does not support the video tag.
-                  </video>
+                  </LazyVideo>
                 </>
               ) : (
                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 px-4">
