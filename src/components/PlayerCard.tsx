@@ -70,7 +70,7 @@ export const PlayerCard = ({ player, viewMode = "grid" }: PlayerCardProps) => {
         {/* Player Image */}
         <div className="relative w-32 h-44 flex-shrink-0 overflow-hidden rounded-lg shadow-lg">
           <img
-            src={player.image_url || player.image}
+            src={player.image_url || `/lovable-uploads/${player.name.toLowerCase().replace(/\s+/g, '-')}.png`}
             alt={player.name}
             className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 ${
               isInView ? "grayscale-0" : "grayscale"
@@ -151,7 +151,7 @@ export const PlayerCard = ({ player, viewMode = "grid" }: PlayerCardProps) => {
       <div className="relative aspect-[3/4] overflow-hidden">
         {/* Background Layer - base image */}
         <img
-          src={player.image_url || player.image}
+          src={player.image_url || `/lovable-uploads/${player.name.toLowerCase().replace(/\s+/g, '-')}.png`}
           alt={player.name}
           className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 z-0 ${
             isInView ? "grayscale-0" : "grayscale"
