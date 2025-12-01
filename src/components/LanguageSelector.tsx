@@ -26,7 +26,7 @@ export const LanguageSelector = () => {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger className="flex items-center gap-1.5 text-xs md:text-sm font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-300 focus:outline-none">
+      <DropdownMenuTrigger className="flex items-center gap-1.5 text-xs md:text-sm font-bebas uppercase tracking-wider text-foreground hover:text-primary transition-all duration-300 focus:outline-none">
         <span className="text-base">{selectedLanguage.flag}</span>
         <span>{selectedLanguage.name}</span>
         <ChevronDown className="w-3 h-3" />

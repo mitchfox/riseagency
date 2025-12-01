@@ -184,12 +184,16 @@ const Stars = () => {
                       <div className="p-3 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
                         <Users className="w-6 h-6 text-primary" />
                       </div>
-                      <div>
-                        <h3 className="font-bebas uppercase tracking-wider text-xl mb-1">Declare Interest in Player(s)</h3>
-                        <p className="text-sm text-muted-foreground">
-                          Select players and submit your interest
-                        </p>
-                      </div>
+                       <div>
+                         <h3 className="font-bebas uppercase tracking-wider text-xl mb-1">Declare Interest in Player(s)</h3>
+                         <p className="text-sm text-muted-foreground flex items-center gap-2">
+                           <img src="/lovable-uploads/rise-logo-gold.png" alt="RISE" className="h-4 w-4 object-contain" />
+                           <span className="flex flex-col leading-tight">
+                             <span className="font-semibold">RISE Football Agency</span>
+                             <span>Elite Representation</span>
+                           </span>
+                         </p>
+                       </div>
                     </div>
                     <ArrowRight className="w-6 h-6 text-primary group-hover:translate-x-1 transition-transform" />
                   </div>
@@ -203,12 +207,16 @@ const Stars = () => {
                       <div className="p-3 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
                         <MessageCircle className="w-6 h-6 text-primary" />
                       </div>
-                      <div>
-                        <h3 className="font-bebas uppercase tracking-wider text-xl mb-1">Contact</h3>
-                        <p className="text-sm text-muted-foreground">
-                          Get in touch with us directly
-                        </p>
-                      </div>
+                       <div>
+                         <h3 className="font-bebas uppercase tracking-wider text-xl mb-1">Contact</h3>
+                         <p className="text-sm text-muted-foreground flex items-center gap-2">
+                           <img src="/lovable-uploads/rise-logo-gold.png" alt="RISE" className="h-4 w-4 object-contain" />
+                           <span className="flex flex-col leading-tight">
+                             <span className="font-semibold">RISE Football Agency</span>
+                             <span>Direct Contact Available</span>
+                           </span>
+                         </p>
+                       </div>
                     </div>
                     <ArrowRight className="w-6 h-6 text-primary group-hover:translate-x-1 transition-transform" />
                   </div>
