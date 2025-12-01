@@ -6,7 +6,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { LateralFilter } from "@/components/LateralFilter";
-import { LayoutGrid, List } from "lucide-react";
+import { LayoutGrid, List, Users, MessageCircle, ArrowRight } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
@@ -176,40 +176,42 @@ const Stars = () => {
             </div>
 
             {/* Interest Cards */}
-            <div className="grid md:grid-cols-3 gap-4 mb-6">
-              <Card className="bg-card/50 backdrop-blur-sm border-primary/20">
-                <CardContent className="pt-6">
-                  <h3 className="font-bebas uppercase tracking-wider text-xl mb-2">Player Representation</h3>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Looking for professional representation? We work with elite talent across Europe.
-                  </p>
-                  <Button variant="outline" className="w-full font-bebas uppercase tracking-wider">
-                    Enquire Now
-                  </Button>
+            <div className="grid md:grid-cols-2 gap-4 mb-6">
+              <Card className="bg-card/50 backdrop-blur-sm border-primary/20 hover:border-primary transition-colors cursor-pointer group">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="p-3 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                        <Users className="w-6 h-6 text-primary" />
+                      </div>
+                      <div>
+                        <h3 className="font-bebas uppercase tracking-wider text-xl mb-1">Declare Interest in Player(s)</h3>
+                        <p className="text-sm text-muted-foreground">
+                          Select players and submit your interest
+                        </p>
+                      </div>
+                    </div>
+                    <ArrowRight className="w-6 h-6 text-primary group-hover:translate-x-1 transition-transform" />
+                  </div>
                 </CardContent>
               </Card>
               
-              <Card className="bg-card/50 backdrop-blur-sm border-primary/20">
-                <CardContent className="pt-6">
-                  <h3 className="font-bebas uppercase tracking-wider text-xl mb-2">Club Partnerships</h3>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Clubs interested in our players? Get in touch to discuss opportunities.
-                  </p>
-                  <Button variant="outline" className="w-full font-bebas uppercase tracking-wider">
-                    Contact Us
-                  </Button>
-                </CardContent>
-              </Card>
-              
-              <Card className="bg-card/50 backdrop-blur-sm border-primary/20">
-                <CardContent className="pt-6">
-                  <h3 className="font-bebas uppercase tracking-wider text-xl mb-2">Scout Network</h3>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Join our global scouting network and recommend talented players.
-                  </p>
-                  <Button variant="outline" className="w-full font-bebas uppercase tracking-wider">
-                    Learn More
-                  </Button>
+              <Card className="bg-card/50 backdrop-blur-sm border-primary/20 hover:border-primary transition-colors cursor-pointer group">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="p-3 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                        <MessageCircle className="w-6 h-6 text-primary" />
+                      </div>
+                      <div>
+                        <h3 className="font-bebas uppercase tracking-wider text-xl mb-1">Contact</h3>
+                        <p className="text-sm text-muted-foreground">
+                          Get in touch with us directly
+                        </p>
+                      </div>
+                    </div>
+                    <ArrowRight className="w-6 h-6 text-primary group-hover:translate-x-1 transition-transform" />
+                  </div>
                 </CardContent>
               </Card>
             </div>
