@@ -275,6 +275,35 @@ All colors MUST be HSL.
     }
   }
 
+  @keyframes slide-in-from-top-left {
+    0% {
+      transform: translate(-100%, -100%);
+      opacity: 0;
+    }
+    100% {
+      transform: translate(0, 0);
+      opacity: 1;
+    }
+  }
+
+  @keyframes disintegrate {
+    0% {
+      opacity: 1;
+      transform: scale(1);
+      filter: blur(0px);
+    }
+    50% {
+      opacity: 0.5;
+      transform: scale(0.95);
+      filter: blur(2px);
+    }
+    100% {
+      opacity: 0;
+      transform: scale(0.8);
+      filter: blur(10px);
+    }
+  }
+
   .animate-fade-in-up {
     animation: fade-in-up 0.8s ease-out;
   }
@@ -301,8 +330,12 @@ All colors MUST be HSL.
     animation-delay: 4s;
   }
 
-  .animate-scroll {
-    animation: scroll 1.5s ease-in-out infinite;
+  .animate-slide-in-top-left {
+    animation: slide-in-from-top-left 0.5s ease-out;
+  }
+
+  .animate-disintegrate {
+    animation: disintegrate 0.4s ease-out forwards;
   }
 
   .bar-glossy {

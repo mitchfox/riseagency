@@ -121,7 +121,7 @@ export const RadialMenu = () => {
   const segmentAngle = 360 / menuItems.length;
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center z-[200] overflow-hidden bg-[#0a0a0a]">
+    <div className="fixed inset-0 flex items-center justify-center z-[200] overflow-hidden bg-[#0a0a0a] animate-slide-in-top-left">
       {/* White pulse animation from center */}
       <div className="absolute inset-0 flex items-center justify-center">
         <div className="absolute w-4 h-4 bg-white rounded-full animate-[pulse-expand_6s_ease-out_infinite]" />
@@ -149,10 +149,14 @@ export const RadialMenu = () => {
       {/* Close button - top right */}
       <DrawerClose asChild>
         <button
-          className="absolute top-8 right-8 z-50 group flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-white transition-all duration-300 ease-out hover:scale-110 hover:rotate-90"
+          className="absolute top-8 right-8 z-50 group flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
           aria-label="Close menu"
         >
-          <X className="h-8 w-8 text-white group-hover:text-primary transition-colors duration-300" />
+          <div className="relative w-12 h-12 flex items-center justify-center">
+            <div className="absolute inset-0 bg-primary/20 rounded-full scale-0 group-hover:scale-100 transition-transform duration-500 ease-out" />
+            <div className="absolute inset-0 bg-primary/10 rounded-full scale-0 group-hover:scale-150 transition-transform duration-700 ease-out" />
+            <X className="h-8 w-8 text-white relative z-10 transition-all duration-300 group-hover:text-primary group-hover:rotate-90" />
+          </div>
         </button>
       </DrawerClose>
 
@@ -268,7 +272,7 @@ export const RadialMenu = () => {
           />
           
           {/* Gold divider line */}
-          <div className="absolute left-0 w-full h-[1px] bg-primary z-10" style={{ top: '75%' }} />
+          <div className="absolute left-0 w-full h-[2px] bg-primary z-10" style={{ top: '75%' }} />
           
           {/* Lower 25% with smudged marble */}
           <div 
