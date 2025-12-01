@@ -29,16 +29,25 @@ const languageRegions: LanguageRegion[] = [
   { code: "tr", name: "Turkish", nativeName: "Türkçe", flag: "🇹🇷", x: 65, y: 90 },
 ];
 
-export const LanguageMapSelector = () => {
+interface LanguageMapSelectorProps {
+  onOpenChange?: (open: boolean) => void;
+}
+
+export const LanguageMapSelector = ({ onOpenChange }: LanguageMapSelectorProps) => {
   const { language, switchLanguage } = useLanguage();
   const [open, setOpen] = useState(false);
+
+  const handleOpenChange = (newOpen: boolean) => {
+    setOpen(newOpen);
+    onOpenChange?.(newOpen);
+  };
   const [hoveredLang, setHoveredLang] = useState<LanguageCode | null>(null);
   
   const selectedLanguage = languageRegions.find(l => l.code === language) || languageRegions[0];
 
   const handleSelectLanguage = (code: LanguageCode) => {
     switchLanguage(code);
-    setOpen(false);
+    handleOpenChange(false);
   };
 
   return (
@@ -46,7 +55,7 @@ export const LanguageMapSelector = () => {
       {/* Trigger Button */}
       <button 
         type="button"
-        onClick={() => setOpen(true)}
+        onClick={() => handleOpenChange(true)}
         className="flex items-center gap-1.5 text-xs md:text-sm font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-300 focus:outline-none cursor-pointer"
       >
         <span className="text-base">{selectedLanguage.flag}</span>
@@ -58,7 +67,7 @@ export const LanguageMapSelector = () => {
       {open && (
         <div 
           className="fixed inset-0 z-[9999] flex items-end justify-center pb-20 md:pb-24"
-          onClick={() => setOpen(false)}
+          onClick={() => handleOpenChange(false)}
         >
           {/* Backdrop */}
           <div className="absolute inset-0 bg-black/80" />
@@ -71,7 +80,7 @@ export const LanguageMapSelector = () => {
             {/* Close Button */}
             <button
               type="button"
-              onClick={() => setOpen(false)}
+              onClick={() => handleOpenChange(false)}
               className="absolute right-4 top-4 z-10 text-white/70 hover:text-white transition-colors"
             >
               <X className="h-5 w-5" />
