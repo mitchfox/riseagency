@@ -132,11 +132,10 @@ export const RadialMenu = () => {
   // Default menu for main site
   const defaultMenu: MenuItem[] = [
     { to: "/stars", labelKey: "header.stars", fallback: "STARS", Icon: Star, angle: 0 },
-    { to: "/performance", labelKey: "header.realise_potential", fallback: "PERFORMANCE", Icon: TrendingUp, angle: 60 },
-    { to: "/between-the-lines", labelKey: "header.between_the_lines", fallback: "INSIGHTS", Icon: BookOpen, angle: 120 },
-    { to: "/news", labelKey: "header.news", fallback: "NEWS", Icon: Newspaper, angle: 180 },
-    { to: "/contact", labelKey: "header.contact", fallback: "CONTACT", Icon: MessageCircle, angle: 240 },
-    { to: "/potential", labelKey: "header.potential", fallback: "VISION", Icon: Target, angle: 300 },
+    { to: "/performance", labelKey: "header.realise_potential", fallback: "PERFORMANCE", Icon: TrendingUp, angle: 72 },
+    { to: "/between-the-lines", labelKey: "header.between_the_lines", fallback: "INSIGHTS", Icon: BookOpen, angle: 144 },
+    { to: "/news", labelKey: "header.news", fallback: "NEWS", Icon: Newspaper, angle: 216 },
+    { to: "/contact", labelKey: "header.contact", fallback: "CONTACT", Icon: MessageCircle, angle: 288 },
   ];
 
   // Select menu based on current role
@@ -166,7 +165,17 @@ export const RadialMenu = () => {
   const segmentAngle = 360 / menuItems.length;
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center z-[200] overflow-hidden bg-[#0a0a0a]">
+    <div className="fixed inset-0 flex items-center justify-center z-[200] overflow-hidden">
+      {/* Marble background */}
+      <div 
+        className="absolute inset-0"
+        style={{
+          backgroundImage: `url(${smudgedMarbleBg})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
+      />
+      
       {/* White pulse animation from center */}
       <div className="absolute inset-0 flex items-center justify-center">
         <div className="absolute w-4 h-4 bg-white rounded-full animate-[pulse-expand_6s_ease-out_infinite]" />
