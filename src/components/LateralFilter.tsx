@@ -25,12 +25,12 @@ export const LateralFilter = ({
   const [isExpanded, setIsExpanded] = useState(false);
 
   return (
-    <div className="flex items-center gap-2 flex-wrap">
+    <div className="inline-flex items-center gap-1">
       {/* Filter trigger button */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
         className={cn(
-          "flex items-center gap-2 px-4 py-2 font-bebas uppercase tracking-wider transition-all duration-300 border",
+          "flex items-center gap-1.5 px-3 py-1.5 font-bebas uppercase tracking-wider transition-all duration-300 border text-sm",
           isExpanded
             ? "bg-primary text-black border-primary"
             : "bg-transparent text-foreground border-primary/30 hover:border-primary/60"
@@ -56,8 +56,8 @@ export const LateralFilter = ({
       {/* Expanded options */}
       <div
         className={cn(
-          "flex items-center gap-2 flex-wrap overflow-hidden transition-all duration-300",
-          isExpanded ? "max-w-[2000px] opacity-100" : "max-w-0 opacity-0"
+          "flex items-center gap-1 overflow-hidden transition-all duration-300",
+          isExpanded ? "max-w-[2000px] opacity-100 ml-1" : "max-w-0 opacity-0"
         )}
       >
         {options.map((option) => {
@@ -67,7 +67,7 @@ export const LateralFilter = ({
               key={option.value}
               onClick={() => onToggle(option.value)}
               className={cn(
-                "px-3 py-1.5 font-bebas uppercase tracking-wider text-sm transition-all duration-200 border whitespace-nowrap",
+                "px-2 py-1 font-bebas uppercase tracking-wider text-xs transition-all duration-200 border whitespace-nowrap",
                 isSelected
                   ? "bg-primary text-black border-primary"
                   : "bg-transparent text-muted-foreground border-border hover:border-primary/50 hover:text-foreground"
@@ -82,10 +82,10 @@ export const LateralFilter = ({
         {selectedValues.length > 0 && onClear && (
           <button
             onClick={onClear}
-            className="p-1.5 text-muted-foreground hover:text-foreground transition-colors"
+            className="p-1 text-muted-foreground hover:text-foreground transition-colors"
             title="Clear selection"
           >
-            <X className="h-4 w-4" />
+            <X className="h-3 w-3" />
           </button>
         )}
       </div>
