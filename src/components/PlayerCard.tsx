@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
 import { getCountryFlagUrl } from "@/lib/countryFlags";
 import { ArrowRight } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface PlayerCardProps {
   player: any; // Changed from Player to any since we're using database structure
@@ -21,11 +22,16 @@ export const PlayerCard = ({ player, viewMode = "grid" }: PlayerCardProps) => {
   const cardRef = useRef<HTMLAnchorElement>(null);
   const [isInView, setIsInView] = useState(false);
   const playerSlug = createPlayerSlug(player.name);
+  const { t } = useLanguage();
 
   // Extract club info from player data - use correct database field names
   const currentClub = player.club || player.currentClub || "";
   const clubLogo = player.club_logo || player.clubLogo || "";
   const currentLeague = player.currentLeague || "Professional League";
+  
+  // Get translated position abbreviation
+  const positionKey = player.position?.toUpperCase() || '';
+  const translatedPosition = t(`positions.${positionKey}`, positionKey);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -111,7 +117,7 @@ export const PlayerCard = ({ player, viewMode = "grid" }: PlayerCardProps) => {
             </div>
             
             <div className="flex gap-4 text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-4">
-              <span>{player.position}</span>
+              <span>{translatedPosition}</span>
               <span>•</span>
               <span>{dobDisplay}</span>
               <span>•</span>
@@ -165,7 +171,7 @@ export const PlayerCard = ({ player, viewMode = "grid" }: PlayerCardProps) => {
         {/* Position badge - top right, smaller on mobile */}
         <div className="absolute top-4 right-4 z-[5]">
           <span className="text-xl md:text-3xl text-primary tracking-wider" style={{ fontFamily: "'BBH Sans Bartle', 'Bebas Neue', sans-serif" }}>
-            {player.position}
+            {translatedPosition}
           </span>
         </div>
 
@@ -212,7 +218,7 @@ export const PlayerCard = ({ player, viewMode = "grid" }: PlayerCardProps) => {
             <div className="flex justify-between mb-6">
               {/* Position - Bottom Left */}
               <div className="flex flex-col items-center">
-                <div className="text-5xl font-bebas text-primary mb-1 translate-y-1.5">{player.position}</div>
+                <div className="text-5xl font-bebas text-primary mb-1 translate-y-1.5">{translatedPosition}</div>
                 <div className="text-sm font-bebas uppercase text-white tracking-wider">Position</div>
               </div>
               
@@ -249,30 +255,23 @@ export const PlayerCard = ({ player, viewMode = "grid" }: PlayerCardProps) => {
         <h3 className="text-3xl font-bebas uppercase text-foreground tracking-wider">
           {player.name}
         </h3>
-        <div className="flex justify-between items-center gap-4 mt-2">
-          <div className="flex gap-4 text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-            <span>Age {player.age}</span>
-            <span>•</span>
-            <span>{player.nationality}</span>
+        {(clubLogo || currentClub) && (
+          <div className="flex items-center gap-3 mt-3">
+            {clubLogo && (
+              <img 
+                src={clubLogo} 
+                alt={currentClub}
+                className="h-10 w-10 object-contain flex-shrink-0"
+              />
+            )}
+            {currentClub && (
+              <div className="flex flex-col leading-tight">
+                <span className="text-base font-semibold text-foreground">{currentClub}</span>
+                <span className="text-sm text-muted-foreground">{currentLeague}</span>
+              </div>
+            )}
           </div>
-          {(clubLogo || currentClub) && (
-            <div className="flex items-center gap-2">
-              {clubLogo && (
-                <img 
-                  src={clubLogo} 
-                  alt={currentClub}
-                  className="h-8 w-8 object-contain flex-shrink-0"
-                />
-              )}
-              {currentClub && (
-                <div className="flex flex-col text-xs leading-tight">
-                  <span className="font-semibold text-foreground">{currentClub}</span>
-                  <span className="text-muted-foreground">{currentLeague}</span>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+        )}
       </div>
     </Link>
   );
