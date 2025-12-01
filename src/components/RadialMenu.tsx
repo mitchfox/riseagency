@@ -244,8 +244,8 @@ export const RadialMenu = () => {
           }}
         >
           <defs>
-            <pattern id="whiteMarblePattern" patternUnits="userSpaceOnUse" width="600" height="600">
-              <image href={whiteMarbleBg} width="600" height="600" />
+            <pattern id="whiteMarblePattern" patternUnits="userSpaceOnUse" width="1200" height="1200">
+              <image href={whiteMarbleBg} width="1200" height="1200" />
             </pattern>
           </defs>
           {menuItems.map((item, index) => {
