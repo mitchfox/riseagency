@@ -5,8 +5,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Edit, X } from "lucide-react";
+import { Edit, X, Save } from "lucide-react";
 import { getCountryFlagUrl } from "@/lib/countryFlags";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -15,6 +16,7 @@ interface Player {
   name: string;
   club: string | null;
   club_logo: string | null;
+  league: string | null;
   position: string;
   age: number;
   nationality: string;
@@ -26,11 +28,20 @@ interface Player {
   visible_on_stars_page: boolean;
 }
 
+type EditableField = 'position' | 'age' | 'club' | 'league' | 'email' | 'category' | 'representation_status';
+
+interface FieldEdit {
+  [playerId: string]: string | number;
+}
+
 export const PlayerList = ({ isAdmin }: { isAdmin: boolean }) => {
   const [players, setPlayers] = useState<Player[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
   const isMobile = useIsMobile();
+  const [selectedField, setSelectedField] = useState<EditableField>('position');
+  const [fieldEdits, setFieldEdits] = useState<FieldEdit>({});
+  const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     club: "",
@@ -54,7 +65,7 @@ export const PlayerList = ({ isAdmin }: { isAdmin: boolean }) => {
     try {
       const { data, error } = await supabase
         .from("players")
-        .select("id, name, club, club_logo, position, age, nationality, bio, email, image_url, category, representation_status, visible_on_stars_page")
+        .select("id, name, club, club_logo, league, position, age, nationality, bio, email, image_url, category, representation_status, visible_on_stars_page")
         .order("name");
 
       if (error) throw error;
@@ -65,6 +76,62 @@ export const PlayerList = ({ isAdmin }: { isAdmin: boolean }) => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleFieldEdit = (playerId: string, value: string | number) => {
+    setFieldEdits(prev => ({
+      ...prev,
+      [playerId]: value
+    }));
+  };
+
+  const handleBulkSave = async () => {
+    if (Object.keys(fieldEdits).length === 0) {
+      toast.info("No changes to save");
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const updates = Object.entries(fieldEdits).map(([playerId, value]) => {
+        return supabase
+          .from("players")
+          .update({ [selectedField]: value })
+          .eq("id", playerId);
+      });
+
+      await Promise.all(updates);
+      
+      toast.success(`Updated ${Object.keys(fieldEdits).length} player(s)`);
+      setFieldEdits({});
+      fetchPlayers();
+    } catch (error) {
+      console.error("Error bulk updating players:", error);
+      toast.error("Failed to update players");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const getFieldValue = (player: Player): string | number => {
+    const editedValue = fieldEdits[player.id];
+    if (editedValue !== undefined) return editedValue;
+    
+    const value = player[selectedField];
+    return value ?? "";
+  };
+
+  const getFieldLabel = (field: EditableField): string => {
+    const labels: Record<EditableField, string> = {
+      position: 'Position',
+      age: 'Age',
+      club: 'Club',
+      league: 'League',
+      email: 'Email',
+      category: 'Category',
+      representation_status: 'Rep Status'
+    };
+    return labels[field];
   };
 
   const handleEdit = (player: Player) => {
@@ -149,6 +216,44 @@ export const PlayerList = ({ isAdmin }: { isAdmin: boolean }) => {
 
   return (
     <div className="space-y-4">
+      {/* Field Selector and Save Button */}
+      {isAdmin && !isMobile && (
+        <div className="flex items-center gap-4 p-4 rounded-lg border bg-card">
+          <div className="flex items-center gap-3 flex-1">
+            <Label htmlFor="field-select" className="text-sm font-medium whitespace-nowrap">
+              Edit Field:
+            </Label>
+            <Select value={selectedField} onValueChange={(value) => {
+              setSelectedField(value as EditableField);
+              setFieldEdits({});
+            }}>
+              <SelectTrigger id="field-select" className="w-[200px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="position">Position</SelectItem>
+                <SelectItem value="age">Age</SelectItem>
+                <SelectItem value="club">Club</SelectItem>
+                <SelectItem value="league">League</SelectItem>
+                <SelectItem value="email">Email</SelectItem>
+                <SelectItem value="category">Category</SelectItem>
+                <SelectItem value="representation_status">Rep Status</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          {Object.keys(fieldEdits).length > 0 && (
+            <Button 
+              onClick={handleBulkSave} 
+              disabled={isSaving}
+              className="gap-2"
+            >
+              <Save className="h-4 w-4" />
+              Save {Object.keys(fieldEdits).length} Change{Object.keys(fieldEdits).length !== 1 ? 's' : ''}
+            </Button>
+          )}
+        </div>
+      )}
+      
       {isMobile ? (
         // Mobile Card View
         <div className="space-y-3">
@@ -230,16 +335,13 @@ export const PlayerList = ({ isAdmin }: { isAdmin: boolean }) => {
           <Table>
             <TableHeader>
               <TableRow className="hover:bg-transparent border-b">
-                <TableHead className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Name</TableHead>
-                <TableHead className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Club</TableHead>
-                <TableHead className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Nat</TableHead>
-                <TableHead className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Position</TableHead>
-                {isAdmin && <TableHead className="text-xs uppercase tracking-wider text-muted-foreground font-semibold w-20"></TableHead>}
+                <TableHead className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Player</TableHead>
+                <TableHead className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">{getFieldLabel(selectedField)}</TableHead>
+                {isAdmin && <TableHead className="text-xs uppercase tracking-wider text-muted-foreground font-semibold w-20">Actions</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
               {players.map((player, index) => {
-              const { club, clubLogo } = getClubInfo(player);
               return (
                 <TableRow 
                   key={player.id} 
@@ -274,28 +376,17 @@ export const PlayerList = ({ isAdmin }: { isAdmin: boolean }) => {
                     </div>
                   </TableCell>
                   <TableCell className="py-2.5">
-                    <div className="flex items-center gap-2.5">
-                      {clubLogo ? (
-                        <img
-                          src={clubLogo}
-                          alt={club || "Club"}
-                          className="h-5 w-5 object-contain"
-                        />
-                      ) : (
-                        <div className="h-5 w-5 bg-muted/50 rounded-full" />
-                      )}
-                      <span className="text-sm text-foreground">{club || "—"}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="py-2.5">
-                    <span className="text-xs text-muted-foreground">
-                      {player.age ? `${player.age}` : "—"}
-                    </span>
-                  </TableCell>
-                  <TableCell className="py-2.5">
-                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                      {player.position}
-                    </span>
+                    {isAdmin ? (
+                      <Input
+                        type={selectedField === 'age' ? 'number' : 'text'}
+                        value={getFieldValue(player)}
+                        onChange={(e) => handleFieldEdit(player.id, selectedField === 'age' ? parseInt(e.target.value) || 0 : e.target.value)}
+                        className="h-9 max-w-[300px]"
+                        placeholder={`Enter ${getFieldLabel(selectedField).toLowerCase()}`}
+                      />
+                    ) : (
+                      <span className="text-sm text-foreground">{getFieldValue(player) || "—"}</span>
+                    )}
                   </TableCell>
                   {isAdmin && (
                     <TableCell className="py-2.5">
