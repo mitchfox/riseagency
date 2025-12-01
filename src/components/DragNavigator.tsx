@@ -19,14 +19,17 @@ export const DragNavigator = ({ options }: DragNavigatorProps) => {
   const [isDragging, setIsDragging] = useState(false);
   const [dragPosition, setDragPosition] = useState(0);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [targetPosition, setTargetPosition] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
-  const snapThreshold = 0.3;
 
   useEffect(() => {
     const handleMouseUp = () => {
       if (isDragging) {
         setIsDragging(false);
-        // Navigate to the snapped option
+        // Snap to nearest position and navigate
+        const targetPos = currentIndex / (options.length - 1);
+        setTargetPosition(targetPos);
+        setDragPosition(targetPos);
         navigate(options[currentIndex].to);
       }
     };
@@ -85,7 +88,7 @@ export const DragNavigator = ({ options }: DragNavigatorProps) => {
     index,
   }));
 
-  const displayPosition = isDragging ? dragPosition : currentIndex / (options.length - 1);
+  const displayPosition = isDragging ? dragPosition : targetPosition;
 
   return (
     <div className="w-full">
@@ -126,9 +129,10 @@ export const DragNavigator = ({ options }: DragNavigatorProps) => {
 
         {/* Draggable element */}
         <div
-          className="absolute top-3 transition-all duration-200 cursor-grab active:cursor-grabbing z-10"
+          className="absolute top-3 cursor-grab active:cursor-grabbing z-10"
           style={{
             left: `calc(${displayPosition * 100}% - 28px)`,
+            transition: isDragging ? 'none' : 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
           }}
         >
           <div className={`w-14 h-14 border-2 border-primary bg-black/80 backdrop-blur-sm flex items-center justify-center transition-all duration-300 ${
