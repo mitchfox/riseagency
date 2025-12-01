@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { LanguageMapSelector } from "@/components/LanguageMapSelector";
 import { HoverText } from "@/components/HoverText";
-import { Player3DEffect } from "@/components/Player3DEffect";
+import { LazyPlayer3D } from "@/components/LazyPlayer3D";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { HomeBackground } from "@/components/HomeBackground";
 import { XRayProvider } from "@/contexts/XRayContext";
@@ -47,13 +47,15 @@ export default function Landing() {
           src={riseLogoWhite} 
           alt="RISE Football Agency" 
           className="h-12 md:h-16 w-auto"
+          loading="eager"
+          fetchPriority="high"
         />
       </div>
       
       {/* 3D Player Effect - Over Video (hidden when language popup is open) */}
       {!languagePopupOpen && (
         <div className="absolute inset-0 pointer-events-none">
-          <Player3DEffect className="pointer-events-auto" />
+          <LazyPlayer3D className="pointer-events-auto" />
         </div>
       )}
 

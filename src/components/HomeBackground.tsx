@@ -31,6 +31,7 @@ export const HomeBackground = () => {
   const [sessionExercises, setSessionExercises] = useState<SessionExercise[]>([]);
   const [sessionName, setSessionName] = useState<string>("");
   const { xrayState } = useXRay();
+  const [isLoaded, setIsLoaded] = useState(false);
   
   // Top speed state
   const [topSpeed, setTopSpeed] = useState(28.5);
@@ -39,58 +40,71 @@ export const HomeBackground = () => {
   const baseSpeed = 28.5;
   const maxSpeed = 35.2;
 
+  // Defer data fetching to not block initial render
   useEffect(() => {
-    const fetchData = async () => {
-      const { data: analysisData } = await supabase
-        .from("player_analysis")
-        .select("opponent, r90_score, result, analysis_date")
-        .eq("player_id", TYRESE_ID)
-        .not("r90_score", "is", null)
-        .order("analysis_date", { ascending: false })
-        .limit(5);
+    // Wait for initial render to complete before fetching
+    const timer = setTimeout(() => {
+      const fetchData = async () => {
+        try {
+          const { data: analysisData } = await supabase
+            .from("player_analysis")
+            .select("opponent, r90_score, result, analysis_date")
+            .eq("player_id", TYRESE_ID)
+            .not("r90_score", "is", null)
+            .order("analysis_date", { ascending: false })
+            .limit(5);
 
-      if (analysisData) {
-        setFormData(analysisData as FormData[]);
-      }
-
-      const { data: actionData } = await supabase
-        .from("performance_report_actions")
-        .select(`
-          action_type,
-          action_description,
-          action_score,
-          minute,
-          player_analysis!inner(player_id)
-        `)
-        .eq("player_analysis.player_id", TYRESE_ID)
-        .gt("action_score", 0)
-        .order("action_score", { ascending: false })
-        .limit(8);
-
-      if (actionData) {
-        setActions(actionData as unknown as ActionData[]);
-      }
-
-      const { data: programData } = await supabase
-        .from("player_programs")
-        .select("sessions")
-        .eq("player_id", TYRESE_ID)
-        .eq("is_current", true)
-        .single();
-
-      if (programData?.sessions) {
-        const sessions = programData.sessions as Record<string, { exercises?: SessionExercise[] }>;
-        for (const [name, session] of Object.entries(sessions)) {
-          if (session?.exercises && session.exercises.length > 0) {
-            setSessionExercises(session.exercises.slice(0, 6));
-            setSessionName(`Session ${name}`);
-            break;
+          if (analysisData) {
+            setFormData(analysisData as FormData[]);
           }
-        }
-      }
-    };
 
-    fetchData();
+          const { data: actionData } = await supabase
+            .from("performance_report_actions")
+            .select(`
+              action_type,
+              action_description,
+              action_score,
+              minute,
+              player_analysis!inner(player_id)
+            `)
+            .eq("player_analysis.player_id", TYRESE_ID)
+            .gt("action_score", 0)
+            .order("action_score", { ascending: false })
+            .limit(8);
+
+          if (actionData) {
+            setActions(actionData as unknown as ActionData[]);
+          }
+
+          const { data: programData } = await supabase
+            .from("player_programs")
+            .select("sessions")
+            .eq("player_id", TYRESE_ID)
+            .eq("is_current", true)
+            .single();
+
+          if (programData?.sessions) {
+            const sessions = programData.sessions as Record<string, { exercises?: SessionExercise[] }>;
+            for (const [name, session] of Object.entries(sessions)) {
+              if (session?.exercises && session.exercises.length > 0) {
+                setSessionExercises(session.exercises.slice(0, 6));
+                setSessionName(`Session ${name}`);
+                break;
+              }
+            }
+          }
+          
+          setIsLoaded(true);
+        } catch (error) {
+          console.error('Error fetching background data:', error);
+          setIsLoaded(true); // Still mark as loaded even on error
+        }
+      };
+
+      fetchData();
+    }, 100); // Small delay to allow initial paint
+
+    return () => clearTimeout(timer);
   }, []);
 
   // Update top speed based on x-ray intensity
@@ -140,8 +154,11 @@ export const HomeBackground = () => {
       {/* Subtle gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-b from-background/50 via-background/30 to-background/50 z-0" />
       
-      {/* LEFT COLUMN - R90 & Actions */}
-      <div className="absolute left-4 md:left-8 top-24 bottom-32 w-[200px] md:w-[280px] flex flex-col gap-8 z-[1]">
+      {/* Only show data when loaded */}
+      {isLoaded && (
+        <>
+          {/* LEFT COLUMN - R90 & Actions */}
+          <div className="absolute left-4 md:left-8 top-24 bottom-32 w-[200px] md:w-[280px] flex flex-col gap-8 z-[1] animate-fade-in">
         {/* R90 Form Chart */}
         <div className="opacity-[0.35]">
           <div className="font-bebas text-sm uppercase tracking-widest text-primary mb-3 border-b border-primary/30 pb-1">
@@ -294,7 +311,9 @@ export const HomeBackground = () => {
             </div>
           </div>
         ))}
-      </div>
+          </div>
+        </>
+      )}
     </div>
   );
 };
