@@ -1522,6 +1522,7 @@ export type Database = {
           hover_image_url: string | null
           id: string
           image_url: string | null
+          league: string | null
           links: Json | null
           name: string
           nationality: string
@@ -1542,6 +1543,7 @@ export type Database = {
           hover_image_url?: string | null
           id?: string
           image_url?: string | null
+          league?: string | null
           links?: Json | null
           name: string
           nationality: string
@@ -1562,6 +1564,7 @@ export type Database = {
           hover_image_url?: string | null
           id?: string
           image_url?: string | null
+          league?: string | null
           links?: Json | null
           name?: string
           nationality?: string
