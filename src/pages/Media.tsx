@@ -32,10 +32,10 @@ const Media = () => {
           
           <div className="relative container mx-auto px-4 text-center z-10">
             <h1 className="text-6xl md:text-8xl font-bebas uppercase tracking-wider text-white mb-4">
-              MEDIA & <span className="text-primary">PRESS</span>
+              {t('media.title', 'MEDIA &')} <span className="text-primary">{t('media.title_highlight', 'PRESS')}</span>
             </h1>
             <p className="text-xl md:text-2xl text-white/90 max-w-3xl mx-auto">
-              Request interviews, access content, and connect with our players
+              {t('media.subtitle', 'Request interviews, access content, and connect with our players')}
             </p>
           </div>
         </section>
@@ -47,56 +47,56 @@ const Media = () => {
               <div className="space-y-6">
                 <div className="inline-flex items-center gap-2 text-primary">
                   <Mic className="h-6 w-6" />
-                  <span className="text-sm font-bebas uppercase tracking-widest">For Journalists</span>
+                  <span className="text-sm font-bebas uppercase tracking-widest">{t('media.for_journalists', 'For Journalists')}</span>
                 </div>
                 <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-foreground">
-                  INTERVIEW <span className="text-primary">REQUESTS</span>
+                  {t('media.interview', 'INTERVIEW')} <span className="text-primary">{t('media.requests', 'REQUESTS')}</span>
                 </h2>
                 <p className="text-lg text-muted-foreground leading-relaxed">
-                  Looking to speak with one of our players? Submit an interview request and our media team will coordinate with player schedules and availability.
+                  {t('media.interview_desc', 'Looking to speak with one of our players? Submit an interview request and our media team will coordinate with player schedules and availability.')}
                 </p>
                 <Collapsible>
                   <CollapsibleTrigger className="group flex items-center gap-3 px-4 py-2.5 bg-primary/10 hover:bg-primary/20 border border-primary/30 rounded-md transition-all">
-                    <span className="text-sm uppercase tracking-wider text-primary font-medium">How It Works</span>
+                    <span className="text-sm uppercase tracking-wider text-primary font-medium">{t('media.how_it_works', 'How It Works')}</span>
                     <ChevronDown className="h-4 w-4 text-primary transition-transform group-data-[state=open]:rotate-180" />
                   </CollapsibleTrigger>
                   <CollapsibleContent className="mt-6 space-y-4 text-base text-muted-foreground leading-relaxed">
                     <p>
-                      Submit your request with details about your publication, the topics you'd like to cover, and your preferred timeline. Our media team reviews all requests and coordinates with players based on their training and match schedules.
+                      {t('media.how_it_works_p1', "Submit your request with details about your publication, the topics you'd like to cover, and your preferred timeline. Our media team reviews all requests and coordinates with players based on their training and match schedules.")}
                     </p>
                     <p>
-                      We aim to respond to all interview requests within 48 hours. Please allow adequate lead time for scheduling, especially during transfer windows or match-heavy periods.
+                      {t('media.how_it_works_p2', 'We aim to respond to all interview requests within 48 hours. Please allow adequate lead time for scheduling, especially during transfer windows or match-heavy periods.')}
                     </p>
                   </CollapsibleContent>
                 </Collapsible>
                 <Button asChild size="lg" className="btn-shine font-bebas uppercase tracking-wider">
                   <a href="mailto:media@risefootballagency.com?subject=Interview%20Request">
-                    Request Interview
+                    {t('media.request_interview', 'Request Interview')}
                   </a>
                 </Button>
               </div>
               <div className="bg-card/50 border border-border rounded-lg p-8 space-y-6">
-                <h3 className="text-2xl font-bebas uppercase tracking-wider text-foreground">Request Guidelines</h3>
+                <h3 className="text-2xl font-bebas uppercase tracking-wider text-foreground">{t('media.request_guidelines', 'Request Guidelines')}</h3>
                 <ul className="space-y-4">
                   <li className="flex items-start gap-3">
                     <Newspaper className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
                     <div>
-                      <span className="font-medium text-foreground">Publication Details</span>
-                      <p className="text-sm text-muted-foreground">Include your outlet name, circulation/reach, and interview format</p>
+                      <span className="font-medium text-foreground">{t('media.publication_details', 'Publication Details')}</span>
+                      <p className="text-sm text-muted-foreground">{t('media.publication_details_desc', 'Include your outlet name, circulation/reach, and interview format')}</p>
                     </div>
                   </li>
                   <li className="flex items-start gap-3">
                     <FileText className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
                     <div>
-                      <span className="font-medium text-foreground">Topic Brief</span>
-                      <p className="text-sm text-muted-foreground">Outline the subjects and questions you'd like to discuss</p>
+                      <span className="font-medium text-foreground">{t('media.topic_brief', 'Topic Brief')}</span>
+                      <p className="text-sm text-muted-foreground">{t('media.topic_brief_desc', "Outline the subjects and questions you'd like to discuss")}</p>
                     </div>
                   </li>
                   <li className="flex items-start gap-3">
                     <Calendar className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
                     <div>
-                      <span className="font-medium text-foreground">Timeline</span>
-                      <p className="text-sm text-muted-foreground">Provide your deadline and preferred interview dates</p>
+                      <span className="font-medium text-foreground">{t('media.timeline', 'Timeline')}</span>
+                      <p className="text-sm text-muted-foreground">{t('media.timeline_desc', 'Provide your deadline and preferred interview dates')}</p>
                     </div>
                   </li>
                 </ul>
@@ -126,31 +126,31 @@ const Media = () => {
               <div className="order-1 md:order-2 space-y-6">
                 <div className="inline-flex items-center gap-2 text-primary">
                   <Camera className="h-6 w-6" />
-                  <span className="text-sm font-bebas uppercase tracking-widest">Media Assets</span>
+                  <span className="text-sm font-bebas uppercase tracking-widest">{t('media.media_assets', 'Media Assets')}</span>
                 </div>
                 <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-foreground">
-                  CONTENT <span className="text-primary">ACCESS</span>
+                  {t('media.content', 'CONTENT')} <span className="text-primary">{t('media.access', 'ACCESS')}</span>
                 </h2>
                 <p className="text-lg text-muted-foreground leading-relaxed">
-                  Need high-resolution images, video footage, or press materials? Request access to our media library for your publication needs.
+                  {t('media.content_desc', 'Need high-resolution images, video footage, or press materials? Request access to our media library for your publication needs.')}
                 </p>
                 <Collapsible>
                   <CollapsibleTrigger className="group flex items-center gap-3 px-4 py-2.5 bg-primary/10 hover:bg-primary/20 border border-primary/30 rounded-md transition-all">
-                    <span className="text-sm uppercase tracking-wider text-primary font-medium">Available Assets</span>
+                    <span className="text-sm uppercase tracking-wider text-primary font-medium">{t('media.available_assets', 'Available Assets')}</span>
                     <ChevronDown className="h-4 w-4 text-primary transition-transform group-data-[state=open]:rotate-180" />
                   </CollapsibleTrigger>
                   <CollapsibleContent className="mt-6 space-y-4 text-base text-muted-foreground leading-relaxed">
                     <p>
-                      Our media library includes professional photography, video highlights, player headshots, and official press releases. All assets are available in broadcast-quality formats.
+                      {t('media.available_assets_p1', 'Our media library includes professional photography, video highlights, player headshots, and official press releases. All assets are available in broadcast-quality formats.')}
                     </p>
                     <p>
-                      Access is granted on a per-request basis. Please specify which players and content types you require, along with your intended usage.
+                      {t('media.available_assets_p2', 'Access is granted on a per-request basis. Please specify which players and content types you require, along with your intended usage.')}
                     </p>
                   </CollapsibleContent>
                 </Collapsible>
                 <Button asChild size="lg" variant="outline" className="font-bebas uppercase tracking-wider">
                   <a href="mailto:media@risefootballagency.com?subject=Content%20Access%20Request">
-                    Request Content Access
+                    {t('media.request_content', 'Request Content Access')}
                   </a>
                 </Button>
               </div>
@@ -165,31 +165,31 @@ const Media = () => {
               <div className="space-y-6">
                 <div className="inline-flex items-center gap-2 text-primary">
                   <Video className="h-6 w-6" />
-                  <span className="text-sm font-bebas uppercase tracking-widest">TV & Documentary</span>
+                  <span className="text-sm font-bebas uppercase tracking-widest">{t('media.tv_documentary', 'TV & Documentary')}</span>
                 </div>
                 <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-foreground">
-                  BROADCAST & <span className="text-primary">FILM</span>
+                  {t('media.broadcast', 'BROADCAST &')} <span className="text-primary">{t('media.film', 'FILM')}</span>
                 </h2>
                 <p className="text-lg text-muted-foreground leading-relaxed">
-                  Producing a documentary, feature, or broadcast segment? We facilitate extended access and behind-the-scenes coverage opportunities.
+                  {t('media.broadcast_desc', 'Producing a documentary, feature, or broadcast segment? We facilitate extended access and behind-the-scenes coverage opportunities.')}
                 </p>
                 <Collapsible>
                   <CollapsibleTrigger className="group flex items-center gap-3 px-4 py-2.5 bg-primary/10 hover:bg-primary/20 border border-primary/30 rounded-md transition-all">
-                    <span className="text-sm uppercase tracking-wider text-primary font-medium">Production Info</span>
+                    <span className="text-sm uppercase tracking-wider text-primary font-medium">{t('media.production_info', 'Production Info')}</span>
                     <ChevronDown className="h-4 w-4 text-primary transition-transform group-data-[state=open]:rotate-180" />
                   </CollapsibleTrigger>
                   <CollapsibleContent className="mt-6 space-y-4 text-base text-muted-foreground leading-relaxed">
                     <p>
-                      For documentary or extended coverage projects, we work closely with production teams to coordinate schedules, access permissions, and player availability over multi-day shoots.
+                      {t('media.production_info_p1', 'For documentary or extended coverage projects, we work closely with production teams to coordinate schedules, access permissions, and player availability over multi-day shoots.')}
                     </p>
                     <p>
-                      Please submit a detailed production brief including your concept, timeline, crew size, and distribution plans. Our team will assess feasibility and discuss terms.
+                      {t('media.production_info_p2', 'Please submit a detailed production brief including your concept, timeline, crew size, and distribution plans. Our team will assess feasibility and discuss terms.')}
                     </p>
                   </CollapsibleContent>
                 </Collapsible>
                 <Button asChild size="lg" className="btn-shine font-bebas uppercase tracking-wider">
                   <a href="mailto:media@risefootballagency.com?subject=Broadcast%20%2F%20Film%20Inquiry">
-                    Discuss Your Project
+                    {t('media.discuss_project', 'Discuss Your Project')}
                   </a>
                 </Button>
               </div>
@@ -197,15 +197,15 @@ const Media = () => {
                 <div className="aspect-video bg-muted flex items-center justify-center">
                   <div className="text-center space-y-4">
                     <Video className="h-16 w-16 text-primary mx-auto" />
-                    <p className="text-muted-foreground">Feature & Documentary</p>
+                    <p className="text-muted-foreground">{t('media.feature_documentary', 'Feature & Documentary')}</p>
                   </div>
                 </div>
                 <div className="p-6 space-y-4">
-                  <h3 className="font-bebas uppercase tracking-wider text-foreground">Previous Productions</h3>
+                  <h3 className="font-bebas uppercase tracking-wider text-foreground">{t('media.previous_productions', 'Previous Productions')}</h3>
                   <div className="flex gap-2 flex-wrap">
-                    <span className="px-3 py-1 bg-primary/10 text-primary text-xs font-bebas uppercase rounded">Documentaries</span>
-                    <span className="px-3 py-1 bg-primary/10 text-primary text-xs font-bebas uppercase rounded">Broadcast Features</span>
-                    <span className="px-3 py-1 bg-primary/10 text-primary text-xs font-bebas uppercase rounded">Behind The Scenes</span>
+                    <span className="px-3 py-1 bg-primary/10 text-primary text-xs font-bebas uppercase rounded">{t('media.documentaries', 'Documentaries')}</span>
+                    <span className="px-3 py-1 bg-primary/10 text-primary text-xs font-bebas uppercase rounded">{t('media.broadcast_features', 'Broadcast Features')}</span>
+                    <span className="px-3 py-1 bg-primary/10 text-primary text-xs font-bebas uppercase rounded">{t('media.behind_scenes', 'Behind The Scenes')}</span>
                   </div>
                 </div>
               </div>
@@ -218,58 +218,58 @@ const Media = () => {
           <div className="container mx-auto px-4">
             <div className="grid md:grid-cols-2 gap-12 items-center">
               <div className="order-2 md:order-1 bg-card/50 border border-border rounded-lg p-8 space-y-6">
-                <h3 className="text-2xl font-bebas uppercase tracking-wider text-foreground">Stay Updated</h3>
+                <h3 className="text-2xl font-bebas uppercase tracking-wider text-foreground">{t('media.stay_updated', 'Stay Updated')}</h3>
                 <ul className="space-y-4">
                   <li className="flex items-start gap-3">
                     <Mail className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
                     <div>
-                      <span className="font-medium text-foreground">Press List</span>
-                      <p className="text-sm text-muted-foreground">Join our media distribution list for announcements</p>
+                      <span className="font-medium text-foreground">{t('media.press_list', 'Press List')}</span>
+                      <p className="text-sm text-muted-foreground">{t('media.press_list_desc', 'Join our media distribution list for announcements')}</p>
                     </div>
                   </li>
                   <li className="flex items-start gap-3">
                     <Newspaper className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
                     <div>
-                      <span className="font-medium text-foreground">Transfer News</span>
-                      <p className="text-sm text-muted-foreground">Official statements and player move announcements</p>
+                      <span className="font-medium text-foreground">{t('media.transfer_news', 'Transfer News')}</span>
+                      <p className="text-sm text-muted-foreground">{t('media.transfer_news_desc', 'Official statements and player move announcements')}</p>
                     </div>
                   </li>
                   <li className="flex items-start gap-3">
                     <FileText className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
                     <div>
-                      <span className="font-medium text-foreground">Player Milestones</span>
-                      <p className="text-sm text-muted-foreground">Career achievements and notable performances</p>
+                      <span className="font-medium text-foreground">{t('media.player_milestones', 'Player Milestones')}</span>
+                      <p className="text-sm text-muted-foreground">{t('media.player_milestones_desc', 'Career achievements and notable performances')}</p>
                     </div>
                   </li>
                 </ul>
                 <Button asChild variant="outline" className="w-full font-bebas uppercase tracking-wider">
                   <a href="mailto:media@risefootballagency.com?subject=Press%20List%20Subscription">
-                    Join Press List
+                    {t('media.join_press_list', 'Join Press List')}
                   </a>
                 </Button>
               </div>
               <div className="order-1 md:order-2 space-y-6">
                 <div className="inline-flex items-center gap-2 text-primary">
                   <Newspaper className="h-6 w-6" />
-                  <span className="text-sm font-bebas uppercase tracking-widest">Official Updates</span>
+                  <span className="text-sm font-bebas uppercase tracking-widest">{t('media.official_updates', 'Official Updates')}</span>
                 </div>
                 <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-foreground">
-                  PRESS <span className="text-primary">RELEASES</span>
+                  {t('media.press', 'PRESS')} <span className="text-primary">{t('media.releases', 'RELEASES')}</span>
                 </h2>
                 <p className="text-lg text-muted-foreground leading-relaxed">
-                  Subscribe to our press list for official announcements, transfer news, and player updates delivered directly to your inbox.
+                  {t('media.press_desc', 'Subscribe to our press list for official announcements, transfer news, and player updates delivered directly to your inbox.')}
                 </p>
                 <Collapsible>
                   <CollapsibleTrigger className="group flex items-center gap-3 px-4 py-2.5 bg-primary/10 hover:bg-primary/20 border border-primary/30 rounded-md transition-all">
-                    <span className="text-sm uppercase tracking-wider text-primary font-medium">What You'll Receive</span>
+                    <span className="text-sm uppercase tracking-wider text-primary font-medium">{t('media.what_youll_receive', "What You'll Receive")}</span>
                     <ChevronDown className="h-4 w-4 text-primary transition-transform group-data-[state=open]:rotate-180" />
                   </CollapsibleTrigger>
                   <CollapsibleContent className="mt-6 space-y-4 text-base text-muted-foreground leading-relaxed">
                     <p>
-                      Our press releases cover all official club announcements for represented players, including transfers, contract extensions, loan moves, and significant career milestones.
+                      {t('media.what_youll_receive_p1', 'Our press releases cover all official club announcements for represented players, including transfers, contract extensions, loan moves, and significant career milestones.')}
                     </p>
                     <p>
-                      Subscribers get early access to statements and are first to receive high-resolution assets accompanying major announcements.
+                      {t('media.what_youll_receive_p2', 'Subscribers get early access to statements and are first to receive high-resolution assets accompanying major announcements.')}
                     </p>
                   </CollapsibleContent>
                 </Collapsible>
@@ -282,27 +282,27 @@ const Media = () => {
         <section className="py-16 md:py-24 bg-background">
           <div className="container mx-auto px-4 text-center">
             <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider mb-6">
-              Media <span className="text-primary">Contact</span>
+              {t('media.media_contact', 'Media')} <span className="text-primary">{t('media.contact', 'Contact')}</span>
             </h2>
             <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-              For all media inquiries, interview requests, and content access, contact our media relations team.
+              {t('media.cta_desc', 'For all media inquiries, interview requests, and content access, contact our media relations team.')}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button asChild size="lg" className="btn-shine font-bebas uppercase tracking-wider">
                 <a href="mailto:media@risefootballagency.com?subject=Media%20Inquiry">
-                  Email Media Team
+                  {t('media.email_team', 'Email Media Team')}
                 </a>
               </Button>
               <WorkWithUsDialog>
                 <Button size="lg" variant="outline" className="font-bebas uppercase tracking-wider">
-                  General Inquiries
+                  {t('media.general_inquiries', 'General Inquiries')}
                 </Button>
               </WorkWithUsDialog>
             </div>
           </div>
         </section>
       </main>
-
+      
       <Footer />
     </div>
   );

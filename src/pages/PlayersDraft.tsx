@@ -4,31 +4,41 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { useEffect, useRef, useState } from "react";
+import { useLanguage } from "@/contexts/LanguageContext";
 import footballIcon from "@/assets/football-icon.png";
 
 const PlayersDraft = () => {
+  const { t } = useLanguage();
   const [activeSection, setActiveSection] = useState(0);
   const sectionsRef = useRef<(HTMLElement | null)[]>([]);
 
   const sections = [
     {
-      title: "ATTRACT",
-      content: "Through our vast scouting network, we maximise visibility across the footballing world to ensure player interest and demand.",
-      position: { x: 15, y: 20 } // Position on pitch (percentage)
+      titleKey: "players.attract",
+      titleFallback: "ATTRACT",
+      contentKey: "players.attract_desc",
+      contentFallback: "Through our vast scouting network, we maximise visibility across the footballing world to ensure player interest and demand.",
+      position: { x: 15, y: 20 }
     },
     {
-      title: "SIGN",
-      content: "Sign the dotted line after our team of intermediaries negotiate new and improved contracts. Retain confidence knowing your career opportunities are being created and finalised.",
+      titleKey: "players.sign",
+      titleFallback: "SIGN",
+      contentKey: "players.sign_desc",
+      contentFallback: "Sign the dotted line after our team of intermediaries negotiate new and improved contracts. Retain confidence knowing your career opportunities are being created and finalised.",
       position: { x: 35, y: 50 }
     },
     {
-      title: "DEVELOP",
-      content: "Receive expert training to maximise your physical capacity for performance. Push the limits of your body and mind to truly know how far you can go in your career.",
+      titleKey: "players.develop",
+      titleFallback: "DEVELOP",
+      contentKey: "players.develop_desc",
+      contentFallback: "Receive expert training to maximise your physical capacity for performance. Push the limits of your body and mind to truly know how far you can go in your career.",
       position: { x: 65, y: 50 }
     },
     {
-      title: "PERFORM",
-      content: "Play your best on a consistent basis through smart preparation, including psychological training sessions and pre-match analysis specific to your individual matchups.",
+      titleKey: "players.perform",
+      titleFallback: "PERFORM",
+      contentKey: "players.perform_desc",
+      contentFallback: "Play your best on a consistent basis through smart preparation, including psychological training sessions and pre-match analysis specific to your individual matchups.",
       position: { x: 85, y: 80 }
     }
   ];
@@ -136,10 +146,10 @@ const PlayersDraft = () => {
       <section className="relative min-h-screen flex items-center justify-center pt-16">
         <div className="relative z-10 container mx-auto px-4 text-center">
           <h1 className="text-6xl md:text-8xl lg:text-9xl font-bebas uppercase tracking-wider text-white mb-6 drop-shadow-2xl animate-fade-in">
-            REALISE POTENTIAL
+            {t('players.hero_title', 'REALISE POTENTIAL')}
           </h1>
           <p className="text-xl md:text-2xl text-white/90 max-w-3xl mx-auto drop-shadow-lg animate-fade-in">
-            Elevating your game through comprehensive support and development
+            {t('players.hero_subtitle', 'Elevating your game through comprehensive support and development')}
           </p>
         </div>
       </section>
@@ -161,10 +171,10 @@ const PlayersDraft = () => {
                 }`}
               >
                 <h2 className="text-5xl md:text-6xl lg:text-7xl font-bebas uppercase tracking-wider text-primary mb-6 md:mb-8">
-                  {section.title}
+                  {t(section.titleKey, section.titleFallback)}
                 </h2>
                 <p className="text-xl md:text-2xl text-white/90 leading-relaxed">
-                  {section.content}
+                  {t(section.contentKey, section.contentFallback)}
                 </p>
               </div>
             </div>
@@ -176,33 +186,33 @@ const PlayersDraft = () => {
           <div className="container mx-auto px-4">
             <div className="bg-black/70 backdrop-blur-md border-2 border-primary/50 rounded-2xl p-8 md:p-12 max-w-6xl mx-auto">
               <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider text-center text-primary mb-12">
-                Additional Services
+                {t('players.additional_services', 'Additional Services')}
               </h2>
               <div className="grid md:grid-cols-3 gap-8">
                 <div className="text-center space-y-4">
                   <h3 className="text-2xl md:text-3xl font-bebas uppercase tracking-wider text-primary">
-                    Stakeholder Management
+                    {t('players.stakeholder_management', 'Stakeholder Management')}
                   </h3>
                   <p className="text-base md:text-lg text-white/80">
-                    Career management through contract negotiations, loans and transfers
+                    {t('players.stakeholder_desc', 'Career management through contract negotiations, loans and transfers')}
                   </p>
                 </div>
 
                 <div className="text-center space-y-4">
                   <h3 className="text-2xl md:text-3xl font-bebas uppercase tracking-wider text-primary">
-                    Brand Image
+                    {t('players.brand_image', 'Brand Image')}
                   </h3>
                   <p className="text-base md:text-lg text-white/80">
-                    Development of your brand image and management of public relations
+                    {t('players.brand_desc', 'Development of your brand image and management of public relations')}
                   </p>
                 </div>
 
                 <div className="text-center space-y-4">
                   <h3 className="text-2xl md:text-3xl font-bebas uppercase tracking-wider text-primary">
-                    Commercial Interests
+                    {t('players.commercial_interests', 'Commercial Interests')}
                   </h3>
                   <p className="text-base md:text-lg text-white/80">
-                    Creating relationships with major brands and negotiating the best sponsorship opportunities
+                    {t('players.commercial_desc', 'Creating relationships with major brands and negotiating the best sponsorship opportunities')}
                   </p>
                 </div>
               </div>
@@ -215,13 +225,13 @@ const PlayersDraft = () => {
           <div className="container mx-auto px-4 text-center">
             <div className="bg-black/70 backdrop-blur-md border-2 border-primary/50 rounded-2xl p-8 md:p-12 max-w-3xl mx-auto">
               <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider text-primary mb-6">
-                Ready to Elevate Your Game?
+                {t('players.cta_title', 'Ready to Elevate Your Game?')}
               </h2>
               <p className="text-xl text-white/90 mb-8">
-                Join RISE and experience comprehensive support designed to maximize your potential
+                {t('players.cta_desc', 'Join RISE and experience comprehensive support designed to maximize your potential')}
               </p>
               <Button asChild size="lg" className="btn-shine font-bebas uppercase tracking-wider">
-                <Link to="/contact">Get Started</Link>
+                <Link to="/contact">{t('players.get_started', 'Get Started')}</Link>
               </Button>
             </div>
           </div>
