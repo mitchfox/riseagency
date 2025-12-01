@@ -84,8 +84,8 @@ const Index = () => {
         image="/og-preview-home.png"
         url="/"
       />
+      <Header />
       <IntroModal open={showIntroModal} onOpenChange={setShowIntroModal} />
-      {!showIntroModal && <Header />}
       <div className="bg-background min-h-screen relative z-10">
         {/* Hero Section */}
         <section className="pt-28 md:pt-32 pb-12 md:pb-20 px-4 relative overflow-hidden">
