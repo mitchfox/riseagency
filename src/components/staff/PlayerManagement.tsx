@@ -633,7 +633,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       links: linksArray,
       
       // Highlighted Match
-      highlightedMatch: null,
+      highlightedMatch: player.highlighted_match || null,
     });
     setIsEditDialogOpen(true);
   };
@@ -2630,7 +2630,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                   <TabsTrigger value="tactical" className="flex-shrink-0 whitespace-nowrap text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2">Schemes</TabsTrigger>
                   <TabsTrigger value="stats" className="flex-shrink-0 whitespace-nowrap text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2">Stats</TabsTrigger>
                   <TabsTrigger value="links" className="flex-shrink-0 whitespace-nowrap text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2">Links</TabsTrigger>
-                  <TabsTrigger value="highlight" className="flex-shrink-0 whitespace-nowrap text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2">Highlight</TabsTrigger>
+                  <TabsTrigger value="highlight" className="flex-shrink-0 whitespace-nowrap text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2">Highlighted Game</TabsTrigger>
                 </TabsList>
 
                 {/* Basic Info Tab */}

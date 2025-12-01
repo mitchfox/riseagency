@@ -23,11 +23,22 @@ const STAT_LABELS: Record<string, string> = {
   goals: "Goals",
   assists: "Assists",
   xG_adj: "xG",
+  xA_adj: "xA",
   progressive_passes_adj: "Prog Passes",
   regains_adj: "Regains",
   turnovers_adj: "Turnovers",
   duels_won_adj: "Duels Won",
   aerial_duels_won_adj: "Aerial Duels",
+  xGChain: "xG Chain",
+  interceptions: "Interceptions",
+  crossing_movement_xC: "Crossing xC",
+  movement_in_behind_xC: "In Behind xC",
+  movement_to_feet_xC: "To Feet xC",
+  triple_threat_xC: "Triple Threat xC",
+  tackles: "Tackles",
+  passes_completed: "Passes",
+  shots: "Shots",
+  shots_on_target: "On Target",
 };
 
 export const HighlightedMatchDisplay = ({ highlightedMatch }: HighlightedMatchProps) => {
@@ -41,7 +52,7 @@ export const HighlightedMatchDisplay = ({ highlightedMatch }: HighlightedMatchPr
   return (
     <div className="mb-16">
       <h2 className="text-2xl font-bebas text-primary uppercase tracking-widest mb-6">
-        Highlighted Match
+        Highlighted Game
       </h2>
       
       <div className="border-2 border-primary/30 rounded-lg overflow-hidden">
