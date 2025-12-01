@@ -6,6 +6,7 @@ import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/client";
 import { LateralFilter } from "@/components/LateralFilter";
 import { Button } from "@/components/ui/button";
+import { DeclareInterestPlayerDialog } from "@/components/DeclareInterestPlayerDialog";
 
 const BATCH_SIZE = 3;
 
@@ -16,6 +17,7 @@ const PlayersList = () => {
   const [selectedPositions, setSelectedPositions] = useState<string[]>([]);
   const [selectedAgeRanges, setSelectedAgeRanges] = useState<string[]>([]);
   const [visibleCount, setVisibleCount] = useState(BATCH_SIZE);
+  const [declareInterestOpen, setDeclareInterestOpen] = useState(false);
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
   const positionOptions = [
@@ -200,9 +202,9 @@ const PlayersList = () => {
               <Button
                 variant="outline"
                 className="font-bebas uppercase tracking-wider border-primary text-primary hover:bg-primary hover:text-black"
-                onClick={() => window.location.href = '/contact?type=interest'}
+                onClick={() => setDeclareInterestOpen(true)}
               >
-                Declare Interest in Star
+                Declare Interest in Player
               </Button>
               <Button
                 variant="outline"
@@ -309,6 +311,11 @@ const PlayersList = () => {
       </main>
 
       <Footer />
+
+      <DeclareInterestPlayerDialog 
+        open={declareInterestOpen} 
+        onOpenChange={setDeclareInterestOpen} 
+      />
     </div>
   );
 };
