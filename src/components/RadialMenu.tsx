@@ -257,6 +257,8 @@ export const RadialMenu = () => {
                     `}
                     fill={hovered ? "rgba(255,255,255,1)" : "rgba(128,128,128,0.1)"}
                     className="transition-colors duration-200"
+                    onMouseEnter={() => setHoveredItem(index)}
+                    onMouseLeave={() => setHoveredItem(null)}
                   />
                 </svg>
 
@@ -364,7 +366,7 @@ export const RadialMenu = () => {
           </div>
           
           {/* Language selector in lower half */}
-          <div className="absolute left-1/2 -translate-x-1/2 z-20" style={{ bottom: '4px' }}>
+          <div className="absolute left-1/2 -translate-x-1/2 z-20" style={{ bottom: '7px' }}>
             <button
               onClick={() => setShowMap(!showMap)}
               className="flex items-center gap-1 text-[10px] font-bebas uppercase tracking-wider text-primary hover:text-primary/80 transition-all duration-300 focus:outline-none"
