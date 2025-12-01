@@ -5,8 +5,10 @@ import { LocalizedLink } from "@/components/LocalizedLink";
 import { useRoleSubdomain } from "@/hooks/useRoleSubdomain";
 import riseLogoBlack from "@/assets/RISEBlack.png";
 import whiteMarbleBg from "@/assets/white-marble.png";
+import smudgedMarbleBg from "@/assets/black-marble-smudged.png";
 import { Home, Star, TrendingUp, BookOpen, Newspaper, MessageCircle, Target, Trophy, Users, Handshake, Briefcase, Search, Calendar, Heart, Package, X } from "lucide-react";
 import { useState, useMemo } from "react";
+import { LanguageSelector } from "@/components/LanguageSelector";
 
 interface MenuItem {
   to: string;
@@ -253,21 +255,42 @@ export const RadialMenu = () => {
 
         {/* Center circle with logo */}
         <div 
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 md:w-40 md:h-40 rounded-full flex flex-col items-center justify-center z-20 border-4 border-black"
-          style={{
-            backgroundImage: `url(${whiteMarbleBg})`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-          }}
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 md:w-40 md:h-40 rounded-full flex flex-col items-center justify-center z-20 border-4 border-black overflow-hidden"
         >
+          {/* Upper half with white marble */}
+          <div 
+            className="absolute top-0 left-0 w-full h-1/2"
+            style={{
+              backgroundImage: `url(${whiteMarbleBg})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+            }}
+          />
+          
+          {/* Black divider line */}
+          <div className="absolute top-1/2 left-0 w-full h-[2px] bg-black z-10" />
+          
+          {/* Lower half with smudged marble */}
+          <div 
+            className="absolute bottom-0 left-0 w-full h-1/2"
+            style={{
+              backgroundImage: `url(${smudgedMarbleBg})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+            }}
+          />
+
+          {/* Logo */}
           <img
             src={riseLogoBlack}
             alt="RISE"
-            className="w-28 h-28 md:w-36 md:h-36 mb-1"
+            className="w-28 h-28 md:w-36 md:h-36 mb-1 relative z-20"
             style={{ transform: 'translateY(-10px)' }}
           />
+          
+          {/* Role/Menu text */}
           <div
-            className="text-center"
+            className="text-center relative z-20"
             style={{ transform: 'translateY(-45px)' }}
           >
             <p className="text-black font-bebas text-2xl md:text-3xl tracking-[0.05em]">
@@ -275,6 +298,11 @@ export const RadialMenu = () => {
                 ? roleConfigs[currentRole].name.toUpperCase()
                 : "MENU"}
             </p>
+          </div>
+          
+          {/* Language selector in lower half */}
+          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 z-20">
+            <LanguageSelector />
           </div>
         </div>
       </div>
