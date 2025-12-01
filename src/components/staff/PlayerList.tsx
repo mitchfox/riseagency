@@ -162,7 +162,7 @@ export const PlayerList = ({ isAdmin }: { isAdmin: boolean }) => {
                 <div className="flex items-start gap-3">
                   <div className="h-14 w-14 rounded-full bg-muted overflow-hidden flex-shrink-0">
                     <img
-                      src={`/players/${player.name.toLowerCase().replace(/\s+/g, '-')}.png`}
+                      src={player.image_url || `/players/${player.name.toLowerCase().replace(/\s+/g, '-')}.png`}
                       alt={player.name}
                       className="h-full w-full object-cover"
                       onError={(e) => {
@@ -249,7 +249,7 @@ export const PlayerList = ({ isAdmin }: { isAdmin: boolean }) => {
                     <div className="flex items-center gap-3">
                       <div className="h-10 w-10 rounded-full bg-muted overflow-hidden flex-shrink-0">
                         <img
-                          src={`/players/${player.name.toLowerCase().replace(/\s+/g, '-')}.png`}
+                          src={player.image_url || `/players/${player.name.toLowerCase().replace(/\s+/g, '-')}.png`}
                           alt={player.name}
                           className="h-full w-full object-cover"
                           onError={(e) => {
