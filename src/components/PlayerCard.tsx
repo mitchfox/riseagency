@@ -70,7 +70,7 @@ export const PlayerCard = ({ player, viewMode = "grid" }: PlayerCardProps) => {
       <Link
         ref={cardRef}
         to={`/stars/${playerSlug}`}
-        className="group relative flex items-start gap-8 p-8 overflow-hidden transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary hover:bg-card border-b border-border last:border-b-0 hover:border-primary hover:border-4"
+        className="group relative flex items-start gap-8 p-8 overflow-hidden transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary hover:bg-card border-b border-border last:border-b-0 hover:!border-primary hover:!border-4"
       >
         {/* Player Image */}
         <div className="relative w-32 h-44 flex-shrink-0 overflow-hidden rounded-lg shadow-lg">
