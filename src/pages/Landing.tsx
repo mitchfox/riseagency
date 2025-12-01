@@ -58,8 +58,8 @@ export default function Landing() {
       )}
 
       {/* Bottom Section - Navigation + Drag Navigator + Language Selector in Golden Box */}
-      <div className="pb-4 md:pb-12 z-50 relative px-2 md:px-0 w-full md:w-auto pointer-events-auto">
-        <div className="border-2 border-primary/60 bg-black/40 backdrop-blur-sm px-4 py-4 md:py-5">
+      <div className="pb-4 md:pb-12 z-50 relative px-2 md:px-4 w-full pointer-events-auto">
+        <div className="border-2 border-primary/60 bg-black/40 backdrop-blur-sm px-4 md:px-8 py-4 md:py-5 max-w-6xl mx-auto">
           
           {/* Desktop Layout */}
           <div className="hidden md:block">
