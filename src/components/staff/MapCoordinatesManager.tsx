@@ -14,8 +14,7 @@ import ScoutingNetworkMap from "@/components/ScoutingNetworkMap";
 
 interface MapClub {
   id: string;
-  name: string;
-  club_name: string | null;
+  club_name: string;
   country: string | null;
   x_position: number | null;
   y_position: number | null;
@@ -47,10 +46,10 @@ export const MapCoordinatesManager = () => {
   const fetchClubs = async () => {
     try {
       const { data, error } = await supabase
-        .from("club_network_contacts")
-        .select("id, name, club_name, country, x_position, y_position, image_url")
+        .from("club_map_positions")
+        .select("id, club_name, country, x_position, y_position, image_url")
         .order("country", { ascending: true })
-        .order("name", { ascending: true });
+        .order("club_name", { ascending: true });
 
       if (error) throw error;
       setClubs(data || []);
@@ -66,9 +65,8 @@ export const MapCoordinatesManager = () => {
     e.preventDefault();
 
     try {
-      const contactData = {
-        name: formData.name,
-        club_name: formData.club_name || null,
+      const clubData = {
+        club_name: formData.name,
         country: formData.country || null,
         x_position: formData.x_position ? parseFloat(formData.x_position) : null,
         y_position: formData.y_position ? parseFloat(formData.y_position) : null,
@@ -76,8 +74,8 @@ export const MapCoordinatesManager = () => {
       };
 
       const { error } = await supabase
-        .from("club_network_contacts")
-        .insert([contactData]);
+        .from("club_map_positions")
+        .insert([clubData]);
 
       if (error) throw error;
       toast.success("Club added to map");
@@ -130,7 +128,7 @@ export const MapCoordinatesManager = () => {
 
       for (const update of updates) {
         const { error } = await supabase
-          .from("club_network_contacts")
+          .from("club_map_positions")
           .update({
             x_position: update.x_position,
             y_position: update.y_position,
@@ -157,7 +155,7 @@ export const MapCoordinatesManager = () => {
 
     try {
       const { error } = await supabase
-        .from("club_network_contacts")
+        .from("club_map_positions")
         .delete()
         .eq("id", id);
 
@@ -189,7 +187,7 @@ export const MapCoordinatesManager = () => {
 
   const handleClubPositionChange = (clubName: string, x: number, y: number) => {
     // Find the club in our clubs list
-    const club = clubs.find(c => c.name === clubName);
+    const club = clubs.find(c => c.club_name === clubName);
     if (!club) return;
 
     // Update the editedClubs state with new coordinates
@@ -294,27 +292,16 @@ export const MapCoordinatesManager = () => {
                 <DialogTitle>Add Club to Map</DialogTitle>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Club Key *</Label>
-                  <Input
-                    id="name"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    placeholder="Must match club name in map data"
-                    required
-                  />
-                  <p className="text-xs text-muted-foreground">This identifier is used to match the club in the map's data</p>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="club_name">Display Name</Label>
-                  <Input
-                    id="club_name"
-                    value={formData.club_name}
-                    onChange={(e) => setFormData({ ...formData, club_name: e.target.value })}
-                    placeholder="e.g. Real Madrid (optional)"
-                  />
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="name">Club Name *</Label>
+                <Input
+                  id="name"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  placeholder="Must match club name in map data"
+                  required
+                />
+                <p className="text-xs text-muted-foreground">This identifier is used to match the club in the map's data</p>
               </div>
 
               <div className="space-y-2">
@@ -400,8 +387,7 @@ export const MapCoordinatesManager = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Club Key</TableHead>
-                  <TableHead>Display Name</TableHead>
+                  <TableHead>Club Name</TableHead>
                   <TableHead>Country</TableHead>
                   <TableHead className="w-[120px]">X Position</TableHead>
                   <TableHead className="w-[120px]">Y Position</TableHead>
@@ -411,8 +397,7 @@ export const MapCoordinatesManager = () => {
               <TableBody>
                 {displayedClubs.map((club) => (
                   <TableRow key={club.id}>
-                    <TableCell className="font-medium">{club.name}</TableCell>
-                    <TableCell className="text-muted-foreground">{club.club_name || "—"}</TableCell>
+                    <TableCell className="font-medium">{club.club_name}</TableCell>
                     <TableCell className="text-muted-foreground">{club.country || "—"}</TableCell>
                     <TableCell>
                       <Input

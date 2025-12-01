@@ -249,6 +249,39 @@ export type Database = {
           },
         ]
       }
+      club_map_positions: {
+        Row: {
+          club_name: string
+          country: string | null
+          created_at: string
+          id: string
+          image_url: string | null
+          updated_at: string
+          x_position: number | null
+          y_position: number | null
+        }
+        Insert: {
+          club_name: string
+          country?: string | null
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          updated_at?: string
+          x_position?: number | null
+          y_position?: number | null
+        }
+        Update: {
+          club_name?: string
+          country?: string | null
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          updated_at?: string
+          x_position?: number | null
+          y_position?: number | null
+        }
+        Relationships: []
+      }
       club_network_contacts: {
         Row: {
           city: string | null
