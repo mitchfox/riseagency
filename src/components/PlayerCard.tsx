@@ -73,10 +73,19 @@ export const PlayerCard = ({ player, viewMode = "grid" }: PlayerCardProps) => {
           <img
             src={player.image_url || player.image}
             alt={player.name}
-            className={`w-full h-full object-cover transition-all duration-700 ${
+            className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 ${
               isInView ? "grayscale-0" : "grayscale"
-            } md:grayscale md:group-hover:grayscale-0`}
-        />
+            } md:grayscale md:group-hover:grayscale-0 ${
+              player.hover_image_url ? 'md:group-hover:opacity-0' : ''
+            }`}
+          />
+          {player.hover_image_url && (
+            <img
+              src={player.hover_image_url}
+              alt={`${player.name} hover`}
+              className="absolute inset-0 w-full h-full object-cover transition-all duration-700 opacity-0 md:group-hover:opacity-100"
+            />
+          )}
         {/* Position badge - top right, smaller on mobile */}
         <div className="absolute top-3 right-3">
           <span className="text-base md:text-xl text-primary tracking-wider" style={{ fontFamily: "'BBH Sans Bartle', 'Bebas Neue', sans-serif" }}>
@@ -112,25 +121,25 @@ export const PlayerCard = ({ player, viewMode = "grid" }: PlayerCardProps) => {
 
       {/* Player Image */}
       <div className="relative aspect-[3/4] overflow-hidden">
-        {/* Background Layer - fades when other cards are hovered */}
+        {/* Background Layer - base image */}
         <img
           src={player.image_url || player.image}
           alt={player.name}
-          className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 group-hover/container:brightness-[0.3] z-0 ${
-            isInView ? "grayscale-0" : "grayscale"
-          } md:grayscale md:group-hover:grayscale-0`}
-        />
-        
-        {/* Foreground Layer (Player Cutout) - stays bright */}
-        <img
-          src={player.cutout_image_url || player.image_url || player.image}
-          alt={`${player.name} foreground`}
-          className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 z-30 ${
+          className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 z-0 ${
             isInView ? "grayscale-0" : "grayscale"
           } md:grayscale md:group-hover:grayscale-0 ${
-            player.cutout_image_url ? 'opacity-100' : 'opacity-0 md:group-hover:opacity-0'
+            player.hover_image_url ? 'md:group-hover:opacity-0' : ''
           }`}
         />
+        
+        {/* Hover Layer - transparent background image (shown on hover) */}
+        {player.hover_image_url && (
+          <img
+            src={player.hover_image_url}
+            alt={`${player.name} hover`}
+            className="absolute inset-0 w-full h-full object-cover transition-all duration-700 z-10 opacity-0 md:group-hover:opacity-100"
+          />
+        )}
         {/* Position badge - top right, smaller on mobile */}
         <div className="absolute top-4 right-4 z-5">
           <span className="text-xl md:text-3xl text-primary tracking-wider" style={{ fontFamily: "'BBH Sans Bartle', 'Bebas Neue', sans-serif" }}>

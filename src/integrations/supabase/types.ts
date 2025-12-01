@@ -1519,6 +1519,7 @@ export type Database = {
           created_at: string | null
           email: string | null
           highlights: Json | null
+          hover_image_url: string | null
           id: string
           image_url: string | null
           links: Json | null
@@ -1538,6 +1539,7 @@ export type Database = {
           created_at?: string | null
           email?: string | null
           highlights?: Json | null
+          hover_image_url?: string | null
           id?: string
           image_url?: string | null
           links?: Json | null
@@ -1557,6 +1559,7 @@ export type Database = {
           created_at?: string | null
           email?: string | null
           highlights?: Json | null
+          hover_image_url?: string | null
           id?: string
           image_url?: string | null
           links?: Json | null
