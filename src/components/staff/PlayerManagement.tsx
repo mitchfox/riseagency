@@ -978,6 +978,11 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
     other: players.filter(p => p.representation_status === 'other' || !p.representation_status),
   };
 
+  // Group players by category
+  const categoryGroups = {
+    scouted: players.filter(p => p.category === 'Scouted'),
+  };
+
   if (loading) {
     return <div className="flex items-center justify-center py-8">Loading players...</div>;
   }
@@ -985,6 +990,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   const representedPlayers = groupedPlayers.represented;
   const mandatedPlayers = groupedPlayers.mandated;
   const otherPlayers = groupedPlayers.other;
+  const scoutedPlayers = categoryGroups.scouted;
 
   return (
     <div className="flex h-full gap-4 flex-col md:flex-row">
@@ -1313,17 +1319,65 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                             </div>
                           </div>
                         </CardHeader>
-                        <CardContent>
-                          {player.club && (
-                            <div className="flex items-center gap-2 text-sm mb-3">
-                              {player.club_logo && (
-                                <img src={player.club_logo} alt="" className="w-5 h-5 object-contain" />
-                              )}
-                              <span className="text-muted-foreground">{player.club}</span>
+                        <CardContent className="pt-0">
+                          {playerStats && (
+                            <div className="grid grid-cols-2 gap-4 text-center">
+                              <div>
+                                <div className="font-semibold text-lg">{playerStats.matches || 0}</div>
+                                <div className="text-muted-foreground">Matches</div>
+                              </div>
+                              <div>
+                                <div className="font-semibold text-lg">{playerStats.minutes || 0}</div>
+                                <div className="text-muted-foreground">Minutes</div>
+                              </div>
                             </div>
                           )}
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Gold Border Separator */}
+            {groupedPlayers.other.length > 0 && scoutedPlayers.length > 0 && (
+              <div className="h-1 bg-gradient-to-r from-transparent via-gold to-transparent rounded-full" />
+            )}
+
+            {/* Scouted Players */}
+            {scoutedPlayers.length > 0 && (
+              <div>
+                <h3 className="text-lg font-semibold mb-4 text-primary">Scouted</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
+                  {scoutedPlayers.map((player) => {
+                    const playerStats = stats[player.id];
+                    return (
+                      <Card 
+                        key={player.id} 
+                        className="cursor-pointer hover:shadow-lg transition-all"
+                        onClick={() => handlePlayerSelect(player.id)}
+                      >
+                        <CardHeader className="pb-3">
+                          <div className="flex items-start gap-3">
+                            <Avatar className="w-16 h-16">
+                              <AvatarImage src={player.image_url || undefined} alt={player.name} className="object-cover" />
+                              <AvatarFallback>{(player.name || '').split(' ').filter(n => n).map(n => n[0]).join('') || '??'}</AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-semibold truncate">{player.name}</h3>
+                              <p className="text-sm text-muted-foreground">{player.position}</p>
+                              <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
+                                <span>{player.age}y</span>
+                                <span>•</span>
+                                <span>{player.nationality}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </CardHeader>
+                        <CardContent className="pt-0">
                           {playerStats && (
-                            <div className="grid grid-cols-2 gap-2 text-center text-xs">
+                            <div className="grid grid-cols-2 gap-4 text-center">
                               <div>
                                 <div className="font-semibold text-lg">{playerStats.matches || 0}</div>
                                 <div className="text-muted-foreground">Matches</div>
