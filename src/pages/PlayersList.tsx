@@ -205,7 +205,7 @@ const PlayersList = () => {
       
       <Header />
       
-      <main className="pt-24 md:pt-16">
+      <main className="pt-32 md:pt-24">
         {/* Hero Section */}
         <section className="py-8 px-4">
           <div className="container mx-auto">

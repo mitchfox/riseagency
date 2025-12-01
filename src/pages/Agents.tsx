@@ -26,7 +26,7 @@ const Agents = () => {
       />
       <Header />
       
-      <main className="pt-24 md:pt-16">
+      <main className="pt-32 md:pt-24">
         {/* Hero Section */}
         <section className="relative min-h-[60vh] flex items-center justify-center px-4">
           <div className="absolute inset-0 bg-gradient-to-b from-background via-primary/5 to-background" />

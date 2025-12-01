@@ -176,7 +176,7 @@ const News = () => {
         url={articleId ? `/news/${articleId}` : "/news"}
       />
       <Header />
-      <div className="min-h-screen bg-background pt-24 md:pt-16 touch-pan-y overflow-x-hidden">
+      <div className="min-h-screen bg-background pt-32 md:pt-24 touch-pan-y overflow-x-hidden">
         <div className="container mx-auto px-4 py-24">
           <div className="max-w-4xl mx-auto">
             {articleId && currentArticle ? (
