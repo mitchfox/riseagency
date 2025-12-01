@@ -62,3 +62,6 @@ verify_jwt = true
 
 [functions.weekly-instagram-report]
 verify_jwt = false
+
+[functions.send-form-email]
+verify_jwt = false
