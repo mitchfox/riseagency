@@ -22,20 +22,9 @@ export const PlayerCard = ({ player, viewMode = "grid" }: PlayerCardProps) => {
   const [isInView, setIsInView] = useState(false);
   const playerSlug = createPlayerSlug(player.name);
 
-  // Extract club info from player data
-  const getClubInfo = () => {
-    let currentClub = player.currentClub || "";
-    let clubLogo = player.clubLogo || "";
-    
-    // Fallback to tactical formations if clubLogo not directly available
-    if (!clubLogo && player.tacticalFormations && player.tacticalFormations[0]?.clubLogo) {
-      clubLogo = player.tacticalFormations[0].clubLogo;
-    }
-
-    return { currentClub, clubLogo };
-  };
-
-  const { currentClub, clubLogo } = getClubInfo();
+  // Extract club info from player data - use correct database field names
+  const currentClub = player.club || player.currentClub || "";
+  const clubLogo = player.club_logo || player.clubLogo || "";
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -153,52 +142,50 @@ export const PlayerCard = ({ player, viewMode = "grid" }: PlayerCardProps) => {
 
         {/* Hover Overlay - Key Info (in front of everything) */}
         <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-between p-6 z-30">
-          {/* Top Section */}
-          <div className="grid grid-cols-2 gap-4">
-            {/* Age */}
-            <div className="text-center">
+          {/* Top Section - Age (left) and Nationality (right) */}
+          <div className="flex justify-between">
+            {/* Age - Top Left */}
+            <div className="flex flex-col items-center">
               <div className="text-5xl font-bebas text-primary mb-1">{player.age}</div>
               <div className="text-sm font-bebas uppercase text-white tracking-wider">Age</div>
             </div>
             
-            {/* Nationality */}
-            <div className="text-center">
-              <div className="flex items-center justify-center mb-1">
-                <img 
-                  src={getCountryFlagUrl(player.nationality)} 
-                  alt={player.nationality}
-                  className="w-10 h-7 object-cover rounded"
-                />
-              </div>
+            {/* Nationality - Top Right */}
+            <div className="flex flex-col items-center">
+              <img 
+                src={getCountryFlagUrl(player.nationality)} 
+                alt={player.nationality}
+                className="w-10 h-7 object-cover rounded mb-1"
+              />
               <div className="text-sm font-bebas uppercase text-white tracking-wider">Nationality</div>
             </div>
           </div>
 
           {/* Bottom Section */}
           <div>
-            <div className="grid grid-cols-2 gap-4 mb-6">
-              {/* Position */}
-              <div className="text-center">
+            {/* Position (left) and Club (right) */}
+            <div className="flex justify-between mb-6">
+              {/* Position - Bottom Left */}
+              <div className="flex flex-col items-center">
                 <div className="text-5xl font-bebas text-primary mb-1">{player.position}</div>
                 <div className="text-sm font-bebas uppercase text-white tracking-wider">Position</div>
               </div>
               
-              {/* Club */}
-              <div className="flex flex-col items-center transition-transform duration-300 group-hover:translate-x-[30px]">
-                <div className="mb-1">
-                  {clubLogo && (
-                    <img 
-                      src={clubLogo} 
-                      alt={currentClub}
-                      className="h-12 w-12 object-contain"
-                    />
-                  )}
-                  {!clubLogo && currentClub && (
-                    <div className="text-3xl font-bebas text-primary">
-                      {currentClub.substring(0, 3).toUpperCase()}
-                    </div>
-                  )}
-                </div>
+              {/* Club - Bottom Right */}
+              <div className="flex flex-col items-center">
+                {clubLogo ? (
+                  <img 
+                    src={clubLogo} 
+                    alt={currentClub}
+                    className="h-12 w-12 object-contain mb-1"
+                  />
+                ) : currentClub ? (
+                  <div className="text-3xl font-bebas text-primary mb-1">
+                    {currentClub.substring(0, 3).toUpperCase()}
+                  </div>
+                ) : (
+                  <div className="h-12 mb-1" />
+                )}
                 <div className="text-sm font-bebas uppercase text-white tracking-wider">Club</div>
               </div>
             </div>
