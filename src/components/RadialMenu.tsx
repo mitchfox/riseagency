@@ -50,7 +50,7 @@ export const RadialMenu = () => {
   const { currentRole, isRoleSubdomain, roleConfigs, getRoleUrl, otherRoles } = useRoleSubdomain();
   const [hoveredItem, setHoveredItem] = useState<number | null>(null);
   const [showMap, setShowMap] = useState(false);
-  const [showRoleDropdown, setShowRoleDropdown] = useState(false);
+  const [isSelectingRole, setIsSelectingRole] = useState(false);
   const [hoveredLang, setHoveredLang] = useState<LanguageCode | null>(null);
 
   const languages = [
@@ -165,13 +165,28 @@ export const RadialMenu = () => {
     { to: "/contact", labelKey: "header.contact", fallback: "CONTACT", Icon: MessageCircle, angle: 288 },
   ];
 
-  // Select menu based on current role
+  // Role selection menu items
+  const roleMenuItems: MenuItem[] = [
+    { to: "/", labelKey: "roles.main", fallback: "MAIN", Icon: Home, angle: 0 },
+    { to: "/players", labelKey: "roles.players", fallback: "PLAYERS", Icon: Users, angle: 45 },
+    { to: "/clubs", labelKey: "roles.clubs", fallback: "CLUBS", Icon: Trophy, angle: 90 },
+    { to: "/scouts", labelKey: "roles.scouts", fallback: "SCOUTS", Icon: Search, angle: 135 },
+    { to: "/agents", labelKey: "roles.agents", fallback: "AGENTS", Icon: Briefcase, angle: 180 },
+    { to: "/coaches", labelKey: "roles.coaches", fallback: "COACHES", Icon: Target, angle: 225 },
+    { to: "/media", labelKey: "roles.media", fallback: "MEDIA", Icon: Newspaper, angle: 270 },
+    { to: "/business", labelKey: "roles.business", fallback: "BUSINESS", Icon: Package, angle: 315 },
+  ];
+
+  // Select menu based on current role or selection mode
   const menuItems = useMemo(() => {
+    if (isSelectingRole) {
+      return roleMenuItems;
+    }
     if (currentRole && roleMenus[currentRole]) {
       return roleMenus[currentRole];
     }
     return defaultMenu;
-  }, [currentRole]);
+  }, [currentRole, isSelectingRole]);
 
   const isActive = (path: string) => {
     return location.pathname === path || location.pathname.startsWith(path + '/');
@@ -292,7 +307,15 @@ export const RadialMenu = () => {
                   style={{ pointerEvents: 'auto' }}
                   onMouseEnter={() => setHoveredItem(index)}
                   onMouseLeave={() => setHoveredItem(null)}
-                  onClick={() => navigate(item.to)}
+                  onClick={() => {
+                    if (isSelectingRole) {
+                      // Navigate to role URL and exit selection mode
+                      window.location.href = item.to;
+                    } else {
+                      // Normal navigation
+                      navigate(item.to);
+                    }
+                  }}
                 />
               </DrawerClose>
             );
@@ -379,17 +402,19 @@ export const RadialMenu = () => {
             style={{ top: '55%' }}
           />
           
-          {/* Role/Menu dropdown button */}
+          {/* Role/Menu selection button */}
           <div
             className="text-center relative z-20"
             style={{ transform: 'translateY(-51px)' }}
           >
             <button
-              onClick={() => setShowRoleDropdown(!showRoleDropdown)}
-              className="flex items-center justify-center gap-1 text-black font-bebas text-2xl md:text-3xl tracking-[0.05em] hover:text-primary transition-colors duration-300 focus:outline-none"
+              onClick={() => setIsSelectingRole(!isSelectingRole)}
+              className={`flex items-center justify-center gap-1 font-bebas text-2xl md:text-3xl tracking-[0.05em] transition-colors duration-300 focus:outline-none ${
+                isSelectingRole ? 'text-primary' : 'text-black hover:text-primary'
+              }`}
             >
-              <span>{displayRoleName}</span>
-              <ChevronDown className={`w-5 h-5 transition-transform duration-300 ${showRoleDropdown ? 'rotate-180' : ''}`} />
+              <span>{isSelectingRole ? 'SELECT ROLE' : displayRoleName}</span>
+              <ChevronDown className={`w-5 h-5 transition-transform duration-300 ${isSelectingRole ? 'rotate-180' : ''}`} />
             </button>
           </div>
           
@@ -405,26 +430,6 @@ export const RadialMenu = () => {
             </button>
           </div>
         </div>
-
-        {/* Role dropdown menu - positioned outside overflow-hidden container */}
-        {showRoleDropdown && (
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 mt-24 bg-background border border-primary/30 rounded-lg shadow-lg min-w-[140px] z-[100]">
-            {allRoles.map((role) => (
-              <a
-                key={role.key || 'main'}
-                href={role.key ? getRoleUrl(role.key as any) : '/'}
-                className={`block px-4 py-2 text-sm font-bebas uppercase tracking-wider transition-colors ${
-                  (displayRoleKey === role.key) || (!displayRoleKey && !role.key)
-                    ? "text-primary bg-primary/10"
-                    : "text-foreground hover:bg-foreground/5 hover:text-primary"
-                }`}
-                onClick={() => setShowRoleDropdown(false)}
-              >
-                {role.name}
-              </a>
-            ))}
-          </div>
-        )}
 
       </div>
 
