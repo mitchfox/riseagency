@@ -206,8 +206,8 @@ export const RadialMenu = () => {
   };
 
   // Responsive sizing - scale down for mobile
-  const radius = isMobile ? 100 : 180; // Distance from center
-  const circleSize = isMobile ? 340 : 600; // Main circle diameter
+  const radius = isMobile ? 110 : 180; // Distance from center
+  const circleSize = isMobile ? 370 : 600; // Main circle diameter
 
   const segmentAngle = 360 / menuItems.length;
 
@@ -371,7 +371,7 @@ export const RadialMenu = () => {
 
         {/* Center circle with logo */}
         <div 
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 md:w-40 md:h-40 rounded-full flex flex-col items-center justify-center z-20 border-4 border-black overflow-hidden"
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[98px] h-[98px] md:w-40 md:h-40 rounded-full flex flex-col items-center justify-center z-20 border-4 border-black overflow-hidden"
         >
           {/* Upper 75% with white marble */}
           <div 
@@ -400,7 +400,7 @@ export const RadialMenu = () => {
           <img
             src={riseLogoBlack}
             alt="RISE"
-            className="w-28 h-28 md:w-36 md:h-36 mb-1 relative z-20"
+            className="w-[88px] h-[88px] md:w-36 md:h-36 mb-1 relative z-20"
             style={{ transform: 'translateY(-13px)' }}
           />
           
@@ -417,7 +417,7 @@ export const RadialMenu = () => {
           >
             <button
               onClick={() => setIsSelectingRole(!isSelectingRole)}
-              className={`flex items-center justify-center gap-1 font-bebas text-2xl md:text-3xl tracking-[0.05em] transition-colors duration-300 focus:outline-none ${
+              className={`flex items-center justify-center gap-1 font-bebas text-lg md:text-3xl tracking-[0.05em] transition-colors duration-300 focus:outline-none ${
                 isSelectingRole ? 'text-primary' : 'text-black hover:text-primary'
               }`}
             >
