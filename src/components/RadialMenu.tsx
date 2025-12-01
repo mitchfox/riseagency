@@ -120,7 +120,8 @@ export const RadialMenu = () => {
     };
   };
 
-  const radius = 320; // Distance from center
+  const radius = 200; // Distance from center
+  const circleSize = 500; // Main circle diameter
 
   const segmentAngle = 360 / menuItems.length;
 
@@ -168,20 +169,26 @@ export const RadialMenu = () => {
 
       {/* Main radial menu container */}
       <div className="relative">
-        {/* Large semi-transparent black circle */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] md:w-[800px] md:h-[800px] rounded-full bg-black/60 backdrop-blur-sm border border-primary/20" />
+        {/* Semi-transparent grey circle */}
+        <div 
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full backdrop-blur-sm border border-primary/20" 
+          style={{
+            width: `${circleSize}px`,
+            height: `${circleSize}px`,
+            backgroundColor: 'rgba(128, 128, 128, 0.2)',
+          }}
+        />
 
         {/* Segment dividers */}
         {menuItems.map((item, index) => {
           const angle = item.angle;
-          const rad = (angle * Math.PI) / 180;
           
           return (
             <div
               key={`divider-${index}`}
               className="absolute top-1/2 left-1/2 origin-left h-[1px] bg-primary/30 pointer-events-none"
               style={{
-                width: '400px',
+                width: `${circleSize / 2}px`,
                 transform: `rotate(${angle}deg)`,
               }}
             />
@@ -202,12 +209,12 @@ export const RadialMenu = () => {
                 onMouseEnter={() => setHoveredItem(item.to)}
                 onMouseLeave={() => setHoveredItem(null)}
                 style={{
-                  width: '800px',
-                  height: '800px',
+                  width: `${circleSize}px`,
+                  height: `${circleSize}px`,
                 }}
               >
                 <svg 
-                  viewBox="0 0 800 800" 
+                  viewBox={`0 0 ${circleSize} ${circleSize}`}
                   className="w-full h-full transition-opacity duration-300"
                   style={{ 
                     opacity: (active || hovered) ? 1 : 0,
@@ -224,13 +231,13 @@ export const RadialMenu = () => {
                   </defs>
                   <path
                     d={`
-                      M 400 400
-                      L ${400 + 350 * Math.cos((startAngle * Math.PI) / 180)} ${400 + 350 * Math.sin((startAngle * Math.PI) / 180)}
-                      A 350 350 0 0 1 ${400 + 350 * Math.cos(((startAngle + segmentAngle) * Math.PI) / 180)} ${400 + 350 * Math.sin(((startAngle + segmentAngle) * Math.PI) / 180)}
+                      M ${circleSize / 2} ${circleSize / 2}
+                      L ${circleSize / 2 + (circleSize / 2.2) * Math.cos((startAngle * Math.PI) / 180)} ${circleSize / 2 + (circleSize / 2.2) * Math.sin((startAngle * Math.PI) / 180)}
+                      A ${circleSize / 2.2} ${circleSize / 2.2} 0 0 1 ${circleSize / 2 + (circleSize / 2.2) * Math.cos(((startAngle + segmentAngle) * Math.PI) / 180)} ${circleSize / 2 + (circleSize / 2.2) * Math.sin(((startAngle + segmentAngle) * Math.PI) / 180)}
                       Z
                     `}
-                    fill="rgba(255, 255, 255, 0.15)"
-                    stroke="rgba(255, 255, 255, 0.3)"
+                    fill="rgba(255, 255, 255, 1)"
+                    stroke="rgba(255, 255, 255, 0.5)"
                     strokeWidth="2"
                     filter={`url(#glow-${index})`}
                   />
@@ -259,19 +266,19 @@ export const RadialMenu = () => {
               <div className="flex flex-col items-center justify-center">
                 {/* Icon */}
                 <div className={`
-                  w-16 h-16 md:w-20 md:h-20 rounded-full flex items-center justify-center mb-2 transition-all duration-300
+                  w-14 h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center mb-2 transition-all duration-300
                   ${active || hovered ? 'scale-110' : 'scale-100'}
                 `}>
                   <item.Icon className={`
-                    w-8 h-8 md:w-10 md:h-10 transition-colors duration-300
-                    ${active || hovered ? 'text-white' : 'text-white/70'}
+                    w-7 h-7 md:w-8 md:h-8 transition-colors duration-300
+                    ${active || hovered ? 'text-black' : 'text-white/70'}
                   `} />
                 </div>
                 
                 {/* Label */}
                 <span className={`
-                  font-bebas text-sm md:text-base tracking-[0.2em] whitespace-nowrap transition-all duration-300 text-center
-                  ${active || hovered ? 'text-white' : 'text-white/60'}
+                  font-bebas text-xs md:text-sm tracking-[0.2em] whitespace-nowrap transition-all duration-300 text-center
+                  ${active || hovered ? 'text-black' : 'text-white/60'}
                 `}>
                   {t(item.labelKey, item.fallback)}
                 </span>
@@ -281,10 +288,10 @@ export const RadialMenu = () => {
         })}
 
         {/* Center circle with logo */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-36 h-36 md:w-44 md:h-44 rounded-full bg-white flex flex-col items-center justify-center shadow-[0_0_60px_rgba(212,175,55,0.3)] z-20">
-          <img src={riseLogoWhite} alt="RISE" className="w-16 h-16 md:w-20 md:h-20 mb-2 brightness-0" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 md:w-36 md:h-36 rounded-full bg-white flex flex-col items-center justify-center shadow-[0_0_60px_rgba(212,175,55,0.3)] z-20 border-4 border-black">
+          <img src={riseLogoWhite} alt="RISE" className="w-14 h-14 md:w-16 md:h-16 mb-2 brightness-0" />
           <div className="text-center">
-            <p className="text-black font-bebas text-lg md:text-xl tracking-[0.25em]">
+            <p className="text-black font-bebas text-base md:text-lg tracking-[0.25em]">
               {isRoleSubdomain && currentRole 
                 ? roleConfigs[currentRole].name.toUpperCase()
                 : "MENU"
