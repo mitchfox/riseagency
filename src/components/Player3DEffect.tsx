@@ -21,6 +21,8 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
     animationId: number
   } | null>(null)
   const mouseRef = useRef({ x: -1000, y: -1000 })
+  const lastInteractionRef = useRef(0)
+  const autoRevealPosRef = useRef({ x: 0.5, y: 0.5 })
 
   // Load images from zip
   const loadImages = useCallback(async () => {
@@ -67,16 +69,18 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
     const container = containerRef.current
     let animationId: number
 
-    // Vertex shader with depth displacement
+    // Vertex shader with depth displacement for 3D pop
     const vertexShader = `
       uniform float time;
       uniform vec2 mousePos;
       uniform float depthScale;
+      uniform sampler2D baseTexture;
       
       varying vec2 vUv;
       varying vec3 vNormal;
       varying vec3 vViewPosition;
       varying float vDepth;
+      varying float vLuminance;
       
       // Simplex noise for organic depth
       vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
@@ -133,32 +137,45 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
       void main() {
         vUv = uv;
         
-        // Create depth based on UV position (center has more depth)
+        // Sample base texture to create depth from luminance (brighter = closer)
+        vec4 texColor = texture2D(baseTexture, uv);
+        float luminance = dot(texColor.rgb, vec3(0.299, 0.587, 0.114));
+        vLuminance = luminance;
+        
+        // Create depth based on luminance and UV position
         float centerDist = length(uv - vec2(0.5));
-        float baseDepth = 1.0 - centerDist * 1.5;
+        float baseDepth = luminance * 0.8 + (1.0 - centerDist * 1.2) * 0.2;
         baseDepth = clamp(baseDepth, 0.0, 1.0);
         
         // Add organic noise for body contours
-        float noise = snoise(vec3(uv * 3.0, time * 0.1)) * 0.3;
+        float noise = snoise(vec3(uv * 4.0, time * 0.15)) * 0.15;
         
         // Subtle breathing animation
-        float breathe = sin(time * 0.8) * 0.02;
+        float breathe = sin(time * 0.8) * 0.015;
         
         // Calculate final depth
-        vDepth = baseDepth + noise;
+        vDepth = baseDepth + noise * 0.5;
         float displacement = vDepth * depthScale + breathe;
         
         // Displace along Z axis for 3D pop
         vec3 newPosition = position;
         newPosition.z += displacement;
         
-        // Mouse influence - subtle bulge toward cursor
+        // Mouse/auto-reveal influence - subtle bulge toward cursor
         vec2 mouseInfluence = mousePos - uv;
         float mouseDist = length(mouseInfluence);
-        float mouseEffect = smoothstep(0.5, 0.0, mouseDist) * 0.05;
+        float mouseEffect = smoothstep(0.4, 0.0, mouseDist) * 0.03;
         newPosition.z += mouseEffect;
         
-        vNormal = normalize(normalMatrix * normal);
+        // Calculate normals for lighting
+        float eps = 0.01;
+        float dzdx = (snoise(vec3((uv + vec2(eps, 0.0)) * 4.0, time * 0.15)) - 
+                      snoise(vec3((uv - vec2(eps, 0.0)) * 4.0, time * 0.15))) / (2.0 * eps);
+        float dzdy = (snoise(vec3((uv + vec2(0.0, eps)) * 4.0, time * 0.15)) - 
+                      snoise(vec3((uv - vec2(0.0, eps)) * 4.0, time * 0.15))) / (2.0 * eps);
+        vec3 perturbedNormal = normalize(vec3(-dzdx * depthScale, -dzdy * depthScale, 1.0));
+        
+        vNormal = normalize(normalMatrix * perturbedNormal);
         vec4 mvPosition = modelViewMatrix * vec4(newPosition, 1.0);
         vViewPosition = -mvPosition.xyz;
         
@@ -175,14 +192,17 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
       uniform vec2 resolution;
       uniform float xrayRadius;
       uniform float roughness;
+      uniform float isAutoReveal;
       
       varying vec2 vUv;
       varying vec3 vNormal;
       varying vec3 vViewPosition;
       varying float vDepth;
+      varying float vLuminance;
       
       // Gold color
       const vec3 goldColor = vec3(0.792, 0.694, 0.443);
+      const vec3 lightDir = normalize(vec3(0.5, 0.8, 1.0));
       
       void main() {
         vec4 baseColor = texture2D(baseTexture, vUv);
@@ -199,37 +219,60 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         float distToMouse = length(vUv - mouseUV);
         
         // X-ray reveal - smooth edge, no border
-        float xrayMask = 1.0 - smoothstep(xrayRadius - 0.02, xrayRadius + 0.02, distToMouse);
+        float xrayMask = 1.0 - smoothstep(xrayRadius - 0.03, xrayRadius + 0.01, distToMouse);
         
         // Mix base and x-ray based on mouse proximity
         vec4 color = mix(baseColor, xrayColor, xrayMask);
         
-        // Lighting calculation for roughness effect
+        // === LIGHTING & ROUGHNESS for base image ===
         vec3 normal = normalize(vNormal);
         vec3 viewDir = normalize(vViewPosition);
         
-        // Simple rim lighting
+        // Diffuse lighting
+        float NdotL = max(dot(normal, lightDir), 0.0);
+        float diffuse = NdotL * 0.3 + 0.7; // Ambient + diffuse
+        
+        // Specular (affected by roughness - lower roughness = sharper highlights)
+        vec3 halfDir = normalize(lightDir + viewDir);
+        float NdotH = max(dot(normal, halfDir), 0.0);
+        float specPower = mix(64.0, 4.0, roughness); // Roughness controls sharpness
+        float specular = pow(NdotH, specPower) * (1.0 - roughness) * 0.4;
+        
+        // Rim lighting (edge glow)
         float rim = 1.0 - max(dot(viewDir, normal), 0.0);
-        rim = pow(rim, 2.0);
+        rim = pow(rim, 3.0) * 0.25;
         
-        // Roughness affects how light spreads
-        float lightIntensity = mix(0.8, 1.0, roughness);
-        vec3 lightColor = goldColor * 0.3;
+        // Fresnel effect for roughness visualization
+        float fresnel = pow(1.0 - max(dot(viewDir, normal), 0.0), 3.0);
+        float fresnelRoughness = fresnel * (1.0 - roughness) * 0.15;
         
-        // Apply subtle lighting only to edges
-        color.rgb += lightColor * rim * (1.0 - roughness) * 0.15;
+        // Apply lighting to base image (not x-ray)
+        vec3 litColor = color.rgb * diffuse;
+        litColor += goldColor * specular * (1.0 - xrayMask);
+        litColor += goldColor * rim * (1.0 - xrayMask);
+        litColor += goldColor * fresnelRoughness * (1.0 - xrayMask);
         
-        // Depth-based shading for 3D effect
-        float depthShade = vDepth * 0.1 + 0.9;
-        color.rgb *= depthShade;
+        // Depth-based ambient occlusion
+        float ao = vDepth * 0.15 + 0.85;
+        litColor *= ao;
         
         // Gold shimmer in x-ray area
         if (xrayMask > 0.0) {
           float shimmer = sin(time * 3.0 + vUv.x * 20.0 + vUv.y * 20.0) * 0.05 + 0.95;
-          color.rgb *= shimmer;
+          litColor *= shimmer;
+          
+          // Subtle gold tint in x-ray
+          litColor = mix(litColor, litColor * vec3(1.05, 1.0, 0.9), xrayMask * 0.3);
         }
         
-        gl_FragColor = vec4(color.rgb, alpha);
+        // Auto-reveal pulsing glow
+        if (isAutoReveal > 0.5) {
+          float pulse = sin(time * 2.0) * 0.1 + 0.9;
+          float autoGlow = xrayMask * pulse * 0.1;
+          litColor += goldColor * autoGlow;
+        }
+        
+        gl_FragColor = vec4(litColor, alpha);
       }
     `
 
@@ -248,6 +291,7 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
       uniform vec2 resolution;
       uniform float xrayRadius;
       uniform vec2 playerCenter;
+      uniform float isAutoReveal;
       
       varying vec2 vUv;
       
@@ -259,9 +303,9 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         float distToMouse = length(vUv - mouseUV);
         
         // Only render inside x-ray area
-        if (distToMouse > xrayRadius + 0.05) discard;
+        if (distToMouse > xrayRadius + 0.08) discard;
         
-        float xrayMask = 1.0 - smoothstep(xrayRadius - 0.02, xrayRadius, distToMouse);
+        float xrayMask = 1.0 - smoothstep(xrayRadius - 0.03, xrayRadius, distToMouse);
         
         vec3 color = vec3(0.0);
         float alpha = 0.0;
@@ -284,7 +328,7 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
           vec2 lineDir = vec2(cos(angle), sin(angle));
           
           // Line distance calculation
-          float lineLength = 0.3 + sin(time * 2.5 + float(i) * 1.2) * 0.1;
+          float lineLength = 0.25 + sin(time * 2.5 + float(i) * 1.2) * 0.08;
           vec2 lineEnd = playerCenter + lineDir * lineLength;
           
           // Point to line distance
@@ -294,7 +338,7 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
           float lineDist = length(pa - ba * h);
           
           // Line glow
-          float lineGlow = smoothstep(0.008, 0.0, lineDist);
+          float lineGlow = smoothstep(0.006, 0.0, lineDist);
           color += goldColor * lineGlow * 0.8 * xrayMask;
           alpha = max(alpha, lineGlow * 0.9 * xrayMask);
           
@@ -303,7 +347,7 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
             float particleProgress = fract(time * 0.5 + float(p) * 0.12 + float(i) * 0.2);
             vec2 particlePos = playerCenter + lineDir * lineLength * particleProgress;
             float particleDist = length(vUv - particlePos);
-            float particleGlow = smoothstep(0.015, 0.0, particleDist);
+            float particleGlow = smoothstep(0.012, 0.0, particleDist);
             float particleAlpha = sin(particleProgress * PI) * 0.9;
             color += goldColor * particleGlow * particleAlpha * xrayMask;
             alpha = max(alpha, particleGlow * particleAlpha * xrayMask);
@@ -311,7 +355,7 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
           
           // End nodes
           float endDist = length(vUv - lineEnd);
-          float endGlow = smoothstep(0.02, 0.005, endDist);
+          float endGlow = smoothstep(0.018, 0.004, endDist);
           color += goldColor * endGlow * xrayMask;
           alpha = max(alpha, endGlow * xrayMask);
         }
@@ -319,47 +363,48 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         // Center core
         float coreDist = length(vUv - playerCenter);
         float corePulse = sin(time * 3.0) * 0.3 + 0.7;
-        float coreGlow = smoothstep(0.025, 0.01, coreDist) * corePulse;
+        float coreGlow = smoothstep(0.022, 0.008, coreDist) * corePulse;
         color += goldColor * coreGlow * xrayMask;
         alpha = max(alpha, coreGlow * xrayMask);
         
         // Cursor indicator
         float cursorDist = length(vUv - mouseUV);
         float cursorPulse = sin(time * 5.0) * 0.2 + 0.8;
-        float cursorGlow = smoothstep(0.02, 0.008, cursorDist) * cursorPulse;
+        float cursorGlow = smoothstep(0.018, 0.006, cursorDist) * cursorPulse;
         color += goldColor * cursorGlow;
         alpha = max(alpha, cursorGlow * 0.9);
         
         // Inner ring around cursor
-        float ringDist = abs(cursorDist - 0.025);
-        float ringGlow = smoothstep(0.005, 0.0, ringDist) * cursorPulse * 0.6;
+        float ringDist = abs(cursorDist - 0.022);
+        float ringGlow = smoothstep(0.004, 0.0, ringDist) * cursorPulse * 0.6;
         color += goldColor * ringGlow;
         alpha = max(alpha, ringGlow);
         
-        // Falling particles from edge
-        for (int i = 0; i < 15; i++) {
-          float particleAngle = float(i) / 15.0 * 2.0 * PI + time * 0.3;
+        // Falling particles from edge (reduced for auto-reveal)
+        float particleIntensity = isAutoReveal > 0.5 ? 0.5 : 1.0;
+        for (int i = 0; i < 12; i++) {
+          float particleAngle = float(i) / 12.0 * 2.0 * PI + time * 0.3;
           float fallProgress = fract(time * 0.8 + float(i) * 0.15);
           
           vec2 startPos = mouseUV + vec2(cos(particleAngle), sin(particleAngle)) * xrayRadius;
-          vec2 fallPos = startPos + vec2(sin(time * 2.0 + float(i)) * 0.02, fallProgress * 0.15);
+          vec2 fallPos = startPos + vec2(sin(time * 2.0 + float(i)) * 0.02, fallProgress * 0.12);
           
           float fallDist = length(vUv - fallPos);
-          float fallAlpha = (1.0 - fallProgress) * 0.7;
-          float fallGlow = smoothstep(0.01, 0.0, fallDist) * fallAlpha;
+          float fallAlpha = (1.0 - fallProgress) * 0.6 * particleIntensity;
+          float fallGlow = smoothstep(0.008, 0.0, fallDist) * fallAlpha;
           color += goldColor * fallGlow;
           alpha = max(alpha, fallGlow);
         }
         
         // Rotating sparks around circle edge (no visible border line)
-        for (int i = 0; i < 10; i++) {
-          float sparkAngle = float(i) / 10.0 * 2.0 * PI + time * 2.0;
-          float sparkRadius = xrayRadius + 0.015 + sin(time * 5.0 + float(i)) * 0.008;
+        for (int i = 0; i < 8; i++) {
+          float sparkAngle = float(i) / 8.0 * 2.0 * PI + time * 2.0;
+          float sparkRadius = xrayRadius + 0.012 + sin(time * 5.0 + float(i)) * 0.006;
           vec2 sparkPos = mouseUV + vec2(cos(sparkAngle), sin(sparkAngle)) * sparkRadius;
           
           float sparkDist = length(vUv - sparkPos);
-          float sparkAlpha = 0.6 + sin(time * 8.0 + float(i) * 2.0) * 0.4;
-          float sparkGlow = smoothstep(0.008, 0.0, sparkDist) * sparkAlpha;
+          float sparkAlpha = 0.5 + sin(time * 8.0 + float(i) * 2.0) * 0.4;
+          float sparkGlow = smoothstep(0.006, 0.0, sparkDist) * sparkAlpha;
           color += goldColor * sparkGlow;
           alpha = max(alpha, sparkGlow);
         }
@@ -428,16 +473,17 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         baseTexture: { value: baseTexture },
         xrayTexture: { value: xrayTexture },
         time: { value: 0 },
-        mousePos: { value: new THREE.Vector2(-1, -1) },
+        mousePos: { value: new THREE.Vector2(0.5, 0.6) },
         resolution: { value: new THREE.Vector2(container.clientWidth, container.clientHeight) },
-        xrayRadius: { value: 0.15 },
-        depthScale: { value: 0.08 },
-        roughness: { value: 0.6 },
-        playerCenter: { value: new THREE.Vector2(0.5, 0.5) }
+        xrayRadius: { value: 0.12 },
+        depthScale: { value: 0.12 },
+        roughness: { value: 0.5 },
+        playerCenter: { value: new THREE.Vector2(0.5, 0.55) },
+        isAutoReveal: { value: 1.0 }
       }
 
       // Player mesh with depth shader
-      const geometry = new THREE.PlaneGeometry(planeWidth, planeHeight, 64, 64)
+      const geometry = new THREE.PlaneGeometry(planeWidth, planeHeight, 128, 128)
       const material = new THREE.ShaderMaterial({
         uniforms,
         vertexShader,
@@ -479,17 +525,60 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
 
       setIsLoading(false)
 
+      // Auto-reveal path parameters
+      const autoRevealSpeed = 0.15
+      let autoTime = Math.random() * 100
+
       // Animation loop
       const animate = () => {
         animationId = requestAnimationFrame(animate)
         
+        const currentTime = Date.now()
         uniforms.time.value += 0.016
+        autoTime += 0.016
         
-        // Update mouse position in UV space
-        const rect = container.getBoundingClientRect()
-        const mouseX = (mouseRef.current.x - rect.left) / rect.width
-        const mouseY = 1 - (mouseRef.current.y - rect.top) / rect.height
-        uniforms.mousePos.value.set(mouseX, mouseY)
+        // Check if user is interacting (within last 2 seconds)
+        const timeSinceInteraction = currentTime - lastInteractionRef.current
+        const isUserInteracting = timeSinceInteraction < 2000
+        
+        if (isUserInteracting) {
+          // User is controlling - use mouse position
+          uniforms.isAutoReveal.value = 0.0
+          const rect = container.getBoundingClientRect()
+          const mouseX = (mouseRef.current.x - rect.left) / rect.width
+          const mouseY = 1 - (mouseRef.current.y - rect.top) / rect.height
+          uniforms.mousePos.value.set(mouseX, mouseY)
+        } else {
+          // Auto-reveal mode - organic blob movement across player
+          uniforms.isAutoReveal.value = 1.0
+          
+          // Lissajous curve for smooth, organic movement
+          const a = 3, b = 2
+          const delta = Math.PI / 4
+          
+          // Base position centered on player (0.35 to 0.65 horizontal, 0.35 to 0.75 vertical)
+          const baseX = 0.5
+          const baseY = 0.55
+          const rangeX = 0.15
+          const rangeY = 0.2
+          
+          // Primary movement
+          const x1 = Math.sin(autoTime * autoRevealSpeed * a + delta) * rangeX
+          const y1 = Math.sin(autoTime * autoRevealSpeed * b) * rangeY
+          
+          // Secondary wobble for organic feel
+          const wobbleX = Math.sin(autoTime * 0.7) * 0.03
+          const wobbleY = Math.cos(autoTime * 0.5) * 0.04
+          
+          const autoX = baseX + x1 + wobbleX
+          const autoY = baseY + y1 + wobbleY
+          
+          // Smooth transition
+          autoRevealPosRef.current.x += (autoX - autoRevealPosRef.current.x) * 0.05
+          autoRevealPosRef.current.y += (autoY - autoRevealPosRef.current.y) * 0.05
+          
+          uniforms.mousePos.value.set(autoRevealPosRef.current.x, autoRevealPosRef.current.y)
+        }
         
         renderer.render(scene, camera)
         
@@ -506,17 +595,20 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
     // Mouse/touch handlers
     const handleMouseMove = (e: MouseEvent) => {
       mouseRef.current = { x: e.clientX, y: e.clientY }
+      lastInteractionRef.current = Date.now()
     }
 
     const handleTouchMove = (e: TouchEvent) => {
       if (e.touches.length > 0) {
         mouseRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }
+        lastInteractionRef.current = Date.now()
       }
     }
 
     const handleTouchStart = (e: TouchEvent) => {
       if (e.touches.length > 0) {
         mouseRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }
+        lastInteractionRef.current = Date.now()
       }
     }
 
