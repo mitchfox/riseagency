@@ -195,17 +195,17 @@ export const RadialMenu = () => {
           );
         })}
 
-        {/* Segment hover slices */}
+        {/* Segment hover slices and content */}
         {menuItems.map((item, index) => {
-          const active = isActive(item.to);
           const hovered = hoveredItem === item.to;
           const startAngle = item.angle - segmentAngle / 2;
+          const pos = getCirclePosition(item.angle, radius);
           
           return (
             <DrawerClose key={`slice-${item.to}`} asChild>
               <Link
                 to={item.to}
-                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-auto"
+                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-auto cursor-pointer group"
                 onMouseEnter={() => setHoveredItem(item.to)}
                 onMouseLeave={() => setHoveredItem(null)}
                 style={{
@@ -213,11 +213,12 @@ export const RadialMenu = () => {
                   height: `${circleSize}px`,
                 }}
               >
+                {/* White segment on hover */}
                 <svg 
                   viewBox={`0 0 ${circleSize} ${circleSize}`}
-                  className="w-full h-full transition-opacity duration-300"
+                  className="w-full h-full transition-opacity duration-300 absolute inset-0"
                   style={{ 
-                    opacity: (active || hovered) ? 1 : 0,
+                    opacity: hovered ? 1 : 0,
                   }}
                 >
                   <defs>
@@ -242,48 +243,36 @@ export const RadialMenu = () => {
                     filter={`url(#glow-${index})`}
                   />
                 </svg>
+                
+                {/* Icon and label positioned on segment */}
+                <div
+                  className="absolute pointer-events-none"
+                  style={{
+                    left: `calc(50% + ${pos.x}px)`,
+                    top: `calc(50% + ${pos.y}px)`,
+                    transform: 'translate(-50%, -50%)',
+                  }}
+                >
+                  <div className="flex flex-col items-center justify-center">
+                    <div className={`
+                      w-14 h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center mb-2 transition-all duration-300
+                    `}>
+                      <item.Icon className={`
+                        w-7 h-7 md:w-8 md:h-8 transition-colors duration-300
+                        ${hovered ? 'text-black' : 'text-white/70'}
+                      `} />
+                    </div>
+                    
+                    <span className={`
+                      font-bebas text-xs md:text-sm tracking-[0.2em] whitespace-nowrap transition-all duration-300 text-center
+                      ${hovered ? 'text-black' : 'text-white/60'}
+                    `}>
+                      {t(item.labelKey, item.fallback)}
+                    </span>
+                  </div>
+                </div>
               </Link>
             </DrawerClose>
-          );
-        })}
-
-        {/* Radial menu items */}
-        {menuItems.map((item) => {
-          const pos = getCirclePosition(item.angle, radius);
-          const active = isActive(item.to);
-          const hovered = hoveredItem === item.to;
-          
-          return (
-            <div
-              key={`item-${item.to}`}
-              className="absolute pointer-events-none"
-              style={{
-                left: `calc(50% + ${pos.x}px)`,
-                top: `calc(50% + ${pos.y}px)`,
-                transform: 'translate(-50%, -50%)',
-              }}
-            >
-              <div className="flex flex-col items-center justify-center">
-                {/* Icon */}
-                <div className={`
-                  w-14 h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center mb-2 transition-all duration-300
-                  ${active || hovered ? 'scale-110' : 'scale-100'}
-                `}>
-                  <item.Icon className={`
-                    w-7 h-7 md:w-8 md:h-8 transition-colors duration-300
-                    ${active || hovered ? 'text-black' : 'text-white/70'}
-                  `} />
-                </div>
-                
-                {/* Label */}
-                <span className={`
-                  font-bebas text-xs md:text-sm tracking-[0.2em] whitespace-nowrap transition-all duration-300 text-center
-                  ${active || hovered ? 'text-black' : 'text-white/60'}
-                `}>
-                  {t(item.labelKey, item.fallback)}
-                </span>
-              </div>
-            </div>
           );
         })}
 
