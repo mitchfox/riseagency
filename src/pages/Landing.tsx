@@ -6,6 +6,7 @@ import { Player3DEffect } from "@/components/Player3DEffect";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { HomeBackground } from "@/components/HomeBackground";
 import { XRayProvider } from "@/contexts/XRayContext";
+import { DragNavigator } from "@/components/DragNavigator";
 import riseLogoWhite from "@/assets/logo.png";
 
 export default function Landing() {
@@ -55,6 +56,11 @@ export default function Landing() {
           <Player3DEffect className="pointer-events-auto" />
         </div>
       )}
+
+      {/* Drag Navigator - Center of screen */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full z-40 pointer-events-auto">
+        <DragNavigator options={desktopNavLinks} />
+      </div>
 
       {/* Bottom Section - Navigation + Language Selector in Golden Box */}
       <div className="pb-4 md:pb-12 z-50 relative px-2 md:px-0 w-full md:w-auto pointer-events-auto">
