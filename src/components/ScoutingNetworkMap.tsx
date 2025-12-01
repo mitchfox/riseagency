@@ -46,9 +46,10 @@ import belarusFlag from "@/assets/flags/belarus.png";
 interface ScoutingNetworkMapProps {
   initialCountry?: string;
   hideStats?: boolean;
+  onClubPositionChange?: (clubName: string, x: number, y: number) => void;
 }
 
-const ScoutingNetworkMap = ({ initialCountry, hideStats = false }: ScoutingNetworkMapProps = {}) => {
+const ScoutingNetworkMap = ({ initialCountry, hideStats = false, onClubPositionChange }: ScoutingNetworkMapProps = {}) => {
   const { t } = useLanguage();
   const [viewBox, setViewBox] = useState("0 0 1000 600");
   const [zoomLevel, setZoomLevel] = useState(0); // 0 = out, 1 = medium, 2 = fully zoomed
@@ -202,6 +203,11 @@ const ScoutingNetworkMap = ({ initialCountry, hideStats = false }: ScoutingNetwo
       ...prev,
       [draggingClub]: { x, y }
     }));
+    
+    // Notify parent component of position change
+    if (onClubPositionChange) {
+      onClubPositionChange(draggingClub, x, y);
+    }
   };
   
   const handleMapMouseUp = async () => {
