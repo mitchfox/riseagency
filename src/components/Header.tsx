@@ -200,13 +200,19 @@ export const Header = () => {
               </button>
             </div>
             
-            {/* Mobile: Simplified centered items */}
-            <div className="flex md:hidden items-center gap-3">
+            {/* Mobile: All four items centered */}
+            <div className="flex md:hidden items-center gap-2">
               <LocalizedLink to="/contact" className="text-[10px] font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500">
                 <HoverText text={t("header.contact_us", "Contact")} />
               </LocalizedLink>
               <div className="w-px h-3 bg-white/20" />
-              <LanguageSelector />
+              <button onClick={() => setDeclareInterestOpen(true)} className="text-[10px] font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500">
+                <HoverText text={t("header.declare_interest_mobile", "Interest")} />
+              </button>
+              <div className="w-px h-3 bg-white/20" />
+              <button onClick={() => setRepresentationOpen(true)} className="text-[10px] font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500">
+                <HoverText text={t("header.represent_mobile", "Represent")} />
+              </button>
               <div className="w-px h-3 bg-white/20" />
               <LocalizedLink to="/login" className="text-[10px] font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500">
                 <HoverText text={t("header.portal", "Portal")} />
@@ -972,9 +978,8 @@ export const Header = () => {
             </>}
 
           {/* RISE WITH US Button - Right */}
-          <Button onClick={() => setWorkWithUsOpen(true)} size="sm" className={`btn-shine font-bebas uppercase tracking-wider transition-all duration-500 ease-out ${isScrolled ? 'text-xs md:text-sm px-3 md:px-5 h-8 md:h-9' : 'text-sm md:text-base px-4 md:px-6 h-9 md:h-10'}`}>
-            <span className="hidden sm:inline"><HoverText text={t("header.rise_with_us", "RISE WITH US")} /></span>
-            <span className="sm:hidden"><HoverText text={t("header.rise", "RISE")} /></span>
+          <Button onClick={() => setWorkWithUsOpen(true)} size="sm" className={`btn-shine font-bebas uppercase tracking-wider transition-all duration-500 ease-out flex items-center justify-center leading-none ${isScrolled ? 'text-xs md:text-sm px-3 md:px-5 h-8 md:h-9' : 'text-sm md:text-base px-4 md:px-6 h-9 md:h-10'}`}>
+            <HoverText text={t("header.rise_with_us", "RISE WITH US")} />
           </Button>
         </div>
       </div>
