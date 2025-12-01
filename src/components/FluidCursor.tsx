@@ -180,7 +180,7 @@ const FluidCursor = () => {
   return (
     <canvas
       ref={canvasRef}
-      className="pointer-events-none fixed inset-0 z-50 hidden md:block"
+      className="pointer-events-none fixed inset-0 z-[9999] hidden md:block"
       style={{ mixBlendMode: 'screen' }}
     />
   );
