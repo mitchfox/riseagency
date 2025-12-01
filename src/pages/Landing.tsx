@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { LanguageMapSelector } from "@/components/LanguageMapSelector";
 import { HoverText } from "@/components/HoverText";
@@ -8,6 +9,7 @@ import riseLogoWhite from "@/assets/logo.png";
 
 export default function Landing() {
   const { t } = useLanguage();
+  const [languagePopupOpen, setLanguagePopupOpen] = useState(false);
   
   // Desktop navigation (PLAYERS goes to /home, no HOME option)
   const desktopNavLinks = [
@@ -45,10 +47,12 @@ export default function Landing() {
         />
       </div>
       
-      {/* Matrix Player Effect - Over Video */}
-      <div className="absolute inset-0 pointer-events-none">
-        <MatrixPlayerEffect className="pointer-events-auto" />
-      </div>
+      {/* Matrix Player Effect - Over Video (hidden when language popup is open) */}
+      {!languagePopupOpen && (
+        <div className="absolute inset-0 pointer-events-none">
+          <MatrixPlayerEffect className="pointer-events-auto" />
+        </div>
+      )}
 
       {/* Bottom Section - Navigation + Language Selector in Golden Box */}
       <div className="pb-4 md:pb-12 z-50 relative px-2 md:px-0 w-full md:w-auto pointer-events-auto">
@@ -75,7 +79,7 @@ export default function Landing() {
             
             {/* Language Selector - Below with divider */}
             <div className="pt-1.5 border-t border-primary/40 w-full flex justify-center">
-              <LanguageMapSelector />
+              <LanguageMapSelector onOpenChange={setLanguagePopupOpen} />
             </div>
           </div>
 
@@ -99,7 +103,7 @@ export default function Landing() {
             
             {/* Language Selector - Below with divider on desktop */}
             <div className="border-t border-primary/40 mt-3 pt-3 flex justify-center">
-              <LanguageMapSelector />
+              <LanguageMapSelector onOpenChange={setLanguagePopupOpen} />
             </div>
           </div>
         </div>
