@@ -55,6 +55,7 @@ const Stars = () => {
         const playersWithParsedData = data.map((player: any) => {
           let currentClub = '';
           let clubLogo = '';
+          let currentLeague = '';
           let tacticalFormations = [];
           
           if (player.bio) {
@@ -62,10 +63,12 @@ const Stars = () => {
               const parsed = JSON.parse(player.bio);
               if (typeof parsed === 'object' && parsed !== null) {
                 currentClub = parsed.currentClub || '';
+                currentLeague = parsed.currentLeague || '';
                 
                 // Extract from schemeHistory or tacticalFormations
                 if (parsed.schemeHistory && Array.isArray(parsed.schemeHistory) && parsed.schemeHistory.length > 0) {
                   clubLogo = parsed.schemeHistory[0].clubLogo || '';
+                  if (!currentLeague) currentLeague = parsed.schemeHistory[0].league || parsed.schemeHistory[0].competition || '';
                   tacticalFormations = parsed.schemeHistory.map((scheme: any) => ({
                     formation: scheme.formation,
                     role: scheme.positions?.[0] || '',
@@ -78,6 +81,7 @@ const Stars = () => {
                   }));
                 } else if (parsed.tacticalFormations && Array.isArray(parsed.tacticalFormations) && parsed.tacticalFormations.length > 0) {
                   clubLogo = parsed.tacticalFormations[0].clubLogo || '';
+                  if (!currentLeague) currentLeague = parsed.tacticalFormations[0].league || parsed.tacticalFormations[0].competition || '';
                   tacticalFormations = parsed.tacticalFormations;
                 }
               }
@@ -90,6 +94,7 @@ const Stars = () => {
             ...player,
             currentClub,
             clubLogo,
+            currentLeague,
             tacticalFormations
           };
         });
@@ -186,12 +191,8 @@ const Stars = () => {
                       </div>
                        <div>
                          <h3 className="font-bebas uppercase tracking-wider text-xl mb-1">Declare Interest in Player(s)</h3>
-                         <p className="text-sm text-muted-foreground flex items-center gap-2">
-                           <img src="/lovable-uploads/rise-logo-gold.png" alt="RISE" className="h-4 w-4 object-contain" />
-                           <span className="flex flex-col leading-tight">
-                             <span className="font-semibold">RISE Football Agency</span>
-                             <span>Elite Representation</span>
-                           </span>
+                         <p className="text-sm text-muted-foreground">
+                           Select players and submit your interest
                          </p>
                        </div>
                     </div>
@@ -209,12 +210,8 @@ const Stars = () => {
                       </div>
                        <div>
                          <h3 className="font-bebas uppercase tracking-wider text-xl mb-1">Contact</h3>
-                         <p className="text-sm text-muted-foreground flex items-center gap-2">
-                           <img src="/lovable-uploads/rise-logo-gold.png" alt="RISE" className="h-4 w-4 object-contain" />
-                           <span className="flex flex-col leading-tight">
-                             <span className="font-semibold">RISE Football Agency</span>
-                             <span>Direct Contact Available</span>
-                           </span>
+                         <p className="text-sm text-muted-foreground">
+                           Get in touch with us directly
                          </p>
                        </div>
                     </div>
@@ -266,6 +263,7 @@ const Stars = () => {
                 selectedValues={selectedAgeRanges}
                 onToggle={toggleAgeRange}
                 onClear={() => setSelectedAgeRanges([])}
+                direction="left"
               />
 
               {/* Clear All Filters */}

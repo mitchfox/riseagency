@@ -25,6 +25,7 @@ export const PlayerCard = ({ player, viewMode = "grid" }: PlayerCardProps) => {
   // Extract club info from player data - use correct database field names
   const currentClub = player.club || player.currentClub || "";
   const clubLogo = player.club_logo || player.clubLogo || "";
+  const currentLeague = player.currentLeague || "Professional League";
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -260,13 +261,14 @@ export const PlayerCard = ({ player, viewMode = "grid" }: PlayerCardProps) => {
                 <img 
                   src={clubLogo} 
                   alt={currentClub}
-                  className="h-6 w-6 object-contain"
+                  className="h-8 w-8 object-contain flex-shrink-0"
                 />
               )}
               {currentClub && (
-                <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-                  {currentClub}
-                </span>
+                <div className="flex flex-col text-xs leading-tight">
+                  <span className="font-semibold text-foreground">{currentClub}</span>
+                  <span className="text-muted-foreground">{currentLeague}</span>
+                </div>
               )}
             </div>
           )}

@@ -56,7 +56,7 @@ export const LanguageMapSelector = ({ onOpenChange }: LanguageMapSelectorProps) 
       <button 
         type="button"
         onClick={() => handleOpenChange(true)}
-        className="flex items-center gap-1.5 text-xs md:text-sm font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-300 focus:outline-none cursor-pointer"
+        className="flex items-center gap-1.5 text-xs md:text-sm font-bebas uppercase tracking-wider text-foreground hover:text-primary transition-all duration-300 focus:outline-none cursor-pointer"
       >
         <span className="text-base">{selectedLanguage.flag}</span>
         <span>{selectedLanguage.code.toUpperCase()}</span>

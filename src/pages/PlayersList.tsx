@@ -8,7 +8,7 @@ import { LateralFilter } from "@/components/LateralFilter";
 import { Button } from "@/components/ui/button";
 import { DeclareInterestPlayerDialog } from "@/components/DeclareInterestPlayerDialog";
 import { ContactDialog } from "@/components/ContactDialog";
-import { LanguageSelector } from "@/components/LanguageSelector";
+import { LanguageMapSelector } from "@/components/LanguageMapSelector";
 import { LayoutGrid, List, Users, MessageCircle, ArrowRight } from "lucide-react";
 
 const BATCH_SIZE = 3;
@@ -60,6 +60,7 @@ const PlayersList = () => {
         const playersWithParsedData = data.map((player: any) => {
           let currentClub = '';
           let clubLogo = '';
+          let currentLeague = '';
           let tacticalFormations = [];
           
           if (player.bio) {
@@ -67,10 +68,12 @@ const PlayersList = () => {
               const parsed = JSON.parse(player.bio);
               if (typeof parsed === 'object' && parsed !== null) {
                 currentClub = parsed.currentClub || '';
+                currentLeague = parsed.currentLeague || '';
                 
                 // Extract from schemeHistory or tacticalFormations
                 if (parsed.schemeHistory && Array.isArray(parsed.schemeHistory) && parsed.schemeHistory.length > 0) {
                   clubLogo = parsed.schemeHistory[0].clubLogo || '';
+                  if (!currentLeague) currentLeague = parsed.schemeHistory[0].league || parsed.schemeHistory[0].competition || '';
                   tacticalFormations = parsed.schemeHistory.map((scheme: any) => ({
                     formation: scheme.formation,
                     role: scheme.positions?.[0] || '',
@@ -83,6 +86,7 @@ const PlayersList = () => {
                   }));
                 } else if (parsed.tacticalFormations && Array.isArray(parsed.tacticalFormations) && parsed.tacticalFormations.length > 0) {
                   clubLogo = parsed.tacticalFormations[0].clubLogo || '';
+                  if (!currentLeague) currentLeague = parsed.tacticalFormations[0].league || parsed.tacticalFormations[0].competition || '';
                   tacticalFormations = parsed.tacticalFormations;
                 }
               }
@@ -95,6 +99,7 @@ const PlayersList = () => {
             ...player,
             currentClub,
             clubLogo,
+            currentLeague,
             tacticalFormations
           };
         });
@@ -216,12 +221,8 @@ const PlayersList = () => {
                   <h3 className="text-2xl font-bebas uppercase tracking-wider text-foreground group-hover:text-primary transition-colors">
                     Declare Interest in Player(s)
                   </h3>
-                  <p className="text-sm text-muted-foreground mt-1 flex items-center gap-2">
-                    <img src="/lovable-uploads/rise-logo-gold.png" alt="RISE" className="h-4 w-4 object-contain" />
-                    <span className="flex flex-col leading-tight">
-                      <span className="font-semibold">RISE Football Agency</span>
-                      <span>Elite Representation</span>
-                    </span>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Select players and submit your interest
                   </p>
                 </div>
                 <ArrowRight className="w-6 h-6 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
@@ -239,12 +240,8 @@ const PlayersList = () => {
                   <h3 className="text-2xl font-bebas uppercase tracking-wider text-foreground group-hover:text-primary transition-colors">
                     Contact
                   </h3>
-                  <p className="text-sm text-muted-foreground mt-1 flex items-center gap-2">
-                    <img src="/lovable-uploads/rise-logo-gold.png" alt="RISE" className="h-4 w-4 object-contain" />
-                    <span className="flex flex-col leading-tight">
-                      <span className="font-semibold">RISE Football Agency</span>
-                      <span>Direct Contact Available</span>
-                    </span>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Get in touch with us directly
                   </p>
                 </div>
                 <ArrowRight className="w-6 h-6 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
@@ -280,7 +277,7 @@ const PlayersList = () => {
             {/* Language Selector */}
             <div className="flex justify-center mb-4">
               <div className="px-4 py-2 bg-card/50 backdrop-blur-sm border border-primary/20 rounded-lg">
-                <LanguageSelector />
+                <LanguageMapSelector />
               </div>
             </div>
 
@@ -300,6 +297,7 @@ const PlayersList = () => {
                 selectedValues={selectedAgeRanges}
                 onToggle={toggleAgeRange}
                 onClear={() => setSelectedAgeRanges([])}
+                direction="left"
               />
 
               {/* Clear All Filters */}

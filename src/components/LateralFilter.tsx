@@ -13,6 +13,7 @@ interface LateralFilterProps {
   selectedValues: string[];
   onToggle: (value: string) => void;
   onClear?: () => void;
+  direction?: "right" | "left";
 }
 
 export const LateralFilter = ({
@@ -21,11 +22,12 @@ export const LateralFilter = ({
   selectedValues,
   onToggle,
   onClear,
+  direction = "right",
 }: LateralFilterProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
   return (
-    <div className="inline-flex items-center gap-1">
+    <div className={cn("inline-flex items-center gap-1", direction === "left" && "flex-row-reverse")}>
       {/* Filter trigger button */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
@@ -48,7 +50,8 @@ export const LateralFilter = ({
         <ChevronRight
           className={cn(
             "h-4 w-4 transition-transform duration-300",
-            isExpanded && "rotate-180"
+            isExpanded && "rotate-180",
+            direction === "left" && "rotate-180"
           )}
         />
       </button>
@@ -57,7 +60,8 @@ export const LateralFilter = ({
       <div
         className={cn(
           "flex items-center gap-1 overflow-hidden transition-all duration-300",
-          isExpanded ? "max-w-[2000px] opacity-100 ml-1" : "max-w-0 opacity-0"
+          isExpanded ? "max-w-[2000px] opacity-100" : "max-w-0 opacity-0",
+          direction === "right" ? "ml-1" : "mr-1 flex-row-reverse"
         )}
       >
         {options.map((option) => {
