@@ -2664,7 +2664,19 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                         )}
                       </div>
                       {(clubLogoPreview || formData.club_logo) && (
-                        <div className="relative w-24 h-24 border rounded-md overflow-hidden bg-white p-2">
+                        <div 
+                          className="relative w-24 h-24 border rounded-md overflow-hidden p-2"
+                          style={{
+                            backgroundImage: `
+                              linear-gradient(45deg, hsl(var(--muted)) 25%, transparent 25%),
+                              linear-gradient(-45deg, hsl(var(--muted)) 25%, transparent 25%),
+                              linear-gradient(45deg, transparent 75%, hsl(var(--muted)) 75%),
+                              linear-gradient(-45deg, transparent 75%, hsl(var(--muted)) 75%)
+                            `,
+                            backgroundSize: '12px 12px',
+                            backgroundPosition: '0 0, 0 6px, 6px -6px, -6px 0px'
+                          }}
+                        >
                           <img 
                             src={clubLogoPreview || formData.club_logo} 
                             alt="Club Logo Preview" 
