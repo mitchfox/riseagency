@@ -41,6 +41,23 @@ export const RadialMenu = () => {
 
   const selectedLanguage = languages.find(l => l.code === language) || languages[0];
 
+  const pathRole = useMemo(() => {
+    if (location.pathname.startsWith('/players')) return 'players';
+    if (location.pathname.startsWith('/clubs')) return 'clubs';
+    if (location.pathname.startsWith('/scouts')) return 'scouts';
+    if (location.pathname.startsWith('/agents')) return 'agents';
+    if (location.pathname.startsWith('/coaches')) return 'coaches';
+    if (location.pathname.startsWith('/media')) return 'media';
+    if (location.pathname.startsWith('/business')) return 'business';
+    return null;
+  }, [location.pathname]);
+
+  const displayRoleKey = currentRole ?? pathRole;
+  const displayRoleName =
+    displayRoleKey && roleConfigs[displayRoleKey as keyof typeof roleConfigs]
+      ? roleConfigs[displayRoleKey as keyof typeof roleConfigs].name.toUpperCase()
+      : 'MAIN';
+
   const allRoles: Array<{ key: string | null; name: string }> = [
     { key: null, name: "Main" },
     { key: "players", name: "Players" },
@@ -321,11 +338,7 @@ export const RadialMenu = () => {
               onClick={() => setShowRoleDropdown(!showRoleDropdown)}
               className="flex items-center justify-center gap-1 text-black font-bebas text-2xl md:text-3xl tracking-[0.05em] hover:text-primary transition-colors duration-300 focus:outline-none"
             >
-              <span>
-                {currentRole && roleConfigs[currentRole]
-                  ? roleConfigs[currentRole].name.toUpperCase()
-                  : "MENU"}
-              </span>
+              <span>{displayRoleName}</span>
               <ChevronDown className={`w-5 h-5 transition-transform duration-300 ${showRoleDropdown ? 'rotate-180' : ''}`} />
             </button>
 
@@ -337,7 +350,7 @@ export const RadialMenu = () => {
                     key={role.key || 'main'}
                     href={role.key ? getRoleUrl(role.key as any) : '/'}
                     className={`block px-4 py-2 text-sm font-bebas uppercase tracking-wider transition-colors ${
-                      (currentRole === role.key) || (!currentRole && !role.key)
+                      (displayRoleKey === role.key) || (!displayRoleKey && !role.key)
                         ? "text-primary bg-primary/10"
                         : "text-foreground hover:bg-foreground/5 hover:text-primary"
                     }`}
@@ -351,7 +364,7 @@ export const RadialMenu = () => {
           </div>
           
           {/* Language selector in lower half */}
-          <div className="absolute bottom-1 left-1/2 -translate-x-1/2 z-20">
+          <div className="absolute bottom-1 left-1/2 -translate-x-1/2 z-20" style={{ transform: 'translateY(-3px)' }}>
             <button
               onClick={() => setShowMap(!showMap)}
               className="flex items-center gap-1 text-[10px] font-bebas uppercase tracking-wider text-primary hover:text-primary/80 transition-all duration-300 focus:outline-none"
@@ -365,7 +378,7 @@ export const RadialMenu = () => {
 
         {/* Map overlay */}
         {showMap && (
-          <div className="absolute inset-0 z-30 bg-background/95 backdrop-blur-sm p-8 overflow-hidden">
+          <div className="absolute inset-0 z-30 bg-background/95 backdrop-blur-sm">
             {/* Close map button */}
             <button
               onClick={() => setShowMap(false)}
@@ -397,7 +410,7 @@ export const RadialMenu = () => {
             </div>
 
             {/* Map */}
-            <div className="w-full h-full pt-20">
+            <div className="absolute inset-x-0 bottom-0 top-20">
               <ScoutingNetworkMap />
             </div>
           </div>
