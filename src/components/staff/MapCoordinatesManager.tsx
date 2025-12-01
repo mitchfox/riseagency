@@ -12,7 +12,7 @@ import { Plus, Trash2, Save, RefreshCw } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import ScoutingNetworkMap from "@/components/ScoutingNetworkMap";
 
-interface MapContact {
+interface MapClub {
   id: string;
   name: string;
   club_name: string | null;
@@ -23,7 +23,7 @@ interface MapContact {
 }
 
 export const MapCoordinatesManager = () => {
-  const [contacts, setContacts] = useState<MapContact[]>([]);
+  const [contacts, setContacts] = useState<MapClub[]>([]);
   const [editedContacts, setEditedContacts] = useState<Record<string, { x_position: string; y_position: string }>>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -55,8 +55,8 @@ export const MapCoordinatesManager = () => {
       if (error) throw error;
       setContacts(data || []);
     } catch (error: any) {
-      console.error("Error fetching contacts:", error);
-      toast.error("Failed to load contacts");
+      console.error("Error fetching clubs:", error);
+      toast.error("Failed to load clubs");
     } finally {
       setLoading(false);
     }
@@ -80,38 +80,38 @@ export const MapCoordinatesManager = () => {
         .insert([contactData]);
 
       if (error) throw error;
-      toast.success("Contact added to map");
+      toast.success("Club added to map");
 
       setDialogOpen(false);
       resetForm();
       fetchContacts();
       setMapKey(prev => prev + 1); // Refresh map
     } catch (error: any) {
-      console.error("Error saving contact:", error);
-      toast.error("Failed to save contact");
+      console.error("Error saving club:", error);
+      toast.error("Failed to save club");
     }
   };
 
-  const handleCoordinateChange = (contactId: string, field: 'x_position' | 'y_position', value: string) => {
+  const handleCoordinateChange = (clubId: string, field: 'x_position' | 'y_position', value: string) => {
     setEditedContacts(prev => {
-      const contact = contacts.find(c => c.id === contactId);
-      const existing = prev[contactId];
+      const club = contacts.find(c => c.id === clubId);
+      const existing = prev[clubId];
       
       return {
         ...prev,
-        [contactId]: {
-          x_position: field === 'x_position' ? value : (existing?.x_position ?? contact?.x_position?.toString() ?? ''),
-          y_position: field === 'y_position' ? value : (existing?.y_position ?? contact?.y_position?.toString() ?? ''),
+        [clubId]: {
+          x_position: field === 'x_position' ? value : (existing?.x_position ?? club?.x_position?.toString() ?? ''),
+          y_position: field === 'y_position' ? value : (existing?.y_position ?? club?.y_position?.toString() ?? ''),
         }
       };
     });
   };
 
-  const getCurrentValue = (contact: MapContact, field: 'x_position' | 'y_position') => {
-    if (editedContacts[contact.id]?.[field] !== undefined) {
-      return editedContacts[contact.id][field];
+  const getCurrentValue = (club: MapClub, field: 'x_position' | 'y_position') => {
+    if (editedContacts[club.id]?.[field] !== undefined) {
+      return editedContacts[club.id][field];
     }
-    return contact[field]?.toString() ?? '';
+    return club[field]?.toString() ?? '';
   };
 
   const handleSaveAll = async () => {
@@ -140,7 +140,7 @@ export const MapCoordinatesManager = () => {
         if (error) throw error;
       }
 
-      toast.success(`Updated ${updates.length} contact${updates.length > 1 ? 's' : ''}`);
+      toast.success(`Updated ${updates.length} club${updates.length > 1 ? 's' : ''}`);
       setEditedContacts({});
       fetchContacts();
       setMapKey(prev => prev + 1); // Refresh map after saving
@@ -153,7 +153,7 @@ export const MapCoordinatesManager = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Remove this contact from the map?")) return;
+    if (!confirm("Remove this club from the map?")) return;
 
     try {
       const { error } = await supabase
@@ -162,12 +162,12 @@ export const MapCoordinatesManager = () => {
         .eq("id", id);
 
       if (error) throw error;
-      toast.success("Contact removed from map");
+      toast.success("Club removed from map");
       fetchContacts();
       setMapKey(prev => prev + 1); // Refresh map
     } catch (error: any) {
-      console.error("Error deleting contact:", error);
-      toast.error("Failed to remove contact");
+      console.error("Error deleting club:", error);
+      toast.error("Failed to remove club");
     }
   };
 
@@ -234,9 +234,9 @@ export const MapCoordinatesManager = () => {
       {/* Controls */}
       <div className="flex items-center justify-between gap-4">
         <div className="flex-1">
-          <h3 className="text-lg font-semibold">Europe Map Coordinates</h3>
+          <h3 className="text-lg font-semibold">Club Logo Positions</h3>
           <p className="text-sm text-muted-foreground">
-            Adjust coordinates directly in the table and save all changes at once
+            Manage club logo positions on the Europe scouting map
           </p>
         </div>
         <div className="flex gap-2 items-center">
@@ -266,32 +266,33 @@ export const MapCoordinatesManager = () => {
             <DialogTrigger asChild>
               <Button variant="outline">
                 <Plus className="h-4 w-4 mr-2" />
-                Add New
+                Add Club
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-2xl">
               <DialogHeader>
-                <DialogTitle>Add to Map</DialogTitle>
+                <DialogTitle>Add Club to Map</DialogTitle>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name">Name *</Label>
+                  <Label htmlFor="name">Club Key *</Label>
                   <Input
                     id="name"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    placeholder="Contact name"
+                    placeholder="Must match club name in map data"
                     required
                   />
+                  <p className="text-xs text-muted-foreground">This identifier is used to match the club in the map's data</p>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="club_name">Club Name</Label>
+                  <Label htmlFor="club_name">Display Name</Label>
                   <Input
                     id="club_name"
                     value={formData.club_name}
                     onChange={(e) => setFormData({ ...formData, club_name: e.target.value })}
-                    placeholder="e.g. Real Madrid"
+                    placeholder="e.g. Real Madrid (optional)"
                   />
                 </div>
               </div>
@@ -364,14 +365,14 @@ export const MapCoordinatesManager = () => {
 
       {/* Table */}
       {loading ? (
-        <div className="text-center py-12">Loading contacts...</div>
+        <div className="text-center py-12">Loading clubs...</div>
       ) : contacts.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">
-          No contacts on the map yet. Click "Add New" to begin.
+          No clubs on the map yet. Click "Add Club" to begin.
         </div>
       ) : filteredContacts.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">
-          No contacts found for this country.
+          No clubs found for this country.
         </div>
       ) : (
         <Card>
@@ -379,8 +380,8 @@ export const MapCoordinatesManager = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Club</TableHead>
+                  <TableHead>Club Key</TableHead>
+                  <TableHead>Display Name</TableHead>
                   <TableHead>Country</TableHead>
                   <TableHead className="w-[120px]">X Position</TableHead>
                   <TableHead className="w-[120px]">Y Position</TableHead>
@@ -388,17 +389,17 @@ export const MapCoordinatesManager = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {displayedContacts.map((contact) => (
-                  <TableRow key={contact.id}>
-                    <TableCell className="font-medium">{contact.name}</TableCell>
-                    <TableCell className="text-muted-foreground">{contact.club_name || "—"}</TableCell>
-                    <TableCell className="text-muted-foreground">{contact.country || "—"}</TableCell>
+                {displayedContacts.map((club) => (
+                  <TableRow key={club.id}>
+                    <TableCell className="font-medium">{club.name}</TableCell>
+                    <TableCell className="text-muted-foreground">{club.club_name || "—"}</TableCell>
+                    <TableCell className="text-muted-foreground">{club.country || "—"}</TableCell>
                     <TableCell>
                       <Input
                         type="number"
                         step="0.1"
-                        value={getCurrentValue(contact, 'x_position')}
-                        onChange={(e) => handleCoordinateChange(contact.id, 'x_position', e.target.value)}
+                        value={getCurrentValue(club, 'x_position')}
+                        onChange={(e) => handleCoordinateChange(club.id, 'x_position', e.target.value)}
                         className="h-8 w-full"
                         placeholder="0-1000"
                       />
@@ -407,8 +408,8 @@ export const MapCoordinatesManager = () => {
                       <Input
                         type="number"
                         step="0.1"
-                        value={getCurrentValue(contact, 'y_position')}
-                        onChange={(e) => handleCoordinateChange(contact.id, 'y_position', e.target.value)}
+                        value={getCurrentValue(club, 'y_position')}
+                        onChange={(e) => handleCoordinateChange(club.id, 'y_position', e.target.value)}
                         className="h-8 w-full"
                         placeholder="0-700"
                       />
@@ -418,7 +419,7 @@ export const MapCoordinatesManager = () => {
                         variant="ghost"
                         size="sm"
                         className="text-destructive h-8 w-8 p-0"
-                        onClick={() => handleDelete(contact.id)}
+                        onClick={() => handleDelete(club.id)}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
