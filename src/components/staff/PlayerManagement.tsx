@@ -700,6 +700,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   const handleRemoveImage = () => {
     setImageFile(null);
     setImagePreview(null);
+    setFormData(prev => ({ ...prev, image_url: "" }));
   };
 
   const handleClubLogoSelect = (file: File) => {
@@ -714,6 +715,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   const handleRemoveClubLogo = () => {
     setClubLogoFile(null);
     setClubLogoPreview(null);
+    setFormData(prev => ({ ...prev, club_logo: "" }));
   };
 
   const handleHoverImageSelect = (file: File) => {
@@ -2381,6 +2383,8 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
           setImagePreview(null);
           setClubLogoFile(null);
           setClubLogoPreview(null);
+          setHoverImageFile(null);
+          setHoverImagePreview(null);
         }
       }}>
         <DialogContent className="max-w-4xl max-h-[95vh] w-[98vw] sm:w-[95vw] p-3 sm:p-6">
