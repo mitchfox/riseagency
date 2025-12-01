@@ -21,16 +21,28 @@ export const DragNavigator = ({ options }: DragNavigatorProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [targetPosition, setTargetPosition] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
+  const snapThreshold = 0.15; // Distance threshold to snap to an option
 
   useEffect(() => {
     const handleMouseUp = () => {
       if (isDragging) {
         setIsDragging(false);
-        // Snap to nearest position and navigate
-        const targetPos = currentIndex / (options.length - 1);
-        setTargetPosition(targetPos);
-        setDragPosition(targetPos);
-        navigate(options[currentIndex].to);
+        
+        // Calculate distance to nearest snap point
+        const nearestPos = currentIndex / (options.length - 1);
+        const distance = Math.abs(dragPosition - nearestPos);
+        
+        // Only navigate if close enough to a snap point
+        if (distance <= snapThreshold) {
+          setTargetPosition(nearestPos);
+          setDragPosition(nearestPos);
+          navigate(options[currentIndex].to);
+        } else {
+          // Return to start position (index 0)
+          setTargetPosition(0);
+          setDragPosition(0);
+          setCurrentIndex(0);
+        }
       }
     };
 
