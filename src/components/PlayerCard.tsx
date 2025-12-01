@@ -156,22 +156,19 @@ export const PlayerCard = ({ player, viewMode = "grid" }: PlayerCardProps) => {
           {/* Top Section */}
           <div className="grid grid-cols-2 gap-4">
             {/* Age */}
-            <div>
+            <div className="text-center">
               <div className="text-5xl font-bebas text-primary mb-1">{player.age}</div>
               <div className="text-sm font-bebas uppercase text-white tracking-wider">Age</div>
             </div>
             
             {/* Nationality */}
-            <div className="text-right">
-              <div className="flex items-center justify-end gap-2 mb-1">
+            <div className="text-center">
+              <div className="flex items-center justify-center mb-1">
                 <img 
                   src={getCountryFlagUrl(player.nationality)} 
                   alt={player.nationality}
-                  className="w-8 h-6 object-cover rounded"
+                  className="w-10 h-7 object-cover rounded"
                 />
-                <span className="text-5xl font-bebas text-primary">
-                  {player.nationality.substring(0, 2).toUpperCase()}
-                </span>
               </div>
               <div className="text-sm font-bebas uppercase text-white tracking-wider">Nationality</div>
             </div>
@@ -181,7 +178,7 @@ export const PlayerCard = ({ player, viewMode = "grid" }: PlayerCardProps) => {
           <div>
             <div className="grid grid-cols-2 gap-4 mb-6">
               {/* Position */}
-              <div>
+              <div className="text-center">
                 <div className="text-5xl font-bebas text-primary mb-1">{player.position}</div>
                 <div className="text-sm font-bebas uppercase text-white tracking-wider">Position</div>
               </div>
