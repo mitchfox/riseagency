@@ -70,7 +70,7 @@ export const PlayerCard = ({ player, viewMode = "grid" }: PlayerCardProps) => {
       <Link
         ref={cardRef}
         to={`/stars/${playerSlug}`}
-        className="group relative flex items-start gap-8 p-8 overflow-hidden transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary hover:bg-card border-b border-border last:border-b-0 hover:border-primary hover:border-l-4 hover:border-r-4"
+        className="group relative flex items-start gap-8 p-8 overflow-hidden transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary hover:bg-card border-b border-border last:border-b-0 hover:border-primary hover:border-4"
       >
         {/* Player Image */}
         <div className="relative w-32 h-44 flex-shrink-0 overflow-hidden rounded-lg shadow-lg">
@@ -84,7 +84,7 @@ export const PlayerCard = ({ player, viewMode = "grid" }: PlayerCardProps) => {
         </div>
 
         {/* Player Info */}
-        <div className="flex-1 min-w-0 flex flex-col justify-between h-44">
+        <div className="flex-1 min-w-0 flex flex-col gap-4">
           <div>
             <div className="flex items-start justify-between gap-4 mb-3">
               <h3 className="text-4xl font-bebas uppercase text-foreground tracking-wider group-hover:text-primary transition-colors leading-none">
@@ -119,14 +119,14 @@ export const PlayerCard = ({ player, viewMode = "grid" }: PlayerCardProps) => {
 
             {/* Bio Text */}
             {truncatedBio && (
-              <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3">
+              <p className="text-sm text-muted-foreground leading-relaxed line-clamp-4">
                 {truncatedBio}
               </p>
             )}
           </div>
 
           {/* View Profile Button */}
-          <div className="mt-auto">
+          <div className="mt-2">
             <div className="inline-flex bg-primary rounded-md py-2.5 px-5 items-center gap-2 transition-all group-hover:brightness-110 group-hover:scale-105">
               <span className="font-bebas uppercase tracking-wider text-black text-base">View Profile</span>
               <ArrowRight className="w-5 h-5 text-black group-hover:translate-x-1 transition-transform" />
