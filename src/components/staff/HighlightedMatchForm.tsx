@@ -33,21 +33,38 @@ const AVAILABLE_STATS = [
   { key: "goals", label: "Goals" },
   { key: "assists", label: "Assists" },
   { key: "xG_adj", label: "xG" },
+  { key: "xA_adj", label: "Expected Assists (xA)" },
   { key: "progressive_passes_adj", label: "Progressive Passes" },
   { key: "regains_adj", label: "Regains" },
   { key: "turnovers_adj", label: "Turnovers" },
   { key: "duels_won_adj", label: "Duels Won" },
   { key: "aerial_duels_won_adj", label: "Aerial Duels Won" },
+  { key: "xGChain", label: "xG Chain" },
+  { key: "interceptions", label: "Interceptions" },
+  { key: "crossing_movement_xC", label: "Crossing Movement xC" },
+  { key: "movement_in_behind_xC", label: "Movement In Behind xC" },
+  { key: "movement_to_feet_xC", label: "Movement To Feet xC" },
+  { key: "triple_threat_xC", label: "Triple Threat xC" },
+  { key: "tackles", label: "Tackles" },
+  { key: "passes_completed", label: "Passes Completed" },
+  { key: "shots", label: "Shots" },
+  { key: "shots_on_target", label: "Shots On Target" },
 ];
 
 export const HighlightedMatchForm = ({ value, onChange, playerAnalyses = [] }: HighlightedMatchFormProps) => {
   const [homeLogoFile, setHomeLogoFile] = useState<File | null>(null);
   const [awayLogoFile, setAwayLogoFile] = useState<File | null>(null);
+  const [homeLogoPreview, setHomeLogoPreview] = useState<string>("");
+  const [awayLogoPreview, setAwayLogoPreview] = useState<string>("");
+  const [isUploadingHomeLogo, setIsUploadingHomeLogo] = useState(false);
+  const [isUploadingAwayLogo, setIsUploadingAwayLogo] = useState(false);
 
   const handleClear = () => {
     onChange(null);
     setHomeLogoFile(null);
     setAwayLogoFile(null);
+    setHomeLogoPreview("");
+    setAwayLogoPreview("");
   };
 
   const updateField = (field: keyof HighlightedMatchData, fieldValue: any) => {
@@ -64,6 +81,40 @@ export const HighlightedMatchForm = ({ value, onChange, playerAnalyses = [] }: H
       ? selected.filter(s => s !== statKey)
       : [...selected, statKey];
     updateField('selected_stats', newSelected);
+  };
+
+  const handleLogoUpload = async (file: File, type: 'home' | 'away') => {
+    const setUploading = type === 'home' ? setIsUploadingHomeLogo : setIsUploadingAwayLogo;
+    setUploading(true);
+
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random()}.${fileExt}`;
+      const filePath = `team-logos/${fileName}`;
+
+      const { supabase } = await import("@/integrations/supabase/client");
+      const { error: uploadError } = await supabase.storage
+        .from('player_images')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('player_images')
+        .getPublicUrl(filePath);
+
+      if (type === 'home') {
+        setHomeLogoPreview(publicUrl);
+        updateField('home_team_logo', publicUrl);
+      } else {
+        setAwayLogoPreview(publicUrl);
+        updateField('away_team_logo', publicUrl);
+      }
+    } catch (error) {
+      console.error('Error uploading logo:', error);
+    } finally {
+      setUploading(false);
+    }
   };
 
   const importFromAnalysis = (analysisId: string) => {
@@ -92,11 +143,20 @@ export const HighlightedMatchForm = ({ value, onChange, playerAnalyses = [] }: H
     });
   };
 
+  // Get available highlight videos from analyses
+  const availableVideos = playerAnalyses
+    .filter(a => a.video_url)
+    .map(a => ({
+      id: a.id,
+      label: `vs ${a.opponent} - ${new Date(a.analysis_date).toLocaleDateString()}`,
+      url: a.video_url
+    }));
+
   if (!value) {
     return (
       <div className="space-y-4">
         <p className="text-sm text-muted-foreground">
-          Create a highlighted match section to showcase a standout performance on the player's profile.
+          Create a highlighted game section to showcase a standout performance on the player's profile.
         </p>
         
         {playerAnalyses.length > 0 && (
@@ -132,7 +192,7 @@ export const HighlightedMatchForm = ({ value, onChange, playerAnalyses = [] }: H
           full_match_url: "",
           r90_report_url: "",
         })}>
-          Create Highlighted Match
+          Create Highlighted Game
         </Button>
       </div>
     );
@@ -141,7 +201,7 @@ export const HighlightedMatchForm = ({ value, onChange, playerAnalyses = [] }: H
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h4 className="font-semibold">Highlighted Match Details</h4>
+        <h4 className="font-semibold">Highlighted Game Details</h4>
         <Button variant="ghost" size="sm" onClick={handleClear}>
           <X className="w-4 h-4 mr-1" />
           Clear
@@ -156,6 +216,43 @@ export const HighlightedMatchForm = ({ value, onChange, playerAnalyses = [] }: H
             onChange={(e) => updateField('home_team', e.target.value)}
             placeholder="e.g., Real Madrid"
           />
+          <div className="space-y-2">
+            <Label>Home Team Logo</Label>
+            {(value.home_team_logo || homeLogoPreview) && (
+              <div className="relative w-20 h-20 border rounded-lg overflow-hidden">
+                <img 
+                  src={homeLogoPreview || value.home_team_logo} 
+                  alt="Home team logo" 
+                  className="w-full h-full object-contain"
+                />
+              </div>
+            )}
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={isUploadingHomeLogo}
+                onClick={() => document.getElementById('home-logo-upload')?.click()}
+              >
+                <ImageIcon className="w-4 h-4 mr-2" />
+                {isUploadingHomeLogo ? "Uploading..." : "Upload Logo"}
+              </Button>
+              <input
+                id="home-logo-upload"
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    setHomeLogoFile(file);
+                    handleLogoUpload(file, 'home');
+                  }
+                }}
+              />
+            </div>
+          </div>
         </div>
         <div className="space-y-2">
           <Label>Away Team</Label>
@@ -164,6 +261,43 @@ export const HighlightedMatchForm = ({ value, onChange, playerAnalyses = [] }: H
             onChange={(e) => updateField('away_team', e.target.value)}
             placeholder="e.g., Barcelona"
           />
+          <div className="space-y-2">
+            <Label>Away Team Logo</Label>
+            {(value.away_team_logo || awayLogoPreview) && (
+              <div className="relative w-20 h-20 border rounded-lg overflow-hidden">
+                <img 
+                  src={awayLogoPreview || value.away_team_logo} 
+                  alt="Away team logo" 
+                  className="w-full h-full object-contain"
+                />
+              </div>
+            )}
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={isUploadingAwayLogo}
+                onClick={() => document.getElementById('away-logo-upload')?.click()}
+              >
+                <ImageIcon className="w-4 h-4 mr-2" />
+                {isUploadingAwayLogo ? "Uploading..." : "Upload Logo"}
+              </Button>
+              <input
+                id="away-logo-upload"
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    setAwayLogoFile(file);
+                    handleLogoUpload(file, 'away');
+                  }
+                }}
+              />
+            </div>
+          </div>
         </div>
       </div>
 
@@ -206,25 +340,39 @@ export const HighlightedMatchForm = ({ value, onChange, playerAnalyses = [] }: H
 
       <div className="space-y-2">
         <Label>Key Stats to Display</Label>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-2 gap-2 max-h-64 overflow-y-auto p-2 border rounded">
           {AVAILABLE_STATS.map((stat) => (
             <div key={stat.key} className="flex items-center gap-2">
               <Checkbox
                 checked={value.selected_stats?.includes(stat.key)}
                 onCheckedChange={() => toggleStat(stat.key)}
               />
-              <Label className="cursor-pointer">{stat.label}</Label>
+              <Label className="cursor-pointer text-sm">{stat.label}</Label>
             </div>
           ))}
         </div>
       </div>
 
       <div className="space-y-2">
-        <Label>Match Highlight Video URL</Label>
+        <Label>Match Highlight Video</Label>
+        {availableVideos.length > 0 && (
+          <Select onValueChange={(url) => updateField('video_url', url)}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select from existing highlights" />
+            </SelectTrigger>
+            <SelectContent>
+              {availableVideos.map((video) => (
+                <SelectItem key={video.id} value={video.url}>
+                  {video.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
         <Input
           value={value.video_url}
           onChange={(e) => updateField('video_url', e.target.value)}
-          placeholder="https://..."
+          placeholder="Or paste video URL here..."
         />
       </div>
 
