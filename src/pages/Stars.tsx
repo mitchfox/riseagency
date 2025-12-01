@@ -178,10 +178,14 @@ const Stars = () => {
               <h1 className="text-6xl md:text-8xl font-bebas uppercase tracking-wider text-foreground">
                 {t('stars.title', 'Our Stars')}
               </h1>
+              <p className="text-muted-foreground mt-4 max-w-3xl mx-auto">
+                Because of our background, we have the mandate to many top players across Europe's major divisions not under exclusive representation. 
+                Clubs can request our full portfolio through the button below.
+              </p>
             </div>
 
             {/* Interest Cards */}
-            <div className="grid md:grid-cols-2 gap-4 mb-6">
+            <div className="grid md:grid-cols-3 gap-4 mb-6">
               <Card className="bg-card/50 backdrop-blur-sm border-primary/20 hover:border-primary transition-colors cursor-pointer group">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
@@ -212,6 +216,25 @@ const Stars = () => {
                          <h3 className="font-bebas uppercase tracking-wider text-xl mb-1">Contact</h3>
                          <p className="text-sm text-muted-foreground">
                            Get in touch with us directly
+                         </p>
+                       </div>
+                    </div>
+                    <ArrowRight className="w-6 h-6 text-primary group-hover:translate-x-1 transition-transform" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-card/50 backdrop-blur-sm border-primary/20 hover:border-primary transition-colors cursor-pointer group">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="p-3 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                        <Users className="w-6 h-6 text-primary" />
+                      </div>
+                       <div>
+                         <h3 className="font-bebas uppercase tracking-wider text-xl mb-1">Request Full Portfolio</h3>
+                         <p className="text-sm text-muted-foreground">
+                           Access our complete player portfolio
                          </p>
                        </div>
                     </div>
