@@ -187,6 +187,21 @@ export const MapCoordinatesManager = () => {
     toast.success("Map refreshed");
   };
 
+  const handleClubPositionChange = (clubName: string, x: number, y: number) => {
+    // Find the club in our clubs list
+    const club = clubs.find(c => c.name === clubName);
+    if (!club) return;
+
+    // Update the editedClubs state with new coordinates
+    setEditedClubs(prev => ({
+      ...prev,
+      [club.id]: {
+        x_position: x.toFixed(1),
+        y_position: y.toFixed(1),
+      }
+    }));
+  };
+
   const hasChanges = Object.keys(editedClubs).length > 0;
 
   const uniqueCountries = Array.from(new Set(clubs.map(c => c.country).filter(Boolean))).sort();
@@ -227,7 +242,12 @@ export const MapCoordinatesManager = () => {
           </Button>
         </div>
         <div className="h-full w-full">
-          <ScoutingNetworkMap key={mapKey} initialCountry={selectedCountry !== "all" ? selectedCountry : undefined} hideStats={true} />
+          <ScoutingNetworkMap 
+            key={mapKey} 
+            initialCountry={selectedCountry !== "all" ? selectedCountry : undefined} 
+            hideStats={true}
+            onClubPositionChange={handleClubPositionChange}
+          />
         </div>
       </div>
 
