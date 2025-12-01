@@ -17,6 +17,7 @@ import { PlaylistManager } from "@/components/PlaylistManager";
 import { InlineVideoUpload } from "./InlineVideoUpload";
 import { EditHighlightDialog } from "./EditHighlightDialog";
 import { UploadPlayerImageDialog } from "./UploadPlayerImageDialog";
+import { AddPlayerDialog } from "./AddPlayerDialog";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -146,6 +147,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   const [autoSelectedFromUrl, setAutoSelectedFromUrl] = useState(false);
   const playerRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const previousPlayerIdFromUrl = useRef<string | null>(null);
+  const [isAddPlayerDialogOpen, setIsAddPlayerDialogOpen] = useState(false);
 
   useEffect(() => {
     fetchPlayers();
@@ -736,6 +738,114 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
     setFormData({ ...formData, hover_image_url: "" });
   };
 
+  const handleAddPlayer = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    try {
+      // Upload image if selected
+      let finalImageUrl = formData.image_url;
+      if (imageFile) {
+        const imageFileName = `${Date.now()}_${imageFile.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+        const { error: imageError } = await supabase.storage
+          .from('analysis-files')
+          .upload(`player-images/${imageFileName}`, imageFile, {
+            cacheControl: '3600',
+            upsert: false
+          });
+
+        if (imageError) {
+          toast.error('Failed to upload image');
+          return;
+        }
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('analysis-files')
+          .getPublicUrl(`player-images/${imageFileName}`);
+        finalImageUrl = publicUrl;
+      }
+
+      // Upload club logo if selected
+      let finalClubLogoUrl = formData.club_logo;
+      if (clubLogoFile) {
+        const logoFileName = `${Date.now()}_logo_${clubLogoFile.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+        const { error: logoError } = await supabase.storage
+          .from('analysis-files')
+          .upload(`club-logos/${logoFileName}`, clubLogoFile, {
+            cacheControl: '3600',
+            upsert: false
+          });
+
+        if (logoError) {
+          toast.error('Failed to upload club logo');
+          return;
+        }
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('analysis-files')
+          .getPublicUrl(`club-logos/${logoFileName}`);
+        finalClubLogoUrl = publicUrl;
+      }
+
+      // Upload hover image if selected
+      let finalHoverImageUrl = formData.hover_image_url;
+      if (hoverImageFile) {
+        const hoverFileName = `${Date.now()}_hover_${hoverImageFile.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+        const { error: hoverError } = await supabase.storage
+          .from('analysis-files')
+          .upload(`player-images/${hoverFileName}`, hoverImageFile, {
+            cacheControl: '3600',
+            upsert: false
+          });
+
+        if (hoverError) {
+          toast.error('Failed to upload hover image');
+          return;
+        }
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('analysis-files')
+          .getPublicUrl(`player-images/${hoverFileName}`);
+        finalHoverImageUrl = publicUrl;
+      }
+
+      const bioJSON = reconstructBioJSON();
+      
+      const { error } = await supabase
+        .from("players")
+        .insert({
+          name: formData.name,
+          email: formData.email || null,
+          position: formData.position,
+          club: formData.club || null,
+          club_logo: finalClubLogoUrl || null,
+          league: formData.league || null,
+          age: formData.age,
+          nationality: formData.nationality,
+          bio: bioJSON,
+          image_url: finalImageUrl || null,
+          hover_image_url: finalHoverImageUrl || null,
+          category: formData.category || 'Scouted',
+          representation_status: formData.representation_status || 'other',
+          visible_on_stars_page: formData.visible_on_stars_page,
+          links: formData.links.length > 0 ? formData.links : null,
+        });
+
+      if (error) throw error;
+
+      toast.success("Player added successfully");
+      setIsAddPlayerDialogOpen(false);
+      setImageFile(null);
+      setImagePreview(null);
+      setClubLogoFile(null);
+      setClubLogoPreview(null);
+      setHoverImageFile(null);
+      setHoverImagePreview(null);
+      fetchPlayers();
+    } catch (error: any) {
+      toast.error("Failed to add player: " + error.message);
+    }
+  };
+
   const handleUpdatePlayer = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingPlayer) return;
@@ -1000,9 +1110,45 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
 
       {/* Main Content Area */}
       <div className="flex-1 overflow-y-auto">
-        {!selectedPlayerId ? (
+      {!selectedPlayerId ? (
           // Preview Cards Grid grouped by representation status
           <div className="space-y-6 px-3 md:px-0">
+            {/* Add Player Button */}
+            <div className="flex justify-between items-center">
+              <h2 className="text-xl font-semibold">Players</h2>
+              <Button onClick={() => {
+                setFormData({
+                  name: "",
+                  email: "",
+                  position: "",
+                  age: 18,
+                  nationality: "",
+                  category: "Scouted",
+                  representation_status: "other",
+                  visible_on_stars_page: false,
+                  image_url: "",
+                  hover_image_url: "",
+                  club: "",
+                  club_logo: "",
+                  league: "",
+                  bioText: "",
+                  dateOfBirth: "",
+                  number: "",
+                  whatsapp: "",
+                  externalLinks: [],
+                  strengths: [],
+                  tacticalSchemes: [],
+                  seasonStats: [],
+                  topStats: [],
+                  links: [],
+                });
+                setIsAddPlayerDialogOpen(true);
+              }}>
+                <Plus className="w-4 h-4 mr-2" />
+                Add Player
+              </Button>
+            </div>
+            
             {/* Represented Players */}
             {representedPlayers.length > 0 && (
               <div>
@@ -3298,6 +3444,36 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
           }}
         />
       )}
+
+      <AddPlayerDialog
+        open={isAddPlayerDialogOpen}
+        onOpenChange={(open) => {
+          setIsAddPlayerDialogOpen(open);
+          if (!open) {
+            setImageFile(null);
+            setImagePreview(null);
+            setClubLogoFile(null);
+            setClubLogoPreview(null);
+            setHoverImageFile(null);
+            setHoverImagePreview(null);
+          }
+        }}
+        formData={formData}
+        setFormData={setFormData}
+        onSubmit={handleAddPlayer}
+        imageFile={imageFile}
+        imagePreview={imagePreview}
+        clubLogoFile={clubLogoFile}
+        clubLogoPreview={clubLogoPreview}
+        hoverImageFile={hoverImageFile}
+        hoverImagePreview={hoverImagePreview}
+        handleImageSelect={handleImageSelect}
+        handleRemoveImage={handleRemoveImage}
+        handleClubLogoSelect={handleClubLogoSelect}
+        handleRemoveClubLogo={handleRemoveClubLogo}
+        handleHoverImageSelect={handleHoverImageSelect}
+        handleRemoveHoverImage={handleRemoveHoverImage}
+      />
     </div>
   );
 };
