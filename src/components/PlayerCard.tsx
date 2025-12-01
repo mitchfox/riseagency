@@ -59,16 +59,16 @@ export const PlayerCard = ({ player, viewMode = "grid" }: PlayerCardProps) => {
       }
     }
     // Truncate bio
-    const truncatedBio = bioText.length > 150 ? bioText.substring(0, 150) + "..." : bioText;
+    const truncatedBio = bioText.length > 200 ? bioText.substring(0, 200) + "..." : bioText;
 
     return (
       <Link
         ref={cardRef}
         to={`/stars/${playerSlug}`}
-        className="group relative flex items-center gap-6 p-6 overflow-hidden transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary hover:bg-primary/5"
+        className="group relative flex items-start gap-8 p-8 overflow-hidden transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary hover:bg-card border-b border-border last:border-b-0"
       >
         {/* Player Image */}
-        <div className="relative w-24 h-32 flex-shrink-0 overflow-hidden rounded-lg">
+        <div className="relative w-32 h-44 flex-shrink-0 overflow-hidden rounded-lg shadow-lg">
           <img
             src={player.image_url || player.image}
             alt={player.name}
@@ -77,54 +77,59 @@ export const PlayerCard = ({ player, viewMode = "grid" }: PlayerCardProps) => {
             } md:grayscale md:group-hover:grayscale-0`}
           />
           {/* Position badge */}
-          <div className="absolute top-2 right-2">
-            <span className="text-sm text-primary tracking-wider font-bebas bg-black/60 px-1.5 py-0.5 rounded">
+          <div className="absolute top-3 right-3">
+            <span className="text-lg text-primary tracking-wider font-bebas bg-black/80 px-2 py-1 rounded">
               {player.position}
             </span>
           </div>
         </div>
 
         {/* Player Info */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-3 mb-2">
-            <h3 className="text-2xl font-bebas uppercase text-foreground tracking-wider group-hover:text-primary transition-colors">
-              {player.name}
-            </h3>
-            {/* Club Logo */}
-            {clubLogo && (
-              <img 
-                src={clubLogo} 
-                alt={currentClub}
-                className="h-6 w-6 object-contain"
-              />
-            )}
-          </div>
-          
-          <div className="flex gap-4 text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-2">
-            <span>Age {player.age}</span>
-            <span>•</span>
-            <span>{player.nationality}</span>
-            {currentClub && (
-              <>
-                <span>•</span>
-                <span>{currentClub}</span>
-              </>
+        <div className="flex-1 min-w-0 flex flex-col justify-between h-44">
+          <div>
+            <div className="flex items-start justify-between gap-4 mb-3">
+              <h3 className="text-4xl font-bebas uppercase text-foreground tracking-wider group-hover:text-primary transition-colors leading-none">
+                {player.name}
+              </h3>
+              {/* Club Info */}
+              {(clubLogo || currentClub) && (
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  {clubLogo && (
+                    <img 
+                      src={clubLogo} 
+                      alt={currentClub}
+                      className="h-8 w-8 object-contain"
+                    />
+                  )}
+                  {currentClub && (
+                    <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                      {currentClub}
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
+            
+            <div className="flex gap-4 text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-4">
+              <span>Age {player.age}</span>
+              <span>•</span>
+              <span>{player.nationality}</span>
+            </div>
+
+            {/* Bio Text */}
+            {truncatedBio && (
+              <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3">
+                {truncatedBio}
+              </p>
             )}
           </div>
 
-          {/* Bio Text */}
-          {truncatedBio && (
-            <p className="text-sm text-muted-foreground line-clamp-2 max-w-2xl">
-              {truncatedBio}
-            </p>
-          )}
-        </div>
-
-        {/* View Profile Button */}
-        <div className="flex-shrink-0">
-          <div className="bg-primary rounded-md py-2 px-4 flex items-center gap-2 transition-all group-hover:brightness-110">
-            <span className="font-bebas uppercase tracking-wider text-black text-sm">View Profile</span>
-            <ArrowRight className="w-4 h-4 text-black" />
+          {/* View Profile Button */}
+          <div className="mt-auto">
+            <div className="inline-flex bg-primary rounded-md py-2.5 px-5 items-center gap-2 transition-all group-hover:brightness-110 group-hover:scale-105">
+              <span className="font-bebas uppercase tracking-wider text-black text-base">View Profile</span>
+              <ArrowRight className="w-5 h-5 text-black group-hover:translate-x-1 transition-transform" />
+            </div>
           </div>
         </div>
       </Link>
