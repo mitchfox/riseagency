@@ -55,7 +55,8 @@ export const Header = () => {
   const realisePotentialImages = [realisePotentialSessions, realisePotentialPaos, realisePotentialReport, realisePotentialAnalysis];
   
   useEffect(() => {
-    setShowTopBar(location.pathname === '/');
+    const topBarPaths = ['/', '/home', '/scouts', '/clubs', '/agents', '/coaches', '/business', '/media'];
+    setShowTopBar(topBarPaths.includes(location.pathname));
   }, [location.pathname]);
   
   useEffect(() => {
@@ -143,8 +144,9 @@ export const Header = () => {
   }, [newsArticles.length]);
   
   useEffect(() => {
+    const scrollEnabledPaths = ['/', '/home', '/scouts', '/clubs', '/agents', '/coaches', '/business', '/media'];
     const handleScroll = () => {
-      if (location.pathname === '/') {
+      if (scrollEnabledPaths.includes(location.pathname)) {
         setIsScrolled(window.scrollY > 50);
       } else {
         setIsScrolled(false);
