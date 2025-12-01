@@ -9,7 +9,7 @@ import whiteMarbleBg from "@/assets/white-marble.png";
 import smudgedMarbleBg from "@/assets/black-marble-smudged.png";
 import europeMap from "@/assets/europe-outline.gif";
 import { Home, Star, TrendingUp, BookOpen, Newspaper, MessageCircle, Target, Trophy, Users, Handshake, Briefcase, Search, Calendar, Heart, Package, X, ChevronDown } from "lucide-react";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 
 interface MenuItem {
   to: string;
@@ -53,6 +53,7 @@ export const RadialMenu = () => {
   const [isSelectingRole, setIsSelectingRole] = useState(false);
   const [selectedRole, setSelectedRole] = useState<string | null>(null);
   const [hoveredLang, setHoveredLang] = useState<LanguageCode | null>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
 
   const languages = [
     { code: "en" as const, name: "ENG", flag: "🇬🇧" },
@@ -246,6 +247,7 @@ export const RadialMenu = () => {
       {/* Close button - top left */}
       <DrawerClose asChild>
         <button
+          ref={closeButtonRef}
           className="absolute top-8 left-8 z-50 group flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
           aria-label="Close menu"
         >
@@ -295,32 +297,32 @@ export const RadialMenu = () => {
             const hovered = hoveredItem === index;
 
             return (
-              <DrawerClose key={`path-${item.to}-${index}`} asChild>
-                <path
-                  d={`
-                    M ${circleSize / 2} ${circleSize / 2}
-                    L ${circleSize / 2 + (circleSize / 2.2) * Math.cos((startAngle * Math.PI) / 180)} ${circleSize / 2 + (circleSize / 2.2) * Math.sin((startAngle * Math.PI) / 180)}
-                    A ${circleSize / 2.2} ${circleSize / 2.2} 0 0 1 ${circleSize / 2 + (circleSize / 2.2) * Math.cos(((endAngle) * Math.PI) / 180)} ${circleSize / 2 + (circleSize / 2.2) * Math.sin(((endAngle) * Math.PI) / 180)}
-                    Z
-                  `}
-                  fill={hovered ? "url(#whiteMarblePattern)" : "rgba(128,128,128,0.1)"}
-                  className="transition-colors duration-200 cursor-pointer"
-                  style={{ pointerEvents: 'auto' }}
-                  onMouseEnter={() => setHoveredItem(index)}
-                  onMouseLeave={() => setHoveredItem(null)}
-                  onClick={() => {
-                    if (isSelectingRole) {
-                      // Set selected role and exit selection mode
-                      const rolePath = item.to.replace('/', '');
-                      setSelectedRole(rolePath);
-                      setIsSelectingRole(false);
-                    } else {
-                      // Normal navigation
-                      navigate(item.to);
-                    }
-                  }}
-                />
-              </DrawerClose>
+              <path
+                key={`path-${item.to}-${index}`}
+                d={`
+                  M ${circleSize / 2} ${circleSize / 2}
+                  L ${circleSize / 2 + (circleSize / 2.2) * Math.cos((startAngle * Math.PI) / 180)} ${circleSize / 2 + (circleSize / 2.2) * Math.sin((startAngle * Math.PI) / 180)}
+                  A ${circleSize / 2.2} ${circleSize / 2.2} 0 0 1 ${circleSize / 2 + (circleSize / 2.2) * Math.cos(((endAngle) * Math.PI) / 180)} ${circleSize / 2 + (circleSize / 2.2) * Math.sin(((endAngle) * Math.PI) / 180)}
+                  Z
+                `}
+                fill={hovered ? "url(#whiteMarblePattern)" : "rgba(128,128,128,0.1)"}
+                className="transition-colors duration-200 cursor-pointer"
+                style={{ pointerEvents: 'auto' }}
+                onMouseEnter={() => setHoveredItem(index)}
+                onMouseLeave={() => setHoveredItem(null)}
+                onClick={() => {
+                  if (isSelectingRole) {
+                    // Just select the role, don't close the drawer
+                    const rolePath = item.to.replace('/', '').replace('more', '');
+                    setSelectedRole(rolePath);
+                    setIsSelectingRole(false);
+                  } else {
+                    // Navigate AND close drawer
+                    navigate(item.to);
+                    closeButtonRef.current?.click();
+                  }
+                }}
+              />
             );
           })}
         </svg>
