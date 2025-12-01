@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { LateralFilter } from "@/components/LateralFilter";
 import { Button } from "@/components/ui/button";
 import { DeclareInterestPlayerDialog } from "@/components/DeclareInterestPlayerDialog";
+import { ContactDialog } from "@/components/ContactDialog";
 import { LayoutGrid, List, Users, MessageCircle, ArrowRight } from "lucide-react";
 
 const BATCH_SIZE = 3;
@@ -19,6 +20,7 @@ const PlayersList = () => {
   const [selectedAgeRanges, setSelectedAgeRanges] = useState<string[]>([]);
   const [visibleCount, setVisibleCount] = useState(BATCH_SIZE);
   const [declareInterestOpen, setDeclareInterestOpen] = useState(false);
+  const [contactOpen, setContactOpen] = useState(false);
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
   const positionOptions = [
@@ -197,10 +199,10 @@ const PlayersList = () => {
       
       <main className="pt-24 md:pt-16">
         {/* Hero Section */}
-        <section className="py-16 md:py-24 px-4">
+        <section className="py-8 px-4">
           <div className="container mx-auto">
             {/* Action Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
               {/* Declare Interest Card */}
               <button
                 onClick={() => setDeclareInterestOpen(true)}
@@ -222,7 +224,7 @@ const PlayersList = () => {
 
               {/* Contact Card */}
               <button
-                onClick={() => window.location.href = '/contact'}
+                onClick={() => setContactOpen(true)}
                 className="group relative flex items-center gap-6 p-8 border border-border rounded-lg hover:border-primary transition-all duration-300 bg-card"
               >
                 <div className="flex-shrink-0 w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
@@ -241,7 +243,7 @@ const PlayersList = () => {
             </div>
 
             {/* View Mode Toggle - Icon Only */}
-            <div className="flex justify-center gap-2 mb-12">
+            <div className="flex justify-center gap-2 mb-4">
               <button
                 onClick={() => setViewMode("grid")}
                 className={`p-3 rounded-lg transition-colors ${
@@ -342,6 +344,11 @@ const PlayersList = () => {
       <DeclareInterestPlayerDialog 
         open={declareInterestOpen} 
         onOpenChange={setDeclareInterestOpen} 
+      />
+      
+      <ContactDialog 
+        open={contactOpen} 
+        onOpenChange={setContactOpen} 
       />
     </div>
   );
