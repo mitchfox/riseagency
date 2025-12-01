@@ -83,7 +83,7 @@ export const PlayerCard = ({ player, viewMode = "grid" }: PlayerCardProps) => {
             <img
               src={player.hover_image_url}
               alt={`${player.name} hover`}
-              className="absolute inset-0 w-full h-full object-contain transition-all duration-700 opacity-0 md:group-hover:opacity-100"
+              className="absolute inset-0 w-full h-full object-cover transition-all duration-700 z-20 opacity-0 md:group-hover:opacity-100"
             />
           )}
         {/* Position badge - top right, smaller on mobile */}
@@ -137,7 +137,7 @@ export const PlayerCard = ({ player, viewMode = "grid" }: PlayerCardProps) => {
           <img
             src={player.hover_image_url}
             alt={`${player.name} hover`}
-            className="absolute inset-0 w-full h-full object-contain transition-all duration-700 z-[5] opacity-0 md:group-hover:opacity-100"
+            className="absolute inset-0 w-full h-full object-cover transition-all duration-700 z-20 opacity-0 md:group-hover:opacity-100"
           />
         )}
         {/* Position badge - top right, smaller on mobile */}
