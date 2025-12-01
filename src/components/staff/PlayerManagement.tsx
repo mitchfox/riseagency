@@ -37,6 +37,7 @@ interface Player {
   nationality: string;
   bio: string | null;
   image_url: string | null;
+  hover_image_url: string | null;
   email: string | null;
   visible_on_stars_page: boolean;
   highlights: any;
@@ -86,6 +87,8 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [clubLogoFile, setClubLogoFile] = useState<File | null>(null);
   const [clubLogoPreview, setClubLogoPreview] = useState<string | null>(null);
+  const [hoverImageFile, setHoverImageFile] = useState<File | null>(null);
+  const [hoverImagePreview, setHoverImagePreview] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     // Basic Info
     name: "",
@@ -97,6 +100,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
     representation_status: "",
     visible_on_stars_page: false,
     image_url: "",
+    hover_image_url: "",
     
     // Club Info
     club: "",
@@ -544,6 +548,8 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
     setEditingPlayer(player);
     setImageFile(null);
     setImagePreview(null);
+    setHoverImageFile(null);
+    setHoverImagePreview(null);
     
     // Parse bio JSON
     const bioData = parseBioJSON(player.bio);
@@ -565,6 +571,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       representation_status: player.representation_status || "",
       visible_on_stars_page: player.visible_on_stars_page || false,
       image_url: player.image_url || "",
+      hover_image_url: player.hover_image_url || "",
       
       // Club Info - read from player table OR bio JSON
       club: player.club || bioData?.currentClub || "",
@@ -703,6 +710,21 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
     setClubLogoPreview(null);
   };
 
+  const handleHoverImageSelect = (file: File) => {
+    setHoverImageFile(file);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setHoverImagePreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveHoverImage = () => {
+    setHoverImageFile(null);
+    setHoverImagePreview(null);
+    setFormData({ ...formData, hover_image_url: "" });
+  };
+
   const handleUpdatePlayer = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingPlayer) return;
@@ -752,6 +774,28 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
         finalClubLogoUrl = publicUrl;
       }
 
+      // Upload new hover image if selected
+      let finalHoverImageUrl = formData.hover_image_url;
+      if (hoverImageFile) {
+        const hoverFileName = `${editingPlayer.id}_${Date.now()}_hover_${hoverImageFile.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+        const { error: hoverError } = await supabase.storage
+          .from('analysis-files')
+          .upload(`player-images/${hoverFileName}`, hoverImageFile, {
+            cacheControl: '3600',
+            upsert: false
+          });
+
+        if (hoverError) {
+          toast.error('Failed to upload hover image');
+          return;
+        }
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('analysis-files')
+          .getPublicUrl(`player-images/${hoverFileName}`);
+        finalHoverImageUrl = publicUrl;
+      }
+
       const bioJSON = reconstructBioJSON();
       
       const { error } = await supabase
@@ -766,6 +810,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
           nationality: formData.nationality,
           bio: bioJSON,
           image_url: finalImageUrl || null,
+          hover_image_url: finalHoverImageUrl || null,
           category: formData.category || null,
           representation_status: formData.representation_status || null,
           visible_on_stars_page: formData.visible_on_stars_page,
@@ -781,6 +826,8 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       setImagePreview(null);
       setClubLogoFile(null);
       setClubLogoPreview(null);
+      setHoverImageFile(null);
+      setHoverImagePreview(null);
       fetchPlayers(true);
     } catch (error: any) {
       toast.error("Failed to update player: " + error.message);
@@ -2455,6 +2502,60 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                           <img 
                             src={imagePreview || formData.image_url} 
                             alt="Preview" 
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Hover Image (Transparent Background) */}
+                  <div className="space-y-1.5 sm:space-y-2">
+                    <Label htmlFor="hover_image_url" className="text-sm">Hover Image (Transparent Background)</Label>
+                    <p className="text-xs text-muted-foreground">This image shows when hovering over the player card on Stars/Players pages</p>
+                    <div className="flex flex-col gap-3">
+                      <Input
+                        id="hover_image_url"
+                        value={formData.hover_image_url}
+                        onChange={(e) => setFormData({ ...formData, hover_image_url: e.target.value })}
+                        placeholder="https://example.com/player-transparent.png or upload below"
+                        className="h-10 sm:h-11 text-sm"
+                      />
+                      <div className="flex items-center gap-3">
+                        <Label 
+                          htmlFor="hover_image_upload" 
+                          className="flex items-center gap-2 px-4 py-2 bg-secondary text-secondary-foreground rounded-md cursor-pointer hover:bg-secondary/80 transition-colors text-sm"
+                        >
+                          <ImageIcon className="w-4 h-4" />
+                          Upload Hover Image
+                        </Label>
+                        <input
+                          id="hover_image_upload"
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) handleHoverImageSelect(file);
+                          }}
+                          className="hidden"
+                        />
+                        {(hoverImagePreview || formData.hover_image_url) && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={handleRemoveHoverImage}
+                          >
+                            <X className="w-4 h-4 mr-1" />
+                            Clear
+                          </Button>
+                        )}
+                      </div>
+                      {(hoverImagePreview || formData.hover_image_url) && (
+                        <div className="relative w-32 h-32 border rounded-md overflow-hidden bg-muted/50">
+                          <img 
+                            src={hoverImagePreview || formData.hover_image_url} 
+                            alt="Hover Preview" 
                             className="w-full h-full object-cover"
                           />
                         </div>
