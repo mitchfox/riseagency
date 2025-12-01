@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { MessageCircle, ArrowLeft, Search } from "lucide-react";
+import { MessageCircle, ArrowLeft, Search, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { z } from "zod";
@@ -31,7 +31,7 @@ const interestSchema = z.object({
 export const DeclareInterestPlayerDialog = ({ open, onOpenChange }: DeclareInterestPlayerDialogProps) => {
   const { toast } = useToast();
   const [step, setStep] = useState<"select" | "form">("select");
-  const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
+  const [selectedPlayers, setSelectedPlayers] = useState<Player[]>([]);
   const [players, setPlayers] = useState<Player[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -66,14 +66,25 @@ export const DeclareInterestPlayerDialog = ({ open, onOpenChange }: DeclareInter
     player.position.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handlePlayerSelect = (player: Player) => {
-    setSelectedPlayer(player);
-    setStep("form");
+  const handlePlayerToggle = (player: Player) => {
+    setSelectedPlayers(prev => {
+      const isSelected = prev.some(p => p.id === player.id);
+      if (isSelected) {
+        return prev.filter(p => p.id !== player.id);
+      } else {
+        return [...prev, player];
+      }
+    });
+  };
+
+  const handleNext = () => {
+    if (selectedPlayers.length > 0) {
+      setStep("form");
+    }
   };
 
   const handleBack = () => {
     setStep("select");
-    setSelectedPlayer(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -82,12 +93,15 @@ export const DeclareInterestPlayerDialog = ({ open, onOpenChange }: DeclareInter
     try {
       interestSchema.parse(formData);
       
+      const playerNames = selectedPlayers.map(p => p.name).join(", ");
+      
       const { error } = await supabase.functions.invoke("send-form-email", {
         body: { 
           formType: "declare-interest", 
           data: { 
             ...formData, 
-            playerName: selectedPlayer?.name,
+            playerName: playerNames,
+            playerNames: selectedPlayers.map(p => p.name),
             name: formData.name,
             role: formData.role,
             clubOrCompany: formData.clubCompany,
@@ -100,12 +114,12 @@ export const DeclareInterestPlayerDialog = ({ open, onOpenChange }: DeclareInter
       
       toast({
         title: "Interest Declared",
-        description: `We'll be in touch regarding ${selectedPlayer?.name}!`,
+        description: `We'll be in touch regarding ${selectedPlayers.length === 1 ? selectedPlayers[0].name : `${selectedPlayers.length} players`}!`,
       });
       
       onOpenChange(false);
       setStep("select");
-      setSelectedPlayer(null);
+      setSelectedPlayers([]);
       setSearchQuery("");
       setFormData({ name: "", role: "", clubCompany: "", request: "" });
     } catch (error) {
@@ -127,8 +141,9 @@ export const DeclareInterestPlayerDialog = ({ open, onOpenChange }: DeclareInter
   };
 
   const handleWhatsApp = () => {
+    const playerNames = selectedPlayers.map(p => p.name).join(", ");
     const message = encodeURIComponent(
-      `Hi, I'm ${formData.name || "[Your Name]"} from ${formData.clubCompany || "[Your Club/Company]"}. I'm interested in ${selectedPlayer?.name}. Role: ${formData.role || "[Your Role]"}. ${formData.request || ""}`
+      `Hi, I'm ${formData.name || "[Your Name]"} from ${formData.clubCompany || "[Your Club/Company]"}. I'm interested in: ${playerNames}. Role: ${formData.role || "[Your Role]"}. ${formData.request || ""}`
     );
     window.open(`https://wa.me/447340184399?text=${message}`, "_blank");
   };
@@ -136,7 +151,7 @@ export const DeclareInterestPlayerDialog = ({ open, onOpenChange }: DeclareInter
   const handleDialogChange = (newOpen: boolean) => {
     if (!newOpen) {
       setStep("select");
-      setSelectedPlayer(null);
+      setSelectedPlayers([]);
       setSearchQuery("");
       setFormData({ name: "", role: "", clubCompany: "", request: "" });
     }
@@ -150,10 +165,15 @@ export const DeclareInterestPlayerDialog = ({ open, onOpenChange }: DeclareInter
           <>
             <DialogHeader>
               <DialogTitle className="text-3xl font-bebas uppercase tracking-wider">
-                Select Player
+                Select Player(s)
               </DialogTitle>
               <DialogDescription>
-                Choose the player you are interested in
+                Choose the player(s) you are interested in
+                {selectedPlayers.length > 0 && (
+                  <span className="ml-2 text-primary font-semibold">
+                    ({selectedPlayers.length} selected)
+                  </span>
+                )}
               </DialogDescription>
             </DialogHeader>
 
@@ -172,35 +192,51 @@ export const DeclareInterestPlayerDialog = ({ open, onOpenChange }: DeclareInter
               <div className="py-8 text-center text-muted-foreground">Loading players...</div>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 py-4 max-h-[400px] overflow-y-auto">
-                {filteredPlayers.map((player) => (
-                  <button
-                    key={player.id}
-                    onClick={() => handlePlayerSelect(player)}
-                    className="group flex flex-col items-center gap-2 p-3 rounded-lg border border-border hover:border-primary hover:bg-primary/5 transition-all"
-                  >
-                    <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-border group-hover:border-primary transition-colors bg-muted">
-                      {player.image_url ? (
-                        <img 
-                          src={player.image_url} 
-                          alt={player.name}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">
-                          No image
+                {filteredPlayers.map((player) => {
+                  const isSelected = selectedPlayers.some(p => p.id === player.id);
+                  return (
+                    <button
+                      key={player.id}
+                      onClick={() => handlePlayerToggle(player)}
+                      className={`group relative flex flex-col items-center gap-2 p-3 rounded-lg border transition-all ${
+                        isSelected 
+                          ? "border-primary bg-primary/10" 
+                          : "border-border hover:border-primary hover:bg-primary/5"
+                      }`}
+                    >
+                      {isSelected && (
+                        <div className="absolute top-2 right-2 w-5 h-5 bg-primary rounded-full flex items-center justify-center">
+                          <Check className="w-3 h-3 text-black" />
                         </div>
                       )}
-                    </div>
-                    <div className="text-center">
-                      <p className="font-bebas text-sm uppercase tracking-wide group-hover:text-primary transition-colors">
-                        {player.name}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {player.position}
-                      </p>
-                    </div>
-                  </button>
-                ))}
+                      <div className={`w-16 h-16 rounded-full overflow-hidden border-2 transition-colors bg-muted ${
+                        isSelected ? "border-primary" : "border-border group-hover:border-primary"
+                      }`}>
+                        {player.image_url ? (
+                          <img 
+                            src={player.image_url} 
+                            alt={player.name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">
+                            No image
+                          </div>
+                        )}
+                      </div>
+                      <div className="text-center">
+                        <p className={`font-bebas text-sm uppercase tracking-wide transition-colors ${
+                          isSelected ? "text-primary" : "group-hover:text-primary"
+                        }`}>
+                          {player.name}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {player.position}
+                        </p>
+                      </div>
+                    </button>
+                  );
+                })}
                 {filteredPlayers.length === 0 && (
                   <div className="col-span-full py-8 text-center text-muted-foreground">
                     No players found
@@ -208,6 +244,16 @@ export const DeclareInterestPlayerDialog = ({ open, onOpenChange }: DeclareInter
                 )}
               </div>
             )}
+
+            {/* Next Button */}
+            <Button
+              onClick={handleNext}
+              disabled={selectedPlayers.length === 0}
+              hoverEffect
+              className="w-full font-bebas uppercase tracking-wider"
+            >
+              Next ({selectedPlayers.length} selected)
+            </Button>
           </>
         ) : (
           <>
@@ -226,7 +272,17 @@ export const DeclareInterestPlayerDialog = ({ open, onOpenChange }: DeclareInter
                 </DialogTitle>
               </div>
               <DialogDescription>
-                Interested in <span className="text-primary font-semibold">{selectedPlayer?.name}</span>
+                Interested in{" "}
+                <span className="text-primary font-semibold">
+                  {selectedPlayers.length === 1 
+                    ? selectedPlayers[0].name 
+                    : `${selectedPlayers.length} players`}
+                </span>
+                {selectedPlayers.length > 1 && (
+                  <span className="block text-xs mt-1 text-muted-foreground">
+                    {selectedPlayers.map(p => p.name).join(", ")}
+                  </span>
+                )}
               </DialogDescription>
             </DialogHeader>
 
