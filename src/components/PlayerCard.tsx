@@ -46,13 +46,15 @@ export const PlayerCard = ({ player, viewMode = "grid" }: PlayerCardProps) => {
   }, []);
 
   if (viewMode === "list") {
-    // Parse bio for display
+    // Parse bio for display and extract DOB
     let bioText = "";
+    let dateOfBirth = "";
     if (player.bio) {
       try {
         const parsed = JSON.parse(player.bio);
         if (typeof parsed === 'object' && parsed !== null) {
           bioText = parsed.bio || parsed.overview || parsed.description || "";
+          dateOfBirth = parsed.dateOfBirth || parsed.dob || "";
         }
       } catch {
         bioText = typeof player.bio === 'string' ? player.bio : "";
@@ -61,11 +63,14 @@ export const PlayerCard = ({ player, viewMode = "grid" }: PlayerCardProps) => {
     // Truncate bio
     const truncatedBio = bioText.length > 200 ? bioText.substring(0, 200) + "..." : bioText;
 
+    // Format DOB with age
+    const dobDisplay = dateOfBirth ? `${dateOfBirth} (${player.age})` : `Age ${player.age}`;
+
     return (
       <Link
         ref={cardRef}
         to={`/stars/${playerSlug}`}
-        className="group relative flex items-start gap-8 p-8 overflow-hidden transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary hover:bg-card border-b border-border last:border-b-0"
+        className="group relative flex items-start gap-8 p-8 overflow-hidden transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary hover:bg-card border-b border-border last:border-b-0 hover:border-primary hover:border-l-4 hover:border-r-4"
       >
         {/* Player Image */}
         <div className="relative w-32 h-44 flex-shrink-0 overflow-hidden rounded-lg shadow-lg">
@@ -76,12 +81,6 @@ export const PlayerCard = ({ player, viewMode = "grid" }: PlayerCardProps) => {
               isInView ? "grayscale-0" : "grayscale"
             } md:grayscale md:group-hover:grayscale-0`}
           />
-          {/* Position badge */}
-          <div className="absolute top-3 right-3">
-            <span className="text-lg text-primary tracking-wider font-bebas bg-black/80 px-2 py-1 rounded">
-              {player.position}
-            </span>
-          </div>
         </div>
 
         {/* Player Info */}
@@ -111,7 +110,9 @@ export const PlayerCard = ({ player, viewMode = "grid" }: PlayerCardProps) => {
             </div>
             
             <div className="flex gap-4 text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-4">
-              <span>Age {player.age}</span>
+              <span>{player.position}</span>
+              <span>•</span>
+              <span>{dobDisplay}</span>
               <span>•</span>
               <span>{player.nationality}</span>
             </div>
