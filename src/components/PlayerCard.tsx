@@ -132,6 +132,16 @@ export const PlayerCard = ({ player, viewMode = "grid" }: PlayerCardProps) => {
           }`}
         />
         
+        {/* Position badge - top right, smaller on mobile */}
+        <div className="absolute top-4 right-4 z-[5]">
+          <span className="text-xl md:text-3xl text-primary tracking-wider" style={{ fontFamily: "'BBH Sans Bartle', 'Bebas Neue', sans-serif" }}>
+            {player.position}
+          </span>
+        </div>
+
+        {/* Hover Background - Black shade */}
+        <div className="absolute inset-0 bg-black/90 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10" />
+        
         {/* Hover Layer - transparent background image (shown on hover) */}
         {player.hover_image_url && (
           <img
@@ -140,15 +150,9 @@ export const PlayerCard = ({ player, viewMode = "grid" }: PlayerCardProps) => {
             className="absolute inset-0 w-full h-full object-cover transition-all duration-700 z-20 opacity-0 md:group-hover:opacity-100"
           />
         )}
-        {/* Position badge - top right, smaller on mobile */}
-        <div className="absolute top-4 right-4 z-5">
-          <span className="text-xl md:text-3xl text-primary tracking-wider" style={{ fontFamily: "'BBH Sans Bartle', 'Bebas Neue', sans-serif" }}>
-            {player.position}
-          </span>
-        </div>
 
-        {/* Hover Overlay - Key Info */}
-        <div className="absolute inset-0 bg-black/90 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-between p-6 z-30">
+        {/* Hover Overlay - Key Info (in front of everything) */}
+        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-between p-6 z-30">
           {/* Top Section */}
           <div className="grid grid-cols-2 gap-4">
             {/* Age */}
