@@ -418,6 +418,12 @@ export const Header = () => {
           {/* Logo - Center - navigates to role-specific page */}
           <Link 
             to={(() => {
+              // First priority: Use role from subdomain
+              if (currentRole && roleConfigs[currentRole]) {
+                return roleConfigs[currentRole].route;
+              }
+              
+              // Second priority: Detect from path
               const path = location.pathname;
               if (path.startsWith('/clubs')) return '/clubs';
               if (path.startsWith('/coaches')) return '/coaches';
@@ -425,7 +431,9 @@ export const Header = () => {
               if (path.startsWith('/agents')) return '/agents';
               if (path.startsWith('/business')) return '/business';
               if (path.startsWith('/media')) return '/media';
-              if (path.startsWith('/players') || path.startsWith('/stars') || path.startsWith('/performance') || path.startsWith('/news') || path.startsWith('/between-the-lines')) return '/players';
+              if (path.startsWith('/players') || path.startsWith('/playersmore') || path.startsWith('/stars') || path.startsWith('/performance') || path.startsWith('/news') || path.startsWith('/between-the-lines')) return '/playersmore';
+              
+              // Only return '/' if truly on the main landing page with no subdomain
               return '/';
             })()}
             className="absolute left-1/2 transform -translate-x-1/2 z-10"

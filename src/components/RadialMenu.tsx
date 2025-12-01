@@ -168,7 +168,7 @@ export const RadialMenu = () => {
 
   // Role selection menu items
   const roleMenuItems: MenuItem[] = [
-    { to: "/players", labelKey: "roles.players", fallback: "PLAYERS", Icon: Users, angle: 0 },
+    { to: "/playersmore", labelKey: "roles.players", fallback: "PLAYERS", Icon: Users, angle: 0 },
     { to: "/clubs", labelKey: "roles.clubs", fallback: "CLUBS", Icon: Trophy, angle: 51.4 },
     { to: "/scouts", labelKey: "roles.scouts", fallback: "SCOUTS", Icon: Search, angle: 102.8 },
     { to: "/agents", labelKey: "roles.agents", fallback: "AGENTS", Icon: Briefcase, angle: 154.3 },
