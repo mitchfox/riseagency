@@ -52,7 +52,7 @@ export const PlayerCard = ({ player, viewMode = "grid" }: PlayerCardProps) => {
       try {
         const parsed = JSON.parse(player.bio);
         if (typeof parsed === 'object' && parsed !== null) {
-          bioText = parsed.overview || parsed.description || "";
+          bioText = parsed.bio || parsed.overview || parsed.description || "";
         }
       } catch {
         bioText = typeof player.bio === 'string' ? player.bio : "";
