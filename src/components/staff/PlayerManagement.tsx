@@ -222,6 +222,12 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
     }
   };
 
+  const handlePlayerSelect = (playerId: string) => {
+    setSelectedPlayerId(playerId);
+    // Scroll to top when selecting a player since content is at top
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const handleMainTabChange = (value: string) => {
     setActiveTab(value);
     
@@ -868,7 +874,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
     <div className="flex h-full gap-4 flex-col md:flex-row">
       {/* Mobile Player Selector */}
       <div className="md:hidden px-3 pb-3">
-        <Select value={selectedPlayerId || undefined} onValueChange={setSelectedPlayerId}>
+        <Select value={selectedPlayerId || undefined} onValueChange={handlePlayerSelect}>
           <SelectTrigger className="w-full">
             <SelectValue placeholder="Select a player" />
           </SelectTrigger>
@@ -920,7 +926,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
           <button
             key={player.id}
             ref={(el) => (playerRefs.current[player.id] = el)}
-            onClick={() => setSelectedPlayerId(player.id)}
+            onClick={() => handlePlayerSelect(player.id)}
             className={`relative group transition-all ${
               selectedPlayerId === player.id 
                 ? 'opacity-100 ring-2 ring-primary' 
@@ -929,7 +935,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
             title={player.name}
           >
             <Avatar className="w-14 h-14">
-              <AvatarImage src={player.image_url || undefined} alt={player.name} />
+              <AvatarImage src={player.image_url || undefined} alt={player.name} className="object-cover" />
               <AvatarFallback className="text-xs">{(player.name || '').split(' ').filter(n => n).map(n => n[0]).join('') || '??'}</AvatarFallback>
             </Avatar>
           </button>
@@ -945,7 +951,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
           <button
             key={player.id}
             ref={(el) => (playerRefs.current[player.id] = el)}
-            onClick={() => setSelectedPlayerId(player.id)}
+            onClick={() => handlePlayerSelect(player.id)}
             className={`relative group transition-all ${
               selectedPlayerId === player.id 
                 ? 'opacity-100 ring-2 ring-primary' 
@@ -954,7 +960,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
             title={player.name}
           >
             <Avatar className="w-14 h-14">
-              <AvatarImage src={player.image_url || undefined} alt={player.name} />
+              <AvatarImage src={player.image_url || undefined} alt={player.name} className="object-cover" />
               <AvatarFallback className="text-xs">{(player.name || '').split(' ').filter(n => n).map(n => n[0]).join('') || '??'}</AvatarFallback>
             </Avatar>
           </button>
@@ -970,7 +976,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
           <button
             key={player.id}
             ref={(el) => (playerRefs.current[player.id] = el)}
-            onClick={() => setSelectedPlayerId(player.id)}
+            onClick={() => handlePlayerSelect(player.id)}
             className={`relative group transition-all ${
               selectedPlayerId === player.id 
                 ? 'opacity-100 ring-2 ring-primary' 
@@ -979,7 +985,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
             title={player.name}
           >
             <Avatar className="w-14 h-14">
-              <AvatarImage src={player.image_url || undefined} alt={player.name} />
+              <AvatarImage src={player.image_url || undefined} alt={player.name} className="object-cover" />
               <AvatarFallback className="text-xs">{(player.name || '').split(' ').filter(n => n).map(n => n[0]).join('') || '??'}</AvatarFallback>
             </Avatar>
           </button>
@@ -1002,7 +1008,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                       <Card 
                         key={player.id} 
                         className="cursor-pointer hover:shadow-lg transition-all overflow-hidden"
-                        onClick={() => setSelectedPlayerId(player.id)}
+                        onClick={() => handlePlayerSelect(player.id)}
                       >
                         <div className="flex flex-col sm:flex-row h-full">
                           {/* Image Section - Top on mobile, Left on desktop */}
@@ -1072,12 +1078,12 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                       <Card 
                         key={player.id} 
                         className="cursor-pointer hover:shadow-lg transition-all"
-                        onClick={() => setSelectedPlayerId(player.id)}
+                        onClick={() => handlePlayerSelect(player.id)}
                       >
                         <CardHeader className="pb-3">
                           <div className="flex items-start gap-3">
                             <Avatar className="w-16 h-16">
-                              <AvatarImage src={player.image_url || undefined} alt={player.name} />
+                              <AvatarImage src={player.image_url || undefined} alt={player.name} className="object-cover" />
                               <AvatarFallback>{(player.name || '').split(' ').filter(n => n).map(n => n[0]).join('') || '??'}</AvatarFallback>
                             </Avatar>
                             <div className="flex-1 min-w-0">
@@ -1136,12 +1142,12 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                       <Card 
                         key={player.id} 
                         className="cursor-pointer hover:shadow-lg transition-all"
-                        onClick={() => setSelectedPlayerId(player.id)}
+                        onClick={() => handlePlayerSelect(player.id)}
                       >
                         <CardHeader className="pb-3">
                           <div className="flex items-start gap-3">
                             <Avatar className="w-16 h-16">
-                              <AvatarImage src={player.image_url || undefined} alt={player.name} />
+                              <AvatarImage src={player.image_url || undefined} alt={player.name} className="object-cover" />
                               <AvatarFallback>{(player.name || '').split(' ').filter(n => n).map(n => n[0]).join('') || '??'}</AvatarFallback>
                             </Avatar>
                             <div className="flex-1 min-w-0">
@@ -1193,7 +1199,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                 <div className="flex flex-col gap-4">
                   <div className="flex items-start gap-3 md:gap-4">
                     <Avatar className="w-14 h-14 md:w-20 md:h-20 flex-shrink-0">
-                      <AvatarImage src={selectedPlayer?.image_url || undefined} alt={selectedPlayer?.name} />
+                      <AvatarImage src={selectedPlayer?.image_url || undefined} alt={selectedPlayer?.name} className="object-cover" />
                       <AvatarFallback className="text-lg md:text-2xl">
                         {(selectedPlayer?.name || '').split(' ').filter(n => n).map(n => n[0]).join('') || '??'}
                       </AvatarFallback>
