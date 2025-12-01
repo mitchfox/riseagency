@@ -148,7 +148,7 @@ export const PlayerCard = ({ player, viewMode = "grid" }: PlayerCardProps) => {
         </div>
 
         {/* Hover Overlay - Key Info */}
-        <div className="absolute inset-0 bg-black/90 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-between p-6 z-10">
+        <div className="absolute inset-0 bg-black/90 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-between p-6 z-30">
           {/* Top Section */}
           <div className="grid grid-cols-2 gap-4">
             {/* Age */}
