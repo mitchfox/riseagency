@@ -4,8 +4,8 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { LocalizedLink } from "@/components/LocalizedLink";
 import { useRoleSubdomain } from "@/hooks/useRoleSubdomain";
 import riseLogoWhite from "@/assets/logo.png";
-import { Home, Star, TrendingUp, BookOpen, Newspaper, MessageCircle, Target, Trophy } from "lucide-react";
-import { useState } from "react";
+import { Home, Star, TrendingUp, BookOpen, Newspaper, MessageCircle, Target, Trophy, Users, Handshake, Briefcase, Search, Calendar, Heart, Package } from "lucide-react";
+import { useState, useMemo } from "react";
 
 interface MenuItem {
   to: string;
@@ -21,9 +21,76 @@ export const RadialMenu = () => {
   const { currentRole, isRoleSubdomain, roleConfigs } = useRoleSubdomain();
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
 
-  // Main menu items arranged in a circle (7 items equally spaced)
-  const mainMenuItems: MenuItem[] = [
-    { to: "/", labelKey: "header.home", fallback: "HOME", Icon: Home, angle: -90 }, // top
+  // Role-specific menu configurations
+  const roleMenus: Record<string, MenuItem[]> = {
+    players: [
+      { to: "/", labelKey: "header.home", fallback: "HOME", Icon: Home, angle: -90 },
+      { to: "/login", labelKey: "header.portal", fallback: "PORTAL", Icon: Users, angle: -38.6 },
+      { to: "/between-the-lines", labelKey: "header.between_the_lines", fallback: "INSIGHTS", Icon: BookOpen, angle: 12.9 },
+      { to: "/playersmore", labelKey: "header.what_we_look_for", fallback: "WHAT WE SEEK", Icon: Search, angle: 64.3 },
+      { to: "/performance", labelKey: "header.performance", fallback: "PERFORMANCE", Icon: TrendingUp, angle: 115.7 },
+      { to: "/stars", labelKey: "header.stars", fallback: "STARS", Icon: Star, angle: 167.1 },
+      { to: "/contact", labelKey: "header.contact", fallback: "REPRESENT ME", Icon: Handshake, angle: 218.6 },
+    ],
+    clubs: [
+      { to: "/", labelKey: "header.home", fallback: "HOME", Icon: Home, angle: -90 },
+      { to: "/clubs", labelKey: "header.club_direction", fallback: "CLUB SUPPORT", Icon: Target, angle: -38.6 },
+      { to: "/stars", labelKey: "header.stars", fallback: "OUR STARS", Icon: Star, angle: 12.9 },
+      { to: "/performance", labelKey: "header.performance", fallback: "PERFORMANCE", Icon: TrendingUp, angle: 64.3 },
+      { to: "/contact", labelKey: "header.declare_interest", fallback: "DECLARE INTEREST", Icon: Users, angle: 115.7 },
+      { to: "/between-the-lines", labelKey: "header.insights", fallback: "INSIGHTS", Icon: BookOpen, angle: 167.1 },
+      { to: "/contact", labelKey: "header.arrange_meeting", fallback: "ARRANGE MEETING", Icon: Calendar, angle: 218.6 },
+    ],
+    agents: [
+      { to: "/", labelKey: "header.home", fallback: "HOME", Icon: Home, angle: -90 },
+      { to: "/stars", labelKey: "header.stars", fallback: "OUR STARS", Icon: Star, angle: -38.6 },
+      { to: "/contact", labelKey: "header.collaboration", fallback: "COLLABORATION", Icon: Handshake, angle: 12.9 },
+      { to: "/contact", labelKey: "header.declare_interest", fallback: "DECLARE INTEREST", Icon: Users, angle: 64.3 },
+      { to: "/between-the-lines", labelKey: "header.insights", fallback: "INSIGHTS", Icon: BookOpen, angle: 115.7 },
+      { to: "/performance", labelKey: "header.performance", fallback: "PERFORMANCE", Icon: TrendingUp, angle: 167.1 },
+      { to: "/contact", labelKey: "header.arrange_meeting", fallback: "ARRANGE MEETING", Icon: Calendar, angle: 218.6 },
+    ],
+    scouts: [
+      { to: "/", labelKey: "header.home", fallback: "HOME", Icon: Home, angle: -90 },
+      { to: "/playersmore", labelKey: "header.what_we_look_for", fallback: "WHAT WE SEEK", Icon: Search, angle: -38.6 },
+      { to: "/login", labelKey: "header.portal", fallback: "PORTAL", Icon: Users, angle: 12.9 },
+      { to: "/scouts", labelKey: "header.jobs", fallback: "OPPORTUNITIES", Icon: Briefcase, angle: 64.3 },
+      { to: "/stars", labelKey: "header.stars", fallback: "STARS", Icon: Star, angle: 115.7 },
+      { to: "/between-the-lines", labelKey: "header.insights", fallback: "INSIGHTS", Icon: BookOpen, angle: 167.1 },
+      { to: "/contact", labelKey: "header.work_with_us", fallback: "SCOUT FOR RISE", Icon: Handshake, angle: 218.6 },
+    ],
+    coaches: [
+      { to: "/", labelKey: "header.home", fallback: "HOME", Icon: Home, angle: -90 },
+      { to: "/login", labelKey: "header.portal", fallback: "PORTAL", Icon: Users, angle: -38.6 },
+      { to: "/potential", labelKey: "header.performance", fallback: "PERFORMANCE", Icon: TrendingUp, angle: 12.9 },
+      { to: "/stars", labelKey: "header.stars", fallback: "STARS", Icon: Star, angle: 64.3 },
+      { to: "/between-the-lines", labelKey: "header.insights", fallback: "INSIGHTS", Icon: BookOpen, angle: 115.7 },
+      { to: "/contact", labelKey: "header.represent_me", fallback: "REPRESENT ME", Icon: Handshake, angle: 167.1 },
+      { to: "/contact", labelKey: "header.arrange_meeting", fallback: "ARRANGE MEETING", Icon: Calendar, angle: 218.6 },
+    ],
+    media: [
+      { to: "/", labelKey: "header.home", fallback: "HOME", Icon: Home, angle: -90 },
+      { to: "/between-the-lines", labelKey: "header.press_release", fallback: "PRESS", Icon: Newspaper, angle: -38.6 },
+      { to: "/stars", labelKey: "header.stars", fallback: "STARS", Icon: Star, angle: 12.9 },
+      { to: "/contact", labelKey: "header.collaboration", fallback: "COLLABORATION", Icon: Heart, angle: 64.3 },
+      { to: "/performance", labelKey: "header.performance", fallback: "PERFORMANCE", Icon: TrendingUp, angle: 115.7 },
+      { to: "/contact", labelKey: "header.declare_interest", fallback: "DECLARE INTEREST", Icon: Users, angle: 167.1 },
+      { to: "/contact", labelKey: "header.arrange_meeting", fallback: "ARRANGE MEETING", Icon: Calendar, angle: 218.6 },
+    ],
+    business: [
+      { to: "/", labelKey: "header.home", fallback: "HOME", Icon: Home, angle: -90 },
+      { to: "/business", labelKey: "header.packages", fallback: "PACKAGES", Icon: Package, angle: -38.6 },
+      { to: "/stars", labelKey: "header.stars", fallback: "STARS", Icon: Star, angle: 12.9 },
+      { to: "/performance", labelKey: "header.performance", fallback: "PERFORMANCE", Icon: TrendingUp, angle: 64.3 },
+      { to: "/contact", labelKey: "header.declare_interest", fallback: "DECLARE INTEREST", Icon: Users, angle: 115.7 },
+      { to: "/between-the-lines", labelKey: "header.insights", fallback: "INSIGHTS", Icon: BookOpen, angle: 167.1 },
+      { to: "/contact", labelKey: "header.connect", fallback: "CONNECT", Icon: MessageCircle, angle: 218.6 },
+    ],
+  };
+
+  // Default menu for main site
+  const defaultMenu: MenuItem[] = [
+    { to: "/", labelKey: "header.home", fallback: "HOME", Icon: Home, angle: -90 },
     { to: "/stars", labelKey: "header.stars", fallback: "STARS", Icon: Star, angle: -38.6 },
     { to: "/performance", labelKey: "header.realise_potential", fallback: "PERFORMANCE", Icon: TrendingUp, angle: 12.9 },
     { to: "/between-the-lines", labelKey: "header.between_the_lines", fallback: "INSIGHTS", Icon: BookOpen, angle: 64.3 },
@@ -31,6 +98,14 @@ export const RadialMenu = () => {
     { to: "/contact", labelKey: "header.contact", fallback: "CONTACT", Icon: MessageCircle, angle: 167.1 },
     { to: "/potential", labelKey: "header.potential", fallback: "VISION", Icon: Target, angle: 218.6 },
   ];
+
+  // Select menu based on current role
+  const menuItems = useMemo(() => {
+    if (currentRole && roleMenus[currentRole]) {
+      return roleMenus[currentRole];
+    }
+    return defaultMenu;
+  }, [currentRole]);
 
   const isActive = (path: string) => {
     return location.pathname === path || location.pathname.startsWith(path + '/');
@@ -85,7 +160,7 @@ export const RadialMenu = () => {
         </div>
 
         {/* Radial menu items */}
-        {mainMenuItems.map((item) => {
+        {menuItems.map((item) => {
           const pos = getCirclePosition(item.angle, radius);
           const active = isActive(item.to);
           const hovered = hoveredItem === item.to;
