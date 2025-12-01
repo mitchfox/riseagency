@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useXRay } from "@/contexts/XRayContext";
 
 interface FormData {
   opponent: string;
@@ -29,10 +30,17 @@ export const HomeBackground = () => {
   const [actions, setActions] = useState<ActionData[]>([]);
   const [sessionExercises, setSessionExercises] = useState<SessionExercise[]>([]);
   const [sessionName, setSessionName] = useState<string>("");
+  const { xrayState } = useXRay();
+  
+  // Top speed state
+  const [topSpeed, setTopSpeed] = useState(28.5);
+  const [displaySpeed, setDisplaySpeed] = useState(28.5);
+  const targetSpeedRef = useRef(28.5);
+  const baseSpeed = 28.5;
+  const maxSpeed = 35.2;
 
   useEffect(() => {
     const fetchData = async () => {
-      // Fetch form data
       const { data: analysisData } = await supabase
         .from("player_analysis")
         .select("opponent, r90_score, result, analysis_date")
@@ -45,7 +53,6 @@ export const HomeBackground = () => {
         setFormData(analysisData as FormData[]);
       }
 
-      // Fetch positive action scores
       const { data: actionData } = await supabase
         .from("performance_report_actions")
         .select(`
@@ -64,7 +71,6 @@ export const HomeBackground = () => {
         setActions(actionData as unknown as ActionData[]);
       }
 
-      // Fetch current program session - find first session with exercises
       const { data: programData } = await supabase
         .from("player_programs")
         .select("sessions")
@@ -74,7 +80,6 @@ export const HomeBackground = () => {
 
       if (programData?.sessions) {
         const sessions = programData.sessions as Record<string, { exercises?: SessionExercise[] }>;
-        // Find first session with actual exercises
         for (const [name, session] of Object.entries(sessions)) {
           if (session?.exercises && session.exercises.length > 0) {
             setSessionExercises(session.exercises.slice(0, 6));
@@ -88,6 +93,29 @@ export const HomeBackground = () => {
     fetchData();
   }, []);
 
+  // Update top speed based on x-ray intensity
+  useEffect(() => {
+    if (xrayState.isActive && xrayState.intensity > 0) {
+      // Calculate target speed based on intensity
+      targetSpeedRef.current = baseSpeed + (maxSpeed - baseSpeed) * xrayState.intensity;
+    } else {
+      targetSpeedRef.current = baseSpeed;
+    }
+  }, [xrayState]);
+
+  // Animate speed display smoothly
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setDisplaySpeed(prev => {
+        const diff = targetSpeedRef.current - prev;
+        if (Math.abs(diff) < 0.05) return targetSpeedRef.current;
+        return prev + diff * 0.08;
+      });
+    }, 16);
+
+    return () => clearInterval(interval);
+  }, []);
+
   const getR90Color = (score: number) => {
     if (score < 0.6) return "hsl(0, 84%, 60%)";
     if (score < 0.8) return "hsl(25, 95%, 53%)";
@@ -96,7 +124,16 @@ export const HomeBackground = () => {
     return "hsl(142, 76%, 36%)";
   };
 
+  const getSpeedColor = (speed: number) => {
+    const ratio = (speed - baseSpeed) / (maxSpeed - baseSpeed);
+    if (ratio < 0.3) return "hsl(48, 96%, 53%)";
+    if (ratio < 0.6) return "hsl(35, 100%, 50%)";
+    if (ratio < 0.8) return "hsl(25, 95%, 53%)";
+    return "hsl(0, 84%, 60%)";
+  };
+
   const reversedFormData = [...formData].reverse();
+  const speedProgress = ((displaySpeed - baseSpeed) / (maxSpeed - baseSpeed)) * 100;
 
   return (
     <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
@@ -151,7 +188,49 @@ export const HomeBackground = () => {
       </div>
 
       {/* RIGHT COLUMN - Programming & Stats */}
-      <div className="absolute right-4 md:right-8 top-24 bottom-32 w-[200px] md:w-[280px] flex flex-col gap-8 z-[1]">
+      <div className="absolute right-4 md:right-8 top-24 bottom-32 w-[200px] md:w-[280px] flex flex-col gap-6 z-[1]">
+        {/* TOP SPEED - Dynamic */}
+        <div 
+          className="transition-opacity duration-300"
+          style={{ opacity: xrayState.isActive ? 0.6 : 0.25 }}
+        >
+          <div className="font-bebas text-sm uppercase tracking-widest text-primary mb-3 border-b border-primary/30 pb-1">
+            Top Speed
+          </div>
+          <div className="bg-card/40 border border-primary/30 rounded-lg p-4">
+            <div className="flex items-baseline gap-2 mb-2">
+              <span 
+                className="text-4xl md:text-5xl font-bebas tabular-nums transition-colors duration-200"
+                style={{ color: getSpeedColor(displaySpeed) }}
+              >
+                {displaySpeed.toFixed(1)}
+              </span>
+              <span className="text-lg font-bebas text-foreground/60">km/h</span>
+            </div>
+            {/* Speed bar */}
+            <div className="h-2 bg-background/50 rounded-full overflow-hidden">
+              <div 
+                className="h-full rounded-full transition-all duration-100"
+                style={{ 
+                  width: `${Math.min(speedProgress, 100)}%`,
+                  backgroundColor: getSpeedColor(displaySpeed),
+                  boxShadow: `0 0 10px ${getSpeedColor(displaySpeed)}`
+                }}
+              />
+            </div>
+            <div className="flex justify-between mt-1">
+              <span className="text-[8px] text-muted-foreground">{baseSpeed} km/h</span>
+              <span className="text-[8px] text-muted-foreground">{maxSpeed} km/h</span>
+            </div>
+            {/* Minute indicator when x-ray active */}
+            {xrayState.intensity > 0.5 && (
+              <div className="mt-2 text-[10px] text-primary/80 font-mono animate-pulse">
+                LIVE TRACKING • {Math.floor(Date.now() / 1000 % 90)}'
+              </div>
+            )}
+          </div>
+        </div>
+
         {/* Gym Program */}
         {sessionExercises.length > 0 && (
           <div className="opacity-[0.35]">
@@ -159,7 +238,7 @@ export const HomeBackground = () => {
               {sessionName || "Training Program"}
             </div>
             <div className="space-y-2">
-              {sessionExercises.slice(0, 5).map((exercise, i) => (
+              {sessionExercises.slice(0, 4).map((exercise, i) => (
                 <div key={i} className="bg-card/40 border border-border/40 rounded px-2 py-1.5">
                   <div className="text-[9px] font-medium text-foreground/80 truncate">{exercise.name}</div>
                   <div className="text-[8px] text-muted-foreground flex gap-2">

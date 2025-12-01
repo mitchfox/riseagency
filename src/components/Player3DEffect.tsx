@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from "react"
 import * as THREE from "three"
 import JSZip from "jszip"
+import { useXRay } from "@/contexts/XRayContext"
 
 interface Player3DEffectProps {
   className?: string
@@ -11,6 +12,7 @@ interface Player3DEffectProps {
 export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
   const containerRef = useRef<HTMLDivElement>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const { setXrayState } = useXRay()
   const sceneRef = useRef<{
     scene: THREE.Scene
     camera: THREE.OrthographicCamera
@@ -183,7 +185,7 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
       }
     `
 
-    // Fragment shader with alpha, roughness, and lighting
+    // Fragment shader with gold tint x-ray (same image, different treatment)
     const fragmentShader = `
       uniform sampler2D baseTexture;
       uniform sampler2D xrayTexture;
@@ -193,6 +195,8 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
       uniform float xrayRadius;
       uniform float roughness;
       uniform float isAutoReveal;
+      uniform vec2 xrayOffset;
+      uniform float xrayScale;
       
       varying vec2 vUv;
       varying vec3 vNormal;
@@ -206,7 +210,14 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
       
       void main() {
         vec4 baseColor = texture2D(baseTexture, vUv);
-        vec4 xrayColor = texture2D(xrayTexture, vUv);
+        
+        // Sample x-ray with offset and scale to align
+        vec2 xrayUV = (vUv - 0.5) * xrayScale + 0.5 + xrayOffset;
+        vec4 xrayColor = texture2D(xrayTexture, xrayUV);
+        
+        // Check if xray UV is valid
+        float xrayValid = step(0.0, xrayUV.x) * step(xrayUV.x, 1.0) * step(0.0, xrayUV.y) * step(xrayUV.y, 1.0);
+        xrayColor = mix(baseColor, xrayColor, xrayValid * xrayColor.a);
         
         // Alpha from base texture
         float alpha = baseColor.a;
@@ -222,7 +233,7 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         float xrayMask = 1.0 - smoothstep(xrayRadius - 0.03, xrayRadius + 0.01, distToMouse);
         
         // Mix base and x-ray based on mouse proximity
-        vec4 color = mix(baseColor, xrayColor, xrayMask);
+        vec4 color = mix(baseColor, xrayColor, xrayMask * xrayValid);
         
         // === LIGHTING & ROUGHNESS for base image ===
         vec3 normal = normalize(vNormal);
@@ -230,23 +241,23 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         
         // Diffuse lighting
         float NdotL = max(dot(normal, lightDir), 0.0);
-        float diffuse = NdotL * 0.3 + 0.7; // Ambient + diffuse
+        float diffuse = NdotL * 0.3 + 0.7;
         
-        // Specular (affected by roughness - lower roughness = sharper highlights)
+        // Specular (affected by roughness)
         vec3 halfDir = normalize(lightDir + viewDir);
         float NdotH = max(dot(normal, halfDir), 0.0);
-        float specPower = mix(64.0, 4.0, roughness); // Roughness controls sharpness
+        float specPower = mix(64.0, 4.0, roughness);
         float specular = pow(NdotH, specPower) * (1.0 - roughness) * 0.4;
         
-        // Rim lighting (edge glow)
+        // Rim lighting
         float rim = 1.0 - max(dot(viewDir, normal), 0.0);
         rim = pow(rim, 3.0) * 0.25;
         
-        // Fresnel effect for roughness visualization
+        // Fresnel effect
         float fresnel = pow(1.0 - max(dot(viewDir, normal), 0.0), 3.0);
         float fresnelRoughness = fresnel * (1.0 - roughness) * 0.15;
         
-        // Apply lighting to base image (not x-ray)
+        // Apply lighting
         vec3 litColor = color.rgb * diffuse;
         litColor += goldColor * specular * (1.0 - xrayMask);
         litColor += goldColor * rim * (1.0 - xrayMask);
@@ -260,15 +271,13 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         if (xrayMask > 0.0) {
           float shimmer = sin(time * 3.0 + vUv.x * 20.0 + vUv.y * 20.0) * 0.05 + 0.95;
           litColor *= shimmer;
-          
-          // Subtle gold tint in x-ray
           litColor = mix(litColor, litColor * vec3(1.05, 1.0, 0.9), xrayMask * 0.3);
         }
         
         // Auto-reveal pulsing glow
         if (isAutoReveal > 0.5) {
           float pulse = sin(time * 2.0) * 0.1 + 0.9;
-          float autoGlow = xrayMask * pulse * 0.1;
+          float autoGlow = xrayMask * pulse * 0.08;
           litColor += goldColor * autoGlow;
         }
         
@@ -276,7 +285,7 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
       }
     `
 
-    // X-ray shader for effects overlay
+    // X-ray overlay shader
     const xrayOverlayVertexShader = `
       varying vec2 vUv;
       void main() {
@@ -302,7 +311,6 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         vec2 mouseUV = mousePos;
         float distToMouse = length(vUv - mouseUV);
         
-        // Only render inside x-ray area
         if (distToMouse > xrayRadius + 0.08) discard;
         
         float xrayMask = 1.0 - smoothstep(xrayRadius - 0.03, xrayRadius, distToMouse);
@@ -318,31 +326,21 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         angles[3] = -306.0 * PI / 180.0;
         angles[4] = -18.0 * PI / 180.0;
         
-        vec2 toPoint = vUv - playerCenter;
-        float pointAngle = atan(toPoint.y, toPoint.x);
-        float pointDist = length(toPoint);
-        
-        // Draw lines and particles
         for (int i = 0; i < 5; i++) {
           float angle = angles[i];
           vec2 lineDir = vec2(cos(angle), sin(angle));
-          
-          // Line distance calculation
           float lineLength = 0.25 + sin(time * 2.5 + float(i) * 1.2) * 0.08;
           vec2 lineEnd = playerCenter + lineDir * lineLength;
           
-          // Point to line distance
           vec2 pa = vUv - playerCenter;
           vec2 ba = lineEnd - playerCenter;
           float h = clamp(dot(pa, ba) / dot(ba, ba), 0.0, 1.0);
           float lineDist = length(pa - ba * h);
           
-          // Line glow
           float lineGlow = smoothstep(0.006, 0.0, lineDist);
           color += goldColor * lineGlow * 0.8 * xrayMask;
           alpha = max(alpha, lineGlow * 0.9 * xrayMask);
           
-          // Streaming particles
           for (int p = 0; p < 6; p++) {
             float particleProgress = fract(time * 0.5 + float(p) * 0.12 + float(i) * 0.2);
             vec2 particlePos = playerCenter + lineDir * lineLength * particleProgress;
@@ -353,7 +351,6 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
             alpha = max(alpha, particleGlow * particleAlpha * xrayMask);
           }
           
-          // End nodes
           float endDist = length(vUv - lineEnd);
           float endGlow = smoothstep(0.018, 0.004, endDist);
           color += goldColor * endGlow * xrayMask;
@@ -374,21 +371,18 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         color += goldColor * cursorGlow;
         alpha = max(alpha, cursorGlow * 0.9);
         
-        // Inner ring around cursor
         float ringDist = abs(cursorDist - 0.022);
         float ringGlow = smoothstep(0.004, 0.0, ringDist) * cursorPulse * 0.6;
         color += goldColor * ringGlow;
         alpha = max(alpha, ringGlow);
         
-        // Falling particles from edge (reduced for auto-reveal)
+        // Falling particles
         float particleIntensity = isAutoReveal > 0.5 ? 0.5 : 1.0;
         for (int i = 0; i < 12; i++) {
           float particleAngle = float(i) / 12.0 * 2.0 * PI + time * 0.3;
           float fallProgress = fract(time * 0.8 + float(i) * 0.15);
-          
           vec2 startPos = mouseUV + vec2(cos(particleAngle), sin(particleAngle)) * xrayRadius;
           vec2 fallPos = startPos + vec2(sin(time * 2.0 + float(i)) * 0.02, fallProgress * 0.12);
-          
           float fallDist = length(vUv - fallPos);
           float fallAlpha = (1.0 - fallProgress) * 0.6 * particleIntensity;
           float fallGlow = smoothstep(0.008, 0.0, fallDist) * fallAlpha;
@@ -396,12 +390,11 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
           alpha = max(alpha, fallGlow);
         }
         
-        // Rotating sparks around circle edge (no visible border line)
+        // Rotating sparks
         for (int i = 0; i < 8; i++) {
           float sparkAngle = float(i) / 8.0 * 2.0 * PI + time * 2.0;
           float sparkRadius = xrayRadius + 0.012 + sin(time * 5.0 + float(i)) * 0.006;
           vec2 sparkPos = mouseUV + vec2(cos(sparkAngle), sin(sparkAngle)) * sparkRadius;
-          
           float sparkDist = length(vUv - sparkPos);
           float sparkAlpha = 0.5 + sin(time * 8.0 + float(i) * 2.0) * 0.4;
           float sparkGlow = smoothstep(0.006, 0.0, sparkDist) * sparkAlpha;
@@ -423,10 +416,8 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
 
       const { baseImage, xrayImage } = images
 
-      // Create scene
       const scene = new THREE.Scene()
       
-      // Orthographic camera for 2D-like rendering with depth
       const aspect = container.clientWidth / container.clientHeight
       const frustumSize = 2
       const camera = new THREE.OrthographicCamera(
@@ -439,7 +430,6 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
       )
       camera.position.z = 5
 
-      // Renderer
       const renderer = new THREE.WebGLRenderer({ 
         antialias: true, 
         alpha: true,
@@ -450,7 +440,6 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
       renderer.setClearColor(0x000000, 0)
       container.appendChild(renderer.domElement)
 
-      // Create textures
       const baseTexture = new THREE.Texture(baseImage)
       baseTexture.needsUpdate = true
       baseTexture.minFilter = THREE.LinearFilter
@@ -461,14 +450,13 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
       xrayTexture.minFilter = THREE.LinearFilter
       xrayTexture.magFilter = THREE.LinearFilter
 
-      // Calculate dimensions
       const isMobile = container.clientWidth < 768
       const imgAspect = baseImage.width / baseImage.height
       
       let planeHeight = isMobile ? 1.4 : 1.6
       let planeWidth = planeHeight * imgAspect
 
-      // Uniforms
+      // Uniforms with x-ray alignment adjustments
       const uniforms = {
         baseTexture: { value: baseTexture },
         xrayTexture: { value: xrayTexture },
@@ -479,10 +467,11 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         depthScale: { value: 0.12 },
         roughness: { value: 0.5 },
         playerCenter: { value: new THREE.Vector2(0.5, 0.55) },
-        isAutoReveal: { value: 1.0 }
+        isAutoReveal: { value: 1.0 },
+        xrayOffset: { value: new THREE.Vector2(0.0, 0.02) }, // Offset to align x-ray image
+        xrayScale: { value: 0.88 } // Scale adjustment for x-ray
       }
 
-      // Player mesh with depth shader
       const geometry = new THREE.PlaneGeometry(planeWidth, planeHeight, 128, 128)
       const material = new THREE.ShaderMaterial({
         uniforms,
@@ -497,7 +486,6 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
       playerMesh.position.y = isMobile ? 0.15 : 0.05
       scene.add(playerMesh)
 
-      // X-ray overlay mesh (slightly in front)
       const overlayGeometry = new THREE.PlaneGeometry(3, 3)
       const overlayMaterial = new THREE.ShaderMaterial({
         uniforms,
@@ -512,7 +500,6 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
       xrayMesh.position.z = 0.01
       scene.add(xrayMesh)
 
-      // Store refs
       sceneRef.current = {
         scene,
         camera,
@@ -525,11 +512,10 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
 
       setIsLoading(false)
 
-      // Auto-reveal path parameters
       const autoRevealSpeed = 0.15
       let autoTime = Math.random() * 100
+      let xrayIntensity = 0
 
-      // Animation loop
       const animate = () => {
         animationId = requestAnimationFrame(animate)
         
@@ -537,48 +523,47 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         uniforms.time.value += 0.016
         autoTime += 0.016
         
-        // Check if user is interacting (within last 2 seconds)
         const timeSinceInteraction = currentTime - lastInteractionRef.current
         const isUserInteracting = timeSinceInteraction < 2000
         
         if (isUserInteracting) {
-          // User is controlling - use mouse position
           uniforms.isAutoReveal.value = 0.0
           const rect = container.getBoundingClientRect()
           const mouseX = (mouseRef.current.x - rect.left) / rect.width
           const mouseY = 1 - (mouseRef.current.y - rect.top) / rect.height
           uniforms.mousePos.value.set(mouseX, mouseY)
+          xrayIntensity = Math.min(1, xrayIntensity + 0.05)
         } else {
-          // Auto-reveal mode - organic blob movement across player
           uniforms.isAutoReveal.value = 1.0
           
-          // Lissajous curve for smooth, organic movement
           const a = 3, b = 2
           const delta = Math.PI / 4
-          
-          // Base position centered on player (0.35 to 0.65 horizontal, 0.35 to 0.75 vertical)
           const baseX = 0.5
           const baseY = 0.55
           const rangeX = 0.15
           const rangeY = 0.2
           
-          // Primary movement
           const x1 = Math.sin(autoTime * autoRevealSpeed * a + delta) * rangeX
           const y1 = Math.sin(autoTime * autoRevealSpeed * b) * rangeY
-          
-          // Secondary wobble for organic feel
           const wobbleX = Math.sin(autoTime * 0.7) * 0.03
           const wobbleY = Math.cos(autoTime * 0.5) * 0.04
           
           const autoX = baseX + x1 + wobbleX
           const autoY = baseY + y1 + wobbleY
           
-          // Smooth transition
           autoRevealPosRef.current.x += (autoX - autoRevealPosRef.current.x) * 0.05
           autoRevealPosRef.current.y += (autoY - autoRevealPosRef.current.y) * 0.05
           
           uniforms.mousePos.value.set(autoRevealPosRef.current.x, autoRevealPosRef.current.y)
+          xrayIntensity = 0.7 + Math.sin(autoTime * 0.5) * 0.3
         }
+        
+        // Update context for HomeBackground
+        setXrayState({
+          isActive: true,
+          intensity: xrayIntensity,
+          position: { x: uniforms.mousePos.value.x, y: uniforms.mousePos.value.y }
+        })
         
         renderer.render(scene, camera)
         
@@ -592,7 +577,6 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
 
     initScene()
 
-    // Mouse/touch handlers
     const handleMouseMove = (e: MouseEvent) => {
       mouseRef.current = { x: e.clientX, y: e.clientY }
       lastInteractionRef.current = Date.now()
@@ -612,7 +596,6 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
       }
     }
 
-    // Resize handler
     const handleResize = () => {
       if (!sceneRef.current || !container) return
       
@@ -629,7 +612,6 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
       renderer.setSize(container.clientWidth, container.clientHeight)
       uniforms.resolution.value.set(container.clientWidth, container.clientHeight)
       
-      // Update player position for mobile
       const isMobile = container.clientWidth < 768
       if (playerMesh) {
         playerMesh.position.y = isMobile ? 0.15 : 0.05
@@ -655,7 +637,7 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         }
       }
     }
-  }, [loadImages])
+  }, [loadImages, setXrayState])
 
   return (
     <div 
