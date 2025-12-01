@@ -123,7 +123,7 @@ export const RadialMenu = () => {
     <div className="fixed inset-0 flex items-center justify-center z-[200] overflow-hidden bg-[#0a0a0a]">
       {/* White pulse animation from center */}
       <div className="absolute inset-0 flex items-center justify-center">
-        <div className="absolute w-4 h-4 bg-white rounded-full animate-[pulse-expand_3s_ease-out_infinite]" />
+        <div className="absolute w-4 h-4 bg-white rounded-full animate-[pulse-expand_6s_ease-out_infinite]" />
       </div>
       {/* Grid pattern background */}
       <div 
@@ -262,10 +262,10 @@ export const RadialMenu = () => {
             backgroundPosition: 'center',
           }}
         >
-          <img src={riseLogoBlack} alt="RISE" className="w-20 h-20 md:w-24 md:h-24 mb-1" />
+          <img src={riseLogoBlack} alt="RISE" className="w-30 h-30 md:w-36 md:h-36 mb-1" />
           <div className="text-center">
-            <p className="text-black font-bebas text-base md:text-lg tracking-[0.25em]">
-              {isRoleSubdomain && currentRole 
+            <p className="text-black font-bebas text-2xl md:text-3xl tracking-[0.25em]">
+              {currentRole && roleConfigs[currentRole] 
                 ? roleConfigs[currentRole].name.toUpperCase()
                 : "MENU"
               }
