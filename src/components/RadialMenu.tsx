@@ -113,7 +113,7 @@ export const RadialMenu = () => {
     };
   };
 
-  const radius = 220; // Distance from center
+  const radius = 210; // Distance from center
   const circleSize = 600; // Main circle diameter
 
   const segmentAngle = 360 / menuItems.length;
@@ -165,7 +165,7 @@ export const RadialMenu = () => {
               key={`divider-${index}`}
               className="absolute top-1/2 left-1/2 origin-left h-[1px] bg-primary/30 pointer-events-none"
               style={{
-                width: `${circleSize / 2}px`,
+                width: `${circleSize / 2.2}px`,
                 transform: `rotate(${angle}deg)`,
               }}
             />
@@ -182,7 +182,7 @@ export const RadialMenu = () => {
             <svg
               key={`slice-${item.to}`}
               viewBox={`0 0 ${circleSize} ${circleSize}`}
-              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none"
+              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
               style={{
                 width: `${circleSize}px`,
                 height: `${circleSize}px`,
@@ -198,6 +198,8 @@ export const RadialMenu = () => {
                 fill={hovered ? "rgba(255,255,255,1)" : "rgba(128,128,128,0.1)"}
                 stroke="rgba(255,255,255,0.4)"
                 strokeWidth="1.5"
+                onMouseEnter={() => setHoveredItem(index)}
+                onMouseLeave={() => setHoveredItem(null)}
               />
             </svg>
           );
@@ -268,7 +270,7 @@ export const RadialMenu = () => {
           />
           <div
             className="text-center"
-            style={{ transform: 'translateY(-33px)' }}
+            style={{ transform: 'translateY(-45px)' }}
           >
             <p className="text-black font-bebas text-2xl md:text-3xl tracking-[0.05em]">
               {currentRole && roleConfigs[currentRole]
