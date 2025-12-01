@@ -4,6 +4,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { LocalizedLink } from "@/components/LocalizedLink";
 import { useRoleSubdomain } from "@/hooks/useRoleSubdomain";
 import { useLocalizedNavigate } from "@/hooks/useLocalizedNavigate";
+import { useIsMobile } from "@/hooks/use-mobile";
 import riseLogoBlack from "@/assets/RISEBlack.png";
 import whiteMarbleBg from "@/assets/white-marble.png";
 import smudgedMarbleBg from "@/assets/black-marble-smudged.png";
@@ -48,6 +49,7 @@ export const RadialMenu = () => {
   const location = useLocation();
   const navigate = useLocalizedNavigate();
   const { currentRole, isRoleSubdomain, roleConfigs, getRoleUrl, otherRoles } = useRoleSubdomain();
+  const isMobile = useIsMobile();
   const [hoveredItem, setHoveredItem] = useState<number | null>(null);
   const [showMap, setShowMap] = useState(false);
   const [isSelectingRole, setIsSelectingRole] = useState(false);
@@ -203,8 +205,9 @@ export const RadialMenu = () => {
     };
   };
 
-  const radius = 180; // Distance from center
-  const circleSize = 600; // Main circle diameter
+  // Responsive sizing - scale down for mobile
+  const radius = isMobile ? 100 : 180; // Distance from center
+  const circleSize = isMobile ? 340 : 600; // Main circle diameter
 
   const segmentAngle = 360 / menuItems.length;
 
