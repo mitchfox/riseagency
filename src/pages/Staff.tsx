@@ -647,7 +647,8 @@ const Staff = () => {
                       <CommandItem
                         key={`${result.type}-${result.id}`}
                         onSelect={() => {
-                          handleSectionToggle(result.sectionId as any);
+                          // Always expand the section (don't toggle)
+                          setExpandedSection(result.sectionId as any);
                           setExpandedCategory(
                             categories.find(c => c.sections.some(s => s.id === result.sectionId))?.id || null
                           );
@@ -655,10 +656,12 @@ const Staff = () => {
                           // Navigate with player ID if it's a player search result
                           if (result.type === 'player') {
                             navigate(`/staff?section=${result.sectionId}&player=${result.id}`);
+                            toast.success(`Opening ${result.title} in ${result.section}`);
+                          } else {
+                            toast.success(`Opening ${result.section}`);
                           }
                           
                           setSidebarSearchOpen(false);
-                          toast.success(`Opening ${result.section}`);
                         }}
                         className="cursor-pointer"
                       >
