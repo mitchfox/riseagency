@@ -273,19 +273,18 @@ const PlayerDetail = () => {
           {/* Highlights Video - Full Width 16:9 with Club Logo Overlays */}
           <div className="mb-8">
             <div className="relative aspect-video bg-secondary/30 rounded-lg overflow-hidden border-4 md:border-[6px] border-[hsl(var(--gold))]">
-              {dbHighlights.length > 0 && typeof currentVideoType === 'number' && dbHighlights[currentVideoType]?.videoUrl ? (
-                <>
-                  <LazyVideo 
-                    ref={videoRef}
-                    key={dbHighlights[currentVideoType].videoUrl}
-                    className="w-full h-full object-contain bg-black"
-                    controls
-                    playsInline
-                    preload="metadata"
-                    loop={false}
-                    src={dbHighlights[currentVideoType].videoUrl}
-                    poster={player.hover_image_url || player.image_url || undefined}
-                    onError={(e) => {
+               {dbHighlights.length > 0 && typeof currentVideoType === 'number' && dbHighlights[currentVideoType]?.videoUrl ? (
+                 <>
+                   <LazyVideo 
+                     ref={videoRef}
+                     key={dbHighlights[currentVideoType].videoUrl}
+                     className="w-full h-full object-contain"
+                     controls
+                     playsInline
+                     preload="auto"
+                     loop={false}
+                     src={dbHighlights[currentVideoType].videoUrl}
+                     onError={(e) => {
                       console.error('Video error:', e);
                       console.log('Video URL:', dbHighlights[currentVideoType].videoUrl);
                     }}

@@ -215,17 +215,16 @@ export const HighlightedMatchDisplay = ({ highlightedMatch, onVideoPlayChange }:
 
         {/* Video */}
         {highlightedMatch.video_url && (
-          <div className="bg-black p-5">
-            <div className="aspect-video w-full rounded-lg overflow-hidden shadow-2xl border-2 border-primary/20">
-              <video 
-                ref={videoRef}
-                src={highlightedMatch.video_url}
-                controls
-                className="w-full h-full"
-                playsInline
-                preload="metadata"
-                poster={highlightedMatch.player_image_url || highlightedMatch.away_team_logo || undefined}
-              >
+           <div className="bg-black p-5">
+             <div className="aspect-video w-full rounded-lg overflow-hidden shadow-2xl border-2 border-primary/20">
+               <video 
+                 ref={videoRef}
+                 src={highlightedMatch.video_url}
+                 controls
+                 className="w-full h-full"
+                 playsInline
+                 preload="auto"
+               >
                 Your browser does not support the video tag.
               </video>
             </div>
