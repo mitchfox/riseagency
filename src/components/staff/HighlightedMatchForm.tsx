@@ -209,12 +209,17 @@ export const HighlightedMatchForm = ({ value, onChange, playerAnalyses = [], pla
           <Select 
             value={value.video_url || undefined}
             onValueChange={(videoUrl) => {
-              const selectedHighlight = parsedHighlights.matchHighlights.find((h: any) => h.url === videoUrl);
+              const selectedHighlight = parsedHighlights.matchHighlights.find((h: any) => {
+                const url = h.videoUrl || h.video_url || h.url;
+                return url === videoUrl;
+              });
+
               onChange({
                 ...value,
                 video_url: videoUrl,
-                // Optionally update opponent if it matches
+                // If the highlight carries opponent or club logo info, use it to enrich the card
                 away_team: selectedHighlight?.opponent || value.away_team,
+                away_team_logo: selectedHighlight?.clubLogo || value.away_team_logo,
               });
             }}
           >
@@ -222,12 +227,16 @@ export const HighlightedMatchForm = ({ value, onChange, playerAnalyses = [], pla
               <SelectValue placeholder="Select highlight video..." />
             </SelectTrigger>
             <SelectContent>
-              {parsedHighlights.matchHighlights.map((highlight: any, index: number) => (
-                <SelectItem key={index} value={highlight.url}>
-                  {highlight.clipName || `Highlight ${index + 1}`} 
-                  {highlight.opponent && ` - vs ${highlight.opponent}`}
-                </SelectItem>
-              ))}
+              {parsedHighlights.matchHighlights.map((highlight: any, index: number) => {
+                const url = highlight.videoUrl || highlight.video_url || highlight.url;
+                const label = highlight.name || highlight.clipName || highlight.opponent || `Highlight ${index + 1}`;
+                return (
+                  <SelectItem key={index} value={url}>
+                    {label}
+                    {highlight.opponent && !label.includes(highlight.opponent) && ` - vs ${highlight.opponent}`}
+                  </SelectItem>
+                );
+              })}
             </SelectContent>
           </Select>
         ) : (
