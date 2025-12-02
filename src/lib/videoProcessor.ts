@@ -37,23 +37,6 @@ class VideoProcessor {
   private isPaused = false;
   private currentExportId: string | null = null;
 
-  private checkSharedArrayBufferSupport(): boolean {
-    // Check for crossOriginIsolated which is required for SharedArrayBuffer
-    if (typeof crossOriginIsolated !== 'undefined' && crossOriginIsolated) {
-      return true;
-    }
-    // Fallback check for SharedArrayBuffer availability
-    try {
-      return typeof SharedArrayBuffer !== 'undefined';
-    } catch {
-      return false;
-    }
-  }
-
-  isCrossOriginIsolated(): boolean {
-    return typeof crossOriginIsolated !== 'undefined' && crossOriginIsolated;
-  }
-
   // Export state management
   saveExportState(state: ExportState): void {
     localStorage.setItem(EXPORT_STATE_KEY, JSON.stringify(state));
@@ -95,19 +78,12 @@ class VideoProcessor {
   async load(onProgress?: (progress: ProcessingProgress) => void): Promise<void> {
     if (this.loaded && this.ffmpeg) return;
 
-    // Check for SharedArrayBuffer support
-    if (!this.checkSharedArrayBufferSupport()) {
-      throw new Error(
-        'REFRESH_REQUIRED: Video processing requires cross-origin isolation which is not yet active. ' +
-        'Please refresh the page to enable video processing.'
-      );
-    }
-
     onProgress?.({ stage: 'loading', progress: 0, message: 'Loading video processor...' });
 
     this.ffmpeg = new FFmpeg();
 
-    const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd';
+    // Use single-threaded version which doesn't require SharedArrayBuffer/COOP-COEP headers
+    const baseURL = 'https://unpkg.com/@ffmpeg/core-st@0.12.6/dist/umd';
     
     this.ffmpeg.on('log', ({ message }) => {
       console.log('[FFmpeg]', message);
