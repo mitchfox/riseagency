@@ -15,6 +15,7 @@ import { LazyVideo } from "@/components/LazyVideo";
 import { HighlightedMatchDisplay } from "@/components/HighlightedMatchDisplay";
 import { PlayerStickyHeader } from "@/components/PlayerStickyHeader";
 import blackMarbleBg from "@/assets/black-marble-menu.png";
+import { createPerformanceReportSlug } from "@/lib/urlHelpers";
 
 const PlayerDetail = () => {
   const { playername } = useParams<{ playername: string }>();
@@ -274,6 +275,7 @@ const PlayerDetail = () => {
                     preload="metadata"
                     loop={false}
                     src={dbHighlights[currentVideoType].videoUrl}
+                    poster={player.hover_image_url || player.image_url || undefined}
                     onError={(e) => {
                       console.error('Video error:', e);
                       console.log('Video URL:', dbHighlights[currentVideoType].videoUrl);
@@ -670,7 +672,10 @@ const PlayerDetail = () => {
           {/* Highlighted Match Section - Only for represented/mandated players visible on stars page */}
           {player.highlighted_match && player.visible_on_stars_page && (
             <HighlightedMatchDisplay 
-              highlightedMatch={player.highlighted_match}
+              highlightedMatch={{
+                ...player.highlighted_match,
+                player_image_url: player.image_url,
+              }}
               onVideoPlayChange={(isPlaying) => {
                 if (isPlaying && videoRef.current) {
                   videoRef.current.pause();
@@ -708,7 +713,8 @@ const PlayerDetail = () => {
                     stats: stats,
                     video_url: report.video_url || "",
                     full_match_url: "",
-                    r90_report_url: report.pdf_url || "",
+                    r90_report_url: createPerformanceReportSlug(player.name, report.opponent || "opposition", report.id),
+                    player_image_url: player.image_url,
                   };
 
                   return (

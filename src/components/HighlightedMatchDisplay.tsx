@@ -18,6 +18,7 @@ interface HighlightedMatchProps {
     video_url: string;
     full_match_url: string;
     r90_report_url: string;
+    player_image_url?: string;
   };
   onVideoPlayChange?: (isPlaying: boolean) => void;
 }
@@ -223,6 +224,7 @@ export const HighlightedMatchDisplay = ({ highlightedMatch, onVideoPlayChange }:
                 className="w-full h-full"
                 playsInline
                 preload="metadata"
+                poster={highlightedMatch.player_image_url || highlightedMatch.away_team_logo || undefined}
               >
                 Your browser does not support the video tag.
               </video>
