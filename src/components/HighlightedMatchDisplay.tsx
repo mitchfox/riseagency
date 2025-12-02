@@ -224,7 +224,6 @@ export const HighlightedMatchDisplay = ({ highlightedMatch, onVideoPlayChange }:
                 className="w-full h-full"
                 playsInline
                 preload="metadata"
-                poster={highlightedMatch.player_image_url || highlightedMatch.away_team_logo || undefined}
               >
                 Your browser does not support the video tag.
               </video>
