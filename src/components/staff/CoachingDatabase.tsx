@@ -16,9 +16,10 @@ import { Plus, Edit, Trash2, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, 
 import { ExerciseDatabaseSelector } from "./ExerciseDatabaseSelector";
 import { R90RatingsManagement } from "./R90RatingsManagement";
 import { TacticalSchemes } from "./TacticalSchemes";
+import { SchemeEditor } from "./SchemeEditor";
 
 
-type TableType = 'coaching_sessions' | 'coaching_programmes' | 'coaching_drills' | 'coaching_exercises' | 'coaching_analysis' | 'psychological_sessions' | 'coaching_aphorisms' | 'r90_ratings' | 'tactical_schemes' | 'performance_statistics';
+type TableType = 'coaching_sessions' | 'coaching_programmes' | 'coaching_drills' | 'coaching_exercises' | 'coaching_analysis' | 'psychological_sessions' | 'coaching_aphorisms' | 'r90_ratings' | 'tactical_schemes' | 'performance_statistics' | 'scheme_view';
 
 interface Exercise {
   name: string;
@@ -135,6 +136,13 @@ const tableConfigs = {
     icon: LineChart,
     color: 'rose',
   },
+  scheme_view: {
+    label: 'Scheme View',
+    singular: 'Scheme',
+    fields: [],
+    icon: Target,
+    color: 'indigo',
+  },
 };
 
 const getScoreColor = (score: number | string | null) => {
@@ -222,8 +230,8 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
   }, [currentPage]);
 
   const fetchCategories = async () => {
-    // Skip for aphorisms, tactical schemes, and performance statistics as they don't have category/tags
-    if (activeTab === 'coaching_aphorisms' || activeTab === 'tactical_schemes' || activeTab === 'performance_statistics') {
+    // Skip for aphorisms, tactical schemes, performance statistics, and scheme view as they don't have category/tags
+    if (activeTab === 'coaching_aphorisms' || activeTab === 'tactical_schemes' || activeTab === 'performance_statistics' || activeTab === 'scheme_view') {
       return;
     }
     
@@ -276,10 +284,18 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
   };
 
   const fetchItems = async () => {
+    // Skip fetching for tabs that don't use the database
+    if (activeTab === 'scheme_view' || activeTab === 'tactical_schemes') {
+      setItems([]);
+      setTotalItems(0);
+      setLoading(false);
+      return;
+    }
+    
     setLoading(true);
     try {
       let query: any = supabase
-        .from(activeTab)
+        .from(activeTab as any)
         .select('*', { count: 'exact' })
         .order('created_at', { ascending: false });
 
@@ -610,7 +626,7 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
       
       if (editingItem) {
         const { error } = await supabase
-          .from(activeTab)
+          .from(activeTab as any)
           .update(dataToSubmit)
           .eq('id', editingItem.id);
 
@@ -618,7 +634,7 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
         toast.success('Item updated successfully');
       } else {
         const { error } = await supabase
-          .from(activeTab)
+          .from(activeTab as any)
           .insert(dataToSubmit);
 
         if (error) throw error;
@@ -658,7 +674,7 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
     setLoading(true);
     try {
       const { error } = await supabase
-        .from(activeTab)
+        .from(activeTab as any)
         .delete()
         .eq('id', id);
 
@@ -868,6 +884,8 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
           <TabsContent key={key} value={key} className="space-y-4">
             {key === 'tactical_schemes' ? (
               <TacticalSchemes isAdmin={isAdmin} />
+            ) : key === 'scheme_view' ? (
+              <SchemeEditor />
             ) : (
               <>
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-end gap-4">

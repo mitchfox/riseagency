@@ -1,4 +1,6 @@
+import React, { useState, useEffect } from "react";
 import { X } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface FormationDisplayProps {
   selectedPosition?: string;
@@ -9,6 +11,42 @@ interface FormationDisplayProps {
 }
 
 export const FormationDisplay = ({ selectedPosition, selectedPositions, playerName, playerImage, formation = "4-3-3" }: FormationDisplayProps) => {
+  const [customPositions, setCustomPositions] = useState<Record<string, { top: number; left: number; label: string }> | null>(null);
+
+  useEffect(() => {
+    const loadCustomPositions = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("formation_positions")
+          .select("positions")
+          .eq("formation", formation)
+          .single();
+
+        if (error && error.code !== "PGRST116") {
+          throw error;
+        }
+
+        if (data) {
+          // Convert positions from {x, y, label} to {top, left, label} format
+          const positions = data.positions as any;
+          const transformedPositions: Record<string, { top: number; left: number; label: string }> = {};
+          Object.entries(positions).forEach(([key, pos]: [string, any]) => {
+            transformedPositions[key] = {
+              top: pos.y,
+              left: pos.x,
+              label: pos.label
+            };
+          });
+          setCustomPositions(transformedPositions);
+        }
+      } catch (error) {
+        console.error("Error loading custom positions:", error);
+      }
+    };
+
+    loadCustomPositions();
+  }, [formation]);
+
   // Position coordinates based on formation
   const getFormationPositions = () => {
     switch (formation) {
@@ -114,7 +152,7 @@ export const FormationDisplay = ({ selectedPosition, selectedPositions, playerNa
     }
   };
 
-  const positions = getFormationPositions();
+  const positions = customPositions || getFormationPositions();
 
   const isPositionActive = (pos: string) => {
     // Use selectedPositions array if provided, otherwise fall back to selectedPosition
