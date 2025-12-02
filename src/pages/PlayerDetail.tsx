@@ -520,15 +520,22 @@ const PlayerDetail = () => {
               {/* Strengths & Play Style */}
               {player.strengthsAndPlayStyle && player.strengthsAndPlayStyle.length > 0 && (
                 <div>
-                  <h2 className="text-sm font-bebas text-primary uppercase tracking-widest mb-4 text-lg">
+                  <h2 className="text-2xl md:text-3xl font-bebas text-primary uppercase tracking-widest mb-6 flex items-center gap-3">
+                    <span className="w-8 h-1 bg-primary"></span>
                     Strengths & Play Style
                   </h2>
-                  <div className="bg-secondary/30 backdrop-blur-sm p-6 rounded-lg">
-                    <ul className="space-y-3">
+                  <div className="group relative overflow-hidden rounded-xl border-2 border-[hsl(var(--gold))]/30 bg-gradient-to-br from-secondary/40 via-secondary/30 to-secondary/20 backdrop-blur-sm p-8 transition-all duration-300 hover:border-[hsl(var(--gold))]/60 hover:shadow-[0_0_30px_rgba(212,175,55,0.15)]">
+                    {/* Animated background gradient */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-[hsl(var(--gold))]/5 via-transparent to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                    
+                    {/* Shine effect */}
+                    <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-[hsl(var(--gold))]/10 to-transparent" />
+                    
+                    <ul className="relative space-y-4">
                       {player.strengthsAndPlayStyle.map((strength, index) => (
-                        <li key={index} className="flex items-start gap-3 text-foreground/90">
-                          <span className="text-primary mt-1">•</span>
-                          <span className="leading-relaxed">{strength}</span>
+                        <li key={index} className="flex items-start gap-4 group/item">
+                          <span className="flex-shrink-0 w-2 h-2 rounded-full bg-gradient-to-br from-[hsl(var(--gold))] to-primary mt-2 group-hover/item:scale-125 transition-transform duration-300 shadow-[0_0_8px_rgba(212,175,55,0.5)]"></span>
+                          <span className="leading-relaxed text-foreground/90 group-hover/item:text-foreground transition-colors duration-300">{strength}</span>
                         </li>
                       ))}
                     </ul>
