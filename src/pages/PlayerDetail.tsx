@@ -306,7 +306,7 @@ const PlayerDetail = () => {
               
               {/* Club Logo Overlays - Top - Show database highlights with horizontal scroll */}
               {dbHighlights.length > 0 && (
-                <div className="absolute left-1/2 -translate-x-1/2 z-10 w-full px-2 pointer-events-none" style={{ bottom: '53px' }}>
+                <div className="absolute bottom-[53px] md:bottom-[69px] left-1/2 -translate-x-1/2 z-10 w-full px-2 pointer-events-none">
                   <div className="relative flex items-center justify-center gap-2">
                     {dbHighlights.length > 10 && (
                       <button
@@ -369,7 +369,7 @@ const PlayerDetail = () => {
               
               {/* Recent Match Highlights Overlay - Left of Club Logos */}
               {dbHighlights.length > 0 && (
-                <div className="hidden lg:block absolute left-4 z-20 bg-[hsl(var(--gold))]/20 backdrop-blur-sm px-3 py-1.5 rounded-md border border-[hsl(var(--gold))]/40" style={{ bottom: '53px' }}>
+                <div className="hidden lg:block absolute bottom-[53px] md:bottom-[69px] left-4 z-20 bg-[hsl(var(--gold))]/20 backdrop-blur-sm px-3 py-1.5 rounded-md border border-[hsl(var(--gold))]/40">
                   <p className="text-foreground font-bebas uppercase tracking-wider text-sm md:text-base whitespace-nowrap">
                     RECENT MATCHES
                   </p>
