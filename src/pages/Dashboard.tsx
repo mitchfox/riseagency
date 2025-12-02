@@ -222,7 +222,7 @@ const Dashboard = () => {
   };
 
   // Save a test result
-  const saveTestResult = async () => {
+  const saveTestResult = async (status: 'draft' | 'submitted' = 'submitted') => {
     if (!playerData?.id || !selectedTest || !testScore.trim()) {
       toast.error('Please enter a score');
       return;
@@ -238,12 +238,13 @@ const Dashboard = () => {
           test_category: selectedTest.category,
           score: testScore.trim(),
           notes: testNotes.trim() || null,
-          test_date: new Date().toISOString().split('T')[0]
+          test_date: new Date().toISOString().split('T')[0],
+          status
         });
       
       if (error) throw error;
       
-      toast.success('Test result saved!');
+      toast.success(status === 'draft' ? 'Draft saved!' : 'Test result submitted!');
       setTestingDialogOpen(false);
       setTestScore('');
       setTestNotes('');
@@ -3298,10 +3299,15 @@ const Dashboard = () => {
                                                         <div className="flex-1">
                                                           <span className="font-medium group-hover:text-primary transition-colors">{test.name}</span>
                                                           {latestResult && (
-                                                            <div className="flex items-center gap-2 mt-1">
+                                                            <div className="flex items-center gap-2 mt-1 flex-wrap">
                                                               <span className="text-xs bg-primary/20 text-primary px-2 py-0.5 rounded">
                                                                 Latest: {latestResult.score}
                                                               </span>
+                                                              {latestResult.status === 'draft' && (
+                                                                <span className="text-xs bg-amber-500/20 text-amber-500 px-2 py-0.5 rounded">
+                                                                  Draft
+                                                                </span>
+                                                              )}
                                                               <span className="text-xs text-muted-foreground">
                                                                 ({format(new Date(latestResult.test_date), 'dd MMM yyyy')})
                                                               </span>
@@ -3997,13 +4003,23 @@ const Dashboard = () => {
                   className="w-full px-3 py-2 bg-secondary/50 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary resize-none"
                 />
               </div>
-              <Button 
-                onClick={saveTestResult} 
-                disabled={savingTestResult || !testScore.trim()}
-                className="w-full"
-              >
-                {savingTestResult ? 'Saving...' : 'Save Result'}
-              </Button>
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline"
+                  onClick={() => saveTestResult('draft')} 
+                  disabled={savingTestResult || !testScore.trim()}
+                  className="flex-1"
+                >
+                  {savingTestResult ? 'Saving...' : 'Save as Draft'}
+                </Button>
+                <Button 
+                  onClick={() => saveTestResult('submitted')} 
+                  disabled={savingTestResult || !testScore.trim()}
+                  className="flex-1"
+                >
+                  {savingTestResult ? 'Saving...' : 'Submit'}
+                </Button>
+              </div>
             </div>
           </div>
         </DialogContent>

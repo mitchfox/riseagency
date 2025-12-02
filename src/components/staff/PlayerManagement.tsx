@@ -161,6 +161,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   });
   const [tacticalAnalyses, setTacticalAnalyses] = useState<Record<string, any[]>>({});
   const [playerPrograms, setPlayerPrograms] = useState<Record<string, any[]>>({});
+  const [playerTestResults, setPlayerTestResults] = useState<Record<string, any[]>>({});
   const [otherAnalyses, setOtherAnalyses] = useState<Record<string, any[]>>({});
   const [isAssignAnalysisDialogOpen, setIsAssignAnalysisDialogOpen] = useState(false);
   const [availableAnalyses, setAvailableAnalyses] = useState<any[]>([]);
@@ -182,6 +183,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
     fetchAllInvoices();
     fetchTacticalAnalyses();
     fetchAllPrograms();
+    fetchAllTestResults();
     fetchOtherAnalyses();
     fetchAvailableAnalyses();
   }, []);
@@ -439,6 +441,28 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       setPlayerPrograms(programsMap);
     } catch (error: any) {
       toast.error("Failed to fetch programs: " + error.message);
+    }
+  };
+
+  const fetchAllTestResults = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("player_test_results")
+        .select("*")
+        .order("test_date", { ascending: false });
+
+      if (error) throw error;
+
+      const resultsMap: Record<string, any[]> = {};
+      data?.forEach(result => {
+        if (!resultsMap[result.player_id]) {
+          resultsMap[result.player_id] = [];
+        }
+        resultsMap[result.player_id].push(result);
+      });
+      setPlayerTestResults(resultsMap);
+    } catch (error: any) {
+      console.error("Failed to fetch test results:", error.message);
     }
   };
 
@@ -2084,6 +2108,73 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                     ) : (
                       <p className="text-center text-muted-foreground py-8 text-sm">
                         No programs yet. Click "Manage Programs" to create one.
+                      </p>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Testing Results Card */}
+                <Card className="mt-4">
+                  <CardHeader className="px-3 md:px-6 py-3 md:py-4">
+                    <CardTitle>Testing Results</CardTitle>
+                  </CardHeader>
+                  <CardContent className="px-3 md:px-6 py-4">
+                    {playerTestResults[selectedPlayerId]?.length > 0 ? (
+                      <div className="space-y-4">
+                        {['Strength', 'Power', 'Speed', 'Conditioning'].map((category) => {
+                          const categoryResults = playerTestResults[selectedPlayerId]?.filter(
+                            r => r.test_category === category
+                          );
+                          if (!categoryResults?.length) return null;
+
+                          // Group by test name, show latest for each
+                          const latestByTest: Record<string, any> = {};
+                          categoryResults.forEach(r => {
+                            if (!latestByTest[r.test_name] || new Date(r.test_date) > new Date(latestByTest[r.test_name].test_date)) {
+                              latestByTest[r.test_name] = r;
+                            }
+                          });
+
+                          return (
+                            <div key={category} className="space-y-2">
+                              <h4 className="font-medium text-sm text-primary border-b border-primary/30 pb-1">
+                                {category}
+                              </h4>
+                              <div className="grid gap-2">
+                                {Object.values(latestByTest).map((result: any) => (
+                                  <div
+                                    key={result.id}
+                                    className="p-3 border rounded-lg bg-secondary/20"
+                                  >
+                                    <div className="flex justify-between items-start">
+                                      <div>
+                                        <span className="font-medium text-sm">{result.test_name}</span>
+                                        <div className="flex items-center gap-2 mt-1">
+                                          <span className="text-lg font-bold text-primary">{result.score}</span>
+                                          <Badge variant={result.status === 'draft' ? 'outline' : 'default'} className="text-xs">
+                                            {result.status === 'draft' ? 'Draft' : 'Submitted'}
+                                          </Badge>
+                                        </div>
+                                        {result.notes && (
+                                          <p className="text-xs text-muted-foreground mt-1">{result.notes}</p>
+                                        )}
+                                      </div>
+                                      <span className="text-xs text-muted-foreground">
+                                        {new Date(result.test_date).toLocaleDateString('en-GB', { 
+                                          day: 'numeric', month: 'short', year: 'numeric' 
+                                        })}
+                                      </span>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <p className="text-center text-muted-foreground py-8 text-sm">
+                        No test results recorded yet.
                       </p>
                     )}
                   </CardContent>
