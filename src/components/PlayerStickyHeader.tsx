@@ -14,10 +14,10 @@ export const PlayerStickyHeader = ({
 }: PlayerStickyHeaderProps) => {
   return (
     <div 
-      className={`fixed top-0 left-0 right-0 z-[150] transition-all duration-300 ${
+      className={`fixed top-0 left-0 right-0 z-[150] transition-all duration-500 ease-out ${
         isVisible 
-          ? 'translate-y-0 opacity-100' 
-          : '-translate-y-full opacity-0'
+          ? 'translate-x-0 opacity-100' 
+          : 'translate-x-full opacity-0'
       }`}
     >
       <div className="bg-secondary/98 backdrop-blur-lg border-b-2 border-[hsl(var(--gold))] shadow-xl">

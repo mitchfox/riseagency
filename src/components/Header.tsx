@@ -417,7 +417,7 @@ export const Header = ({ shouldFade = false }: HeaderProps) => {
       </div>}
 
       {/* Main Header */}
-      <header className={`fixed top-0 left-0 right-0 z-[100] bg-background/95 backdrop-blur-md w-full transition-all duration-500 ease-out ${showTopBar && isScrolled ? 'border-b-2 border-primary' : 'border-b border-white/10'} ${shouldFade ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+      <header className={`fixed top-0 left-0 right-0 z-[100] bg-background/95 backdrop-blur-md w-full transition-all duration-500 ease-out ${showTopBar && isScrolled ? 'border-b-2 border-primary' : 'border-b border-white/10'} ${shouldFade ? '-translate-x-full opacity-0 pointer-events-none' : 'translate-x-0 opacity-100'}`}>
         <div className="container mx-auto px-2 md:px-4">
         <div className={`flex items-center justify-between transition-all duration-500 ease-out ${isScrolled ? 'h-12 md:h-14' : 'h-14 md:h-16'}`}>
           {/* Drawer Menu - Left */}
