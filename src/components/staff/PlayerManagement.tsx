@@ -93,6 +93,12 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   const [clubLogoPreview, setClubLogoPreview] = useState<string | null>(null);
   const [hoverImageFile, setHoverImageFile] = useState<File | null>(null);
   const [hoverImagePreview, setHoverImagePreview] = useState<string | null>(null);
+  
+  // Scheme-specific image uploads (indexed by scheme index)
+  const [schemePlayerImageFiles, setSchemePlayerImageFiles] = useState<{ [key: number]: File }>({});
+  const [schemePlayerImagePreviews, setSchemePlayerImagePreviews] = useState<{ [key: number]: string }>({});
+  const [schemeClubLogoFiles, setSchemeClubLogoFiles] = useState<{ [key: number]: File }>({});
+  const [schemeClubLogoPreviews, setSchemeClubLogoPreviews] = useState<{ [key: number]: string }>({});
   const [formData, setFormData] = useState({
     // Basic Info
     name: "",
@@ -536,7 +542,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
     }
   };
 
-  const reconstructBioJSON = () => {
+  const reconstructBioJSON = (customTacticalSchemes?: any[]) => {
     const bio: any = {
       bio: formData.bioText, // Use 'bio' key to match existing structure
       dateOfBirth: formData.dateOfBirth || undefined,
@@ -554,8 +560,9 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       bio.strengthsAndPlayStyle = formData.strengths;
     }
 
-    if (formData.tacticalSchemes.length > 0) {
-      bio.schemeHistory = formData.tacticalSchemes; // Use 'schemeHistory' to match existing structure
+    const schemesToUse = customTacticalSchemes || formData.tacticalSchemes;
+    if (schemesToUse.length > 0) {
+      bio.schemeHistory = schemesToUse; // Use 'schemeHistory' to match existing structure
     }
 
     if (formData.seasonStats.length > 0) {
@@ -580,6 +587,10 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
     setImagePreview(null);
     setHoverImageFile(null);
     setHoverImagePreview(null);
+    setSchemePlayerImageFiles({});
+    setSchemePlayerImagePreviews({});
+    setSchemeClubLogoFiles({});
+    setSchemeClubLogoPreviews({});
     
     // Parse bio JSON
     const bioData = parseBioJSON(player.bio);
@@ -744,6 +755,56 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
     setClubLogoFile(null);
     setClubLogoPreview(null);
     setFormData(prev => ({ ...prev, club_logo: "" }));
+  };
+
+  const handleSchemePlayerImageSelect = (file: File, schemeIndex: number) => {
+    setSchemePlayerImageFiles(prev => ({ ...prev, [schemeIndex]: file }));
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setSchemePlayerImagePreviews(prev => ({ ...prev, [schemeIndex]: reader.result as string }));
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveSchemePlayerImage = (schemeIndex: number) => {
+    setSchemePlayerImageFiles(prev => {
+      const newFiles = { ...prev };
+      delete newFiles[schemeIndex];
+      return newFiles;
+    });
+    setSchemePlayerImagePreviews(prev => {
+      const newPreviews = { ...prev };
+      delete newPreviews[schemeIndex];
+      return newPreviews;
+    });
+    const newSchemes = [...formData.tacticalSchemes];
+    newSchemes[schemeIndex].playerImage = "";
+    setFormData({ ...formData, tacticalSchemes: newSchemes });
+  };
+
+  const handleSchemeClubLogoSelect = (file: File, schemeIndex: number) => {
+    setSchemeClubLogoFiles(prev => ({ ...prev, [schemeIndex]: file }));
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setSchemeClubLogoPreviews(prev => ({ ...prev, [schemeIndex]: reader.result as string }));
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveSchemeClubLogo = (schemeIndex: number) => {
+    setSchemeClubLogoFiles(prev => {
+      const newFiles = { ...prev };
+      delete newFiles[schemeIndex];
+      return newFiles;
+    });
+    setSchemeClubLogoPreviews(prev => {
+      const newPreviews = { ...prev };
+      delete newPreviews[schemeIndex];
+      return newPreviews;
+    });
+    const newSchemes = [...formData.tacticalSchemes];
+    newSchemes[schemeIndex].clubLogo = "";
+    setFormData({ ...formData, tacticalSchemes: newSchemes });
   };
 
   const handleHoverImageSelect = (file: File) => {
@@ -934,13 +995,58 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
           return;
         }
 
-        const { data: { publicUrl } } = supabase.storage
+      const { data: { publicUrl } } = supabase.storage
+        .from('analysis-files')
+        .getPublicUrl(`player-images/${hoverFileName}`);
+      finalHoverImageUrl = publicUrl;
+    }
+
+    // Upload scheme-specific images
+    const updatedSchemes = [...formData.tacticalSchemes];
+    
+    for (let i = 0; i < updatedSchemes.length; i++) {
+      // Upload scheme player image if selected
+      if (schemePlayerImageFiles[i]) {
+        const schemePlayerFileName = `${editingPlayer.id}_scheme${i}_${Date.now()}_${schemePlayerImageFiles[i].name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+        const { error: schemePlayerError } = await supabase.storage
           .from('analysis-files')
-          .getPublicUrl(`player-images/${hoverFileName}`);
-        finalHoverImageUrl = publicUrl;
+          .upload(`player-images/${schemePlayerFileName}`, schemePlayerImageFiles[i], {
+            cacheControl: '3600',
+            upsert: false
+          });
+
+        if (!schemePlayerError) {
+          const { data: { publicUrl } } = supabase.storage
+            .from('analysis-files')
+            .getPublicUrl(`player-images/${schemePlayerFileName}`);
+          updatedSchemes[i].playerImage = publicUrl;
+        }
       }
 
-      const bioJSON = reconstructBioJSON();
+      // Upload scheme club logo if selected
+      if (schemeClubLogoFiles[i]) {
+        const schemeLogoFileName = `${editingPlayer.id}_scheme${i}_logo_${Date.now()}_${schemeClubLogoFiles[i].name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+        const { error: schemeLogoError } = await supabase.storage
+          .from('analysis-files')
+          .upload(`club-logos/${schemeLogoFileName}`, schemeClubLogoFiles[i], {
+            cacheControl: '3600',
+            upsert: false
+          });
+
+        if (!schemeLogoError) {
+          const { data: { publicUrl } } = supabase.storage
+            .from('analysis-files')
+            .getPublicUrl(`club-logos/${schemeLogoFileName}`);
+          updatedSchemes[i].clubLogo = publicUrl;
+        }
+      }
+    }
+
+    // Update formData with uploaded scheme images before reconstructing bioJSON
+    const updatedFormData = { ...formData, tacticalSchemes: updatedSchemes };
+    setFormData(updatedFormData);
+
+    const bioJSON = reconstructBioJSON(updatedSchemes);
       
       const { error } = await supabase
         .from("players")
@@ -974,6 +1080,10 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       setClubLogoPreview(null);
       setHoverImageFile(null);
       setHoverImagePreview(null);
+      setSchemePlayerImageFiles({});
+      setSchemePlayerImagePreviews({});
+      setSchemeClubLogoFiles({});
+      setSchemeClubLogoPreviews({});
       fetchPlayers(true);
     } catch (error: any) {
       toast.error("Failed to update player: " + error.message);
@@ -3085,6 +3195,28 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                           onClick={() => {
                             const newSchemes = formData.tacticalSchemes.filter((_, i) => i !== index);
                             setFormData({ ...formData, tacticalSchemes: newSchemes });
+                            
+                            // Clear file states for this scheme
+                            setSchemePlayerImageFiles(prev => {
+                              const newFiles = { ...prev };
+                              delete newFiles[index];
+                              return newFiles;
+                            });
+                            setSchemePlayerImagePreviews(prev => {
+                              const newPreviews = { ...prev };
+                              delete newPreviews[index];
+                              return newPreviews;
+                            });
+                            setSchemeClubLogoFiles(prev => {
+                              const newFiles = { ...prev };
+                              delete newFiles[index];
+                              return newFiles;
+                            });
+                            setSchemeClubLogoPreviews(prev => {
+                              const newPreviews = { ...prev };
+                              delete newPreviews[index];
+                              return newPreviews;
+                            });
                           }}
                         >
                           <Trash2 className="h-4 w-4" />
@@ -3129,27 +3261,94 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                           }}
                           placeholder="Matches (e.g., 15 or 'CURRENT CLUB')"
                         />
-                        <Input
-                          value={scheme.clubLogo || ""}
-                          onChange={(e) => {
-                            const newSchemes = [...formData.tacticalSchemes];
-                            newSchemes[index].clubLogo = e.target.value;
-                            setFormData({ ...formData, tacticalSchemes: newSchemes });
-                          }}
-                          placeholder="Club Logo (upload via Career tab)"
-                          className="col-span-2"
-                          disabled
-                        />
-                        <Input
-                          value={scheme.playerImage || ""}
-                          onChange={(e) => {
-                            const newSchemes = [...formData.tacticalSchemes];
-                            newSchemes[index].playerImage = e.target.value;
-                            setFormData({ ...formData, tacticalSchemes: newSchemes });
-                          }}
-                          placeholder="Player Image URL"
-                          className="col-span-2"
-                        />
+                      </div>
+                      
+                      {/* Club Logo Upload */}
+                      <div className="space-y-2">
+                        <Label>Club Logo</Label>
+                        {(schemeClubLogoPreviews[index] || scheme.clubLogo) && (
+                          <div className="relative w-20 h-20 border rounded-lg overflow-hidden">
+                            <img 
+                              src={schemeClubLogoPreviews[index] || scheme.clubLogo} 
+                              alt="Club logo" 
+                              className="w-full h-full object-contain"
+                            />
+                          </div>
+                        )}
+                        <div className="flex gap-2">
+                          <Label
+                            htmlFor={`scheme-club-logo-${index}`}
+                            className="flex items-center gap-2 px-4 py-2 bg-secondary text-secondary-foreground rounded-md cursor-pointer hover:bg-secondary/80 transition-colors text-sm"
+                          >
+                            <ImageIcon className="w-4 h-4" />
+                            Upload Club Logo
+                          </Label>
+                          <input
+                            id={`scheme-club-logo-${index}`}
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) handleSchemeClubLogoSelect(file, index);
+                            }}
+                            className="hidden"
+                          />
+                          {(schemeClubLogoPreviews[index] || scheme.clubLogo) && (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleRemoveSchemeClubLogo(index)}
+                            >
+                              <X className="w-4 h-4 mr-1" />
+                              Clear
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Player Image Upload */}
+                      <div className="space-y-2">
+                        <Label>Player Image</Label>
+                        {(schemePlayerImagePreviews[index] || scheme.playerImage) && (
+                          <div className="relative w-20 h-20 border rounded-lg overflow-hidden">
+                            <img 
+                              src={schemePlayerImagePreviews[index] || scheme.playerImage} 
+                              alt="Player" 
+                              className="w-full h-full object-contain"
+                            />
+                          </div>
+                        )}
+                        <div className="flex gap-2">
+                          <Label
+                            htmlFor={`scheme-player-image-${index}`}
+                            className="flex items-center gap-2 px-4 py-2 bg-secondary text-secondary-foreground rounded-md cursor-pointer hover:bg-secondary/80 transition-colors text-sm"
+                          >
+                            <ImageIcon className="w-4 h-4" />
+                            Upload Player Image
+                          </Label>
+                          <input
+                            id={`scheme-player-image-${index}`}
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) handleSchemePlayerImageSelect(file, index);
+                            }}
+                            className="hidden"
+                          />
+                          {(schemePlayerImagePreviews[index] || scheme.playerImage) && (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleRemoveSchemePlayerImage(index)}
+                            >
+                              <X className="w-4 h-4 mr-1" />
+                              Clear
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     </Card>
                   ))}
