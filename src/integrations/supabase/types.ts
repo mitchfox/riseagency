@@ -705,6 +705,30 @@ export type Database = {
         }
         Relationships: []
       }
+      formation_positions: {
+        Row: {
+          created_at: string | null
+          formation: string
+          id: string
+          positions: Json
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          formation: string
+          id?: string
+          positions: Json
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          formation?: string
+          id?: string
+          positions?: Json
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       homepage_videos: {
         Row: {
           created_at: string | null
