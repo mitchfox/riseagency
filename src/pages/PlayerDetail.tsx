@@ -13,7 +13,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { parsePlayerBio, parsePlayerHighlights } from "@/lib/playerDataParser";
 import { LazyVideo } from "@/components/LazyVideo";
 import { HighlightedMatchDisplay } from "@/components/HighlightedMatchDisplay";
-
+import { PlayerStickyHeader } from "@/components/PlayerStickyHeader";
 import blackMarbleBg from "@/assets/black-marble-menu.png";
 
 const PlayerDetail = () => {
@@ -167,6 +167,16 @@ const PlayerDetail = () => {
       </Helmet>
       
       {!isModal && <Header shouldFade={isPlayerInfoSticky} />}
+      
+      {/* Sticky Player Header - Shows when scrolling */}
+      {!isModal && player && (
+        <PlayerStickyHeader 
+          playerName={player.name}
+          whatsapp={player.whatsapp}
+          isVisible={isPlayerInfoSticky}
+        />
+      )}
+      
       <ErrorBoundary>
         <div className={`min-h-screen bg-background ${!isModal ? 'pt-16' : ''} overflow-x-hidden`}>
           
