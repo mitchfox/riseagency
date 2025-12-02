@@ -476,14 +476,25 @@ const PlayerDetail = () => {
                 Season Stats
                 <span className="flex-1 h-1 bg-primary/20"></span>
               </h2>
-              <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
+              <div className="grid gap-6 grid-cols-2 lg:grid-cols-4">
                 {player.seasonStats.map((stat: any, idx: number) => (
-                  <div key={idx} className="text-center p-6 bg-background">
-                    <div className="text-4xl font-bbh text-primary mb-2">
-                      {stat.value || "0"}
-                    </div>
-                    <div className="text-sm text-muted-foreground uppercase tracking-widest font-semibold">
-                      {stat.header}
+                  <div 
+                    key={idx} 
+                    className="group relative overflow-hidden rounded-xl border-2 border-[hsl(var(--gold))]/30 bg-gradient-to-br from-secondary/40 via-secondary/30 to-secondary/20 backdrop-blur-sm p-8 transition-all duration-300 hover:border-[hsl(var(--gold))]/60 hover:shadow-[0_0_30px_rgba(212,175,55,0.2)]"
+                  >
+                    {/* Animated background gradient */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-[hsl(var(--gold))]/5 via-transparent to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                    
+                    {/* Shine effect */}
+                    <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-[hsl(var(--gold))]/10 to-transparent" />
+                    
+                    <div className="relative text-center">
+                      <div className="text-6xl md:text-7xl font-bebas text-transparent bg-clip-text bg-gradient-to-br from-[hsl(var(--gold))] via-primary to-[hsl(var(--gold))]/70 mb-3 leading-none tracking-tight drop-shadow-[0_2px_10px_rgba(212,175,55,0.3)]">
+                        {stat.value || "0"}
+                      </div>
+                      <div className="text-sm md:text-base text-foreground/90 uppercase tracking-[0.2em] font-bold font-bebas">
+                        {stat.header}
+                      </div>
                     </div>
                   </div>
                 ))}
