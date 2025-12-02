@@ -1,5 +1,5 @@
 // UPDATE THIS VERSION NUMBER WHEN YOU DEPLOY NEW CHANGES
-const CACHE_VERSION = 'rise-v1.3.3';
+const CACHE_VERSION = 'rise-v1.3.4';
 const CACHE_NAME = `${CACHE_VERSION}`;
 const ASSETS_CACHE = `${CACHE_VERSION}-assets`;
 
@@ -57,6 +57,19 @@ self.addEventListener('activate', (event) => {
   );
 });
 
+// Helper function to add COOP/COEP headers for SharedArrayBuffer support
+function addCrossOriginHeaders(response) {
+  const newHeaders = new Headers(response.headers);
+  newHeaders.set("Cross-Origin-Opener-Policy", "same-origin");
+  newHeaders.set("Cross-Origin-Embedder-Policy", "credentialless");
+  
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers: newHeaders
+  });
+}
+
 // Fetch event - cache-first for assets, network-first for API
 self.addEventListener('fetch', (event) => {
   // Skip cross-origin requests and browser extensions
@@ -68,7 +81,9 @@ self.addEventListener('fetch', (event) => {
   
   // Skip service worker and manifest
   if (url.pathname === '/sw.js' || url.pathname === '/manifest.json') {
-    event.respondWith(fetch(event.request, { cache: 'no-store' }));
+    event.respondWith(
+      fetch(event.request, { cache: 'no-store' }).then(addCrossOriginHeaders)
+    );
     return;
   }
 
@@ -79,9 +94,9 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       caches.match(event.request).then((cachedResponse) => {
         if (cachedResponse) {
-          // Return cached version immediately
+          // Return cached version immediately with COOP/COEP headers
           console.log('[Service Worker] Serving asset from cache:', url.pathname);
-          return cachedResponse;
+          return addCrossOriginHeaders(cachedResponse);
         }
         
         // If not in cache, fetch and cache it
@@ -92,7 +107,7 @@ self.addEventListener('fetch', (event) => {
               cache.put(event.request, responseToCache);
             });
           }
-          return response;
+          return addCrossOriginHeaders(response);
         }).catch(() => {
           console.log('[Service Worker] Asset not available offline:', url.pathname);
           return new Response('Asset not available offline', { status: 503 });
@@ -108,7 +123,7 @@ self.addEventListener('fetch', (event) => {
       caches.match('/').then((cachedResponse) => {
         if (cachedResponse) {
           console.log('[Service Worker] Serving index from cache for navigation');
-          return cachedResponse;
+          return addCrossOriginHeaders(cachedResponse);
         }
         
         // If not cached, try network
@@ -119,7 +134,7 @@ self.addEventListener('fetch', (event) => {
               cache.put('/', responseToCache);
             });
           }
-          return response;
+          return addCrossOriginHeaders(response);
         }).catch(() => {
           return new Response(
             `<!DOCTYPE html>
@@ -155,7 +170,9 @@ self.addEventListener('fetch', (event) => {
               status: 200,
               statusText: 'OK',
               headers: new Headers({
-                'Content-Type': 'text/html'
+                'Content-Type': 'text/html',
+                'Cross-Origin-Opener-Policy': 'same-origin',
+                'Cross-Origin-Embedder-Policy': 'credentialless'
               })
             }
           );
@@ -175,13 +192,13 @@ self.addEventListener('fetch', (event) => {
           cache.put(event.request, responseToCache);
         });
       }
-      return response;
+      return addCrossOriginHeaders(response);
     }).catch(() => {
       // Try cache if network fails
       return caches.match(event.request).then((cachedResponse) => {
         if (cachedResponse) {
           console.log('[Service Worker] Serving API from cache:', url.pathname);
-          return cachedResponse;
+          return addCrossOriginHeaders(cachedResponse);
         }
         return new Response('Offline - Content not available', {
           status: 503,

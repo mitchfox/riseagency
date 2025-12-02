@@ -38,11 +38,20 @@ class VideoProcessor {
   private currentExportId: string | null = null;
 
   private checkSharedArrayBufferSupport(): boolean {
+    // Check for crossOriginIsolated which is required for SharedArrayBuffer
+    if (typeof crossOriginIsolated !== 'undefined' && crossOriginIsolated) {
+      return true;
+    }
+    // Fallback check for SharedArrayBuffer availability
     try {
       return typeof SharedArrayBuffer !== 'undefined';
     } catch {
       return false;
     }
+  }
+
+  isCrossOriginIsolated(): boolean {
+    return typeof crossOriginIsolated !== 'undefined' && crossOriginIsolated;
   }
 
   // Export state management
@@ -89,8 +98,8 @@ class VideoProcessor {
     // Check for SharedArrayBuffer support
     if (!this.checkSharedArrayBufferSupport()) {
       throw new Error(
-        'Video processing requires SharedArrayBuffer which is not available in this environment. ' +
-        'Please try using Chrome or Firefox, or download clips individually and use desktop video editing software.'
+        'REFRESH_REQUIRED: Video processing requires cross-origin isolation which is not yet active. ' +
+        'Please refresh the page to enable video processing.'
       );
     }
 
