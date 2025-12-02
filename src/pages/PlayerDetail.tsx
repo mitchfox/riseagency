@@ -209,7 +209,7 @@ const PlayerDetail = () => {
           >
             <div className="relative p-4 md:p-5">
               {/* Info Row - Wraps when needed */}
-              <div className="flex flex-wrap items-center gap-4 md:gap-6 lg:gap-8 mb-4">
+              <div className="flex flex-wrap items-center gap-4 md:gap-6 lg:gap-8">
                 {/* Player Name with Golden Gloss */}
                 <div className="relative">
                   <div className="absolute inset-0 bg-gradient-to-r from-[hsl(var(--gold))]/20 via-[hsl(var(--gold))]/10 to-transparent blur-xl" />
@@ -243,24 +243,6 @@ const PlayerDetail = () => {
                   />
                   {player.currentClub}
                 </p>
-              </div>
-
-              {/* Button Row */}
-              <div className="w-full">
-                <Button 
-                  asChild
-                  size="default"
-                  className="btn-shine text-sm md:text-base font-bebas uppercase tracking-wider w-full md:w-auto"
-                >
-                  <a 
-                    href={player.whatsapp ? `https://wa.me/${player.whatsapp.replace(/\+/g, '')}` : "https://wa.me/447508342901"}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <MessageCircle className="mr-2 h-4 w-4" />
-                    Enquire About This Player
-                  </a>
-                </Button>
               </div>
             </div>
           </div>
