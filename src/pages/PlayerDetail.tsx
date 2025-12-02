@@ -284,6 +284,7 @@ const PlayerDetail = () => {
                     preload="metadata"
                     loop={false}
                     src={dbHighlights[currentVideoType].videoUrl}
+                    poster={player.hover_image_url || player.image_url || undefined}
                     onError={(e) => {
                       console.error('Video error:', e);
                       console.log('Video URL:', dbHighlights[currentVideoType].videoUrl);
