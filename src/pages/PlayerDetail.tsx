@@ -103,21 +103,20 @@ const PlayerDetail = () => {
     }
   }, [playername]);
 
-  // IntersectionObserver for sticky player info
+  // Scroll-based sticky behavior for player info and headers
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        // When sentinel leaves viewport, make info sticky
-        setIsPlayerInfoSticky(!entry.isIntersecting);
-      },
-      { threshold: 0, rootMargin: '-80px 0px 0px 0px' }
-    );
-    
-    if (playerInfoSentinelRef.current) {
-      observer.observe(playerInfoSentinelRef.current);
-    }
-    
-    return () => observer.disconnect();
+    const handleScroll = () => {
+      if (!playerInfoSentinelRef.current) return;
+      const rect = playerInfoSentinelRef.current.getBoundingClientRect();
+      const headerOffset = 80; // approximate combined height of headers
+      setIsPlayerInfoSticky(rect.top <= headerOffset);
+    };
+
+    // Run once on mount to set initial state
+    handleScroll();
+
+    window.addEventListener("scroll", handleScroll, { passive: true } as AddEventListenerOptions);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   // Auto-rotate tactical formations every 5 seconds
