@@ -12,13 +12,15 @@ import {
   Film, 
   Download, 
   Play, 
+  Pause,
   Trash2, 
   GripVertical,
   ArrowRight,
   Loader2,
-  RefreshCw
+  RefreshCw,
+  PlayCircle
 } from 'lucide-react';
-import { videoProcessor, TransitionType, ClipWithTransition, ProcessingProgress } from '@/lib/videoProcessor';
+import { videoProcessor, TransitionType, ClipWithTransition, ProcessingProgress, ExportState } from '@/lib/videoProcessor';
 
 interface Player {
   id: string;
@@ -64,6 +66,15 @@ export const HighlightMaker = ({ isAdmin }: HighlightMakerProps) => {
   const [processing, setProcessing] = useState(false);
   const [progress, setProgress] = useState<ProcessingProgress | null>(null);
   const [previewClipIndex, setPreviewClipIndex] = useState<number | null>(null);
+  const [savedExportState, setSavedExportState] = useState<ExportState | null>(null);
+
+  // Check for saved export state on mount
+  useEffect(() => {
+    const saved = videoProcessor.getSavedExportState();
+    if (saved) {
+      setSavedExportState(saved);
+    }
+  }, []);
 
   // Fetch all players
   useEffect(() => {
@@ -162,6 +173,70 @@ export const HighlightMaker = ({ isAdmin }: HighlightMakerProps) => {
     setClips(newClips.map((clip, i) => ({ ...clip, order: i })));
   };
 
+  const handlePauseExport = () => {
+    videoProcessor.pauseExport();
+    toast.info('Export will pause after current clip finishes downloading');
+  };
+
+  const handleResumeExport = async () => {
+    if (!savedExportState) return;
+    
+    setProcessing(true);
+    setProgress({ stage: 'loading', progress: 0, message: 'Resuming export...' });
+
+    try {
+      await videoProcessor.load((p) => setProgress(p));
+      
+      const resumeFromClip = savedExportState.downloadedClips.length;
+      
+      const blob = savedExportState.withTransitions
+        ? await videoProcessor.processWithTransitions(
+            savedExportState.clips, 
+            (p) => setProgress(p),
+            savedExportState.id,
+            resumeFromClip
+          )
+        : await videoProcessor.processHighlight(
+            savedExportState.clips, 
+            (p) => setProgress(p),
+            savedExportState.id,
+            resumeFromClip
+          );
+      
+      if (blob) {
+        // Download the video
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `highlight_${Date.now()}.mp4`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        toast.success('Highlight video downloaded!');
+        setSavedExportState(null);
+      } else {
+        // Export was paused again
+        const newState = videoProcessor.getSavedExportState();
+        setSavedExportState(newState);
+      }
+    } catch (error) {
+      console.error('Resume error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to resume export';
+      toast.error(errorMessage, { duration: 8000 });
+    } finally {
+      setProcessing(false);
+      setProgress(null);
+    }
+  };
+
+  const handleDiscardExport = () => {
+    videoProcessor.clearExportState();
+    setSavedExportState(null);
+    toast.info('Saved export discarded');
+  };
+
   const handleExport = async () => {
     if (clips.length === 0) {
       toast.error('No clips to export');
@@ -176,17 +251,24 @@ export const HighlightMaker = ({ isAdmin }: HighlightMakerProps) => {
       
       const blob = await videoProcessor.processHighlight(clips, (p) => setProgress(p));
       
-      // Download the video
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `highlight_${selectedPlayerId}_${Date.now()}.mp4`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      
-      toast.success('Highlight video downloaded!');
+      if (blob) {
+        // Download the video
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `highlight_${selectedPlayerId}_${Date.now()}.mp4`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        toast.success('Highlight video downloaded!');
+        setSavedExportState(null);
+      } else {
+        // Export was paused
+        const newState = videoProcessor.getSavedExportState();
+        setSavedExportState(newState);
+      }
     } catch (error) {
       console.error('Export error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to export video';
@@ -211,17 +293,24 @@ export const HighlightMaker = ({ isAdmin }: HighlightMakerProps) => {
       
       const blob = await videoProcessor.processWithTransitions(clips, (p) => setProgress(p));
       
-      // Download the video
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `highlight_transitions_${selectedPlayerId}_${Date.now()}.mp4`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      
-      toast.success('Highlight video with transitions downloaded!');
+      if (blob) {
+        // Download the video
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `highlight_transitions_${selectedPlayerId}_${Date.now()}.mp4`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        toast.success('Highlight video with transitions downloaded!');
+        setSavedExportState(null);
+      } else {
+        // Export was paused
+        const newState = videoProcessor.getSavedExportState();
+        setSavedExportState(newState);
+      }
     } catch (error) {
       console.error('Export error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to export video with transitions';
@@ -439,6 +528,35 @@ export const HighlightMaker = ({ isAdmin }: HighlightMakerProps) => {
         </Card>
       )}
 
+      {/* Resume Paused Export Banner */}
+      {savedExportState && !processing && (
+        <Card className="border-primary/50 bg-primary/5">
+          <CardContent className="py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <PlayCircle className="h-5 w-5 text-primary" />
+                <div>
+                  <p className="font-medium">Paused Export</p>
+                  <p className="text-sm text-muted-foreground">
+                    {savedExportState.downloadedClips.length} of {savedExportState.clips.length} clips downloaded
+                    {savedExportState.withTransitions ? ' (with transitions)' : ''}
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={handleDiscardExport}>
+                  Discard
+                </Button>
+                <Button size="sm" onClick={handleResumeExport}>
+                  <PlayCircle className="h-4 w-4 mr-2" />
+                  Continue Export
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Export Options */}
       {clips.length > 0 && (
         <Card>
@@ -447,47 +565,52 @@ export const HighlightMaker = ({ isAdmin }: HighlightMakerProps) => {
           </CardHeader>
           <CardContent className="space-y-4">
             {processing && progress && (
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <div className="flex items-center justify-between text-sm">
                   <span>{progress.message}</span>
                   <span>{progress.progress}%</span>
                 </div>
                 <Progress value={progress.progress} />
+                {progress.stage === 'downloading' && (
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={handlePauseExport}
+                    className="w-full"
+                  >
+                    <Pause className="h-4 w-4 mr-2" />
+                    Pause Export
+                  </Button>
+                )}
               </div>
             )}
 
-            <div className="flex flex-wrap gap-3">
-              <Button
-                onClick={handleExport}
-                disabled={processing || clips.length === 0}
-                className="flex-1 min-w-[200px]"
-              >
-                {processing ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
+            {!processing && (
+              <div className="flex flex-wrap gap-3">
+                <Button
+                  onClick={handleExport}
+                  disabled={processing || clips.length === 0}
+                  className="flex-1 min-w-[200px]"
+                >
                   <Download className="h-4 w-4 mr-2" />
-                )}
-                Quick Export (No Transitions)
-              </Button>
+                  Quick Export (No Transitions)
+                </Button>
 
-              <Button
-                onClick={handleExportWithTransitions}
-                disabled={processing || clips.length === 0}
-                variant="secondary"
-                className="flex-1 min-w-[200px]"
-              >
-                {processing ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
+                <Button
+                  onClick={handleExportWithTransitions}
+                  disabled={processing || clips.length === 0}
+                  variant="secondary"
+                  className="flex-1 min-w-[200px]"
+                >
                   <Film className="h-4 w-4 mr-2" />
-                )}
-                Export with Transitions
-              </Button>
-            </div>
+                  Export with Transitions
+                </Button>
+              </div>
+            )}
 
             <p className="text-xs text-muted-foreground">
               Note: Video processing happens in your browser. Large files may take several minutes.
-              Quick export concatenates clips without transitions. Export with transitions applies the selected effects between clips.
+              You can pause the export during download and resume later, even after closing the page.
             </p>
           </CardContent>
         </Card>

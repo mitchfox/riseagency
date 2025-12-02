@@ -14,14 +14,28 @@ export interface ClipWithTransition {
 }
 
 export interface ProcessingProgress {
-  stage: 'loading' | 'downloading' | 'processing' | 'finalizing' | 'complete';
+  stage: 'loading' | 'downloading' | 'processing' | 'finalizing' | 'complete' | 'paused';
   progress: number;
   message: string;
 }
 
+export interface ExportState {
+  id: string;
+  clips: ClipWithTransition[];
+  downloadedClips: number[];
+  withTransitions: boolean;
+  stage: ProcessingProgress['stage'];
+  progress: number;
+  createdAt: number;
+}
+
+const EXPORT_STATE_KEY = 'highlight_export_state';
+
 class VideoProcessor {
   private ffmpeg: FFmpeg | null = null;
   private loaded = false;
+  private isPaused = false;
+  private currentExportId: string | null = null;
 
   private checkSharedArrayBufferSupport(): boolean {
     try {
@@ -29,6 +43,44 @@ class VideoProcessor {
     } catch {
       return false;
     }
+  }
+
+  // Export state management
+  saveExportState(state: ExportState): void {
+    localStorage.setItem(EXPORT_STATE_KEY, JSON.stringify(state));
+  }
+
+  getSavedExportState(): ExportState | null {
+    const saved = localStorage.getItem(EXPORT_STATE_KEY);
+    if (!saved) return null;
+    try {
+      const state = JSON.parse(saved) as ExportState;
+      // Check if state is less than 24 hours old
+      if (Date.now() - state.createdAt > 24 * 60 * 60 * 1000) {
+        this.clearExportState();
+        return null;
+      }
+      return state;
+    } catch {
+      return null;
+    }
+  }
+
+  clearExportState(): void {
+    localStorage.removeItem(EXPORT_STATE_KEY);
+    this.currentExportId = null;
+  }
+
+  pauseExport(): void {
+    this.isPaused = true;
+  }
+
+  resumeExport(): void {
+    this.isPaused = false;
+  }
+
+  isExportPaused(): boolean {
+    return this.isPaused;
   }
 
   async load(onProgress?: (progress: ProcessingProgress) => void): Promise<void> {
@@ -99,13 +151,35 @@ class VideoProcessor {
 
   async processHighlight(
     clips: ClipWithTransition[],
-    onProgress?: (progress: ProcessingProgress) => void
-  ): Promise<Blob> {
+    onProgress?: (progress: ProcessingProgress) => void,
+    exportId?: string,
+    resumeFromClip?: number
+  ): Promise<Blob | null> {
     if (!this.ffmpeg) throw new Error('FFmpeg not loaded');
     if (clips.length === 0) throw new Error('No clips to process');
 
-    // Download all clips
-    for (let i = 0; i < clips.length; i++) {
+    this.isPaused = false;
+    this.currentExportId = exportId || `export_${Date.now()}`;
+    const downloadedClips: number[] = [];
+    const startIndex = resumeFromClip || 0;
+
+    // Download all clips (with pause support)
+    for (let i = startIndex; i < clips.length; i++) {
+      // Check if paused
+      if (this.isPaused) {
+        this.saveExportState({
+          id: this.currentExportId,
+          clips,
+          downloadedClips,
+          withTransitions: false,
+          stage: 'paused',
+          progress: Math.round((i / clips.length) * 100),
+          createdAt: Date.now()
+        });
+        onProgress?.({ stage: 'paused', progress: Math.round((i / clips.length) * 100), message: 'Export paused' });
+        return null;
+      }
+
       const clip = clips[i];
       const filename = `input${i}.mp4`;
       onProgress?.({ 
@@ -114,6 +188,18 @@ class VideoProcessor {
         message: `Downloading clip ${i + 1} of ${clips.length}...` 
       });
       await this.downloadClip(clip.videoUrl, filename);
+      downloadedClips.push(i);
+
+      // Save progress after each download
+      this.saveExportState({
+        id: this.currentExportId,
+        clips,
+        downloadedClips,
+        withTransitions: false,
+        stage: 'downloading',
+        progress: Math.round(((i + 1) / clips.length) * 100),
+        createdAt: Date.now()
+      });
     }
 
     onProgress?.({ stage: 'processing', progress: 0, message: 'Processing clips...' });
@@ -122,9 +208,6 @@ class VideoProcessor {
     if (clips.length === 1) {
       await this.ffmpeg.exec(['-i', 'input0.mp4', '-c', 'copy', 'output.mp4']);
     } else {
-      // Create a concat file for simple concatenation (no transitions)
-      // For transitions, we'd use xfade filter but it's complex and slow
-      // Using simple concat for now
       let concatContent = '';
       for (let i = 0; i < clips.length; i++) {
         concatContent += `file 'input${i}.mp4'\n`;
@@ -133,7 +216,6 @@ class VideoProcessor {
       const encoder = new TextEncoder();
       await this.ffmpeg.writeFile('concat.txt', encoder.encode(concatContent));
       
-      // Use concat demuxer for simple concatenation
       await this.ffmpeg.exec([
         '-f', 'concat',
         '-safe', '0',
@@ -156,6 +238,9 @@ class VideoProcessor {
     }
     await this.ffmpeg.deleteFile('output.mp4');
 
+    // Clear saved state on completion
+    this.clearExportState();
+
     onProgress?.({ stage: 'complete', progress: 100, message: 'Video ready!' });
 
     return new Blob([new Uint8Array(data as Uint8Array)], { type: 'video/mp4' });
@@ -163,13 +248,35 @@ class VideoProcessor {
 
   async processWithTransitions(
     clips: ClipWithTransition[],
-    onProgress?: (progress: ProcessingProgress) => void
-  ): Promise<Blob> {
+    onProgress?: (progress: ProcessingProgress) => void,
+    exportId?: string,
+    resumeFromClip?: number
+  ): Promise<Blob | null> {
     if (!this.ffmpeg) throw new Error('FFmpeg not loaded');
     if (clips.length === 0) throw new Error('No clips to process');
 
-    // Download all clips
-    for (let i = 0; i < clips.length; i++) {
+    this.isPaused = false;
+    this.currentExportId = exportId || `export_${Date.now()}`;
+    const downloadedClips: number[] = [];
+    const startIndex = resumeFromClip || 0;
+
+    // Download all clips (with pause support)
+    for (let i = startIndex; i < clips.length; i++) {
+      // Check if paused
+      if (this.isPaused) {
+        this.saveExportState({
+          id: this.currentExportId,
+          clips,
+          downloadedClips,
+          withTransitions: true,
+          stage: 'paused',
+          progress: Math.round((i / clips.length) * 100),
+          createdAt: Date.now()
+        });
+        onProgress?.({ stage: 'paused', progress: Math.round((i / clips.length) * 100), message: 'Export paused' });
+        return null;
+      }
+
       const clip = clips[i];
       const filename = `input${i}.mp4`;
       onProgress?.({ 
@@ -178,6 +285,18 @@ class VideoProcessor {
         message: `Downloading clip ${i + 1} of ${clips.length}...` 
       });
       await this.downloadClip(clip.videoUrl, filename);
+      downloadedClips.push(i);
+
+      // Save progress after each download
+      this.saveExportState({
+        id: this.currentExportId,
+        clips,
+        downloadedClips,
+        withTransitions: true,
+        stage: 'downloading',
+        progress: Math.round(((i + 1) / clips.length) * 100),
+        createdAt: Date.now()
+      });
     }
 
     onProgress?.({ stage: 'processing', progress: 0, message: 'Applying transitions...' });
@@ -185,7 +304,6 @@ class VideoProcessor {
     if (clips.length === 1) {
       await this.ffmpeg.exec(['-i', 'input0.mp4', '-c:v', 'libx264', '-c:a', 'aac', 'output.mp4']);
     } else {
-      // Build filter complex for xfade transitions
       let filterComplex = '';
       let lastOutput = '[0:v]';
       
@@ -194,18 +312,14 @@ class VideoProcessor {
         const transitionType = transition.type === 'none' ? 'fade' : transition.type;
         const duration = transition.duration || 0.5;
         const outputLabel = i === clips.length - 1 ? '[outv]' : `[v${i}]`;
-        
-        // Get video duration (approximate - using offset)
-        const offset = 5 - duration; // Assume 5 second clips, adjust offset
+        const offset = 5 - duration;
         
         filterComplex += `${lastOutput}[${i}:v]xfade=transition=${transitionType}:duration=${duration}:offset=${offset}${outputLabel};`;
         lastOutput = outputLabel;
       }
       
-      // Remove trailing semicolon
       filterComplex = filterComplex.slice(0, -1);
       
-      // Build input arguments
       const inputArgs: string[] = [];
       for (let i = 0; i < clips.length; i++) {
         inputArgs.push('-i', `input${i}.mp4`);
@@ -222,7 +336,6 @@ class VideoProcessor {
         ]);
       } catch (error) {
         console.error('Transition processing failed, falling back to simple concat:', error);
-        // Fallback to simple concat
         let concatContent = '';
         for (let i = 0; i < clips.length; i++) {
           concatContent += `file 'input${i}.mp4'\n`;
@@ -242,6 +355,9 @@ class VideoProcessor {
       await this.ffmpeg.deleteFile(`input${i}.mp4`);
     }
     await this.ffmpeg.deleteFile('output.mp4');
+
+    // Clear saved state on completion
+    this.clearExportState();
 
     onProgress?.({ stage: 'complete', progress: 100, message: 'Video ready!' });
 
