@@ -23,8 +23,24 @@ class VideoProcessor {
   private ffmpeg: FFmpeg | null = null;
   private loaded = false;
 
+  private checkSharedArrayBufferSupport(): boolean {
+    try {
+      return typeof SharedArrayBuffer !== 'undefined';
+    } catch {
+      return false;
+    }
+  }
+
   async load(onProgress?: (progress: ProcessingProgress) => void): Promise<void> {
     if (this.loaded && this.ffmpeg) return;
+
+    // Check for SharedArrayBuffer support
+    if (!this.checkSharedArrayBufferSupport()) {
+      throw new Error(
+        'Video processing requires SharedArrayBuffer which is not available in this environment. ' +
+        'Please try using Chrome or Firefox, or download clips individually and use desktop video editing software.'
+      );
+    }
 
     onProgress?.({ stage: 'loading', progress: 0, message: 'Loading video processor...' });
 
@@ -44,13 +60,29 @@ class VideoProcessor {
       });
     });
 
-    await this.ffmpeg.load({
-      coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
-      wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
-    });
+    onProgress?.({ stage: 'loading', progress: 20, message: 'Downloading FFmpeg core...' });
 
-    this.loaded = true;
-    onProgress?.({ stage: 'loading', progress: 100, message: 'Video processor ready' });
+    try {
+      const coreURL = await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript');
+      onProgress?.({ stage: 'loading', progress: 50, message: 'Downloading FFmpeg WASM...' });
+      
+      const wasmURL = await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm');
+      onProgress?.({ stage: 'loading', progress: 80, message: 'Initializing FFmpeg...' });
+
+      await this.ffmpeg.load({
+        coreURL,
+        wasmURL,
+      });
+
+      this.loaded = true;
+      onProgress?.({ stage: 'loading', progress: 100, message: 'Video processor ready' });
+    } catch (error) {
+      console.error('FFmpeg load error:', error);
+      throw new Error(
+        'Failed to load video processor. This may be due to browser restrictions. ' +
+        'Try refreshing the page or using a different browser.'
+      );
+    }
   }
 
   async downloadClip(url: string, filename: string, onProgress?: (progress: ProcessingProgress) => void): Promise<void> {

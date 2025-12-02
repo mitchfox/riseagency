@@ -189,7 +189,8 @@ export const HighlightMaker = ({ isAdmin }: HighlightMakerProps) => {
       toast.success('Highlight video downloaded!');
     } catch (error) {
       console.error('Export error:', error);
-      toast.error('Failed to export video. Try with fewer clips or smaller files.');
+      const errorMessage = error instanceof Error ? error.message : 'Failed to export video';
+      toast.error(errorMessage, { duration: 8000 });
     } finally {
       setProcessing(false);
       setProgress(null);
@@ -223,7 +224,8 @@ export const HighlightMaker = ({ isAdmin }: HighlightMakerProps) => {
       toast.success('Highlight video with transitions downloaded!');
     } catch (error) {
       console.error('Export error:', error);
-      toast.error('Failed to export video with transitions. Try simple export instead.');
+      const errorMessage = error instanceof Error ? error.message : 'Failed to export video with transitions';
+      toast.error(errorMessage, { duration: 8000 });
     } finally {
       setProcessing(false);
       setProgress(null);
