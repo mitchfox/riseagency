@@ -92,7 +92,7 @@ export const HighlightedMatchForm = ({ value, onChange, playerAnalyses = [], pla
       minutes_played: analysis.minutes_played || 0,
       match_date: analysis.analysis_date || "",
       competition: "",
-      selected_stats: ["goals", "assists", "xG_adj", "progressive_passes_adj"],
+      selected_stats: [],
       stats: stats,
       video_url: analysis.video_url || "",
       full_match_url: "",
