@@ -1573,6 +1573,7 @@ export type Database = {
           notes: string | null
           player_id: string
           score: string
+          status: string
           test_category: string
           test_date: string
           test_name: string
@@ -1584,6 +1585,7 @@ export type Database = {
           notes?: string | null
           player_id: string
           score: string
+          status?: string
           test_category: string
           test_date?: string
           test_name: string
@@ -1595,6 +1597,7 @@ export type Database = {
           notes?: string | null
           player_id?: string
           score?: string
+          status?: string
           test_category?: string
           test_date?: string
           test_name?: string
