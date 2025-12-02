@@ -1566,6 +1566,57 @@ export type Database = {
           },
         ]
       }
+      player_test_results: {
+        Row: {
+          created_at: string
+          id: string
+          notes: string | null
+          player_id: string
+          score: string
+          test_category: string
+          test_date: string
+          test_name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          player_id: string
+          score: string
+          test_category: string
+          test_date?: string
+          test_name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          player_id?: string
+          score?: string
+          test_category?: string
+          test_date?: string
+          test_name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "player_test_results_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "player_test_results_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       players: {
         Row: {
           age: number
