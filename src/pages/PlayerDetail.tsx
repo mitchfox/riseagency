@@ -13,7 +13,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { parsePlayerBio, parsePlayerHighlights } from "@/lib/playerDataParser";
 import { LazyVideo } from "@/components/LazyVideo";
 import { HighlightedMatchDisplay } from "@/components/HighlightedMatchDisplay";
-import { StickyPlayerInfo } from "@/components/StickyPlayerInfo";
+
 import blackMarbleBg from "@/assets/black-marble-menu.png";
 
 const PlayerDetail = () => {
@@ -169,20 +169,6 @@ const PlayerDetail = () => {
       {!isModal && <Header shouldFade={isPlayerInfoSticky} />}
       <ErrorBoundary>
         <div className={`min-h-screen bg-background ${!isModal ? 'pt-16' : ''} overflow-x-hidden`}>
-          {/* Sticky Player Info - Shows when scrolled */}
-          {!isModal && player && (
-            <StickyPlayerInfo
-              name={player.name}
-              position={player.position}
-              dateOfBirth={player.dateOfBirth}
-              age={player.age}
-              nationality={player.nationality}
-              club={player.currentClub}
-              clubLogo={player.currentClubLogo || player.tacticalFormations?.[0]?.clubLogo}
-              whatsapp={player.whatsapp}
-              isSticky={isPlayerInfoSticky}
-            />
-          )}
           
           <main className="container mx-auto px-4 py-2 touch-pan-y">
           {/* Back Button */}
@@ -204,7 +190,13 @@ const PlayerDetail = () => {
           <div ref={playerInfoSentinelRef} className="h-px" />
 
           {/* Player Name, Info, and Contact - Full width */}
-          <div className="mb-1 relative border-2 border-[hsl(var(--gold))] bg-secondary/20 backdrop-blur-sm rounded-lg overflow-hidden">
+          <div 
+            className={`mb-1 relative border-2 border-[hsl(var(--gold))] backdrop-blur-sm rounded-lg overflow-hidden transition-all duration-300 ${
+              isPlayerInfoSticky 
+                ? 'sticky top-0 z-[100] shadow-xl bg-secondary/95' 
+                : 'bg-secondary/20'
+            }`}
+          >
             <div className="relative p-4 md:p-5">
               {/* Info Row - Wraps when needed */}
               <div className="flex flex-wrap items-center gap-4 md:gap-6 lg:gap-8 mb-4">
