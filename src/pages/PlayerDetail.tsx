@@ -27,6 +27,7 @@ const PlayerDetail = () => {
   const [bioDialogOpen, setBioDialogOpen] = useState(false);
   const [isPlayerInfoSticky, setIsPlayerInfoSticky] = useState(false);
   const [showPlayerStickyHeader, setShowPlayerStickyHeader] = useState(false);
+  const [performanceReports, setPerformanceReports] = useState<any[]>([]);
   const videoRef = useRef<HTMLVideoElement>(null);
   const playerInfoSentinelRef = useRef<HTMLDivElement>(null);
   
@@ -56,6 +57,15 @@ const PlayerDetail = () => {
               .select('*')
               .eq('player_id', data.id)
               .single();
+            
+            // Fetch performance reports
+            const { data: analysisData } = await supabase
+              .from('player_analysis')
+              .select('*')
+              .eq('player_id', data.id)
+              .order('analysis_date', { ascending: false });
+            
+            setPerformanceReports(analysisData || []);
             
             // Use optimized parsers
             const bioData = parsePlayerBio(data.bio);
@@ -656,6 +666,54 @@ const PlayerDetail = () => {
                 }
               }}
             />
+          )}
+
+          {/* Performance Reports Section */}
+          {player.visible_on_stars_page && performanceReports.length > 0 && (
+            <div className="mb-12">
+              <h2 className="text-3xl font-bebas text-primary uppercase tracking-widest mb-6 flex items-center gap-3">
+                <span className="w-12 h-1 bg-primary"></span>
+                Performance Reports
+                <span className="flex-1 h-1 bg-primary/20"></span>
+              </h2>
+              <div className="space-y-6">
+                {performanceReports.map((report) => {
+                  const stats = typeof report.striker_stats === 'string' 
+                    ? JSON.parse(report.striker_stats) 
+                    : report.striker_stats || {};
+                  
+                  const highlightedMatch = {
+                    analysis_id: report.id,
+                    home_team: "",
+                    home_team_logo: "",
+                    away_team: report.opponent || "",
+                    away_team_logo: "",
+                    score: report.result || "",
+                    show_score: true,
+                    minutes_played: report.minutes_played || 0,
+                    match_date: report.analysis_date || "",
+                    competition: "",
+                    selected_stats: Object.keys(stats).slice(0, 4), // Show first 4 stats
+                    stats: stats,
+                    video_url: report.video_url || "",
+                    full_match_url: "",
+                    r90_report_url: report.pdf_url || "",
+                  };
+
+                  return (
+                    <HighlightedMatchDisplay 
+                      key={report.id}
+                      highlightedMatch={highlightedMatch}
+                      onVideoPlayChange={(isPlaying) => {
+                        if (isPlaying && videoRef.current) {
+                          videoRef.current.pause();
+                        }
+                      }}
+                    />
+                  );
+                })}
+              </div>
+            </div>
           )}
 
           {/* News Section */}
