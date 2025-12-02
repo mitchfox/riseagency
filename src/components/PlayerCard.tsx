@@ -22,6 +22,7 @@ const createPlayerSlug = (name: string): string => {
 export const PlayerCard = ({ player, viewMode = "grid" }: PlayerCardProps) => {
   const cardRef = useRef<HTMLAnchorElement>(null);
   const [isInView, setIsInView] = useState(false);
+  const [isTouched, setIsTouched] = useState(false);
   const playerSlug = createPlayerSlug(player.name);
   const { t } = useLanguage();
 
@@ -155,9 +156,13 @@ export const PlayerCard = ({ player, viewMode = "grid" }: PlayerCardProps) => {
       ref={cardRef}
       to={`/stars/${playerSlug}`}
       className="group relative block overflow-hidden transition-all duration-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+      onTouchStart={() => setIsTouched(true)}
+      onTouchEnd={() => setTimeout(() => setIsTouched(false), 300)}
     >
-      {/* Hover and focus glow effect - desktop only */}
-      <div className="absolute inset-0 opacity-0 md:group-hover:opacity-100 md:group-focus-visible:opacity-100 transition-opacity duration-500 pointer-events-none z-10">
+      {/* Hover and focus glow effect - desktop and mobile */}
+      <div className={`absolute inset-0 transition-opacity duration-500 pointer-events-none z-10 ${
+        isTouched ? 'opacity-100' : 'opacity-0 md:group-hover:opacity-100 md:group-focus-visible:opacity-100'
+      }`}>
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-primary/5 to-transparent animate-slide-glow" />
       </div>
 
@@ -169,8 +174,8 @@ export const PlayerCard = ({ player, viewMode = "grid" }: PlayerCardProps) => {
           alt={player.name}
           className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 z-0 ${
             isInView ? "grayscale-0" : "grayscale"
-          } md:grayscale md:group-hover:grayscale-0 ${
-            player.hover_image_url ? 'md:group-hover:opacity-0' : ''
+          } md:grayscale ${isTouched || 'md:group-hover:grayscale-0'} ${
+            player.hover_image_url ? (isTouched ? 'opacity-0' : 'md:group-hover:opacity-0') : ''
           }`}
         />
         
@@ -182,7 +187,9 @@ export const PlayerCard = ({ player, viewMode = "grid" }: PlayerCardProps) => {
         </div>
 
         {/* Hover Background - Black shade */}
-        <div className="absolute inset-0 bg-black/90 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10" />
+        <div className={`absolute inset-0 bg-black/90 transition-opacity duration-300 z-10 ${
+          isTouched ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+        }`} />
         
         {/* Hover Layer - transparent background image (shown on hover) */}
         {player.hover_image_url && (
@@ -190,12 +197,16 @@ export const PlayerCard = ({ player, viewMode = "grid" }: PlayerCardProps) => {
             src={player.hover_image_url}
             alt={`${player.name} hover`}
             disableLoadingTransition
-            className="absolute inset-0 w-full h-full object-cover transition-all duration-700 z-20 opacity-0 md:group-hover:opacity-100"
+            className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 z-20 ${
+              isTouched ? 'opacity-100' : 'opacity-0 md:group-hover:opacity-100'
+            }`}
           />
         )}
 
         {/* Hover Overlay - Key Info (in front of everything) */}
-        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-between p-6 z-30">
+        <div className={`absolute inset-0 transition-opacity duration-300 flex flex-col justify-between p-6 z-30 ${
+          isTouched ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+        }`}>
           {/* Top Section - Age (left) and Nationality (right) */}
           <div className="flex justify-between items-start">
             {/* Age - Top Left */}
