@@ -118,6 +118,16 @@ const Dashboard = () => {
   const [schemes, setSchemes] = useState<any[]>([]);
   const [selectedTeamScheme, setSelectedTeamScheme] = useState<string>('');
   const [selectedOppositionScheme, setSelectedOppositionScheme] = useState<string>('');
+  
+  // Testing states
+  const [testingDialogOpen, setTestingDialogOpen] = useState(false);
+  const [selectedTest, setSelectedTest] = useState<{name: string; category: string; description?: string; reps?: string; sets?: number} | null>(null);
+  const [testScore, setTestScore] = useState('');
+  const [testNotes, setTestNotes] = useState('');
+  const [testResults, setTestResults] = useState<any[]>([]);
+  const [testHistoryOpen, setTestHistoryOpen] = useState(false);
+  const [selectedHistoryMonth, setSelectedHistoryMonth] = useState<string>(format(new Date(), 'yyyy-MM'));
+  const [savingTestResult, setSavingTestResult] = useState(false);
 
 
   // Initialize push notifications with player ID
@@ -185,6 +195,81 @@ const Dashboard = () => {
   const handleExerciseClick = (exercise: any) => {
     setSelectedExercise(exercise);
     setExerciseDialogOpen(true);
+  };
+
+  // Handle clicking on a test to show details and input score
+  const handleTestClick = (test: any, category: string) => {
+    setSelectedTest({ ...test, category });
+    setTestScore('');
+    setTestNotes('');
+    setTestingDialogOpen(true);
+  };
+
+  // Fetch test results for a player
+  const fetchTestResults = async (playerId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('player_test_results')
+        .select('*')
+        .eq('player_id', playerId)
+        .order('test_date', { ascending: false });
+      
+      if (error) throw error;
+      setTestResults(data || []);
+    } catch (error) {
+      console.error('Error fetching test results:', error);
+    }
+  };
+
+  // Save a test result
+  const saveTestResult = async () => {
+    if (!playerData?.id || !selectedTest || !testScore.trim()) {
+      toast.error('Please enter a score');
+      return;
+    }
+    
+    setSavingTestResult(true);
+    try {
+      const { error } = await supabase
+        .from('player_test_results')
+        .insert({
+          player_id: playerData.id,
+          test_name: selectedTest.name,
+          test_category: selectedTest.category,
+          score: testScore.trim(),
+          notes: testNotes.trim() || null,
+          test_date: new Date().toISOString().split('T')[0]
+        });
+      
+      if (error) throw error;
+      
+      toast.success('Test result saved!');
+      setTestingDialogOpen(false);
+      setTestScore('');
+      setTestNotes('');
+      fetchTestResults(playerData.id);
+    } catch (error: any) {
+      console.error('Error saving test result:', error);
+      toast.error('Failed to save test result');
+    } finally {
+      setSavingTestResult(false);
+    }
+  };
+
+  // Get test results filtered by month
+  const getTestResultsByMonth = (month: string) => {
+    return testResults.filter(result => result.test_date?.startsWith(month));
+  };
+
+  // Get available months from test results
+  const getAvailableMonths = () => {
+    const months = new Set<string>();
+    testResults.forEach(result => {
+      if (result.test_date) {
+        months.add(result.test_date.substring(0, 7));
+      }
+    });
+    return Array.from(months).sort().reverse();
   };
 
   const handleFileUpload = async (files: FileList) => {
@@ -709,6 +794,7 @@ const Dashboard = () => {
       await fetchPrograms(playerEmail);
       await fetchInvoices(playerEmail);
       await fetchUpdates(player.id);
+      await fetchTestResults(player.id);
     } catch (error) {
       console.error("Error loading data:", error);
       
@@ -3170,6 +3256,19 @@ const Dashboard = () => {
                                         Testing
                                       </AccordionTrigger>
                                       <AccordionContent className="pl-6 pr-6 space-y-6">
+                                        {/* History Button */}
+                                        <div className="flex justify-end mb-2">
+                                          <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => setTestHistoryOpen(true)}
+                                            className="gap-2"
+                                          >
+                                            <Calendar className="w-4 h-4" />
+                                            View Previous Results
+                                          </Button>
+                                        </div>
+                                        
                                         {testingProgram.overview_text && (
                                           <p className="text-sm text-muted-foreground mb-4">{testingProgram.overview_text}</p>
                                         )}
@@ -3183,25 +3282,40 @@ const Dashboard = () => {
                                                 {category}
                                               </h4>
                                               <div className="space-y-2">
-                                                {tests.map((test: any, idx: number) => (
-                                                  <div 
-                                                    key={idx}
-                                                    className="bg-secondary/30 rounded-lg p-3 hover:bg-secondary/50 transition-colors"
-                                                  >
-                                                    <div className="flex justify-between items-start gap-2">
-                                                      <div className="flex-1">
-                                                        <span className="font-medium">{test.name}</span>
-                                                        {test.description && (
-                                                          <p className="text-xs text-muted-foreground mt-1">{test.description}</p>
-                                                        )}
-                                                      </div>
-                                                      <div className="text-right text-sm">
-                                                        {test.sets && <span className="text-muted-foreground">{test.sets}x </span>}
-                                                        <span className="font-medium text-primary">{test.reps}</span>
+                                                {tests.map((test: any, idx: number) => {
+                                                  // Find latest score for this test
+                                                  const latestResult = testResults.find(
+                                                    r => r.test_name === test.name && r.test_category === category
+                                                  );
+                                                  
+                                                  return (
+                                                    <div 
+                                                      key={idx}
+                                                      onClick={() => handleTestClick(test, category)}
+                                                      className="bg-secondary/30 rounded-lg p-3 hover:bg-secondary/50 transition-colors cursor-pointer group"
+                                                    >
+                                                      <div className="flex justify-between items-start gap-2">
+                                                        <div className="flex-1">
+                                                          <span className="font-medium group-hover:text-primary transition-colors">{test.name}</span>
+                                                          {latestResult && (
+                                                            <div className="flex items-center gap-2 mt-1">
+                                                              <span className="text-xs bg-primary/20 text-primary px-2 py-0.5 rounded">
+                                                                Latest: {latestResult.score}
+                                                              </span>
+                                                              <span className="text-xs text-muted-foreground">
+                                                                ({format(new Date(latestResult.test_date), 'dd MMM yyyy')})
+                                                              </span>
+                                                            </div>
+                                                          )}
+                                                        </div>
+                                                        <div className="text-right text-sm">
+                                                          {test.sets && <span className="text-muted-foreground">{test.sets}x </span>}
+                                                          <span className="font-medium text-primary">{test.reps}</span>
+                                                        </div>
                                                       </div>
                                                     </div>
-                                                  </div>
-                                                ))}
+                                                  );
+                                                })}
                                               </div>
                                             </div>
                                           );
@@ -3828,6 +3942,155 @@ const Dashboard = () => {
         open={coachAvailabilityOpen}
         onOpenChange={setCoachAvailabilityOpen}
       />
+
+      {/* Test Input Dialog */}
+      <Dialog open={testingDialogOpen} onOpenChange={setTestingDialogOpen}>
+        <DialogContent className="w-[95vw] max-w-md mx-auto">
+          <DialogHeader>
+            <DialogTitle className="font-bebas uppercase text-2xl">
+              {selectedTest?.name || 'Test Details'}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {selectedTest?.description && (
+              <div className="bg-secondary/30 rounded-lg p-3">
+                <p className="text-sm text-muted-foreground">{selectedTest.description}</p>
+              </div>
+            )}
+            
+            <div className="flex gap-4 text-sm">
+              {selectedTest?.sets && (
+                <div>
+                  <span className="text-muted-foreground">Sets: </span>
+                  <span className="font-medium">{selectedTest.sets}</span>
+                </div>
+              )}
+              {selectedTest?.reps && (
+                <div>
+                  <span className="text-muted-foreground">Target: </span>
+                  <span className="font-medium text-primary">{selectedTest.reps}</span>
+                </div>
+              )}
+            </div>
+            
+            <div className="border-t pt-4 space-y-4">
+              <h4 className="font-medium">Record Your Score</h4>
+              <div className="space-y-2">
+                <Label htmlFor="testScore">Score / Result</Label>
+                <input
+                  id="testScore"
+                  type="text"
+                  value={testScore}
+                  onChange={(e) => setTestScore(e.target.value)}
+                  placeholder="e.g., 100kg, 2.5m, 4.2s"
+                  className="w-full px-3 py-2 bg-secondary/50 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="testNotes">Notes (optional)</Label>
+                <textarea
+                  id="testNotes"
+                  value={testNotes}
+                  onChange={(e) => setTestNotes(e.target.value)}
+                  placeholder="Any additional notes..."
+                  rows={2}
+                  className="w-full px-3 py-2 bg-secondary/50 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+                />
+              </div>
+              <Button 
+                onClick={saveTestResult} 
+                disabled={savingTestResult || !testScore.trim()}
+                className="w-full"
+              >
+                {savingTestResult ? 'Saving...' : 'Save Result'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Test History Dialog */}
+      <Dialog open={testHistoryOpen} onOpenChange={setTestHistoryOpen}>
+        <DialogContent className="w-[95vw] max-w-2xl mx-auto max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="font-bebas uppercase text-2xl">
+              Testing History
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {/* Month Selector */}
+            <div className="flex items-center gap-2">
+              <Label>Select Month:</Label>
+              <Select value={selectedHistoryMonth} onValueChange={setSelectedHistoryMonth}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Select month" />
+                </SelectTrigger>
+                <SelectContent>
+                  {getAvailableMonths().length > 0 ? (
+                    getAvailableMonths().map(month => (
+                      <SelectItem key={month} value={month}>
+                        {format(new Date(month + '-01'), 'MMMM yyyy')}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <SelectItem value={format(new Date(), 'yyyy-MM')}>
+                      {format(new Date(), 'MMMM yyyy')}
+                    </SelectItem>
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            {/* Results by Category */}
+            {(() => {
+              const monthResults = getTestResultsByMonth(selectedHistoryMonth);
+              const categories = ['Strength', 'Power', 'Speed', 'Conditioning'];
+              
+              if (monthResults.length === 0) {
+                return (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No test results recorded for this month.
+                  </div>
+                );
+              }
+              
+              return categories.map(category => {
+                const categoryResults = monthResults.filter(r => r.test_category === category);
+                if (categoryResults.length === 0) return null;
+                
+                return (
+                  <div key={category} className="space-y-2">
+                    <h4 className="font-bebas text-lg uppercase tracking-wider text-primary border-b border-primary/30 pb-1">
+                      {category}
+                    </h4>
+                    <div className="space-y-2">
+                      {categoryResults.map((result: any) => (
+                        <div 
+                          key={result.id}
+                          className="bg-secondary/30 rounded-lg p-3"
+                        >
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <span className="font-medium">{result.test_name}</span>
+                              <p className="text-xs text-muted-foreground mt-1">
+                                {format(new Date(result.test_date), 'dd MMM yyyy')}
+                              </p>
+                            </div>
+                            <span className="font-bold text-primary text-lg">{result.score}</span>
+                          </div>
+                          {result.notes && (
+                            <p className="text-xs text-muted-foreground mt-2 italic">{result.notes}</p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              });
+            })()}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Logout Section */}
       <div className="container mx-auto px-4 pb-8">
