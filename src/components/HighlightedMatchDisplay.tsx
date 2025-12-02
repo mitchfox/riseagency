@@ -82,8 +82,8 @@ export const HighlightedMatchDisplay = ({ highlightedMatch, onVideoPlayChange }:
   }, [onVideoPlayChange]);
 
   return (
-    <div ref={containerRef} className="mb-16">
-      <h2 className="text-3xl font-bebas text-primary uppercase tracking-widest mb-8 flex items-center gap-3">
+    <div ref={containerRef} className="mb-10">
+      <h2 className="text-3xl font-bebas text-primary uppercase tracking-widest mb-4 flex items-center gap-3">
         <span className="w-12 h-1 bg-primary"></span>
         Highlighted Performance
         <span className="flex-1 h-1 bg-primary/20"></span>
@@ -97,12 +97,12 @@ export const HighlightedMatchDisplay = ({ highlightedMatch, onVideoPlayChange }:
         <div className="absolute bottom-0 right-0 w-20 h-20 border-b-4 border-r-4 border-primary/30 rounded-br-xl"></div>
 
         {/* Match Header */}
-        <div className="relative bg-gradient-to-r from-secondary/40 via-secondary/30 to-secondary/40 backdrop-blur-sm p-8">
-          <div className="flex flex-col items-center gap-4">
+        <div className="relative bg-gradient-to-r from-secondary/40 via-secondary/30 to-secondary/40 backdrop-blur-sm p-5">
+          <div className="flex flex-col items-center gap-3">
             {/* Opposition Display */}
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
               {highlightedMatch.away_team_logo && (
-                <div className="w-20 h-20 rounded-full bg-background/80 backdrop-blur-sm p-3 border-2 border-primary/20 shadow-lg">
+                <div className="w-16 h-16 rounded-full bg-background/80 backdrop-blur-sm p-2.5 border-2 border-primary/20 shadow-lg">
                   <img 
                     src={highlightedMatch.away_team_logo} 
                     alt={highlightedMatch.away_team}
@@ -111,12 +111,12 @@ export const HighlightedMatchDisplay = ({ highlightedMatch, onVideoPlayChange }:
                 </div>
               )}
               <div className="text-center">
-                <div className="text-5xl font-bebas text-foreground uppercase tracking-wider flex items-center gap-3">
+                <div className="text-4xl font-bebas text-foreground uppercase tracking-wider flex items-center gap-3">
                   <span className="text-primary/60">VS</span>
                   <span>{highlightedMatch.away_team || "Opposition"}</span>
                 </div>
                 {highlightedMatch.show_score && highlightedMatch.score && (
-                  <div className="text-2xl font-bebas text-primary mt-2">
+                  <div className="text-xl font-bebas text-primary mt-1">
                     {highlightedMatch.score}
                   </div>
                 )}
@@ -124,7 +124,7 @@ export const HighlightedMatchDisplay = ({ highlightedMatch, onVideoPlayChange }:
             </div>
 
             {/* Match Info */}
-            <div className="flex flex-wrap items-center justify-center gap-4 text-sm text-muted-foreground uppercase tracking-widest font-semibold">
+            <div className="flex flex-wrap items-center justify-center gap-3 text-sm text-muted-foreground uppercase tracking-widest font-semibold">
               {highlightedMatch.competition && (
                 <>
                   <span className="px-3 py-1 rounded-full bg-primary/10 border border-primary/20">
@@ -142,13 +142,13 @@ export const HighlightedMatchDisplay = ({ highlightedMatch, onVideoPlayChange }:
 
         {/* Key Stats */}
         {highlightedMatch.selected_stats && highlightedMatch.selected_stats.length > 0 && (
-          <div className="bg-gradient-to-br from-background/50 via-background to-background/50 p-8 border-y border-primary/10">
-            <h3 className="text-lg font-bebas text-primary uppercase tracking-widest mb-6 text-center">Performance Metrics</h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          <div className="bg-gradient-to-br from-background/50 via-background to-background/50 p-5 border-y border-primary/10">
+            <h3 className="text-lg font-bebas text-primary uppercase tracking-widest mb-4 text-center">Performance Metrics</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {highlightedMatch.selected_stats.map((statKey) => (
                 <div key={statKey} className="relative group">
-                  <div className="bg-gradient-to-br from-secondary/30 to-secondary/10 backdrop-blur-sm rounded-lg p-6 border border-primary/10 hover:border-primary/30 transition-all hover:shadow-lg hover:scale-105">
-                    <div className="text-5xl font-bebas text-primary mb-2 text-center">
+                  <div className="bg-gradient-to-br from-secondary/30 to-secondary/10 backdrop-blur-sm rounded-lg p-4 border border-primary/10 hover:border-primary/30 transition-all hover:shadow-lg hover:scale-105">
+                    <div className="text-4xl font-bebas text-primary mb-1 text-center">
                       {formatStatValue(highlightedMatch.stats[statKey])}
                     </div>
                     <div className="text-xs text-muted-foreground uppercase tracking-wider text-center font-semibold">
@@ -165,7 +165,7 @@ export const HighlightedMatchDisplay = ({ highlightedMatch, onVideoPlayChange }:
 
         {/* Video */}
         {highlightedMatch.video_url && (
-          <div className="bg-black p-8">
+          <div className="bg-black p-5">
             <div className="aspect-video w-full rounded-lg overflow-hidden shadow-2xl border-2 border-primary/20">
               <video 
                 ref={videoRef}
@@ -183,8 +183,8 @@ export const HighlightedMatchDisplay = ({ highlightedMatch, onVideoPlayChange }:
 
         {/* Action Buttons */}
         {(highlightedMatch.full_match_url || highlightedMatch.r90_report_url) && (
-          <div className="bg-gradient-to-r from-secondary/20 via-secondary/10 to-secondary/20 p-8 border-t border-primary/10">
-            <div className="flex flex-wrap gap-4 justify-center">
+          <div className="bg-gradient-to-r from-secondary/20 via-secondary/10 to-secondary/20 p-5 border-t border-primary/10">
+            <div className="flex flex-wrap gap-3 justify-center">
               {highlightedMatch.full_match_url && (
                 <Button
                   asChild
