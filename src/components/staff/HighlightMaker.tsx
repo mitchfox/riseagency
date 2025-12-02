@@ -12,15 +12,13 @@ import {
   Film, 
   Download, 
   Play, 
-  Pause,
   Trash2, 
   GripVertical,
   ArrowRight,
   Loader2,
-  RefreshCw,
-  PlayCircle
+  RefreshCw
 } from 'lucide-react';
-import { videoProcessor, TransitionType, ClipWithTransition, ProcessingProgress, ExportState } from '@/lib/videoProcessor';
+import { canvasVideoProcessor, TransitionType, ClipWithTransition, ProcessingProgress } from '@/lib/canvasVideoProcessor';
 
 interface Player {
   id: string;
@@ -66,15 +64,6 @@ export const HighlightMaker = ({ isAdmin }: HighlightMakerProps) => {
   const [processing, setProcessing] = useState(false);
   const [progress, setProgress] = useState<ProcessingProgress | null>(null);
   const [previewClipIndex, setPreviewClipIndex] = useState<number | null>(null);
-  const [savedExportState, setSavedExportState] = useState<ExportState | null>(null);
-
-  // Check for saved export state on mount
-  useEffect(() => {
-    const saved = videoProcessor.getSavedExportState();
-    if (saved) {
-      setSavedExportState(saved);
-    }
-  }, []);
 
   // Fetch all players
   useEffect(() => {
@@ -173,112 +162,6 @@ export const HighlightMaker = ({ isAdmin }: HighlightMakerProps) => {
     setClips(newClips.map((clip, i) => ({ ...clip, order: i })));
   };
 
-  const handlePauseExport = () => {
-    videoProcessor.pauseExport();
-    toast.info('Export will pause after current clip finishes downloading');
-  };
-
-  const handleResumeExport = async () => {
-    if (!savedExportState) return;
-    
-    setProcessing(true);
-    setProgress({ stage: 'loading', progress: 0, message: 'Resuming export...' });
-
-    try {
-      await videoProcessor.load((p) => setProgress(p));
-      
-      const resumeFromClip = savedExportState.downloadedClips.length;
-      
-      const blob = savedExportState.withTransitions
-        ? await videoProcessor.processWithTransitions(
-            savedExportState.clips, 
-            (p) => setProgress(p),
-            savedExportState.id,
-            resumeFromClip
-          )
-        : await videoProcessor.processHighlight(
-            savedExportState.clips, 
-            (p) => setProgress(p),
-            savedExportState.id,
-            resumeFromClip
-          );
-      
-      if (blob) {
-        // Download the video
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `highlight_${Date.now()}.mp4`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        
-        toast.success('Highlight video downloaded!');
-        setSavedExportState(null);
-      } else {
-        // Export was paused again
-        const newState = videoProcessor.getSavedExportState();
-        setSavedExportState(newState);
-      }
-    } catch (error) {
-      console.error('Resume error:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Failed to resume export';
-      toast.error(errorMessage, { duration: 8000 });
-    } finally {
-      setProcessing(false);
-      setProgress(null);
-    }
-  };
-
-  const handleDiscardExport = () => {
-    videoProcessor.clearExportState();
-    setSavedExportState(null);
-    toast.info('Saved export discarded');
-  };
-
-  const handleExport = async () => {
-    if (clips.length === 0) {
-      toast.error('No clips to export');
-      return;
-    }
-
-    setProcessing(true);
-    setProgress({ stage: 'loading', progress: 0, message: 'Initializing...' });
-
-    try {
-      await videoProcessor.load((p) => setProgress(p));
-      
-      const blob = await videoProcessor.processHighlight(clips, (p) => setProgress(p));
-      
-      if (blob) {
-        // Download the video
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `highlight_${selectedPlayerId}_${Date.now()}.mp4`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        
-        toast.success('Highlight video downloaded!');
-        setSavedExportState(null);
-      } else {
-        // Export was paused
-        const newState = videoProcessor.getSavedExportState();
-        setSavedExportState(newState);
-      }
-    } catch (error) {
-      console.error('Export error:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Failed to export video';
-      toast.error(errorMessage, { duration: 8000 });
-    } finally {
-      setProcessing(false);
-      setProgress(null);
-    }
-  };
-
   const handleExportWithTransitions = async () => {
     if (clips.length === 0) {
       toast.error('No clips to export');
@@ -289,31 +172,23 @@ export const HighlightMaker = ({ isAdmin }: HighlightMakerProps) => {
     setProgress({ stage: 'loading', progress: 0, message: 'Initializing...' });
 
     try {
-      await videoProcessor.load((p) => setProgress(p));
-      
-      const blob = await videoProcessor.processWithTransitions(clips, (p) => setProgress(p));
+      const blob = await canvasVideoProcessor.processWithTransitions(clips, (p) => setProgress(p));
       
       if (blob) {
-        // Download the video
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `highlight_transitions_${selectedPlayerId}_${Date.now()}.mp4`;
+        a.download = `highlight_${selectedPlayerId}_${Date.now()}.webm`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
         
-        toast.success('Highlight video with transitions downloaded!');
-        setSavedExportState(null);
-      } else {
-        // Export was paused
-        const newState = videoProcessor.getSavedExportState();
-        setSavedExportState(newState);
+        toast.success('Highlight video downloaded!');
       }
     } catch (error) {
       console.error('Export error:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Failed to export video with transitions';
+      const errorMessage = error instanceof Error ? error.message : 'Failed to export video';
       toast.error(errorMessage, { duration: 8000 });
     } finally {
       setProcessing(false);
@@ -528,35 +403,6 @@ export const HighlightMaker = ({ isAdmin }: HighlightMakerProps) => {
         </Card>
       )}
 
-      {/* Resume Paused Export Banner */}
-      {savedExportState && !processing && (
-        <Card className="border-primary/50 bg-primary/5">
-          <CardContent className="py-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <PlayCircle className="h-5 w-5 text-primary" />
-                <div>
-                  <p className="font-medium">Paused Export</p>
-                  <p className="text-sm text-muted-foreground">
-                    {savedExportState.downloadedClips.length} of {savedExportState.clips.length} clips downloaded
-                    {savedExportState.withTransitions ? ' (with transitions)' : ''}
-                  </p>
-                </div>
-              </div>
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={handleDiscardExport}>
-                  Discard
-                </Button>
-                <Button size="sm" onClick={handleResumeExport}>
-                  <PlayCircle className="h-4 w-4 mr-2" />
-                  Continue Export
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
       {/* Export Options */}
       {clips.length > 0 && (
         <Card>
@@ -571,46 +417,24 @@ export const HighlightMaker = ({ isAdmin }: HighlightMakerProps) => {
                   <span>{progress.progress}%</span>
                 </div>
                 <Progress value={progress.progress} />
-                {progress.stage === 'downloading' && (
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={handlePauseExport}
-                    className="w-full"
-                  >
-                    <Pause className="h-4 w-4 mr-2" />
-                    Pause Export
-                  </Button>
-                )}
               </div>
             )}
 
             {!processing && (
               <div className="flex flex-wrap gap-3">
                 <Button
-                  onClick={handleExport}
+                  onClick={handleExportWithTransitions}
                   disabled={processing || clips.length === 0}
                   className="flex-1 min-w-[200px]"
                 >
                   <Download className="h-4 w-4 mr-2" />
-                  Quick Export (No Transitions)
-                </Button>
-
-                <Button
-                  onClick={handleExportWithTransitions}
-                  disabled={processing || clips.length === 0}
-                  variant="secondary"
-                  className="flex-1 min-w-[200px]"
-                >
-                  <Film className="h-4 w-4 mr-2" />
-                  Export with Transitions
+                  Export Highlight Video
                 </Button>
               </div>
             )}
 
             <p className="text-xs text-muted-foreground">
-              Note: Video processing happens in your browser. Large files may take several minutes.
-              You can pause the export during download and resume later, even after closing the page.
+              Note: Video processing happens in your browser. Configure transitions between clips above before exporting.
             </p>
           </CardContent>
         </Card>
