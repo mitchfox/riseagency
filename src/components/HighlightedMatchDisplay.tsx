@@ -162,6 +162,67 @@ export const HighlightedMatchDisplay = ({ highlightedMatch, onVideoPlayChange }:
             </div>
           </div>
         )}
+
+        {/* Action Buttons */}
+        {(highlightedMatch.full_match_url || highlightedMatch.r90_report_url) && (
+          <div className="bg-gradient-to-r from-secondary/20 via-secondary/10 to-secondary/20 p-5 border-y border-primary/10">
+            <div className="flex flex-wrap gap-3 justify-center">
+              {highlightedMatch.r90_report_url && (
+                <Button
+                  asChild
+                  size="lg"
+                  className="font-bebas uppercase tracking-wider text-base bg-primary hover:bg-primary/90 shadow-lg hover:shadow-xl transition-all"
+                >
+                  <a 
+                    href={highlightedMatch.r90_report_url} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2"
+                  >
+                    <ExternalLink className="h-5 w-5" />
+                    Read Action Report
+                  </a>
+                </Button>
+              )}
+              {highlightedMatch.full_match_url && (
+                <Button
+                  asChild
+                  variant="outline"
+                  size="lg"
+                  className="font-bebas uppercase tracking-wider text-base hover:bg-primary/10 hover:border-primary/40 transition-all"
+                >
+                  <a 
+                    href={highlightedMatch.full_match_url} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2"
+                  >
+                    <ExternalLink className="h-5 w-5" />
+                    Watch Full Match
+                  </a>
+                </Button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Video */}
+        {highlightedMatch.video_url && (
+          <div className="bg-black p-5">
+            <div className="aspect-video w-full rounded-lg overflow-hidden shadow-2xl border-2 border-primary/20">
+              <video 
+                ref={videoRef}
+                src={highlightedMatch.video_url}
+                controls
+                className="w-full h-full"
+                playsInline
+                preload="metadata"
+              >
+                Your browser does not support the video tag.
+              </video>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
