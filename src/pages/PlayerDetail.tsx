@@ -619,7 +619,14 @@ const PlayerDetail = () => {
 
           {/* Highlighted Match Section - Only for represented/mandated players visible on stars page */}
           {player.highlighted_match && player.visible_on_stars_page && (
-            <HighlightedMatchDisplay highlightedMatch={player.highlighted_match} />
+            <HighlightedMatchDisplay 
+              highlightedMatch={player.highlighted_match}
+              onVideoPlayChange={(isPlaying) => {
+                if (isPlaying && videoRef.current) {
+                  videoRef.current.pause();
+                }
+              }}
+            />
           )}
 
           {/* News Section */}

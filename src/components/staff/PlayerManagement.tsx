@@ -148,6 +148,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       away_team: string;
       away_team_logo: string;
       score: string;
+      show_score: boolean;
       minutes_played: number;
       match_date: string;
       competition: string;
