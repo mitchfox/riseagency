@@ -367,9 +367,9 @@ const PlayerDetail = () => {
                 </div>
               )}
               
-              {/* Recent Match Highlights Overlay - Below Club Logos */}
+              {/* Recent Match Highlights Overlay - Left of Club Logos */}
               {dbHighlights.length > 0 && (
-                <div className="hidden lg:block absolute bottom-2 md:bottom-4 left-1/2 -translate-x-1/2 z-20 bg-[hsl(var(--gold))]/20 backdrop-blur-sm px-3 py-1.5 rounded-md border border-[hsl(var(--gold))]/40">
+                <div className="hidden lg:block absolute bottom-16 md:bottom-20 left-4 z-20 bg-[hsl(var(--gold))]/20 backdrop-blur-sm px-3 py-1.5 rounded-md border border-[hsl(var(--gold))]/40">
                   <p className="text-foreground font-bebas uppercase tracking-wider text-sm md:text-base whitespace-nowrap">
                     RECENT MATCHES
                   </p>
