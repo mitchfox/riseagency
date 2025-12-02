@@ -441,7 +441,7 @@ export const RadialMenu = () => {
             style={{ 
               width: `${centerSize * 0.9}px`,
               height: `${centerSize * 0.9}px`,
-              transform: `translateY(${-centerSize * 0.13}px)` 
+              transform: `translateY(${isMobile ? -centerSize * 0.06 : -centerSize * 0.13}px)` 
             }}
           />
           
@@ -453,14 +453,14 @@ export const RadialMenu = () => {
           
           {/* Role/Menu selection button */}
           <div
-            className="text-center relative z-20"
-            style={{ transform: `translateY(${-centerSize * 0.3125}px)` }}
+            className="text-center relative z-20 w-full flex items-center justify-center"
+            style={{ transform: `translateY(${isMobile ? -centerSize * 0.28 : -centerSize * 0.3125}px)` }}
           >
             <button
               onClick={() => setIsSelectingRole(!isSelectingRole)}
               className="flex items-center justify-center gap-1 font-bebas tracking-[0.05em] transition-colors duration-300 focus:outline-none"
               style={{ 
-                fontSize: `${centerSize * 0.1875}px`,
+                fontSize: `${isMobile ? centerSize * 0.22 : centerSize * 0.1875}px`,
                 ...(isSelectingRole ? { color: 'hsl(var(--primary))' } : {})
               }}
             >
@@ -468,8 +468,8 @@ export const RadialMenu = () => {
               <ChevronDown 
                 className="transition-transform duration-300" 
                 style={{ 
-                  width: `${centerSize * 0.15625}px`,
-                  height: `${centerSize * 0.15625}px`,
+                  width: `${isMobile ? centerSize * 0.18 : centerSize * 0.15625}px`,
+                  height: `${isMobile ? centerSize * 0.18 : centerSize * 0.15625}px`,
                   transform: isSelectingRole ? 'rotate(180deg)' : 'rotate(0deg)'
                 }} 
               />
@@ -479,20 +479,20 @@ export const RadialMenu = () => {
           {/* Language selector in lower half */}
           <div 
             className="absolute left-1/2 -translate-x-1/2 z-20" 
-            style={{ bottom: `${centerSize * 0.04375}px` }}
+            style={{ bottom: `${isMobile ? centerSize * 0.06 : centerSize * 0.04375}px` }}
           >
             <button
               onClick={() => setShowMap(!showMap)}
               className="flex items-center gap-1 font-bebas uppercase tracking-wider text-primary hover:text-primary/80 transition-all duration-300 focus:outline-none"
-              style={{ fontSize: `${centerSize * 0.0625}px` }}
+              style={{ fontSize: `${isMobile ? centerSize * 0.11 : centerSize * 0.0625}px` }}
             >
-              <span style={{ fontSize: `${centerSize * 0.0875}px` }}>{selectedLanguage.flag}</span>
+              <span style={{ fontSize: `${isMobile ? centerSize * 0.15 : centerSize * 0.0875}px` }}>{selectedLanguage.flag}</span>
               <span>{selectedLanguage.name}</span>
               <ChevronDown 
                 className="transition-transform duration-300"
                 style={{
-                  width: `${centerSize * 0.078125}px`,
-                  height: `${centerSize * 0.078125}px`,
+                  width: `${isMobile ? centerSize * 0.12 : centerSize * 0.078125}px`,
+                  height: `${isMobile ? centerSize * 0.12 : centerSize * 0.078125}px`,
                   transform: showMap ? 'rotate(180deg)' : 'rotate(0deg)'
                 }}
               />
