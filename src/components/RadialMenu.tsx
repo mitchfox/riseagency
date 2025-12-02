@@ -205,10 +205,30 @@ export const RadialMenu = () => {
     };
   };
 
-  // Responsive sizing - scale down for mobile
-  const radius = isMobile ? 110 : 180; // Distance from center
-  const circleSize = isMobile ? 370 : 600; // Main circle diameter
+  // Responsive sizing - scale based on viewport
+  const getResponsiveSize = () => {
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const minDimension = Math.min(vw, vh);
+    
+    if (isMobile) {
+      // Scale based on smaller viewport dimension to ensure everything fits
+      const scale = Math.min(minDimension / 400, 1); // 400px as base
+      return {
+        radius: 110 * scale,
+        circleSize: 370 * scale,
+        centerSize: 98 * scale,
+      };
+    }
+    
+    return {
+      radius: 180,
+      circleSize: 600,
+      centerSize: 160, // md:w-40 = 160px
+    };
+  };
 
+  const { radius, circleSize, centerSize } = getResponsiveSize();
   const segmentAngle = 360 / menuItems.length;
 
   return (
@@ -263,7 +283,10 @@ export const RadialMenu = () => {
       </DrawerClose>
 
       {/* Main radial menu container */}
-      <div className="relative">
+      <div className="relative" style={{
+        width: `${circleSize}px`,
+        height: `${circleSize}px`,
+      }}>
         {/* Segment dividers */}
         {menuItems.map((_, index) => {
           const angle = index * segmentAngle;
@@ -347,20 +370,28 @@ export const RadialMenu = () => {
               }}
             >
               <div className="flex flex-col items-center justify-center">
-                <div className="w-14 h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center mb-2 transition-all duration-300">
-                  <item.Icon
-                    className={`
-                      w-7 h-7 md:w-8 md:h-8 transition-colors duration-300
-                      ${hovered ? 'text-black' : 'text-white/70'}
-                    `}
-                  />
+                <div 
+                  className="rounded-full flex items-center justify-center transition-all duration-300"
+                  style={{
+                    width: `${centerSize * 0.4}px`,
+                    height: `${centerSize * 0.4}px`,
+                    marginBottom: `${centerSize * 0.05}px`,
+                  }}
+                >
+                  <div 
+                    className={`transition-colors duration-300 ${hovered ? 'text-black' : 'text-white/70'}`}
+                    style={{
+                      width: `${centerSize * 0.2}px`,
+                      height: `${centerSize * 0.2}px`,
+                    }}
+                  >
+                    <item.Icon className="w-full h-full" />
+                  </div>
                 </div>
 
                 <span
-                  className={`
-                    font-bebas text-xs md:text-sm tracking-[0.2em] whitespace-nowrap transition-all duration-300 text-center
-                    ${hovered ? 'text-black' : 'text-white/60'}
-                  `}
+                  className={`font-bebas tracking-[0.2em] whitespace-nowrap transition-all duration-300 text-center ${hovered ? 'text-black' : 'text-white/60'}`}
+                  style={{ fontSize: `${centerSize * 0.0875}px` }}
                 >
                   {t(item.labelKey, item.fallback)}
                 </span>
@@ -371,7 +402,11 @@ export const RadialMenu = () => {
 
         {/* Center circle with logo */}
         <div 
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[98px] h-[98px] md:w-40 md:h-40 rounded-full flex flex-col items-center justify-center z-20 border-4 border-black overflow-hidden"
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full flex flex-col items-center justify-center z-20 border-4 border-black overflow-hidden"
+          style={{
+            width: `${centerSize}px`,
+            height: `${centerSize}px`,
+          }}
         >
           {/* Upper 75% with white marble */}
           <div 
@@ -400,8 +435,12 @@ export const RadialMenu = () => {
           <img
             src={riseLogoBlack}
             alt="RISE"
-            className="w-[88px] h-[88px] md:w-36 md:h-36 mb-1 relative z-20"
-            style={{ transform: 'translateY(-13px)' }}
+            className="mb-1 relative z-20"
+            style={{ 
+              width: `${centerSize * 0.9}px`,
+              height: `${centerSize * 0.9}px`,
+              transform: `translateY(${-centerSize * 0.13}px)` 
+            }}
           />
           
           {/* Gold divider between logo and dropdown */}
@@ -413,28 +452,48 @@ export const RadialMenu = () => {
           {/* Role/Menu selection button */}
           <div
             className="text-center relative z-20"
-            style={{ transform: 'translateY(-50px)' }}
+            style={{ transform: `translateY(${-centerSize * 0.3125}px)` }}
           >
             <button
               onClick={() => setIsSelectingRole(!isSelectingRole)}
-              className={`flex items-center justify-center gap-1 font-bebas text-lg md:text-3xl tracking-[0.05em] transition-colors duration-300 focus:outline-none ${
-                isSelectingRole ? 'text-primary' : 'text-black hover:text-primary'
-              }`}
+              className="flex items-center justify-center gap-1 font-bebas tracking-[0.05em] transition-colors duration-300 focus:outline-none"
+              style={{ 
+                fontSize: `${centerSize * 0.1875}px`,
+                ...(isSelectingRole ? { color: 'hsl(var(--primary))' } : {})
+              }}
             >
-              <span>{isSelectingRole ? 'ROLE' : displayRoleName}</span>
-              <ChevronDown className={`w-5 h-5 transition-transform duration-300 ${isSelectingRole ? 'rotate-180' : ''}`} />
+              <span className={isSelectingRole ? '' : 'text-black hover:text-primary transition-colors'}>{isSelectingRole ? 'ROLE' : displayRoleName}</span>
+              <ChevronDown 
+                className="transition-transform duration-300" 
+                style={{ 
+                  width: `${centerSize * 0.15625}px`,
+                  height: `${centerSize * 0.15625}px`,
+                  transform: isSelectingRole ? 'rotate(180deg)' : 'rotate(0deg)'
+                }} 
+              />
             </button>
           </div>
           
           {/* Language selector in lower half */}
-          <div className="absolute left-1/2 -translate-x-1/2 z-20" style={{ bottom: '7px' }}>
+          <div 
+            className="absolute left-1/2 -translate-x-1/2 z-20" 
+            style={{ bottom: `${centerSize * 0.04375}px` }}
+          >
             <button
               onClick={() => setShowMap(!showMap)}
-              className="flex items-center gap-1 text-[10px] font-bebas uppercase tracking-wider text-primary hover:text-primary/80 transition-all duration-300 focus:outline-none"
+              className="flex items-center gap-1 font-bebas uppercase tracking-wider text-primary hover:text-primary/80 transition-all duration-300 focus:outline-none"
+              style={{ fontSize: `${centerSize * 0.0625}px` }}
             >
-              <span className="text-sm">{selectedLanguage.flag}</span>
+              <span style={{ fontSize: `${centerSize * 0.0875}px` }}>{selectedLanguage.flag}</span>
               <span>{selectedLanguage.name}</span>
-              <ChevronDown className={`w-2.5 h-2.5 transition-transform duration-300 ${showMap ? 'rotate-180' : ''}`} />
+              <ChevronDown 
+                className="transition-transform duration-300"
+                style={{
+                  width: `${centerSize * 0.078125}px`,
+                  height: `${centerSize * 0.078125}px`,
+                  transform: showMap ? 'rotate(180deg)' : 'rotate(0deg)'
+                }}
+              />
             </button>
           </div>
         </div>
