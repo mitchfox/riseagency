@@ -219,11 +219,11 @@ export const HighlightedMatchDisplay = ({ highlightedMatch, onVideoPlayChange }:
              <div className="aspect-video w-full rounded-lg overflow-hidden shadow-2xl border-2 border-primary/20">
                <video 
                  ref={videoRef}
-                 src={highlightedMatch.video_url}
+                 src={`${highlightedMatch.video_url}#t=0.001`}
                  controls
                  className="w-full h-full"
                  playsInline
-                 preload="auto"
+                 preload="metadata"
                >
                 Your browser does not support the video tag.
               </video>
