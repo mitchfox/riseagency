@@ -13,6 +13,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { parsePlayerBio, parsePlayerHighlights } from "@/lib/playerDataParser";
 import { LazyVideo } from "@/components/LazyVideo";
 import { HighlightedMatchDisplay } from "@/components/HighlightedMatchDisplay";
+import { StickyPlayerInfo } from "@/components/StickyPlayerInfo";
 import blackMarbleBg from "@/assets/black-marble-menu.png";
 
 const PlayerDetail = () => {
@@ -24,7 +25,9 @@ const PlayerDetail = () => {
   const [player, setPlayer] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [bioDialogOpen, setBioDialogOpen] = useState(false);
+  const [isPlayerInfoSticky, setIsPlayerInfoSticky] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const playerInfoSentinelRef = useRef<HTMLDivElement>(null);
   
   // Check if opened in modal
   const isModal = new URLSearchParams(window.location.search).get('modal') === 'true';
@@ -100,6 +103,23 @@ const PlayerDetail = () => {
     }
   }, [playername]);
 
+  // IntersectionObserver for sticky player info
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        // When sentinel leaves viewport, make info sticky
+        setIsPlayerInfoSticky(!entry.isIntersecting);
+      },
+      { threshold: 0, rootMargin: '-80px 0px 0px 0px' }
+    );
+    
+    if (playerInfoSentinelRef.current) {
+      observer.observe(playerInfoSentinelRef.current);
+    }
+    
+    return () => observer.disconnect();
+  }, []);
+
   // Auto-rotate tactical formations every 5 seconds
   useEffect(() => {
     if (player?.tacticalFormations && player.tacticalFormations.length > 0) {
@@ -146,9 +166,24 @@ const PlayerDetail = () => {
         )}
       </Helmet>
       
-      {!isModal && <Header />}
+      {!isModal && <Header shouldFade={isPlayerInfoSticky} />}
       <ErrorBoundary>
         <div className={`min-h-screen bg-background ${!isModal ? 'pt-16' : ''} overflow-x-hidden`}>
+          {/* Sticky Player Info - Shows when scrolled */}
+          {!isModal && player && (
+            <StickyPlayerInfo
+              name={player.name}
+              position={player.position}
+              dateOfBirth={player.dateOfBirth}
+              age={player.age}
+              nationality={player.nationality}
+              club={player.currentClub}
+              clubLogo={player.currentClubLogo || player.tacticalFormations?.[0]?.clubLogo}
+              whatsapp={player.whatsapp}
+              isSticky={isPlayerInfoSticky}
+            />
+          )}
+          
           <main className="container mx-auto px-4 py-2 touch-pan-y">
           {/* Back Button */}
           {!isModal && (
@@ -164,6 +199,9 @@ const PlayerDetail = () => {
               </Button>
             </div>
           )}
+
+          {/* Sentinel element to trigger sticky behavior */}
+          <div ref={playerInfoSentinelRef} className="h-px" />
 
           {/* Player Name, Info, and Contact - Full width */}
           <div className="mb-1 relative border-2 border-[hsl(var(--gold))] bg-secondary/20 backdrop-blur-sm rounded-lg overflow-hidden">
