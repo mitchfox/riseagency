@@ -3158,16 +3158,58 @@ const Dashboard = () => {
                                 })()}
 
                                 {/* Testing Section */}
-                                <AccordionItem value="testing">
-                                  <AccordionTrigger className="text-xl font-bebas uppercase hover:no-underline pl-6">
-                                    Testing
-                                  </AccordionTrigger>
-                                  <AccordionContent className="pl-6 pr-6">
-                                    <p className="text-muted-foreground">
-                                      Testing protocols and benchmarks will be added here by your coach.
-                                    </p>
-                                  </AccordionContent>
-                                </AccordionItem>
+                                {(() => {
+                                  const testingProgram = programs.find(p => p.program_name === 'Testing Protocol');
+                                  const testingCategories = ['Strength', 'Power', 'Speed', 'Conditioning'];
+                                  
+                                  if (!testingProgram?.sessions) return null;
+                                  
+                                  return (
+                                    <AccordionItem value="testing">
+                                      <AccordionTrigger className="text-xl font-bebas uppercase hover:no-underline pl-6">
+                                        Testing
+                                      </AccordionTrigger>
+                                      <AccordionContent className="pl-6 pr-6 space-y-6">
+                                        {testingProgram.overview_text && (
+                                          <p className="text-sm text-muted-foreground mb-4">{testingProgram.overview_text}</p>
+                                        )}
+                                        {testingCategories.map((category) => {
+                                          const tests = testingProgram.sessions[category];
+                                          if (!tests || tests.length === 0) return null;
+                                          
+                                          return (
+                                            <div key={category} className="space-y-3">
+                                              <h4 className="font-bebas text-lg uppercase tracking-wider text-primary border-b border-primary/30 pb-1">
+                                                {category}
+                                              </h4>
+                                              <div className="space-y-2">
+                                                {tests.map((test: any, idx: number) => (
+                                                  <div 
+                                                    key={idx}
+                                                    className="bg-secondary/30 rounded-lg p-3 hover:bg-secondary/50 transition-colors"
+                                                  >
+                                                    <div className="flex justify-between items-start gap-2">
+                                                      <div className="flex-1">
+                                                        <span className="font-medium">{test.name}</span>
+                                                        {test.description && (
+                                                          <p className="text-xs text-muted-foreground mt-1">{test.description}</p>
+                                                        )}
+                                                      </div>
+                                                      <div className="text-right text-sm">
+                                                        {test.sets && <span className="text-muted-foreground">{test.sets}x </span>}
+                                                        <span className="font-medium text-primary">{test.reps}</span>
+                                                      </div>
+                                                    </div>
+                                                  </div>
+                                                ))}
+                                              </div>
+                                            </div>
+                                          );
+                                        })}
+                                      </AccordionContent>
+                                    </AccordionItem>
+                                  );
+                                })()}
                               </Accordion>
                             )}
                           </div>
