@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { ExternalLink } from "lucide-react";
+import { useEffect, useRef } from "react";
 
 interface HighlightedMatchProps {
   highlightedMatch: {
@@ -8,6 +9,7 @@ interface HighlightedMatchProps {
     away_team: string;
     away_team_logo: string;
     score: string;
+    show_score: boolean;
     minutes_played: number;
     match_date: string;
     competition: string;
@@ -17,6 +19,7 @@ interface HighlightedMatchProps {
     full_match_url: string;
     r90_report_url: string;
   };
+  onVideoPlayChange?: (isPlaying: boolean) => void;
 }
 
 const STAT_LABELS: Record<string, string> = {
@@ -41,7 +44,10 @@ const STAT_LABELS: Record<string, string> = {
   shots_on_target: "On Target",
 };
 
-export const HighlightedMatchDisplay = ({ highlightedMatch }: HighlightedMatchProps) => {
+export const HighlightedMatchDisplay = ({ highlightedMatch, onVideoPlayChange }: HighlightedMatchProps) => {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
   const formatStatValue = (value: any): string => {
     if (typeof value === 'number') {
       return value % 1 === 0 ? value.toString() : value.toFixed(1);
@@ -49,57 +55,108 @@ export const HighlightedMatchDisplay = ({ highlightedMatch }: HighlightedMatchPr
     return value?.toString() || "0";
   };
 
+  // Intersection Observer for autoplay
+  useEffect(() => {
+    if (!videoRef.current || !containerRef.current) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && videoRef.current) {
+            videoRef.current.play().catch(() => {
+              // Autoplay failed, user interaction required
+            });
+            onVideoPlayChange?.(true);
+          } else if (videoRef.current) {
+            videoRef.current.pause();
+            onVideoPlayChange?.(false);
+          }
+        });
+      },
+      { threshold: 0.5 }
+    );
+
+    observer.observe(containerRef.current);
+
+    return () => observer.disconnect();
+  }, [onVideoPlayChange]);
+
   return (
-    <div className="mb-16">
-      <h2 className="text-2xl font-bebas text-primary uppercase tracking-widest mb-6">
-        Highlighted Game
+    <div ref={containerRef} className="mb-16">
+      <h2 className="text-3xl font-bebas text-primary uppercase tracking-widest mb-8 flex items-center gap-3">
+        <span className="w-12 h-1 bg-primary"></span>
+        Highlighted Performance
+        <span className="flex-1 h-1 bg-primary/20"></span>
       </h2>
       
-      <div className="border-2 border-primary/30 rounded-lg overflow-hidden">
+      <div className="relative border-2 border-primary/20 rounded-xl overflow-hidden bg-gradient-to-br from-background via-secondary/5 to-background shadow-2xl">
+        {/* Decorative Corner Accents */}
+        <div className="absolute top-0 left-0 w-20 h-20 border-t-4 border-l-4 border-primary/30 rounded-tl-xl"></div>
+        <div className="absolute top-0 right-0 w-20 h-20 border-t-4 border-r-4 border-primary/30 rounded-tr-xl"></div>
+        <div className="absolute bottom-0 left-0 w-20 h-20 border-b-4 border-l-4 border-primary/30 rounded-bl-xl"></div>
+        <div className="absolute bottom-0 right-0 w-20 h-20 border-b-4 border-r-4 border-primary/30 rounded-br-xl"></div>
+
         {/* Match Header */}
-        <div className="bg-secondary/30 backdrop-blur-sm p-6">
-          <div className="flex items-center justify-center gap-6 mb-2">
-            {highlightedMatch.home_team_logo && (
-              <img 
-                src={highlightedMatch.home_team_logo} 
-                alt={highlightedMatch.home_team}
-                className="w-16 h-16 object-contain"
-              />
-            )}
-            <div className="text-center">
-              <div className="text-3xl font-bebas text-foreground uppercase tracking-wider">
-                {highlightedMatch.home_team || "Team A"} <span className="text-primary">{highlightedMatch.score}</span> {highlightedMatch.away_team || "Team B"}
-              </div>
-              <div className="text-sm text-muted-foreground uppercase tracking-widest font-semibold mt-1">
-                {highlightedMatch.competition} • {new Date(highlightedMatch.match_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-              </div>
-              <div className="text-xs text-muted-foreground mt-1">
-                {highlightedMatch.minutes_played} minutes played
+        <div className="relative bg-gradient-to-r from-secondary/40 via-secondary/30 to-secondary/40 backdrop-blur-sm p-8">
+          <div className="flex flex-col items-center gap-4">
+            {/* Opposition Display */}
+            <div className="flex items-center gap-4">
+              {highlightedMatch.away_team_logo && (
+                <div className="w-20 h-20 rounded-full bg-background/80 backdrop-blur-sm p-3 border-2 border-primary/20 shadow-lg">
+                  <img 
+                    src={highlightedMatch.away_team_logo} 
+                    alt={highlightedMatch.away_team}
+                    className="w-full h-full object-contain"
+                  />
+                </div>
+              )}
+              <div className="text-center">
+                <div className="text-5xl font-bebas text-foreground uppercase tracking-wider flex items-center gap-3">
+                  <span className="text-primary/60">VS</span>
+                  <span>{highlightedMatch.away_team || "Opposition"}</span>
+                </div>
+                {highlightedMatch.show_score && highlightedMatch.score && (
+                  <div className="text-2xl font-bebas text-primary mt-2">
+                    {highlightedMatch.score}
+                  </div>
+                )}
               </div>
             </div>
-            {highlightedMatch.away_team_logo && (
-              <img 
-                src={highlightedMatch.away_team_logo} 
-                alt={highlightedMatch.away_team}
-                className="w-16 h-16 object-contain"
-              />
-            )}
+
+            {/* Match Info */}
+            <div className="flex flex-wrap items-center justify-center gap-4 text-sm text-muted-foreground uppercase tracking-widest font-semibold">
+              {highlightedMatch.competition && (
+                <>
+                  <span className="px-3 py-1 rounded-full bg-primary/10 border border-primary/20">
+                    {highlightedMatch.competition}
+                  </span>
+                  <span className="text-primary/40">•</span>
+                </>
+              )}
+              <span>{new Date(highlightedMatch.match_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+              <span className="text-primary/40">•</span>
+              <span>{highlightedMatch.minutes_played} mins</span>
+            </div>
           </div>
         </div>
 
         {/* Key Stats */}
         {highlightedMatch.selected_stats && highlightedMatch.selected_stats.length > 0 && (
-          <div className="bg-background/50 p-6 border-t border-primary/10">
-            <h3 className="text-sm font-bebas text-primary uppercase tracking-widest mb-4">Key Stats</h3>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div className="bg-gradient-to-br from-background/50 via-background to-background/50 p-8 border-y border-primary/10">
+            <h3 className="text-lg font-bebas text-primary uppercase tracking-widest mb-6 text-center">Performance Metrics</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
               {highlightedMatch.selected_stats.map((statKey) => (
-                <div key={statKey} className="text-center">
-                  <div className="text-3xl font-bebas text-primary">
-                    {formatStatValue(highlightedMatch.stats[statKey])}
+                <div key={statKey} className="relative group">
+                  <div className="bg-gradient-to-br from-secondary/30 to-secondary/10 backdrop-blur-sm rounded-lg p-6 border border-primary/10 hover:border-primary/30 transition-all hover:shadow-lg hover:scale-105">
+                    <div className="text-5xl font-bebas text-primary mb-2 text-center">
+                      {formatStatValue(highlightedMatch.stats[statKey])}
+                    </div>
+                    <div className="text-xs text-muted-foreground uppercase tracking-wider text-center font-semibold">
+                      {STAT_LABELS[statKey] || statKey}
+                    </div>
                   </div>
-                  <div className="text-xs text-muted-foreground uppercase tracking-wider">
-                    {STAT_LABELS[statKey] || statKey}
-                  </div>
+                  {/* Subtle glow effect on hover */}
+                  <div className="absolute inset-0 bg-primary/5 rounded-lg blur-xl opacity-0 group-hover:opacity-100 transition-opacity -z-10"></div>
                 </div>
               ))}
             </div>
@@ -108,13 +165,15 @@ export const HighlightedMatchDisplay = ({ highlightedMatch }: HighlightedMatchPr
 
         {/* Video */}
         {highlightedMatch.video_url && (
-          <div className="bg-background p-6 border-t border-primary/10">
-            <div className="aspect-video w-full rounded-lg overflow-hidden bg-muted">
+          <div className="bg-black p-8">
+            <div className="aspect-video w-full rounded-lg overflow-hidden shadow-2xl border-2 border-primary/20">
               <video 
+                ref={videoRef}
                 src={highlightedMatch.video_url}
                 controls
                 className="w-full h-full"
-                poster=""
+                playsInline
+                preload="metadata"
               >
                 Your browser does not support the video tag.
               </video>
@@ -122,15 +181,16 @@ export const HighlightedMatchDisplay = ({ highlightedMatch }: HighlightedMatchPr
           </div>
         )}
 
-        {/* Links */}
+        {/* Action Buttons */}
         {(highlightedMatch.full_match_url || highlightedMatch.r90_report_url) && (
-          <div className="bg-secondary/20 p-6 border-t border-primary/10">
-            <div className="flex flex-wrap gap-3 justify-center">
+          <div className="bg-gradient-to-r from-secondary/20 via-secondary/10 to-secondary/20 p-8 border-t border-primary/10">
+            <div className="flex flex-wrap gap-4 justify-center">
               {highlightedMatch.full_match_url && (
                 <Button
                   asChild
                   variant="outline"
-                  className="font-bebas uppercase tracking-wider"
+                  size="lg"
+                  className="font-bebas uppercase tracking-wider text-base hover:bg-primary/10 hover:border-primary/40 transition-all"
                 >
                   <a 
                     href={highlightedMatch.full_match_url} 
@@ -138,7 +198,7 @@ export const HighlightedMatchDisplay = ({ highlightedMatch }: HighlightedMatchPr
                     rel="noopener noreferrer"
                     className="flex items-center gap-2"
                   >
-                    <ExternalLink className="h-4 w-4" />
+                    <ExternalLink className="h-5 w-5" />
                     Watch Full Match
                   </a>
                 </Button>
@@ -146,8 +206,8 @@ export const HighlightedMatchDisplay = ({ highlightedMatch }: HighlightedMatchPr
               {highlightedMatch.r90_report_url && (
                 <Button
                   asChild
-                  variant="default"
-                  className="font-bebas uppercase tracking-wider bg-primary hover:bg-primary/90"
+                  size="lg"
+                  className="font-bebas uppercase tracking-wider text-base bg-primary hover:bg-primary/90 shadow-lg hover:shadow-xl transition-all"
                 >
                   <a 
                     href={highlightedMatch.r90_report_url} 
@@ -155,7 +215,7 @@ export const HighlightedMatchDisplay = ({ highlightedMatch }: HighlightedMatchPr
                     rel="noopener noreferrer"
                     className="flex items-center gap-2"
                   >
-                    <ExternalLink className="h-4 w-4" />
+                    <ExternalLink className="h-5 w-5" />
                     View Performance Report
                   </a>
                 </Button>

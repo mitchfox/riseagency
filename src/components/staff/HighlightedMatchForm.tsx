@@ -12,6 +12,7 @@ interface HighlightedMatchData {
   away_team: string;
   away_team_logo: string;
   score: string;
+  show_score: boolean;
   minutes_played: number;
   match_date: string;
   competition: string;
@@ -89,6 +90,7 @@ export const HighlightedMatchForm = ({ value, onChange, playerAnalyses = [], pla
       away_team: analysis.opponent || "",
       away_team_logo: "",
       score: analysis.result || "",
+      show_score: true,
       minutes_played: analysis.minutes_played || 0,
       match_date: analysis.analysis_date || "",
       competition: "",
@@ -261,6 +263,18 @@ export const HighlightedMatchForm = ({ value, onChange, playerAnalyses = [], pla
             ✓ Highlight video selected
           </div>
         )}
+      </div>
+
+      {/* Score Display Toggle */}
+      <div className="flex items-center space-x-2">
+        <Checkbox
+          id="show-score"
+          checked={value.show_score}
+          onCheckedChange={(checked) => onChange({ ...value, show_score: !!checked })}
+        />
+        <Label htmlFor="show-score" className="cursor-pointer">
+          Show match score on profile
+        </Label>
       </div>
 
       {/* Full Match URL */}
