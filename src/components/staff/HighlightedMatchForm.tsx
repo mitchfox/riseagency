@@ -142,6 +142,17 @@ export const HighlightedMatchForm = ({ value, onChange, playerAnalyses = [], pla
       value: value.stats[key]
     }))
     .filter(stat => stat.value !== null && stat.value !== undefined); // Only show stats with values
+  
+  // Also include any stats that are currently selected but missing from stats object
+  const selectedButMissing = (value.selected_stats || [])
+    .filter(key => STAT_LABELS[key] && !availableStats.find(s => s.key === key))
+    .map(key => ({
+      key,
+      label: STAT_LABELS[key],
+      value: "N/A"
+    }));
+  
+  const allStats = [...availableStats, ...selectedButMissing];
 
   const selectedAnalysis = playerAnalyses.find(a => a.id === value.analysis_id);
 
@@ -271,9 +282,9 @@ export const HighlightedMatchForm = ({ value, onChange, playerAnalyses = [], pla
           </p>
         </div>
         
-        {availableStats.length > 0 ? (
+        {allStats.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-96 overflow-y-auto p-3 border rounded-lg bg-background">
-            {availableStats.map((stat) => (
+            {allStats.map((stat) => (
               <div 
                 key={stat.key} 
                 className="flex items-center gap-3 p-2 rounded hover:bg-muted/50 transition-colors"
