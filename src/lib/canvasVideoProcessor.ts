@@ -56,33 +56,8 @@ class CanvasVideoProcessor {
       this.canvas.height = videos[0].videoHeight || 720;
     }
 
-    // Start recording
+    // Start recording (video only - audio mixing requires more complex handling)
     const stream = this.canvas.captureStream(30);
-    
-    // Add audio from first video if available
-    try {
-      const audioCtx = new AudioContext();
-      const destination = audioCtx.createMediaStreamDestination();
-      
-      for (const video of videos) {
-        const videoWithCapture = video as HTMLVideoElement & { captureStream?: () => MediaStream };
-        if (videoWithCapture.captureStream) {
-          const videoStream = videoWithCapture.captureStream();
-          const audioTracks = videoStream.getAudioTracks();
-          if (audioTracks.length > 0) {
-            const source = audioCtx.createMediaElementSource(video);
-            source.connect(destination);
-            source.connect(audioCtx.destination);
-          }
-        }
-      }
-      
-      destination.stream.getAudioTracks().forEach(track => {
-        stream.addTrack(track);
-      });
-    } catch (e) {
-      console.log('Audio capture not available, continuing without audio');
-    }
 
     this.recordedChunks = [];
     this.mediaRecorder = new MediaRecorder(stream, {
