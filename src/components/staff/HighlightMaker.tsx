@@ -21,7 +21,6 @@ import {
   PlayCircle
 } from 'lucide-react';
 import { videoProcessor, TransitionType, ClipWithTransition, ProcessingProgress, ExportState } from '@/lib/videoProcessor';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 interface Player {
   id: string;
@@ -68,18 +67,12 @@ export const HighlightMaker = ({ isAdmin }: HighlightMakerProps) => {
   const [progress, setProgress] = useState<ProcessingProgress | null>(null);
   const [previewClipIndex, setPreviewClipIndex] = useState<number | null>(null);
   const [savedExportState, setSavedExportState] = useState<ExportState | null>(null);
-  const [needsRefresh, setNeedsRefresh] = useState(false);
 
-  // Check for saved export state and cross-origin isolation on mount
+  // Check for saved export state on mount
   useEffect(() => {
     const saved = videoProcessor.getSavedExportState();
     if (saved) {
       setSavedExportState(saved);
-    }
-    
-    // Check if cross-origin isolation is active
-    if (!videoProcessor.isCrossOriginIsolated()) {
-      setNeedsRefresh(true);
     }
   }, []);
 
@@ -344,26 +337,6 @@ export const HighlightMaker = ({ isAdmin }: HighlightMakerProps) => {
           </p>
         </div>
       </div>
-
-      {/* Cross-Origin Isolation Warning */}
-      {needsRefresh && (
-        <Alert className="border-amber-500/50 bg-amber-500/10">
-          <RefreshCw className="h-4 w-4 text-amber-500" />
-          <AlertTitle className="text-amber-500">Refresh Required</AlertTitle>
-          <AlertDescription className="flex items-center justify-between">
-            <span>Video processing requires a page refresh to activate. Please refresh to enable export functionality.</span>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={() => window.location.reload()}
-              className="ml-4"
-            >
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Refresh Now
-            </Button>
-          </AlertDescription>
-        </Alert>
-      )}
 
       {/* Player and Playlist Selection */}
       <Card>
