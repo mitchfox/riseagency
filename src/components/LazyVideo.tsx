@@ -38,7 +38,7 @@ export const LazyVideo = forwardRef<HTMLVideoElement, LazyVideoProps>(({
       ref={videoRef}
       {...props}
     >
-      {isInView && <source src={src} type="video/mp4" />}
+      {isInView && <source src={`${src}#t=0.001`} type="video/mp4" />}
       {children}
     </video>
   );
