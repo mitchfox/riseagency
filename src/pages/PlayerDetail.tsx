@@ -375,10 +375,12 @@ const PlayerDetail = () => {
             </div>
           </div>
 
-          {/* Player Image and Bio Section - Image smaller, bio wider */}
+          {/* Biography Section */}
           <div className="mb-12">
-            <h2 className="text-sm font-bebas text-primary uppercase tracking-widest mb-4 text-lg">
-              BIOGRAPHY
+            <h2 className="text-3xl font-bebas text-primary uppercase tracking-widest mb-4 flex items-center gap-3">
+              <span className="w-12 h-1 bg-primary"></span>
+              Biography
+              <span className="flex-1 h-1 bg-primary/20"></span>
             </h2>
             <div className="flex gap-6 items-stretch">
               {/* Player Image - Matches text height */}
@@ -453,11 +455,13 @@ const PlayerDetail = () => {
             </div>
           )}
 
-          {/* Stats - Full Width */}
+          {/* Season Stats */}
           {player.seasonStats && player.seasonStats.length > 0 && (
             <div className="mb-12">
-              <h2 className="text-2xl font-bebas text-primary uppercase tracking-widest mb-6">
+              <h2 className="text-3xl font-bebas text-primary uppercase tracking-widest mb-6 flex items-center gap-3">
+                <span className="w-12 h-1 bg-primary"></span>
                 Season Stats
+                <span className="flex-1 h-1 bg-primary/20"></span>
               </h2>
               <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
                 {player.seasonStats.map((stat: any, idx: number) => (
