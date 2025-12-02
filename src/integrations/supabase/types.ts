@@ -729,6 +729,57 @@ export type Database = {
         }
         Relationships: []
       }
+      highlight_projects: {
+        Row: {
+          clips: Json | null
+          created_at: string | null
+          created_by: string | null
+          id: string
+          name: string
+          player_id: string | null
+          playlist_id: string | null
+          settings: Json | null
+          updated_at: string | null
+        }
+        Insert: {
+          clips?: Json | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          name: string
+          player_id?: string | null
+          playlist_id?: string | null
+          settings?: Json | null
+          updated_at?: string | null
+        }
+        Update: {
+          clips?: Json | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          name?: string
+          player_id?: string | null
+          playlist_id?: string | null
+          settings?: Json | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "highlight_projects_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "highlight_projects_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       homepage_videos: {
         Row: {
           created_at: string | null
