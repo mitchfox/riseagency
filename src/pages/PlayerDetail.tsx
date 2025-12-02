@@ -304,18 +304,9 @@ const PlayerDetail = () => {
                 </div>
               )}
               
-              {/* Recent Match Highlights Overlay - Above Club Logos */}
+              {/* Club Logo Overlays - Top - Show database highlights with horizontal scroll */}
               {dbHighlights.length > 0 && (
-                <div className="hidden lg:block absolute bottom-16 md:bottom-20 left-1/2 -translate-x-1/2 z-20 bg-[hsl(var(--gold))]/20 backdrop-blur-sm px-3 py-1.5 rounded-md border border-[hsl(var(--gold))]/40">
-                  <p className="text-foreground font-bebas uppercase tracking-wider text-sm md:text-base whitespace-nowrap">
-                    RECENT MATCHES
-                  </p>
-                </div>
-              )}
-              
-              {/* Club Logo Overlays - Bottom - Show database highlights with horizontal scroll */}
-              {dbHighlights.length > 0 && (
-                <div className="absolute bottom-2 md:bottom-4 left-1/2 -translate-x-1/2 z-10 w-full px-2 pointer-events-none">
+                <div className="absolute bottom-16 md:bottom-20 left-1/2 -translate-x-1/2 z-10 w-full px-2 pointer-events-none">
                   <div className="relative flex items-center justify-center gap-2">
                     {dbHighlights.length > 10 && (
                       <button
@@ -373,6 +364,15 @@ const PlayerDetail = () => {
                       </button>
                     )}
                   </div>
+                </div>
+              )}
+              
+              {/* Recent Match Highlights Overlay - Below Club Logos */}
+              {dbHighlights.length > 0 && (
+                <div className="hidden lg:block absolute bottom-2 md:bottom-4 left-1/2 -translate-x-1/2 z-20 bg-[hsl(var(--gold))]/20 backdrop-blur-sm px-3 py-1.5 rounded-md border border-[hsl(var(--gold))]/40">
+                  <p className="text-foreground font-bebas uppercase tracking-wider text-sm md:text-base whitespace-nowrap">
+                    RECENT MATCHES
+                  </p>
                 </div>
               )}
             </div>
