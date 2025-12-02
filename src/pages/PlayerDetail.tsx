@@ -31,6 +31,15 @@ const PlayerDetail = () => {
   const [performanceReports, setPerformanceReports] = useState<any[]>([]);
   const videoRef = useRef<HTMLVideoElement>(null);
   const playerInfoSentinelRef = useRef<HTMLDivElement>(null);
+
+  const highlightedAnalysis = player && player.highlighted_match
+    ? performanceReports.find((report) => {
+        if (!report.opponent) return false;
+        const reportOpponent = report.opponent.toLowerCase().trim();
+        const highlightOpponent = String(player.highlighted_match.away_team || "").toLowerCase().trim();
+        return reportOpponent === highlightOpponent;
+      })
+    : null;
   
   // Check if opened in modal
   const isModal = new URLSearchParams(window.location.search).get('modal') === 'true';
@@ -675,6 +684,13 @@ const PlayerDetail = () => {
               highlightedMatch={{
                 ...player.highlighted_match,
                 player_image_url: player.image_url,
+                r90_report_url: highlightedAnalysis
+                  ? createPerformanceReportSlug(
+                      player.name,
+                      highlightedAnalysis.opponent || "opposition",
+                      highlightedAnalysis.id
+                    )
+                  : player.highlighted_match.r90_report_url || "",
               }}
               onVideoPlayChange={(isPlaying) => {
                 if (isPlaying && videoRef.current) {
@@ -684,54 +700,6 @@ const PlayerDetail = () => {
             />
           )}
 
-          {/* Performance Reports Section */}
-          {player.visible_on_stars_page && performanceReports.length > 0 && (
-            <div className="mb-12">
-              <h2 className="text-3xl font-bebas text-primary uppercase tracking-widest mb-6 flex items-center gap-3">
-                <span className="w-12 h-1 bg-primary"></span>
-                Performance Reports
-                <span className="flex-1 h-1 bg-primary/20"></span>
-              </h2>
-              <div className="space-y-6">
-                {performanceReports.map((report) => {
-                  const stats = typeof report.striker_stats === 'string' 
-                    ? JSON.parse(report.striker_stats) 
-                    : report.striker_stats || {};
-                  
-                  const highlightedMatch = {
-                    analysis_id: report.id,
-                    home_team: "",
-                    home_team_logo: "",
-                    away_team: report.opponent || "",
-                    away_team_logo: "",
-                    score: report.result || "",
-                    show_score: true,
-                    minutes_played: report.minutes_played || 0,
-                    match_date: report.analysis_date || "",
-                    competition: "",
-                    selected_stats: Object.keys(stats).slice(0, 4), // Show first 4 stats
-                    stats: stats,
-                    video_url: report.video_url || "",
-                    full_match_url: "",
-                    r90_report_url: createPerformanceReportSlug(player.name, report.opponent || "opposition", report.id),
-                    player_image_url: player.image_url,
-                  };
-
-                  return (
-                    <HighlightedMatchDisplay 
-                      key={report.id}
-                      highlightedMatch={highlightedMatch}
-                      onVideoPlayChange={(isPlaying) => {
-                        if (isPlaying && videoRef.current) {
-                          videoRef.current.pause();
-                        }
-                      }}
-                    />
-                  );
-                })}
-              </div>
-            </div>
-          )}
 
           {/* News Section */}
           {player.news && player.news.length > 0 && (
