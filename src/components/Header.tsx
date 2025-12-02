@@ -359,11 +359,11 @@ export const Header = ({ shouldFade = false }: HeaderProps) => {
                   {index > 0 && <div className="w-px h-3 bg-white/20" />}
                   {item.type === 'link' ? (
                     <LocalizedLink to={item.to!} className="text-[10px] font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500">
-                      <HoverText text={item.mobileLabel} />
+                      <HoverText text={item.label} />
                     </LocalizedLink>
                   ) : (
                     <button onClick={() => handleSubHeaderAction(item.action)} className="text-[10px] font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500">
-                      <HoverText text={item.mobileLabel} />
+                      <HoverText text={item.label} />
                     </button>
                   )}
                 </div>
@@ -377,11 +377,11 @@ export const Header = ({ shouldFade = false }: HeaderProps) => {
                   {index > 0 && <div className="w-px h-3 bg-white/20" />}
                   {item.type === 'link' ? (
                     <LocalizedLink to={item.to!} className="text-[10px] font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500">
-                      <HoverText text={item.mobileLabel} />
+                      <HoverText text={item.label} />
                     </LocalizedLink>
                   ) : (
                     <button onClick={() => handleSubHeaderAction(item.action)} className="text-[10px] font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500">
-                      <HoverText text={item.mobileLabel} />
+                      <HoverText text={item.label} />
                     </button>
                   )}
                 </div>
