@@ -26,6 +26,7 @@ const PlayerDetail = () => {
   const [loading, setLoading] = useState(true);
   const [bioDialogOpen, setBioDialogOpen] = useState(false);
   const [isPlayerInfoSticky, setIsPlayerInfoSticky] = useState(false);
+  const [showPlayerStickyHeader, setShowPlayerStickyHeader] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const playerInfoSentinelRef = useRef<HTMLDivElement>(null);
   
@@ -109,7 +110,10 @@ const PlayerDetail = () => {
       if (!playerInfoSentinelRef.current) return;
       const rect = playerInfoSentinelRef.current.getBoundingClientRect();
       const headerOffset = 80; // approximate combined height of headers
+      const headerFadeOffset = headerOffset + 50; // player sticky header comes in 50px later
+      
       setIsPlayerInfoSticky(rect.top <= headerOffset);
+      setShowPlayerStickyHeader(rect.top <= -50); // 50px extra scroll before showing
     };
 
     // Run once on mount to set initial state
@@ -172,7 +176,7 @@ const PlayerDetail = () => {
         <PlayerStickyHeader 
           playerName={player.name}
           whatsapp={player.whatsapp}
-          isVisible={isPlayerInfoSticky}
+          isVisible={showPlayerStickyHeader}
         />
       )}
       
