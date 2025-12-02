@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { getR90Grade, getXGGrade, getXAGrade, getRegainsGrade, getInterceptionsGrade, getXGChainGrade, getProgressivePassesGrade, getPPTurnoversRatioGrade } from "@/lib/gradeCalculations";
-import { ArrowLeft, Download } from "lucide-react";
+import { Download } from "lucide-react";
 import { toast } from "sonner";
 import { extractAnalysisIdFromSlug } from "@/lib/urlHelpers";
 import { SEO } from "@/components/SEO";
@@ -158,10 +158,6 @@ const PerformanceReport = () => {
     window.print();
   };
 
-  const handleBackClick = () => {
-    // Navigate to portal instead of using navigate(-1) which can be unreliable
-    navigate('/portal');
-  };
 
   console.log('PerformanceReport - Render - loading:', loading);
   console.log('PerformanceReport - Render - analysis:', analysis);
@@ -187,9 +183,6 @@ const PerformanceReport = () => {
           <Card>
             <CardContent className="pt-6">
               <p className="text-center text-muted-foreground">Performance report not found</p>
-              <Button onClick={handleBackClick} className="mt-4 mx-auto block">
-                Go Back
-              </Button>
             </CardContent>
           </Card>
         </main>
@@ -218,10 +211,6 @@ const PerformanceReport = () => {
                 <Button onClick={handleSaveAsPDF} variant="default" size="sm" className="flex-1 md:flex-none">
                   <Download className="mr-2 h-4 w-4" />
                   Save as PDF
-                </Button>
-                <Button onClick={handleBackClick} variant="ghost" size="sm" className="flex-1 md:flex-none">
-                  <ArrowLeft className="mr-2 h-4 w-4" />
-                  Back
                 </Button>
               </div>
             </div>
