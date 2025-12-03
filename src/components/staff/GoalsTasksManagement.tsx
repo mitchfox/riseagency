@@ -56,11 +56,11 @@ export const GoalsTasksManagement = () => {
     color: "primary",
     quarter: `Q${Math.floor((new Date().getMonth() / 3) + 1)}`,
     year: new Date().getFullYear().toString(),
-    assigned_to: "",
+    assigned_to: "unassigned",
   });
 
   const [newTaskTitle, setNewTaskTitle] = useState("");
-  const [newTaskAssignee, setNewTaskAssignee] = useState("");
+  const [newTaskAssignee, setNewTaskAssignee] = useState("unassigned");
 
   useEffect(() => {
     fetchGoals();
@@ -158,7 +158,7 @@ export const GoalsTasksManagement = () => {
         quarter: goalForm.quarter,
         year: parseInt(goalForm.year),
         display_order: goals.length,
-        assigned_to: goalForm.assigned_to || null,
+        assigned_to: goalForm.assigned_to === "unassigned" ? null : goalForm.assigned_to,
       };
 
       if (editingGoal) {
@@ -186,7 +186,7 @@ export const GoalsTasksManagement = () => {
         color: "primary",
         quarter: `Q${Math.floor((new Date().getMonth() / 3) + 1)}`,
         year: new Date().getFullYear().toString(),
-        assigned_to: "",
+        assigned_to: "unassigned",
       });
       setEditingGoal(null);
       setIsAddingGoal(false);
@@ -224,12 +224,12 @@ export const GoalsTasksManagement = () => {
         .insert({
           title: newTaskTitle,
           display_order: tasks.length,
-          assigned_to: newTaskAssignee || null,
+          assigned_to: newTaskAssignee === "unassigned" ? null : newTaskAssignee,
         });
 
       if (error) throw error;
       setNewTaskTitle("");
-      setNewTaskAssignee("");
+      setNewTaskAssignee("unassigned");
       toast.success("Task added!");
       fetchTasks();
     } catch (error: any) {
@@ -394,7 +394,7 @@ export const GoalsTasksManagement = () => {
                       <SelectValue placeholder="Select staff member" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Unassigned</SelectItem>
+                      <SelectItem value="unassigned">Unassigned</SelectItem>
                       {staffMembers.map((member) => (
                         <SelectItem key={member.user_id} value={member.user_id}>
                           {member.full_name || member.email}
@@ -418,7 +418,7 @@ export const GoalsTasksManagement = () => {
                       color: "primary",
                       quarter: `Q${Math.floor((new Date().getMonth() / 3) + 1)}`,
                       year: new Date().getFullYear().toString(),
-                      assigned_to: "",
+                      assigned_to: "unassigned",
                     });
                   }}
                 >
@@ -490,7 +490,7 @@ export const GoalsTasksManagement = () => {
                             color: goal.color,
                             quarter: goal.quarter,
                             year: goal.year.toString(),
-                            assigned_to: goal.assigned_to || "",
+                            assigned_to: goal.assigned_to || "unassigned",
                           });
                           setIsAddingGoal(false);
                         }}
@@ -532,7 +532,7 @@ export const GoalsTasksManagement = () => {
               <SelectValue placeholder="Assign to..." />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Unassigned</SelectItem>
+              <SelectItem value="unassigned">Unassigned</SelectItem>
               {staffMembers.map((member) => (
                 <SelectItem key={member.user_id} value={member.user_id}>
                   {member.full_name || member.email}
@@ -567,14 +567,14 @@ export const GoalsTasksManagement = () => {
                       )}
                     </div>
                     <Select
-                      value={task.assigned_to || ""}
-                      onValueChange={(value) => handleUpdateTaskAssignee(task.id, value || null)}
+                      value={task.assigned_to || "unassigned"}
+                      onValueChange={(value) => handleUpdateTaskAssignee(task.id, value === "unassigned" ? null : value)}
                     >
                       <SelectTrigger className="w-[140px] h-8 text-xs">
                         <SelectValue placeholder="Assign" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">Unassigned</SelectItem>
+                        <SelectItem value="unassigned">Unassigned</SelectItem>
                         {staffMembers.map((member) => (
                           <SelectItem key={member.user_id} value={member.user_id}>
                             {member.full_name || member.email}
