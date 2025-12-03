@@ -51,7 +51,7 @@ export const ContactDialog = ({ open, onOpenChange }: ContactDialogProps) => {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="w-full max-w-3xl sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle className="text-3xl font-bebas uppercase tracking-wider">
             Contact Us
