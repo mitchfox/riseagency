@@ -454,7 +454,7 @@ export const RadialMenu = () => {
           {/* Role/Menu selection button */}
           <div
             className="text-center relative z-20 w-full flex items-center justify-center"
-            style={{ transform: `translateY(${isMobile ? -centerSize * 0.28 : -centerSize * 0.3125}px)` }}
+            style={{ transform: isMobile ? `translateY(${-centerSize * 0.28 - 3}px) translateX(6px)` : `translateY(${-centerSize * 0.3125}px)` }}
           >
             <button
               onClick={() => setIsSelectingRole(!isSelectingRole)}
@@ -478,8 +478,12 @@ export const RadialMenu = () => {
           
           {/* Language selector in lower half */}
           <div 
-            className="absolute left-1/2 -translate-x-1/2 z-20" 
-            style={{ bottom: `${isMobile ? centerSize * 0.06 : centerSize * 0.04375}px` }}
+            className="absolute z-20" 
+            style={{ 
+              bottom: `${isMobile ? centerSize * 0.06 - 3 : centerSize * 0.04375}px`,
+              left: isMobile ? `calc(50% + 1px)` : '50%',
+              transform: 'translateX(-50%)'
+            }}
           >
             <button
               onClick={() => setShowMap(!showMap)}
