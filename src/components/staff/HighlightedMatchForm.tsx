@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { X } from "lucide-react";
-
+import { createPerformanceReportSlug } from "@/lib/urlHelpers";
 interface HighlightedMatchData {
   analysis_id?: string | null;
   home_team: string;
@@ -28,6 +28,7 @@ interface HighlightedMatchFormProps {
   onChange: (value: HighlightedMatchData | null) => void;
   playerAnalyses?: any[];
   playerHighlights?: any;
+  playerName?: string;
 }
 
 const STAT_LABELS: Record<string, string> = {
@@ -76,7 +77,7 @@ const STAT_LABELS: Record<string, string> = {
   triple_threat_xC_per90: "Triple Threat xC per 90",
 };
 
-export const HighlightedMatchForm = ({ value, onChange, playerAnalyses = [], playerHighlights }: HighlightedMatchFormProps) => {
+export const HighlightedMatchForm = ({ value, onChange, playerAnalyses = [], playerHighlights, playerName = "" }: HighlightedMatchFormProps) => {
   const handleClear = () => {
     onChange(null);
   };
@@ -107,6 +108,11 @@ export const HighlightedMatchForm = ({ value, onChange, playerAnalyses = [], pla
       ? JSON.parse(analysis.striker_stats) 
       : analysis.striker_stats || {};
 
+    // Generate internal performance report URL
+    const reportUrl = playerName && analysis.opponent 
+      ? createPerformanceReportSlug(playerName, analysis.opponent, analysis.id)
+      : "";
+
     onChange({
       analysis_id: analysis.id,
       home_team: "",
@@ -122,7 +128,7 @@ export const HighlightedMatchForm = ({ value, onChange, playerAnalyses = [], pla
       stats: stats,
       video_url: analysis.video_url || "",
       full_match_url: "",
-      r90_report_url: analysis.pdf_url || "",
+      r90_report_url: reportUrl,
     });
   };
 

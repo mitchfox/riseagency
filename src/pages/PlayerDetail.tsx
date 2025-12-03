@@ -34,6 +34,11 @@ const PlayerDetail = () => {
 
   const highlightedAnalysis = player && player.highlighted_match
     ? performanceReports.find((report) => {
+        // First try to match by analysis_id
+        if (player.highlighted_match.analysis_id && report.id === player.highlighted_match.analysis_id) {
+          return true;
+        }
+        // Fallback to opponent name matching
         if (!report.opponent) return false;
         const reportOpponent = report.opponent.toLowerCase().trim();
         const highlightOpponent = String(player.highlighted_match.away_team || "").toLowerCase().trim();
