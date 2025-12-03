@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Plus, Edit2, Trash2, Target, CheckSquare, User } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 interface Goal {
   id: string;
@@ -21,7 +22,7 @@ interface Goal {
   quarter: string;
   year: number;
   display_order: number;
-  assigned_to: string | null;
+  assigned_to: string[];
 }
 
 interface Task {
@@ -31,7 +32,7 @@ interface Task {
   priority: string;
   category: string | null;
   display_order: number;
-  assigned_to: string | null;
+  assigned_to: string[];
 }
 
 interface StaffMember {
@@ -56,11 +57,11 @@ export const GoalsTasksManagement = () => {
     color: "primary",
     quarter: `Q${Math.floor((new Date().getMonth() / 3) + 1)}`,
     year: new Date().getFullYear().toString(),
-    assigned_to: "unassigned",
+    assigned_to: [] as string[],
   });
 
   const [newTaskTitle, setNewTaskTitle] = useState("");
-  const [newTaskAssignee, setNewTaskAssignee] = useState("unassigned");
+  const [newTaskAssignees, setNewTaskAssignees] = useState<string[]>([]);
 
   useEffect(() => {
     fetchGoals();
@@ -102,10 +103,14 @@ export const GoalsTasksManagement = () => {
     }
   };
 
-  const getStaffName = (userId: string | null) => {
-    if (!userId) return null;
+  const getStaffName = (userId: string) => {
     const member = staffMembers.find(m => m.user_id === userId);
     return member ? (member.full_name || member.email) : "Unknown";
+  };
+
+  const getStaffNames = (userIds: string[]) => {
+    if (!userIds || userIds.length === 0) return null;
+    return userIds.map(id => getStaffName(id)).join(", ");
   };
 
   const fetchGoals = async () => {
@@ -117,7 +122,10 @@ export const GoalsTasksManagement = () => {
         .order("display_order", { ascending: true });
 
       if (error) throw error;
-      setGoals(data || []);
+      setGoals((data || []).map(g => ({
+        ...g,
+        assigned_to: g.assigned_to || []
+      })));
     } catch (error: any) {
       console.error("Error fetching goals:", error);
       toast.error("Failed to load goals");
@@ -135,7 +143,10 @@ export const GoalsTasksManagement = () => {
         .order("display_order", { ascending: true });
 
       if (error) throw error;
-      setTasks(data || []);
+      setTasks((data || []).map(t => ({
+        ...t,
+        assigned_to: t.assigned_to || []
+      })));
     } catch (error: any) {
       console.error("Error fetching tasks:", error);
       toast.error("Failed to load tasks");
@@ -158,7 +169,7 @@ export const GoalsTasksManagement = () => {
         quarter: goalForm.quarter,
         year: parseInt(goalForm.year),
         display_order: goals.length,
-        assigned_to: goalForm.assigned_to === "unassigned" ? null : goalForm.assigned_to,
+        assigned_to: goalForm.assigned_to,
       };
 
       if (editingGoal) {
@@ -186,7 +197,7 @@ export const GoalsTasksManagement = () => {
         color: "primary",
         quarter: `Q${Math.floor((new Date().getMonth() / 3) + 1)}`,
         year: new Date().getFullYear().toString(),
-        assigned_to: "unassigned",
+        assigned_to: [],
       });
       setEditingGoal(null);
       setIsAddingGoal(false);
@@ -224,12 +235,12 @@ export const GoalsTasksManagement = () => {
         .insert({
           title: newTaskTitle,
           display_order: tasks.length,
-          assigned_to: newTaskAssignee === "unassigned" ? null : newTaskAssignee,
+          assigned_to: newTaskAssignees,
         });
 
       if (error) throw error;
       setNewTaskTitle("");
-      setNewTaskAssignee("unassigned");
+      setNewTaskAssignees([]);
       toast.success("Task added!");
       fetchTasks();
     } catch (error: any) {
@@ -253,19 +264,19 @@ export const GoalsTasksManagement = () => {
     }
   };
 
-  const handleUpdateTaskAssignee = async (taskId: string, assigneeId: string | null) => {
+  const handleUpdateTaskAssignees = async (taskId: string, assignees: string[]) => {
     try {
       const { error } = await supabase
         .from("staff_tasks")
-        .update({ assigned_to: assigneeId })
+        .update({ assigned_to: assignees })
         .eq("id", taskId);
 
       if (error) throw error;
-      toast.success("Task assignee updated!");
+      toast.success("Task assignees updated!");
       fetchTasks();
     } catch (error: any) {
-      console.error("Error updating task assignee:", error);
-      toast.error("Failed to update assignee");
+      console.error("Error updating task assignees:", error);
+      toast.error("Failed to update assignees");
     }
   };
 
@@ -286,6 +297,54 @@ export const GoalsTasksManagement = () => {
       toast.error("Failed to delete task");
     }
   };
+
+  const toggleAssignee = (currentAssignees: string[], userId: string) => {
+    if (currentAssignees.includes(userId)) {
+      return currentAssignees.filter(id => id !== userId);
+    } else {
+      return [...currentAssignees, userId];
+    }
+  };
+
+  const MultiAssigneeSelector = ({ 
+    selected, 
+    onChange,
+    className = ""
+  }: { 
+    selected: string[], 
+    onChange: (assignees: string[]) => void,
+    className?: string
+  }) => (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button variant="outline" className={`justify-start ${className}`}>
+          <User className="h-4 w-4 mr-2" />
+          {selected.length === 0 
+            ? "Assign to..." 
+            : selected.length === 1 
+              ? getStaffName(selected[0])
+              : `${selected.length} assigned`}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-56 p-2" align="start">
+        <div className="space-y-1">
+          {staffMembers.map((member) => (
+            <div
+              key={member.user_id}
+              className="flex items-center gap-2 p-2 rounded hover:bg-muted cursor-pointer"
+              onClick={() => onChange(toggleAssignee(selected, member.user_id))}
+            >
+              <Checkbox checked={selected.includes(member.user_id)} />
+              <span className="text-sm">{member.full_name || member.email}</span>
+            </div>
+          ))}
+          {staffMembers.length === 0 && (
+            <p className="text-sm text-muted-foreground p-2">No staff members found</p>
+          )}
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
 
   return (
     <Tabs defaultValue="goals" className="w-full">
@@ -389,19 +448,11 @@ export const GoalsTasksManagement = () => {
                 </div>
                 <div className="space-y-2">
                   <Label>Assign To</Label>
-                  <Select value={goalForm.assigned_to} onValueChange={(value) => setGoalForm({ ...goalForm, assigned_to: value })}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select staff member" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="unassigned">Unassigned</SelectItem>
-                      {staffMembers.map((member) => (
-                        <SelectItem key={member.user_id} value={member.user_id}>
-                          {member.full_name || member.email}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <MultiAssigneeSelector
+                    selected={goalForm.assigned_to}
+                    onChange={(assignees) => setGoalForm({ ...goalForm, assigned_to: assignees })}
+                    className="w-full"
+                  />
                 </div>
               </div>
               <div className="flex justify-end gap-2">
@@ -418,7 +469,7 @@ export const GoalsTasksManagement = () => {
                       color: "primary",
                       quarter: `Q${Math.floor((new Date().getMonth() / 3) + 1)}`,
                       year: new Date().getFullYear().toString(),
-                      assigned_to: "unassigned",
+                      assigned_to: [],
                     });
                   }}
                 >
@@ -444,10 +495,12 @@ export const GoalsTasksManagement = () => {
                         <span className="text-xs text-muted-foreground">
                           {goal.quarter} {goal.year}
                         </span>
-                        {goal.assigned_to && (
+                        {goal.assigned_to && goal.assigned_to.length > 0 && (
                           <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full flex items-center gap-1">
                             <User className="h-3 w-3" />
-                            {getStaffName(goal.assigned_to)}
+                            {goal.assigned_to.length === 1 
+                              ? getStaffName(goal.assigned_to[0])
+                              : `${goal.assigned_to.length} assigned`}
                           </span>
                         )}
                       </div>
@@ -490,7 +543,7 @@ export const GoalsTasksManagement = () => {
                             color: goal.color,
                             quarter: goal.quarter,
                             year: goal.year.toString(),
-                            assigned_to: goal.assigned_to || "unassigned",
+                            assigned_to: goal.assigned_to || [],
                           });
                           setIsAddingGoal(false);
                         }}
@@ -527,19 +580,11 @@ export const GoalsTasksManagement = () => {
             onKeyPress={(e) => e.key === "Enter" && handleAddTask()}
             className="flex-1"
           />
-          <Select value={newTaskAssignee} onValueChange={setNewTaskAssignee}>
-            <SelectTrigger className="w-full sm:w-[180px]">
-              <SelectValue placeholder="Assign to..." />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="unassigned">Unassigned</SelectItem>
-              {staffMembers.map((member) => (
-                <SelectItem key={member.user_id} value={member.user_id}>
-                  {member.full_name || member.email}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <MultiAssigneeSelector
+            selected={newTaskAssignees}
+            onChange={setNewTaskAssignees}
+            className="w-full sm:w-auto"
+          />
           <Button onClick={handleAddTask}>
             <Plus className="h-4 w-4" />
           </Button>
@@ -559,29 +604,18 @@ export const GoalsTasksManagement = () => {
                       <span className={`block ${task.completed ? "line-through text-muted-foreground" : ""}`}>
                         {task.title}
                       </span>
-                      {task.assigned_to && (
+                      {task.assigned_to && task.assigned_to.length > 0 && (
                         <span className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
                           <User className="h-3 w-3" />
-                          {getStaffName(task.assigned_to)}
+                          {getStaffNames(task.assigned_to)}
                         </span>
                       )}
                     </div>
-                    <Select
-                      value={task.assigned_to || "unassigned"}
-                      onValueChange={(value) => handleUpdateTaskAssignee(task.id, value === "unassigned" ? null : value)}
-                    >
-                      <SelectTrigger className="w-[140px] h-8 text-xs">
-                        <SelectValue placeholder="Assign" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="unassigned">Unassigned</SelectItem>
-                        {staffMembers.map((member) => (
-                          <SelectItem key={member.user_id} value={member.user_id}>
-                            {member.full_name || member.email}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <MultiAssigneeSelector
+                      selected={task.assigned_to || []}
+                      onChange={(assignees) => handleUpdateTaskAssignees(task.id, assignees)}
+                      className="h-8 text-xs"
+                    />
                     <Button
                       size="sm"
                       variant="ghost"
