@@ -197,7 +197,7 @@ export const PlayerCard = ({ player, viewMode = "grid" }: PlayerCardProps) => {
             src={player.hover_image_url}
             alt={`${player.name} hover`}
             disableLoadingTransition
-            className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 z-20 ${
+            className={`absolute inset-0 w-full h-full object-contain object-bottom transition-all duration-700 z-20 ${
               isTouched ? 'opacity-100' : 'opacity-0 md:group-hover:opacity-100'
             }`}
           />
