@@ -649,10 +649,22 @@ const PlayerDetail = () => {
                         {player.tacticalFormations[currentFormationIndex].club}
                       </div>
                       <div className="text-sm text-muted-foreground uppercase tracking-widest font-semibold transition-all duration-500">
-                        {player.tacticalFormations[currentFormationIndex].club === player.currentClub 
-                          ? 'CURRENT CLUB'
-                          : `${player.tacticalFormations[currentFormationIndex].appearances || player.tacticalFormations[currentFormationIndex].matches || 0} Matches`
-                        } • {player.tacticalFormations[currentFormationIndex].formation}
+                        {(() => {
+                          const formation = player.tacticalFormations[currentFormationIndex];
+                          const matchValue = formation.appearances || formation.matches;
+                          const isCurrentClub = formation.club === player.currentClub;
+                          const isNumeric = typeof matchValue === 'number' || (typeof matchValue === 'string' && !isNaN(Number(matchValue)) && matchValue !== '');
+                          
+                          if (isCurrentClub) {
+                            return 'CURRENT CLUB';
+                          } else if (isNumeric) {
+                            return `${matchValue} MATCHES`;
+                          } else if (matchValue) {
+                            return String(matchValue).toUpperCase();
+                          } else {
+                            return '';
+                          }
+                        })()} • {player.tacticalFormations[currentFormationIndex].formation}
                       </div>
                     </div>
                   </div>
