@@ -31,8 +31,15 @@ interface HighlightedMatchFormProps {
 }
 
 const STAT_LABELS: Record<string, string> = {
+  // Basic stats
   goals: "Goals",
   assists: "Assists",
+  shots: "Shots",
+  shots_on_target: "Shots On Target",
+  tackles: "Tackles",
+  passes_completed: "Passes Completed",
+  
+  // Adjusted stats
   xG_adj: "xG",
   xA_adj: "xA",
   progressive_passes_adj: "Progressive Passes",
@@ -40,16 +47,33 @@ const STAT_LABELS: Record<string, string> = {
   turnovers_adj: "Turnovers",
   duels_won_adj: "Duels Won",
   aerial_duels_won_adj: "Aerial Duels",
-  xGChain: "xG Chain",
   interceptions: "Interceptions",
+  dribbles: "Dribbles",
+  dribbles_attempted: "Dribbles Attempted",
+  
+  // xC stats
+  xGChain: "xG Chain",
   crossing_movement_xC: "Crossing xC",
   movement_in_behind_xC: "In Behind xC",
   movement_to_feet_xC: "To Feet xC",
+  movement_down_side_xC: "Down Side xC",
   triple_threat_xC: "Triple Threat xC",
-  tackles: "Tackles",
-  passes_completed: "Passes Completed",
-  shots: "Shots",
-  shots_on_target: "Shots On Target",
+  
+  // Per 90 stats
+  xG_adj_per90: "xG per 90",
+  xA_adj_per90: "xA per 90",
+  progressive_passes_adj_per90: "Progressive Passes per 90",
+  regains_adj_per90: "Regains per 90",
+  turnovers_adj_per90: "Turnovers per 90",
+  interceptions_per90: "Interceptions per 90",
+  dribbles_per90: "Dribbles per 90",
+  dribbles_attempted_per90: "Dribbles Attempted per 90",
+  xGChain_per90: "xG Chain per 90",
+  crossing_movement_xC_per90: "Crossing xC per 90",
+  movement_in_behind_xC_per90: "In Behind xC per 90",
+  movement_to_feet_xC_per90: "To Feet xC per 90",
+  movement_down_side_xC_per90: "Down Side xC per 90",
+  triple_threat_xC_per90: "Triple Threat xC per 90",
 };
 
 export const HighlightedMatchForm = ({ value, onChange, playerAnalyses = [], playerHighlights }: HighlightedMatchFormProps) => {
