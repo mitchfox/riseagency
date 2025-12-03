@@ -375,16 +375,16 @@ export const RadialMenu = () => {
                 <div 
                   className="rounded-full flex items-center justify-center transition-all duration-300"
                   style={{
-                    width: `${centerSize * 0.4}px`,
-                    height: `${centerSize * 0.4}px`,
-                    marginBottom: `${centerSize * 0.05}px`,
+                    width: `${isMobile ? centerSize * 0.35 : centerSize * 0.4}px`,
+                    height: `${isMobile ? centerSize * 0.35 : centerSize * 0.4}px`,
+                    marginBottom: `${isMobile ? centerSize * 0.02 : centerSize * 0.05}px`,
                   }}
                 >
                   <div 
                     className={`transition-colors duration-300 ${hovered ? 'text-black' : 'text-white/70'}`}
                     style={{
-                      width: `${centerSize * 0.2}px`,
-                      height: `${centerSize * 0.2}px`,
+                      width: `${isMobile ? centerSize * 0.28 : centerSize * 0.2}px`,
+                      height: `${isMobile ? centerSize * 0.28 : centerSize * 0.2}px`,
                     }}
                   >
                     <item.Icon className="w-full h-full" />
@@ -392,8 +392,12 @@ export const RadialMenu = () => {
                 </div>
 
                 <span
-                  className={`font-bebas tracking-[0.2em] whitespace-nowrap transition-all duration-300 text-center ${hovered ? 'text-black' : 'text-white/60'}`}
-                  style={{ fontSize: `${centerSize * 0.0875}px` }}
+                  className={`font-bebas tracking-[0.15em] transition-all duration-300 text-center leading-tight ${hovered ? 'text-black' : 'text-white/60'}`}
+                  style={{ 
+                    fontSize: `${isMobile ? centerSize * 0.12 : centerSize * 0.0875}px`,
+                    maxWidth: isMobile ? `${centerSize * 0.5}px` : 'none',
+                    whiteSpace: isMobile ? 'normal' : 'nowrap',
+                  }}
                 >
                   {t(item.labelKey, item.fallback)}
                 </span>
