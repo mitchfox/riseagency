@@ -337,7 +337,6 @@ export const RadialMenu = () => {
                 onMouseEnter={() => setHoveredItem(index)}
                 onMouseLeave={() => setHoveredItem(null)}
                 onTouchStart={() => setHoveredItem(index)}
-                onTouchEnd={() => setHoveredItem(null)}
                 onClick={() => {
                   if (isSelectingRole) {
                     // Just select the role, don't close the drawer
