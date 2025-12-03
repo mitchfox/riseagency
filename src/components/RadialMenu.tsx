@@ -456,7 +456,7 @@ export const RadialMenu = () => {
             className="text-center relative z-20 w-full flex items-center justify-center"
             style={{ 
               transform: isMobile 
-                ? `translate(6px, ${-centerSize * 0.28 - 3}px)` 
+                ? `translate(9px, ${-centerSize * 0.28 - 4}px)` 
                 : `translateY(${-centerSize * 0.3125}px)` 
             }}
           >
@@ -484,7 +484,7 @@ export const RadialMenu = () => {
           <div 
             className="absolute z-20" 
             style={{ 
-              bottom: isMobile ? `${centerSize * 0.06 - 3}px` : `${centerSize * 0.04375}px`,
+              bottom: isMobile ? `${centerSize * 0.06 - 5}px` : `${centerSize * 0.04375}px`,
               left: '50%',
               transform: isMobile ? 'translateX(calc(-50% + 1px))' : 'translateX(-50%)'
             }}
