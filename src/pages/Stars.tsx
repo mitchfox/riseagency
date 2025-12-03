@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { parsePlayerBio } from "@/lib/playerDataParser";
 import { DeclareInterestDialog } from "@/components/DeclareInterestDialog";
 import { ContactDialog } from "@/components/ContactDialog";
+import { PortfolioRequestDialog } from "@/components/PortfolioRequestDialog";
 import { useNavigate } from "react-router-dom";
 
 const PLAYERS_PER_PAGE = 12;
@@ -27,6 +28,7 @@ const Stars = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [declareInterestOpen, setDeclareInterestOpen] = useState(false);
   const [contactOpen, setContactOpen] = useState(false);
+  const [portfolioOpen, setPortfolioOpen] = useState(false);
 
   const positionOptions = [
     { label: "#1 - GK", value: "#1 - Goalkeeper" },
@@ -215,7 +217,7 @@ const Stars = () => {
 
               <Card 
                 className="bg-card/50 backdrop-blur-sm border-primary/20 hover:border-primary transition-colors cursor-pointer group"
-                onClick={() => setDeclareInterestOpen(true)}
+                onClick={() => setPortfolioOpen(true)}
               >
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
@@ -358,6 +360,7 @@ const Stars = () => {
       {/* Dialogs */}
       <DeclareInterestDialog open={declareInterestOpen} onOpenChange={setDeclareInterestOpen} />
       <ContactDialog open={contactOpen} onOpenChange={setContactOpen} />
+      <PortfolioRequestDialog open={portfolioOpen} onOpenChange={setPortfolioOpen} />
     </div>
   );
 };
