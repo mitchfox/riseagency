@@ -2373,7 +2373,7 @@ export type Database = {
       }
       staff_goals: {
         Row: {
-          assigned_to: string | null
+          assigned_to: string[] | null
           color: string
           created_at: string
           current_value: number
@@ -2387,7 +2387,7 @@ export type Database = {
           year: number
         }
         Insert: {
-          assigned_to?: string | null
+          assigned_to?: string[] | null
           color?: string
           created_at?: string
           current_value?: number
@@ -2401,7 +2401,7 @@ export type Database = {
           year: number
         }
         Update: {
-          assigned_to?: string | null
+          assigned_to?: string[] | null
           color?: string
           created_at?: string
           current_value?: number
@@ -2439,7 +2439,7 @@ export type Database = {
       }
       staff_tasks: {
         Row: {
-          assigned_to: string | null
+          assigned_to: string[] | null
           category: string | null
           completed: boolean
           created_at: string
@@ -2450,7 +2450,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          assigned_to?: string | null
+          assigned_to?: string[] | null
           category?: string | null
           completed?: boolean
           created_at?: string
@@ -2461,7 +2461,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
-          assigned_to?: string | null
+          assigned_to?: string[] | null
           category?: string | null
           completed?: boolean
           created_at?: string
