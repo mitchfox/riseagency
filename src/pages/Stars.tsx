@@ -6,21 +6,27 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { LateralFilter } from "@/components/LateralFilter";
-import { LayoutGrid, List, Users, MessageCircle, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
+import { LayoutGrid, List, Users, MessageCircle, ArrowRight, ChevronLeft, ChevronRight, FileText } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { parsePlayerBio } from "@/lib/playerDataParser";
+import { DeclareInterestDialog } from "@/components/DeclareInterestDialog";
+import { ContactDialog } from "@/components/ContactDialog";
+import { useNavigate } from "react-router-dom";
 
 const PLAYERS_PER_PAGE = 12;
 
 const Stars = () => {
   const { t } = useLanguage();
+  const navigate = useNavigate();
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [players, setPlayers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedPositions, setSelectedPositions] = useState<string[]>([]);
   const [selectedAgeRanges, setSelectedAgeRanges] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
+  const [declareInterestOpen, setDeclareInterestOpen] = useState(false);
+  const [contactOpen, setContactOpen] = useState(false);
 
   const positionOptions = [
     { label: "#1 - GK", value: "#1 - Goalkeeper" },
@@ -163,7 +169,10 @@ const Stars = () => {
 
             {/* Interest Cards */}
             <div className="grid md:grid-cols-3 gap-4 mb-6">
-              <Card className="bg-card/50 backdrop-blur-sm border-primary/20 hover:border-primary transition-colors cursor-pointer group">
+              <Card 
+                className="bg-card/50 backdrop-blur-sm border-primary/20 hover:border-primary transition-colors cursor-pointer group"
+                onClick={() => setDeclareInterestOpen(true)}
+              >
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
@@ -182,7 +191,10 @@ const Stars = () => {
                 </CardContent>
               </Card>
               
-              <Card className="bg-card/50 backdrop-blur-sm border-primary/20 hover:border-primary transition-colors cursor-pointer group">
+              <Card 
+                className="bg-card/50 backdrop-blur-sm border-primary/20 hover:border-primary transition-colors cursor-pointer group"
+                onClick={() => setContactOpen(true)}
+              >
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
@@ -201,12 +213,15 @@ const Stars = () => {
                 </CardContent>
               </Card>
 
-              <Card className="bg-card/50 backdrop-blur-sm border-primary/20 hover:border-primary transition-colors cursor-pointer group">
+              <Card 
+                className="bg-card/50 backdrop-blur-sm border-primary/20 hover:border-primary transition-colors cursor-pointer group"
+                onClick={() => setDeclareInterestOpen(true)}
+              >
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
                       <div className="p-3 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                        <Users className="w-6 h-6 text-primary" />
+                        <FileText className="w-6 h-6 text-primary" />
                       </div>
                        <div>
                          <h3 className="font-bebas uppercase tracking-wider text-xl mb-1">Request Full Portfolio</h3>
@@ -339,6 +354,10 @@ const Stars = () => {
       </main>
 
       <Footer />
+      
+      {/* Dialogs */}
+      <DeclareInterestDialog open={declareInterestOpen} onOpenChange={setDeclareInterestOpen} />
+      <ContactDialog open={contactOpen} onOpenChange={setContactOpen} />
     </div>
   );
 };
