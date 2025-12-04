@@ -301,7 +301,7 @@ const PlayerDetail = () => {
                       className="w-full h-full object-contain"
                       controls
                       playsInline
-                      preload="auto"
+                      preload={currentVideoType === 0 ? "auto" : "none"}
                       loop={false}
                       autoPlayOnVisible
                       src={dbHighlights[currentVideoType].videoUrl}
