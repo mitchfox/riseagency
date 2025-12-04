@@ -5,12 +5,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, FileText, Copy, DollarSign } from "lucide-react";
+import { Plus, Pencil, Trash2, FileText, Copy, Check } from "lucide-react";
 import { format } from "date-fns";
 
 interface Invoice {
@@ -47,12 +48,14 @@ export const InvoiceManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   const [players, setPlayers] = useState<Player[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
-  const [selectedInvoiceForPayment, setSelectedInvoiceForPayment] = useState<Invoice | null>(null);
-  const [paymentAmount, setPaymentAmount] = useState("");
   const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null);
   const [selectedPlayer, setSelectedPlayer] = useState<string>("all");
   const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [activeSubTab, setActiveSubTab] = useState<string>("invoices");
+  
+  // Inline editing for received amounts
+  const [editingPaymentId, setEditingPaymentId] = useState<string | null>(null);
+  const [editingPaymentValue, setEditingPaymentValue] = useState("");
 
   const [formData, setFormData] = useState({
     player_id: "",
@@ -75,19 +78,23 @@ export const InvoiceManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   const playerPreferredCurrency = selectedPlayerData?.preferred_currency || "GBP";
   const showConversionFields = formData.currency && formData.currency !== playerPreferredCurrency;
 
-  // Calculate total outstanding (pending + overdue) for filtered invoices
+  // Filter invoices
   const filteredInvoices = invoices.filter(inv => {
     if (selectedPlayer !== "all" && inv.player_id !== selectedPlayer) return false;
     if (filterStatus !== "all" && inv.status !== filterStatus) return false;
     return true;
   });
 
-  const totalOutstanding = filteredInvoices
+  // Calculate totals for selected player
+  const playerInvoices = selectedPlayer !== "all" 
+    ? invoices.filter(inv => inv.player_id === selectedPlayer)
+    : invoices;
+
+  const totalOutstanding = playerInvoices
     .filter(inv => inv.status === "pending" || inv.status === "overdue")
     .reduce((acc, inv) => {
       const remaining = inv.amount - (inv.amount_paid || 0);
       if (remaining > 0) {
-        // Use converted amount if available, otherwise original
         if (inv.converted_amount && inv.converted_currency) {
           const convertedRemaining = inv.converted_amount - ((inv.amount_paid || 0) * (inv.converted_amount / inv.amount));
           if (!acc[inv.converted_currency]) acc[inv.converted_currency] = 0;
@@ -99,6 +106,14 @@ export const InvoiceManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       }
       return acc;
     }, {} as Record<string, number>);
+
+  const totalReceived = playerInvoices.reduce((acc, inv) => {
+    if ((inv.amount_paid || 0) > 0) {
+      if (!acc[inv.currency]) acc[inv.currency] = 0;
+      acc[inv.currency] += (inv.amount_paid || 0);
+    }
+    return acc;
+  }, {} as Record<string, number>);
 
   useEffect(() => {
     fetchPlayers();
@@ -249,34 +264,27 @@ export const InvoiceManagement = ({ isAdmin }: { isAdmin: boolean }) => {
     setDialogOpen(true);
   };
 
-  const handleRecordPayment = (invoice: Invoice) => {
-    setSelectedInvoiceForPayment(invoice);
-    setPaymentAmount("");
-    setPaymentDialogOpen(true);
-  };
+  const handleSavePayment = async (invoiceId: string, newAmount: number) => {
+    const invoice = invoices.find(inv => inv.id === invoiceId);
+    if (!invoice) return;
 
-  const submitPayment = async () => {
-    if (!selectedInvoiceForPayment || !paymentAmount) return;
-
-    const newAmountPaid = (selectedInvoiceForPayment.amount_paid || 0) + parseFloat(paymentAmount);
-    const newStatus = newAmountPaid >= selectedInvoiceForPayment.amount ? "paid" : selectedInvoiceForPayment.status;
+    const newStatus = newAmount >= invoice.amount ? "paid" : invoice.status;
 
     const { error } = await supabase
       .from('invoices')
       .update({ 
-        amount_paid: newAmountPaid,
+        amount_paid: newAmount,
         status: newStatus
       })
-      .eq('id', selectedInvoiceForPayment.id);
+      .eq('id', invoiceId);
 
     if (error) {
-      toast.error("Error recording payment");
+      toast.error("Error updating payment");
       return;
     }
 
-    toast.success("Payment recorded successfully");
-    setPaymentDialogOpen(false);
-    setSelectedInvoiceForPayment(null);
+    toast.success("Payment updated");
+    setEditingPaymentId(null);
     fetchInvoices();
   };
 
@@ -319,6 +327,11 @@ export const InvoiceManagement = ({ isAdmin }: { isAdmin: boolean }) => {
     setDialogOpen(true);
   };
 
+  const handlePlayerSelect = (playerId: string) => {
+    setSelectedPlayer(playerId);
+    setActiveSubTab("invoices");
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0">
@@ -338,7 +351,7 @@ export const InvoiceManagement = ({ isAdmin }: { isAdmin: boolean }) => {
           <Button
             variant={selectedPlayer === "all" ? "default" : "outline"}
             size="sm"
-            onClick={() => setSelectedPlayer("all")}
+            onClick={() => handlePlayerSelect("all")}
             className="flex-shrink-0"
           >
             All Players
@@ -348,7 +361,7 @@ export const InvoiceManagement = ({ isAdmin }: { isAdmin: boolean }) => {
               key={player.id}
               variant={selectedPlayer === player.id ? "default" : "outline"}
               size="sm"
-              onClick={() => setSelectedPlayer(player.id)}
+              onClick={() => handlePlayerSelect(player.id)}
               className="flex-shrink-0"
             >
               {player.name}
@@ -358,164 +371,434 @@ export const InvoiceManagement = ({ isAdmin }: { isAdmin: boolean }) => {
         <ScrollBar orientation="horizontal" />
       </ScrollArea>
 
-      <div className="flex flex-col sm:flex-row gap-4">
-        <div className="w-full sm:w-48">
-          <Label>Filter by Status</Label>
-          <Select value={filterStatus} onValueChange={setFilterStatus}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Statuses</SelectItem>
-              <SelectItem value="pending">Pending</SelectItem>
-              <SelectItem value="paid">Paid</SelectItem>
-              <SelectItem value="overdue">Overdue</SelectItem>
-              <SelectItem value="cancelled">Cancelled</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
+      {/* Sub-tabs when a player is selected */}
+      {selectedPlayer !== "all" && (
+        <Tabs value={activeSubTab} onValueChange={setActiveSubTab}>
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="invoices">Invoices</TabsTrigger>
+            <TabsTrigger value="received">What's Been Received</TabsTrigger>
+          </TabsList>
 
-      {/* Total Outstanding Card */}
-      {Object.keys(totalOutstanding).length > 0 && (
-        <Card className="bg-destructive/10 border-destructive/20">
-          <CardContent className="py-4">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">Total Outstanding</span>
-              <div className="flex gap-4">
-                {Object.entries(totalOutstanding).map(([currency, amount]) => (
-                  <span key={currency} className="text-lg font-bold text-destructive">
-                    {amount.toFixed(2)} {currency}
-                  </span>
-                ))}
-              </div>
+          <TabsContent value="invoices" className="space-y-4">
+            {/* Status filter */}
+            <div className="w-full sm:w-48">
+              <Label>Filter by Status</Label>
+              <Select value={filterStatus} onValueChange={setFilterStatus}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Statuses</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="paid">Paid</SelectItem>
+                  <SelectItem value="overdue">Overdue</SelectItem>
+                  <SelectItem value="cancelled">Cancelled</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-          </CardContent>
-        </Card>
-      )}
 
-      {loading ? (
-        <div className="text-center py-8">Loading invoices...</div>
-      ) : (
-        <Card>
-          <CardContent className="p-0">
-            <ScrollArea className="w-full">
-              <div className="min-w-[1100px]">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Invoice #</TableHead>
-                      <TableHead>Player</TableHead>
-                      <TableHead>Month</TableHead>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Due Date</TableHead>
-                      <TableHead>Amount</TableHead>
-                      <TableHead>Paid</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredInvoices.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
-                          No invoices found
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      filteredInvoices.map((invoice) => {
-                        const remaining = invoice.amount - (invoice.amount_paid || 0);
-                        const isPartiallyPaid = (invoice.amount_paid || 0) > 0 && remaining > 0;
-                        
-                        return (
-                          <TableRow key={invoice.id}>
-                            <TableCell className="font-mono">{invoice.invoice_number}</TableCell>
-                            <TableCell>{getPlayerName(invoice.player_id)}</TableCell>
-                            <TableCell className="text-muted-foreground">{invoice.billing_month || "-"}</TableCell>
-                            <TableCell>{format(new Date(invoice.invoice_date), 'dd/MM/yyyy')}</TableCell>
-                            <TableCell>{format(new Date(invoice.due_date), 'dd/MM/yyyy')}</TableCell>
-                            <TableCell>
-                              <div className="flex flex-col">
-                                <span>{invoice.amount.toFixed(2)} {invoice.currency}</span>
-                                {invoice.converted_amount && invoice.converted_currency && (
-                                  <span className="text-xs text-muted-foreground">
-                                    ({invoice.converted_amount.toFixed(2)} {invoice.converted_currency})
-                                  </span>
-                                )}
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              {isPartiallyPaid ? (
-                                <span className="text-primary font-medium">
-                                  {(invoice.amount_paid || 0).toFixed(2)} / {invoice.amount.toFixed(2)}
-                                </span>
-                              ) : invoice.status === "paid" ? (
-                                <span className="text-green-500">Paid</span>
-                              ) : (
-                                <span className="text-muted-foreground">-</span>
-                              )}
-                            </TableCell>
-                            <TableCell>{getStatusBadge(invoice.status)}</TableCell>
-                            <TableCell>
-                              <div className="flex gap-1">
-                                {invoice.pdf_url && (
-                                  <Button
-                                    size="icon"
-                                    variant="ghost"
-                                    className="h-8 w-8"
-                                    onClick={() => window.open(invoice.pdf_url!, '_blank')}
-                                  >
-                                    <FileText className="w-3.5 h-3.5" />
-                                  </Button>
-                                )}
-                                {invoice.status !== "paid" && (
-                                  <Button
-                                    size="icon"
-                                    variant="ghost"
-                                    className="h-8 w-8"
-                                    onClick={() => handleRecordPayment(invoice)}
-                                    title="Record payment"
-                                  >
-                                    <DollarSign className="w-3.5 h-3.5" />
-                                  </Button>
-                                )}
-                                <Button
-                                  size="icon"
-                                  variant="ghost"
-                                  className="h-8 w-8"
-                                  onClick={() => handleDuplicate(invoice)}
-                                  title="Duplicate invoice"
-                                >
-                                  <Copy className="w-3.5 h-3.5" />
-                                </Button>
-                                <Button
-                                  size="icon"
-                                  variant="ghost"
-                                  className="h-8 w-8"
-                                  onClick={() => handleEdit(invoice)}
-                                >
-                                  <Pencil className="w-3.5 h-3.5" />
-                                </Button>
-                                <Button
-                                  size="icon"
-                                  variant="ghost"
-                                  className="h-8 w-8"
-                                  onClick={() => handleDelete(invoice.id)}
-                                >
-                                  <Trash2 className="w-3.5 h-3.5" />
-                                </Button>
-                              </div>
+            {/* Outstanding Card */}
+            {Object.keys(totalOutstanding).length > 0 && (
+              <Card className="bg-destructive/10 border-destructive/20">
+                <CardContent className="py-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Total Outstanding</span>
+                    <div className="flex gap-4">
+                      {Object.entries(totalOutstanding).map(([currency, amount]) => (
+                        <span key={currency} className="text-lg font-bold text-destructive">
+                          {amount.toFixed(2)} {currency}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Invoices Table */}
+            {loading ? (
+              <div className="text-center py-8">Loading invoices...</div>
+            ) : (
+              <Card>
+                <CardContent className="p-0">
+                  <ScrollArea className="w-full">
+                    <div className="min-w-[900px]">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Invoice #</TableHead>
+                            <TableHead>Month</TableHead>
+                            <TableHead>Date</TableHead>
+                            <TableHead>Due Date</TableHead>
+                            <TableHead>Amount</TableHead>
+                            <TableHead>Paid</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead>Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {filteredInvoices.length === 0 ? (
+                            <TableRow>
+                              <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                                No invoices found
+                              </TableCell>
+                            </TableRow>
+                          ) : (
+                            filteredInvoices.map((invoice) => {
+                              const remaining = invoice.amount - (invoice.amount_paid || 0);
+                              const isPartiallyPaid = (invoice.amount_paid || 0) > 0 && remaining > 0;
+                              
+                              return (
+                                <TableRow key={invoice.id}>
+                                  <TableCell className="font-mono">{invoice.invoice_number}</TableCell>
+                                  <TableCell className="text-muted-foreground">{invoice.billing_month || "-"}</TableCell>
+                                  <TableCell>{format(new Date(invoice.invoice_date), 'dd/MM/yyyy')}</TableCell>
+                                  <TableCell>{format(new Date(invoice.due_date), 'dd/MM/yyyy')}</TableCell>
+                                  <TableCell>
+                                    <div className="flex flex-col">
+                                      <span>{invoice.amount.toFixed(2)} {invoice.currency}</span>
+                                      {invoice.converted_amount && invoice.converted_currency && (
+                                        <span className="text-xs text-muted-foreground">
+                                          ({invoice.converted_amount.toFixed(2)} {invoice.converted_currency})
+                                        </span>
+                                      )}
+                                    </div>
+                                  </TableCell>
+                                  <TableCell>
+                                    {isPartiallyPaid ? (
+                                      <span className="text-primary font-medium">
+                                        {(invoice.amount_paid || 0).toFixed(2)} / {invoice.amount.toFixed(2)}
+                                      </span>
+                                    ) : invoice.status === "paid" ? (
+                                      <span className="text-green-500">Paid</span>
+                                    ) : (
+                                      <span className="text-muted-foreground">-</span>
+                                    )}
+                                  </TableCell>
+                                  <TableCell>{getStatusBadge(invoice.status)}</TableCell>
+                                  <TableCell>
+                                    <div className="flex gap-1">
+                                      {invoice.pdf_url && (
+                                        <Button
+                                          size="icon"
+                                          variant="ghost"
+                                          className="h-8 w-8"
+                                          onClick={() => window.open(invoice.pdf_url!, '_blank')}
+                                        >
+                                          <FileText className="w-3.5 h-3.5" />
+                                        </Button>
+                                      )}
+                                      <Button
+                                        size="icon"
+                                        variant="ghost"
+                                        className="h-8 w-8"
+                                        onClick={() => handleDuplicate(invoice)}
+                                        title="Duplicate invoice"
+                                      >
+                                        <Copy className="w-3.5 h-3.5" />
+                                      </Button>
+                                      <Button
+                                        size="icon"
+                                        variant="ghost"
+                                        className="h-8 w-8"
+                                        onClick={() => handleEdit(invoice)}
+                                      >
+                                        <Pencil className="w-3.5 h-3.5" />
+                                      </Button>
+                                      <Button
+                                        size="icon"
+                                        variant="ghost"
+                                        className="h-8 w-8"
+                                        onClick={() => handleDelete(invoice.id)}
+                                      >
+                                        <Trash2 className="w-3.5 h-3.5" />
+                                      </Button>
+                                    </div>
+                                  </TableCell>
+                                </TableRow>
+                              );
+                            })
+                          )}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </ScrollArea>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+
+          <TabsContent value="received" className="space-y-4">
+            {/* Total Received Card */}
+            {Object.keys(totalReceived).length > 0 && (
+              <Card className="bg-green-500/10 border-green-500/20">
+                <CardContent className="py-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Total Received</span>
+                    <div className="flex gap-4">
+                      {Object.entries(totalReceived).map(([currency, amount]) => (
+                        <span key={currency} className="text-lg font-bold text-green-500">
+                          {amount.toFixed(2)} {currency}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Received Payments Table */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Payment Records</CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                <ScrollArea className="w-full">
+                  <div className="min-w-[600px]">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Invoice #</TableHead>
+                          <TableHead>Month</TableHead>
+                          <TableHead>Invoice Amount</TableHead>
+                          <TableHead>Amount Received</TableHead>
+                          <TableHead>Remaining</TableHead>
+                          <TableHead>Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {playerInvoices.length === 0 ? (
+                          <TableRow>
+                            <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                              No invoices for this player
                             </TableCell>
                           </TableRow>
-                        );
-                      })
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-            </ScrollArea>
-          </CardContent>
-        </Card>
+                        ) : (
+                          playerInvoices.map((invoice) => {
+                            const remaining = invoice.amount - (invoice.amount_paid || 0);
+                            const isEditing = editingPaymentId === invoice.id;
+                            
+                            return (
+                              <TableRow key={invoice.id}>
+                                <TableCell className="font-mono">{invoice.invoice_number}</TableCell>
+                                <TableCell className="text-muted-foreground">{invoice.billing_month || "-"}</TableCell>
+                                <TableCell>{invoice.amount.toFixed(2)} {invoice.currency}</TableCell>
+                                <TableCell>
+                                  {isEditing ? (
+                                    <div className="flex items-center gap-2">
+                                      <Input
+                                        type="number"
+                                        step="0.01"
+                                        value={editingPaymentValue}
+                                        onChange={(e) => setEditingPaymentValue(e.target.value)}
+                                        className="w-24 h-8"
+                                        autoFocus
+                                      />
+                                      <Button
+                                        size="icon"
+                                        variant="ghost"
+                                        className="h-8 w-8"
+                                        onClick={() => handleSavePayment(invoice.id, parseFloat(editingPaymentValue) || 0)}
+                                      >
+                                        <Check className="w-4 h-4 text-green-500" />
+                                      </Button>
+                                    </div>
+                                  ) : (
+                                    <span 
+                                      className={`cursor-pointer hover:underline ${(invoice.amount_paid || 0) > 0 ? 'text-green-500 font-medium' : 'text-muted-foreground'}`}
+                                      onClick={() => {
+                                        setEditingPaymentId(invoice.id);
+                                        setEditingPaymentValue((invoice.amount_paid || 0).toString());
+                                      }}
+                                    >
+                                      {(invoice.amount_paid || 0).toFixed(2)} {invoice.currency}
+                                    </span>
+                                  )}
+                                </TableCell>
+                                <TableCell>
+                                  <span className={remaining > 0 ? 'text-destructive font-medium' : 'text-green-500'}>
+                                    {remaining > 0 ? `${remaining.toFixed(2)} ${invoice.currency}` : 'Fully Paid'}
+                                  </span>
+                                </TableCell>
+                                <TableCell>
+                                  {!isEditing && (
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => {
+                                        setEditingPaymentId(invoice.id);
+                                        setEditingPaymentValue((invoice.amount_paid || 0).toString());
+                                      }}
+                                    >
+                                      <Pencil className="w-3.5 h-3.5 mr-1" />
+                                      Edit
+                                    </Button>
+                                  )}
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </ScrollArea>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      )}
+
+      {/* Show all invoices view when "All Players" selected */}
+      {selectedPlayer === "all" && (
+        <>
+          <div className="w-full sm:w-48">
+            <Label>Filter by Status</Label>
+            <Select value={filterStatus} onValueChange={setFilterStatus}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Statuses</SelectItem>
+                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="paid">Paid</SelectItem>
+                <SelectItem value="overdue">Overdue</SelectItem>
+                <SelectItem value="cancelled">Cancelled</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Total Outstanding Card */}
+          {Object.keys(totalOutstanding).length > 0 && (
+            <Card className="bg-destructive/10 border-destructive/20">
+              <CardContent className="py-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">Total Outstanding</span>
+                  <div className="flex gap-4">
+                    {Object.entries(totalOutstanding).map(([currency, amount]) => (
+                      <span key={currency} className="text-lg font-bold text-destructive">
+                        {amount.toFixed(2)} {currency}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {loading ? (
+            <div className="text-center py-8">Loading invoices...</div>
+          ) : (
+            <Card>
+              <CardContent className="p-0">
+                <ScrollArea className="w-full">
+                  <div className="min-w-[1100px]">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Invoice #</TableHead>
+                          <TableHead>Player</TableHead>
+                          <TableHead>Month</TableHead>
+                          <TableHead>Date</TableHead>
+                          <TableHead>Due Date</TableHead>
+                          <TableHead>Amount</TableHead>
+                          <TableHead>Paid</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {filteredInvoices.length === 0 ? (
+                          <TableRow>
+                            <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
+                              No invoices found
+                            </TableCell>
+                          </TableRow>
+                        ) : (
+                          filteredInvoices.map((invoice) => {
+                            const remaining = invoice.amount - (invoice.amount_paid || 0);
+                            const isPartiallyPaid = (invoice.amount_paid || 0) > 0 && remaining > 0;
+                            
+                            return (
+                              <TableRow key={invoice.id}>
+                                <TableCell className="font-mono">{invoice.invoice_number}</TableCell>
+                                <TableCell>{getPlayerName(invoice.player_id)}</TableCell>
+                                <TableCell className="text-muted-foreground">{invoice.billing_month || "-"}</TableCell>
+                                <TableCell>{format(new Date(invoice.invoice_date), 'dd/MM/yyyy')}</TableCell>
+                                <TableCell>{format(new Date(invoice.due_date), 'dd/MM/yyyy')}</TableCell>
+                                <TableCell>
+                                  <div className="flex flex-col">
+                                    <span>{invoice.amount.toFixed(2)} {invoice.currency}</span>
+                                    {invoice.converted_amount && invoice.converted_currency && (
+                                      <span className="text-xs text-muted-foreground">
+                                        ({invoice.converted_amount.toFixed(2)} {invoice.converted_currency})
+                                      </span>
+                                    )}
+                                  </div>
+                                </TableCell>
+                                <TableCell>
+                                  {isPartiallyPaid ? (
+                                    <span className="text-primary font-medium">
+                                      {(invoice.amount_paid || 0).toFixed(2)} / {invoice.amount.toFixed(2)}
+                                    </span>
+                                  ) : invoice.status === "paid" ? (
+                                    <span className="text-green-500">Paid</span>
+                                  ) : (
+                                    <span className="text-muted-foreground">-</span>
+                                  )}
+                                </TableCell>
+                                <TableCell>{getStatusBadge(invoice.status)}</TableCell>
+                                <TableCell>
+                                  <div className="flex gap-1">
+                                    {invoice.pdf_url && (
+                                      <Button
+                                        size="icon"
+                                        variant="ghost"
+                                        className="h-8 w-8"
+                                        onClick={() => window.open(invoice.pdf_url!, '_blank')}
+                                      >
+                                        <FileText className="w-3.5 h-3.5" />
+                                      </Button>
+                                    )}
+                                    <Button
+                                      size="icon"
+                                      variant="ghost"
+                                      className="h-8 w-8"
+                                      onClick={() => handleDuplicate(invoice)}
+                                      title="Duplicate invoice"
+                                    >
+                                      <Copy className="w-3.5 h-3.5" />
+                                    </Button>
+                                    <Button
+                                      size="icon"
+                                      variant="ghost"
+                                      className="h-8 w-8"
+                                      onClick={() => handleEdit(invoice)}
+                                    >
+                                      <Pencil className="w-3.5 h-3.5" />
+                                    </Button>
+                                    <Button
+                                      size="icon"
+                                      variant="ghost"
+                                      className="h-8 w-8"
+                                      onClick={() => handleDelete(invoice.id)}
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                    </Button>
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </ScrollArea>
+              </CardContent>
+            </Card>
+          )}
+        </>
       )}
 
       {/* Create/Edit Invoice Dialog */}
@@ -634,7 +917,7 @@ export const InvoiceManagement = ({ isAdmin }: { isAdmin: boolean }) => {
               </div>
             </div>
 
-            {/* Conversion fields - shown when currency differs from player's preferred */}
+            {/* Conversion fields */}
             {showConversionFields && formData.player_id && (
               <div className="grid grid-cols-2 gap-4 p-3 bg-muted/50 rounded-lg">
                 <div className="space-y-2">
@@ -724,44 +1007,6 @@ export const InvoiceManagement = ({ isAdmin }: { isAdmin: boolean }) => {
               </Button>
             </div>
           </form>
-        </DialogContent>
-      </Dialog>
-
-      {/* Record Payment Dialog */}
-      <Dialog open={paymentDialogOpen} onOpenChange={setPaymentDialogOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Record Payment</DialogTitle>
-          </DialogHeader>
-          {selectedInvoiceForPayment && (
-            <div className="space-y-4">
-              <div className="text-sm space-y-1">
-                <p><span className="text-muted-foreground">Invoice:</span> {selectedInvoiceForPayment.invoice_number}</p>
-                <p><span className="text-muted-foreground">Total Amount:</span> {selectedInvoiceForPayment.amount.toFixed(2)} {selectedInvoiceForPayment.currency}</p>
-                <p><span className="text-muted-foreground">Already Paid:</span> {(selectedInvoiceForPayment.amount_paid || 0).toFixed(2)} {selectedInvoiceForPayment.currency}</p>
-                <p><span className="text-muted-foreground">Remaining:</span> {(selectedInvoiceForPayment.amount - (selectedInvoiceForPayment.amount_paid || 0)).toFixed(2)} {selectedInvoiceForPayment.currency}</p>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="payment_amount">Payment Amount ({selectedInvoiceForPayment.currency})</Label>
-                <Input
-                  id="payment_amount"
-                  type="number"
-                  step="0.01"
-                  value={paymentAmount}
-                  onChange={(e) => setPaymentAmount(e.target.value)}
-                  placeholder="0.00"
-                />
-              </div>
-              <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={() => setPaymentDialogOpen(false)}>
-                  Cancel
-                </Button>
-                <Button onClick={submitPayment} disabled={!paymentAmount}>
-                  Record Payment
-                </Button>
-              </div>
-            </div>
-          )}
         </DialogContent>
       </Dialog>
     </div>
