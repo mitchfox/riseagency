@@ -816,7 +816,10 @@ export type Database = {
       invoices: {
         Row: {
           amount: number
+          amount_paid: number | null
           billing_month: string | null
+          converted_amount: number | null
+          converted_currency: string | null
           created_at: string
           currency: string
           description: string | null
@@ -831,7 +834,10 @@ export type Database = {
         }
         Insert: {
           amount: number
+          amount_paid?: number | null
           billing_month?: string | null
+          converted_amount?: number | null
+          converted_currency?: string | null
           created_at?: string
           currency?: string
           description?: string | null
@@ -846,7 +852,10 @@ export type Database = {
         }
         Update: {
           amount?: number
+          amount_paid?: number | null
           billing_month?: string | null
+          converted_amount?: number | null
+          converted_currency?: string | null
           created_at?: string
           currency?: string
           description?: string | null
@@ -1693,6 +1702,7 @@ export type Database = {
           name: string
           nationality: string
           position: string
+          preferred_currency: string | null
           representation_status: string | null
           updated_at: string | null
           visible_on_stars_page: boolean | null
@@ -1715,6 +1725,7 @@ export type Database = {
           name: string
           nationality: string
           position: string
+          preferred_currency?: string | null
           representation_status?: string | null
           updated_at?: string | null
           visible_on_stars_page?: boolean | null
@@ -1737,6 +1748,7 @@ export type Database = {
           name?: string
           nationality?: string
           position?: string
+          preferred_currency?: string | null
           representation_status?: string | null
           updated_at?: string | null
           visible_on_stars_page?: boolean | null

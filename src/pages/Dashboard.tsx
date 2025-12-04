@@ -73,6 +73,10 @@ interface Invoice {
   status: string;
   description: string | null;
   pdf_url: string | null;
+  billing_month: string | null;
+  amount_paid: number;
+  converted_amount: number | null;
+  converted_currency: string | null;
 }
 
 interface Update {
@@ -3367,77 +3371,189 @@ const Dashboard = () => {
                       </div>
                     </CardHeader>
                     <CardContent className="container mx-auto px-4">
+                      {/* Summary Cards */}
+                      {invoices.length > 0 && (
+                        <div className="grid grid-cols-2 gap-4 mb-6">
+                          <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-4">
+                            <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Total Paid</p>
+                            <p className="text-xl font-bold text-green-500">
+                              {(() => {
+                                const paid = invoices
+                                  .filter(inv => inv.status === 'paid')
+                                  .reduce((sum, inv) => {
+                                    const amt = inv.converted_amount || inv.amount;
+                                    return sum + amt;
+                                  }, 0);
+                                const currency = invoices.find(inv => inv.converted_currency)?.converted_currency || 
+                                                 invoices[0]?.currency || 'GBP';
+                                return `${paid.toFixed(2)} ${currency}`;
+                              })()}
+                            </p>
+                          </div>
+                          <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4">
+                            <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Outstanding</p>
+                            <p className="text-xl font-bold text-destructive">
+                              {(() => {
+                                const outstanding = invoices
+                                  .filter(inv => inv.status === 'pending' || inv.status === 'overdue')
+                                  .reduce((sum, inv) => {
+                                    const remaining = (inv.converted_amount || inv.amount) - (inv.amount_paid || 0);
+                                    return sum + Math.max(0, remaining);
+                                  }, 0);
+                                const currency = invoices.find(inv => inv.converted_currency)?.converted_currency || 
+                                                 invoices[0]?.currency || 'GBP';
+                                return `${outstanding.toFixed(2)} ${currency}`;
+                              })()}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+
                       {invoices.length === 0 ? (
                         <div className="py-8 text-center text-muted-foreground">
                           No invoices available yet.
                         </div>
                       ) : (
                         <div className="space-y-4">
-                          {invoices.map((invoice) => {
-                            const getStatusColor = (status: string) => {
-                              switch (status) {
-                                case 'paid':
-                                  return 'bg-green-500/10 text-green-500 border-green-500/20';
-                                case 'pending':
-                                  return 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20';
-                                case 'overdue':
-                                  return 'bg-red-500/10 text-red-500 border-red-500/20';
-                                case 'cancelled':
-                                  return 'bg-gray-500/10 text-gray-500 border-gray-500/20';
-                                default:
-                                  return 'bg-muted text-muted-foreground';
-                              }
-                            };
+                          {/* Outstanding invoices first */}
+                          {invoices
+                            .filter(inv => inv.status === 'pending' || inv.status === 'overdue')
+                            .map((invoice) => {
+                              const remaining = invoice.amount - (invoice.amount_paid || 0);
+                              const isPartiallyPaid = (invoice.amount_paid || 0) > 0 && remaining > 0;
+                              const getStatusColor = (status: string) => {
+                                switch (status) {
+                                  case 'paid':
+                                    return 'bg-green-500/10 text-green-500 border-green-500/20';
+                                  case 'pending':
+                                    return 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20';
+                                  case 'overdue':
+                                    return 'bg-red-500/10 text-red-500 border-red-500/20';
+                                  case 'cancelled':
+                                    return 'bg-gray-500/10 text-gray-500 border-gray-500/20';
+                                  default:
+                                    return 'bg-muted text-muted-foreground';
+                                }
+                              };
 
-                            return (
-                              <div 
-                                key={invoice.id}
-                                className="flex flex-col md:flex-row md:items-center md:justify-between border rounded-lg p-4 hover:border-primary transition-colors bg-card gap-4"
-                              >
-                                <div className="flex flex-col md:flex-row md:items-center gap-4 flex-1">
-                                  <div className="flex flex-col">
-                                    <span className="font-mono text-sm font-medium">
-                                      {invoice.invoice_number}
-                                    </span>
-                                    {invoice.description && (
-                                      <span className="text-xs text-muted-foreground">
-                                        {invoice.description}
+                              return (
+                                <div 
+                                  key={invoice.id}
+                                  className="flex flex-col md:flex-row md:items-center md:justify-between border rounded-lg p-4 hover:border-primary transition-colors bg-card gap-4"
+                                >
+                                  <div className="flex flex-col md:flex-row md:items-center gap-4 flex-1">
+                                    <div className="flex flex-col">
+                                      <span className="font-mono text-sm font-medium">
+                                        {invoice.invoice_number}
                                       </span>
-                                    )}
+                                      {invoice.billing_month && (
+                                        <span className="text-xs text-primary font-medium">
+                                          {invoice.billing_month}
+                                        </span>
+                                      )}
+                                      {invoice.description && (
+                                        <span className="text-xs text-muted-foreground">
+                                          {invoice.description}
+                                        </span>
+                                      )}
+                                    </div>
+
+                                    <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4">
+                                      <span className="text-sm text-muted-foreground">
+                                        Due: {format(new Date(invoice.due_date), 'dd/MM/yyyy')}
+                                      </span>
+                                    </div>
+
+                                    <div className="flex items-center gap-4">
+                                      <div className="flex flex-col">
+                                        <span className="text-lg font-bold">
+                                          {invoice.converted_amount 
+                                            ? `${invoice.converted_amount.toFixed(2)} ${invoice.converted_currency}`
+                                            : `${invoice.amount.toFixed(2)} ${invoice.currency}`
+                                          }
+                                        </span>
+                                        {isPartiallyPaid && (
+                                          <span className="text-xs text-primary">
+                                            {(invoice.amount_paid || 0).toFixed(2)} paid
+                                          </span>
+                                        )}
+                                      </div>
+                                      <span className={`px-3 py-1 rounded-full text-xs font-medium uppercase border ${getStatusColor(invoice.status)}`}>
+                                        {invoice.status}
+                                      </span>
+                                    </div>
                                   </div>
 
-                                  <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4">
-                                    <span className="text-sm text-muted-foreground">
-                                      Issued: {format(new Date(invoice.invoice_date), 'dd/MM/yyyy')}
-                                    </span>
-                                    <span className="text-sm text-muted-foreground">
-                                      Due: {format(new Date(invoice.due_date), 'dd/MM/yyyy')}
-                                    </span>
-                                  </div>
-
-                                  <div className="flex items-center gap-4">
-                                    <span className="text-lg font-bold">
-                                      {invoice.amount.toFixed(2)} {invoice.currency}
-                                    </span>
-                                    <span className={`px-3 py-1 rounded-full text-xs font-medium uppercase border ${getStatusColor(invoice.status)}`}>
-                                      {invoice.status}
-                                    </span>
-                                  </div>
+                                  {invoice.pdf_url && (
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => window.open(invoice.pdf_url!, '_blank')}
+                                    >
+                                      <FileText className="w-4 h-4 mr-2" />
+                                      View PDF
+                                    </Button>
+                                  )}
                                 </div>
+                              );
+                            })}
+                          
+                          {/* Paid invoices */}
+                          {invoices
+                            .filter(inv => inv.status === 'paid')
+                            .map((invoice) => {
+                              const getStatusColor = (status: string) => {
+                                switch (status) {
+                                  case 'paid':
+                                    return 'bg-green-500/10 text-green-500 border-green-500/20';
+                                  default:
+                                    return 'bg-muted text-muted-foreground';
+                                }
+                              };
 
-                                {invoice.pdf_url && (
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => window.open(invoice.pdf_url!, '_blank')}
-                                  >
-                                    <FileText className="w-4 h-4 mr-2" />
-                                    View PDF
-                                  </Button>
-                                )}
-                              </div>
-                            );
-                          })}
+                              return (
+                                <div 
+                                  key={invoice.id}
+                                  className="flex flex-col md:flex-row md:items-center md:justify-between border rounded-lg p-4 hover:border-primary transition-colors bg-card gap-4 opacity-70"
+                                >
+                                  <div className="flex flex-col md:flex-row md:items-center gap-4 flex-1">
+                                    <div className="flex flex-col">
+                                      <span className="font-mono text-sm font-medium">
+                                        {invoice.invoice_number}
+                                      </span>
+                                      {invoice.billing_month && (
+                                        <span className="text-xs text-primary font-medium">
+                                          {invoice.billing_month}
+                                        </span>
+                                      )}
+                                    </div>
+
+                                    <div className="flex items-center gap-4">
+                                      <span className="text-lg font-bold">
+                                        {invoice.converted_amount 
+                                          ? `${invoice.converted_amount.toFixed(2)} ${invoice.converted_currency}`
+                                          : `${invoice.amount.toFixed(2)} ${invoice.currency}`
+                                        }
+                                      </span>
+                                      <span className={`px-3 py-1 rounded-full text-xs font-medium uppercase border ${getStatusColor(invoice.status)}`}>
+                                        {invoice.status}
+                                      </span>
+                                    </div>
+                                  </div>
+
+                                  {invoice.pdf_url && (
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => window.open(invoice.pdf_url!, '_blank')}
+                                    >
+                                      <FileText className="w-4 h-4 mr-2" />
+                                      View PDF
+                                    </Button>
+                                  )}
+                                </div>
+                              );
+                            })}
                         </div>
                       )}
                     </CardContent>

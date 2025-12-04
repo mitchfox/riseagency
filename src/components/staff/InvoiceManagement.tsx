@@ -8,9 +8,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, FileText, Copy } from "lucide-react";
+import { Plus, Pencil, Trash2, FileText, Copy, DollarSign } from "lucide-react";
 import { format } from "date-fns";
 
 interface Invoice {
@@ -25,6 +25,9 @@ interface Invoice {
   description: string | null;
   pdf_url: string | null;
   billing_month: string | null;
+  amount_paid: number;
+  converted_amount: number | null;
+  converted_currency: string | null;
   created_at: string;
 }
 
@@ -36,6 +39,7 @@ const MONTHS = [
 interface Player {
   id: string;
   name: string;
+  preferred_currency: string | null;
 }
 
 export const InvoiceManagement = ({ isAdmin }: { isAdmin: boolean }) => {
@@ -43,8 +47,11 @@ export const InvoiceManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   const [players, setPlayers] = useState<Player[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
+  const [selectedInvoiceForPayment, setSelectedInvoiceForPayment] = useState<Invoice | null>(null);
+  const [paymentAmount, setPaymentAmount] = useState("");
   const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null);
-  const [filterPlayer, setFilterPlayer] = useState<string>("all");
+  const [selectedPlayer, setSelectedPlayer] = useState<string>("all");
   const [filterStatus, setFilterStatus] = useState<string>("all");
 
   const [formData, setFormData] = useState({
@@ -57,16 +64,39 @@ export const InvoiceManagement = ({ isAdmin }: { isAdmin: boolean }) => {
     status: "pending",
     description: "",
     pdf_url: "",
-    billing_month: ""
+    billing_month: "",
+    amount_paid: "0",
+    converted_amount: "",
+    converted_currency: ""
   });
 
-  // Calculate total outstanding (pending + overdue)
-  const totalOutstanding = invoices
+  // Get selected player's preferred currency
+  const selectedPlayerData = players.find(p => p.id === formData.player_id);
+  const playerPreferredCurrency = selectedPlayerData?.preferred_currency || "GBP";
+  const showConversionFields = formData.currency && formData.currency !== playerPreferredCurrency;
+
+  // Calculate total outstanding (pending + overdue) for filtered invoices
+  const filteredInvoices = invoices.filter(inv => {
+    if (selectedPlayer !== "all" && inv.player_id !== selectedPlayer) return false;
+    if (filterStatus !== "all" && inv.status !== filterStatus) return false;
+    return true;
+  });
+
+  const totalOutstanding = filteredInvoices
     .filter(inv => inv.status === "pending" || inv.status === "overdue")
     .reduce((acc, inv) => {
-      // Group by currency
-      if (!acc[inv.currency]) acc[inv.currency] = 0;
-      acc[inv.currency] += inv.amount;
+      const remaining = inv.amount - (inv.amount_paid || 0);
+      if (remaining > 0) {
+        // Use converted amount if available, otherwise original
+        if (inv.converted_amount && inv.converted_currency) {
+          const convertedRemaining = inv.converted_amount - ((inv.amount_paid || 0) * (inv.converted_amount / inv.amount));
+          if (!acc[inv.converted_currency]) acc[inv.converted_currency] = 0;
+          acc[inv.converted_currency] += convertedRemaining;
+        } else {
+          if (!acc[inv.currency]) acc[inv.currency] = 0;
+          acc[inv.currency] += remaining;
+        }
+      }
       return acc;
     }, {} as Record<string, number>);
 
@@ -78,7 +108,7 @@ export const InvoiceManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   const fetchPlayers = async () => {
     const { data, error } = await supabase
       .from('players')
-      .select('id, name')
+      .select('id, name, preferred_currency')
       .order('name');
 
     if (error) {
@@ -91,20 +121,10 @@ export const InvoiceManagement = ({ isAdmin }: { isAdmin: boolean }) => {
 
   const fetchInvoices = async () => {
     setLoading(true);
-    let query = supabase
+    const { data, error } = await supabase
       .from('invoices')
       .select('*')
       .order('invoice_date', { ascending: false });
-
-    if (filterPlayer !== "all") {
-      query = query.eq('player_id', filterPlayer);
-    }
-
-    if (filterStatus !== "all") {
-      query = query.eq('status', filterStatus);
-    }
-
-    const { data, error } = await query;
 
     if (error) {
       toast.error("Error fetching invoices");
@@ -115,10 +135,6 @@ export const InvoiceManagement = ({ isAdmin }: { isAdmin: boolean }) => {
     setInvoices(data || []);
     setLoading(false);
   };
-
-  useEffect(() => {
-    fetchInvoices();
-  }, [filterPlayer, filterStatus]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -138,7 +154,10 @@ export const InvoiceManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       status: formData.status,
       description: formData.description || null,
       pdf_url: formData.pdf_url || null,
-      billing_month: formData.billing_month || null
+      billing_month: formData.billing_month || null,
+      amount_paid: parseFloat(formData.amount_paid) || 0,
+      converted_amount: formData.converted_amount ? parseFloat(formData.converted_amount) : null,
+      converted_currency: formData.converted_currency || null
     };
 
     if (editingInvoice) {
@@ -183,7 +202,10 @@ export const InvoiceManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       status: invoice.status,
       description: invoice.description || "",
       pdf_url: invoice.pdf_url || "",
-      billing_month: invoice.billing_month || ""
+      billing_month: invoice.billing_month || "",
+      amount_paid: (invoice.amount_paid || 0).toString(),
+      converted_amount: invoice.converted_amount?.toString() || "",
+      converted_currency: invoice.converted_currency || ""
     });
     setDialogOpen(true);
   };
@@ -206,7 +228,6 @@ export const InvoiceManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   };
 
   const handleDuplicate = (invoice: Invoice) => {
-    // Generate a new invoice number based on the original
     const newNumber = `${invoice.invoice_number}-COPY`;
     
     setEditingInvoice(null);
@@ -220,15 +241,49 @@ export const InvoiceManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       status: "pending",
       description: invoice.description || "",
       pdf_url: invoice.pdf_url || "",
-      billing_month: invoice.billing_month || ""
+      billing_month: invoice.billing_month || "",
+      amount_paid: "0",
+      converted_amount: invoice.converted_amount?.toString() || "",
+      converted_currency: invoice.converted_currency || ""
     });
     setDialogOpen(true);
+  };
+
+  const handleRecordPayment = (invoice: Invoice) => {
+    setSelectedInvoiceForPayment(invoice);
+    setPaymentAmount("");
+    setPaymentDialogOpen(true);
+  };
+
+  const submitPayment = async () => {
+    if (!selectedInvoiceForPayment || !paymentAmount) return;
+
+    const newAmountPaid = (selectedInvoiceForPayment.amount_paid || 0) + parseFloat(paymentAmount);
+    const newStatus = newAmountPaid >= selectedInvoiceForPayment.amount ? "paid" : selectedInvoiceForPayment.status;
+
+    const { error } = await supabase
+      .from('invoices')
+      .update({ 
+        amount_paid: newAmountPaid,
+        status: newStatus
+      })
+      .eq('id', selectedInvoiceForPayment.id);
+
+    if (error) {
+      toast.error("Error recording payment");
+      return;
+    }
+
+    toast.success("Payment recorded successfully");
+    setPaymentDialogOpen(false);
+    setSelectedInvoiceForPayment(null);
+    fetchInvoices();
   };
 
   const resetForm = () => {
     setEditingInvoice(null);
     setFormData({
-      player_id: "",
+      player_id: selectedPlayer !== "all" ? selectedPlayer : "",
       invoice_number: "",
       invoice_date: "",
       due_date: "",
@@ -237,7 +292,10 @@ export const InvoiceManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       status: "pending",
       description: "",
       pdf_url: "",
-      billing_month: ""
+      billing_month: "",
+      amount_paid: "0",
+      converted_amount: "",
+      converted_currency: ""
     });
   };
 
@@ -256,205 +314,51 @@ export const InvoiceManagement = ({ isAdmin }: { isAdmin: boolean }) => {
     return player?.name || "Unknown";
   };
 
+  const handleNewInvoice = () => {
+    resetForm();
+    setDialogOpen(true);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0">
         <h2 className="text-xl md:text-2xl font-bold">Invoice Management</h2>
         {isAdmin && (
-          <Dialog open={dialogOpen} onOpenChange={(open) => {
-            setDialogOpen(open);
-            if (!open) resetForm();
-          }}>
-            <DialogTrigger asChild>
-              <Button size="sm" className="w-full sm:w-auto md:h-10">
-                <Plus className="w-4 h-4 mr-2" />
-                <span className="hidden sm:inline">New Invoice</span>
-                <span className="sm:hidden">New</span>
-              </Button>
-            </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>{editingInvoice ? "Edit Invoice" : "Create New Invoice"}</DialogTitle>
-            </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="player_id">Player *</Label>
-                <Select
-                  value={formData.player_id}
-                  onValueChange={(value) => setFormData({ ...formData, player_id: value })}
-                  required
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select player" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {players.map((player) => (
-                      <SelectItem key={player.id} value={player.id}>
-                        {player.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="invoice_number">Invoice Number *</Label>
-                  <Input
-                    id="invoice_number"
-                    value={formData.invoice_number}
-                    onChange={(e) => setFormData({ ...formData, invoice_number: e.target.value })}
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="status">Status *</Label>
-                  <Select
-                    value={formData.status}
-                    onValueChange={(value) => setFormData({ ...formData, status: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="paid">Paid</SelectItem>
-                      <SelectItem value="overdue">Overdue</SelectItem>
-                      <SelectItem value="cancelled">Cancelled</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="invoice_date">Invoice Date *</Label>
-                  <Input
-                    id="invoice_date"
-                    type="date"
-                    value={formData.invoice_date}
-                    onChange={(e) => setFormData({ ...formData, invoice_date: e.target.value })}
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="due_date">Due Date *</Label>
-                  <Input
-                    id="due_date"
-                    type="date"
-                    value={formData.due_date}
-                    onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="amount">Amount *</Label>
-                  <Input
-                    id="amount"
-                    type="number"
-                    step="0.01"
-                    value={formData.amount}
-                    onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="currency">Currency *</Label>
-                  <Select
-                    value={formData.currency}
-                    onValueChange={(value) => setFormData({ ...formData, currency: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="EUR">EUR</SelectItem>
-                      <SelectItem value="USD">USD</SelectItem>
-                      <SelectItem value="GBP">GBP</SelectItem>
-                      <SelectItem value="CZK">CZK</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="billing_month">Billing Month</Label>
-                <Select
-                  value={formData.billing_month}
-                  onValueChange={(value) => setFormData({ ...formData, billing_month: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select month" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {MONTHS.map((month) => (
-                      <SelectItem key={month} value={month}>
-                        {month}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
-                <Input
-                  id="description"
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="Invoice description"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="pdf_url">PDF URL</Label>
-                <Input
-                  id="pdf_url"
-                  type="url"
-                  value={formData.pdf_url}
-                  onChange={(e) => setFormData({ ...formData, pdf_url: e.target.value })}
-                  placeholder="https://..."
-                />
-              </div>
-
-              <div className="flex justify-end gap-2">
-                <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
-                  Cancel
-                </Button>
-                <Button type="submit">
-                  {editingInvoice ? "Update" : "Create"} Invoice
-                </Button>
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog>
+          <Button size="sm" className="w-full sm:w-auto md:h-10" onClick={handleNewInvoice}>
+            <Plus className="w-4 h-4 mr-2" />
+            <span className="hidden sm:inline">New Invoice</span>
+            <span className="sm:hidden">New</span>
+          </Button>
         )}
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-4">
-        <div className="w-full sm:w-64">
-          <Label>Filter by Player</Label>
-          <Select value={filterPlayer} onValueChange={setFilterPlayer}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Players</SelectItem>
-              {players.map((player) => (
-                <SelectItem key={player.id} value={player.id}>
-                  {player.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+      {/* Player Tabs */}
+      <ScrollArea className="w-full whitespace-nowrap">
+        <div className="flex gap-2 pb-2">
+          <Button
+            variant={selectedPlayer === "all" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setSelectedPlayer("all")}
+            className="flex-shrink-0"
+          >
+            All Players
+          </Button>
+          {players.map((player) => (
+            <Button
+              key={player.id}
+              variant={selectedPlayer === player.id ? "default" : "outline"}
+              size="sm"
+              onClick={() => setSelectedPlayer(player.id)}
+              className="flex-shrink-0"
+            >
+              {player.name}
+            </Button>
+          ))}
         </div>
+        <ScrollBar orientation="horizontal" />
+      </ScrollArea>
 
+      <div className="flex flex-col sm:flex-row gap-4">
         <div className="w-full sm:w-48">
           <Label>Filter by Status</Label>
           <Select value={filterStatus} onValueChange={setFilterStatus}>
@@ -496,86 +400,370 @@ export const InvoiceManagement = ({ isAdmin }: { isAdmin: boolean }) => {
         <Card>
           <CardContent className="p-0">
             <ScrollArea className="w-full">
-              <div className="min-w-[1000px]">
+              <div className="min-w-[1100px]">
                 <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Invoice #</TableHead>
-                  <TableHead>Player</TableHead>
-                  <TableHead>Month</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Due Date</TableHead>
-                  <TableHead>Amount</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {invoices.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
-                      No invoices found
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  invoices.map((invoice) => (
-                    <TableRow key={invoice.id}>
-                      <TableCell className="font-mono">{invoice.invoice_number}</TableCell>
-                      <TableCell>{getPlayerName(invoice.player_id)}</TableCell>
-                      <TableCell className="text-muted-foreground">{invoice.billing_month || "-"}</TableCell>
-                      <TableCell>{format(new Date(invoice.invoice_date), 'dd/MM/yyyy')}</TableCell>
-                      <TableCell>{format(new Date(invoice.due_date), 'dd/MM/yyyy')}</TableCell>
-                      <TableCell>{invoice.amount.toFixed(2)} {invoice.currency}</TableCell>
-                      <TableCell>{getStatusBadge(invoice.status)}</TableCell>
-                      <TableCell>
-                        <div className="flex gap-1">
-                          {invoice.pdf_url && (
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              className="h-8 w-8"
-                              onClick={() => window.open(invoice.pdf_url!, '_blank')}
-                            >
-                              <FileText className="w-3.5 h-3.5" />
-                            </Button>
-                          )}
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="h-8 w-8"
-                            onClick={() => handleDuplicate(invoice)}
-                            title="Duplicate invoice"
-                          >
-                            <Copy className="w-3.5 h-3.5" />
-                          </Button>
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="h-8 w-8"
-                            onClick={() => handleEdit(invoice)}
-                          >
-                            <Pencil className="w-3.5 h-3.5" />
-                          </Button>
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="h-8 w-8"
-                            onClick={() => handleDelete(invoice.id)}
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </Button>
-                        </div>
-                      </TableCell>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Invoice #</TableHead>
+                      <TableHead>Player</TableHead>
+                      <TableHead>Month</TableHead>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Due Date</TableHead>
+                      <TableHead>Amount</TableHead>
+                      <TableHead>Paid</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Actions</TableHead>
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredInvoices.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
+                          No invoices found
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      filteredInvoices.map((invoice) => {
+                        const remaining = invoice.amount - (invoice.amount_paid || 0);
+                        const isPartiallyPaid = (invoice.amount_paid || 0) > 0 && remaining > 0;
+                        
+                        return (
+                          <TableRow key={invoice.id}>
+                            <TableCell className="font-mono">{invoice.invoice_number}</TableCell>
+                            <TableCell>{getPlayerName(invoice.player_id)}</TableCell>
+                            <TableCell className="text-muted-foreground">{invoice.billing_month || "-"}</TableCell>
+                            <TableCell>{format(new Date(invoice.invoice_date), 'dd/MM/yyyy')}</TableCell>
+                            <TableCell>{format(new Date(invoice.due_date), 'dd/MM/yyyy')}</TableCell>
+                            <TableCell>
+                              <div className="flex flex-col">
+                                <span>{invoice.amount.toFixed(2)} {invoice.currency}</span>
+                                {invoice.converted_amount && invoice.converted_currency && (
+                                  <span className="text-xs text-muted-foreground">
+                                    ({invoice.converted_amount.toFixed(2)} {invoice.converted_currency})
+                                  </span>
+                                )}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              {isPartiallyPaid ? (
+                                <span className="text-primary font-medium">
+                                  {(invoice.amount_paid || 0).toFixed(2)} / {invoice.amount.toFixed(2)}
+                                </span>
+                              ) : invoice.status === "paid" ? (
+                                <span className="text-green-500">Paid</span>
+                              ) : (
+                                <span className="text-muted-foreground">-</span>
+                              )}
+                            </TableCell>
+                            <TableCell>{getStatusBadge(invoice.status)}</TableCell>
+                            <TableCell>
+                              <div className="flex gap-1">
+                                {invoice.pdf_url && (
+                                  <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    className="h-8 w-8"
+                                    onClick={() => window.open(invoice.pdf_url!, '_blank')}
+                                  >
+                                    <FileText className="w-3.5 h-3.5" />
+                                  </Button>
+                                )}
+                                {invoice.status !== "paid" && (
+                                  <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    className="h-8 w-8"
+                                    onClick={() => handleRecordPayment(invoice)}
+                                    title="Record payment"
+                                  >
+                                    <DollarSign className="w-3.5 h-3.5" />
+                                  </Button>
+                                )}
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  className="h-8 w-8"
+                                  onClick={() => handleDuplicate(invoice)}
+                                  title="Duplicate invoice"
+                                >
+                                  <Copy className="w-3.5 h-3.5" />
+                                </Button>
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  className="h-8 w-8"
+                                  onClick={() => handleEdit(invoice)}
+                                >
+                                  <Pencil className="w-3.5 h-3.5" />
+                                </Button>
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  className="h-8 w-8"
+                                  onClick={() => handleDelete(invoice.id)}
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })
+                    )}
+                  </TableBody>
                 </Table>
               </div>
             </ScrollArea>
           </CardContent>
         </Card>
       )}
+
+      {/* Create/Edit Invoice Dialog */}
+      <Dialog open={dialogOpen} onOpenChange={(open) => {
+        setDialogOpen(open);
+        if (!open) resetForm();
+      }}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{editingInvoice ? "Edit Invoice" : "Create New Invoice"}</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="player_id">Player *</Label>
+              <Select
+                value={formData.player_id}
+                onValueChange={(value) => setFormData({ ...formData, player_id: value })}
+                required
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select player" />
+                </SelectTrigger>
+                <SelectContent>
+                  {players.map((player) => (
+                    <SelectItem key={player.id} value={player.id}>
+                      {player.name} ({player.preferred_currency || 'GBP'})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="invoice_number">Invoice Number *</Label>
+                <Input
+                  id="invoice_number"
+                  value={formData.invoice_number}
+                  onChange={(e) => setFormData({ ...formData, invoice_number: e.target.value })}
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="status">Status *</Label>
+                <Select
+                  value={formData.status}
+                  onValueChange={(value) => setFormData({ ...formData, status: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="paid">Paid</SelectItem>
+                    <SelectItem value="overdue">Overdue</SelectItem>
+                    <SelectItem value="cancelled">Cancelled</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="invoice_date">Invoice Date *</Label>
+                <Input
+                  id="invoice_date"
+                  type="date"
+                  value={formData.invoice_date}
+                  onChange={(e) => setFormData({ ...formData, invoice_date: e.target.value })}
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="due_date">Due Date *</Label>
+                <Input
+                  id="due_date"
+                  type="date"
+                  value={formData.due_date}
+                  onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="amount">Amount *</Label>
+                <Input
+                  id="amount"
+                  type="number"
+                  step="0.01"
+                  value={formData.amount}
+                  onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="currency">Currency *</Label>
+                <Select
+                  value={formData.currency}
+                  onValueChange={(value) => setFormData({ ...formData, currency: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="EUR">EUR</SelectItem>
+                    <SelectItem value="USD">USD</SelectItem>
+                    <SelectItem value="GBP">GBP</SelectItem>
+                    <SelectItem value="CZK">CZK</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* Conversion fields - shown when currency differs from player's preferred */}
+            {showConversionFields && formData.player_id && (
+              <div className="grid grid-cols-2 gap-4 p-3 bg-muted/50 rounded-lg">
+                <div className="space-y-2">
+                  <Label htmlFor="converted_amount">
+                    Converted Amount ({playerPreferredCurrency})
+                  </Label>
+                  <Input
+                    id="converted_amount"
+                    type="number"
+                    step="0.01"
+                    value={formData.converted_amount}
+                    onChange={(e) => setFormData({ 
+                      ...formData, 
+                      converted_amount: e.target.value,
+                      converted_currency: playerPreferredCurrency 
+                    })}
+                    placeholder={`Amount in ${playerPreferredCurrency}`}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Player's Preferred Currency</Label>
+                  <Input value={playerPreferredCurrency} disabled />
+                </div>
+              </div>
+            )}
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="billing_month">Billing Month</Label>
+                <Select
+                  value={formData.billing_month}
+                  onValueChange={(value) => setFormData({ ...formData, billing_month: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select month" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {MONTHS.map((month) => (
+                      <SelectItem key={month} value={month}>
+                        {month}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="amount_paid">Amount Paid</Label>
+                <Input
+                  id="amount_paid"
+                  type="number"
+                  step="0.01"
+                  value={formData.amount_paid}
+                  onChange={(e) => setFormData({ ...formData, amount_paid: e.target.value })}
+                  placeholder="0.00"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="description">Description</Label>
+              <Input
+                id="description"
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                placeholder="Invoice description"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="pdf_url">PDF URL</Label>
+              <Input
+                id="pdf_url"
+                type="url"
+                value={formData.pdf_url}
+                onChange={(e) => setFormData({ ...formData, pdf_url: e.target.value })}
+                placeholder="https://..."
+              />
+            </div>
+
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit">
+                {editingInvoice ? "Update" : "Create"} Invoice
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Record Payment Dialog */}
+      <Dialog open={paymentDialogOpen} onOpenChange={setPaymentDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Record Payment</DialogTitle>
+          </DialogHeader>
+          {selectedInvoiceForPayment && (
+            <div className="space-y-4">
+              <div className="text-sm space-y-1">
+                <p><span className="text-muted-foreground">Invoice:</span> {selectedInvoiceForPayment.invoice_number}</p>
+                <p><span className="text-muted-foreground">Total Amount:</span> {selectedInvoiceForPayment.amount.toFixed(2)} {selectedInvoiceForPayment.currency}</p>
+                <p><span className="text-muted-foreground">Already Paid:</span> {(selectedInvoiceForPayment.amount_paid || 0).toFixed(2)} {selectedInvoiceForPayment.currency}</p>
+                <p><span className="text-muted-foreground">Remaining:</span> {(selectedInvoiceForPayment.amount - (selectedInvoiceForPayment.amount_paid || 0)).toFixed(2)} {selectedInvoiceForPayment.currency}</p>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="payment_amount">Payment Amount ({selectedInvoiceForPayment.currency})</Label>
+                <Input
+                  id="payment_amount"
+                  type="number"
+                  step="0.01"
+                  value={paymentAmount}
+                  onChange={(e) => setPaymentAmount(e.target.value)}
+                  placeholder="0.00"
+                />
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setPaymentDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={submitPayment} disabled={!paymentAmount}>
+                  Record Payment
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
