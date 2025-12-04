@@ -61,6 +61,14 @@ export default function Landing() {
         />
       </div>
       
+      {/* Portal link - subtle top right */}
+      <Link 
+        to="/portal" 
+        className="absolute top-6 md:top-8 right-4 md:right-8 z-50 text-white/20 hover:text-white/50 text-xs font-bebas uppercase tracking-wider transition-colors duration-300"
+      >
+        Portal
+      </Link>
+      
       {/* 3D Player Effect - Over Video (hidden when language popup is open) */}
       {!languagePopupOpen && (
         <div className="absolute inset-0 pointer-events-none">
