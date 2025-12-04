@@ -1853,18 +1853,15 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                           <Edit className="w-3 h-3 md:w-4 md:h-4 md:mr-2" />
                                           <span className="hidden md:inline">Edit</span>
                                         </Button>
-                                        <Button
-                                          variant="secondary"
-                                          size="sm"
-                                          onClick={() => {
-                                            const slug = `${selectedPlayer!.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-vs-${analysis.opponent.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`.replace(/-+/g, '-');
-                                            window.open(`/performance-report/${slug}-${analysis.id}`, '_blank');
-                                          }}
-                                          className="h-8 px-2 md:px-3"
+                                        <a
+                                          href={`/performance-report/${selectedPlayer!.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-vs-${analysis.opponent.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`.replace(/-+/g, '-') + `-${analysis.id}`}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="inline-flex items-center justify-center h-8 px-2 md:px-3 text-sm font-medium rounded-md bg-secondary text-secondary-foreground hover:bg-secondary/80"
                                         >
                                           <Eye className="w-3 h-3 md:w-4 md:h-4 md:mr-2" />
                                           <span className="hidden md:inline">View</span>
-                                        </Button>
+                                        </a>
                                       </div>
                                     </div>
                                   </div>
