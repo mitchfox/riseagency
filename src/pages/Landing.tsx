@@ -8,11 +8,16 @@ import { HomeBackground } from "@/components/HomeBackground";
 import { XRayProvider } from "@/contexts/XRayContext";
 import { DragNavigator } from "@/components/DragNavigator";
 import { LandingCursor } from "@/components/LandingCursor";
+import { RepresentationDialog } from "@/components/RepresentationDialog";
+import { DeclareInterestPlayerDialog } from "@/components/DeclareInterestPlayerDialog";
+import { Button } from "@/components/ui/button";
 import riseLogoWhite from "@/assets/logo.png";
 
 export default function Landing() {
   const { t } = useLanguage();
   const [languagePopupOpen, setLanguagePopupOpen] = useState(false);
+  const [showRepresentation, setShowRepresentation] = useState(false);
+  const [showDeclareInterest, setShowDeclareInterest] = useState(false);
   
   // Desktop navigation (PLAYERS goes to /players)
   const desktopNavLinks = [
@@ -69,6 +74,25 @@ export default function Landing() {
           
           {/* Desktop Layout */}
           <div className="hidden md:block">
+            {/* Represent Me & Declare Interest Buttons */}
+            <div className="flex justify-center gap-4 mb-4">
+              <Button 
+                onClick={() => setShowRepresentation(true)}
+                variant="outline"
+                className="font-bebas uppercase tracking-wider border-primary/50 text-primary hover:bg-primary/10 px-6"
+                hoverEffect
+              >
+                {t("landing.represent_me", "Represent Me")}
+              </Button>
+              <Button 
+                onClick={() => setShowDeclareInterest(true)}
+                className="btn-shine font-bebas uppercase tracking-wider px-6"
+                hoverEffect
+              >
+                {t("landing.declare_interest", "Declare Interest In Star")}
+              </Button>
+            </div>
+            
             {/* Drag Navigator */}
             <div className="mb-4">
               <DragNavigator options={desktopNavLinks} />
@@ -82,6 +106,27 @@ export default function Landing() {
 
           {/* Mobile Layout - Compact horizontal scroll */}
           <div className="md:hidden flex flex-col items-center gap-1.5">
+            {/* Represent Me & Declare Interest Buttons */}
+            <div className="flex gap-2 mb-2">
+              <Button 
+                onClick={() => setShowRepresentation(true)}
+                variant="outline"
+                size="sm"
+                className="font-bebas uppercase tracking-wider border-primary/50 text-primary hover:bg-primary/10 text-xs px-3"
+                hoverEffect
+              >
+                {t("landing.represent_me", "Represent Me")}
+              </Button>
+              <Button 
+                onClick={() => setShowDeclareInterest(true)}
+                size="sm"
+                className="btn-shine font-bebas uppercase tracking-wider text-xs px-3"
+                hoverEffect
+              >
+                {t("landing.declare_interest_short", "Declare Interest")}
+              </Button>
+            </div>
+            
             {/* Navigation - horizontal scroll */}
             <nav className="flex items-center justify-center gap-1 flex-wrap px-1">
               {mobileNavLinks.map((link, index) => (
@@ -107,6 +152,10 @@ export default function Landing() {
 
         </div>
       </div>
+      
+      {/* Dialogs */}
+      <RepresentationDialog open={showRepresentation} onOpenChange={setShowRepresentation} />
+      <DeclareInterestPlayerDialog open={showDeclareInterest} onOpenChange={setShowDeclareInterest} />
     </div>
     </XRayProvider>
   );
