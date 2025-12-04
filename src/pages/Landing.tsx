@@ -74,8 +74,13 @@ export default function Landing() {
           
           {/* Desktop Layout */}
           <div className="hidden md:block">
-            {/* Represent Me & Declare Interest Buttons */}
-            <div className="flex justify-center gap-4 mb-4">
+            {/* Drag Navigator */}
+            <div className="mb-4">
+              <DragNavigator options={desktopNavLinks} />
+            </div>
+            
+            {/* Language Selector with buttons on either side */}
+            <div className="border-t border-primary/40 pt-3 flex items-center justify-between">
               <Button 
                 onClick={() => setShowRepresentation(true)}
                 variant="outline"
@@ -84,6 +89,9 @@ export default function Landing() {
               >
                 {t("landing.represent_me", "Represent Me")}
               </Button>
+              
+              <LanguageMapSelector onOpenChange={setLanguagePopupOpen} />
+              
               <Button 
                 onClick={() => setShowDeclareInterest(true)}
                 className="btn-shine font-bebas uppercase tracking-wider px-6"
@@ -91,16 +99,6 @@ export default function Landing() {
               >
                 {t("landing.declare_interest", "Declare Interest In Star")}
               </Button>
-            </div>
-            
-            {/* Drag Navigator */}
-            <div className="mb-4">
-              <DragNavigator options={desktopNavLinks} />
-            </div>
-            
-            {/* Language Selector */}
-            <div className="border-t border-primary/40 pt-3 flex justify-center">
-              <LanguageMapSelector onOpenChange={setLanguagePopupOpen} />
             </div>
           </div>
 
