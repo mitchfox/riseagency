@@ -6,8 +6,9 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { UserPlus } from "lucide-react";
+import { UserPlus, Trash2 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 interface StaffAccount {
   email: string;
@@ -24,6 +25,7 @@ export const StaffAccountManagement = () => {
   const [loadingAccounts, setLoadingAccounts] = useState(false);
   const [createdAccount, setCreatedAccount] = useState<StaffAccount | null>(null);
   const [resettingPassword, setResettingPassword] = useState<string | null>(null);
+  const [deletingAccount, setDeletingAccount] = useState<string | null>(null);
   const [newAccount, setNewAccount] = useState<StaffAccount>({
     email: "",
     password: "",
@@ -203,6 +205,44 @@ export const StaffAccountManagement = () => {
     }
   };
 
+  const handleDeleteAccount = async (userId: string, email: string) => {
+    setDeletingAccount(userId);
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error("Not authenticated");
+        return;
+      }
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/delete-staff-account`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({ user_id: userId }),
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || "Failed to delete account");
+      }
+
+      toast.success(`Account ${email} deleted successfully`);
+      fetchExistingAccounts();
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "An error occurred";
+      toast.error(errorMessage);
+    } finally {
+      setDeletingAccount(null);
+    }
+  };
+
   if (loading) {
     return <div className="text-center py-8">Loading...</div>;
   }
@@ -252,7 +292,7 @@ export const StaffAccountManagement = () => {
                       <p className="font-medium text-sm md:text-base capitalize">{account.role}</p>
                     </div>
                   </div>
-                  <div className="mt-3 md:mt-4 flex justify-end">
+                  <div className="mt-3 md:mt-4 flex justify-end gap-2">
                     <Button
                       variant="outline"
                       size="sm"
@@ -266,6 +306,35 @@ export const StaffAccountManagement = () => {
                     >
                       {resettingPassword === account.profiles?.email ? "Resetting..." : "Reset Password"}
                     </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          disabled={deletingAccount === account.user_id}
+                          className="w-full sm:w-auto"
+                        >
+                          {deletingAccount === account.user_id ? "Deleting..." : <><Trash2 className="h-4 w-4 mr-1" /> Delete</>}
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Delete Staff Account</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Are you sure you want to delete the account for <strong>{account.profiles?.email}</strong>? This action cannot be undone.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => handleDeleteAccount(account.user_id, account.profiles?.email || '')}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          >
+                            Delete
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </div>
                 </div>
               ))}
