@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, FileText } from "lucide-react";
+import { Plus, Pencil, Trash2, FileText, Copy } from "lucide-react";
 import { format } from "date-fns";
 
 interface Invoice {
@@ -184,6 +184,25 @@ export const InvoiceManagement = ({ isAdmin }: { isAdmin: boolean }) => {
 
     toast.success("Invoice deleted successfully");
     fetchInvoices();
+  };
+
+  const handleDuplicate = (invoice: Invoice) => {
+    // Generate a new invoice number based on the original
+    const newNumber = `${invoice.invoice_number}-COPY`;
+    
+    setEditingInvoice(null);
+    setFormData({
+      player_id: invoice.player_id,
+      invoice_number: newNumber,
+      invoice_date: new Date().toISOString().split('T')[0],
+      due_date: invoice.due_date,
+      amount: invoice.amount.toString(),
+      currency: invoice.currency,
+      status: "pending",
+      description: invoice.description || "",
+      pdf_url: invoice.pdf_url || ""
+    });
+    setDialogOpen(true);
   };
 
   const resetForm = () => {
@@ -460,6 +479,15 @@ export const InvoiceManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                               <FileText className="w-3.5 h-3.5" />
                             </Button>
                           )}
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-8 w-8"
+                            onClick={() => handleDuplicate(invoice)}
+                            title="Duplicate invoice"
+                          >
+                            <Copy className="w-3.5 h-3.5" />
+                          </Button>
                           <Button
                             size="icon"
                             variant="ghost"
