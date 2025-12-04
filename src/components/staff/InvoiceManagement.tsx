@@ -24,8 +24,14 @@ interface Invoice {
   status: string;
   description: string | null;
   pdf_url: string | null;
+  billing_month: string | null;
   created_at: string;
 }
+
+const MONTHS = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December"
+];
 
 interface Player {
   id: string;
@@ -50,8 +56,19 @@ export const InvoiceManagement = ({ isAdmin }: { isAdmin: boolean }) => {
     currency: "EUR",
     status: "pending",
     description: "",
-    pdf_url: ""
+    pdf_url: "",
+    billing_month: ""
   });
+
+  // Calculate total outstanding (pending + overdue)
+  const totalOutstanding = invoices
+    .filter(inv => inv.status === "pending" || inv.status === "overdue")
+    .reduce((acc, inv) => {
+      // Group by currency
+      if (!acc[inv.currency]) acc[inv.currency] = 0;
+      acc[inv.currency] += inv.amount;
+      return acc;
+    }, {} as Record<string, number>);
 
   useEffect(() => {
     fetchPlayers();
@@ -120,7 +137,8 @@ export const InvoiceManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       currency: formData.currency,
       status: formData.status,
       description: formData.description || null,
-      pdf_url: formData.pdf_url || null
+      pdf_url: formData.pdf_url || null,
+      billing_month: formData.billing_month || null
     };
 
     if (editingInvoice) {
@@ -164,7 +182,8 @@ export const InvoiceManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       currency: invoice.currency,
       status: invoice.status,
       description: invoice.description || "",
-      pdf_url: invoice.pdf_url || ""
+      pdf_url: invoice.pdf_url || "",
+      billing_month: invoice.billing_month || ""
     });
     setDialogOpen(true);
   };
@@ -200,7 +219,8 @@ export const InvoiceManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       currency: invoice.currency,
       status: "pending",
       description: invoice.description || "",
-      pdf_url: invoice.pdf_url || ""
+      pdf_url: invoice.pdf_url || "",
+      billing_month: invoice.billing_month || ""
     });
     setDialogOpen(true);
   };
@@ -216,7 +236,8 @@ export const InvoiceManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       currency: "EUR",
       status: "pending",
       description: "",
-      pdf_url: ""
+      pdf_url: "",
+      billing_month: ""
     });
   };
 
@@ -363,6 +384,25 @@ export const InvoiceManagement = ({ isAdmin }: { isAdmin: boolean }) => {
               </div>
 
               <div className="space-y-2">
+                <Label htmlFor="billing_month">Billing Month</Label>
+                <Select
+                  value={formData.billing_month}
+                  onValueChange={(value) => setFormData({ ...formData, billing_month: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select month" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {MONTHS.map((month) => (
+                      <SelectItem key={month} value={month}>
+                        {month}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
                 <Label htmlFor="description">Description</Label>
                 <Input
                   id="description"
@@ -432,18 +472,37 @@ export const InvoiceManagement = ({ isAdmin }: { isAdmin: boolean }) => {
         </div>
       </div>
 
+      {/* Total Outstanding Card */}
+      {Object.keys(totalOutstanding).length > 0 && (
+        <Card className="bg-destructive/10 border-destructive/20">
+          <CardContent className="py-4">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium">Total Outstanding</span>
+              <div className="flex gap-4">
+                {Object.entries(totalOutstanding).map(([currency, amount]) => (
+                  <span key={currency} className="text-lg font-bold text-destructive">
+                    {amount.toFixed(2)} {currency}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {loading ? (
         <div className="text-center py-8">Loading invoices...</div>
       ) : (
         <Card>
           <CardContent className="p-0">
             <ScrollArea className="w-full">
-              <div className="min-w-[900px]">
+              <div className="min-w-[1000px]">
                 <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Invoice #</TableHead>
                   <TableHead>Player</TableHead>
+                  <TableHead>Month</TableHead>
                   <TableHead>Date</TableHead>
                   <TableHead>Due Date</TableHead>
                   <TableHead>Amount</TableHead>
@@ -454,7 +513,7 @@ export const InvoiceManagement = ({ isAdmin }: { isAdmin: boolean }) => {
               <TableBody>
                 {invoices.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                       No invoices found
                     </TableCell>
                   </TableRow>
@@ -463,6 +522,7 @@ export const InvoiceManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                     <TableRow key={invoice.id}>
                       <TableCell className="font-mono">{invoice.invoice_number}</TableCell>
                       <TableCell>{getPlayerName(invoice.player_id)}</TableCell>
+                      <TableCell className="text-muted-foreground">{invoice.billing_month || "-"}</TableCell>
                       <TableCell>{format(new Date(invoice.invoice_date), 'dd/MM/yyyy')}</TableCell>
                       <TableCell>{format(new Date(invoice.due_date), 'dd/MM/yyyy')}</TableCell>
                       <TableCell>{invoice.amount.toFixed(2)} {invoice.currency}</TableCell>
