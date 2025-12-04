@@ -483,48 +483,203 @@ const PlayerDetail = () => {
             </div>
           )}
 
-          {/* Season Stats */}
-          {player.seasonStats && player.seasonStats.length > 0 && (
-            <div className="mb-12">
-              <h2 className="text-3xl font-bebas text-primary uppercase tracking-widest mb-6 flex items-center gap-3">
-                <span className="w-12 h-1 bg-primary"></span>
-                Season Stats
-                <span className="flex-1 h-1 bg-primary/20"></span>
-              </h2>
-              <div className="grid gap-6 grid-cols-2 lg:grid-cols-4">
-                {player.seasonStats.map((stat: any, idx: number) => (
-                  <div 
-                    key={idx} 
-                    className="group relative overflow-hidden rounded-xl border-2 border-[hsl(var(--gold))]/30 bg-gradient-to-br from-secondary/40 via-secondary/30 to-secondary/20 backdrop-blur-sm p-8 transition-all duration-300 hover:border-[hsl(var(--gold))]/60 hover:shadow-[0_0_30px_rgba(212,175,55,0.2)]"
-                  >
-                    {/* Animated background gradient */}
-                    <div className="absolute inset-0 bg-gradient-to-br from-[hsl(var(--gold))]/5 via-transparent to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                    
-                    {/* Shine effect */}
-                    <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-[hsl(var(--gold))]/10 to-transparent" />
-                    
-                    <div className="relative text-center">
-                      <div className="text-6xl md:text-7xl font-bebas text-transparent bg-clip-text bg-gradient-to-br from-[hsl(var(--gold))] via-primary to-[hsl(var(--gold))]/70 mb-3 leading-none tracking-tight drop-shadow-[0_2px_10px_rgba(212,175,55,0.3)]">
-                        {stat.value || "0"}
+          {/* Flexible layout for mobile ordering */}
+          <div className="flex flex-col gap-8 mb-12">
+            
+            {/* In Numbers - First on mobile, in left column on desktop */}
+            <div className="order-1 lg:order-2">
+              <div className="grid lg:grid-cols-2 gap-8">
+                <div>
+                  <h2 className="text-2xl md:text-3xl font-bebas text-primary uppercase tracking-widest mb-6 flex items-center gap-3">
+                    <span className="w-8 h-1 bg-primary"></span>
+                    In Numbers
+                  </h2>
+                  <div className="bg-secondary/30 backdrop-blur-sm p-6 rounded-lg space-y-6">
+                    {player.topStats && player.topStats.length > 0 ? (
+                      player.topStats.map((stat, index) => (
+                        <div key={index} className="space-y-3">
+                          <div className="flex items-start gap-4">
+                            {/* Icon/Graphic */}
+                            <div className="flex-shrink-0 w-16 h-16 bg-primary/10 rounded-lg flex items-center justify-center">
+                              {stat.icon === 'shield' ? (
+                                <svg className="w-10 h-10 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                                </svg>
+                              ) : stat.icon === 'target' ? (
+                                <svg className="w-10 h-10 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                  <circle cx="12" cy="12" r="10"/>
+                                  <circle cx="12" cy="12" r="6"/>
+                                  <circle cx="12" cy="12" r="2"/>
+                                </svg>
+                              ) : stat.icon === 'muscle' ? (
+                                <svg className="w-12 h-12 text-primary" viewBox="0 0 24 24" fill="currentColor">
+                                  <path d="M20.57 14.86L22 13.43 20.57 12 17 15.57 8.43 7 12 3.43 10.57 2 9.14 3.43 7.71 2 5.57 4.14 4.14 2.71 2.71 4.14l1.43 1.43L2 7.71l1.43 1.43L2 10.57 3.43 12 7 8.43 15.57 17 12 20.57 13.43 22l1.43-1.43L16.29 22l2.14-2.14 1.43 1.43 1.43-1.43-1.43-1.43L22 16.29z"/>
+                                </svg>
+                              ) : stat.icon === '1v1' ? (
+                                <div className="text-primary font-black text-2xl tracking-tighter">1v1</div>
+                              ) : stat.icon === 'zap' ? (
+                                <svg className="w-10 h-10 text-primary" viewBox="0 0 24 24" fill="currentColor">
+                                  <path d="M13 2L3 14h8l-1 8 10-12h-8l1-8z"/>
+                                </svg>
+                              ) : stat.icon === 'trophy' ? (
+                                <svg className="w-10 h-10 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                  <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/>
+                                  <path d="M6 9v10a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V9"/>
+                                  <path d="M6 9h12"/>
+                                </svg>
+                              ) : (
+                                <svg className="w-10 h-10 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                  <circle cx="12" cy="12" r="3"/>
+                                  <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+                                </svg>
+                              )}
+                            </div>
+                            
+                            {/* Content */}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-baseline gap-3 mb-2">
+                                <span className="text-5xl font-bebas text-primary leading-none">
+                                  {stat.value}
+                                </span>
+                                {stat.value === '#1' && (
+                                  <span className="text-lg font-bebas text-primary/80 uppercase">
+                                    IN LEAGUE
+                                  </span>
+                                )}
+                              </div>
+                              <span className="text-sm text-muted-foreground uppercase tracking-wider block mb-2">
+                                {stat.label}
+                              </span>
+                              {stat.description && (
+                                <p className="text-sm text-foreground/70 leading-relaxed">
+                                  {stat.description}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                          {index < player.topStats.length - 1 && (
+                            <div className="h-px bg-border/50 mt-4" />
+                          )}
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-sm text-muted-foreground text-center py-4">
+                        No stats data available yet
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Scheme History - Right column on desktop */}
+                {player.tacticalFormations && player.tacticalFormations.length > 0 && (
+                  <div className="hidden lg:block">
+                    <h2 className="text-2xl md:text-3xl font-bebas text-primary uppercase tracking-widest mb-6 flex items-center gap-3">
+                      <span className="w-8 h-1 bg-primary"></span>
+                      Scheme History
+                    </h2>
+                    <div className="bg-secondary/30 backdrop-blur-sm p-6 rounded-lg">
+                      {/* Club Info with Logo */}
+                      <div className="flex items-center justify-center gap-4 mb-4">
+                        <img 
+                          src={player.tacticalFormations[currentFormationIndex].clubLogo} 
+                          alt={player.tacticalFormations[currentFormationIndex].club}
+                          className="w-16 h-16 object-contain transition-all duration-500"
+                        />
+                        <div className="text-center">
+                          <div className="text-2xl font-bebas text-foreground uppercase tracking-wider transition-all duration-500">
+                            {player.tacticalFormations[currentFormationIndex].club}
+                          </div>
+                          <div className="text-sm text-muted-foreground uppercase tracking-widest font-semibold transition-all duration-500">
+                            {(() => {
+                              const formation = player.tacticalFormations[currentFormationIndex];
+                              const matchValue = formation.appearances || formation.matches;
+                              const isCurrentClub = formation.club === player.currentClub;
+                              const isNumeric = typeof matchValue === 'number' || (typeof matchValue === 'string' && !isNaN(Number(matchValue)) && matchValue !== '');
+                              
+                              if (isCurrentClub) {
+                                return 'CURRENT CLUB';
+                              } else if (isNumeric) {
+                                return `${matchValue} MATCHES`;
+                              } else if (matchValue) {
+                                return String(matchValue).toUpperCase();
+                              } else {
+                                return '';
+                              }
+                            })()} • {player.tacticalFormations[currentFormationIndex].formation}
+                          </div>
+                        </div>
                       </div>
-                      <div className="text-sm md:text-base text-foreground/90 uppercase tracking-[0.2em] font-bold font-bebas">
-                        {stat.header}
-                      </div>
+                      
+                      {/* Formation Visual Below */}
+                      <FormationDisplay 
+                        selectedPositions={
+                          (player.tacticalFormations[currentFormationIndex].positions && 
+                           player.tacticalFormations[currentFormationIndex].positions.length > 0)
+                            ? player.tacticalFormations[currentFormationIndex].positions 
+                            : [player.tacticalFormations[currentFormationIndex].role]
+                        } 
+                        playerName={player.name} 
+                        playerImage={player.tacticalFormations[currentFormationIndex].playerImage || player.image_url}
+                        formation={player.tacticalFormations[currentFormationIndex].formation}
+                      />
+                    </div>
+                    <div className="flex justify-center gap-2 mt-4">
+                      {player.tacticalFormations.map((_, index) => (
+                        <button
+                          key={index}
+                          onClick={() => setCurrentFormationIndex(index)}
+                          className={`w-2 h-2 rounded-full transition-all ${
+                            index === currentFormationIndex 
+                              ? 'bg-primary w-6' 
+                              : 'bg-primary/30'
+                          }`}
+                          aria-label={`Go to formation ${index + 1}`}
+                        />
+                      ))}
                     </div>
                   </div>
-                ))}
+                )}
               </div>
             </div>
-          )}
 
-          {/* Strengths, In Numbers, Scheme History Grid */}
-          <div className="grid lg:grid-cols-2 gap-8 mb-12">
+            {/* Season Stats - Second on mobile */}
+            {player.seasonStats && player.seasonStats.length > 0 && (
+              <div className="order-2 lg:order-1">
+                <h2 className="text-3xl font-bebas text-primary uppercase tracking-widest mb-6 flex items-center gap-3">
+                  <span className="w-12 h-1 bg-primary"></span>
+                  Season Stats
+                  <span className="flex-1 h-1 bg-primary/20"></span>
+                </h2>
+                <div className="grid gap-6 grid-cols-2 lg:grid-cols-4">
+                  {player.seasonStats.map((stat: any, idx: number) => (
+                    <div 
+                      key={idx} 
+                      className="group relative overflow-hidden rounded-xl border-2 border-[hsl(var(--gold))]/30 bg-gradient-to-br from-secondary/40 via-secondary/30 to-secondary/20 backdrop-blur-sm p-8 transition-all duration-300 hover:border-[hsl(var(--gold))]/60 hover:shadow-[0_0_30px_rgba(212,175,55,0.2)]"
+                    >
+                      {/* Animated background gradient */}
+                      <div className="absolute inset-0 bg-gradient-to-br from-[hsl(var(--gold))]/5 via-transparent to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                      
+                      {/* Shine effect */}
+                      <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-[hsl(var(--gold))]/10 to-transparent" />
+                      
+                      <div className="relative text-center">
+                        <div className="text-6xl md:text-7xl font-bebas text-transparent bg-clip-text bg-gradient-to-br from-[hsl(var(--gold))] via-primary to-[hsl(var(--gold))]/70 mb-3 leading-none tracking-tight drop-shadow-[0_2px_10px_rgba(212,175,55,0.3)]">
+                          {stat.value || "0"}
+                        </div>
+                        <div className="text-sm md:text-base text-foreground/90 uppercase tracking-[0.2em] font-bold font-bebas">
+                          {stat.header}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
-            {/* Left Column: Strengths & In Numbers */}
-            <div className="space-y-8">
-              {/* Strengths & Play Style */}
-              {player.strengthsAndPlayStyle && player.strengthsAndPlayStyle.length > 0 && (
-                <div>
+            {/* Strengths & Play Style - Third on mobile */}
+            {player.strengthsAndPlayStyle && player.strengthsAndPlayStyle.length > 0 && (
+              <div className="order-3">
+                <div className="lg:w-1/2">
                   <h2 className="text-2xl md:text-3xl font-bebas text-primary uppercase tracking-widest mb-6 flex items-center gap-3">
                     <span className="w-8 h-1 bg-primary"></span>
                     Strengths & Play Style
@@ -546,94 +701,14 @@ const PlayerDetail = () => {
                     </ul>
                   </div>
                 </div>
-              )}
-
-              {/* In Numbers - Always show even if empty */}
-              <div>
-                <h2 className="text-sm font-bebas text-primary uppercase tracking-widest mb-4 text-lg">
-                  In Numbers
-                </h2>
-                <div className="bg-secondary/30 backdrop-blur-sm p-6 rounded-lg space-y-6">
-                  {player.topStats && player.topStats.length > 0 ? (
-                    player.topStats.map((stat, index) => (
-                      <div key={index} className="space-y-3">
-                        <div className="flex items-start gap-4">
-                          {/* Icon/Graphic */}
-                          <div className="flex-shrink-0 w-16 h-16 bg-primary/10 rounded-lg flex items-center justify-center">
-                            {stat.icon === 'shield' ? (
-                              <svg className="w-10 h-10 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-                              </svg>
-                            ) : stat.icon === 'target' ? (
-                              <svg className="w-10 h-10 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <circle cx="12" cy="12" r="10"/>
-                                <circle cx="12" cy="12" r="6"/>
-                                <circle cx="12" cy="12" r="2"/>
-                              </svg>
-                            ) : stat.icon === 'muscle' ? (
-                              <svg className="w-12 h-12 text-primary" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M20.57 14.86L22 13.43 20.57 12 17 15.57 8.43 7 12 3.43 10.57 2 9.14 3.43 7.71 2 5.57 4.14 4.14 2.71 2.71 4.14l1.43 1.43L2 7.71l1.43 1.43L2 10.57 3.43 12 7 8.43 15.57 17 12 20.57 13.43 22l1.43-1.43L16.29 22l2.14-2.14 1.43 1.43 1.43-1.43-1.43-1.43L22 16.29z"/>
-                              </svg>
-                            ) : stat.icon === '1v1' ? (
-                              <div className="text-primary font-black text-2xl tracking-tighter">1v1</div>
-                            ) : stat.icon === 'zap' ? (
-                              <svg className="w-10 h-10 text-primary" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M13 2L3 14h8l-1 8 10-12h-8l1-8z"/>
-                              </svg>
-                            ) : stat.icon === 'trophy' ? (
-                              <svg className="w-10 h-10 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/>
-                                <path d="M6 9v10a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V9"/>
-                                <path d="M6 9h12"/>
-                              </svg>
-                            ) : (
-                              <svg className="w-10 h-10 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <circle cx="12" cy="12" r="3"/>
-                                <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
-                              </svg>
-                            )}
-                          </div>
-                          
-                          {/* Content */}
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-baseline gap-3 mb-2">
-                              <span className="text-5xl font-bebas text-primary leading-none">
-                                {stat.value}
-                              </span>
-                              {stat.value === '#1' && (
-                                <span className="text-lg font-bebas text-primary/80 uppercase">
-                                  IN LEAGUE
-                                </span>
-                              )}
-                            </div>
-                            <span className="text-sm text-muted-foreground uppercase tracking-wider block mb-2">
-                              {stat.label}
-                            </span>
-                            {stat.description && (
-                              <p className="text-sm text-foreground/70 leading-relaxed">
-                                {stat.description}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                        {index < player.topStats.length - 1 && (
-                          <div className="h-px bg-border/50 mt-4" />
-                        )}
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-sm text-muted-foreground text-center py-4">
-                      No stats data available yet
-                    </p>
-                  )}
-                </div>
               </div>
-            </div>
+            )}
 
-            {/* Right Column: Scheme History */}
+            {/* Scheme History - Fourth on mobile only (hidden on lg where it's in grid above) */}
             {player.tacticalFormations && player.tacticalFormations.length > 0 && (
-              <div>
-                <h2 className="text-sm font-bebas text-primary uppercase tracking-widest mb-4 text-lg">
+              <div className="order-4 lg:hidden">
+                <h2 className="text-2xl md:text-3xl font-bebas text-primary uppercase tracking-widest mb-6 flex items-center gap-3">
+                  <span className="w-8 h-1 bg-primary"></span>
                   Scheme History
                 </h2>
                 <div className="bg-secondary/30 backdrop-blur-sm p-6 rounded-lg">
