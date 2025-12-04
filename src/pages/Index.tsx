@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { WorkWithUsDialog } from "@/components/WorkWithUsDialog";
 import { IntroModal } from "@/components/IntroModal";
+import { RepresentationDialog } from "@/components/RepresentationDialog";
+import { DeclareInterestDialog } from "@/components/DeclareInterestDialog";
 import { SEO } from "@/components/SEO";
 import { VideoPortfolio } from "@/components/VideoPortfolio";
 import ScoutingNetworkMap from "@/components/ScoutingNetworkMap";
@@ -12,6 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { HoverText } from "@/components/HoverText";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useTranslatedNews } from "@/hooks/useTranslateContent";
+import { UserPlus, Star } from "lucide-react";
 import riseStarIcon from "@/assets/rise-star-icon.png";
 import playersNetwork from "@/assets/players-network.jpg";
 import clubsNetwork from "@/assets/clubs-network.jpg";
@@ -31,6 +34,8 @@ const Index = () => {
   const [showIntroModal, setShowIntroModal] = useState(false);
   const [newsArticles, setNewsArticles] = useState<NewsArticle[]>([]);
   const [insideAccessArticles, setInsideAccessArticles] = useState<NewsArticle[]>([]);
+  const [representationOpen, setRepresentationOpen] = useState(false);
+  const [declareInterestOpen, setDeclareInterestOpen] = useState(false);
   
   // Auto-translate news articles based on current language
   const { translatedArticles: translatedNews } = useTranslatedNews(newsArticles);
@@ -318,6 +323,31 @@ const Index = () => {
           </div>
         </section>
 
+        {/* Action Buttons Section */}
+        <section className="py-8 md:py-12 px-4 bg-background/95">
+          <div className="container mx-auto max-w-4xl">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+              <Button
+                onClick={() => setRepresentationOpen(true)}
+                size="lg"
+                className="btn-shine text-lg font-bebas uppercase tracking-wider px-8 py-6 hover:scale-105 transition-transform"
+              >
+                <UserPlus className="mr-2 h-5 w-5" />
+                <HoverText text={t("home.represent_me", "Represent Me")} />
+              </Button>
+              <Button
+                onClick={() => setDeclareInterestOpen(true)}
+                variant="outline"
+                size="lg"
+                className="text-lg font-bebas uppercase tracking-wider px-8 py-6 hover:scale-105 transition-transform border-primary/30"
+              >
+                <Star className="mr-2 h-5 w-5" />
+                <HoverText text={t("home.declare_interest_star", "Declare Interest in Star")} />
+              </Button>
+            </div>
+          </div>
+        </section>
+
         {/* WATCH NOW Section */}
         <section className="py-12 md:py-16 px-4 bg-background/95 backdrop-blur-sm">
           <div className="container mx-auto max-w-7xl">
@@ -454,6 +484,8 @@ const Index = () => {
         </section>
       </div>
       <Footer />
+      <RepresentationDialog open={representationOpen} onOpenChange={setRepresentationOpen} />
+      <DeclareInterestDialog open={declareInterestOpen} onOpenChange={setDeclareInterestOpen} />
     </>
   );
 };
