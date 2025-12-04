@@ -30,7 +30,7 @@ const PlayerDetail = () => {
   const [showPlayerStickyHeader, setShowPlayerStickyHeader] = useState(false);
   const [performanceReports, setPerformanceReports] = useState<any[]>([]);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const videoContainerRef = useRef<HTMLDivElement>(null);
+  
   const playerInfoSentinelRef = useRef<HTMLDivElement>(null);
 
   const highlightedAnalysis = player && player.highlighted_match
@@ -160,30 +160,6 @@ const PlayerDetail = () => {
       return () => clearInterval(interval);
     }
   }, [player]);
-
-  // Intersection Observer for main video autoplay/pause
-  useEffect(() => {
-    if (!videoRef.current || !videoContainerRef.current) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting && videoRef.current) {
-            videoRef.current.play().catch(() => {
-              // Autoplay failed, user interaction required
-            });
-          } else if (videoRef.current) {
-            videoRef.current.pause();
-          }
-        });
-      },
-      { threshold: 0.5 }
-    );
-
-    observer.observe(videoContainerRef.current);
-
-    return () => observer.disconnect();
-  }, [currentVideoType, dbHighlights]);
 
   if (loading) {
     return (
@@ -315,19 +291,20 @@ const PlayerDetail = () => {
           </div>
 
           {/* Highlights Video - Full Width 16:9 with Club Logo Overlays */}
-          <div className="mb-8" ref={videoContainerRef}>
+          <div className="mb-8">
             <div className="relative aspect-video bg-secondary/30 rounded-lg overflow-hidden border-4 md:border-[6px] border-[hsl(var(--gold))]">
                {dbHighlights.length > 0 && typeof currentVideoType === 'number' && dbHighlights[currentVideoType]?.videoUrl ? (
                  <>
                    <LazyVideo 
-                     ref={videoRef}
-                     key={dbHighlights[currentVideoType].videoUrl}
-                     className="w-full h-full object-contain"
-                     controls
-                     playsInline
-                     preload="auto"
-                     loop={false}
-                     src={dbHighlights[currentVideoType].videoUrl}
+                      ref={videoRef}
+                      key={dbHighlights[currentVideoType].videoUrl}
+                      className="w-full h-full object-contain"
+                      controls
+                      playsInline
+                      preload="auto"
+                      loop={false}
+                      autoPlayOnVisible
+                      src={dbHighlights[currentVideoType].videoUrl}
                      onError={(e) => {
                       console.error('Video error:', e);
                       console.log('Video URL:', dbHighlights[currentVideoType].videoUrl);
@@ -407,7 +384,7 @@ const PlayerDetail = () => {
                               src={highlight.logoUrl || highlight.clubLogo} 
                               alt={highlight.name || `Highlight ${index + 1}`}
                               className="w-full h-full object-contain p-0.5"
-                              loading="lazy"
+                              loading="eager"
                             />
                           )}
                         </button>
