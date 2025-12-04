@@ -3371,41 +3371,23 @@ const Dashboard = () => {
                       </div>
                     </CardHeader>
                     <CardContent className="container mx-auto px-4">
-                      {/* Summary Cards */}
-                      {invoices.length > 0 && (
-                        <div className="grid grid-cols-2 gap-4 mb-6">
-                          <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-4">
-                            <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Total Paid</p>
-                            <p className="text-xl font-bold text-green-500">
-                              {(() => {
-                                const paid = invoices
-                                  .filter(inv => inv.status === 'paid')
-                                  .reduce((sum, inv) => {
-                                    const amt = inv.converted_amount || inv.amount;
-                                    return sum + amt;
-                                  }, 0);
-                                const currency = invoices.find(inv => inv.converted_currency)?.converted_currency || 
-                                                 invoices[0]?.currency || 'GBP';
-                                return `${paid.toFixed(2)} ${currency}`;
-                              })()}
-                            </p>
-                          </div>
-                          <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4">
-                            <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Outstanding</p>
-                            <p className="text-xl font-bold text-destructive">
-                              {(() => {
-                                const outstanding = invoices
-                                  .filter(inv => inv.status === 'pending' || inv.status === 'overdue')
-                                  .reduce((sum, inv) => {
-                                    const remaining = (inv.converted_amount || inv.amount) - (inv.amount_paid || 0);
-                                    return sum + Math.max(0, remaining);
-                                  }, 0);
-                                const currency = invoices.find(inv => inv.converted_currency)?.converted_currency || 
-                                                 invoices[0]?.currency || 'GBP';
-                                return `${outstanding.toFixed(2)} ${currency}`;
-                              })()}
-                            </p>
-                          </div>
+                      {/* Outstanding Summary */}
+                      {invoices.length > 0 && invoices.some(inv => inv.status === 'pending' || inv.status === 'overdue') && (
+                        <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-4 mb-6">
+                          <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Outstanding</p>
+                          <p className="text-xl font-bold text-amber-500">
+                            {(() => {
+                              const outstanding = invoices
+                                .filter(inv => inv.status === 'pending' || inv.status === 'overdue')
+                                .reduce((sum, inv) => {
+                                  const remaining = (inv.converted_amount || inv.amount) - (inv.amount_paid || 0);
+                                  return sum + Math.max(0, remaining);
+                                }, 0);
+                              const currency = invoices.find(inv => inv.converted_currency)?.converted_currency || 
+                                               invoices[0]?.currency || 'GBP';
+                              return `${outstanding.toFixed(2)} ${currency}`;
+                            })()}
+                          </p>
                         </div>
                       )}
 
