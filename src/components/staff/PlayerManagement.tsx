@@ -1614,43 +1614,14 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
               </CardHeader>
               <CardContent className="p-3 sm:p-6">
                 {(() => {
-                  const playerStats = selectedPlayer ? stats[selectedPlayer.id] : null;
-                  
-                  if (playerStats) {
-                    return (
-                      <div className="grid gap-2 sm:gap-4 text-center grid-cols-2 md:grid-cols-6">
-                        <div className="p-2 sm:p-4 bg-secondary/30 rounded-lg">
-                          <div className="text-xl sm:text-2xl md:text-3xl font-bold text-primary">{playerStats.matches || 0}</div>
-                          <div className="text-[10px] sm:text-xs md:text-sm text-muted-foreground mt-1">Matches</div>
-                        </div>
-                        <div className="p-2 sm:p-4 bg-secondary/30 rounded-lg">
-                          <div className="text-xl sm:text-2xl md:text-3xl font-bold text-primary">{playerStats.minutes || 0}</div>
-                          <div className="text-[10px] sm:text-xs md:text-sm text-muted-foreground mt-1">Minutes</div>
-                        </div>
-                        <div className="p-2 sm:p-4 bg-secondary/30 rounded-lg">
-                          <div className="text-xl sm:text-2xl md:text-3xl font-bold text-primary">{playerStats.goals || 0}</div>
-                          <div className="text-[10px] sm:text-xs md:text-sm text-muted-foreground mt-1">Goals</div>
-                        </div>
-                        <div className="p-2 sm:p-4 bg-secondary/30 rounded-lg">
-                          <div className="text-xl sm:text-2xl md:text-3xl font-bold text-primary">{playerStats.assists || 0}</div>
-                          <div className="text-[10px] sm:text-xs md:text-sm text-muted-foreground mt-1">Assists</div>
-                        </div>
-                        <div className="p-2 sm:p-4 bg-secondary/30 rounded-lg">
-                          <div className="text-xl sm:text-2xl md:text-3xl font-bold text-primary">{playerStats.clean_sheets || 0}</div>
-                          <div className="text-[10px] sm:text-xs md:text-sm text-muted-foreground mt-1">Clean Sheets</div>
-                        </div>
-                        <div className="p-2 sm:p-4 bg-secondary/30 rounded-lg">
-                          <div className="text-xl sm:text-2xl md:text-3xl font-bold text-primary">{playerStats.saves || 0}</div>
-                          <div className="text-[10px] sm:text-xs md:text-sm text-muted-foreground mt-1">Saves</div>
-                        </div>
-                      </div>
-                    );
-                  } else if (selectedPlayerSeasonStats && selectedPlayerSeasonStats.length > 0) {
+                  // Always prioritize the actual seasonStats from bio data
+                  if (selectedPlayerSeasonStats && selectedPlayerSeasonStats.length > 0) {
                     return (
                       <div className={`grid gap-2 sm:gap-4 text-center ${
                         selectedPlayerSeasonStats.length <= 2 ? 'grid-cols-2' : 
                         selectedPlayerSeasonStats.length === 3 ? 'grid-cols-3' : 
-                        'grid-cols-2 md:grid-cols-4'
+                        selectedPlayerSeasonStats.length <= 4 ? 'grid-cols-2 md:grid-cols-4' :
+                        'grid-cols-2 md:grid-cols-3 lg:grid-cols-6'
                       }`}>
                         {selectedPlayerSeasonStats.map((stat: any, idx: number) => (
                           <div key={idx} className="p-2 sm:p-4 bg-secondary/30 rounded-lg">
