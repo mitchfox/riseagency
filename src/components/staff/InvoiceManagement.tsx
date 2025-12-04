@@ -84,6 +84,7 @@ export const InvoiceManagement = ({ isAdmin }: { isAdmin: boolean }) => {
     pdf_url: "",
     billing_month: "",
     amount_paid: "0",
+    amount_paid_currency: "GBP",
     converted_amount: "",
     converted_currency: ""
   });
@@ -92,6 +93,11 @@ export const InvoiceManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   const selectedPlayerData = players.find(p => p.id === formData.player_id);
   const playerPreferredCurrency = selectedPlayerData?.preferred_currency || "GBP";
   const showConversionFields = formData.currency && formData.currency !== playerPreferredCurrency;
+  
+  // Calculate converted amount_paid for display
+  const amountPaidInInvoiceCurrency = formData.amount_paid && formData.amount_paid_currency !== formData.currency
+    ? convertCurrency(parseFloat(formData.amount_paid) || 0, formData.amount_paid_currency, formData.currency)
+    : parseFloat(formData.amount_paid) || 0;
 
   // Filter invoices
   const filteredInvoices = invoices.filter(inv => {
@@ -174,6 +180,11 @@ export const InvoiceManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       return;
     }
 
+    // Convert amount_paid to invoice currency if different
+    const amountPaidConverted = formData.amount_paid_currency !== formData.currency
+      ? convertCurrency(parseFloat(formData.amount_paid) || 0, formData.amount_paid_currency, formData.currency)
+      : parseFloat(formData.amount_paid) || 0;
+
     const invoiceData = {
       player_id: formData.player_id,
       invoice_number: formData.invoice_number,
@@ -185,7 +196,7 @@ export const InvoiceManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       description: formData.description || null,
       pdf_url: formData.pdf_url || null,
       billing_month: formData.billing_month || null,
-      amount_paid: parseFloat(formData.amount_paid) || 0,
+      amount_paid: amountPaidConverted,
       converted_amount: formData.converted_amount ? parseFloat(formData.converted_amount) : null,
       converted_currency: formData.converted_currency || null
     };
@@ -234,6 +245,7 @@ export const InvoiceManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       pdf_url: invoice.pdf_url || "",
       billing_month: invoice.billing_month || "",
       amount_paid: (invoice.amount_paid || 0).toString(),
+      amount_paid_currency: invoice.currency, // Default to invoice currency when editing
       converted_amount: invoice.converted_amount?.toString() || "",
       converted_currency: invoice.converted_currency || ""
     });
@@ -273,6 +285,7 @@ export const InvoiceManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       pdf_url: invoice.pdf_url || "",
       billing_month: invoice.billing_month || "",
       amount_paid: "0",
+      amount_paid_currency: "GBP",
       converted_amount: invoice.converted_amount?.toString() || "",
       converted_currency: invoice.converted_currency || ""
     });
@@ -323,6 +336,7 @@ export const InvoiceManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       pdf_url: "",
       billing_month: "",
       amount_paid: "0",
+      amount_paid_currency: "GBP",
       converted_amount: "",
       converted_currency: ""
     });
@@ -1009,14 +1023,35 @@ export const InvoiceManagement = ({ isAdmin }: { isAdmin: boolean }) => {
 
               <div className="space-y-2">
                 <Label htmlFor="amount_paid">Amount Paid</Label>
-                <Input
-                  id="amount_paid"
-                  type="number"
-                  step="0.01"
-                  value={formData.amount_paid}
-                  onChange={(e) => setFormData({ ...formData, amount_paid: e.target.value })}
-                  placeholder="0.00"
-                />
+                <div className="flex gap-2">
+                  <Input
+                    id="amount_paid"
+                    type="number"
+                    step="0.01"
+                    value={formData.amount_paid}
+                    onChange={(e) => setFormData({ ...formData, amount_paid: e.target.value })}
+                    placeholder="0.00"
+                    className="flex-1"
+                  />
+                  <Select
+                    value={formData.amount_paid_currency}
+                    onValueChange={(value) => setFormData({ ...formData, amount_paid_currency: value })}
+                  >
+                    <SelectTrigger className="w-24">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="GBP">GBP</SelectItem>
+                      <SelectItem value="EUR">EUR</SelectItem>
+                      <SelectItem value="USD">USD</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                {formData.amount_paid_currency !== formData.currency && parseFloat(formData.amount_paid) > 0 && (
+                  <p className="text-xs text-muted-foreground">
+                    ≈ {amountPaidInInvoiceCurrency.toFixed(2)} {formData.currency} (invoice currency)
+                  </p>
+                )}
               </div>
             </div>
 
