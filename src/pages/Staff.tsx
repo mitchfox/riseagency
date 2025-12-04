@@ -691,8 +691,41 @@ const Staff = () => {
                 )}
                 
                 <CommandGroup heading="Jump to Section">
-                  {categories.flatMap(category => 
-                    category.sections.map((section) => {
+                  {(() => {
+                    const searchInput = document.querySelector('[cmdk-input]') as HTMLInputElement;
+                    const currentSearch = searchInput?.value?.toLowerCase() || '';
+                    
+                    // Flatten sections and sort by relevance to search
+                    const allSections = categories.flatMap(category => 
+                      category.sections.map(section => ({ section, category }))
+                    );
+                    
+                    // Sort: exact matches first, then starts-with, then contains
+                    const sortedSections = allSections.sort((a, b) => {
+                      if (!currentSearch) return 0;
+                      
+                      const aTitle = a.section.title.toLowerCase();
+                      const bTitle = b.section.title.toLowerCase();
+                      
+                      const aExact = aTitle === currentSearch;
+                      const bExact = bTitle === currentSearch;
+                      if (aExact && !bExact) return -1;
+                      if (bExact && !aExact) return 1;
+                      
+                      const aStarts = aTitle.startsWith(currentSearch);
+                      const bStarts = bTitle.startsWith(currentSearch);
+                      if (aStarts && !bStarts) return -1;
+                      if (bStarts && !aStarts) return 1;
+                      
+                      const aContains = aTitle.includes(currentSearch);
+                      const bContains = bTitle.includes(currentSearch);
+                      if (aContains && !bContains) return -1;
+                      if (bContains && !aContains) return 1;
+                      
+                      return 0;
+                    });
+                    
+                    return sortedSections.map(({ section, category }) => {
                       const Icon = section.icon;
                       return (
                         <CommandItem
@@ -713,8 +746,8 @@ const Staff = () => {
                           <span>{section.title}</span>
                         </CommandItem>
                       );
-                    })
-                  )}
+                    });
+                  })()}
                 </CommandGroup>
               </>
             )}
