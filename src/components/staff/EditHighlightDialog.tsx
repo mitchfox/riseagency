@@ -85,25 +85,50 @@ export function EditHighlightDialog({
 
       if (fetchError) throw fetchError;
 
-      const highlights = (player?.highlights as any) || {};
-      const targetArray = highlightType === 'match' ? 'matchHighlights' : 'bestClips';
-      const currentHighlights = highlights[targetArray] || [];
+      const rawHighlights = player?.highlights;
+      const highlights = typeof rawHighlights === 'string' 
+        ? JSON.parse(rawHighlights) 
+        : (rawHighlights || {});
       
-      const updatedHighlights = {
-        ...highlights,
-        [targetArray]: currentHighlights.map((h: any) =>
-          h.id === highlight.id
+      // Handle both array format and object format
+      const isArrayFormat = Array.isArray(highlights);
+      
+      if (isArrayFormat && highlightType === 'match') {
+        // Old array format - update directly
+        const updatedHighlights = highlights.map((h: any) =>
+          (h.id === highlight.id || h.videoUrl === highlight.videoUrl)
             ? { ...h, name: clipName, logoUrl: logoUrl }
             : h
-        )
-      };
+        );
+        
+        const { error: updateError } = await supabase
+          .from('players')
+          .update({ highlights: updatedHighlights })
+          .eq('id', playerId);
 
-      const { error: updateError } = await supabase
-        .from('players')
-        .update({ highlights: updatedHighlights })
-        .eq('id', playerId);
+        if (updateError) throw updateError;
+      } else {
+        // Object format with matchHighlights/bestClips
+        const targetArray = highlightType === 'match' ? 'matchHighlights' : 'bestClips';
+        const currentHighlights = highlights[targetArray] || [];
+        
+        const updatedHighlights = {
+          ...highlights,
+          [targetArray]: currentHighlights.map((h: any) =>
+            (h.id === highlight.id || h.videoUrl === highlight.videoUrl)
+              ? { ...h, name: clipName, logoUrl: logoUrl }
+              : h
+          )
+        };
 
-      if (updateError) throw updateError;
+        const { error: updateError } = await supabase
+          .from('players')
+          .update({ highlights: updatedHighlights })
+          .eq('id', playerId);
+
+        if (updateError) throw updateError;
+      }
+
 
       toast.success('Highlight updated successfully');
       onSave();
