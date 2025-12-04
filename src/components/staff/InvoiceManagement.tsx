@@ -56,6 +56,21 @@ export const InvoiceManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   // Inline editing for received amounts
   const [editingPaymentId, setEditingPaymentId] = useState<string | null>(null);
   const [editingPaymentValue, setEditingPaymentValue] = useState("");
+  const [editingPaymentCurrency, setEditingPaymentCurrency] = useState("GBP");
+  
+  // Simple conversion rates (GBP base)
+  const conversionRates: Record<string, number> = {
+    "GBP": 1,
+    "EUR": 1.17,  // 1 GBP = 1.17 EUR
+    "USD": 1.27   // 1 GBP = 1.27 USD
+  };
+  
+  const convertCurrency = (amount: number, fromCurrency: string, toCurrency: string): number => {
+    if (fromCurrency === toCurrency) return amount;
+    // Convert to GBP first, then to target
+    const inGBP = amount / conversionRates[fromCurrency];
+    return inGBP * conversionRates[toCurrency];
+  };
 
   const [formData, setFormData] = useState({
     player_id: "",
@@ -264,16 +279,18 @@ export const InvoiceManagement = ({ isAdmin }: { isAdmin: boolean }) => {
     setDialogOpen(true);
   };
 
-  const handleSavePayment = async (invoiceId: string, newAmount: number) => {
+  const handleSavePayment = async (invoiceId: string, inputAmount: number, inputCurrency: string) => {
     const invoice = invoices.find(inv => inv.id === invoiceId);
     if (!invoice) return;
 
-    const newStatus = newAmount >= invoice.amount ? "paid" : invoice.status;
+    // Convert the input amount to the invoice currency
+    const convertedAmount = convertCurrency(inputAmount, inputCurrency, invoice.currency);
+    const newStatus = convertedAmount >= invoice.amount ? "paid" : invoice.status;
 
     const { error } = await supabase
       .from('invoices')
       .update({ 
-        amount_paid: newAmount,
+        amount_paid: convertedAmount,
         status: newStatus
       })
       .eq('id', invoiceId);
@@ -283,8 +300,12 @@ export const InvoiceManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       return;
     }
 
-    toast.success("Payment updated");
+    toast.success(inputCurrency !== invoice.currency 
+      ? `Payment updated (${inputAmount.toFixed(2)} ${inputCurrency} → ${convertedAmount.toFixed(2)} ${invoice.currency})`
+      : "Payment updated"
+    );
     setEditingPaymentId(null);
+    setEditingPaymentCurrency("GBP");
     fetchInvoices();
   };
 
@@ -585,23 +606,43 @@ export const InvoiceManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                 <TableCell>{invoice.amount.toFixed(2)} {invoice.currency}</TableCell>
                                 <TableCell>
                                   {isEditing ? (
-                                    <div className="flex items-center gap-2">
-                                      <Input
-                                        type="number"
-                                        step="0.01"
-                                        value={editingPaymentValue}
-                                        onChange={(e) => setEditingPaymentValue(e.target.value)}
-                                        className="w-24 h-8"
-                                        autoFocus
-                                      />
-                                      <Button
-                                        size="icon"
-                                        variant="ghost"
-                                        className="h-8 w-8"
-                                        onClick={() => handleSavePayment(invoice.id, parseFloat(editingPaymentValue) || 0)}
-                                      >
-                                        <Check className="w-4 h-4 text-green-500" />
-                                      </Button>
+                                    <div className="flex flex-col gap-2">
+                                      <div className="flex items-center gap-2">
+                                        <Input
+                                          type="number"
+                                          step="0.01"
+                                          value={editingPaymentValue}
+                                          onChange={(e) => setEditingPaymentValue(e.target.value)}
+                                          className="w-24 h-8"
+                                          autoFocus
+                                        />
+                                        <Select
+                                          value={editingPaymentCurrency}
+                                          onValueChange={setEditingPaymentCurrency}
+                                        >
+                                          <SelectTrigger className="w-20 h-8">
+                                            <SelectValue />
+                                          </SelectTrigger>
+                                          <SelectContent>
+                                            <SelectItem value="GBP">GBP</SelectItem>
+                                            <SelectItem value="EUR">EUR</SelectItem>
+                                            <SelectItem value="USD">USD</SelectItem>
+                                          </SelectContent>
+                                        </Select>
+                                        <Button
+                                          size="icon"
+                                          variant="ghost"
+                                          className="h-8 w-8"
+                                          onClick={() => handleSavePayment(invoice.id, parseFloat(editingPaymentValue) || 0, editingPaymentCurrency)}
+                                        >
+                                          <Check className="w-4 h-4 text-green-500" />
+                                        </Button>
+                                      </div>
+                                      {editingPaymentCurrency !== invoice.currency && parseFloat(editingPaymentValue) > 0 && (
+                                        <span className="text-xs text-muted-foreground">
+                                          ≈ {convertCurrency(parseFloat(editingPaymentValue) || 0, editingPaymentCurrency, invoice.currency).toFixed(2)} {invoice.currency}
+                                        </span>
+                                      )}
                                     </div>
                                   ) : (
                                     <span 
@@ -609,6 +650,7 @@ export const InvoiceManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                       onClick={() => {
                                         setEditingPaymentId(invoice.id);
                                         setEditingPaymentValue((invoice.amount_paid || 0).toString());
+                                        setEditingPaymentCurrency(invoice.currency);
                                       }}
                                     >
                                       {(invoice.amount_paid || 0).toFixed(2)} {invoice.currency}
@@ -628,6 +670,7 @@ export const InvoiceManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                       onClick={() => {
                                         setEditingPaymentId(invoice.id);
                                         setEditingPaymentValue((invoice.amount_paid || 0).toString());
+                                        setEditingPaymentCurrency(invoice.currency);
                                       }}
                                     >
                                       <Pencil className="w-3.5 h-3.5 mr-1" />
