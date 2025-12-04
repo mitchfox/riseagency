@@ -100,10 +100,33 @@ const Index = () => {
                 {t("home.hero_subtitle", "Elite Football Representation & Performance Optimisation")}
               </p>
             </div>
-
           </div>
         </section>
 
+        {/* Action Buttons Section */}
+        <section className="py-8 md:py-10 px-4 bg-background/90">
+          <div className="container mx-auto max-w-4xl">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+              <Button
+                onClick={() => setRepresentationOpen(true)}
+                size="lg"
+                className="btn-shine text-lg font-bebas uppercase tracking-wider px-8 py-6 hover:scale-105 transition-transform"
+              >
+                <UserPlus className="mr-2 h-5 w-5" />
+                <HoverText text={t("home.represent_me", "Represent Me")} />
+              </Button>
+              <Button
+                onClick={() => setDeclareInterestOpen(true)}
+                variant="outline"
+                size="lg"
+                className="text-lg font-bebas uppercase tracking-wider px-8 py-6 hover:scale-105 transition-transform border-primary/30"
+              >
+                <Star className="mr-2 h-5 w-5" />
+                <HoverText text={t("home.declare_interest_star", "Declare Interest in Star")} />
+              </Button>
+            </div>
+          </div>
+        </section>
 
         {/* INSIDE:ACCESS Section */}
         {translatedInsideAccess.length > 0 && (
@@ -323,31 +346,6 @@ const Index = () => {
           </div>
         </section>
 
-        {/* Action Buttons Section */}
-        <section className="py-8 md:py-12 px-4 bg-background/95">
-          <div className="container mx-auto max-w-4xl">
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              <Button
-                onClick={() => setRepresentationOpen(true)}
-                size="lg"
-                className="btn-shine text-lg font-bebas uppercase tracking-wider px-8 py-6 hover:scale-105 transition-transform"
-              >
-                <UserPlus className="mr-2 h-5 w-5" />
-                <HoverText text={t("home.represent_me", "Represent Me")} />
-              </Button>
-              <Button
-                onClick={() => setDeclareInterestOpen(true)}
-                variant="outline"
-                size="lg"
-                className="text-lg font-bebas uppercase tracking-wider px-8 py-6 hover:scale-105 transition-transform border-primary/30"
-              >
-                <Star className="mr-2 h-5 w-5" />
-                <HoverText text={t("home.declare_interest_star", "Declare Interest in Star")} />
-              </Button>
-            </div>
-          </div>
-        </section>
-
         {/* WATCH NOW Section */}
         <section className="py-12 md:py-16 px-4 bg-background/95 backdrop-blur-sm">
           <div className="container mx-auto max-w-7xl">
@@ -392,8 +390,6 @@ const Index = () => {
             </div>
           </div>
         </section>
-
-
 
         {/* Services Section for Players - HIDDEN */}
         <section className="hidden">
@@ -449,9 +445,6 @@ const Index = () => {
             </div>
           </div>
         </section>
-
-
-        {/* CTA Section moved above News */}
 
         {/* RISE Broadcast Advertisement */}
         <section className="py-12 md:py-16 px-4 bg-muted/30">
