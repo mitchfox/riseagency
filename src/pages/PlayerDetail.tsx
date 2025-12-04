@@ -211,7 +211,7 @@ const PlayerDetail = () => {
           <main className="container mx-auto px-4 py-2 touch-pan-y">
           {/* Back Button */}
           {!isModal && (
-            <div className="mb-2">
+            <div className="mb-2 flex flex-wrap gap-2">
               <Button
                 onClick={() => navigate("/stars")}
                 variant="outline"
@@ -220,6 +220,20 @@ const PlayerDetail = () => {
               >
                 <ArrowLeft className="mr-2 h-4 w-4 group-hover:-translate-x-1 transition-transform" />
                 Back to Stars
+              </Button>
+              <Button 
+                asChild
+                size="sm"
+                className="btn-shine font-bebas uppercase tracking-wider"
+              >
+                <a 
+                  href={player?.whatsapp ? `https://wa.me/${player.whatsapp.replace(/\+/g, '')}` : "https://wa.me/447508342901"}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <MessageCircle className="mr-2 h-4 w-4" />
+                  Enquire About This Player
+                </a>
               </Button>
             </div>
           )}
