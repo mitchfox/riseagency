@@ -2207,6 +2207,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                           <video 
                                             src={highlight.videoUrl} 
                                             controls 
+                                            preload="none"
                                             className="w-full aspect-video pointer-events-auto"
                                             onPointerDown={(e) => {
                                               // Allow drag to work even if pointer is near video
@@ -2383,6 +2384,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                           <video 
                                             src={clip.videoUrl} 
                                             controls 
+                                            preload="none"
                                             className="w-full aspect-video pointer-events-auto"
                                             onPointerDown={(e) => {
                                               // Allow drag to work even if pointer is near video
