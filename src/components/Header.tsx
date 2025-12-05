@@ -313,19 +313,19 @@ export const Header = ({ shouldFade = false }: HeaderProps) => {
   const getLeftIconOffset = () => {
     if (!isScrolled) return "3rem";
 
-    if (viewport === "desktop") return "7.75rem"; // desktop: +4px more to the right
-    if (viewport === "tablet") return "4.75rem"; // iPad: perfect
+    if (viewport === "desktop") return "7.5625rem"; // desktop: 3px more to the left
+    if (viewport === "tablet") return "4.5625rem"; // iPad: 3px more to the left
 
-    return "3.5rem"; // mobile: great
+    return "3.3125rem"; // mobile: 3px more to the left
   };
 
   const getRightIconOffset = () => {
     if (!isScrolled) return "2.5rem";
 
-    if (viewport === "desktop") return "clamp(7rem, 15vw, 11.5rem)"; // desktop: perfect
-    if (viewport === "tablet") return "9rem"; // iPad: perfect
+    if (viewport === "desktop") return "clamp(7.1875rem, 15vw, 11.6875rem)"; // desktop: 3px more to the left
+    if (viewport === "tablet") return "9.1875rem"; // iPad: 3px more to the left
 
-    return "3.5rem"; // mobile: a bit more to the left
+    return "3.6875rem"; // mobile: 3px more to the left
   };
 
   return <>
