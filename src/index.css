@@ -514,9 +514,10 @@ All colors MUST be HSL.
 /* Hover Text Animation - Staggered Letter Effect */
 .hover-text-wrapper {
   position: relative;
-  display: inline-block;
+  display: inline-flex !important;
   overflow: hidden;
   line-height: 1.2;
+  vertical-align: middle;
 }
 
 .hover-text-original,
@@ -536,14 +537,24 @@ All colors MUST be HSL.
   transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.hover-text-wrapper:hover .hover-text-letter,
-button:hover .hover-text-wrapper .hover-text-letter,
-a:hover .hover-text-wrapper .hover-text-letter {
-  transform: translateY(-100%);
+/* Standard hover on wrapper */
+.hover-text-wrapper:hover .hover-text-letter {
+  transform: translateY(-100%) !important;
 }
 
-.hover-text-wrapper:hover .hover-text-letter-clone,
-button:hover .hover-text-wrapper .hover-text-letter-clone,
-a:hover .hover-text-wrapper .hover-text-letter-clone {
-  transform: translateY(-100%);
+.hover-text-wrapper:hover .hover-text-letter-clone {
+  transform: translateY(-100%) !important;
+}
+
+/* Button/link hover - more specific selectors */
+button:hover .hover-text-letter,
+a:hover .hover-text-letter,
+.btn-shine:hover .hover-text-letter {
+  transform: translateY(-100%) !important;
+}
+
+button:hover .hover-text-letter-clone,
+a:hover .hover-text-letter-clone,
+.btn-shine:hover .hover-text-letter-clone {
+  transform: translateY(-100%) !important;
 }
