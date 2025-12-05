@@ -233,9 +233,9 @@ export const RadialMenu = () => {
 
   return (
     <div className="fixed inset-0 flex items-center justify-center z-[200] overflow-hidden">
-      {/* Marble background */}
+      {/* Marble background - delayed */}
       <div 
-        className="absolute inset-0"
+        className="absolute inset-0 animate-[fade-in_0.4s_ease-out_0.2s_both]"
         style={{
           backgroundImage: `url(${smudgedMarbleBg})`,
           backgroundSize: 'cover',
@@ -243,13 +243,13 @@ export const RadialMenu = () => {
         }}
       />
       
-      {/* White pulse animation from center */}
-      <div className="absolute inset-0 flex items-center justify-center">
+      {/* White pulse animation from center - delayed */}
+      <div className="absolute inset-0 flex items-center justify-center animate-[fade-in_0.3s_ease-out_0.3s_both]">
         <div className="absolute w-4 h-4 bg-white rounded-full animate-[pulse-expand_6s_ease-out_infinite]" />
       </div>
-      {/* Grid pattern background */}
+      {/* Grid pattern background - delayed */}
       <div 
-        className="absolute inset-0 opacity-20"
+        className="absolute inset-0 opacity-20 animate-[fade-in_0.4s_ease-out_0.25s_both]"
         style={{
           backgroundImage: `
             linear-gradient(rgba(212,175,55,0.1) 1px, transparent 1px),
@@ -259,19 +259,19 @@ export const RadialMenu = () => {
         }}
       />
       
-      {/* Radial gradient overlay */}
+      {/* Radial gradient overlay - delayed */}
       <div 
-        className="absolute inset-0"
+        className="absolute inset-0 animate-[fade-in_0.4s_ease-out_0.2s_both]"
         style={{
           background: 'radial-gradient(circle at center, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.8) 70%, rgba(0,0,0,0.95) 100%)',
         }}
       />
 
-      {/* Close button - top left */}
+      {/* Close button - top left - delayed */}
       <DrawerClose asChild>
         <button
           ref={closeButtonRef}
-          className="absolute top-8 left-8 z-50 group flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
+          className="absolute top-8 left-8 z-50 group flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-white animate-[fade-in_0.3s_ease-out_0.35s_both]"
           aria-label="Close menu"
         >
           <div className="relative w-12 h-12 flex items-center justify-center">
@@ -287,17 +287,18 @@ export const RadialMenu = () => {
         width: `${circleSize}px`,
         height: `${circleSize}px`,
       }}>
-        {/* Segment dividers */}
+        {/* Segment dividers - delayed */}
         {menuItems.map((_, index) => {
           const angle = index * segmentAngle;
           
           return (
             <div
               key={`divider-${index}`}
-              className="absolute top-1/2 left-1/2 origin-left h-[1px] bg-black pointer-events-none"
+              className="absolute top-1/2 left-1/2 origin-left h-[1px] bg-black pointer-events-none animate-[fade-in_0.3s_ease-out_both]"
               style={{
                 width: `${circleSize / 2.2}px`,
                 transform: `rotate(${angle}deg)`,
+                animationDelay: `${0.15 + index * 0.03}s`,
               }}
             />
           );
@@ -366,7 +367,7 @@ export const RadialMenu = () => {
           })}
         </svg>
 
-        {/* Icons and labels positioned separately */}
+        {/* Icons and labels positioned separately - delayed after center */}
         {menuItems.map((item, index) => {
           const centerAngle = index * segmentAngle + segmentAngle / 2;
           const hovered = hoveredItem === index;
@@ -375,11 +376,12 @@ export const RadialMenu = () => {
           return (
             <div
               key={`label-${item.to}-${index}`}
-              className="absolute pointer-events-none"
+              className="absolute pointer-events-none animate-[fade-in_0.25s_ease-out_both]"
               style={{
                 left: `calc(50% + ${pos.x}px)`,
                 top: `calc(50% + ${pos.y}px)`,
                 transform: 'translate(-50%, -50%)',
+                animationDelay: `${0.12 + index * 0.04}s`,
               }}
             >
               <div className="flex flex-col items-center justify-center">
@@ -417,16 +419,16 @@ export const RadialMenu = () => {
           );
         })}
 
-        {/* Center circle with logo */}
+        {/* Center circle with logo - LOADS FIRST */}
         <div 
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full flex flex-col items-center justify-center z-20 border-4 border-black overflow-hidden"
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full flex flex-col items-center justify-center z-20 border-4 border-black overflow-hidden animate-[scale-in_0.25s_ease-out_both]"
           style={{
             width: `${centerSize}px`,
             height: `${centerSize}px`,
           }}
         >
           {/* Upper 75% with white marble */}
-          <div 
+          <div
             className="absolute top-0 left-0 w-full h-[75%]"
             style={{
               backgroundImage: `url(${whiteMarbleBg})`,
