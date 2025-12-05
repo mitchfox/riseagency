@@ -138,9 +138,37 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: Perf
     window.print();
   };
 
+  // Format stat key to readable label
+  const formatStatLabel = (key: string): string => {
+    return key
+      .replace(/_/g, ' ')
+      .replace(/([A-Z])/g, ' $1')
+      .replace(/^./, str => str.toUpperCase())
+      .trim();
+  };
+
+  // Get advanced stats from striker_stats, excluding internal fields
+  const getAdvancedStats = () => {
+    if (!analysis?.striker_stats) return [];
+    
+    const excludeKeys = ['selected_stats', 'stats_order'];
+    const stats: { key: string; value: number | string }[] = [];
+    
+    for (const [key, value] of Object.entries(analysis.striker_stats)) {
+      if (excludeKeys.includes(key)) continue;
+      if (typeof value === 'number' || typeof value === 'string') {
+        stats.push({ key, value });
+      }
+    }
+    
+    return stats;
+  };
+
+  const advancedStats = getAdvancedStats();
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-6xl max-h-[95vh] overflow-y-auto p-0">
+      <DialogContent className="max-w-[95vw] w-full max-h-[95vh] overflow-y-auto p-0">
         <div className="sticky top-0 z-10 bg-background border-b p-4 flex items-center justify-between">
           <h2 className="text-xl font-bebas uppercase tracking-wider">Performance Report</h2>
           <div className="flex gap-2">
@@ -155,7 +183,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: Perf
           </div>
         </div>
 
-        <div className="p-4">
+        <div className="p-6">
           {loading ? (
             <div className="space-y-6 animate-pulse">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -201,7 +229,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: Perf
               </div>
 
               {/* Key Stats */}
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 bg-accent/20 rounded-lg">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-accent/20 rounded-lg">
                 <div className="text-center">
                   <p className="text-xs md:text-sm text-muted-foreground mb-1">Raw Score</p>
                   <p className="text-xl md:text-2xl font-bold">{calculateRScore().toFixed(5)}</p>
@@ -224,6 +252,25 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: Perf
                   <p className="text-xl md:text-2xl font-bold">{analysis.minutes_played || "N/A"}</p>
                 </div>
               </div>
+
+              {/* Advanced Stats */}
+              {advancedStats.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Match Statistics</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                      {advancedStats.map(({ key, value }) => (
+                        <div key={key} className="text-center p-3 bg-accent/10 rounded-lg">
+                          <p className="text-xs text-muted-foreground mb-1 capitalize">{formatStatLabel(key)}</p>
+                          <p className="text-lg font-bold">{typeof value === 'number' ? value.toFixed(2) : value}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
 
               {/* Performance Overview */}
               {analysis.performance_overview && (
