@@ -11,13 +11,29 @@ import { LandingCursor } from "@/components/LandingCursor";
 import { RepresentationDialog } from "@/components/RepresentationDialog";
 import { DeclareInterestPlayerDialog } from "@/components/DeclareInterestPlayerDialog";
 import { Button } from "@/components/ui/button";
+import { useRoleSubdomain, pathToRole, RoleSubdomain } from "@/hooks/useRoleSubdomain";
 import riseLogoWhite from "@/assets/logo.png";
 
 export default function Landing() {
   const { t } = useLanguage();
+  const { getRoleUrl } = useRoleSubdomain();
   const [languagePopupOpen, setLanguagePopupOpen] = useState(false);
   const [showRepresentation, setShowRepresentation] = useState(false);
   const [showDeclareInterest, setShowDeclareInterest] = useState(false);
+  
+  const navigateToRole = (path: string) => {
+    const role = pathToRole[path];
+    if (role) {
+      const roleUrl = getRoleUrl(role as Exclude<RoleSubdomain, null>);
+      if (roleUrl.startsWith('http')) {
+        window.location.href = roleUrl;
+      } else {
+        window.location.href = path;
+      }
+    } else {
+      window.location.href = path;
+    }
+  };
   
   // Desktop navigation (PLAYERS goes to /players)
   const desktopNavLinks = [
@@ -137,12 +153,12 @@ export default function Landing() {
             <nav className="flex items-center justify-center gap-1 flex-wrap px-1">
               {mobileNavLinks.map((link, index) => (
                 <div key={link.to} className="flex items-center">
-                  <Link
-                    to={link.to}
+                  <button
+                    onClick={() => navigateToRole(link.to)}
                     className="px-2 py-1 text-xs font-bebas uppercase tracking-[0.15em] text-white/80 hover:text-primary transition-colors duration-300 whitespace-nowrap"
                   >
                     <HoverText text={t(link.labelKey, link.fallback)} />
-                  </Link>
+                  </button>
                   {index < mobileNavLinks.length - 1 && (
                     <div className="w-px h-3 bg-primary/40" />
                   )}
