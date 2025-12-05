@@ -231,6 +231,27 @@ export const RadialMenu = () => {
   const { radius, circleSize, centerSize } = getResponsiveSize();
   const segmentAngle = 360 / menuItems.length;
 
+  // Language subdomains that take priority over role subdomains
+  const languageSubdomains = ['es', 'pt', 'fr', 'de', 'it', 'pl', 'cs', 'cz', 'ru', 'tr'];
+  
+  const isOnLanguageSubdomain = (): boolean => {
+    const hostname = window.location.hostname;
+    const parts = hostname.split('.');
+    
+    if (hostname === 'localhost' || /^\d+\.\d+\.\d+\.\d+$/.test(hostname)) {
+      return false;
+    }
+    
+    let subdomain = '';
+    if (parts[0].toLowerCase() === 'www' && parts.length >= 4) {
+      subdomain = parts[1].toLowerCase();
+    } else if (parts[0].toLowerCase() !== 'www' && parts.length >= 3) {
+      subdomain = parts[0].toLowerCase();
+    }
+    
+    return languageSubdomains.includes(subdomain);
+  };
+
   return (
     <div className="fixed inset-0 flex items-center justify-center z-[200] overflow-hidden touch-none overscroll-none">
       {/* Marble background - delayed */}
@@ -343,13 +364,19 @@ export const RadialMenu = () => {
                   const role = pathToRole[item.to];
                   
                   if (role) {
-                    // Navigate to subdomain for role pages
-                    const url = getRoleUrl(role);
-                    if (url.startsWith('http')) {
-                      window.location.href = url;
-                    } else {
-                      navigate(url);
+                    // If on a language subdomain, stay on it and use localized route
+                    if (isOnLanguageSubdomain()) {
+                      navigate(item.to);
                       closeButtonRef.current?.click();
+                    } else {
+                      // Navigate to subdomain for role pages
+                      const url = getRoleUrl(role);
+                      if (url.startsWith('http')) {
+                        window.location.href = url;
+                      } else {
+                        navigate(url);
+                        closeButtonRef.current?.click();
+                      }
                     }
                   } else if (isSelectingRole) {
                     // Non-role item in role selection mode - shouldn't happen but handle gracefully
