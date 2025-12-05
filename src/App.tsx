@@ -12,6 +12,7 @@ import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { useSubdomainRouter } from "@/hooks/useSubdomainRouter";
 import { getAllPathVariants } from "@/lib/localizedRoutes";
 import Landing from "./pages/Landing";
+import Home from "./pages/Home";
 import Index from "./pages/Index";
 import Stars from "./pages/Stars";
 import Players from "./pages/Performance"; // Old Performance content now becomes Players
@@ -90,7 +91,7 @@ const App = () => {
             <PageTransition>
               {(displayLocation) => (
                 <Routes location={displayLocation}>
-                  <Route path="/" element={<Landing />} />
+                  <Route path="/" element={<Home />} />
                   <Route path="/players" element={<Index />} />
                   <Route path="/intro" element={<Intro />} />
                   

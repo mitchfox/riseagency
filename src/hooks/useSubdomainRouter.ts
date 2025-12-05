@@ -1,60 +1,51 @@
 import { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
-const subdomainRoutes: Record<string, string> = {
-  'portal': '/portal',
-  'scouts': '/scouts',
-  'potential': '/potential',
-  'players': '/playersmore',
-  'clubs': '/clubs',
-  'agents': '/agents',
-  'coaches': '/coaches',
-  'media': '/media',
-  'business': '/business'
-};
+// Role subdomains - these are handled by the Home component at root path
+const roleSubdomains = ['portal', 'scouts', 'potential', 'players', 'clubs', 'agents', 'coaches', 'media', 'business'];
 
 // Language subdomains (don't trigger route redirects)
 const languageSubdomains = ['es', 'pt', 'fr', 'de', 'it', 'pl', 'cs', 'cz', 'ru', 'tr'];
+
+const getSubdomain = (): string | null => {
+  const hostname = window.location.hostname;
+  const parts = hostname.split('.');
+  
+  // For localhost or IP addresses, skip subdomain routing
+  if (hostname === 'localhost' || /^\d+\.\d+\.\d+\.\d+$/.test(hostname)) {
+    return null;
+  }
+  
+  let functionalSubdomain = '';
+  
+  if (parts[0].toLowerCase() === 'www' && parts.length >= 4) {
+    // Format: www.{subdomain}.domain.com
+    functionalSubdomain = parts[1].toLowerCase();
+  } else if (parts[0].toLowerCase() !== 'www' && parts.length >= 3) {
+    // Format: {subdomain}.domain.com
+    functionalSubdomain = parts[0].toLowerCase();
+  }
+  
+  if (!functionalSubdomain || languageSubdomains.includes(functionalSubdomain)) {
+    return null;
+  }
+  
+  return functionalSubdomain;
+};
 
 export const useSubdomainRouter = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
   useEffect(() => {
-    const hostname = window.location.hostname;
-    const parts = hostname.split('.');
+    const subdomain = getSubdomain();
     
-    // For localhost or IP addresses, skip subdomain routing
-    if (hostname === 'localhost' || /^\d+\.\d+\.\d+\.\d+$/.test(hostname)) {
+    // If we're on a role subdomain, don't do any navigation
+    // The Home component handles rendering the correct page at root
+    if (subdomain && roleSubdomains.includes(subdomain)) {
       return;
     }
     
-    // Determine the functional subdomain based on format:
-    // www.portal.risefootballagency.com -> portal (parts[1])
-    // www.es.risefootballagency.com -> es (language, ignore)
-    // portal.risefootballagency.com -> portal (parts[0])
-    // www.risefootballagency.com -> no subdomain
-    
-    let functionalSubdomain = '';
-    
-    if (parts[0].toLowerCase() === 'www' && parts.length >= 4) {
-      // Format: www.{subdomain}.domain.com
-      functionalSubdomain = parts[1].toLowerCase();
-    } else if (parts[0].toLowerCase() !== 'www' && parts.length >= 3) {
-      // Format: {subdomain}.domain.com
-      functionalSubdomain = parts[0].toLowerCase();
-    }
-    
-    // Skip if no subdomain or it's a language subdomain
-    if (!functionalSubdomain || languageSubdomains.includes(functionalSubdomain)) {
-      return;
-    }
-    
-    // Check if this subdomain has a mapped route
-    const targetRoute = subdomainRoutes[functionalSubdomain];
-    
-    if (targetRoute && location.pathname !== targetRoute) {
-      navigate(targetRoute, { replace: true });
-    }
+    // No navigation needed - subdomain-based content is handled by Home component
   }, [navigate, location.pathname]);
 };
