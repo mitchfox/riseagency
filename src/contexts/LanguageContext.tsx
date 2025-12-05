@@ -42,6 +42,9 @@ const languageSubdomains: Record<string, LanguageCode> = {
   'tr': 'tr',
 };
 
+// Role subdomains that should NOT be treated as language subdomains
+const roleSubdomains = ['players', 'clubs', 'scouts', 'agents', 'coaches', 'media', 'business'];
+
 // URL subdomains to use (matching DNS records)
 const languageUrlSubdomains: Record<LanguageCode, string> = {
   'en': '',
@@ -90,8 +93,13 @@ function detectLanguageFromSubdomain(): LanguageCode | null {
   const parts = hostname.split('.');
   
   // Check format: es.risefootballagency.com (language subdomain first)
+  // Skip role subdomains like players.risefootballagency.com
   if (parts.length >= 2) {
     const potentialLang = parts[0].toLowerCase();
+    // Skip if it's a role subdomain
+    if (roleSubdomains.includes(potentialLang)) {
+      return null;
+    }
     if (languageSubdomains[potentialLang]) {
       return languageSubdomains[potentialLang];
     }
@@ -242,6 +250,13 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     const hasWww = parts[0].toLowerCase() === 'www';
     let workingParts = hasWww ? parts.slice(1) : parts;
     
+    // Check if first remaining part is a role subdomain (e.g., players.risefootballagency.com)
+    let currentRoleSubdomain: string | null = null;
+    if (roleSubdomains.includes(workingParts[0]?.toLowerCase())) {
+      currentRoleSubdomain = workingParts[0].toLowerCase();
+      workingParts = workingParts.slice(1);
+    }
+    
     // Then check if first remaining part is a language subdomain and remove it
     if (languageSubdomains[workingParts[0]?.toLowerCase()]) {
       workingParts = workingParts.slice(1);
@@ -250,7 +265,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     // workingParts is now the base domain parts (e.g., ['risefootballagency', 'com'])
     const baseDomain = workingParts.join('.');
 
-    // Build new URL - format: es.risefootballagency.com (no www)
+    // Build new URL - format: es.risefootballagency.com/players (language subdomain + role as path)
     let newHostname: string;
     if (lang === 'en') {
       // English uses the base domain (no language subdomain)
@@ -261,7 +276,17 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
       newHostname = `${urlSubdomain}.${baseDomain}`;
     }
 
-    const newUrl = `${protocol}//${newHostname}${localizedPath}`;
+    // If we were on a role subdomain, convert it to a path
+    // e.g., players.risefootballagency.com → es.risefootballagency.com/players
+    let finalPath = localizedPath;
+    if (currentRoleSubdomain) {
+      // Prepend the role as a path segment if not already present
+      if (!localizedPath.startsWith(`/${currentRoleSubdomain}`)) {
+        finalPath = `/${currentRoleSubdomain}${localizedPath === '/' ? '' : localizedPath}`;
+      }
+    }
+
+    const newUrl = `${protocol}//${newHostname}${finalPath}`;
     window.location.href = newUrl;
   }, []);
 
