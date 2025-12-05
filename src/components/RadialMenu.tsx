@@ -425,8 +425,8 @@ export const RadialMenu = () => {
           style={{
             width: `${centerSize}px`,
             height: `${centerSize}px`,
-            top: `calc(50% - ${centerSize / 2 + 20}px)`,
-            left: `calc(50% - ${centerSize / 2 + 20}px)`,
+            top: `calc(50% - ${centerSize / 2 + 15}px)`,
+            left: `calc(50% - ${centerSize / 2 + 15}px)`,
           }}
         >
           {/* Upper 75% with white marble */}
@@ -493,9 +493,9 @@ export const RadialMenu = () => {
           <div 
             className="absolute z-20" 
             style={{ 
-              bottom: isMobile ? `${centerSize * 0.06 - 6}px` : `${centerSize * 0.04375 - 1}px`,
+              bottom: isMobile ? `${centerSize * 0.06 - 7}px` : `${centerSize * 0.04375 - 2}px`,
               left: '50%',
-              transform: isMobile ? 'translateX(calc(-50% + 2px))' : 'translateX(calc(-50% + 1px))'
+              transform: isMobile ? 'translateX(calc(-50% + 4px))' : 'translateX(calc(-50% + 3px))'
             }}
           >
             <button
