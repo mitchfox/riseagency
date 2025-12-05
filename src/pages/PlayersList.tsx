@@ -357,7 +357,8 @@ const PlayersList = () => {
 
       <DeclareInterestPlayerDialog 
         open={declareInterestOpen} 
-        onOpenChange={setDeclareInterestOpen} 
+        onOpenChange={setDeclareInterestOpen}
+        starsOnly
       />
       
       <ContactDialog 
