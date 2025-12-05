@@ -218,7 +218,7 @@ export const HighlightedMatchDisplay = ({ highlightedMatch, onVideoPlayChange, o
                   asChild
                   variant="outline"
                   size="lg"
-                  className="btn-shine font-bebas uppercase tracking-wider text-base hover:bg-primary/10 hover:border-primary/40 transition-all"
+                  className="btn-shine font-bebas uppercase tracking-wider text-base border-primary/40 text-foreground hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all"
                 >
                   <a 
                     href={highlightedMatch.full_match_url} 
