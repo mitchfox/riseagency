@@ -75,15 +75,21 @@ const PerformanceReport = () => {
         .from("player_analysis")
         .select(`
           *,
-          players!inner (name)
+          players (name)
         `)
         .eq("id", analysisId)
-        .single();
+        .maybeSingle();
 
       console.log('PerformanceReport - Analysis data:', analysisData);
       console.log('PerformanceReport - Analysis error:', analysisError);
 
       if (analysisError) throw analysisError;
+      
+      if (!analysisData) {
+        console.log('PerformanceReport - No analysis data found');
+        setLoading(false);
+        return;
+      }
 
       setAnalysis({
         id: analysisData.id,
