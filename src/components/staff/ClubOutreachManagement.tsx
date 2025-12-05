@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, Building, User, Briefcase, Clock, MessageSquare, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -38,6 +39,14 @@ interface Player {
   name: string;
 }
 
+// Group outreach records by club
+interface ClubGroup {
+  clubName: string;
+  contactName: string | null;
+  contactRole: string | null;
+  records: ClubOutreach[];
+}
+
 const statusConfig: Record<string, { label: string; color: string }> = {
   contacted: { label: "Contacted", color: "bg-muted text-muted-foreground" },
   responded: { label: "Responded", color: "bg-blue-500/20 text-blue-400" },
@@ -48,22 +57,24 @@ const statusConfig: Record<string, { label: string; color: string }> = {
 
 export const ClubOutreachManagement = () => {
   const [outreachRecords, setOutreachRecords] = useState<ClubOutreach[]>([]);
+  const [clubGroups, setClubGroups] = useState<ClubGroup[]>([]);
   const [players, setPlayers] = useState<Player[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedPlayerId, setSelectedPlayerId] = useState<string>("all");
+  const [selectedClubFilter, setSelectedClubFilter] = useState<string>("all");
   
   // Add dialog state
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [newClubName, setNewClubName] = useState("");
   const [newContactName, setNewContactName] = useState("");
   const [newContactRole, setNewContactRole] = useState("");
-  const [newPlayerId, setNewPlayerId] = useState("");
+  const [selectedPlayerIds, setSelectedPlayerIds] = useState<string[]>([]);
   const [newStatus, setNewStatus] = useState("contacted");
   const [newInitialUpdate, setNewInitialUpdate] = useState("");
   const [saving, setSaving] = useState(false);
   
   // Detail dialog state
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
+  const [selectedClubGroup, setSelectedClubGroup] = useState<ClubGroup | null>(null);
   const [selectedOutreach, setSelectedOutreach] = useState<ClubOutreach | null>(null);
   const [outreachUpdates, setOutreachUpdates] = useState<OutreachUpdate[]>([]);
   const [newUpdateText, setNewUpdateText] = useState("");
@@ -71,7 +82,7 @@ export const ClubOutreachManagement = () => {
 
   useEffect(() => {
     fetchData();
-  }, [selectedPlayerId]);
+  }, []);
 
   const fetchData = async () => {
     setLoading(true);
@@ -84,16 +95,11 @@ export const ClubOutreachManagement = () => {
       setPlayers(playersData || []);
 
       // Fetch outreach records
-      let query = supabase
+      const { data: outreachData, error } = await supabase
         .from("club_outreach")
         .select("*")
-        .order("created_at", { ascending: false });
-      
-      if (selectedPlayerId !== "all") {
-        query = query.eq("player_id", selectedPlayerId);
-      }
+        .order("club_name", { ascending: true });
 
-      const { data: outreachData, error } = await query;
       if (error) throw error;
 
       // Join player names
@@ -103,6 +109,24 @@ export const ClubOutreachManagement = () => {
       }));
 
       setOutreachRecords(enrichedData);
+
+      // Group by club
+      const grouped = enrichedData.reduce((acc, record) => {
+        const existing = acc.find(g => g.clubName === record.club_name);
+        if (existing) {
+          existing.records.push(record);
+        } else {
+          acc.push({
+            clubName: record.club_name,
+            contactName: record.contact_name,
+            contactRole: record.contact_role,
+            records: [record]
+          });
+        }
+        return acc;
+      }, [] as ClubGroup[]);
+
+      setClubGroups(grouped);
     } catch (error: any) {
       console.error("Error fetching data:", error);
       toast.error("Failed to load data");
@@ -111,39 +135,50 @@ export const ClubOutreachManagement = () => {
     }
   };
 
+  const handlePlayerToggle = (playerId: string) => {
+    setSelectedPlayerIds(prev => 
+      prev.includes(playerId) 
+        ? prev.filter(id => id !== playerId)
+        : [...prev, playerId]
+    );
+  };
+
   const handleAddOutreach = async () => {
-    if (!newClubName.trim() || !newPlayerId) {
-      toast.error("Please fill in required fields");
+    if (!newClubName.trim() || selectedPlayerIds.length === 0) {
+      toast.error("Please fill in club name and select at least one player");
       return;
     }
 
     setSaving(true);
     try {
-      const { data, error } = await supabase
-        .from("club_outreach")
-        .insert({
-          player_id: newPlayerId,
-          club_name: newClubName.trim(),
-          contact_name: newContactName.trim() || null,
-          contact_role: newContactRole.trim() || null,
-          status: newStatus,
-          latest_update: newInitialUpdate.trim() || null,
-          latest_update_date: newInitialUpdate.trim() ? new Date().toISOString() : null,
-        })
-        .select()
-        .single();
+      // Create a record for each selected player
+      for (const playerId of selectedPlayerIds) {
+        const { data, error } = await supabase
+          .from("club_outreach")
+          .insert({
+            player_id: playerId,
+            club_name: newClubName.trim(),
+            contact_name: newContactName.trim() || null,
+            contact_role: newContactRole.trim() || null,
+            status: newStatus,
+            latest_update: newInitialUpdate.trim() || null,
+            latest_update_date: newInitialUpdate.trim() ? new Date().toISOString() : null,
+          })
+          .select()
+          .single();
 
-      if (error) throw error;
+        if (error) throw error;
 
-      // If there's an initial update, also add it to updates table
-      if (newInitialUpdate.trim() && data) {
-        await supabase.from("club_outreach_updates").insert({
-          outreach_id: data.id,
-          update_text: newInitialUpdate.trim(),
-        });
+        // If there's an initial update, also add it to updates table
+        if (newInitialUpdate.trim() && data) {
+          await supabase.from("club_outreach_updates").insert({
+            outreach_id: data.id,
+            update_text: newInitialUpdate.trim(),
+          });
+        }
       }
 
-      toast.success("Club outreach added");
+      toast.success(`Club outreach added for ${selectedPlayerIds.length} player(s)`);
       setAddDialogOpen(false);
       resetAddForm();
       fetchData();
@@ -159,21 +194,24 @@ export const ClubOutreachManagement = () => {
     setNewClubName("");
     setNewContactName("");
     setNewContactRole("");
-    setNewPlayerId("");
+    setSelectedPlayerIds([]);
     setNewStatus("contacted");
     setNewInitialUpdate("");
   };
 
-  const handleOpenDetail = async (outreach: ClubOutreach) => {
-    setSelectedOutreach(outreach);
+  const handleOpenClubDetail = async (clubGroup: ClubGroup) => {
+    setSelectedClubGroup(clubGroup);
+    setSelectedOutreach(clubGroup.records[0]); // Select first record for updates
     setDetailDialogOpen(true);
     setUpdatesLoading(true);
 
     try {
+      // Fetch all updates for all records in this club group
+      const outreachIds = clubGroup.records.map(r => r.id);
       const { data, error } = await supabase
         .from("club_outreach_updates")
         .select("*")
-        .eq("outreach_id", outreach.id)
+        .in("outreach_id", outreachIds)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -187,39 +225,37 @@ export const ClubOutreachManagement = () => {
   };
 
   const handleAddUpdate = async () => {
-    if (!newUpdateText.trim() || !selectedOutreach) return;
+    if (!newUpdateText.trim() || !selectedClubGroup) return;
 
     setSaving(true);
     try {
-      // Add update to updates table
-      const { error: updateError } = await supabase
-        .from("club_outreach_updates")
-        .insert({
-          outreach_id: selectedOutreach.id,
-          update_text: newUpdateText.trim(),
-        });
+      // Add update to all records in the club group
+      for (const record of selectedClubGroup.records) {
+        await supabase
+          .from("club_outreach_updates")
+          .insert({
+            outreach_id: record.id,
+            update_text: newUpdateText.trim(),
+          });
 
-      if (updateError) throw updateError;
-
-      // Update the main record with latest update
-      const { error: outreachError } = await supabase
-        .from("club_outreach")
-        .update({
-          latest_update: newUpdateText.trim(),
-          latest_update_date: new Date().toISOString(),
-        })
-        .eq("id", selectedOutreach.id);
-
-      if (outreachError) throw outreachError;
+        await supabase
+          .from("club_outreach")
+          .update({
+            latest_update: newUpdateText.trim(),
+            latest_update_date: new Date().toISOString(),
+          })
+          .eq("id", record.id);
+      }
 
       toast.success("Update added");
       setNewUpdateText("");
       
       // Refresh updates list
+      const outreachIds = selectedClubGroup.records.map(r => r.id);
       const { data } = await supabase
         .from("club_outreach_updates")
         .select("*")
-        .eq("outreach_id", selectedOutreach.id)
+        .in("outreach_id", outreachIds)
         .order("created_at", { ascending: false });
       setOutreachUpdates(data || []);
       
@@ -233,17 +269,17 @@ export const ClubOutreachManagement = () => {
   };
 
   const handleStatusChange = async (newStatus: string) => {
-    if (!selectedOutreach) return;
+    if (!selectedClubGroup) return;
 
     try {
-      const { error } = await supabase
-        .from("club_outreach")
-        .update({ status: newStatus })
-        .eq("id", selectedOutreach.id);
-
-      if (error) throw error;
+      // Update all records in the club group
+      for (const record of selectedClubGroup.records) {
+        await supabase
+          .from("club_outreach")
+          .update({ status: newStatus })
+          .eq("id", record.id);
+      }
       
-      setSelectedOutreach({ ...selectedOutreach, status: newStatus });
       toast.success("Status updated");
       fetchData();
     } catch (error) {
@@ -251,6 +287,10 @@ export const ClubOutreachManagement = () => {
       toast.error("Failed to update status");
     }
   };
+
+  const filteredGroups = selectedClubFilter === "all" 
+    ? clubGroups 
+    : clubGroups.filter(g => g.clubName.toLowerCase().includes(selectedClubFilter.toLowerCase()));
 
   return (
     <div className="space-y-6">
@@ -262,19 +302,12 @@ export const ClubOutreachManagement = () => {
               Club Outreach
             </CardTitle>
             <div className="flex items-center gap-3">
-              <Select value={selectedPlayerId} onValueChange={setSelectedPlayerId}>
-                <SelectTrigger className="w-[200px]">
-                  <SelectValue placeholder="Filter by player" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Players</SelectItem>
-                  {players.map(player => (
-                    <SelectItem key={player.id} value={player.id}>
-                      {player.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Input
+                placeholder="Filter by club..."
+                value={selectedClubFilter === "all" ? "" : selectedClubFilter}
+                onChange={e => setSelectedClubFilter(e.target.value || "all")}
+                className="w-[200px]"
+              />
               <Button onClick={() => setAddDialogOpen(true)}>
                 <Plus className="h-4 w-4 mr-2" />
                 Add Outreach
@@ -287,7 +320,7 @@ export const ClubOutreachManagement = () => {
             <div className="flex items-center justify-center py-8">
               <Loader2 className="h-6 w-6 animate-spin" />
             </div>
-          ) : outreachRecords.length === 0 ? (
+          ) : clubGroups.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               No outreach records yet. Click "Add Outreach" to create one.
             </div>
@@ -295,32 +328,45 @@ export const ClubOutreachManagement = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Player</TableHead>
                   <TableHead>Club</TableHead>
+                  <TableHead>Players</TableHead>
                   <TableHead>Contact</TableHead>
-                  <TableHead>Role</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Latest Update</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {outreachRecords.map(record => (
+                {filteredGroups.map(group => (
                   <TableRow
-                    key={record.id}
+                    key={group.clubName}
                     className="cursor-pointer hover:bg-muted/50"
-                    onClick={() => handleOpenDetail(record)}
+                    onClick={() => handleOpenClubDetail(group)}
                   >
-                    <TableCell className="font-medium">{record.player?.name || "Unknown"}</TableCell>
-                    <TableCell>{record.club_name}</TableCell>
-                    <TableCell>{record.contact_name || "-"}</TableCell>
-                    <TableCell>{record.contact_role || "-"}</TableCell>
+                    <TableCell className="font-medium">{group.clubName}</TableCell>
                     <TableCell>
-                      <Badge className={statusConfig[record.status]?.color || "bg-muted"}>
-                        {statusConfig[record.status]?.label || record.status}
+                      <div className="flex flex-wrap gap-1">
+                        {group.records.map(r => (
+                          <Badge key={r.id} variant="outline" className="text-xs">
+                            {r.player?.name || "Unknown"}
+                          </Badge>
+                        ))}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      {group.contactName ? (
+                        <span>
+                          {group.contactName}
+                          {group.contactRole && <span className="text-muted-foreground"> ({group.contactRole})</span>}
+                        </span>
+                      ) : "-"}
+                    </TableCell>
+                    <TableCell>
+                      <Badge className={statusConfig[group.records[0]?.status]?.color || "bg-muted"}>
+                        {statusConfig[group.records[0]?.status]?.label || group.records[0]?.status}
                       </Badge>
                     </TableCell>
                     <TableCell className="max-w-[300px] truncate">
-                      {record.latest_update || "-"}
+                      {group.records[0]?.latest_update || "-"}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -330,28 +376,13 @@ export const ClubOutreachManagement = () => {
         </CardContent>
       </Card>
 
-      {/* Add Dialog */}
+      {/* Add Dialog - Club First with Player Checkboxes */}
       <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>Add Club Outreach</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Player *</Label>
-              <Select value={newPlayerId} onValueChange={setNewPlayerId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select player" />
-                </SelectTrigger>
-                <SelectContent>
-                  {players.map(player => (
-                    <SelectItem key={player.id} value={player.id}>
-                      {player.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
             <div className="space-y-2">
               <Label>Club Name *</Label>
               <Input
@@ -377,6 +408,31 @@ export const ClubOutreachManagement = () => {
                   placeholder="e.g., Head Scout"
                 />
               </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Players to Suggest *</Label>
+              <div className="border rounded-lg p-3 max-h-[200px] overflow-y-auto space-y-2">
+                {players.map(player => (
+                  <div key={player.id} className="flex items-center gap-2">
+                    <Checkbox
+                      id={player.id}
+                      checked={selectedPlayerIds.includes(player.id)}
+                      onCheckedChange={() => handlePlayerToggle(player.id)}
+                    />
+                    <label 
+                      htmlFor={player.id} 
+                      className="text-sm cursor-pointer flex-1"
+                    >
+                      {player.name}
+                    </label>
+                  </div>
+                ))}
+              </div>
+              {selectedPlayerIds.length > 0 && (
+                <p className="text-xs text-muted-foreground">
+                  {selectedPlayerIds.length} player(s) selected
+                </p>
+              )}
             </div>
             <div className="space-y-2">
               <Label>Status</Label>
@@ -413,38 +469,49 @@ export const ClubOutreachManagement = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Detail Dialog */}
+      {/* Detail Dialog - Shows Club with all associated players */}
       <Dialog open={detailDialogOpen} onOpenChange={setDetailDialogOpen}>
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Building className="h-5 w-5" />
-              {selectedOutreach?.club_name}
+              {selectedClubGroup?.clubName}
             </DialogTitle>
           </DialogHeader>
-          {selectedOutreach && (
+          {selectedClubGroup && (
             <div className="space-y-6">
-              {/* Details */}
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div className="flex items-center gap-2">
-                  <User className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-muted-foreground">Player:</span>
-                  <span className="font-medium">{selectedOutreach.player?.name}</span>
+              {/* Players */}
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  <User className="h-4 w-4" />
+                  Players Suggested
+                </Label>
+                <div className="flex flex-wrap gap-2">
+                  {selectedClubGroup.records.map(r => (
+                    <Badge key={r.id} variant="secondary">
+                      {r.player?.name || "Unknown"}
+                    </Badge>
+                  ))}
                 </div>
-                <div className="flex items-center gap-2">
-                  <Briefcase className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-muted-foreground">Contact:</span>
-                  <span className="font-medium">
-                    {selectedOutreach.contact_name || "N/A"}
-                    {selectedOutreach.contact_role && ` (${selectedOutreach.contact_role})`}
-                  </span>
-                </div>
+              </div>
+
+              {/* Contact Info */}
+              <div className="flex items-center gap-2 text-sm">
+                <Briefcase className="h-4 w-4 text-muted-foreground" />
+                <span className="text-muted-foreground">Contact:</span>
+                <span className="font-medium">
+                  {selectedClubGroup.contactName || "N/A"}
+                  {selectedClubGroup.contactRole && ` (${selectedClubGroup.contactRole})`}
+                </span>
               </div>
 
               {/* Status */}
               <div className="space-y-2">
                 <Label>Status</Label>
-                <Select value={selectedOutreach.status} onValueChange={handleStatusChange}>
+                <Select 
+                  value={selectedClubGroup.records[0]?.status} 
+                  onValueChange={handleStatusChange}
+                >
                   <SelectTrigger className="w-[200px]">
                     <SelectValue />
                   </SelectTrigger>
@@ -484,15 +551,13 @@ export const ClubOutreachManagement = () => {
                     <Loader2 className="h-5 w-5 animate-spin" />
                   </div>
                 ) : outreachUpdates.length === 0 ? (
-                  <div className="text-sm text-muted-foreground py-4 text-center">
-                    No updates yet
-                  </div>
+                  <p className="text-sm text-muted-foreground">No updates yet.</p>
                 ) : (
-                  <div className="space-y-3 max-h-[300px] overflow-y-auto">
+                  <div className="space-y-2 max-h-[200px] overflow-y-auto">
                     {outreachUpdates.map(update => (
                       <div
                         key={update.id}
-                        className="p-3 rounded-lg bg-muted/50 border border-border"
+                        className="p-3 rounded-lg bg-muted/30 border border-border/50"
                       >
                         <p className="text-sm">{update.update_text}</p>
                         <p className="text-xs text-muted-foreground mt-1">
