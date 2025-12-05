@@ -339,10 +339,23 @@ export const RadialMenu = () => {
                 onTouchStart={() => setHoveredItem(index)}
                 onClick={() => {
                   if (isSelectingRole) {
-                    // Just select the role, don't close the drawer
+                    // Navigate to the role subdomain
                     const rolePath = item.to.replace('/', '').replace('more', '');
-                    setSelectedRole(rolePath);
-                    setIsSelectingRole(false);
+                    const roleKeys = ['players', 'clubs', 'scouts', 'agents', 'coaches', 'media', 'business'];
+                    
+                    if (roleKeys.includes(rolePath)) {
+                      // Use subdomain URL for role pages
+                      const url = getRoleUrl(rolePath as any);
+                      if (url.startsWith('http')) {
+                        window.location.href = url;
+                      } else {
+                        navigate(url);
+                        closeButtonRef.current?.click();
+                      }
+                    } else {
+                      setSelectedRole(rolePath);
+                      setIsSelectingRole(false);
+                    }
                   } else {
                     // Navigate AND close drawer
                     navigate(item.to);

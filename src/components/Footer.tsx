@@ -5,7 +5,7 @@ import { WorkWithUsDialog } from "@/components/WorkWithUsDialog";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { LocalizedLink } from "@/components/LocalizedLink";
-
+import { SubdomainLink } from "@/components/SubdomainLink";
 // Build version - update this to verify deployments
 const BUILD_VERSION = "v2024.11.27.001";
 
@@ -37,18 +37,18 @@ export const Footer = () => {
               <LocalizedLink to="/stars" className="text-muted-foreground hover:text-primary transition-colors">
                 {t("footer.stars", "Stars")}
               </LocalizedLink>
-              <Link to="/playersmore" className="text-muted-foreground hover:text-primary transition-colors">
+              <SubdomainLink role="players" className="text-muted-foreground hover:text-primary transition-colors">
                 {t("footer.players", "Players")}
-              </Link>
-              <LocalizedLink to="/clubs" className="text-muted-foreground hover:text-primary transition-colors">
+              </SubdomainLink>
+              <SubdomainLink role="clubs" className="text-muted-foreground hover:text-primary transition-colors">
                 {t("footer.clubs", "Clubs")}
-              </LocalizedLink>
-              <LocalizedLink to="/coaches" className="text-muted-foreground hover:text-primary transition-colors">
+              </SubdomainLink>
+              <SubdomainLink role="coaches" className="text-muted-foreground hover:text-primary transition-colors">
                 {t("footer.coaches", "Coaches")}
-              </LocalizedLink>
-              <LocalizedLink to="/scouts" className="text-muted-foreground hover:text-primary transition-colors">
+              </SubdomainLink>
+              <SubdomainLink role="scouts" className="text-muted-foreground hover:text-primary transition-colors">
                 {t("footer.scouts", "Scouts")}
-              </LocalizedLink>
+              </SubdomainLink>
               <LocalizedLink to="/performance" className="text-muted-foreground hover:text-primary transition-colors">
                 {t("footer.realise_potential", "Realise Potential")}
               </LocalizedLink>
