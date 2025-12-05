@@ -950,10 +950,10 @@ const PlayerDetail = () => {
                 <Button 
                   asChild
                   size="lg"
-                  className="w-full font-bebas uppercase tracking-wider"
+                  className="w-full font-bebas uppercase tracking-wider btn-shine"
                 >
                   <a href="https://wa.me/447508342901" target="_blank" rel="noopener noreferrer">
-                    Enquire About This Player
+                    <HoverText text="Enquire About This Player" />
                   </a>
                 </Button>
               </div>
@@ -970,10 +970,10 @@ const PlayerDetail = () => {
                   asChild
                   variant="outline"
                   size="lg"
-                  className="w-full font-bebas uppercase tracking-wider"
+                  className="w-full font-bebas uppercase tracking-wider btn-shine"
                 >
                   <a href="mailto:kuda.butawo@risefootballagency.com?subject=Media%20Inquiry">
-                    Contact
+                    <HoverText text="Contact" />
                   </a>
                 </Button>
               </div>
@@ -990,10 +990,10 @@ const PlayerDetail = () => {
                   asChild
                   variant="outline"
                   size="lg"
-                  className="w-full font-bebas uppercase tracking-wider"
+                  className="w-full font-bebas uppercase tracking-wider btn-shine"
                 >
                   <a href="https://wa.me/447446365438" target="_blank" rel="noopener noreferrer">
-                    Reach Out
+                    <HoverText text="Reach Out" />
                   </a>
                 </Button>
               </div>
