@@ -1,6 +1,7 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { Helmet } from "react-helmet-async";
+import { useVideoPreloader } from "@/hooks/useVideoPreloader";
 import { players } from "@/data/players";
 import { supabase } from "@/integrations/supabase/client";
 import { Header } from "@/components/Header";
@@ -36,6 +37,19 @@ const PlayerDetail = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   
   const playerInfoSentinelRef = useRef<HTMLDivElement>(null);
+  
+  // Extract video URLs for preloading
+  const videoUrls = useMemo(() => 
+    dbHighlights.map(h => h.videoUrl).filter(Boolean), 
+    [dbHighlights]
+  );
+  
+  // Setup video preloader
+  const { preloadNextVideos } = useVideoPreloader({
+    videos: videoUrls,
+    preloadCount: 3,
+    enabled: dbHighlights.length > 1
+  });
 
   const highlightedAnalysis = player && player.highlighted_match
     ? performanceReports.find((report) => {
@@ -299,15 +313,16 @@ const PlayerDetail = () => {
             <div className="relative aspect-video bg-secondary/30 rounded-lg overflow-hidden border-4 md:border-[6px] border-[hsl(var(--gold))]">
                {dbHighlights.length > 0 && typeof currentVideoType === 'number' && dbHighlights[currentVideoType]?.videoUrl ? (
                  <>
-                   <LazyVideo 
+               <LazyVideo 
                       ref={videoRef}
                       key={dbHighlights[currentVideoType].videoUrl}
                       className="w-full h-full object-contain"
                       controls
                       playsInline
-                      preload={currentVideoType === 0 ? "auto" : "none"}
+                      preload="auto"
                       loop={false}
                       autoPlayOnVisible
+                      loadImmediately={currentVideoType === 0}
                       src={dbHighlights[currentVideoType].videoUrl}
                      onError={(e) => {
                       console.error('Video error:', e);
@@ -316,6 +331,12 @@ const PlayerDetail = () => {
                     onLoadStart={() => console.log('Video loading started')}
                     onLoadedData={() => {
                       console.log('Video loaded successfully');
+                    }}
+                    onCanPlay={() => {
+                      // When video is ready, preload next videos
+                      if (typeof currentVideoType === 'number') {
+                        preloadNextVideos(currentVideoType);
+                      }
                     }}
                     onEnded={() => {
                       console.log('Video ended, current index:', currentVideoType, 'total videos:', dbHighlights.length);
