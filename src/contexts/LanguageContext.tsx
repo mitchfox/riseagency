@@ -246,33 +246,28 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
 
     const parts = hostname.split('.');
     
-    // Strip 'www' if present first
-    const hasWww = parts[0].toLowerCase() === 'www';
-    let workingParts = hasWww ? parts.slice(1) : parts;
+    // Extract base domain using the same reliable approach as role subdomains
+    // Always take the last 2 parts: risefootballagency.com
+    const baseDomain = parts.slice(-2).join('.');
     
-    // Check if first remaining part is a role subdomain (e.g., players.risefootballagency.com)
+    // Check if we're on a role subdomain by looking at parts before the base domain
     let currentRoleSubdomain: string | null = null;
-    if (roleSubdomains.includes(workingParts[0]?.toLowerCase())) {
-      currentRoleSubdomain = workingParts[0].toLowerCase();
-      workingParts = workingParts.slice(1);
+    for (const part of parts.slice(0, -2)) {
+      const lowerPart = part.toLowerCase();
+      if (lowerPart === 'www') continue;
+      if (roleSubdomains.includes(lowerPart)) {
+        currentRoleSubdomain = lowerPart;
+        break;
+      }
     }
-    
-    // Then check if first remaining part is a language subdomain and remove it
-    if (languageSubdomains[workingParts[0]?.toLowerCase()]) {
-      workingParts = workingParts.slice(1);
-    }
-    
-    // workingParts is now the base domain parts (e.g., ['risefootballagency', 'com'])
-    const baseDomain = workingParts.join('.');
 
-    // Build new URL
+    // Build new hostname
     let newHostname: string;
     if (lang === 'en') {
-      // English uses the base domain, preserve www if present
-      newHostname = hasWww ? `www.${baseDomain}` : baseDomain;
+      // English: just the base domain (no language subdomain)
+      newHostname = baseDomain;
     } else {
-      // Other languages: use language subdomain WITHOUT www
-      // (www.es.domain.com requires additional DNS setup, so we use es.domain.com)
+      // Other languages: language.basedomain (e.g., es.risefootballagency.com)
       const urlSubdomain = languageUrlSubdomains[lang];
       newHostname = `${urlSubdomain}.${baseDomain}`;
     }
