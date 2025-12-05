@@ -421,11 +421,12 @@ export const RadialMenu = () => {
 
         {/* Center circle with logo - LOADS FIRST */}
         <div 
-          className="absolute top-1/2 left-1/2 rounded-full flex flex-col items-center justify-center z-20 border-4 border-black overflow-hidden animate-[scale-in_0.25s_ease-out_both]"
+          className="absolute rounded-full flex flex-col items-center justify-center z-20 border-4 border-black overflow-hidden animate-[scale-in_0.25s_ease-out_both]"
           style={{
             width: `${centerSize}px`,
             height: `${centerSize}px`,
-            transform: 'translate(calc(-50% - 20px), calc(-50% - 20px))',
+            top: `calc(50% - ${centerSize / 2 + 20}px)`,
+            left: `calc(50% - ${centerSize / 2 + 20}px)`,
           }}
         >
           {/* Upper 75% with white marble */}
