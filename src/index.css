@@ -516,45 +516,45 @@ All colors MUST be HSL.
   position: relative;
   display: inline-flex !important;
   overflow: hidden;
-  line-height: 1.2;
+  line-height: 1.4;
   vertical-align: middle;
+  height: 1.4em;
 }
 
-.hover-text-original,
-.hover-text-clone {
+.hover-text-original {
   display: inline-flex;
 }
 
 .hover-text-clone {
+  display: inline-flex;
   position: absolute;
-  top: 100%;
+  top: 0;
   left: 0;
 }
 
-.hover-text-letter,
+.hover-text-letter {
+  display: inline-block;
+  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: translateY(0);
+}
+
 .hover-text-letter-clone {
   display: inline-block;
   transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: translateY(100%);
 }
 
-/* Standard hover on wrapper */
-.hover-text-wrapper:hover .hover-text-letter {
-  transform: translateY(-100%) !important;
-}
-
-.hover-text-wrapper:hover .hover-text-letter-clone {
-  transform: translateY(-100%) !important;
-}
-
-/* Button/link hover - more specific selectors */
+/* Hover states - original slides up and out, clone slides up and in */
+.hover-text-wrapper:hover .hover-text-letter,
 button:hover .hover-text-letter,
 a:hover .hover-text-letter,
 .btn-shine:hover .hover-text-letter {
   transform: translateY(-100%) !important;
 }
 
+.hover-text-wrapper:hover .hover-text-letter-clone,
 button:hover .hover-text-letter-clone,
 a:hover .hover-text-letter-clone,
 .btn-shine:hover .hover-text-letter-clone {
-  transform: translateY(-100%) !important;
+  transform: translateY(0) !important;
 }

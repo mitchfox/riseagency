@@ -19,11 +19,11 @@ export const HoverText: React.FC<HoverTextProps> = ({ text, className = "" }) =>
   );
 
   return (
-    <span className={`hover-text-wrapper ${className}`} style={{ display: 'inline-flex' }}>
-      <span className="hover-text-original" style={{ display: 'inline-flex' }}>
+    <span className={`hover-text-wrapper ${className}`}>
+      <span className="hover-text-original">
         {renderLetters(false)}
       </span>
-      <span className="hover-text-clone" aria-hidden="true" style={{ display: 'inline-flex' }}>
+      <span className="hover-text-clone" aria-hidden="true">
         {renderLetters(true)}
       </span>
     </span>
