@@ -2386,6 +2386,48 @@ export type Database = {
         }
         Relationships: []
       }
+      staff_calendar_events: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          end_time: string | null
+          event_date: string
+          event_type: string | null
+          id: string
+          staff_id: string
+          start_time: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          end_time?: string | null
+          event_date: string
+          event_type?: string | null
+          id?: string
+          staff_id: string
+          start_time?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          end_time?: string | null
+          event_date?: string
+          event_type?: string | null
+          id?: string
+          staff_id?: string
+          start_time?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       staff_goals: {
         Row: {
           assigned_to: string[] | null
