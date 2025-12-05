@@ -99,7 +99,7 @@ export const Footer = () => {
                 className="flex items-center gap-3 p-4 bg-primary/5 hover:bg-primary/10 rounded-lg border border-primary/20 hover:border-primary/40 transition-all group"
               >
                 <FaInstagram className="w-5 h-5 text-primary" />
-                <span className="text-sm font-bebas uppercase tracking-wider text-foreground group-hover:text-primary transition-colors">Instagram</span>
+                <span className="text-sm font-bebas uppercase tracking-wider text-foreground group-hover:text-primary transition-colors">{t("footer.instagram", "Instagram")}</span>
               </a>
               <a
                 href="https://x.com/RISE_FTBL"
@@ -108,7 +108,7 @@ export const Footer = () => {
                 className="flex items-center gap-3 p-4 bg-primary/5 hover:bg-primary/10 rounded-lg border border-primary/20 hover:border-primary/40 transition-all group"
               >
                 <FaTwitter className="w-5 h-5 text-primary" />
-                <span className="text-sm font-bebas uppercase tracking-wider text-foreground group-hover:text-primary transition-colors">Twitter</span>
+                <span className="text-sm font-bebas uppercase tracking-wider text-foreground group-hover:text-primary transition-colors">{t("footer.twitter", "Twitter")}</span>
               </a>
               <a
                 href="https://www.linkedin.com/company/rise-football-agency"
@@ -117,7 +117,7 @@ export const Footer = () => {
                 className="flex items-center gap-3 p-4 bg-primary/5 hover:bg-primary/10 rounded-lg border border-primary/20 hover:border-primary/40 transition-all group"
               >
                 <FaLinkedin className="w-5 h-5 text-primary" />
-                <span className="text-sm font-bebas uppercase tracking-wider text-foreground group-hover:text-primary transition-colors">LinkedIn</span>
+                <span className="text-sm font-bebas uppercase tracking-wider text-foreground group-hover:text-primary transition-colors">{t("footer.linkedin", "LinkedIn")}</span>
               </a>
               <a
                 href="https://www.youtube.com/@RISEFootball"
@@ -126,7 +126,7 @@ export const Footer = () => {
                 className="flex items-center gap-3 p-4 bg-primary/5 hover:bg-primary/10 rounded-lg border border-primary/20 hover:border-primary/40 transition-all group"
               >
                 <FaYoutube className="w-5 h-5 text-primary" />
-                <span className="text-sm font-bebas uppercase tracking-wider text-foreground group-hover:text-primary transition-colors">YouTube</span>
+                <span className="text-sm font-bebas uppercase tracking-wider text-foreground group-hover:text-primary transition-colors">{t("footer.youtube", "YouTube")}</span>
               </a>
             </div>
           </div>
