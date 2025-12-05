@@ -265,15 +265,15 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     // workingParts is now the base domain parts (e.g., ['risefootballagency', 'com'])
     const baseDomain = workingParts.join('.');
 
-    // Build new URL - format: es.risefootballagency.com/players (language subdomain + role as path)
+    // Build new URL - format: www.es.risefootballagency.com/players (preserve www, then language subdomain)
     let newHostname: string;
     if (lang === 'en') {
       // English uses the base domain (no language subdomain)
-      newHostname = baseDomain;
+      newHostname = hasWww ? `www.${baseDomain}` : baseDomain;
     } else {
-      // Other languages: es.risefootballagency.com
+      // Other languages: www.es.risefootballagency.com (www first, then language)
       const urlSubdomain = languageUrlSubdomains[lang];
-      newHostname = `${urlSubdomain}.${baseDomain}`;
+      newHostname = hasWww ? `www.${urlSubdomain}.${baseDomain}` : `${urlSubdomain}.${baseDomain}`;
     }
 
     // If we were on a role subdomain, convert it to a path and translate it
