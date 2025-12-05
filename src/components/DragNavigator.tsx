@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useRoleSubdomain, pathToRole } from "@/hooks/useRoleSubdomain";
 import { ArrowRight } from "lucide-react";
 
 interface NavOption {
@@ -16,6 +17,7 @@ interface DragNavigatorProps {
 export const DragNavigator = ({ options }: DragNavigatorProps) => {
   const { t } = useLanguage();
   const navigate = useNavigate();
+  const { getRoleUrl } = useRoleSubdomain();
   const [isDragging, setIsDragging] = useState(false);
   const [dragPosition, setDragPosition] = useState(0);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -36,7 +38,20 @@ export const DragNavigator = ({ options }: DragNavigatorProps) => {
         if (distance <= snapThreshold) {
           setTargetPosition(nearestPos);
           setDragPosition(nearestPos);
-          navigate(options[currentIndex].to);
+          
+          // Navigate to subdomain if it's a role path
+          const path = options[currentIndex].to;
+          const role = pathToRole[path];
+          if (role) {
+            const roleUrl = getRoleUrl(role);
+            if (roleUrl.startsWith('http')) {
+              window.location.href = roleUrl;
+            } else {
+              navigate(roleUrl);
+            }
+          } else {
+            navigate(path);
+          }
         } else {
           // Return to start position (index 0)
           setTargetPosition(0);

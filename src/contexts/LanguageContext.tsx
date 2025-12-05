@@ -237,17 +237,20 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     }
 
     const parts = hostname.split('.');
-    let baseDomain: string;
-
-    // Check if first part is a language subdomain
-    if (languageSubdomains[parts[0].toLowerCase()]) {
-      // Format: es.domain.com -> remove the language part
-      baseDomain = parts.slice(1).join('.');
-    } else {
-      baseDomain = hostname;
+    
+    // Strip 'www' if present first
+    const hasWww = parts[0].toLowerCase() === 'www';
+    let workingParts = hasWww ? parts.slice(1) : parts;
+    
+    // Then check if first remaining part is a language subdomain and remove it
+    if (languageSubdomains[workingParts[0]?.toLowerCase()]) {
+      workingParts = workingParts.slice(1);
     }
+    
+    // workingParts is now the base domain parts (e.g., ['risefootballagency', 'com'])
+    const baseDomain = workingParts.join('.');
 
-    // Build new URL - format: es.risefootballagency.com (matching DNS records)
+    // Build new URL - format: es.risefootballagency.com (no www)
     let newHostname: string;
     if (lang === 'en') {
       // English uses the base domain (no language subdomain)
