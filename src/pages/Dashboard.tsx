@@ -19,7 +19,7 @@ import { FileText, Play, Download, Upload, ChevronDown, Trash2, Lock, Calendar, 
 import { ClipNameEditor } from "@/components/ClipNameEditor";
 import { addDays, format, parseISO, startOfWeek, endOfWeek, isWithinInterval } from "date-fns";
 import { SEO } from "@/components/SEO";
-import { createPerformanceReportSlug } from "@/lib/urlHelpers";
+import { PerformanceReportDialog } from "@/components/PerformanceReportDialog";
 import { PlaylistContent } from "@/components/PlaylistContent";
 import { CoachAvailability } from "@/components/CoachAvailability";
 import { PlayerScoutingReports } from "@/components/PlayerScoutingReports";
@@ -122,6 +122,10 @@ const Dashboard = () => {
   const [schemes, setSchemes] = useState<any[]>([]);
   const [selectedTeamScheme, setSelectedTeamScheme] = useState<string>('');
   const [selectedOppositionScheme, setSelectedOppositionScheme] = useState<string>('');
+  
+  // Performance Report Dialog state
+  const [performanceReportDialogOpen, setPerformanceReportDialogOpen] = useState(false);
+  const [selectedReportAnalysisId, setSelectedReportAnalysisId] = useState<string | null>(null);
   
   // Testing states
   const [testingDialogOpen, setTestingDialogOpen] = useState(false);
@@ -1726,12 +1730,8 @@ const Dashboard = () => {
                                 {analysis.r90_score !== null && analysis.r90_score !== undefined && (
                                   <button
                                     onClick={() => {
-                                      const url = createPerformanceReportSlug(
-                                        playerData?.name || 'player',
-                                        analysis.opponent || 'opponent',
-                                        analysis.id
-                                      );
-                                      navigate(url);
+                                      setSelectedReportAnalysisId(analysis.id);
+                                      setPerformanceReportDialogOpen(true);
                                     }}
                                     className={`${getR90Color(analysis.r90_score)} text-white px-3 py-1.5 rounded text-sm font-bold hover:opacity-80 transition-opacity cursor-pointer`}
                                   >
@@ -4231,6 +4231,13 @@ const Dashboard = () => {
           </Button>
         </div>
       </div>
+      
+      {/* Performance Report Dialog */}
+      <PerformanceReportDialog
+        open={performanceReportDialogOpen}
+        onOpenChange={setPerformanceReportDialogOpen}
+        analysisId={selectedReportAnalysisId}
+      />
     </div>
   );
 };
