@@ -26,7 +26,16 @@ interface CalendarEvent {
   start_time: string | null;
   end_time: string | null;
   event_type: string;
+  is_ongoing: boolean | null;
+  category: string | null;
 }
+
+const EVENT_CATEGORIES = [
+  { value: 'work', label: 'Work', color: 'hsl(43, 49%, 61%)' },
+  { value: 'personal', label: 'Personal', color: 'hsl(200, 70%, 50%)' },
+  { value: 'meeting', label: 'Meeting', color: 'hsl(280, 60%, 55%)' },
+  { value: 'training', label: 'Training', color: 'hsl(140, 60%, 45%)' },
+];
 
 const MAIN_ADMIN_EMAIL = "jolonlevene98@gmail.com";
 
@@ -42,6 +51,8 @@ export const StaffSchedulesManagement = () => {
     description: "",
     start_time: "",
     end_time: "",
+    is_ongoing: false,
+    category: "work",
   });
 
   useEffect(() => {
@@ -124,6 +135,8 @@ export const StaffSchedulesManagement = () => {
           description: newEvent.description || null,
           start_time: newEvent.start_time || null,
           end_time: newEvent.end_time || null,
+          is_ongoing: newEvent.is_ongoing,
+          category: newEvent.category,
         });
 
       if (error) throw error;
@@ -136,6 +149,8 @@ export const StaffSchedulesManagement = () => {
         description: "",
         start_time: "",
         end_time: "",
+        is_ongoing: false,
+        category: "work",
       });
     } catch (error) {
       console.error("Error adding event:", error);
@@ -186,8 +201,13 @@ export const StaffSchedulesManagement = () => {
 
   const getEventsForDay = (date: Date): CalendarEvent[] => {
     return events.filter(event => 
-      isSameDay(parseISO(event.event_date), date)
+      event.is_ongoing || isSameDay(parseISO(event.event_date), date)
     );
+  };
+
+  const getCategoryColor = (category: string | null): string => {
+    const cat = EVENT_CATEGORIES.find(c => c.value === category);
+    return cat?.color || 'hsl(43, 49%, 61%)';
   };
 
   const calendarWeeks = generateCalendarWeeks();
@@ -252,17 +272,7 @@ export const StaffSchedulesManagement = () => {
                         <Plus className="h-4 w-4" />
                         Add Event for {getStaffDisplayName(staff)}
                       </h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-                        <div className="space-y-2">
-                          <Label>Date</Label>
-                          <Input
-                            type="date"
-                            value={newEvent.event_date}
-                            onChange={(e) =>
-                              setNewEvent({ ...newEvent, event_date: e.target.value })
-                            }
-                          />
-                        </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                         <div className="space-y-2">
                           <Label>Title *</Label>
                           <Input
@@ -273,6 +283,45 @@ export const StaffSchedulesManagement = () => {
                             }
                           />
                         </div>
+                        <div className="space-y-2">
+                          <Label>Category</Label>
+                          <select
+                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                            value={newEvent.category}
+                            onChange={(e) =>
+                              setNewEvent({ ...newEvent, category: e.target.value })
+                            }
+                          >
+                            {EVENT_CATEGORIES.map((cat) => (
+                              <option key={cat.value} value={cat.value}>
+                                {cat.label}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Date</Label>
+                          <Input
+                            type="date"
+                            value={newEvent.event_date}
+                            onChange={(e) =>
+                              setNewEvent({ ...newEvent, event_date: e.target.value })
+                            }
+                            disabled={newEvent.is_ongoing}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Notes</Label>
+                          <Input
+                            placeholder="Optional notes"
+                            value={newEvent.description}
+                            onChange={(e) =>
+                              setNewEvent({ ...newEvent, description: e.target.value })
+                            }
+                          />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="space-y-2">
                           <Label>Start Time</Label>
                           <Input
@@ -293,15 +342,19 @@ export const StaffSchedulesManagement = () => {
                             }
                           />
                         </div>
-                        <div className="space-y-2">
-                          <Label>Notes</Label>
-                          <Input
-                            placeholder="Optional notes"
-                            value={newEvent.description}
+                        <div className="flex items-center gap-2 pt-6">
+                          <input
+                            type="checkbox"
+                            id="is_ongoing"
+                            checked={newEvent.is_ongoing}
                             onChange={(e) =>
-                              setNewEvent({ ...newEvent, description: e.target.value })
+                              setNewEvent({ ...newEvent, is_ongoing: e.target.checked })
                             }
+                            className="h-4 w-4 rounded border-input"
                           />
+                          <Label htmlFor="is_ongoing" className="cursor-pointer">
+                            Ongoing task (shows every day)
+                          </Label>
                         </div>
                       </div>
                       <Button onClick={addEvent} className="w-full md:w-auto">
@@ -422,12 +475,15 @@ export const StaffSchedulesManagement = () => {
                                                 key={event.id}
                                                 className="text-xs p-1 rounded group relative"
                                                 style={{ 
-                                                  backgroundColor: 'hsl(43, 49%, 61%)',
+                                                  backgroundColor: getCategoryColor(event.category),
                                                   color: 'hsl(0, 0%, 0%)'
                                                 }}
-                                                title={`${event.title}${event.start_time ? ` at ${event.start_time}` : ''}`}
+                                                title={`${event.title}${event.start_time ? ` at ${event.start_time}` : ''}${event.is_ongoing ? ' (ongoing)' : ''}`}
                                               >
-                                                <div className="font-bold truncate pr-4">{event.title}</div>
+                                                <div className="font-bold truncate pr-4 flex items-center gap-1">
+                                                  {event.is_ongoing && <span className="text-[8px]">🔄</span>}
+                                                  {event.title}
+                                                </div>
                                                 {event.start_time && (
                                                   <div className="text-[10px] opacity-75 flex items-center gap-1">
                                                     <Clock className="h-2.5 w-2.5" />
@@ -485,13 +541,29 @@ export const StaffSchedulesManagement = () => {
                                 key={event.id} 
                                 className="flex items-center justify-between p-3 border rounded-lg bg-background"
                               >
-                                <div className="flex-1">
-                                  <div className="font-medium">{event.title}</div>
-                                  <div className="text-sm text-muted-foreground">
-                                    {formattedDate}
-                                    {event.start_time && ` • ${event.start_time}`}
-                                    {event.end_time && ` - ${event.end_time}`}
-                                    {event.description && ` • ${event.description}`}
+                                <div className="flex items-center gap-3">
+                                  <div 
+                                    className="w-3 h-3 rounded-full" 
+                                    style={{ backgroundColor: getCategoryColor(event.category) }}
+                                  />
+                                  <div className="flex-1">
+                                    <div className="font-medium flex items-center gap-2">
+                                      {event.title}
+                                      {event.is_ongoing && (
+                                        <span className="text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
+                                          Ongoing
+                                        </span>
+                                      )}
+                                      <span className="text-xs px-1.5 py-0.5 rounded capitalize" style={{ backgroundColor: getCategoryColor(event.category), color: 'black' }}>
+                                        {event.category}
+                                      </span>
+                                    </div>
+                                    <div className="text-sm text-muted-foreground">
+                                      {event.is_ongoing ? 'Every day' : formattedDate}
+                                      {event.start_time && ` • ${event.start_time}`}
+                                      {event.end_time && ` - ${event.end_time}`}
+                                      {event.description && ` • ${event.description}`}
+                                    </div>
                                   </div>
                                 </div>
                                 <Button
