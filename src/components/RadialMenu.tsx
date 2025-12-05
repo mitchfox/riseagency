@@ -232,7 +232,7 @@ export const RadialMenu = () => {
   const segmentAngle = 360 / menuItems.length;
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center z-[200] overflow-hidden">
+    <div className="fixed inset-0 flex items-center justify-center z-[200] overflow-hidden touch-none overscroll-none">
       {/* Marble background - delayed */}
       <div 
         className="absolute inset-0 animate-[fade-in_0.4s_ease-out_0.2s_both]"
@@ -307,10 +307,10 @@ export const RadialMenu = () => {
         {/* Single SVG for all segment paths */}
         <svg
           viewBox={`0 0 ${circleSize} ${circleSize}`}
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none"
+          className="absolute inset-0 pointer-events-none"
           style={{
-            width: `${circleSize}px`,
-            height: `${circleSize}px`,
+            width: '100%',
+            height: '100%',
           }}
         >
           <defs>
