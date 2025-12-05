@@ -59,20 +59,48 @@ export const HighlightedMatchDisplay = ({ highlightedMatch, onVideoPlayChange, o
     return value?.toString() || "0";
   };
 
-  // Intersection Observer for autoplay
+  // Early autoplay once ~10 seconds are buffered
   useEffect(() => {
     if (!videoRef.current || !containerRef.current) return;
 
+    const video = videoRef.current;
+    let hasStartedPlaying = false;
+    let isVisible = false;
+
+    const tryAutoplay = () => {
+      if (hasStartedPlaying || !isVisible) return;
+      
+      // Check if we have enough buffered data (at least 10 seconds or end of video)
+      if (video.buffered.length > 0) {
+        const bufferedEnd = video.buffered.end(0);
+        const duration = video.duration || Infinity;
+        
+        // Start playing if we have 10+ seconds buffered or the whole video
+        if (bufferedEnd >= 10 || bufferedEnd >= duration) {
+          hasStartedPlaying = true;
+          video.play().catch(() => {
+            // Autoplay failed, user interaction required
+          });
+          onVideoPlayChange?.(true);
+        }
+      }
+    };
+
+    const handleProgress = () => tryAutoplay();
+    const handleCanPlay = () => tryAutoplay();
+
+    video.addEventListener('progress', handleProgress);
+    video.addEventListener('canplay', handleCanPlay);
+
+    // Intersection Observer for visibility-based play/pause
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          if (entry.isIntersecting && videoRef.current) {
-            videoRef.current.play().catch(() => {
-              // Autoplay failed, user interaction required
-            });
-            onVideoPlayChange?.(true);
-          } else if (videoRef.current) {
-            videoRef.current.pause();
+          isVisible = entry.isIntersecting;
+          if (entry.isIntersecting) {
+            tryAutoplay();
+          } else if (video) {
+            video.pause();
             onVideoPlayChange?.(false);
           }
         });
@@ -82,7 +110,11 @@ export const HighlightedMatchDisplay = ({ highlightedMatch, onVideoPlayChange, o
 
     observer.observe(containerRef.current);
 
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      video.removeEventListener('progress', handleProgress);
+      video.removeEventListener('canplay', handleCanPlay);
+    };
   }, [onVideoPlayChange]);
 
   return (
@@ -253,7 +285,7 @@ export const HighlightedMatchDisplay = ({ highlightedMatch, onVideoPlayChange, o
                  controls
                  className="w-full h-full"
                  playsInline
-                 preload="metadata"
+                 preload="auto"
                >
                 Your browser does not support the video tag.
               </video>
