@@ -1,7 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { ExternalLink } from "lucide-react";
 import { useEffect, useRef } from "react";
-import { Link } from "react-router-dom";
 import { HoverText } from "@/components/HoverText";
 
 interface HighlightedMatchProps {
@@ -201,10 +200,10 @@ export const HighlightedMatchDisplay = ({ highlightedMatch, onVideoPlayChange, o
         )}
 
         {/* Action Buttons */}
-        {(highlightedMatch.full_match_url || highlightedMatch.r90_report_url || highlightedMatch.analysis_id) && (
+        {(highlightedMatch.full_match_url || highlightedMatch.analysis_id) && (
           <div className="bg-gradient-to-r from-secondary/20 via-secondary/10 to-secondary/20 p-5 border-y border-primary/10">
             <div className="flex flex-wrap gap-3 justify-center">
-              {(highlightedMatch.analysis_id && onViewReport) ? (
+              {highlightedMatch.analysis_id && onViewReport && (
                 <Button
                   onClick={() => onViewReport(highlightedMatch.analysis_id!)}
                   size="lg"
@@ -212,46 +211,6 @@ export const HighlightedMatchDisplay = ({ highlightedMatch, onVideoPlayChange, o
                 >
                   <ExternalLink className="h-5 w-5 mr-2" />
                   <HoverText text="Read Action Report" />
-                </Button>
-              ) : highlightedMatch.r90_report_url ? (
-                highlightedMatch.r90_report_url.startsWith('/') ? (
-                  <Button
-                    asChild
-                    size="lg"
-                    className="btn-shine font-bebas uppercase tracking-wider text-base bg-primary hover:bg-primary/90 shadow-lg hover:shadow-xl transition-all"
-                  >
-                    <Link to={highlightedMatch.r90_report_url} className="flex items-center gap-2">
-                      <ExternalLink className="h-5 w-5" />
-                      <HoverText text="Read Action Report" />
-                    </Link>
-                  </Button>
-                ) : (
-                  <Button
-                    asChild
-                    size="lg"
-                    className="btn-shine font-bebas uppercase tracking-wider text-base bg-primary hover:bg-primary/90 shadow-lg hover:shadow-xl transition-all"
-                  >
-                    <a 
-                      href={highlightedMatch.r90_report_url} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-2"
-                    >
-                      <ExternalLink className="h-5 w-5" />
-                      <HoverText text="Read Action Report" />
-                    </a>
-                  </Button>
-                )
-              ) : (
-                <Button
-                  size="lg"
-                  disabled
-                  className="font-bebas uppercase tracking-wider text-base bg-primary hover:bg-primary/90 shadow-lg hover:shadow-xl transition-all disabled:opacity-60 disabled:cursor-not-allowed"
-                >
-                  <span className="flex items-center gap-2">
-                    <ExternalLink className="h-5 w-5" />
-                    Read Action Report
-                  </span>
                 </Button>
               )}
               {highlightedMatch.full_match_url && (

@@ -40,53 +40,66 @@ interface PerformanceReportDialogProps {
 }
 
 export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: PerformanceReportDialogProps) => {
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [analysis, setAnalysis] = useState<AnalysisDetails | null>(null);
   const [actions, setActions] = useState<PerformanceAction[]>([]);
+  const [prefetchedId, setPrefetchedId] = useState<string | null>(null);
 
+  // Pre-fetch data when analysisId changes (even before dialog opens)
   useEffect(() => {
-    if (open && analysisId) {
-      fetchPerformanceData();
+    if (analysisId && analysisId !== prefetchedId) {
+      fetchPerformanceData(analysisId);
     }
-  }, [open, analysisId]);
+  }, [analysisId]);
 
-  const fetchPerformanceData = async () => {
-    if (!analysisId) return;
+  // Re-fetch if dialog opens with a different ID than what's cached
+  useEffect(() => {
+    if (open && analysisId && analysisId !== prefetchedId) {
+      fetchPerformanceData(analysisId);
+    }
+  }, [open, analysisId, prefetchedId]);
+
+  const fetchPerformanceData = async (id: string) => {
+    if (!id) return;
     
     setLoading(true);
     try {
-      const { data: analysisData, error: analysisError } = await supabase
-        .from("player_analysis")
-        .select(`
-          *,
-          players!inner (name)
-        `)
-        .eq("id", analysisId)
-        .single();
+      // Fetch both in parallel for faster loading
+      const [analysisResult, actionsResult] = await Promise.all([
+        supabase
+          .from("player_analysis")
+          .select(`
+            *,
+            players!inner (name)
+          `)
+          .eq("id", id)
+          .single(),
+        supabase
+          .from("performance_report_actions")
+          .select("*")
+          .eq("analysis_id", id)
+          .order("action_number", { ascending: true })
+      ]);
 
-      if (analysisError) throw analysisError;
+      if (analysisResult.error) throw analysisResult.error;
 
       setAnalysis({
-        id: analysisData.id,
-        analysis_date: analysisData.analysis_date,
-        opponent: analysisData.opponent || "",
-        result: analysisData.result || "",
-        r90_score: analysisData.r90_score,
-        minutes_played: analysisData.minutes_played,
-        player_name: analysisData.players?.name || "Unknown Player",
-        striker_stats: analysisData.striker_stats as StrikerStats | null,
-        performance_overview: analysisData.performance_overview,
+        id: analysisResult.data.id,
+        analysis_date: analysisResult.data.analysis_date,
+        opponent: analysisResult.data.opponent || "",
+        result: analysisResult.data.result || "",
+        r90_score: analysisResult.data.r90_score,
+        minutes_played: analysisResult.data.minutes_played,
+        player_name: analysisResult.data.players?.name || "Unknown Player",
+        striker_stats: analysisResult.data.striker_stats as StrikerStats | null,
+        performance_overview: analysisResult.data.performance_overview,
       });
 
-      const { data: actionsData, error: actionsError } = await supabase
-        .from("performance_report_actions")
-        .select("*")
-        .eq("analysis_id", analysisId)
-        .order("action_number", { ascending: true });
-
-      if (actionsError) throw actionsError;
-
-      setActions(actionsData || []);
+      if (actionsResult.error) throw actionsResult.error;
+      setActions(actionsResult.data || []);
+      
+      // Mark this ID as prefetched
+      setPrefetchedId(id);
     } catch (error: any) {
       console.error("Error fetching performance data:", error);
       toast.error("Failed to load performance report");
@@ -144,7 +157,25 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: Perf
 
         <div className="p-4">
           {loading ? (
-            <div className="text-center py-8">Loading...</div>
+            <div className="space-y-6 animate-pulse">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i}>
+                    <div className="h-4 w-16 bg-muted rounded mb-2"></div>
+                    <div className="h-6 w-24 bg-muted rounded"></div>
+                  </div>
+                ))}
+              </div>
+              <div className="grid grid-cols-4 gap-4 p-4 bg-accent/20 rounded-lg">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="text-center">
+                    <div className="h-4 w-16 bg-muted rounded mx-auto mb-2"></div>
+                    <div className="h-8 w-20 bg-muted rounded mx-auto"></div>
+                  </div>
+                ))}
+              </div>
+              <div className="h-40 bg-muted rounded"></div>
+            </div>
           ) : !analysis ? (
             <div className="text-center py-8 text-muted-foreground">Performance report not found</div>
           ) : (
