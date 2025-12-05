@@ -1,5 +1,5 @@
 // UPDATE THIS VERSION NUMBER WHEN YOU DEPLOY NEW CHANGES
-const CACHE_VERSION = 'rise-v1.3.4';
+const CACHE_VERSION = 'rise-v1.3.5';
 const CACHE_NAME = `${CACHE_VERSION}`;
 const ASSETS_CACHE = `${CACHE_VERSION}-assets`;
 
@@ -87,19 +87,45 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Cache-first strategy for static assets (JS, CSS, images, fonts)
-  const isStaticAsset = /\.(js|css|png|jpg|jpeg|gif|svg|webp|woff|woff2|ttf|otf)$/.test(url.pathname);
+  // Network-first strategy for JS and CSS (always get latest code)
+  const isCodeAsset = /\.(js|css)$/.test(url.pathname);
+  
+  if (isCodeAsset) {
+    event.respondWith(
+      fetch(event.request).then((response) => {
+        if (response && response.status === 200) {
+          const responseToCache = response.clone();
+          caches.open(ASSETS_CACHE).then((cache) => {
+            cache.put(event.request, responseToCache);
+          });
+        }
+        return addCrossOriginHeaders(response);
+      }).catch(() => {
+        // Fallback to cache if offline
+        return caches.match(event.request).then((cachedResponse) => {
+          if (cachedResponse) {
+            console.log('[Service Worker] Serving code from cache (offline):', url.pathname);
+            return addCrossOriginHeaders(cachedResponse);
+          }
+          console.log('[Service Worker] Code not available offline:', url.pathname);
+          return new Response('Asset not available offline', { status: 503 });
+        });
+      })
+    );
+    return;
+  }
+
+  // Cache-first strategy for static assets (images, fonts) - these change rarely
+  const isStaticAsset = /\.(png|jpg|jpeg|gif|svg|webp|woff|woff2|ttf|otf)$/.test(url.pathname);
   
   if (isStaticAsset) {
     event.respondWith(
       caches.match(event.request).then((cachedResponse) => {
         if (cachedResponse) {
-          // Return cached version immediately with COOP/COEP headers
           console.log('[Service Worker] Serving asset from cache:', url.pathname);
           return addCrossOriginHeaders(cachedResponse);
         }
         
-        // If not in cache, fetch and cache it
         return fetch(event.request).then((response) => {
           if (response && response.status === 200) {
             const responseToCache = response.clone();
