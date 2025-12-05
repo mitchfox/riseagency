@@ -486,7 +486,7 @@ const PlayerDetail = () => {
                     key={index}
                     asChild
                     variant="outline"
-                    className="font-bebas uppercase tracking-wider border-primary/30 hover:bg-primary hover:text-primary-foreground"
+                    className="btn-shine font-bebas uppercase tracking-wider border-primary/30 hover:bg-primary hover:text-primary-foreground"
                   >
                     <a 
                       href={link.url} 
@@ -495,7 +495,7 @@ const PlayerDetail = () => {
                       className="flex items-center gap-2"
                     >
                       <ExternalLink className="h-4 w-4" />
-                      {link.label}
+                      <HoverText text={link.label} />
                     </a>
                   </Button>
                 ))}
