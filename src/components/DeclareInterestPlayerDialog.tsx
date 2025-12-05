@@ -12,6 +12,7 @@ import { z } from "zod";
 interface DeclareInterestPlayerDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  starsOnly?: boolean;
 }
 
 interface Player {
@@ -28,7 +29,7 @@ const interestSchema = z.object({
   request: z.string().trim().max(1000),
 });
 
-export const DeclareInterestPlayerDialog = ({ open, onOpenChange }: DeclareInterestPlayerDialogProps) => {
+export const DeclareInterestPlayerDialog = ({ open, onOpenChange, starsOnly = false }: DeclareInterestPlayerDialogProps) => {
   const { toast } = useToast();
   const [step, setStep] = useState<"select" | "form">("select");
   const [selectedPlayers, setSelectedPlayers] = useState<Player[]>([]);
@@ -50,10 +51,16 @@ export const DeclareInterestPlayerDialog = ({ open, onOpenChange }: DeclareInter
 
   const fetchPlayers = async () => {
     setLoading(true);
-    const { data, error } = await supabase
+    let query = supabase
       .from('players')
       .select('id, name, position, image_url')
       .order('name');
+    
+    if (starsOnly) {
+      query = query.eq('visible_on_stars_page', true);
+    }
+    
+    const { data, error } = await query;
     
     if (!error && data) {
       setPlayers(data);

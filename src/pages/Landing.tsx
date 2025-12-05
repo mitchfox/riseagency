@@ -177,7 +177,7 @@ export default function Landing() {
       
       {/* Dialogs */}
       <RepresentationDialog open={showRepresentation} onOpenChange={setShowRepresentation} />
-      <DeclareInterestPlayerDialog open={showDeclareInterest} onOpenChange={setShowDeclareInterest} />
+      <DeclareInterestPlayerDialog open={showDeclareInterest} onOpenChange={setShowDeclareInterest} starsOnly />
     </div>
     </XRayProvider>
   );
