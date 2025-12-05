@@ -84,20 +84,20 @@ export const RadialMenu = () => {
   }, [location.pathname]);
 
   const displayRoleKey = selectedRole || currentRole || pathRole;
-  const displayRoleName =
-    displayRoleKey && roleConfigs[displayRoleKey as keyof typeof roleConfigs]
-      ? roleConfigs[displayRoleKey as keyof typeof roleConfigs].name.toUpperCase()
-      : 'MAIN';
+  const displayRoleLabelKey = displayRoleKey ? `roles.${displayRoleKey}` : 'roles.main';
+  const displayRoleFallback = displayRoleKey && roleConfigs[displayRoleKey as keyof typeof roleConfigs]
+    ? roleConfigs[displayRoleKey as keyof typeof roleConfigs].name.toUpperCase()
+    : 'MAIN';
 
-  const allRoles: Array<{ key: string | null; name: string }> = [
-    { key: null, name: "Main" },
-    { key: "players", name: "Players" },
-    { key: "clubs", name: "Clubs" },
-    { key: "scouts", name: "Scouts" },
-    { key: "agents", name: "Agents" },
-    { key: "coaches", name: "Coaches" },
-    { key: "media", name: "Media" },
-    { key: "business", name: "Business" },
+  const allRoles: Array<{ key: string | null; labelKey: string; fallback: string }> = [
+    { key: null, labelKey: "roles.main", fallback: "Main" },
+    { key: "players", labelKey: "roles.players", fallback: "Players" },
+    { key: "clubs", labelKey: "roles.clubs", fallback: "Clubs" },
+    { key: "scouts", labelKey: "roles.scouts", fallback: "Scouts" },
+    { key: "agents", labelKey: "roles.agents", fallback: "Agents" },
+    { key: "coaches", labelKey: "roles.coaches", fallback: "Coaches" },
+    { key: "media", labelKey: "roles.media", fallback: "Media" },
+    { key: "business", labelKey: "roles.business", fallback: "Business" },
   ];
 
   // Role-specific menu configurations
@@ -483,7 +483,7 @@ export const RadialMenu = () => {
                 ...(isSelectingRole ? { color: 'hsl(var(--primary))' } : {})
               }}
             >
-              <span className={isSelectingRole ? '' : 'text-black hover:text-primary transition-colors'}>{isSelectingRole ? 'ROLE' : displayRoleName}</span>
+              <span className={isSelectingRole ? '' : 'text-black hover:text-primary transition-colors'}>{isSelectingRole ? t('menu.role', 'ROLE') : t(displayRoleLabelKey, displayRoleFallback).toUpperCase()}</span>
               <ChevronDown 
                 className="transition-transform duration-300" 
                 style={{ 
