@@ -9,9 +9,10 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { DndContext, DragEndEvent, closestCenter, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
+import { DndContext, DragEndEvent, DragOverEvent, closestCenter, PointerSensor, useSensor, useSensors, DragOverlay, rectIntersection } from "@dnd-kit/core";
 import { SortableContext, horizontalListSortingStrategy, arrayMove } from "@dnd-kit/sortable";
 import { SortableWidget, WidgetLayout } from "./SortableWidget";
+import { RowDropZone } from "./RowDropZone";
 
 interface Goal {
   id: string;
@@ -172,8 +173,61 @@ export const StaffOverview = ({ isAdmin, userId }: { isAdmin: boolean; userId?: 
     if (!over || active.id === over.id) return;
 
     const activeLayout = layouts.find(l => l.id === active.id);
+    if (!activeLayout) return;
+
+    // Check if dropped on a row gap (new row creation)
+    if (String(over.id).startsWith('row-gap-')) {
+      const targetRowIndex = parseInt(String(over.id).replace('row-gap-', ''), 10);
+      
+      // Get the actual row numbers
+      const sortedRows = [...new Set(layouts.filter(l => visibleWidgets.includes(l.id)).map(l => l.row))].sort((a, b) => a - b);
+      
+      let newRowNumber: number;
+      if (targetRowIndex === 0) {
+        // Dropped above first row - new row will be the minimum row - 1
+        newRowNumber = sortedRows.length > 0 ? sortedRows[0] - 1 : 0;
+      } else if (targetRowIndex > sortedRows.length) {
+        // Dropped below last row
+        newRowNumber = sortedRows.length > 0 ? sortedRows[sortedRows.length - 1] + 1 : 0;
+      } else {
+        // Dropped between rows
+        const rowAbove = sortedRows[targetRowIndex - 1];
+        const rowBelow = sortedRows[targetRowIndex];
+        newRowNumber = rowAbove + 0.5; // Temporary, will be normalized
+      }
+
+      // Remove from old row and add to new row
+      const oldRowWidgets = layouts.filter(l => l.row === activeLayout.row && l.id !== active.id && visibleWidgets.includes(l.id));
+      const oldRowTotal = oldRowWidgets.reduce((sum, w) => sum + w.widthPercent, 0);
+
+      let newLayouts = layouts.map(l => {
+        if (l.id === active.id) {
+          return { ...l, row: newRowNumber, order: 0, widthPercent: 100 };
+        }
+        if (l.row === activeLayout.row && l.id !== active.id && visibleWidgets.includes(l.id)) {
+          // Expand remaining widgets in old row to fill 100%
+          return { ...l, widthPercent: oldRowTotal > 0 ? (l.widthPercent / oldRowTotal) * 100 : 100 };
+        }
+        return l;
+      });
+
+      // Normalize row numbers to be sequential (0, 1, 2, ...)
+      const allRows = [...new Set(newLayouts.filter(l => visibleWidgets.includes(l.id)).map(l => l.row))].sort((a, b) => a - b);
+      const rowMapping = new Map<number, number>();
+      allRows.forEach((oldRow, newIndex) => rowMapping.set(oldRow, newIndex));
+
+      newLayouts = newLayouts.map(l => ({
+        ...l,
+        row: rowMapping.get(l.row) ?? l.row
+      }));
+
+      saveSettings(visibleWidgets, newLayouts);
+      return;
+    }
+
+    // Original logic for dropping on another widget
     const overLayout = layouts.find(l => l.id === over.id);
-    if (!activeLayout || !overLayout) return;
+    if (!overLayout) return;
 
     let newLayouts: WidgetLayout[];
 
@@ -219,6 +273,16 @@ export const StaffOverview = ({ isAdmin, userId }: { isAdmin: boolean; userId?: 
         if (idx !== -1) newLayouts[idx] = { ...newLayouts[idx], order: i };
       });
     }
+
+    // Clean up empty rows and normalize row numbers
+    const usedRows = [...new Set(newLayouts.filter(l => visibleWidgets.includes(l.id)).map(l => l.row))].sort((a, b) => a - b);
+    const rowMapping = new Map<number, number>();
+    usedRows.forEach((oldRow, newIndex) => rowMapping.set(oldRow, newIndex));
+
+    newLayouts = newLayouts.map(l => ({
+      ...l,
+      row: rowMapping.get(l.row) ?? l.row
+    }));
 
     saveSettings(visibleWidgets, newLayouts);
   };
@@ -600,41 +664,47 @@ export const StaffOverview = ({ isAdmin, userId }: { isAdmin: boolean; userId?: 
         ) : (
           <DndContext
             sensors={sensors}
-            collisionDetection={closestCenter}
+            collisionDetection={rectIntersection}
             onDragEnd={handleDragEnd}
           >
-            {widgetsByRow.map(([rowNum, rowWidgets]) => {
+            {/* Drop zone above first row */}
+            <RowDropZone id="row-gap-0" />
+            
+            {widgetsByRow.map(([rowNum, rowWidgets], rowIndex) => {
               const maxHeightInRow = Math.max(...rowWidgets.map(w => w.heightRows));
               return (
-                <div 
-                  key={rowNum} 
-                  className="flex gap-2 w-full"
-                  style={{ minHeight: `${maxHeightInRow * ROW_HEIGHT}px` }}
-                >
-                  <SortableContext
-                    items={rowWidgets.map(w => w.id)}
-                    strategy={horizontalListSortingStrategy}
+                <div key={rowNum}>
+                  <div 
+                    className="flex gap-2 w-full"
+                    style={{ minHeight: `${maxHeightInRow * ROW_HEIGHT}px` }}
                   >
-                    {rowWidgets.map(widget => {
-                      const config = WIDGET_CONFIGS.find(c => c.id === widget.id);
-                      if (!config) return null;
-                      return (
-                        <SortableWidget
-                          key={widget.id}
-                          id={widget.id}
-                          layout={widget}
-                          title={config.title}
-                          icon={config.icon}
-                          expanded={expandedWidget === widget.id}
-                          onToggleExpand={() => toggleWidget(widget.id)}
-                          onResize={handleResize}
-                          rowHeight={ROW_HEIGHT}
-                        >
-                          {renderWidgetContent(widget.id)}
-                        </SortableWidget>
-                      );
-                    })}
-                  </SortableContext>
+                    <SortableContext
+                      items={rowWidgets.map(w => w.id)}
+                      strategy={horizontalListSortingStrategy}
+                    >
+                      {rowWidgets.map(widget => {
+                        const config = WIDGET_CONFIGS.find(c => c.id === widget.id);
+                        if (!config) return null;
+                        return (
+                          <SortableWidget
+                            key={widget.id}
+                            id={widget.id}
+                            layout={widget}
+                            title={config.title}
+                            icon={config.icon}
+                            expanded={expandedWidget === widget.id}
+                            onToggleExpand={() => toggleWidget(widget.id)}
+                            onResize={handleResize}
+                            rowHeight={ROW_HEIGHT}
+                          >
+                            {renderWidgetContent(widget.id)}
+                          </SortableWidget>
+                        );
+                      })}
+                    </SortableContext>
+                  </div>
+                  {/* Drop zone below this row */}
+                  <RowDropZone id={`row-gap-${rowIndex + 1}`} />
                 </div>
               );
             })}
