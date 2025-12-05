@@ -425,8 +425,9 @@ export const RadialMenu = () => {
           style={{
             width: `${centerSize}px`,
             height: `${centerSize}px`,
-            top: `calc(50% - ${centerSize / 2 + 12}px)`,
-            left: `calc(50% - ${centerSize / 2 + 12}px)`,
+            top: '50%',
+            left: '50%',
+            transform: `translate(calc(-50% - 12px), calc(-50% - 12px))`,
           }}
         >
           {/* Upper 75% with white marble */}
