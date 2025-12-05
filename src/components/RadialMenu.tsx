@@ -458,13 +458,13 @@ export const RadialMenu = () => {
             style={{ 
               width: `${centerSize * 0.9}px`,
               height: `${centerSize * 0.9}px`,
-              transform: `translateY(${isMobile ? -centerSize * 0.06 : -centerSize * 0.13}px)` 
+              transform: `translate(-2px, ${isMobile ? -centerSize * 0.06 + 7 : -centerSize * 0.13 + 7}px)` 
             }}
           />
           
           {/* Gold divider between logo and dropdown */}
           <div 
-            className="absolute left-0 w-full h-[1px] bg-primary z-20"
+            className="absolute left-0 w-full h-[2px] bg-primary z-20"
             style={{ top: 'calc(55% - 1px)' }}
           />
           
@@ -477,7 +477,7 @@ export const RadialMenu = () => {
           >
             <button
               onClick={() => setIsSelectingRole(!isSelectingRole)}
-              className="flex items-center justify-center gap-1 font-bebas tracking-[0.05em] transition-colors duration-300 focus:outline-none"
+              className="flex items-center justify-center gap-1 font-bebas tracking-[0.05em] transition-colors duration-300 focus:outline-none w-full text-center"
               style={{ 
                 fontSize: `${isMobile ? centerSize * 0.22 : centerSize * 0.1875}px`,
                 ...(isSelectingRole ? { color: 'hsl(var(--primary))' } : {})
@@ -507,15 +507,15 @@ export const RadialMenu = () => {
             <button
               onClick={() => setShowMap(!showMap)}
               className="flex items-center gap-1 font-bebas uppercase tracking-wider text-primary hover:text-primary/80 transition-all duration-300 focus:outline-none"
-              style={{ fontSize: `${isMobile ? centerSize * 0.11 : centerSize * 0.0625}px` }}
+              style={{ fontSize: `${isMobile ? centerSize * 0.165 : centerSize * 0.09375}px` }}
             >
-              <span style={{ fontSize: `${isMobile ? centerSize * 0.15 : centerSize * 0.0875}px` }}>{selectedLanguage.flag}</span>
+              <span style={{ fontSize: `${isMobile ? centerSize * 0.225 : centerSize * 0.13125}px` }}>{selectedLanguage.flag}</span>
               <span>{selectedLanguage.name}</span>
               <ChevronDown 
                 className="transition-transform duration-300"
                 style={{
-                  width: `${isMobile ? centerSize * 0.12 : centerSize * 0.078125}px`,
-                  height: `${isMobile ? centerSize * 0.12 : centerSize * 0.078125}px`,
+                  width: `${isMobile ? centerSize * 0.18 : centerSize * 0.1171875}px`,
+                  height: `${isMobile ? centerSize * 0.18 : centerSize * 0.1171875}px`,
                   transform: showMap ? 'rotate(180deg)' : 'rotate(0deg)'
                 }}
               />
