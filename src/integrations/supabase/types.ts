@@ -2391,6 +2391,7 @@ export type Database = {
           category: string | null
           created_at: string
           created_by: string | null
+          day_of_week: number | null
           description: string | null
           end_time: string | null
           event_date: string
@@ -2406,6 +2407,7 @@ export type Database = {
           category?: string | null
           created_at?: string
           created_by?: string | null
+          day_of_week?: number | null
           description?: string | null
           end_time?: string | null
           event_date: string
@@ -2421,6 +2423,7 @@ export type Database = {
           category?: string | null
           created_at?: string
           created_by?: string | null
+          day_of_week?: number | null
           description?: string | null
           end_time?: string | null
           event_date?: string

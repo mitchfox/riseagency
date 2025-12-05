@@ -28,6 +28,7 @@ interface CalendarEvent {
   event_type: string;
   is_ongoing: boolean | null;
   category: string | null;
+  day_of_week: number | null;
 }
 
 const EVENT_CATEGORIES = [
@@ -200,9 +201,19 @@ export const StaffSchedulesManagement = () => {
   };
 
   const getEventsForDay = (date: Date): CalendarEvent[] => {
-    return events.filter(event => 
-      event.is_ongoing || isSameDay(parseISO(event.event_date), date)
-    );
+    const currentDayOfWeek = date.getDay(); // 0=Sunday, 1=Monday, etc.
+    return events.filter(event => {
+      // Weekly recurring events - match by day of week
+      if (event.is_ongoing && event.day_of_week !== null) {
+        return event.day_of_week === currentDayOfWeek;
+      }
+      // Daily recurring events (no specific day)
+      if (event.is_ongoing && event.day_of_week === null) {
+        return true;
+      }
+      // One-time events
+      return isSameDay(parseISO(event.event_date), date);
+    });
   };
 
   const getCategoryColor = (category: string | null): string => {
