@@ -18,6 +18,18 @@ export const roleConfigs: Record<Exclude<RoleSubdomain, null>, RoleConfig> = {
   media: { name: 'MEDIA', subdomain: 'media', route: '/media' },
 };
 
+// Map routes to their role subdomains
+export const pathToRole: Record<string, Exclude<RoleSubdomain, null>> = {
+  '/playersmore': 'players',
+  '/players': 'players',
+  '/clubs': 'clubs',
+  '/scouts': 'scouts',
+  '/agents': 'agents',
+  '/coaches': 'coaches',
+  '/media': 'media',
+  '/business': 'business',
+};
+
 export const useRoleSubdomain = () => {
   const [currentRole, setCurrentRole] = useState<RoleSubdomain>(null);
 
