@@ -2388,6 +2388,7 @@ export type Database = {
       }
       staff_calendar_events: {
         Row: {
+          category: string | null
           created_at: string
           created_by: string | null
           description: string | null
@@ -2395,12 +2396,14 @@ export type Database = {
           event_date: string
           event_type: string | null
           id: string
+          is_ongoing: boolean | null
           staff_id: string
           start_time: string | null
           title: string
           updated_at: string
         }
         Insert: {
+          category?: string | null
           created_at?: string
           created_by?: string | null
           description?: string | null
@@ -2408,12 +2411,14 @@ export type Database = {
           event_date: string
           event_type?: string | null
           id?: string
+          is_ongoing?: boolean | null
           staff_id: string
           start_time?: string | null
           title: string
           updated_at?: string
         }
         Update: {
+          category?: string | null
           created_at?: string
           created_by?: string | null
           description?: string | null
@@ -2421,6 +2426,7 @@ export type Database = {
           event_date?: string
           event_type?: string | null
           id?: string
+          is_ongoing?: boolean | null
           staff_id?: string
           start_time?: string | null
           title?: string
