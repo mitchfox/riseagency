@@ -276,13 +276,20 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
       newHostname = `${urlSubdomain}.${baseDomain}`;
     }
 
-    // If we were on a role subdomain, convert it to a path
-    // e.g., players.risefootballagency.com → es.risefootballagency.com/players
+    // If we were on a role subdomain, convert it to a path and translate it
+    // e.g., players.risefootballagency.com → es.risefootballagency.com/jugadoras
     let finalPath = localizedPath;
     if (currentRoleSubdomain) {
-      // Prepend the role as a path segment if not already present
-      if (!localizedPath.startsWith(`/${currentRoleSubdomain}`)) {
-        finalPath = `/${currentRoleSubdomain}${localizedPath === '/' ? '' : localizedPath}`;
+      // Translate the role subdomain to a localized path
+      const roleAsEnglishPath = `/${currentRoleSubdomain}`;
+      const localizedRolePath = getLocalizedPath(roleAsEnglishPath, lang);
+      
+      // If user was at root of role subdomain, use the localized role path
+      if (localizedPath === '/' || localizedPath === '') {
+        finalPath = localizedRolePath;
+      } else {
+        // Append the current localized path to the localized role path
+        finalPath = `${localizedRolePath}${localizedPath}`;
       }
     }
 

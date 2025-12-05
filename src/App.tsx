@@ -92,7 +92,7 @@ const App = () => {
               {(displayLocation) => (
                 <Routes location={displayLocation}>
                   <Route path="/" element={<Home />} />
-                  <Route path="/players" element={<Index />} />
+                  {createLocalizedRoutes('/players', <Index />)}
                   <Route path="/intro" element={<Intro />} />
                   
                   {/* Localized routes */}

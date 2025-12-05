@@ -2,6 +2,18 @@
 // Format: { englishPath: { languageCode: localizedPath } }
 
 export const routeTranslations: Record<string, Record<string, string>> = {
+  '/players': {
+    en: '/players',
+    es: '/jugadoras',
+    pt: '/jogadoras',
+    fr: '/joueuses',
+    de: '/spielerinnen',
+    it: '/giocatrici',
+    pl: '/zawodniczki',
+    cs: '/hracky',
+    ru: '/igroki',
+    tr: '/oyuncular',
+  },
   '/stars': {
     en: '/stars',
     es: '/estrellas',
