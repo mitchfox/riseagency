@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { ExternalLink } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
+import { HoverText } from "@/components/HoverText";
 
 interface HighlightedMatchProps {
   highlightedMatch: {
@@ -207,28 +208,28 @@ export const HighlightedMatchDisplay = ({ highlightedMatch, onVideoPlayChange, o
                 <Button
                   onClick={() => onViewReport(highlightedMatch.analysis_id!)}
                   size="lg"
-                  className="font-bebas uppercase tracking-wider text-base bg-primary hover:bg-primary/90 shadow-lg hover:shadow-xl transition-all"
+                  className="btn-shine font-bebas uppercase tracking-wider text-base bg-primary hover:bg-primary/90 shadow-lg hover:shadow-xl transition-all"
                 >
                   <ExternalLink className="h-5 w-5 mr-2" />
-                  Read Action Report
+                  <HoverText text="Read Action Report" />
                 </Button>
               ) : highlightedMatch.r90_report_url ? (
                 highlightedMatch.r90_report_url.startsWith('/') ? (
                   <Button
                     asChild
                     size="lg"
-                    className="font-bebas uppercase tracking-wider text-base bg-primary hover:bg-primary/90 shadow-lg hover:shadow-xl transition-all"
+                    className="btn-shine font-bebas uppercase tracking-wider text-base bg-primary hover:bg-primary/90 shadow-lg hover:shadow-xl transition-all"
                   >
                     <Link to={highlightedMatch.r90_report_url} className="flex items-center gap-2">
                       <ExternalLink className="h-5 w-5" />
-                      Read Action Report
+                      <HoverText text="Read Action Report" />
                     </Link>
                   </Button>
                 ) : (
                   <Button
                     asChild
                     size="lg"
-                    className="font-bebas uppercase tracking-wider text-base bg-primary hover:bg-primary/90 shadow-lg hover:shadow-xl transition-all"
+                    className="btn-shine font-bebas uppercase tracking-wider text-base bg-primary hover:bg-primary/90 shadow-lg hover:shadow-xl transition-all"
                   >
                     <a 
                       href={highlightedMatch.r90_report_url} 
@@ -237,7 +238,7 @@ export const HighlightedMatchDisplay = ({ highlightedMatch, onVideoPlayChange, o
                       className="flex items-center gap-2"
                     >
                       <ExternalLink className="h-5 w-5" />
-                      Read Action Report
+                      <HoverText text="Read Action Report" />
                     </a>
                   </Button>
                 )
@@ -258,7 +259,7 @@ export const HighlightedMatchDisplay = ({ highlightedMatch, onVideoPlayChange, o
                   asChild
                   variant="outline"
                   size="lg"
-                  className="font-bebas uppercase tracking-wider text-base hover:bg-primary/10 hover:border-primary/40 transition-all"
+                  className="btn-shine font-bebas uppercase tracking-wider text-base hover:bg-primary/10 hover:border-primary/40 transition-all"
                 >
                   <a 
                     href={highlightedMatch.full_match_url} 
@@ -267,7 +268,7 @@ export const HighlightedMatchDisplay = ({ highlightedMatch, onVideoPlayChange, o
                     className="flex items-center gap-2"
                   >
                     <ExternalLink className="h-5 w-5" />
-                    Watch Full Match
+                    <HoverText text="Watch Full Match" />
                   </a>
                 </Button>
               )}
