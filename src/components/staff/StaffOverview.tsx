@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Target, CheckSquare, Users, Calendar, Link2, TrendingUp, Settings, RotateCcw, Layers } from "lucide-react";
+import { Target, CheckSquare, Users, Calendar, Link2, TrendingUp, Settings, RotateCcw, Layers, Plus } from "lucide-react";
 import { StaffSchedule } from "./StaffSchedule";
 import { supabase } from "@/integrations/supabase/client";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -67,6 +67,7 @@ export const StaffOverview = ({ isAdmin, userId }: { isAdmin: boolean; userId?: 
   const [visibleWidgets, setVisibleWidgets] = useState<string[]>([]);
   const [layouts, setLayouts] = useState<WidgetLayout[]>(DEFAULT_LAYOUTS);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [newTaskInput, setNewTaskInput] = useState("");
   const isMobile = useIsMobile();
 
   const sensors = useSensors(
@@ -341,6 +342,27 @@ export const StaffOverview = ({ isAdmin, userId }: { isAdmin: boolean; userId?: 
     setSearchParams({ section: 'goalstasks' });
   };
 
+  const handleQuickAddTask = async () => {
+    if (!newTaskInput.trim()) return;
+    try {
+      const { error } = await supabase
+        .from('staff_tasks')
+        .insert({ title: newTaskInput.trim(), display_order: tasks.length });
+      if (error) throw error;
+      setNewTaskInput("");
+      // Refresh tasks
+      const { data } = await supabase
+        .from('staff_tasks')
+        .select('*')
+        .eq('completed', false)
+        .order('display_order', { ascending: true })
+        .limit(5);
+      if (data) setTasks(data);
+    } catch (error) {
+      console.error('Error adding task:', error);
+    }
+  };
+
   const toggleTask = async (taskId: string, currentCompleted: boolean) => {
     try {
       const { error } = await supabase
@@ -425,35 +447,55 @@ export const StaffOverview = ({ isAdmin, userId }: { isAdmin: boolean; userId?: 
 
       case "todo":
         return (
-          <div className="space-y-1.5">
-            {tasks.length === 0 ? (
-              <div className="text-center text-xs text-muted-foreground py-4 cursor-pointer" onClick={navigateToGoalsTasks}>
-                Click to add tasks
-              </div>
-            ) : (
-              <>
-                {tasks.map((task) => (
-                  <label key={task.id} className="flex items-center gap-2 p-1.5 hover:bg-accent/50 rounded cursor-pointer transition-colors group">
-                    <Checkbox
-                      checked={task.completed}
-                      onCheckedChange={() => toggleTask(task.id, task.completed)}
-                      className="h-3 w-3"
-                    />
-                    <span className="text-xs">{task.title}</span>
-                  </label>
-                ))}
-                <div className="pt-1 text-center">
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="h-6 text-[10px]"
-                    onClick={navigateToGoalsTasks}
-                  >
-                    Manage Tasks
-                  </Button>
+          <div className="space-y-1.5 h-full flex flex-col">
+            <div className="flex gap-1">
+              <input
+                type="text"
+                placeholder="New task..."
+                value={newTaskInput}
+                onChange={(e) => setNewTaskInput(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleQuickAddTask()}
+                className="flex-1 h-6 px-2 text-xs bg-background border border-border rounded focus:outline-none focus:ring-1 focus:ring-primary"
+              />
+              <Button 
+                size="sm" 
+                className="h-6 w-6 p-0"
+                onClick={handleQuickAddTask}
+                disabled={!newTaskInput.trim()}
+              >
+                <Plus className="h-3 w-3" />
+              </Button>
+            </div>
+            <div className="flex-1 overflow-auto">
+              {tasks.length === 0 ? (
+                <div className="text-center text-xs text-muted-foreground py-4 cursor-pointer" onClick={navigateToGoalsTasks}>
+                  No tasks yet
                 </div>
-              </>
-            )}
+              ) : (
+                <>
+                  {tasks.map((task) => (
+                    <label key={task.id} className="flex items-center gap-2 p-1.5 hover:bg-accent/50 rounded cursor-pointer transition-colors group">
+                      <Checkbox
+                        checked={task.completed}
+                        onCheckedChange={() => toggleTask(task.id, task.completed)}
+                        className="h-3 w-3"
+                      />
+                      <span className="text-xs">{task.title}</span>
+                    </label>
+                  ))}
+                </>
+              )}
+            </div>
+            <div className="pt-1 text-center">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="h-6 text-[10px]"
+                onClick={navigateToGoalsTasks}
+              >
+                Manage Tasks
+              </Button>
+            </div>
           </div>
         );
 
