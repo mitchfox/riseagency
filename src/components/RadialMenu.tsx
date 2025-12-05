@@ -232,7 +232,7 @@ export const RadialMenu = () => {
   const segmentAngle = 360 / menuItems.length;
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center z-[200] overflow-hidden touch-none overscroll-none">
+    <div className="w-full h-full flex items-center justify-center overflow-hidden touch-none overscroll-none">
       {/* Marble background - delayed */}
       <div 
         className="absolute inset-0 animate-[fade-in_0.4s_ease-out_0.2s_both]"
@@ -271,7 +271,7 @@ export const RadialMenu = () => {
       <DrawerClose asChild>
         <button
           ref={closeButtonRef}
-          className="absolute top-8 left-8 z-50 group flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-white animate-[fade-in_0.3s_ease-out_0.35s_both]"
+          className="fixed top-8 left-8 z-[250] group flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-white animate-[fade-in_0.3s_ease-out_0.35s_both]"
           aria-label="Close menu"
         >
           <div className="relative w-12 h-12 flex items-center justify-center">
