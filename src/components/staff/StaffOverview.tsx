@@ -379,7 +379,7 @@ export const StaffOverview = ({ isAdmin, userId }: { isAdmin: boolean; userId?: 
     return Array.from(rows.entries()).sort(([a], [b]) => a - b);
   }, [layouts, visibleWidgets]);
 
-  const renderWidgetContent = (widgetId: string) => {
+  const renderWidgetContent = (widgetId: string, layout?: WidgetLayout) => {
     const config = WIDGET_CONFIGS.find(c => c.id === widgetId);
     if (!config) return null;
 
@@ -511,30 +511,58 @@ export const StaffOverview = ({ isAdmin, userId }: { isAdmin: boolean; userId?: 
           </div>
         );
 
-      case "represented":
+      case "represented": {
+        // Calculate adaptive sizing based on widget dimensions
+        const widthPercent = layout?.widthPercent || 40;
+        const heightRows = layout?.heightRows || 1;
+        
+        // Determine grid columns based on width
+        const gridCols = widthPercent >= 80 ? 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5' 
+                       : widthPercent >= 50 ? 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3' 
+                       : 'grid-cols-1 sm:grid-cols-2';
+        
+        // Scale factors based on available space
+        const isLarge = widthPercent >= 60 && heightRows >= 2;
+        const isMedium = widthPercent >= 40 || heightRows >= 2;
+        
+        // Adaptive text/element sizes
+        const imageHeight = isLarge ? 'h-24' : isMedium ? 'h-16' : 'h-12';
+        const nameSize = isLarge ? 'text-sm' : isMedium ? 'text-xs' : 'text-[10px]';
+        const positionSize = isLarge ? 'text-xs' : isMedium ? 'text-[10px]' : 'text-[9px]';
+        const buttonHeight = isLarge ? 'h-7' : isMedium ? 'h-6' : 'h-5';
+        const buttonTextSize = isLarge ? 'text-xs' : isMedium ? 'text-[10px]' : 'text-[8px]';
+        const padding = isLarge ? 'p-3' : isMedium ? 'p-2' : 'p-1.5';
+        const gap = isLarge ? 'gap-3' : isMedium ? 'gap-2' : 'gap-1.5';
+        
         return (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+          <div className={`grid ${gridCols} ${gap} h-full overflow-auto`}>
             {(expandedWidget === "represented" ? players : isMobile ? players.slice(0, 2) : players).map((player) => (
-              <div key={player.id} className="flex flex-col p-2 border border-border/50 rounded hover:bg-accent/50 hover:border-primary/30 transition-all group">
+              <div key={player.id} className={`flex flex-col ${padding} border border-border/50 rounded hover:bg-accent/50 hover:border-primary/30 transition-all group`}>
                 <img 
                   src={player.image_url || player.image || "/players/player1.jpg"} 
                   alt={player.name} 
-                  className="w-full h-14 object-cover border border-primary/30 mb-1" 
+                  className={`w-full ${imageHeight} object-cover border border-primary/30 mb-1`} 
                 />
-                <span className="text-[10px] md:text-[10px] font-semibold text-center">{player.name}</span>
-                <span className="text-[9px] text-muted-foreground mb-1 text-center">{player.position}</span>
-                <div className="flex flex-col xl:flex-row gap-0.5 w-full">
+                <span className={`${nameSize} font-semibold text-center truncate`}>{player.name}</span>
+                <span className={`${positionSize} text-muted-foreground mb-1 text-center`}>{player.position}</span>
+                <div className={`flex ${isLarge ? 'flex-row' : 'flex-col xl:flex-row'} gap-0.5 w-full mt-auto`}>
                   <Button 
                     size="sm" 
-                    className="h-5 text-[8px] px-1 flex-1 bg-primary hover:bg-primary/90 text-primary-foreground border-0" 
-                    onClick={() => navigateToPlayer(player.slug || player.id, 'analysis')}
+                    className={`${buttonHeight} ${buttonTextSize} px-1 flex-1 bg-primary hover:bg-primary/90 text-primary-foreground border-0`} 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigateToPlayer(player.id, 'analysis');
+                    }}
                   >
                     Analysis
                   </Button>
                   <Button 
                     size="sm" 
-                    className="h-5 text-[8px] px-1 flex-1 bg-primary hover:bg-primary/90 text-primary-foreground border-0" 
-                    onClick={() => navigateToPlayer(player.slug || player.id, 'programming')}
+                    className={`${buttonHeight} ${buttonTextSize} px-1 flex-1 bg-primary hover:bg-primary/90 text-primary-foreground border-0`} 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigateToPlayer(player.id, 'programming');
+                    }}
                   >
                     Programming
                   </Button>
@@ -543,6 +571,7 @@ export const StaffOverview = ({ isAdmin, userId }: { isAdmin: boolean; userId?: 
             ))}
           </div>
         );
+      }
 
       default:
         return null;
@@ -697,7 +726,7 @@ export const StaffOverview = ({ isAdmin, userId }: { isAdmin: boolean; userId?: 
                             onResize={handleResize}
                             rowHeight={ROW_HEIGHT}
                           >
-                            {renderWidgetContent(widget.id)}
+                            {renderWidgetContent(widget.id, widget)}
                           </SortableWidget>
                         );
                       })}
