@@ -7,6 +7,7 @@ import { format, parseISO, startOfWeek, endOfWeek, isWithinInterval, addDays } f
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { getR90Grade } from "@/lib/gradeCalculations";
+import { PerformanceReportDialog } from "@/components/PerformanceReportDialog";
 
 interface PlayerProgram {
   id: string;
@@ -43,6 +44,8 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
   const hasAnimated = React.useRef(false);
   const chartRef = React.useRef<HTMLDivElement>(null);
   const [tooltipVisible, setTooltipVisible] = React.useState(true);
+  const [reportDialogOpen, setReportDialogOpen] = React.useState(false);
+  const [selectedReportId, setSelectedReportId] = React.useState<string | null>(null);
   
   // Custom Tooltip Component with close button
   const CustomTooltip = ({ active, payload }: any) => {
@@ -698,10 +701,13 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
             <CardContent className="container mx-auto px-4 pt-3 pb-2">
               <div className="space-y-3">
                 {recentAnalyses.map((analysis) => (
-                  <Link
+                  <button
                     key={analysis.id}
-                    to={`/performance-report/match-${analysis.id}`}
-                    className="block border-l-2 border-primary pl-3 pt-0 pb-2 hover:bg-accent/5 transition-colors rounded"
+                    onClick={() => {
+                      setSelectedReportId(analysis.id);
+                      setReportDialogOpen(true);
+                    }}
+                    className="w-full text-left block border-l-2 border-primary pl-3 pt-0 pb-2 hover:bg-accent/5 transition-colors rounded"
                   >
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1">
@@ -719,13 +725,20 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
                         </div>
                       )}
                     </div>
-                  </Link>
+                  </button>
                 ))}
               </div>
             </CardContent>
           </Card>
         )}
       </div>
+
+      {/* Performance Report Dialog */}
+      <PerformanceReportDialog 
+        open={reportDialogOpen} 
+        onOpenChange={setReportDialogOpen}
+        analysisId={selectedReportId}
+      />
 
       {/* Gold Separator Line */}
       {dailyAphorism && (

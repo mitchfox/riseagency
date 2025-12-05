@@ -20,8 +20,10 @@ interface HighlightedMatchProps {
     full_match_url: string;
     r90_report_url: string;
     player_image_url?: string;
+    analysis_id?: string;
   };
   onVideoPlayChange?: (isPlaying: boolean) => void;
+  onViewReport?: (analysisId: string) => void;
 }
 
 const STAT_LABELS: Record<string, string> = {
@@ -46,7 +48,7 @@ const STAT_LABELS: Record<string, string> = {
   shots_on_target: "On Target",
 };
 
-export const HighlightedMatchDisplay = ({ highlightedMatch, onVideoPlayChange }: HighlightedMatchProps) => {
+export const HighlightedMatchDisplay = ({ highlightedMatch, onVideoPlayChange, onViewReport }: HighlightedMatchProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -166,10 +168,19 @@ export const HighlightedMatchDisplay = ({ highlightedMatch, onVideoPlayChange }:
         )}
 
         {/* Action Buttons */}
-        {(highlightedMatch.full_match_url || highlightedMatch.r90_report_url) && (
+        {(highlightedMatch.full_match_url || highlightedMatch.r90_report_url || highlightedMatch.analysis_id) && (
           <div className="bg-gradient-to-r from-secondary/20 via-secondary/10 to-secondary/20 p-5 border-y border-primary/10">
             <div className="flex flex-wrap gap-3 justify-center">
-              {highlightedMatch.r90_report_url && (
+              {(highlightedMatch.analysis_id && onViewReport) ? (
+                <Button
+                  onClick={() => onViewReport(highlightedMatch.analysis_id!)}
+                  size="lg"
+                  className="font-bebas uppercase tracking-wider text-base bg-primary hover:bg-primary/90 shadow-lg hover:shadow-xl transition-all"
+                >
+                  <ExternalLink className="h-5 w-5 mr-2" />
+                  Read Action Report
+                </Button>
+              ) : highlightedMatch.r90_report_url ? (
                 highlightedMatch.r90_report_url.startsWith('/') ? (
                   <Button
                     asChild
@@ -198,8 +209,7 @@ export const HighlightedMatchDisplay = ({ highlightedMatch, onVideoPlayChange }:
                     </a>
                   </Button>
                 )
-              )}
-              {!highlightedMatch.r90_report_url && (
+              ) : (
                 <Button
                   size="lg"
                   disabled

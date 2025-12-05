@@ -17,6 +17,7 @@ import { PlayerStickyHeader } from "@/components/PlayerStickyHeader";
 import blackMarbleBg from "@/assets/black-marble-menu.png";
 import { createPerformanceReportSlug } from "@/lib/urlHelpers";
 import { HoverText } from "@/components/HoverText";
+import { PerformanceReportDialog } from "@/components/PerformanceReportDialog";
 
 const PlayerDetail = () => {
   const { playername } = useParams<{ playername: string }>();
@@ -30,6 +31,8 @@ const PlayerDetail = () => {
   const [isPlayerInfoSticky, setIsPlayerInfoSticky] = useState(false);
   const [showPlayerStickyHeader, setShowPlayerStickyHeader] = useState(false);
   const [performanceReports, setPerformanceReports] = useState<any[]>([]);
+  const [reportDialogOpen, setReportDialogOpen] = useState(false);
+  const [selectedReportId, setSelectedReportId] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   
   const playerInfoSentinelRef = useRef<HTMLDivElement>(null);
@@ -840,6 +843,7 @@ const PlayerDetail = () => {
               highlightedMatch={{
                 ...player.highlighted_match,
                 player_image_url: player.image_url,
+                analysis_id: highlightedAnalysis?.id,
                 r90_report_url: highlightedAnalysis
                   ? createPerformanceReportSlug(
                       player.name,
@@ -853,8 +857,19 @@ const PlayerDetail = () => {
                   videoRef.current.pause();
                 }
               }}
+              onViewReport={(analysisId) => {
+                setSelectedReportId(analysisId);
+                setReportDialogOpen(true);
+              }}
             />
           )}
+          
+          {/* Performance Report Dialog */}
+          <PerformanceReportDialog 
+            open={reportDialogOpen} 
+            onOpenChange={setReportDialogOpen}
+            analysisId={selectedReportId}
+          />
 
 
           {/* News Section */}
