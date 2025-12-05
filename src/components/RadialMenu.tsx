@@ -2,7 +2,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { DrawerClose } from "@/components/ui/drawer";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { LocalizedLink } from "@/components/LocalizedLink";
-import { useRoleSubdomain } from "@/hooks/useRoleSubdomain";
+import { useRoleSubdomain, pathToRole } from "@/hooks/useRoleSubdomain";
 import { useLocalizedNavigate } from "@/hooks/useLocalizedNavigate";
 import { useIsMobile } from "@/hooks/use-mobile";
 import riseLogoBlack from "@/assets/RISEBlack.png";
@@ -338,26 +338,25 @@ export const RadialMenu = () => {
                 onMouseLeave={() => setHoveredItem(null)}
                 onTouchStart={() => setHoveredItem(index)}
                 onClick={() => {
-                  if (isSelectingRole) {
-                    // Navigate to the role subdomain
-                    const rolePath = item.to.replace('/', '').replace('more', '');
-                    const roleKeys = ['players', 'clubs', 'scouts', 'agents', 'coaches', 'media', 'business'];
-                    
-                    if (roleKeys.includes(rolePath)) {
-                      // Use subdomain URL for role pages
-                      const url = getRoleUrl(rolePath as any);
-                      if (url.startsWith('http')) {
-                        window.location.href = url;
-                      } else {
-                        navigate(url);
-                        closeButtonRef.current?.click();
-                      }
+                  // Check if this path maps to a role subdomain
+                  const role = pathToRole[item.to];
+                  
+                  if (role) {
+                    // Navigate to subdomain for role pages
+                    const url = getRoleUrl(role);
+                    if (url.startsWith('http')) {
+                      window.location.href = url;
                     } else {
-                      setSelectedRole(rolePath);
-                      setIsSelectingRole(false);
+                      navigate(url);
+                      closeButtonRef.current?.click();
                     }
+                  } else if (isSelectingRole) {
+                    // Non-role item in role selection mode - shouldn't happen but handle gracefully
+                    setIsSelectingRole(false);
+                    navigate(item.to);
+                    closeButtonRef.current?.click();
                   } else {
-                    // Navigate AND close drawer
+                    // Regular navigation for non-role pages
                     navigate(item.to);
                     closeButtonRef.current?.click();
                   }

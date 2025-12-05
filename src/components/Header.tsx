@@ -25,8 +25,9 @@ import { LanguageSelector } from "@/components/LanguageSelector";
 import { LocalizedLink } from "@/components/LocalizedLink";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { getEnglishPath, getAllPathVariants } from "@/lib/localizedRoutes";
-import { useRoleSubdomain, roleConfigs, RoleSubdomain } from "@/hooks/useRoleSubdomain";
+import { useRoleSubdomain, roleConfigs, RoleSubdomain, pathToRole } from "@/hooks/useRoleSubdomain";
 import { RadialMenu } from "@/components/RadialMenu";
+import { SubdomainLink } from "@/components/SubdomainLink";
 
 // NOTE: GridLines component is available at src/components/GridLines.tsx 
 // for coordinate-based positioning during design. Import and add it when needed.
@@ -338,10 +339,17 @@ export const Header = ({ shouldFade = false }: HeaderProps) => {
                 <div key={`left-${index}`} className="flex items-center gap-4">
                   {index > 0 && <div className="w-px h-4 bg-white/20" />}
                   {item.type === 'link' ? (
-                    <LocalizedLink to={item.to!} className="text-sm font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500 flex items-center gap-1.5">
-                      <item.icon className="w-3.5 h-3.5" />
-                      <HoverText text={item.label} />
-                    </LocalizedLink>
+                    pathToRole[item.to!] ? (
+                      <SubdomainLink role={pathToRole[item.to!]} className="text-sm font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500 flex items-center gap-1.5">
+                        <item.icon className="w-3.5 h-3.5" />
+                        <HoverText text={item.label} />
+                      </SubdomainLink>
+                    ) : (
+                      <LocalizedLink to={item.to!} className="text-sm font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500 flex items-center gap-1.5">
+                        <item.icon className="w-3.5 h-3.5" />
+                        <HoverText text={item.label} />
+                      </LocalizedLink>
+                    )
                   ) : (
                     <button onClick={() => handleSubHeaderAction(item.action)} className="text-sm font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500 flex items-center gap-1.5">
                       <item.icon className="w-3.5 h-3.5" />
@@ -358,9 +366,15 @@ export const Header = ({ shouldFade = false }: HeaderProps) => {
                 <div key={`mobile-left-${index}`} className="flex items-center gap-2">
                   {index > 0 && <div className="w-px h-3 bg-white/20" />}
                   {item.type === 'link' ? (
-                    <LocalizedLink to={item.to!} className="text-[10px] font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500">
-                      <HoverText text={item.label} />
-                    </LocalizedLink>
+                    pathToRole[item.to!] ? (
+                      <SubdomainLink role={pathToRole[item.to!]} className="text-[10px] font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500">
+                        <HoverText text={item.label} />
+                      </SubdomainLink>
+                    ) : (
+                      <LocalizedLink to={item.to!} className="text-[10px] font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500">
+                        <HoverText text={item.label} />
+                      </LocalizedLink>
+                    )
                   ) : (
                     <button onClick={() => handleSubHeaderAction(item.action)} className="text-[10px] font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500">
                       <HoverText text={item.label} />
@@ -376,9 +390,15 @@ export const Header = ({ shouldFade = false }: HeaderProps) => {
                 <div key={`mobile-right-${index}`} className="flex items-center gap-2">
                   {index > 0 && <div className="w-px h-3 bg-white/20" />}
                   {item.type === 'link' ? (
-                    <LocalizedLink to={item.to!} className="text-[10px] font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500">
-                      <HoverText text={item.label} />
-                    </LocalizedLink>
+                    pathToRole[item.to!] ? (
+                      <SubdomainLink role={pathToRole[item.to!]} className="text-[10px] font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500">
+                        <HoverText text={item.label} />
+                      </SubdomainLink>
+                    ) : (
+                      <LocalizedLink to={item.to!} className="text-[10px] font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500">
+                        <HoverText text={item.label} />
+                      </LocalizedLink>
+                    )
                   ) : (
                     <button onClick={() => handleSubHeaderAction(item.action)} className="text-[10px] font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500">
                       <HoverText text={item.label} />
@@ -399,10 +419,17 @@ export const Header = ({ shouldFade = false }: HeaderProps) => {
                 <div key={`right-${index}`} className="flex items-center gap-4">
                   {index > 0 && <div className="w-px h-4 bg-white/20" />}
                   {item.type === 'link' ? (
-                    <LocalizedLink to={item.to!} className="text-sm font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500 flex items-center gap-1.5">
-                      <item.icon className="w-3.5 h-3.5" />
-                      <HoverText text={item.label} />
-                    </LocalizedLink>
+                    pathToRole[item.to!] ? (
+                      <SubdomainLink role={pathToRole[item.to!]} className="text-sm font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500 flex items-center gap-1.5">
+                        <item.icon className="w-3.5 h-3.5" />
+                        <HoverText text={item.label} />
+                      </SubdomainLink>
+                    ) : (
+                      <LocalizedLink to={item.to!} className="text-sm font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500 flex items-center gap-1.5">
+                        <item.icon className="w-3.5 h-3.5" />
+                        <HoverText text={item.label} />
+                      </LocalizedLink>
+                    )
                   ) : (
                     <button onClick={() => handleSubHeaderAction(item.action)} className="text-sm font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500 flex items-center gap-1.5">
                       <item.icon className="w-3.5 h-3.5" />
