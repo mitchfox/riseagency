@@ -14,6 +14,7 @@ import { DeclareInterestDialog } from "@/components/DeclareInterestDialog";
 import { ContactDialog } from "@/components/ContactDialog";
 import { PortfolioRequestDialog } from "@/components/PortfolioRequestDialog";
 import { useNavigate } from "react-router-dom";
+import { HoverText } from "@/components/HoverText";
 
 const PLAYERS_PER_PAGE = 12;
 
@@ -172,7 +173,7 @@ const Stars = () => {
             {/* Interest Cards */}
             <div className="grid md:grid-cols-3 gap-4 mb-6">
               <Card 
-                className="bg-card/50 backdrop-blur-sm border-primary/20 hover:border-primary transition-colors cursor-pointer group"
+                className="bg-card/50 backdrop-blur-sm border-primary/20 hover:border-primary transition-colors cursor-pointer group btn-shine"
                 onClick={() => setDeclareInterestOpen(true)}
               >
                 <CardContent className="p-6">
@@ -182,7 +183,9 @@ const Stars = () => {
                         <Users className="w-6 h-6 text-primary" />
                       </div>
                        <div>
-                         <h3 className="font-bebas uppercase tracking-wider text-xl mb-1">Declare Interest in Player(s)</h3>
+                         <h3 className="font-bebas uppercase tracking-wider text-xl mb-1">
+                           <HoverText text="Declare Interest in Player(s)" />
+                         </h3>
                          <p className="text-sm text-muted-foreground">
                            Select players and submit your interest
                          </p>
@@ -194,7 +197,7 @@ const Stars = () => {
               </Card>
               
               <Card 
-                className="bg-card/50 backdrop-blur-sm border-primary/20 hover:border-primary transition-colors cursor-pointer group"
+                className="bg-card/50 backdrop-blur-sm border-primary/20 hover:border-primary transition-colors cursor-pointer group btn-shine"
                 onClick={() => setContactOpen(true)}
               >
                 <CardContent className="p-6">
@@ -204,7 +207,9 @@ const Stars = () => {
                         <MessageCircle className="w-6 h-6 text-primary" />
                       </div>
                        <div>
-                         <h3 className="font-bebas uppercase tracking-wider text-xl mb-1">Contact</h3>
+                         <h3 className="font-bebas uppercase tracking-wider text-xl mb-1">
+                           <HoverText text="Contact" />
+                         </h3>
                          <p className="text-sm text-muted-foreground">
                            Get in touch with us directly
                          </p>
@@ -216,7 +221,7 @@ const Stars = () => {
               </Card>
 
               <Card 
-                className="bg-card/50 backdrop-blur-sm border-primary/20 hover:border-primary transition-colors cursor-pointer group"
+                className="bg-card/50 backdrop-blur-sm border-primary/20 hover:border-primary transition-colors cursor-pointer group btn-shine"
                 onClick={() => setPortfolioOpen(true)}
               >
                 <CardContent className="p-6">
@@ -226,7 +231,9 @@ const Stars = () => {
                         <FileText className="w-6 h-6 text-primary" />
                       </div>
                        <div>
-                         <h3 className="font-bebas uppercase tracking-wider text-xl mb-1">Request Full Portfolio</h3>
+                         <h3 className="font-bebas uppercase tracking-wider text-xl mb-1">
+                           <HoverText text="Request Full Portfolio" />
+                         </h3>
                          <p className="text-sm text-muted-foreground">
                            Access our complete player portfolio
                          </p>

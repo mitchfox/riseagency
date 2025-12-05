@@ -16,6 +16,7 @@ import { HighlightedMatchDisplay } from "@/components/HighlightedMatchDisplay";
 import { PlayerStickyHeader } from "@/components/PlayerStickyHeader";
 import blackMarbleBg from "@/assets/black-marble-menu.png";
 import { createPerformanceReportSlug } from "@/lib/urlHelpers";
+import { HoverText } from "@/components/HoverText";
 
 const PlayerDetail = () => {
   const { playername } = useParams<{ playername: string }>();
@@ -217,10 +218,10 @@ const PlayerDetail = () => {
                 onClick={() => navigate("/stars")}
                 variant="outline"
                 size="sm"
-                className="group font-bebas uppercase tracking-wider border-primary/30 bg-background/80 backdrop-blur-sm hover:bg-primary hover:text-primary-foreground"
+                className="group font-bebas uppercase tracking-wider border-primary/30 bg-background/80 backdrop-blur-sm hover:bg-primary hover:text-primary-foreground btn-shine"
               >
                 <ArrowLeft className="mr-2 h-4 w-4 group-hover:-translate-x-1 transition-transform" />
-                Back to Stars
+                <HoverText text="Back to Stars" />
               </Button>
               <Button 
                 asChild
@@ -233,7 +234,7 @@ const PlayerDetail = () => {
                   rel="noopener noreferrer"
                 >
                   <MessageCircle className="mr-2 h-4 w-4" />
-                  Enquire About This Player
+                  <HoverText text="Enquire About This Player" />
                 </a>
               </Button>
             </div>
