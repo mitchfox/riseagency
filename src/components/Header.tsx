@@ -37,8 +37,9 @@ type SubHeaderItem = {
   type: 'link' | 'button';
   to?: string;
   action?: 'declareInterest' | 'representation' | 'workWithUs' | 'arrangeMeeting';
-  label: string;
-  mobileLabel: string;
+  labelKey: string;
+  fallback: string;
+  mobileFallback: string;
   icon: React.ComponentType<{ className?: string }>;
 };
 
@@ -49,84 +50,84 @@ type SubHeaderConfig = {
 
 const defaultSubHeader: SubHeaderConfig = {
   left: [
-    { type: 'link', to: '/contact', label: 'Contact Us', mobileLabel: 'Contact', icon: MessageCircle },
-    { type: 'button', action: 'declareInterest', label: 'Declare Interest In A Star', mobileLabel: 'Interest', icon: Users },
+    { type: 'link', to: '/contact', labelKey: 'header.contact_us', fallback: 'Contact Us', mobileFallback: 'Contact', icon: MessageCircle },
+    { type: 'button', action: 'declareInterest', labelKey: 'header.declare_interest', fallback: 'Declare Interest In A Star', mobileFallback: 'Interest', icon: Users },
   ],
   right: [
-    { type: 'button', action: 'representation', label: 'Request Representation', mobileLabel: 'Represent', icon: Handshake },
-    { type: 'link', to: '/login', label: 'Portal', mobileLabel: 'Portal', icon: LogIn },
+    { type: 'button', action: 'representation', labelKey: 'header.request_representation', fallback: 'Request Representation', mobileFallback: 'Represent', icon: Handshake },
+    { type: 'link', to: '/login', labelKey: 'header.portal', fallback: 'Portal', mobileFallback: 'Portal', icon: LogIn },
   ],
 };
 
 const subdomainSubHeaders: Record<string, SubHeaderConfig> = {
   players: {
     left: [
-      { type: 'link', to: '/login', label: 'Portal', mobileLabel: 'Portal', icon: LogIn },
-      { type: 'link', to: '/between-the-lines', label: 'Between The Lines', mobileLabel: 'BTL', icon: BookOpen },
+      { type: 'link', to: '/login', labelKey: 'header.portal', fallback: 'Portal', mobileFallback: 'Portal', icon: LogIn },
+      { type: 'link', to: '/between-the-lines', labelKey: 'header.between_the_lines', fallback: 'Between The Lines', mobileFallback: 'BTL', icon: BookOpen },
     ],
     right: [
-      { type: 'link', to: '/playersmore', label: 'What We Look For', mobileLabel: 'Look For', icon: Search },
-      { type: 'button', action: 'representation', label: 'Represent Me', mobileLabel: 'Represent', icon: Handshake },
+      { type: 'link', to: '/playersmore', labelKey: 'header.what_we_look_for', fallback: 'What We Look For', mobileFallback: 'Look For', icon: Search },
+      { type: 'button', action: 'representation', labelKey: 'header.represent_me', fallback: 'Represent Me', mobileFallback: 'Represent', icon: Handshake },
     ],
   },
   clubs: {
     left: [
-      { type: 'link', to: '/clubs', label: 'Club Direction', mobileLabel: 'Direction', icon: Compass },
-      { type: 'button', action: 'arrangeMeeting', label: 'Arrange Meeting', mobileLabel: 'Meeting', icon: Calendar },
+      { type: 'link', to: '/clubs', labelKey: 'header.club_direction', fallback: 'Club Direction', mobileFallback: 'Direction', icon: Compass },
+      { type: 'button', action: 'arrangeMeeting', labelKey: 'header.arrange_meeting', fallback: 'Arrange Meeting', mobileFallback: 'Meeting', icon: Calendar },
     ],
     right: [
-      { type: 'link', to: '/stars', label: 'Stars', mobileLabel: 'Stars', icon: Star },
-      { type: 'button', action: 'declareInterest', label: 'Declare Interest', mobileLabel: 'Interest', icon: Users },
+      { type: 'link', to: '/stars', labelKey: 'header.stars', fallback: 'Stars', mobileFallback: 'Stars', icon: Star },
+      { type: 'button', action: 'declareInterest', labelKey: 'header.declare_interest', fallback: 'Declare Interest', mobileFallback: 'Interest', icon: Users },
     ],
   },
   scouts: {
     left: [
-      { type: 'link', to: '/playersmore', label: 'What We Look For', mobileLabel: 'Look For', icon: Search },
-      { type: 'link', to: '/login', label: 'Portal', mobileLabel: 'Portal', icon: LogIn },
+      { type: 'link', to: '/playersmore', labelKey: 'header.what_we_look_for', fallback: 'What We Look For', mobileFallback: 'Look For', icon: Search },
+      { type: 'link', to: '/login', labelKey: 'header.portal', fallback: 'Portal', mobileFallback: 'Portal', icon: LogIn },
     ],
     right: [
-      { type: 'button', action: 'workWithUs', label: 'Scout for RISE', mobileLabel: 'Scout', icon: Send },
-      { type: 'link', to: '/scouts', label: 'Jobs', mobileLabel: 'Jobs', icon: Briefcase },
+      { type: 'button', action: 'workWithUs', labelKey: 'header.scout_for_rise', fallback: 'Scout for RISE', mobileFallback: 'Scout', icon: Send },
+      { type: 'link', to: '/scouts', labelKey: 'header.jobs', fallback: 'Jobs', mobileFallback: 'Jobs', icon: Briefcase },
     ],
   },
   agents: {
     left: [
-      { type: 'link', to: '/stars', label: 'Stars', mobileLabel: 'Stars', icon: Star },
-      { type: 'link', to: '/contact', label: 'Requests', mobileLabel: 'Requests', icon: FileText },
+      { type: 'link', to: '/stars', labelKey: 'header.stars', fallback: 'Stars', mobileFallback: 'Stars', icon: Star },
+      { type: 'link', to: '/contact', labelKey: 'header.requests', fallback: 'Requests', mobileFallback: 'Requests', icon: FileText },
     ],
     right: [
-      { type: 'button', action: 'declareInterest', label: 'Declare Interest', mobileLabel: 'Interest', icon: Users },
-      { type: 'button', action: 'arrangeMeeting', label: 'Arrange Meeting', mobileLabel: 'Meeting', icon: Calendar },
+      { type: 'button', action: 'declareInterest', labelKey: 'header.declare_interest', fallback: 'Declare Interest', mobileFallback: 'Interest', icon: Users },
+      { type: 'button', action: 'arrangeMeeting', labelKey: 'header.arrange_meeting', fallback: 'Arrange Meeting', mobileFallback: 'Meeting', icon: Calendar },
     ],
   },
   coaches: {
     left: [
-      { type: 'link', to: '/login', label: 'Portal', mobileLabel: 'Portal', icon: LogIn },
-      { type: 'link', to: '/potential', label: 'Performance', mobileLabel: 'Performance', icon: Activity },
+      { type: 'link', to: '/login', labelKey: 'header.portal', fallback: 'Portal', mobileFallback: 'Portal', icon: LogIn },
+      { type: 'link', to: '/potential', labelKey: 'header.performance', fallback: 'Performance', mobileFallback: 'Performance', icon: Activity },
     ],
     right: [
-      { type: 'button', action: 'representation', label: 'Represent Me', mobileLabel: 'Represent', icon: Handshake },
-      { type: 'button', action: 'arrangeMeeting', label: 'Arrange Meeting', mobileLabel: 'Meeting', icon: Calendar },
+      { type: 'button', action: 'representation', labelKey: 'header.represent_me', fallback: 'Represent Me', mobileFallback: 'Represent', icon: Handshake },
+      { type: 'button', action: 'arrangeMeeting', labelKey: 'header.arrange_meeting', fallback: 'Arrange Meeting', mobileFallback: 'Meeting', icon: Calendar },
     ],
   },
   media: {
     left: [
-      { type: 'link', to: '/between-the-lines', label: 'Press Release', mobileLabel: 'Press', icon: Newspaper },
-      { type: 'link', to: '/contact', label: 'Collaboration', mobileLabel: 'Collab', icon: Heart },
+      { type: 'link', to: '/between-the-lines', labelKey: 'header.press_release', fallback: 'Press Release', mobileFallback: 'Press', icon: Newspaper },
+      { type: 'link', to: '/contact', labelKey: 'header.collaboration', fallback: 'Collaboration', mobileFallback: 'Collab', icon: Heart },
     ],
     right: [
-      { type: 'button', action: 'declareInterest', label: 'Declare Interest in Star', mobileLabel: 'Interest', icon: Users },
-      { type: 'button', action: 'arrangeMeeting', label: 'Arrange Meeting', mobileLabel: 'Meeting', icon: Calendar },
+      { type: 'button', action: 'declareInterest', labelKey: 'header.declare_interest_star', fallback: 'Declare Interest in Star', mobileFallback: 'Interest', icon: Users },
+      { type: 'button', action: 'arrangeMeeting', labelKey: 'header.arrange_meeting', fallback: 'Arrange Meeting', mobileFallback: 'Meeting', icon: Calendar },
     ],
   },
   business: {
     left: [
-      { type: 'link', to: '/business', label: 'Packages', mobileLabel: 'Packages', icon: Package },
-      { type: 'button', action: 'declareInterest', label: 'Declare Interest in Package', mobileLabel: 'Interest', icon: Users },
+      { type: 'link', to: '/business', labelKey: 'header.packages', fallback: 'Packages', mobileFallback: 'Packages', icon: Package },
+      { type: 'button', action: 'declareInterest', labelKey: 'header.declare_interest_package', fallback: 'Declare Interest in Package', mobileFallback: 'Interest', icon: Users },
     ],
     right: [
-      { type: 'link', to: '/contact', label: 'Connect With Us', mobileLabel: 'Connect', icon: Phone },
-      { type: 'button', action: 'arrangeMeeting', label: 'Arrange Meeting', mobileLabel: 'Meeting', icon: Calendar },
+      { type: 'link', to: '/contact', labelKey: 'header.connect_with_us', fallback: 'Connect With Us', mobileFallback: 'Connect', icon: Phone },
+      { type: 'button', action: 'arrangeMeeting', labelKey: 'header.arrange_meeting', fallback: 'Arrange Meeting', mobileFallback: 'Meeting', icon: Calendar },
     ],
   },
 };
@@ -342,18 +343,18 @@ export const Header = ({ shouldFade = false }: HeaderProps) => {
                     pathToRole[item.to!] ? (
                       <SubdomainLink role={pathToRole[item.to!]} className="text-sm font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500 flex items-center gap-1.5">
                         <item.icon className="w-3.5 h-3.5" />
-                        <HoverText text={item.label} />
+                        <HoverText text={t(item.labelKey, item.fallback)} />
                       </SubdomainLink>
                     ) : (
                       <LocalizedLink to={item.to!} className="text-sm font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500 flex items-center gap-1.5">
                         <item.icon className="w-3.5 h-3.5" />
-                        <HoverText text={item.label} />
+                        <HoverText text={t(item.labelKey, item.fallback)} />
                       </LocalizedLink>
                     )
                   ) : (
                     <button onClick={() => handleSubHeaderAction(item.action)} className="text-sm font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500 flex items-center gap-1.5">
                       <item.icon className="w-3.5 h-3.5" />
-                      <HoverText text={item.label} />
+                      <HoverText text={t(item.labelKey, item.fallback)} />
                     </button>
                   )}
                 </div>
@@ -368,16 +369,16 @@ export const Header = ({ shouldFade = false }: HeaderProps) => {
                   {item.type === 'link' ? (
                     pathToRole[item.to!] ? (
                       <SubdomainLink role={pathToRole[item.to!]} className="text-[10px] font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500">
-                        <HoverText text={item.label} />
+                        <HoverText text={t(item.labelKey, item.mobileFallback)} />
                       </SubdomainLink>
                     ) : (
                       <LocalizedLink to={item.to!} className="text-[10px] font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500">
-                        <HoverText text={item.label} />
+                        <HoverText text={t(item.labelKey, item.mobileFallback)} />
                       </LocalizedLink>
                     )
                   ) : (
                     <button onClick={() => handleSubHeaderAction(item.action)} className="text-[10px] font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500">
-                      <HoverText text={item.label} />
+                      <HoverText text={t(item.labelKey, item.mobileFallback)} />
                     </button>
                   )}
                 </div>
@@ -392,16 +393,16 @@ export const Header = ({ shouldFade = false }: HeaderProps) => {
                   {item.type === 'link' ? (
                     pathToRole[item.to!] ? (
                       <SubdomainLink role={pathToRole[item.to!]} className="text-[10px] font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500">
-                        <HoverText text={item.label} />
+                        <HoverText text={t(item.labelKey, item.mobileFallback)} />
                       </SubdomainLink>
                     ) : (
                       <LocalizedLink to={item.to!} className="text-[10px] font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500">
-                        <HoverText text={item.label} />
+                        <HoverText text={t(item.labelKey, item.mobileFallback)} />
                       </LocalizedLink>
                     )
                   ) : (
                     <button onClick={() => handleSubHeaderAction(item.action)} className="text-[10px] font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500">
-                      <HoverText text={item.label} />
+                      <HoverText text={t(item.labelKey, item.mobileFallback)} />
                     </button>
                   )}
                 </div>
@@ -422,18 +423,18 @@ export const Header = ({ shouldFade = false }: HeaderProps) => {
                     pathToRole[item.to!] ? (
                       <SubdomainLink role={pathToRole[item.to!]} className="text-sm font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500 flex items-center gap-1.5">
                         <item.icon className="w-3.5 h-3.5" />
-                        <HoverText text={item.label} />
+                        <HoverText text={t(item.labelKey, item.fallback)} />
                       </SubdomainLink>
                     ) : (
                       <LocalizedLink to={item.to!} className="text-sm font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500 flex items-center gap-1.5">
                         <item.icon className="w-3.5 h-3.5" />
-                        <HoverText text={item.label} />
+                        <HoverText text={t(item.labelKey, item.fallback)} />
                       </LocalizedLink>
                     )
                   ) : (
                     <button onClick={() => handleSubHeaderAction(item.action)} className="text-sm font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-all duration-500 flex items-center gap-1.5">
                       <item.icon className="w-3.5 h-3.5" />
-                      <HoverText text={item.label} />
+                      <HoverText text={t(item.labelKey, item.fallback)} />
                     </button>
                   )}
                 </div>
