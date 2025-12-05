@@ -6,10 +6,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar, User, Plus, Trash2, Clock } from "lucide-react";
+import { Calendar, User, Plus, Trash2, Clock, CalendarDays, CalendarRange } from "lucide-react";
 import { StaffSchedule } from "./StaffSchedule";
-import { format, startOfWeek, addDays, isSameDay, parseISO, addWeeks } from "date-fns";
+import { format, startOfWeek, addDays, isSameDay, parseISO, addWeeks, startOfMonth, endOfMonth, getDay } from "date-fns";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 interface StaffMember {
   id: string;
@@ -46,6 +47,7 @@ export const StaffSchedulesManagement = () => {
   const [loading, setLoading] = useState(true);
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [weekOffset, setWeekOffset] = useState(0);
+  const [viewMode, setViewMode] = useState<'weekly' | 'monthly'>('weekly');
   const [newEvent, setNewEvent] = useState({
     event_date: new Date().toISOString().split('T')[0],
     title: "",
@@ -186,13 +188,24 @@ export const StaffSchedulesManagement = () => {
     return staff.email === MAIN_ADMIN_EMAIL;
   };
 
-  const generateCalendarWeeks = () => {
+  // Generate days for weekly view (7 days from today)
+  const generateWeeklyDays = () => {
+    const today = new Date();
+    const days = [];
+    for (let i = 0; i < 7; i++) {
+      days.push(addDays(today, i));
+    }
+    return days;
+  };
+
+  // Generate weeks for monthly view (full month starting from current week)
+  const generateMonthlyWeeks = () => {
     const today = new Date();
     const currentWeekStart = startOfWeek(today, { weekStartsOn: 1 });
-    const offsetWeekStart = addWeeks(currentWeekStart, weekOffset * 6);
+    const offsetWeekStart = addWeeks(currentWeekStart, weekOffset * 5);
     const weeks = [];
 
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < 5; i++) {
       const weekStart = addDays(offsetWeekStart, i * 7);
       weeks.push(weekStart);
     }
@@ -201,17 +214,14 @@ export const StaffSchedulesManagement = () => {
   };
 
   const getEventsForDay = (date: Date): CalendarEvent[] => {
-    const currentDayOfWeek = date.getDay(); // 0=Sunday, 1=Monday, etc.
+    const currentDayOfWeek = date.getDay();
     return events.filter(event => {
-      // Weekly recurring events - match by day of week
       if (event.is_ongoing && event.day_of_week !== null) {
         return event.day_of_week === currentDayOfWeek;
       }
-      // Daily recurring events (no specific day)
       if (event.is_ongoing && event.day_of_week === null) {
         return true;
       }
-      // One-time events
       return isSameDay(parseISO(event.event_date), date);
     });
   };
@@ -221,7 +231,8 @@ export const StaffSchedulesManagement = () => {
     return cat?.color || 'hsl(43, 49%, 61%)';
   };
 
-  const calendarWeeks = generateCalendarWeeks();
+  const weeklyDays = generateWeeklyDays();
+  const monthlyWeeks = generateMonthlyWeeks();
 
   if (loading) {
     return <div className="text-center py-8">Loading staff members...</div>;
@@ -238,6 +249,41 @@ export const StaffSchedulesManagement = () => {
   }
 
   const selectedStaff = staffMembers.find(s => s.id === selectedStaffId);
+
+  const EventCard = ({ event, showDelete = true }: { event: CalendarEvent; showDelete?: boolean }) => (
+    <div 
+      className="text-xs p-2 rounded group relative"
+      style={{ 
+        backgroundColor: getCategoryColor(event.category),
+        color: 'hsl(0, 0%, 0%)'
+      }}
+    >
+      <div className="font-bold truncate pr-4 flex items-center gap-1">
+        {event.is_ongoing && <span className="text-[8px]">🔄</span>}
+        {event.title}
+      </div>
+      {event.start_time && (
+        <div className="text-[10px] opacity-75 flex items-center gap-1">
+          <Clock className="h-2.5 w-2.5" />
+          {event.start_time}{event.end_time && ` - ${event.end_time}`}
+        </div>
+      )}
+      {event.description && (
+        <div className="text-[10px] opacity-60 truncate mt-0.5">{event.description}</div>
+      )}
+      {showDelete && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            deleteEvent(event.id);
+          }}
+          className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity"
+        >
+          <Trash2 className="h-3 w-3 text-destructive" />
+        </button>
+      )}
+    </div>
+  );
 
   return (
     <div className="space-y-6">
@@ -266,7 +312,6 @@ export const StaffSchedulesManagement = () => {
             {staffMembers.map((staff) => (
               <TabsContent key={staff.id} value={staff.id} className="space-y-6">
                 {isMainAdmin(staff) ? (
-                  // Main admin sees programs & fixtures calendar
                   <div className="border rounded-lg p-4 bg-muted/20">
                     <h3 className="font-semibold mb-4 flex items-center gap-2">
                       <Calendar className="h-4 w-4" />
@@ -275,7 +320,6 @@ export const StaffSchedulesManagement = () => {
                     <StaffSchedule isAdmin={true} />
                   </div>
                 ) : (
-                  // Other staff see personal calendar with events
                   <div className="space-y-6">
                     {/* Add Event Form */}
                     <div className="space-y-4 p-4 border rounded-lg bg-muted/30">
@@ -374,157 +418,263 @@ export const StaffSchedulesManagement = () => {
                       </Button>
                     </div>
 
-                    {/* Calendar View */}
+                    {/* View Toggle & Calendar */}
                     <div className="border rounded-lg p-4 bg-muted/20">
-                      <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
                         <h3 className="font-semibold flex items-center gap-2">
                           <Calendar className="h-4 w-4" />
                           {getStaffDisplayName(staff)}'s Calendar
                         </h3>
-                        <div className="flex items-center gap-2">
-                          <Button 
-                            onClick={() => setWeekOffset(weekOffset - 1)} 
-                            size="sm" 
-                            variant="outline"
-                          >
-                            <ChevronLeft className="w-4 h-4" />
-                          </Button>
-                          <span className="text-sm text-muted-foreground">
-                            {weekOffset === 0 ? 'Current' : weekOffset > 0 ? `+${weekOffset * 6} weeks` : `${weekOffset * 6} weeks`}
-                          </span>
-                          <Button 
-                            onClick={() => setWeekOffset(weekOffset + 1)} 
-                            size="sm" 
-                            variant="outline"
-                          >
-                            <ChevronRight className="w-4 h-4" />
-                          </Button>
+                        
+                        <div className="flex items-center gap-3">
+                          {/* View Mode Toggle */}
+                          <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
+                            <Button
+                              size="sm"
+                              variant={viewMode === 'weekly' ? 'default' : 'ghost'}
+                              onClick={() => setViewMode('weekly')}
+                              className="h-8 px-3"
+                            >
+                              <CalendarDays className="h-4 w-4 mr-1" />
+                              Weekly
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant={viewMode === 'monthly' ? 'default' : 'ghost'}
+                              onClick={() => setViewMode('monthly')}
+                              className="h-8 px-3"
+                            >
+                              <CalendarRange className="h-4 w-4 mr-1" />
+                              Monthly
+                            </Button>
+                          </div>
+
+                          {/* Navigation (monthly only) */}
+                          {viewMode === 'monthly' && (
+                            <div className="flex items-center gap-2">
+                              <Button 
+                                onClick={() => setWeekOffset(weekOffset - 1)} 
+                                size="sm" 
+                                variant="outline"
+                              >
+                                <ChevronLeft className="w-4 h-4" />
+                              </Button>
+                              <span className="text-sm text-muted-foreground min-w-[80px] text-center">
+                                {weekOffset === 0 ? 'Current' : weekOffset > 0 ? `+${weekOffset * 5}w` : `${weekOffset * 5}w`}
+                              </span>
+                              <Button 
+                                onClick={() => setWeekOffset(weekOffset + 1)} 
+                                size="sm" 
+                                variant="outline"
+                              >
+                                <ChevronRight className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          )}
                         </div>
                       </div>
 
-                      {/* Calendar Grid */}
-                      <div className="overflow-x-auto">
-                        <div className="min-w-[700px]">
-                          {/* Header Row */}
-                          <div className="grid grid-cols-8 gap-2 mb-2">
-                            <div 
-                              className="p-2 text-center font-bebas uppercase text-sm rounded-lg"
-                              style={{ 
-                                backgroundColor: 'hsl(43, 49%, 61%)',
-                                color: 'hsl(0, 0%, 0%)'
-                              }}
-                            >
-                              Week
-                            </div>
-                            {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => (
+                      {/* Weekly View */}
+                      {viewMode === 'weekly' && (
+                        <div className="space-y-3">
+                          {weeklyDays.map((date, index) => {
+                            const dayEvents = getEventsForDay(date);
+                            const isToday = isSameDay(date, new Date());
+
+                            return (
                               <div 
-                                key={day}
+                                key={index}
+                                className="p-4 rounded-lg border transition-all"
+                                style={{ 
+                                  backgroundColor: isToday ? 'hsl(43, 49%, 25%)' : 'hsl(0, 0%, 10%)',
+                                  borderColor: isToday ? 'hsl(43, 49%, 61%)' : 'rgba(255, 255, 255, 0.1)',
+                                  borderWidth: isToday ? '2px' : '1px'
+                                }}
+                              >
+                                <div className="flex items-center justify-between mb-3">
+                                  <div className="flex items-center gap-3">
+                                    <div 
+                                      className="text-lg font-bold px-3 py-1 rounded"
+                                      style={{ 
+                                        backgroundColor: isToday ? 'hsl(43, 49%, 61%)' : 'rgba(255,255,255,0.1)',
+                                        color: isToday ? 'hsl(0, 0%, 0%)' : 'hsl(0, 0%, 100%)'
+                                      }}
+                                    >
+                                      {format(date, 'EEE')}
+                                    </div>
+                                    <div>
+                                      <div className="font-semibold text-white">{format(date, 'MMMM d, yyyy')}</div>
+                                      {isToday && <span className="text-xs text-primary">Today</span>}
+                                    </div>
+                                  </div>
+                                  <div className="text-sm text-muted-foreground">
+                                    {dayEvents.length} event{dayEvents.length !== 1 ? 's' : ''}
+                                  </div>
+                                </div>
+
+                                {dayEvents.length === 0 ? (
+                                  <p className="text-sm text-muted-foreground italic">No events scheduled</p>
+                                ) : (
+                                  <div className="grid gap-2">
+                                    {dayEvents.map((event) => (
+                                      <EventCard key={event.id} event={event} />
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+
+                      {/* Monthly View */}
+                      {viewMode === 'monthly' && (
+                        <div className="overflow-x-auto">
+                          <div className="min-w-[700px]">
+                            {/* Header Row */}
+                            <div className="grid grid-cols-8 gap-2 mb-2">
+                              <div 
                                 className="p-2 text-center font-bebas uppercase text-sm rounded-lg"
                                 style={{ 
                                   backgroundColor: 'hsl(43, 49%, 61%)',
                                   color: 'hsl(0, 0%, 0%)'
                                 }}
                               >
-                                {day}
+                                Week
                               </div>
-                            ))}
-                          </div>
-
-                          {/* Week Rows */}
-                          <div className="space-y-2">
-                            {calendarWeeks.map((weekStart, weekIndex) => {
-                              const isCurrentWeek = isSameDay(weekStart, startOfWeek(new Date(), { weekStartsOn: 1 }));
-                              
-                              return (
-                                <div key={weekIndex} className="grid grid-cols-8 gap-2">
-                                  {/* Week Start Cell */}
-                                  <div 
-                                    className="p-2 rounded-lg flex flex-col items-center justify-center border"
-                                    style={{ 
-                                      backgroundColor: isCurrentWeek ? 'hsl(43, 49%, 61%)' : 'hsl(0, 0%, 95%)',
-                                      color: 'hsl(0, 0%, 0%)',
-                                      borderColor: 'rgba(0, 0, 0, 0.1)'
-                                    }}
-                                  >
-                                    <div className="text-lg font-bold">
-                                      {format(weekStart, 'd')}
-                                    </div>
-                                    <div className="text-xs font-medium italic">
-                                      {format(weekStart, 'MMM')}
-                                    </div>
-                                  </div>
-
-                                  {/* Day Cells */}
-                                  {[0, 1, 2, 3, 4, 5, 6].map((dayOffset) => {
-                                    const currentDate = addDays(weekStart, dayOffset);
-                                    const dayEvents = getEventsForDay(currentDate);
-                                    const isToday = isSameDay(currentDate, new Date());
-
-                                    return (
-                                      <div 
-                                        key={dayOffset}
-                                        className="p-2 rounded-lg min-h-[70px] relative border transition-all"
-                                        style={{ 
-                                          backgroundColor: dayEvents.length > 0 ? 'hsl(43, 49%, 25%)' : 'hsl(0, 0%, 10%)',
-                                          borderColor: isToday ? 'hsl(43, 49%, 61%)' : 'rgba(255, 255, 255, 0.1)',
-                                          borderWidth: isToday ? '2px' : '1px'
-                                        }}
-                                      >
-                                        {/* Day number */}
-                                        <span 
-                                          className="absolute top-0.5 right-1 text-xs opacity-40"
-                                          style={{ color: 'hsl(0, 0%, 100%)' }}
-                                        >
-                                          {format(currentDate, 'd')}
-                                        </span>
-
-                                        {/* Events */}
-                                        {dayEvents.length > 0 && (
-                                          <div className="flex flex-col gap-1 mt-4">
-                                            {dayEvents.slice(0, 2).map((event) => (
-                                              <div 
-                                                key={event.id}
-                                                className="text-xs p-1 rounded group relative"
-                                                style={{ 
-                                                  backgroundColor: getCategoryColor(event.category),
-                                                  color: 'hsl(0, 0%, 0%)'
-                                                }}
-                                                title={`${event.title}${event.start_time ? ` at ${event.start_time}` : ''}${event.is_ongoing ? ' (ongoing)' : ''}`}
-                                              >
-                                                <div className="font-bold truncate pr-4 flex items-center gap-1">
-                                                  {event.is_ongoing && <span className="text-[8px]">🔄</span>}
-                                                  {event.title}
-                                                </div>
-                                                {event.start_time && (
-                                                  <div className="text-[10px] opacity-75 flex items-center gap-1">
-                                                    <Clock className="h-2.5 w-2.5" />
-                                                    {event.start_time}{event.end_time && ` - ${event.end_time}`}
-                                                  </div>
-                                                )}
-                                                <button
-                                                  onClick={() => deleteEvent(event.id)}
-                                                  className="absolute top-0.5 right-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
-                                                >
-                                                  <Trash2 className="h-3 w-3 text-destructive" />
-                                                </button>
-                                              </div>
-                                            ))}
-                                            {dayEvents.length > 2 && (
-                                              <div className="text-[10px] text-center opacity-60 text-white">
-                                                +{dayEvents.length - 2} more
-                                              </div>
-                                            )}
-                                          </div>
-                                        )}
-                                      </div>
-                                    );
-                                  })}
+                              {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => (
+                                <div 
+                                  key={day}
+                                  className="p-2 text-center font-bebas uppercase text-sm rounded-lg"
+                                  style={{ 
+                                    backgroundColor: 'hsl(43, 49%, 61%)',
+                                    color: 'hsl(0, 0%, 0%)'
+                                  }}
+                                >
+                                  {day}
                                 </div>
-                              );
-                            })}
+                              ))}
+                            </div>
+
+                            {/* Week Rows */}
+                            <div className="space-y-2">
+                              {monthlyWeeks.map((weekStart, weekIndex) => {
+                                const isCurrentWeek = isSameDay(weekStart, startOfWeek(new Date(), { weekStartsOn: 1 }));
+                                
+                                return (
+                                  <div key={weekIndex} className="grid grid-cols-8 gap-2">
+                                    {/* Week Start Cell */}
+                                    <div 
+                                      className="p-2 rounded-lg flex flex-col items-center justify-center border"
+                                      style={{ 
+                                        backgroundColor: isCurrentWeek ? 'hsl(43, 49%, 61%)' : 'hsl(0, 0%, 95%)',
+                                        color: 'hsl(0, 0%, 0%)',
+                                        borderColor: 'rgba(0, 0, 0, 0.1)'
+                                      }}
+                                    >
+                                      <div className="text-lg font-bold">
+                                        {format(weekStart, 'd')}
+                                      </div>
+                                      <div className="text-xs font-medium italic">
+                                        {format(weekStart, 'MMM')}
+                                      </div>
+                                    </div>
+
+                                    {/* Day Cells */}
+                                    {[0, 1, 2, 3, 4, 5, 6].map((dayOffset) => {
+                                      const currentDate = addDays(weekStart, dayOffset);
+                                      const dayEvents = getEventsForDay(currentDate);
+                                      const isToday = isSameDay(currentDate, new Date());
+                                      const hasMoreEvents = dayEvents.length > 2;
+
+                                      return (
+                                        <div 
+                                          key={dayOffset}
+                                          className="p-2 rounded-lg min-h-[90px] relative border transition-all"
+                                          style={{ 
+                                            backgroundColor: dayEvents.length > 0 ? 'hsl(43, 49%, 25%)' : 'hsl(0, 0%, 10%)',
+                                            borderColor: isToday ? 'hsl(43, 49%, 61%)' : 'rgba(255, 255, 255, 0.1)',
+                                            borderWidth: isToday ? '2px' : '1px'
+                                          }}
+                                        >
+                                          {/* Day number */}
+                                          <span 
+                                            className="absolute top-0.5 right-1 text-xs opacity-40"
+                                            style={{ color: 'hsl(0, 0%, 100%)' }}
+                                          >
+                                            {format(currentDate, 'd')}
+                                          </span>
+
+                                          {/* Events */}
+                                          {dayEvents.length > 0 && (
+                                            <div className="flex flex-col gap-1 mt-4">
+                                              {dayEvents.slice(0, 2).map((event) => (
+                                                <div 
+                                                  key={event.id}
+                                                  className="text-xs p-1 rounded group relative"
+                                                  style={{ 
+                                                    backgroundColor: getCategoryColor(event.category),
+                                                    color: 'hsl(0, 0%, 0%)'
+                                                  }}
+                                                  title={`${event.title}${event.start_time ? ` at ${event.start_time}` : ''}${event.is_ongoing ? ' (ongoing)' : ''}`}
+                                                >
+                                                  <div className="font-bold truncate pr-4 flex items-center gap-1">
+                                                    {event.is_ongoing && <span className="text-[8px]">🔄</span>}
+                                                    {event.title}
+                                                  </div>
+                                                  {event.start_time && (
+                                                    <div className="text-[10px] opacity-75 flex items-center gap-1">
+                                                      <Clock className="h-2.5 w-2.5" />
+                                                      {event.start_time}{event.end_time && ` - ${event.end_time}`}
+                                                    </div>
+                                                  )}
+                                                  <button
+                                                    onClick={() => deleteEvent(event.id)}
+                                                    className="absolute top-0.5 right-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                  >
+                                                    <Trash2 className="h-3 w-3 text-destructive" />
+                                                  </button>
+                                                </div>
+                                              ))}
+                                              
+                                              {/* See More Popover */}
+                                              {hasMoreEvents && (
+                                                <Popover>
+                                                  <PopoverTrigger asChild>
+                                                    <button className="text-[10px] text-center opacity-80 text-white hover:opacity-100 hover:text-primary transition-all cursor-pointer bg-black/30 rounded px-1 py-0.5">
+                                                      +{dayEvents.length - 2} more
+                                                    </button>
+                                                  </PopoverTrigger>
+                                                  <PopoverContent 
+                                                    className="w-64 p-3" 
+                                                    align="center"
+                                                    side="top"
+                                                  >
+                                                    <div className="space-y-2">
+                                                      <div className="font-semibold text-sm border-b pb-2 mb-2">
+                                                        {format(currentDate, 'EEEE, MMMM d')}
+                                                      </div>
+                                                      <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                                                        {dayEvents.map((event) => (
+                                                          <EventCard key={event.id} event={event} />
+                                                        ))}
+                                                      </div>
+                                                    </div>
+                                                  </PopoverContent>
+                                                </Popover>
+                                              )}
+                                            </div>
+                                          )}
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                );
+                              })}
+                            </div>
                           </div>
                         </div>
-                      </div>
+                      )}
                     </div>
 
                     {/* Event List */}

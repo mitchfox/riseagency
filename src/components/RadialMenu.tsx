@@ -472,9 +472,7 @@ export const RadialMenu = () => {
           <div
             className="text-center relative z-20 w-full flex items-center justify-center"
             style={{ 
-              transform: isMobile 
-                ? `translate(9px, ${-centerSize * 0.28 - 4}px)` 
-                : `translateY(${-centerSize * 0.3125}px)` 
+              transform: `translateY(${isMobile ? (-centerSize * 0.28 - 4) : (-centerSize * 0.3125)}px)` 
             }}
           >
             <button
