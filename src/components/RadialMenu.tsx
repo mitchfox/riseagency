@@ -421,10 +421,11 @@ export const RadialMenu = () => {
 
         {/* Center circle with logo - LOADS FIRST */}
         <div 
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full flex flex-col items-center justify-center z-20 border-4 border-black overflow-hidden animate-[scale-in_0.25s_ease-out_both]"
+          className="absolute top-1/2 left-1/2 rounded-full flex flex-col items-center justify-center z-20 border-4 border-black overflow-hidden animate-[scale-in_0.25s_ease-out_both]"
           style={{
             width: `${centerSize}px`,
             height: `${centerSize}px`,
+            transform: 'translate(calc(-50% - 20px), calc(-50% - 20px))',
           }}
         >
           {/* Upper 75% with white marble */}
@@ -464,7 +465,7 @@ export const RadialMenu = () => {
           
           {/* Gold divider between logo and dropdown */}
           <div 
-            className="absolute left-0 w-full h-[2px] bg-primary z-20"
+            className="absolute left-0 w-full h-[2px] bg-primary z-30"
             style={{ top: 'calc(55% - 1px)' }}
           />
           
@@ -477,21 +478,13 @@ export const RadialMenu = () => {
           >
             <button
               onClick={() => setIsSelectingRole(!isSelectingRole)}
-              className="flex items-center justify-center gap-1 font-bebas tracking-[0.05em] transition-colors duration-300 focus:outline-none w-full text-center"
+              className="font-bebas tracking-[0.05em] transition-colors duration-300 focus:outline-none w-full"
               style={{ 
                 fontSize: `${isMobile ? centerSize * 0.22 : centerSize * 0.1875}px`,
                 ...(isSelectingRole ? { color: 'hsl(var(--primary))' } : {})
               }}
             >
               <span className={isSelectingRole ? '' : 'text-black hover:text-primary transition-colors'}>{isSelectingRole ? t('menu.role', 'ROLE') : t(displayRoleLabelKey, displayRoleFallback).toUpperCase()}</span>
-              <ChevronDown 
-                className="transition-transform duration-300" 
-                style={{ 
-                  width: `${isMobile ? centerSize * 0.18 : centerSize * 0.15625}px`,
-                  height: `${isMobile ? centerSize * 0.18 : centerSize * 0.15625}px`,
-                  transform: isSelectingRole ? 'rotate(180deg)' : 'rotate(0deg)'
-                }} 
-              />
             </button>
           </div>
           
@@ -499,9 +492,9 @@ export const RadialMenu = () => {
           <div 
             className="absolute z-20" 
             style={{ 
-              bottom: isMobile ? `${centerSize * 0.06 - 5}px` : `${centerSize * 0.04375}px`,
+              bottom: isMobile ? `${centerSize * 0.06 - 6}px` : `${centerSize * 0.04375 - 1}px`,
               left: '50%',
-              transform: isMobile ? 'translateX(calc(-50% + 1px))' : 'translateX(-50%)'
+              transform: isMobile ? 'translateX(calc(-50% + 2px))' : 'translateX(calc(-50% + 1px))'
             }}
           >
             <button
