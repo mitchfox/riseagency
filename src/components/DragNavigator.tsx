@@ -121,7 +121,7 @@ export const DragNavigator = ({ options }: DragNavigatorProps) => {
     <div className="w-full">
       <div className="text-center mb-4">
         <p className="text-white/60 text-sm uppercase tracking-[0.25em] font-bebas mb-1">
-          {isDragging ? "Release to Navigate" : "Drag & Hold to Enter"}
+          {isDragging ? "Release to Navigate" : "Drag to Select Your Role"}
         </p>
         <p className="text-primary text-xl font-bebas tracking-[0.2em]">
           {t(options[currentIndex].labelKey, options[currentIndex].fallback)}
