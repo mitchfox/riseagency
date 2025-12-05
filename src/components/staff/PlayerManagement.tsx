@@ -1561,6 +1561,11 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
               </div>
             )}
           </div>
+        ) : !selectedPlayer ? (
+          // Player selected but not found (loading or invalid)
+          <div className="flex items-center justify-center py-8 text-muted-foreground">
+            Loading player data...
+          </div>
         ) : (
           // Player Detail View
           <div className="space-y-4 md:space-y-6">
