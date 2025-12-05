@@ -339,6 +339,95 @@ export type Database = {
         }
         Relationships: []
       }
+      club_outreach: {
+        Row: {
+          club_name: string
+          contact_name: string | null
+          contact_role: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          latest_update: string | null
+          latest_update_date: string | null
+          player_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          club_name: string
+          contact_name?: string | null
+          contact_role?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          latest_update?: string | null
+          latest_update_date?: string | null
+          player_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          club_name?: string
+          contact_name?: string | null
+          contact_role?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          latest_update?: string | null
+          latest_update_date?: string | null
+          player_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "club_outreach_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "club_outreach_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      club_outreach_updates: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          outreach_id: string
+          update_text: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          outreach_id: string
+          update_text: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          outreach_id?: string
+          update_text?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "club_outreach_updates_outreach_id_fkey"
+            columns: ["outreach_id"]
+            isOneToOne: false
+            referencedRelation: "club_outreach"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       coaching_analysis: {
         Row: {
           analysis_type: string | null
@@ -1260,6 +1349,57 @@ export type Database = {
           },
           {
             foreignKeyName: "player_analysis_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      player_club_submissions: {
+        Row: {
+          club_name: string
+          contact_name: string | null
+          contact_role: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          player_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          club_name: string
+          contact_name?: string | null
+          contact_role?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          player_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          club_name?: string
+          contact_name?: string | null
+          contact_role?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          player_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "player_club_submissions_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "player_club_submissions_player_id_fkey"
             columns: ["player_id"]
             isOneToOne: false
             referencedRelation: "players_public"

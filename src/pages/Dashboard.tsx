@@ -29,6 +29,7 @@ import { CacheManager } from "@/lib/cacheManager";
 import { Hub } from "@/components/dashboard/Hub";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Cell, LabelList, ReferenceLine } from "recharts";
 import { Link } from "react-router-dom";
+import { PlayerClubInterest } from "@/components/PlayerClubInterest";
 import { getR90Grade, getXGGrade, getXAGrade, getRegainsGrade, getInterceptionsGrade, getXGChainGrade, getProgressivePassesGrade, getPPTurnoversRatioGrade } from "@/lib/gradeCalculations";
 import { downloadVideo } from "@/lib/videoDownload";
 
@@ -3957,9 +3958,13 @@ const Dashboard = () => {
                     </TabsContent>
 
                     <TabsContent value="club-interest" className="space-y-6 pl-6 pr-6">
-                      <div className="py-8 text-center text-muted-foreground">
-                        No club interest updates available yet.
-                      </div>
+                      {playerData?.id ? (
+                        <PlayerClubInterest playerId={playerData.id} />
+                      ) : (
+                        <div className="py-8 text-center text-muted-foreground">
+                          Loading player data...
+                        </div>
+                      )}
                     </TabsContent>
                   </Tabs>
                 </CardContent>

@@ -49,6 +49,7 @@ import { StaffPWAInstall } from "@/components/staff/StaffPWAInstall";
 import { StaffOfflineManager } from "@/components/staff/StaffOfflineManager";
 import { StaffPushNotifications } from "@/components/staff/StaffPushNotifications";
 import { HighlightMaker } from "@/components/staff/HighlightMaker";
+import { ClubOutreachManagement } from "@/components/staff/ClubOutreachManagement";
 import { useStaffNotifications } from "@/hooks/useStaffNotifications";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -79,7 +80,8 @@ import {
   ClipboardList,
   Settings,
   Languages,
-  Film
+  Film,
+  Building2
 } from "lucide-react";
 
 const Staff = () => {
@@ -92,7 +94,7 @@ const Staff = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [isMarketeer, setIsMarketeer] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-  const [expandedSection, setExpandedSection] = useState<'overview' | 'schedule' | 'goalstasks' | 'staffschedules' | 'staffaccounts' | 'passwords' | 'pwainstall' | 'offlinemanager' | 'pushnotifications' | 'players' | 'playerlist' | 'recruitment' | 'playerdatabase' | 'scouts' | 'scoutingcentre' | 'blog' | 'betweenthelines' | 'coaching' | 'analysis' | 'highlightmaker' | 'marketing' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'legal' | 'languages' | 'sitemanagement' | null>('overview');
+  const [expandedSection, setExpandedSection] = useState<'overview' | 'schedule' | 'goalstasks' | 'staffschedules' | 'staffaccounts' | 'passwords' | 'pwainstall' | 'offlinemanager' | 'pushnotifications' | 'players' | 'playerlist' | 'recruitment' | 'playerdatabase' | 'scouts' | 'scoutingcentre' | 'blog' | 'betweenthelines' | 'coaching' | 'analysis' | 'highlightmaker' | 'marketing' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'cluboutreach' | 'legal' | 'languages' | 'sitemanagement' | null>('overview');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   
   // Enable staff notifications
@@ -545,6 +547,7 @@ const Staff = () => {
       locked: false,
         sections: [
           { id: 'clubnetwork', title: 'Club Network', icon: Network },
+          { id: 'cluboutreach', title: 'Club Outreach', icon: Building2 },
           { id: 'playerlist', title: 'Player List', icon: Users },
           { id: 'recruitment', title: 'Recruitment', icon: Target },
           { id: 'playerdatabase', title: 'Player Database', icon: Users },
@@ -912,6 +915,7 @@ const Staff = () => {
                   {expandedSection === 'invoices' && <InvoiceManagement isAdmin={isAdmin} />}
                   {expandedSection === 'updates' && <UpdatesManagement isAdmin={isAdmin} />}
                   {expandedSection === 'clubnetwork' && <ClubNetworkManagement />}
+                  {expandedSection === 'cluboutreach' && <ClubOutreachManagement />}
                   {expandedSection === 'legal' && <LegalManagement isAdmin={isAdmin} />}
                   {expandedSection === 'languages' && <LanguagesManagement isAdmin={isAdmin} />}
                   {expandedSection === 'sitemanagement' && isAdmin && <SiteManagement isAdmin={isAdmin} />}
