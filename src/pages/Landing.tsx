@@ -109,46 +109,13 @@ export default function Landing() {
         </div>
       )}
 
-      {/* Bottom Section - Cone shape (wide base, point at top) */}
+      {/* Bottom Section - Menu area */}
       <div className="pb-1 md:pb-8 z-50 relative w-full pointer-events-auto">
         <div className="relative max-w-6xl mx-auto" style={{ minHeight: '180px' }}>
-          {/* Cone background - SVG with curved base for 3D cone effect */}
-          <svg 
-            className="absolute inset-0 w-full h-full pointer-events-none"
-            viewBox="0 0 100 100"
-            preserveAspectRatio="none"
-          >
-            <defs>
-              <linearGradient id="coneGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" stopColor="rgba(0,0,0,0.3)" />
-                <stop offset="100%" stopColor="rgba(0,0,0,0.7)" />
-              </linearGradient>
-            </defs>
-            {/* Cone shape with curved base (ellipse arc) */}
-            <path 
-              d="M 50,12 L 100,92 Q 75,100 50,100 Q 25,100 0,92 Z" 
-              fill="url(#coneGradient)"
-              stroke="hsl(var(--primary) / 0.6)" 
-              strokeWidth="0.5"
-              vectorEffect="non-scaling-stroke"
-            />
-            {/* Bottom ellipse for 3D cone effect */}
-            <ellipse 
-              cx="50" 
-              cy="96" 
-              rx="50" 
-              ry="6"
-              fill="none"
-              stroke="hsl(var(--primary) / 0.3)"
-              strokeWidth="0.3"
-              vectorEffect="non-scaling-stroke"
-            />
-          </svg>
-          
-          {/* Backdrop blur overlay matching cone shape */}
+          {/* Subtle backdrop for menu readability */}
           <div 
-            className="absolute inset-0 backdrop-blur-sm pointer-events-none"
-            style={{ clipPath: 'polygon(50% 12%, 100% 92%, 100% 100%, 0% 100%, 0% 92%)' }}
+            className="absolute inset-0 backdrop-blur-sm pointer-events-none bg-black/30"
+            style={{ clipPath: 'polygon(50% 15%, 100% 100%, 0% 100%)' }}
           />
           
           {/* Content container - pushed down to align with triangle body */}
