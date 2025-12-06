@@ -66,8 +66,8 @@ export default function Landing() {
       {/* Data-driven Background */}
       <HomeBackground />
       
-      {/* RISE Logo at top center - moved up 7px */}
-      <div className="absolute top-[17px] md:top-[25px] left-1/2 -translate-x-1/2 z-50">
+      {/* RISE Logo at top center - adjusted position */}
+      <div className="absolute top-[14px] md:top-[22px] left-1/2 -translate-x-1/2 ml-[-2px] z-50">
         <img 
           src={riseLogoWhite} 
           alt="RISE Football Agency" 
