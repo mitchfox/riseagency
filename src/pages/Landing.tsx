@@ -163,7 +163,7 @@ export default function Landing() {
                   <div key={link.to} className="flex items-center">
                     <button
                       onClick={() => navigateToRole(link.to)}
-                      className="px-3 py-1 text-[15px] font-bebas uppercase tracking-[0.2em] text-white/80 hover:text-primary transition-colors duration-300 whitespace-nowrap"
+                      className="px-3 py-1 text-[17px] font-bebas uppercase tracking-[0.2em] text-white/80 hover:text-primary transition-colors duration-300 whitespace-nowrap"
                     >
                       <HoverText text={t(link.labelKey, link.fallback)} />
                     </button>
@@ -180,7 +180,7 @@ export default function Landing() {
                   <div key={link.to} className="flex items-center">
                     <button
                       onClick={() => navigateToRole(link.to)}
-                      className="px-3 py-1 text-[15px] font-bebas uppercase tracking-[0.2em] text-white/80 hover:text-primary transition-colors duration-300 whitespace-nowrap"
+                      className="px-3 py-1 text-[17px] font-bebas uppercase tracking-[0.2em] text-white/80 hover:text-primary transition-colors duration-300 whitespace-nowrap"
                     >
                       <HoverText text={t(link.labelKey, link.fallback)} />
                     </button>
@@ -229,7 +229,7 @@ export default function Landing() {
                   <div key={link.to} className="flex items-center">
                     <button
                       onClick={() => navigateToRole(link.to)}
-                      className="px-2 py-1 text-[13px] font-bebas uppercase tracking-[0.15em] text-white/80 hover:text-primary transition-colors duration-300 whitespace-nowrap"
+                      className="px-2 py-1 text-[15px] font-bebas uppercase tracking-[0.15em] text-white/80 hover:text-primary transition-colors duration-300 whitespace-nowrap"
                     >
                       <HoverText text={t(link.labelKey, link.fallback)} />
                     </button>
@@ -246,7 +246,7 @@ export default function Landing() {
                   <div key={link.to} className="flex items-center">
                     <button
                       onClick={() => navigateToRole(link.to)}
-                      className="px-2 py-1 text-[13px] font-bebas uppercase tracking-[0.15em] text-white/80 hover:text-primary transition-colors duration-300 whitespace-nowrap"
+                      className="px-2 py-1 text-[15px] font-bebas uppercase tracking-[0.15em] text-white/80 hover:text-primary transition-colors duration-300 whitespace-nowrap"
                     >
                       <HoverText text={t(link.labelKey, link.fallback)} />
                     </button>
