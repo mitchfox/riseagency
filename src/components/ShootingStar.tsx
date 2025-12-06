@@ -9,9 +9,9 @@ export const ShootingStar = ({ className = '' }: ShootingStarProps) => {
   const [position, setPosition] = useState({ x: -100, y: 0 });
 
   useEffect(() => {
-    // Animation timing: 1 second animation, then 11 seconds pause (12 second total cycle)
-    const ANIMATION_DURATION = 1000; // 1 second
-    const PAUSE_DURATION = 11000; // 11 seconds
+    // Animation timing: 2 seconds animation, then 10 seconds pause (12 second total cycle)
+    const ANIMATION_DURATION = 2000; // 2 seconds (half speed)
+    const PAUSE_DURATION = 10000; // 10 seconds
     const TOTAL_CYCLE = ANIMATION_DURATION + PAUSE_DURATION;
     
     let animationFrame: number;
@@ -90,31 +90,47 @@ export const ShootingStar = ({ className = '' }: ShootingStarProps) => {
         transform: 'translate(-50%, -50%)',
       }}
     >
-      {/* Star core - risegold */}
+      {/* Star core - bright white center with gold glow */}
       <div 
         className="absolute rounded-full"
         style={{
-          width: '10px',
-          height: '10px',
-          background: `radial-gradient(circle, ${riseGoldLight} 0%, ${riseGold} 60%, #d4a84b 100%)`,
+          width: '6px',
+          height: '6px',
+          background: `radial-gradient(circle, #ffffff 0%, ${riseGoldLight} 40%, ${riseGold} 100%)`,
           boxShadow: `
-            0 0 8px 4px ${riseGold}cc,
-            0 0 16px 8px ${riseGold}99,
-            0 0 32px 16px ${riseGold}44
+            0 0 4px 2px #ffffffcc,
+            0 0 10px 5px ${riseGoldLight}aa,
+            0 0 20px 10px ${riseGold}66,
+            0 0 40px 20px ${riseGold}22
           `,
         }}
       />
-      {/* Trail - risegold gradient */}
+      {/* Main trail - elegant taper */}
+      <div 
+        className="absolute"
+        style={{
+          width: '120px',
+          height: '2px',
+          left: '-115px',
+          top: '2px',
+          background: `linear-gradient(to right, transparent 0%, ${riseGold}11 20%, ${riseGold}55 50%, ${riseGoldLight}cc 85%, #ffffff 100%)`,
+          borderRadius: '1px',
+          filter: 'blur(0.5px)',
+          transform: 'rotate(-45deg)',
+          transformOrigin: 'right center',
+        }}
+      />
+      {/* Secondary glow trail */}
       <div 
         className="absolute"
         style={{
           width: '80px',
-          height: '4px',
+          height: '6px',
           left: '-75px',
-          top: '3px',
-          background: `linear-gradient(to right, transparent 0%, ${riseGold}33 30%, ${riseGold}aa 70%, ${riseGoldLight} 100%)`,
-          borderRadius: '2px',
-          filter: 'blur(1px)',
+          top: '0px',
+          background: `linear-gradient(to right, transparent 0%, ${riseGold}08 30%, ${riseGold}22 70%, ${riseGold}44 100%)`,
+          borderRadius: '3px',
+          filter: 'blur(3px)',
           transform: 'rotate(-45deg)',
           transformOrigin: 'right center',
         }}
