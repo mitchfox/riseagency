@@ -506,7 +506,7 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         mousePos: { value: new THREE.Vector2(-1, -1) }, // User hover position
         autoPos: { value: new THREE.Vector2(0.5, 0.55) }, // Auto-reveal position
         resolution: { value: new THREE.Vector2(container.clientWidth, container.clientHeight) },
-        xrayRadius: { value: isMobile ? 0.08 : 0.12 },
+        xrayRadius: { value: isMobile ? 0.045 : 0.12 },
         depthScale: { value: 0.12 },
         roughness: { value: 0.5 },
         playerCenter: { value: new THREE.Vector2(0.5, 0.55) },
