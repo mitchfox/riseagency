@@ -204,10 +204,32 @@ const PlayerDetail = () => {
     );
   }
 
+  // Map player names to their custom OG images
+  const getPlayerOgImage = (playerName: string): string => {
+    const ogImages: Record<string, string> = {
+      'tyrese omotoye': '/og-tyrese-omotoye.png',
+      'michael vit mulligan': '/og-michael-vit-mulligan.png',
+    };
+    return ogImages[playerName.toLowerCase()] || player.image_url || '/og-preview-home.png';
+  };
+
+  const ogImage = getPlayerOgImage(player.name);
+  const siteUrl = window.location.origin;
+  const fullOgImage = ogImage.startsWith('http') ? ogImage : `${siteUrl}${ogImage}`;
+
   return (
     <>
       <Helmet>
         <title>{player.name} | RISE Football Agency</title>
+        <meta property="og:title" content={`${player.name} | RISE Football Agency`} />
+        <meta property="og:description" content={`${player.name} - Professional football player represented by RISE Football Agency.`} />
+        <meta property="og:image" content={fullOgImage} />
+        <meta property="og:url" content={`${siteUrl}/stars/${playername}`} />
+        <meta property="og:type" content="profile" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={`${player.name} | RISE Football Agency`} />
+        <meta name="twitter:description" content={`${player.name} - Professional football player represented by RISE Football Agency.`} />
+        <meta name="twitter:image" content={fullOgImage} />
         {player.representation_status !== 'represented' && (
           <meta name="robots" content="noindex, nofollow" />
         )}
