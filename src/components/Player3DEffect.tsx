@@ -168,8 +168,8 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         float combinedDepth = baseDepth * (1.0 + boostAmount * 0.15 - reduceAmount * 0.1);
         combinedDepth = clamp(combinedDepth, 0.2, 1.0);
         
-        // Zero out parallax in bottom-right corner (football area)
-        float bottomRightMask = smoothstep(0.55, 0.75, vUv.x) * smoothstep(0.45, 0.25, vUv.y);
+        // Zero out parallax in bottom-right corner (football area) - earlier fade
+        float bottomRightMask = smoothstep(0.45, 0.65, vUv.x) * smoothstep(0.55, 0.30, vUv.y);
         combinedDepth *= (1.0 - bottomRightMask);
         
         // Parallax offset based on mouse position and combined depth
