@@ -26,6 +26,9 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
   const lastInteractionRef = useRef(0)
   const autoRevealPosRef = useRef({ x: 0.5, y: 0.5 })
 
+  // Utility to yield to main thread, preventing long tasks
+  const yieldToMain = () => new Promise<void>(resolve => setTimeout(resolve, 0));
+
   // Load images from zip + custom depth maps
   const loadImages = useCallback(async () => {
     try {
@@ -45,14 +48,26 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
       const shadowPromise = loadImage("/assets/player-shadow.png")
       const bwLayerPromise = loadImage("/assets/player-bw-layer.png")
 
+      // Yield before heavy zip processing
+      await yieldToMain();
+
       const response = await fetch("/assets/Website_Hero_RISE.zip")
       const zipData = await response.arrayBuffer()
+      
+      // Yield after fetch, before JSZip processing
+      await yieldToMain();
+      
       const zip = await JSZip.loadAsync(zipData)
+      
+      // Yield after zip parsing
+      await yieldToMain();
       
       const imageMap: { [key: string]: HTMLImageElement } = {}
       const imagePromises: Promise<void>[] = []
 
-      zip.forEach((relativePath, file) => {
+      const files = Object.entries(zip.files);
+      for (let i = 0; i < files.length; i++) {
+        const [relativePath, file] = files[i];
         if (relativePath.endsWith(".png") && !relativePath.startsWith("__MACOSX")) {
           const match = relativePath.match(/(\d+)\.png$/i)
           if (match) {
@@ -71,7 +86,9 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
             imagePromises.push(promise)
           }
         }
-      })
+        // Yield every few files to prevent blocking
+        if (i % 3 === 0) await yieldToMain();
+      }
 
       const [depthMapImg, depthLightenedImg, depthDarkenedImg, kitOverlayImg, kitDepthImg, shadowImg, bwLayerImg] = await Promise.all([
         depthMapPromise, 
