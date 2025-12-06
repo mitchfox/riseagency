@@ -487,7 +487,7 @@ export const RadialMenu = () => {
             style={{ 
               width: `${centerSize * 0.9}px`,
               height: `${centerSize * 0.9}px`,
-              transform: `translate(-2px, ${isMobile ? -centerSize * 0.06 + 7 : -centerSize * 0.13 + 7}px)` 
+              transform: `translate(-2px, ${isMobile ? -centerSize * 0.06 + 7 - 3 : -centerSize * 0.13 + 7}px)` 
             }}
           />
           
@@ -501,7 +501,7 @@ export const RadialMenu = () => {
           <div
             className="text-center relative z-20 w-full flex items-center justify-center"
             style={{ 
-              transform: `translateY(${isMobile ? (-centerSize * 0.28 - 4) : (-centerSize * 0.3125)}px)` 
+              transform: `translateY(${isMobile ? (-centerSize * 0.28 - 4 + 1) : (-centerSize * 0.3125)}px)` 
             }}
           >
             <button
@@ -520,7 +520,7 @@ export const RadialMenu = () => {
           <div 
             className="absolute z-20" 
             style={{ 
-              bottom: isMobile ? `${centerSize * 0.06 - 7}px` : `${centerSize * 0.04375 - 2}px`,
+              bottom: isMobile ? `${centerSize * 0.06 - 7 - 2}px` : `${centerSize * 0.04375 - 2}px`,
               left: '50%',
               transform: isMobile ? 'translateX(calc(-50% + 4px))' : 'translateX(calc(-50% + 3px))'
             }}
@@ -528,15 +528,15 @@ export const RadialMenu = () => {
             <button
               onClick={() => setShowMap(!showMap)}
               className="flex items-center gap-1 font-bebas uppercase tracking-wider text-primary hover:text-primary/80 transition-all duration-300 focus:outline-none"
-              style={{ fontSize: `${isMobile ? centerSize * 0.165 : centerSize * 0.09375}px` }}
+              style={{ fontSize: `${isMobile ? centerSize * 0.165 * 0.7 : centerSize * 0.09375}px` }}
             >
-              <span style={{ fontSize: `${isMobile ? centerSize * 0.225 : centerSize * 0.13125}px` }}>{selectedLanguage.flag}</span>
+              <span style={{ fontSize: `${isMobile ? centerSize * 0.225 * 0.7 : centerSize * 0.13125}px` }}>{selectedLanguage.flag}</span>
               <span>{selectedLanguage.name}</span>
               <ChevronDown 
                 className="transition-transform duration-300"
                 style={{
-                  width: `${isMobile ? centerSize * 0.18 : centerSize * 0.1171875}px`,
-                  height: `${isMobile ? centerSize * 0.18 : centerSize * 0.1171875}px`,
+                  width: `${isMobile ? centerSize * 0.18 * 0.7 : centerSize * 0.1171875}px`,
+                  height: `${isMobile ? centerSize * 0.18 * 0.7 : centerSize * 0.1171875}px`,
                   transform: showMap ? 'rotate(180deg)' : 'rotate(0deg)'
                 }}
               />
