@@ -60,7 +60,7 @@ export default function Landing() {
 
   return (
     <XRayProvider>
-    <div className="bg-black flex flex-col items-center justify-end relative overflow-hidden cursor-none md:cursor-none" style={{ minHeight: '100dvh', height: '100dvh' }}>
+    <div className="bg-black flex flex-col items-center justify-end relative overflow-hidden cursor-none md:cursor-none" style={{ height: '100dvh', maxHeight: '100dvh' }}>
       {/* Electric Wave Effect */}
       <ElectricWave />
       
@@ -106,8 +106,8 @@ export default function Landing() {
       )}
 
       {/* Bottom Section - Triangular shape (wide base, point at top) */}
-      <div className="pb-2 md:pb-12 z-50 relative w-full pointer-events-auto">
-        <div className="relative max-w-6xl mx-auto" style={{ minHeight: '220px' }}>
+      <div className="pb-1 md:pb-8 z-50 relative w-full pointer-events-auto">
+        <div className="relative max-w-6xl mx-auto" style={{ minHeight: '180px' }}>
           {/* Triangle background - SVG that creates the actual triangle shape */}
           {/* Point is at 50% horizontal, positioned to be directly above language selector */}
           <svg 
@@ -137,7 +137,7 @@ export default function Landing() {
           />
           
           {/* Content container - pushed down to align with triangle body */}
-          <div className="relative z-10 px-4 md:px-8 pt-16 md:pt-14 pb-2 md:py-5">
+          <div className="relative z-10 px-4 md:px-8 pt-12 md:pt-10 pb-1 md:py-3">
             {/* Desktop Layout */}
             <div className="hidden md:block">
               {/* Language Selector at top - near triangle peak */}
@@ -209,7 +209,7 @@ export default function Landing() {
             </div>
 
             {/* Mobile Layout - pushed down with proper divider lines */}
-            <div className="md:hidden flex flex-col items-center gap-0 mt-8">
+            <div className="md:hidden flex flex-col items-center gap-0 mt-4">
               {/* Language Selector at top - near peak */}
               <div className="pb-1 mb-1 flex justify-center">
                 <LanguageMapSelector onOpenChange={setLanguagePopupOpen} />
