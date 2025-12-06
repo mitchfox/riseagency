@@ -584,11 +584,17 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
           finalColor *= shimmer;
         }
         
-        // ============= MAKE PLAYER TRANSPARENT WHERE FLUID IS =============
-        // This reveals the actual white marble page background behind
-        float revealAlpha = alpha * (1.0 - coreTransparency * 0.92);
-        
-        gl_FragColor = vec4(finalColor, revealAlpha);
+        // ============= CRITICAL: BLACK OUTSIDE PLAYER, TRANSPARENT ONLY WHERE FLUID =============
+        // Areas outside the player (low alpha) must be BLACK OPAQUE to match page background
+        // Only the player itself becomes transparent where fluid effect is active
+        if (alpha < 0.1) {
+          // Outside player - render black opaque
+          gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+        } else {
+          // Inside player - apply fluid transparency to reveal marble behind
+          float revealAlpha = alpha * (1.0 - coreTransparency * 0.92);
+          gl_FragColor = vec4(finalColor, revealAlpha);
+        }
       }
     `
 
