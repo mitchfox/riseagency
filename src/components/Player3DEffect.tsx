@@ -886,26 +886,35 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
       const velocity = { x: 0, y: 0 }
       let speed = 0
       
-      // Phantom touch (auto-swipe) state
-      const PHANTOM_INTERVAL = 3500 // 3.5 seconds
+      // Phantom touch (auto-swipe) state - supports multiple overlapping swipes
+      const PHANTOM_INTERVAL = 2000 // 2 seconds
       let lastPhantomTime = Date.now()
-      let phantomActive = false
-      let phantomStartTime = 0
       const phantomDuration = 800 // Duration of each phantom swipe
-      let phantomStart = { x: 0, y: 0 }
-      let phantomEnd = { x: 0, y: 0 }
       
-      const generatePhantomSwipe = () => {
+      interface PhantomSwipe {
+        startTime: number
+        start: { x: number; y: number }
+        end: { x: number; y: number }
+      }
+      const activePhantoms: PhantomSwipe[] = []
+      
+      const generatePhantomSwipe = (): PhantomSwipe => {
         // Random start position
-        phantomStart.x = 0.2 + Math.random() * 0.6
-        phantomStart.y = 0.2 + Math.random() * 0.6
+        const startX = 0.2 + Math.random() * 0.6
+        const startY = 0.2 + Math.random() * 0.6
         
         // Random direction and length
         const angle = Math.random() * Math.PI * 2
         const length = 0.15 + Math.random() * 0.25
         
-        phantomEnd.x = Math.max(0.1, Math.min(0.9, phantomStart.x + Math.cos(angle) * length))
-        phantomEnd.y = Math.max(0.1, Math.min(0.9, phantomStart.y + Math.sin(angle) * length))
+        return {
+          startTime: Date.now(),
+          start: { x: startX, y: startY },
+          end: {
+            x: Math.max(0.1, Math.min(0.9, startX + Math.cos(angle) * length)),
+            y: Math.max(0.1, Math.min(0.9, startY + Math.sin(angle) * length))
+          }
+        }
       }
 
       const animate = () => {
@@ -951,51 +960,70 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         if (!isUserActive) {
           const timeSincePhantom = currentTime - lastPhantomTime
           
-          if (!phantomActive && timeSincePhantom >= PHANTOM_INTERVAL) {
-            // Start a new phantom swipe
-            phantomActive = true
-            phantomStartTime = currentTime
-            generatePhantomSwipe()
+          // Start a new phantom swipe every interval (can overlap)
+          if (timeSincePhantom >= PHANTOM_INTERVAL) {
+            activePhantoms.push(generatePhantomSwipe())
+            lastPhantomTime = currentTime
           }
           
-          if (phantomActive) {
-            const phantomElapsed = currentTime - phantomStartTime
-            const phantomProgress = Math.min(phantomElapsed / phantomDuration, 1)
+          // Process all active phantoms and blend their positions
+          if (activePhantoms.length > 0) {
+            let blendedX = 0
+            let blendedY = 0
+            let totalWeight = 0
             
-            // Ease in-out for smooth motion
-            const easedProgress = phantomProgress < 0.5
-              ? 2 * phantomProgress * phantomProgress
-              : 1 - Math.pow(-2 * phantomProgress + 2, 2) / 2
-            
-            // Interpolate phantom position
-            mouseX = phantomStart.x + (phantomEnd.x - phantomStart.x) * easedProgress
-            mouseY = phantomStart.y + (phantomEnd.y - phantomStart.y) * easedProgress
-            
-            // Update velocity for phantom
-            if (cursorBlobTarget.x >= 0) {
-              velocity.x = mouseX - cursorBlobTarget.x
-              velocity.y = mouseY - cursorBlobTarget.y
-              speed = Math.sqrt(velocity.x * velocity.x + velocity.y * velocity.y)
-              if (speed > 0.001) {
-                velocity.x /= speed
-                velocity.y /= speed
+            // Remove completed phantoms and blend active ones
+            for (let i = activePhantoms.length - 1; i >= 0; i--) {
+              const phantom = activePhantoms[i]
+              const phantomElapsed = currentTime - phantom.startTime
+              const phantomProgress = phantomElapsed / phantomDuration
+              
+              if (phantomProgress >= 1) {
+                activePhantoms.splice(i, 1)
+                continue
               }
-              speed = Math.min(speed * 15, 1.0)
+              
+              // Ease in-out for smooth motion
+              const easedProgress = phantomProgress < 0.5
+                ? 2 * phantomProgress * phantomProgress
+                : 1 - Math.pow(-2 * phantomProgress + 2, 2) / 2
+              
+              // Weight newer phantoms more heavily
+              const weight = 1 - phantomProgress * 0.5
+              
+              const px = phantom.start.x + (phantom.end.x - phantom.start.x) * easedProgress
+              const py = phantom.start.y + (phantom.end.y - phantom.start.y) * easedProgress
+              
+              blendedX += px * weight
+              blendedY += py * weight
+              totalWeight += weight
             }
             
-            cursorBlobTarget.x = mouseX
-            cursorBlobTarget.y = mouseY
-            lastCursorMoveTime = currentTime
-            
-            if (phantomProgress >= 1) {
-              phantomActive = false
-              lastPhantomTime = currentTime
+            if (totalWeight > 0) {
+              mouseX = blendedX / totalWeight
+              mouseY = blendedY / totalWeight
+              
+              // Update velocity for phantom
+              if (cursorBlobTarget.x >= 0) {
+                velocity.x = mouseX - cursorBlobTarget.x
+                velocity.y = mouseY - cursorBlobTarget.y
+                speed = Math.sqrt(velocity.x * velocity.x + velocity.y * velocity.y)
+                if (speed > 0.001) {
+                  velocity.x /= speed
+                  velocity.y /= speed
+                }
+                speed = Math.min(speed * 15, 1.0)
+              }
+              
+              cursorBlobTarget.x = mouseX
+              cursorBlobTarget.y = mouseY
+              lastCursorMoveTime = currentTime
             }
           }
         } else {
           // Reset phantom timer when user interacts
           lastPhantomTime = currentTime
-          phantomActive = false
+          activePhantoms.length = 0 // Clear all active phantoms
         }
         
         // Update cursor target and track velocity (for real user input)
