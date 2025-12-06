@@ -5,6 +5,7 @@ import { HoverText } from "@/components/HoverText";
 import { LazyPlayer3D } from "@/components/LazyPlayer3D";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { HomeBackground } from "@/components/HomeBackground";
+import { LightConeBackground } from "@/components/LightConeBackground";
 import { XRayProvider } from "@/contexts/XRayContext";
 import { DragNavigator } from "@/components/DragNavigator";
 import { LandingCursor } from "@/components/LandingCursor";
@@ -70,6 +71,9 @@ export default function Landing() {
       {/* Data-driven Background */}
       <HomeBackground />
       
+      {/* Light Cone Background - revealed by X-Ray */}
+      <LightConeBackground />
+      
       {/* RISE Logo at top center - shifted 5px left */}
       <div 
         className="absolute top-[14px] md:top-[22px] z-50"
@@ -105,35 +109,46 @@ export default function Landing() {
         </div>
       )}
 
-      {/* Bottom Section - Triangular shape (wide base, point at top) */}
+      {/* Bottom Section - Cone shape (wide base, point at top) */}
       <div className="pb-1 md:pb-8 z-50 relative w-full pointer-events-auto">
         <div className="relative max-w-6xl mx-auto" style={{ minHeight: '180px' }}>
-          {/* Triangle background - SVG that creates the actual triangle shape */}
-          {/* Point is at 50% horizontal, positioned to be directly above language selector */}
+          {/* Cone background - SVG with curved base for 3D cone effect */}
           <svg 
             className="absolute inset-0 w-full h-full pointer-events-none"
             viewBox="0 0 100 100"
             preserveAspectRatio="none"
-            style={{ filter: 'blur(0px)' }}
           >
             <defs>
-              <filter id="blur-filter" x="-50%" y="-50%" width="200%" height="200%">
-                <feGaussianBlur in="SourceGraphic" stdDeviation="0" />
-              </filter>
+              <linearGradient id="coneGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor="rgba(0,0,0,0.3)" />
+                <stop offset="100%" stopColor="rgba(0,0,0,0.7)" />
+              </linearGradient>
             </defs>
-            <polygon 
-              points="50,15 100,100 0,100" 
-              fill="rgba(0,0,0,0.55)"
+            {/* Cone shape with curved base (ellipse arc) */}
+            <path 
+              d="M 50,12 L 100,92 Q 75,100 50,100 Q 25,100 0,92 Z" 
+              fill="url(#coneGradient)"
               stroke="hsl(var(--primary) / 0.6)" 
               strokeWidth="0.5"
               vectorEffect="non-scaling-stroke"
             />
+            {/* Bottom ellipse for 3D cone effect */}
+            <ellipse 
+              cx="50" 
+              cy="96" 
+              rx="50" 
+              ry="6"
+              fill="none"
+              stroke="hsl(var(--primary) / 0.3)"
+              strokeWidth="0.3"
+              vectorEffect="non-scaling-stroke"
+            />
           </svg>
           
-          {/* Backdrop blur overlay matching triangle shape */}
+          {/* Backdrop blur overlay matching cone shape */}
           <div 
             className="absolute inset-0 backdrop-blur-sm pointer-events-none"
-            style={{ clipPath: 'polygon(50% 15%, 100% 100%, 0% 100%)' }}
+            style={{ clipPath: 'polygon(50% 12%, 100% 92%, 100% 100%, 0% 100%, 0% 92%)' }}
           />
           
           {/* Content container - pushed down to align with triangle body */}
