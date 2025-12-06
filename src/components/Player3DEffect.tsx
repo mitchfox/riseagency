@@ -585,21 +585,23 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         }
         
         // ============= FINAL OUTPUT =============
-        // Outside player = TRANSPARENT (shows black page background)
-        // Inside player with fluid = render MARBLE texture
-        // Inside player without fluid = normal opaque player
+        // Outside player: black normally, white marble when fluid hovers
+        // Inside player: ALWAYS normal player, NEVER touched
         if (alpha < 0.1) {
-          // Outside player - TRANSPARENT to show black background
-          gl_FragColor = vec4(0.0, 0.0, 0.0, 0.0);
-        } else if (coreTransparency > 0.05) {
-          // Fluid active - render white marble HERE
-          vec3 marbleBase = vec3(0.97, 0.97, 0.98);
-          float vein1 = sin(vUv.x * 25.0 + vUv.y * 18.0 + 0.5) * 0.015;
-          float vein2 = sin(vUv.y * 30.0 - vUv.x * 12.0) * 0.01;
-          vec3 marbleColor = marbleBase + vein1 + vein2;
-          gl_FragColor = vec4(marbleColor, 1.0);
+          // OUTSIDE PLAYER (background area)
+          if (coreTransparency > 0.05) {
+            // Fluid hovering over background - show WHITE MARBLE
+            vec3 marbleBase = vec3(0.97, 0.97, 0.98);
+            float vein1 = sin(vUv.x * 25.0 + vUv.y * 18.0 + 0.5) * 0.015;
+            float vein2 = sin(vUv.y * 30.0 - vUv.x * 12.0) * 0.01;
+            vec3 marbleColor = marbleBase + vein1 + vein2;
+            gl_FragColor = vec4(marbleColor, 1.0);
+          } else {
+            // No fluid - show BLACK background
+            gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+          }
         } else {
-          // No fluid - normal opaque player
+          // INSIDE PLAYER - ALWAYS show normal player, NO EXCEPTIONS
           gl_FragColor = vec4(finalColor, alpha);
         }
       }
