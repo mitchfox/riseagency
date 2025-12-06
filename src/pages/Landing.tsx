@@ -108,7 +108,7 @@ export default function Landing() {
       {/* Bottom Section - Triangular shape (wide base, point at top) */}
       <div className="pb-4 md:pb-12 z-50 relative px-2 md:px-4 w-full pointer-events-auto">
         <div 
-          className="bg-black/40 backdrop-blur-sm px-4 md:px-8 py-4 md:py-5 max-w-6xl mx-auto relative"
+          className="bg-black/40 backdrop-blur-sm px-4 md:px-8 py-4 md:py-5 max-w-6xl mx-auto relative overflow-hidden"
           style={{
             clipPath: 'polygon(50% 0%, 100% 100%, 0% 100%)',
           }}
@@ -116,14 +116,15 @@ export default function Landing() {
           {/* SVG border overlay for triangular shape */}
           <svg 
             className="absolute inset-0 w-full h-full pointer-events-none" 
+            viewBox="0 0 100 100"
             preserveAspectRatio="none"
             style={{ zIndex: 1 }}
           >
             <polygon 
-              points="50%,0% 100%,100% 0%,100%" 
+              points="50,0 100,100 0,100" 
               fill="none" 
               stroke="hsl(var(--primary) / 0.6)" 
-              strokeWidth="2"
+              strokeWidth="0.5"
               vectorEffect="non-scaling-stroke"
             />
           </svg>
@@ -135,12 +136,13 @@ export default function Landing() {
               <LanguageMapSelector onOpenChange={setLanguagePopupOpen} />
             </div>
             
-            {/* Buttons below language selector */}
-            <div className="flex items-center justify-center gap-6 mb-4">
+            {/* Buttons below language selector - same size */}
+            <div className="flex items-center justify-center gap-4 mb-4">
               <Button 
                 onClick={() => setShowRepresentation(true)}
                 variant="outline"
-                className="font-bebas uppercase tracking-wider border-primary/50 text-primary hover:bg-primary/10 hover:text-primary px-6"
+                size="sm"
+                className="font-bebas uppercase tracking-wider border-primary/50 text-primary hover:bg-primary/10 hover:text-primary px-4 h-8 text-sm"
                 hoverEffect
               >
                 {t("landing.represent_me", "Represent Me")}
@@ -148,7 +150,8 @@ export default function Landing() {
               
               <Button 
                 onClick={() => setShowDeclareInterest(true)}
-                className="btn-shine font-bebas uppercase tracking-wider px-6"
+                size="sm"
+                className="btn-shine font-bebas uppercase tracking-wider px-4 h-8 text-sm"
                 hoverEffect
               >
                 {t("landing.declare_interest", "Declare Interest In Star")}
@@ -200,13 +203,13 @@ export default function Landing() {
               <LanguageMapSelector onOpenChange={setLanguagePopupOpen} />
             </div>
             
-            {/* Represent Me & Declare Interest Buttons */}
+            {/* Represent Me & Declare Interest Buttons - same size */}
             <div className="flex gap-2 mb-2">
               <Button 
                 onClick={() => setShowRepresentation(true)}
                 variant="outline"
                 size="sm"
-                className="font-bebas uppercase tracking-wider border-primary/50 text-primary hover:bg-primary/10 hover:text-primary text-xs px-3"
+                className="font-bebas uppercase tracking-wider border-primary/50 text-primary hover:bg-primary/10 hover:text-primary text-xs px-2 h-7"
                 hoverEffect
               >
                 {t("landing.represent_me", "Represent Me")}
@@ -214,7 +217,7 @@ export default function Landing() {
               <Button 
                 onClick={() => setShowDeclareInterest(true)}
                 size="sm"
-                className="btn-shine font-bebas uppercase tracking-wider text-xs px-3"
+                className="btn-shine font-bebas uppercase tracking-wider text-xs px-2 h-7"
                 hoverEffect
               >
                 {t("landing.declare_interest_short", "Declare Interest")}
