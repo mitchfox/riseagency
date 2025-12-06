@@ -10,11 +10,12 @@ interface LanguageRegion {
   name: string;
   nativeName: string;
   flag: string;
+  // Position on map (percentage)
   x: number;
   y: number;
 }
 
-// Positions as percentages of the map container
+// Positions are percentages - will adjust based on feedback
 const languageRegions: LanguageRegion[] = [
   { code: "en", name: "English", nativeName: "English", flag: "🇬🇧", x: 30, y: 60 },
   { code: "es", name: "Spanish", nativeName: "Español", flag: "🇪🇸", x: 29, y: 87 },
@@ -35,12 +36,12 @@ interface LanguageMapSelectorProps {
 export const LanguageMapSelector = ({ onOpenChange }: LanguageMapSelectorProps) => {
   const { language, switchLanguage } = useLanguage();
   const [open, setOpen] = useState(false);
-  const [hoveredLang, setHoveredLang] = useState<LanguageCode | null>(null);
 
   const handleOpenChange = (newOpen: boolean) => {
     setOpen(newOpen);
     onOpenChange?.(newOpen);
   };
+  const [hoveredLang, setHoveredLang] = useState<LanguageCode | null>(null);
   
   const selectedLanguage = languageRegions.find(l => l.code === language) || languageRegions[0];
 
@@ -65,7 +66,7 @@ export const LanguageMapSelector = ({ onOpenChange }: LanguageMapSelectorProps) 
       {/* Modal Overlay */}
       {open && (
         <div 
-          className="fixed inset-0 z-[9999] flex items-center justify-center"
+          className="fixed inset-0 z-[9999] flex items-end justify-center pb-20 md:pb-24"
           onClick={() => handleOpenChange(false)}
         >
           {/* Backdrop */}
@@ -73,20 +74,19 @@ export const LanguageMapSelector = ({ onOpenChange }: LanguageMapSelectorProps) 
           
           {/* Content */}
           <div 
-            className="relative bg-black/95 border border-primary/30 max-w-4xl mx-4 overflow-hidden rounded-lg"
+            className="relative bg-black/95 border border-primary/30 max-w-4xl w-full mx-4 overflow-hidden rounded-lg"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Close Button */}
             <button
               type="button"
               onClick={() => handleOpenChange(false)}
-              className="absolute right-4 top-4 z-20 text-white/70 hover:text-white transition-colors"
+              className="absolute right-4 top-4 z-10 text-white/70 hover:text-white transition-colors"
             >
               <X className="h-5 w-5" />
             </button>
 
-            {/* Map container */}
-            <div className="relative w-full aspect-[16/10] overflow-hidden">
+            <div className="relative w-full aspect-[16/10]">
               {/* Europe Map Image */}
               <img 
                 src={europeMap} 
@@ -95,7 +95,7 @@ export const LanguageMapSelector = ({ onOpenChange }: LanguageMapSelectorProps) 
               />
               
               {/* Overlay gradient */}
-              <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60 pointer-events-none" />
+              <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60" />
               
               {/* Language markers */}
               {languageRegions.map((region) => {
@@ -143,7 +143,7 @@ export const LanguageMapSelector = ({ onOpenChange }: LanguageMapSelectorProps) 
                       className={`
                         absolute left-1/2 -translate-x-1/2 top-full mt-1
                         whitespace-nowrap text-xs md:text-sm font-bebas uppercase tracking-wider
-                        px-2 py-0.5 rounded bg-black/90
+                        px-2 py-0.5 rounded bg-black/80
                         transition-all duration-300
                         ${isSelected || isHovered ? 'opacity-100 text-primary' : 'opacity-0 group-hover:opacity-100 text-white/70'}
                       `}
@@ -155,18 +155,18 @@ export const LanguageMapSelector = ({ onOpenChange }: LanguageMapSelectorProps) 
               })}
               
               {/* Title */}
-              <div className="absolute top-4 left-0 right-0 text-center z-10">
+              <div className="absolute top-4 left-0 right-0 text-center">
                 <h3 className="text-xl md:text-2xl font-bebas uppercase tracking-[0.3em] text-primary">
                   Select Language
                 </h3>
                 <p className="text-xs text-white/50 font-bebas tracking-wider mt-1">
-                  Tap a flag to switch
+                  Click a country to switch
                 </p>
               </div>
               
               {/* Current selection indicator */}
-              <div className="absolute bottom-4 left-0 right-0 text-center z-10">
-                <span className="text-sm font-bebas uppercase tracking-wider text-white/60 bg-black/80 px-3 py-1 rounded">
+              <div className="absolute bottom-4 left-0 right-0 text-center">
+                <span className="text-sm font-bebas uppercase tracking-wider text-white/60">
                   Current: <span className="text-primary">{selectedLanguage.flag} {selectedLanguage.nativeName}</span>
                 </span>
               </div>

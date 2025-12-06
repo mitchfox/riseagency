@@ -530,7 +530,7 @@ export const RadialMenu = () => {
               className="flex items-center gap-1 font-bebas uppercase tracking-wider text-primary hover:text-primary/80 transition-all duration-300 focus:outline-none"
               style={{ fontSize: `${isMobile ? centerSize * 0.165 * 0.7 : centerSize * 0.09375}px` }}
             >
-              <span style={{ fontSize: `${isMobile ? centerSize * 0.225 * 0.5 : centerSize * 0.13125}px` }}>{selectedLanguage.flag}</span>
+              <span style={{ fontSize: `${isMobile ? centerSize * 0.225 * 0.7 : centerSize * 0.13125}px` }}>{selectedLanguage.flag}</span>
               <span>{selectedLanguage.name}</span>
               <ChevronDown 
                 className="transition-transform duration-300"
