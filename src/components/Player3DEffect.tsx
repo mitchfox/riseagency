@@ -186,8 +186,8 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         }
         
         // Combine: boost adds to depth, reduce subtracts from it
-        float parallaxStrength = 0.06 + (boostAmount * 0.02) - (reduceAmount * 0.01);
-        parallaxStrength = clamp(parallaxStrength, 0.03, 0.09);
+        float parallaxStrength = 0.26 + (boostAmount * 0.02) - (reduceAmount * 0.01);
+        parallaxStrength = clamp(parallaxStrength, 0.23, 0.29);
         
         // Combined depth - less aggressive modifiers for more even distribution
         float combinedDepth = baseDepth * (1.0 + boostAmount * 0.15 - reduceAmount * 0.1);
@@ -243,24 +243,24 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
           // Focus on lighter areas (face/arms) - threshold for skin tones
           float skinMask = smoothstep(0.35, 0.7, bwBrightness);
           
-          // Animated specular highlights on skin
-          float specular = combinedLight * skinMask * bwColor.a;
+          // Animated specular highlights on skin - boosted intensity
+          float specular = combinedLight * skinMask * bwColor.a * 1.5;
           
-          // Add warm rim light effect
-          vec3 rimLight = warmLight * specular * 0.4;
+          // Add warm rim light effect - stronger
+          vec3 rimLight = warmLight * specular * 0.8;
           
-          // Add subtle gold reflection
-          vec3 goldReflection = goldColor * specular * 0.25;
+          // Add gold reflection - stronger
+          vec3 goldReflection = goldColor * specular * 0.5;
           
-          // Create pulsing glow on brightest areas (face highlights)
+          // Create pulsing glow on brightest areas (face highlights) - stronger
           float highlightPulse = sin(bwLightPhase * 3.0) * 0.5 + 0.5;
-          float brightHighlights = smoothstep(0.65, 0.9, bwBrightness) * highlightPulse * bwColor.a;
-          vec3 brightGlow = brightGold * brightHighlights * 0.3;
+          float brightHighlights = smoothstep(0.5, 0.85, bwBrightness) * highlightPulse * bwColor.a;
+          vec3 brightGlow = brightGold * brightHighlights * 0.6;
           
-          // Blend B&W layer behind current composite with light effects, modulated by opacity
-          vec3 litBwLayer = bwColor.rgb + rimLight + goldReflection + brightGlow;
-          float blendFactor = mix(1.0, 0.7, bwLayerOpacity);
-          compositeColor = mix(litBwLayer, compositeColor, blendFactor);
+          // Blend B&W layer with light effects on top, modulated by opacity
+          vec3 litBwLayer = bwColor.rgb + (rimLight + goldReflection + brightGlow) * bwLayerOpacity;
+          // When opacity is 1, show more of the lit B&W layer; when 0, show only composite
+          compositeColor = mix(compositeColor, litBwLayer, bwLayerOpacity * 0.5);
         }
         
         // === KIT OVERLAY - Always visible, with sweeping shine on top ===
