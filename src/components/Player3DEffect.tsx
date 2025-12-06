@@ -58,7 +58,7 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
       })
 
       await Promise.all(imagePromises)
-      return { baseImage: imageMap["7"], xrayImage: imageMap["11"] }
+      return { baseImage: imageMap["7"], xrayImage: imageMap["7"] }
     } catch (error) {
       console.error("Error loading zip:", error)
       return null
@@ -486,8 +486,8 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         roughness: { value: 0.5 },
         playerCenter: { value: new THREE.Vector2(0.5, 0.55) },
         userActive: { value: 0.0 }, // Whether user is hovering
-        xrayOffset: { value: new THREE.Vector2(0.0, -0.03) }, // Adjusted Y offset to align images
-        xrayScale: { value: 0.92 } // Scale adjustment for x-ray
+        xrayOffset: { value: new THREE.Vector2(0.0, 0.0) }, // Same position for both images
+        xrayScale: { value: 1.0 } // Same scale for both images
       }
 
       const geometry = new THREE.PlaneGeometry(planeWidth, planeHeight, 128, 128)
