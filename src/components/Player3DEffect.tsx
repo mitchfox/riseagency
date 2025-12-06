@@ -220,123 +220,151 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         return 130.0 * dot(m, g);
       }
       
-      // Fractal brownian motion for more organic noise
-      float fbm(vec2 p, float t) {
+      // Flow-based FBM for smooth organic distortion (NOT radial)
+      float flowFBM(vec2 p, float t) {
         float value = 0.0;
         float amplitude = 0.5;
-        float frequency = 1.0;
-        for (int i = 0; i < 4; i++) {
-          value += amplitude * snoise(p * frequency + t * 0.3);
-          frequency *= 2.0;
+        vec2 flow = vec2(t * 0.15, t * 0.1);
+        for (int i = 0; i < 3; i++) {
+          value += amplitude * snoise(p + flow);
+          p *= 2.1;
+          flow *= 1.3;
           amplitude *= 0.5;
         }
         return value;
       }
       
-      // ============= ORGANIC FLUID BLOB FUNCTION =============
-      float organicBlob(vec2 uv, vec2 center, float baseRadius, vec2 velocity, float speed, float timeOffset) {
-        vec2 diff = uv - center;
-        float dist = length(diff);
-        float angle = atan(diff.y, diff.x);
-        
-        // Velocity-based directional stretching
-        float velAlignment = 0.0;
-        if (speed > 0.01) {
-          velAlignment = dot(normalize(diff + 0.001), velocity);
-        }
-        // Stretch blob backward in movement direction (creates trailing effect)
-        float stretch = 1.0 + speed * max(0.0, -velAlignment) * 3.0;
-        float stretchedDist = dist / mix(1.0, stretch, 0.7);
-        
-        // Multi-octave noise distortion for organic, irregular edges
-        float n1 = snoise(vec2(angle * 2.0 + noiseTime * 0.4 + timeOffset, noiseTime * 0.2)) * 0.4;
-        float n2 = snoise(vec2(angle * 4.0 - noiseTime * 0.3 + timeOffset * 2.0, noiseTime * 0.35)) * 0.25;
-        float n3 = snoise(vec2(angle * 8.0 + noiseTime * 0.5, noiseTime * 0.5 + timeOffset)) * 0.15;
-        float n4 = snoise(vec2(angle * 16.0, noiseTime * 0.7)) * 0.08;
-        
-        float noiseDistortion = n1 + n2 + n3 + n4;
-        
-        // Pulsing radius for organic breathing effect
-        float pulse = sin(noiseTime * 1.5 + timeOffset * 3.0) * 0.1 + 1.0;
-        
-        float distortedRadius = baseRadius * (1.0 + noiseDistortion) * pulse;
-        
-        // Soft falloff for fluid blending
-        float blob = 1.0 - smoothstep(distortedRadius * 0.3, distortedRadius, stretchedDist);
-        
-        return blob;
+      // ============= SDF FUNCTIONS FOR TRUE FLUID BLENDING =============
+      
+      // Smooth minimum - creates organic metaball-like blending
+      float smin(float a, float b, float k) {
+        float h = max(k - abs(a - b), 0.0) / k;
+        return min(a, b) - h * h * k * 0.25;
       }
       
-      // ============= SPLASH POCKET FUNCTION =============
-      // Creates smaller satellite blobs around main blob for splash effect
-      float splashPockets(vec2 uv, vec2 center, vec2 velocity, float speed, float baseRadius, float timeOffset) {
-        float splash = 0.0;
+      // Circle SDF
+      float circleSDF(vec2 p, vec2 center, float radius) {
+        return length(p - center) - radius;
+      }
+      
+      // Capsule/pill SDF for elongated fluid trails
+      float capsuleSDF(vec2 p, vec2 a, vec2 b, float r) {
+        vec2 pa = p - a;
+        vec2 ba = b - a;
+        float h = clamp(dot(pa, ba) / (dot(ba, ba) + 0.0001), 0.0, 1.0);
+        return length(pa - ba * h) - r;
+      }
+      
+      // ============= MAIN WATER BLOB FUNCTION =============
+      // Creates smooth, organic water-like blob using SDF with flow distortion
+      float waterBlob(vec2 uv, vec2 center, float baseRadius, float timeOffset) {
+        // Flow-based distortion applied to UV space (NOT radial like before)
+        vec2 flowDistort = vec2(
+          flowFBM(uv * 4.0 + timeOffset, noiseTime * 0.8) * 0.04,
+          flowFBM(uv * 4.0 + timeOffset + 100.0, noiseTime * 0.7) * 0.04
+        );
+        vec2 distortedUV = uv + flowDistort;
         
-        // Generate splash pockets in velocity direction
-        for (int i = 0; i < 5; i++) {
+        // Base circle SDF
+        float dist = circleSDF(distortedUV, center, baseRadius);
+        
+        // Add flowing edge distortion (smooth waves, not spiky)
+        float edgeWave = flowFBM(uv * 6.0 + center * 3.0 + timeOffset, noiseTime * 0.5) * 0.025;
+        dist += edgeWave;
+        
+        // Soft, smooth edge
+        return 1.0 - smoothstep(-0.02, 0.04, dist);
+      }
+      
+      // ============= CONNECTED WATER LOBES =============
+      // Creates 2-3 smaller connected blobs that merge into main mass
+      float waterLobes(vec2 uv, vec2 center, float baseRadius, vec2 velocity, float speed, float timeOffset) {
+        float combinedSDF = circleSDF(uv, center, baseRadius);
+        
+        // Generate 3 connected lobes with noise-driven positions
+        for (int i = 0; i < 3; i++) {
           float fi = float(i);
-          float pocketAngle = fi * 1.2566 + noiseTime * 0.2 + timeOffset; // ~72 degrees apart
           
-          // Pockets spread out more with speed
-          float spreadDist = baseRadius * (0.8 + fi * 0.25) * (1.0 + speed * 2.0);
+          // Lobe offset driven by smooth noise (not angle-based)
+          vec2 lobeOffset = vec2(
+            snoise(vec2(fi * 3.0 + timeOffset, noiseTime * 0.3)) * 0.12,
+            snoise(vec2(fi * 3.0 + 50.0 + timeOffset, noiseTime * 0.25)) * 0.12
+          );
           
-          // Add velocity bias - pockets extend more in movement direction
-          vec2 pocketOffset = vec2(cos(pocketAngle), sin(pocketAngle)) * spreadDist;
-          if (speed > 0.01) {
-            pocketOffset += velocity * spreadDist * (0.5 + fi * 0.2);
+          // Add velocity bias - lobes extend more in movement direction
+          if (speed > 0.02) {
+            lobeOffset += velocity * (0.06 + fi * 0.03);
           }
           
-          vec2 pocketPos = center + pocketOffset;
-          float pocketRadius = baseRadius * (0.15 + snoise(vec2(fi * 3.0, noiseTime * 0.5)) * 0.08);
+          vec2 lobeCenter = center + lobeOffset;
+          float lobeRadius = baseRadius * (0.4 + snoise(vec2(fi, noiseTime * 0.4)) * 0.15);
           
-          // Organic pocket shape
-          float pocket = organicBlob(uv, pocketPos, pocketRadius, velocity, speed * 0.5, timeOffset + fi);
+          float lobeSDF = circleSDF(uv, lobeCenter, lobeRadius);
           
-          // Fade pockets with distance
-          float distFade = 1.0 - fi * 0.15;
-          splash = max(splash, pocket * distFade * 0.6);
+          // Smooth-min blend creates organic connection
+          combinedSDF = smin(combinedSDF, lobeSDF, 0.08);
         }
         
-        return splash;
+        // Apply flow distortion to the combined SDF
+        float flowDistort = flowFBM(uv * 5.0 + timeOffset, noiseTime * 0.6) * 0.02;
+        combinedSDF += flowDistort;
+        
+        return 1.0 - smoothstep(-0.015, 0.035, combinedSDF);
       }
       
-      // ============= TENDRIL FUNCTION =============
-      // Creates flowing tendrils extending from blob
-      float fluidTendrils(vec2 uv, vec2 center, vec2 velocity, float speed, float timeOffset) {
-        float tendrils = 0.0;
+      // ============= FLUID TRAIL (Capsule-based) =============
+      // Creates elongated, connected trail stretching in movement direction
+      float fluidTrail(vec2 uv, vec2 headPos, vec2 velocity, float speed, float maxLength, float width) {
+        if (speed < 0.02) return 0.0;
+        
+        // Trail extends backward from head position
+        float trailLen = maxLength * speed;
+        vec2 tailPos = headPos - velocity * trailLen;
+        
+        // Capsule SDF with tapered width
+        float dist = capsuleSDF(uv, headPos, tailPos, width);
+        
+        // Add subtle wave distortion along the trail
+        float waveDistort = snoise(vec2(dot(uv - headPos, velocity) * 20.0, noiseTime)) * 0.01;
+        dist += waveDistort;
+        
+        return 1.0 - smoothstep(-0.01, 0.02, dist);
+      }
+      
+      // ============= SPLASH DROPLETS (SDF-based) =============
+      // Creates small satellite droplets that connect to main mass
+      float splashDroplets(vec2 uv, vec2 center, vec2 velocity, float speed, float baseRadius, float timeOffset) {
+        float splash = 0.0;
+        
+        // Only create splash when moving
+        if (speed < 0.05) return 0.0;
+        
+        float baseSDF = circleSDF(uv, center, baseRadius * 1.2);
         
         for (int i = 0; i < 4; i++) {
           float fi = float(i);
-          // Tendrils flow in velocity direction with some spread
-          float tendrilAngle = atan(velocity.y, velocity.x) + (fi - 1.5) * 0.5;
           
-          // Length varies with speed and noise
-          float tendrilLength = (0.15 + speed * 0.4) * (1.0 + snoise(vec2(fi, noiseTime * 0.3)) * 0.3);
-          float tendrilWidth = 0.02 + snoise(vec2(fi * 2.0, noiseTime * 0.4)) * 0.01;
+          // Droplets positioned with noise, biased toward velocity direction
+          vec2 dropOffset = vec2(
+            snoise(vec2(fi * 5.0 + timeOffset, noiseTime * 0.5)) * 0.1,
+            snoise(vec2(fi * 5.0 + 30.0 + timeOffset, noiseTime * 0.4)) * 0.1
+          );
+          dropOffset += velocity * (0.1 + fi * 0.05) * speed;
           
-          // Create tendril as elongated shape
-          vec2 tendrilDir = vec2(cos(tendrilAngle), sin(tendrilAngle));
-          vec2 tendrilStart = center;
+          vec2 dropCenter = center + dropOffset;
+          float dropRadius = 0.02 + snoise(vec2(fi * 2.0, noiseTime * 0.6)) * 0.01;
           
-          // Distance along tendril direction
-          vec2 toPoint = uv - tendrilStart;
-          float alongTendril = dot(toPoint, tendrilDir);
-          float perpTendril = length(toPoint - tendrilDir * alongTendril);
+          float dropSDF = circleSDF(uv, dropCenter, dropRadius);
           
-          // Tendril shape - tapers toward end
-          if (alongTendril > 0.0 && alongTendril < tendrilLength) {
-            float taper = 1.0 - alongTendril / tendrilLength;
-            float tendrilMask = smoothstep(tendrilWidth * taper, 0.0, perpTendril);
-            
-            // Add noise to tendril edge
-            float edgeNoise = snoise(vec2(alongTendril * 20.0 + noiseTime, fi)) * 0.02;
-            tendrilMask *= smoothstep(tendrilWidth * taper + edgeNoise, 0.0, perpTendril);
-            
-            tendrils = max(tendrils, tendrilMask * taper * 0.5);
-          }
+          // Blend with main mass using smooth-min
+          float connectedSDF = smin(baseSDF, dropSDF, 0.05);
+          
+          // Only show the droplet contribution
+          float dropMask = 1.0 - smoothstep(-0.01, 0.02, dropSDF);
+          splash = max(splash, dropMask * 0.7);
         }
         
-        return tendrils * speed;
+        return splash * speed;
       }
       
       void main() {
@@ -435,47 +463,44 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
           }
         }
         
-        // ============= ORGANIC FLUID X-RAY REVEAL =============
+        // ============= WATER-LIKE FLUID X-RAY REVEAL =============
         float fluidMask = 0.0;
         
-        // Main cursor blob with organic shape
-        float mainBlob = organicBlob(vUv, cursorBlobPos, 0.18, cursorVelocity, cursorSpeed, 0.0);
+        // Main cursor water blob with connected lobes
+        float mainBlob = waterLobes(vUv, cursorBlobPos, 0.14, cursorVelocity, cursorSpeed, 0.0);
         fluidMask += mainBlob * cursorBlobOpacity;
         
-        // Splash pockets around cursor
-        float cursorSplash = splashPockets(vUv, cursorBlobPos, cursorVelocity, cursorSpeed, 0.12, 0.0);
-        fluidMask += cursorSplash * cursorBlobOpacity * 0.8;
+        // Fluid trail stretching backward in movement direction
+        float trail = fluidTrail(vUv, cursorBlobPos, cursorVelocity, cursorSpeed, 0.25, 0.04);
+        fluidMask = max(fluidMask, trail * cursorBlobOpacity * 0.9);
         
-        // Tendrils extending from cursor blob
-        float cursorTendrils = fluidTendrils(vUv, cursorBlobPos, cursorVelocity, cursorSpeed, 0.0);
-        fluidMask += cursorTendrils * cursorBlobOpacity;
+        // Splash droplets when moving fast
+        float splash = splashDroplets(vUv, cursorBlobPos, cursorVelocity, cursorSpeed, 0.12, 0.0);
+        fluidMask = max(fluidMask, splash * cursorBlobOpacity * 0.7);
         
-        // Trailing blobs with organic shapes
-        float trail1Blob = organicBlob(vUv, cursorTrail1, 0.14, cursorVelocity, cursorSpeed * 0.7, 1.0);
-        fluidMask += trail1Blob * trailOpacity1 * 0.85;
-        fluidMask += splashPockets(vUv, cursorTrail1, cursorVelocity, cursorSpeed * 0.5, 0.08, 1.0) * trailOpacity1 * 0.5;
+        // Trailing water blobs with smooth SDF blending
+        float trail1Blob = waterBlob(vUv, cursorTrail1, 0.11, 1.0);
+        float trail1Lobes = waterLobes(vUv, cursorTrail1, 0.08, cursorVelocity, cursorSpeed * 0.5, 1.0);
+        fluidMask = max(fluidMask, max(trail1Blob, trail1Lobes) * trailOpacity1 * 0.85);
         
-        float trail2Blob = organicBlob(vUv, cursorTrail2, 0.11, cursorVelocity, cursorSpeed * 0.5, 2.0);
-        fluidMask += trail2Blob * trailOpacity2 * 0.7;
-        fluidMask += splashPockets(vUv, cursorTrail2, cursorVelocity, cursorSpeed * 0.3, 0.06, 2.0) * trailOpacity2 * 0.4;
+        float trail2Blob = waterBlob(vUv, cursorTrail2, 0.08, 2.0);
+        fluidMask = max(fluidMask, trail2Blob * trailOpacity2 * 0.7);
         
-        float trail3Blob = organicBlob(vUv, cursorTrail3, 0.08, cursorVelocity, cursorSpeed * 0.3, 3.0);
-        fluidMask += trail3Blob * trailOpacity3 * 0.55;
+        float trail3Blob = waterBlob(vUv, cursorTrail3, 0.06, 3.0);
+        fluidMask = max(fluidMask, trail3Blob * trailOpacity3 * 0.55);
         
-        float trail4Blob = organicBlob(vUv, cursorTrail4, 0.06, cursorVelocity, cursorSpeed * 0.2, 4.0);
-        fluidMask += trail4Blob * trailOpacity4 * 0.4;
+        float trail4Blob = waterBlob(vUv, cursorTrail4, 0.045, 4.0);
+        fluidMask = max(fluidMask, trail4Blob * trailOpacity4 * 0.4);
         
-        // Autonomous ambient blobs - lower opacity, organic movement
-        float ambient1 = organicBlob(vUv, ambientBlob1Pos, 0.22, vec2(0.0), 0.0, 5.0);
-        float ambient1Splash = splashPockets(vUv, ambientBlob1Pos, vec2(sin(noiseTime * 0.3), cos(noiseTime * 0.4)), 0.15, 0.1, 5.0);
-        fluidMask += (ambient1 + ambient1Splash * 0.5) * 0.38;
+        // Autonomous ambient water blobs - smooth, flowing movement
+        float ambient1 = waterLobes(vUv, ambientBlob1Pos, 0.16, vec2(sin(noiseTime * 0.2), cos(noiseTime * 0.25)), 0.1, 5.0);
+        fluidMask = max(fluidMask, ambient1 * 0.35);
         
-        float ambient2 = organicBlob(vUv, ambientBlob2Pos, 0.18, vec2(0.0), 0.0, 6.0);
-        float ambient2Splash = splashPockets(vUv, ambientBlob2Pos, vec2(cos(noiseTime * 0.25), sin(noiseTime * 0.35)), 0.12, 0.08, 6.0);
-        fluidMask += (ambient2 + ambient2Splash * 0.4) * 0.32;
+        float ambient2 = waterBlob(vUv, ambientBlob2Pos, 0.13, 6.0);
+        fluidMask = max(fluidMask, ambient2 * 0.3);
         
-        float ambient3 = organicBlob(vUv, ambientBlob3Pos, 0.14, vec2(0.0), 0.0, 7.0);
-        fluidMask += ambient3 * 0.28;
+        float ambient3 = waterBlob(vUv, ambientBlob3Pos, 0.10, 7.0);
+        fluidMask = max(fluidMask, ambient3 * 0.25);
         
         // Clamp and smooth the combined mask
         fluidMask = clamp(fluidMask, 0.0, 1.0);
