@@ -510,42 +510,66 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         vec4 xrayColor = texture2D(xrayTexture, xrayUV);
         float xrayValid = step(0.0, xrayUV.x) * step(xrayUV.x, 1.0) * step(0.0, xrayUV.y) * step(xrayUV.y, 1.0);
         
-        // ============= WHITE MARBLE BACKGROUND REVEAL =============
-        // Create marble texture using layered noise
-        float marble1 = snoise(vUv * 8.0 + noiseTime * 0.1) * 0.5 + 0.5;
-        float marble2 = snoise(vUv * 16.0 - noiseTime * 0.05) * 0.3;
-        float marble3 = snoise(vUv * 32.0 + vec2(noiseTime * 0.03, 0.0)) * 0.15;
+        // ============= WHITE MARBLE BACKGROUND =============
+        // Create subtle marble texture for the reveal background
+        float marble1 = snoise(vUv * 6.0 + noiseTime * 0.05) * 0.5 + 0.5;
+        float marble2 = snoise(vUv * 12.0 - noiseTime * 0.03) * 0.25;
+        float marble3 = snoise(vUv * 24.0) * 0.12;
         float marblePattern = marble1 + marble2 + marble3;
-        marblePattern = smoothstep(0.3, 0.7, marblePattern);
+        marblePattern = smoothstep(0.35, 0.65, marblePattern);
         
         // White base with semi-transparent grey marble veins
-        vec3 marbleWhite = vec3(1.0, 1.0, 1.0);
-        vec3 marbleVein = vec3(0.85, 0.85, 0.88);
-        vec3 marbleColor = mix(marbleWhite, marbleVein, marblePattern * 0.4);
+        vec3 marbleWhite = vec3(0.98, 0.98, 0.99);
+        vec3 marbleVein = vec3(0.88, 0.87, 0.89);
+        vec3 marbleColor = mix(marbleWhite, marbleVein, marblePattern * 0.35);
         
-        // ============= COLOR LAYERS: WHITE/GREY/GOLD =============
-        // Core intensity (center of blobs) - solid marble
-        float coreIntensity = smoothstep(0.5, 1.0, fluidMask);
-        // Mid intensity - grey transition
-        float midIntensity = smoothstep(0.25, 0.5, fluidMask);
-        // Edge intensity - gold accent
-        float edgeIntensity = smoothstep(0.0, 0.3, fluidMask);
+        // ============= PURE X-RAY REVEAL WITH OUTWARD COLOR BANDS =============
+        // The core shows PURE x-ray (what's behind) - no colors added
+        // Colors radiate OUTWARD from the reveal: gold -> grey -> white
         
-        // Build reveal color - white marble background
-        vec3 revealColor = marbleColor;
+        // Band definitions (from center outward)
+        float coreReveal = smoothstep(0.55, 0.85, fluidMask);  // Pure x-ray window
+        float goldBand = smoothstep(0.35, 0.55, fluidMask) * (1.0 - coreReveal);  // Shiny gold ring
+        float greyBand = smoothstep(0.15, 0.35, fluidMask) * (1.0 - smoothstep(0.35, 0.55, fluidMask));  // Grey transition
+        float whiteBand = smoothstep(0.0, 0.15, fluidMask) * (1.0 - smoothstep(0.15, 0.35, fluidMask));  // White outer edge
         
-        // Edge layer: subtle gold shimmer on marble
-        float goldShimmer = sin(noiseTime * 0.8 + vUv.x * 8.0 + vUv.y * 6.0) * 0.15 + 0.85;
-        revealColor = mix(revealColor, mix(marbleColor, riseGold * goldShimmer, 0.2), edgeIntensity * 0.5);
+        // Directional stretch - color bands stretch in movement direction
+        vec2 velDir = normalize(cursorVelocity + vec2(0.0001));
+        float velMag = length(cursorVelocity);
+        vec2 toPixel = vUv - cursorBlobPos;
+        float alongVel = dot(toPixel, velDir);
+        float directionalStretch = 1.0 + max(0.0, alongVel) * velMag * 8.0;
         
-        // Mid layer: slight grey tint
-        revealColor = mix(revealColor, mix(marbleColor, revealGrey, 0.1), midIntensity * 0.3);
+        // Apply directional stretch to outer bands
+        goldBand *= mix(1.0, directionalStretch, 0.4);
+        greyBand *= mix(1.0, directionalStretch, 0.6);
+        whiteBand *= mix(1.0, directionalStretch, 0.8);
         
-        // Core layer: pure white highlight
-        revealColor = mix(revealColor, revealWhite, coreIntensity * 0.4);
+        // Shiny shimmer for gold band (reflective water effect)
+        float goldShimmer = sin(noiseTime * 1.2 + vUv.x * 12.0 + vUv.y * 10.0) * 0.2 + 0.9;
+        goldShimmer += sin(noiseTime * 2.0 + vUv.y * 18.0) * 0.1;
+        vec3 shinyGold = riseGold * goldShimmer * 1.15;
+        
+        // Color definitions for bands
+        vec3 goldGreyMix = mix(riseGold, revealGrey, 0.5);  // Transition color
+        vec3 greyWhiteMix = mix(revealGrey, revealWhite, 0.6);  // Outer transition
+        
+        // Build the reveal: start with marble background + x-ray blend
+        vec3 xrayOnMarble = mix(marbleColor, xrayColor.rgb, 0.85 * xrayValid);  // X-ray over marble
+        
+        // Pure core = x-ray reveal (what's actually behind)
+        vec3 revealColor = xrayOnMarble;
+        
+        // Add color bands radiating OUTWARD (applied semi-transparently)
+        // White outer edge (most transparent)
+        revealColor = mix(revealColor, greyWhiteMix, whiteBand * 0.35);
+        // Grey band
+        revealColor = mix(revealColor, goldGreyMix, greyBand * 0.45);
+        // Gold band (closest to reveal, most visible)
+        revealColor = mix(revealColor, shinyGold, goldBand * 0.6);
         
         // Apply fluid reveal to composite
-        compositeColor = mix(compositeColor, revealColor, fluidMask * 0.95);
+        compositeColor = mix(compositeColor, revealColor, fluidMask);
         
         // ============= ORIGINAL MOUSE SPOTLIGHT X-RAY =============
         float distToMouse = length(vUv - mousePos);
