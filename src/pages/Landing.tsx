@@ -104,27 +104,29 @@ export default function Landing() {
             </div>
             
             {/* Language Selector centered, buttons on either side */}
-            <div className="border-t border-primary/40 pt-3 flex items-center justify-center">
-              <Button 
-                onClick={() => setShowRepresentation(true)}
-                variant="outline"
-                className="font-bebas uppercase tracking-wider border-primary/50 text-primary hover:bg-primary/10 px-6"
-                hoverEffect
-              >
-                {t("landing.represent_me", "Represent Me")}
-              </Button>
-              
-              <div className="flex-1 flex justify-center">
-                <LanguageMapSelector onOpenChange={setLanguagePopupOpen} />
+            <div className="border-t border-primary/40 pt-3 flex items-center">
+              <div className="flex-1 flex justify-start">
+                <Button 
+                  onClick={() => setShowRepresentation(true)}
+                  variant="outline"
+                  className="font-bebas uppercase tracking-wider border-primary/50 text-primary hover:bg-primary/10 px-6"
+                  hoverEffect
+                >
+                  {t("landing.represent_me", "Represent Me")}
+                </Button>
               </div>
               
-              <Button 
-                onClick={() => setShowDeclareInterest(true)}
-                className="btn-shine font-bebas uppercase tracking-wider px-6"
-                hoverEffect
-              >
-                {t("landing.declare_interest", "Declare Interest In Star")}
-              </Button>
+              <LanguageMapSelector onOpenChange={setLanguagePopupOpen} />
+              
+              <div className="flex-1 flex justify-end">
+                <Button 
+                  onClick={() => setShowDeclareInterest(true)}
+                  className="btn-shine font-bebas uppercase tracking-wider px-6"
+                  hoverEffect
+                >
+                  {t("landing.declare_interest", "Declare Interest In Star")}
+                </Button>
+              </div>
             </div>
           </div>
 
