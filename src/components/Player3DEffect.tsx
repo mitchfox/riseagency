@@ -59,16 +59,23 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
 
       await Promise.all(imagePromises)
       
-      const img5 = imageMap["5"]
-      const img2 = imageMap["2"]
-      const img1 = imageMap["1"]
+      const img5 = imageMap["5"]  // Base image
+      const img2 = imageMap["2"]  // Gold overlay/gloss
+      const img1 = imageMap["1"]  // X-ray image
+      const img7 = imageMap["7"]  // Depth map
       
       if (!img5 || !img2 || !img1) {
         console.error("Missing required images")
         return null
       }
       
-      return { baseImage: img5, overlayImage: img2, xrayImage: img1 }
+      // img7 is optional - depth map
+      return { 
+        baseImage: img5, 
+        overlayImage: img2, 
+        xrayImage: img1,
+        depthMap: img7 || null
+      }
     } catch (error) {
       console.error("Error loading zip:", error)
       return null
@@ -81,111 +88,54 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
     const container = containerRef.current
     let animationId: number
 
-    // Vertex shader with depth displacement for 3D pop
+    // Vertex shader with depth map displacement for 3D parallax
     const vertexShader = `
       uniform float time;
       uniform vec2 mousePos;
       uniform float depthScale;
-      uniform sampler2D baseTexture;
+      uniform sampler2D depthMap;
+      uniform float hasDepthMap;
       
       varying vec2 vUv;
       varying vec3 vNormal;
       varying vec3 vViewPosition;
       varying float vDepth;
-      varying float vLuminance;
-      
-      // Simplex noise for organic depth
-      vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
-      vec4 mod289(vec4 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
-      vec4 permute(vec4 x) { return mod289(((x*34.0)+1.0)*x); }
-      vec4 taylorInvSqrt(vec4 r) { return 1.79284291400159 - 0.85373472095314 * r; }
-      
-      float snoise(vec3 v) {
-        const vec2 C = vec2(1.0/6.0, 1.0/3.0);
-        const vec4 D = vec4(0.0, 0.5, 1.0, 2.0);
-        vec3 i = floor(v + dot(v, C.yyy));
-        vec3 x0 = v - i + dot(i, C.xxx);
-        vec3 g = step(x0.yzx, x0.xyz);
-        vec3 l = 1.0 - g;
-        vec3 i1 = min(g.xyz, l.zxy);
-        vec3 i2 = max(g.xyz, l.zxy);
-        vec3 x1 = x0 - i1 + C.xxx;
-        vec3 x2 = x0 - i2 + C.yyy;
-        vec3 x3 = x0 - D.yyy;
-        i = mod289(i);
-        vec4 p = permute(permute(permute(
-          i.z + vec4(0.0, i1.z, i2.z, 1.0))
-          + i.y + vec4(0.0, i1.y, i2.y, 1.0))
-          + i.x + vec4(0.0, i1.x, i2.x, 1.0));
-        float n_ = 0.142857142857;
-        vec3 ns = n_ * D.wyz - D.xzx;
-        vec4 j = p - 49.0 * floor(p * ns.z * ns.z);
-        vec4 x_ = floor(j * ns.z);
-        vec4 y_ = floor(j - 7.0 * x_);
-        vec4 x = x_ *ns.x + ns.yyyy;
-        vec4 y = y_ *ns.x + ns.yyyy;
-        vec4 h = 1.0 - abs(x) - abs(y);
-        vec4 b0 = vec4(x.xy, y.xy);
-        vec4 b1 = vec4(x.zw, y.zw);
-        vec4 s0 = floor(b0)*2.0 + 1.0;
-        vec4 s1 = floor(b1)*2.0 + 1.0;
-        vec4 sh = -step(h, vec4(0.0));
-        vec4 a0 = b0.xzyw + s0.xzyw*sh.xxyy;
-        vec4 a1 = b1.xzyw + s1.xzyw*sh.zzww;
-        vec3 p0 = vec3(a0.xy, h.x);
-        vec3 p1 = vec3(a0.zw, h.y);
-        vec3 p2 = vec3(a1.xy, h.z);
-        vec3 p3 = vec3(a1.zw, h.w);
-        vec4 norm = taylorInvSqrt(vec4(dot(p0,p0), dot(p1,p1), dot(p2,p2), dot(p3,p3)));
-        p0 *= norm.x;
-        p1 *= norm.y;
-        p2 *= norm.z;
-        p3 *= norm.w;
-        vec4 m = max(0.6 - vec4(dot(x0,x0), dot(x1,x1), dot(x2,x2), dot(x3,x3)), 0.0);
-        m = m * m;
-        return 42.0 * dot(m*m, vec4(dot(p0,x0), dot(p1,x1), dot(p2,x2), dot(p3,x3)));
-      }
       
       void main() {
         vUv = uv;
         
-        // Sample base texture to create depth from luminance (brighter = closer)
-        vec4 texColor = texture2D(baseTexture, uv);
-        float luminance = dot(texColor.rgb, vec3(0.299, 0.587, 0.114));
-        vLuminance = luminance;
-        
-        // Create depth based on luminance and UV position
-        float centerDist = length(uv - vec2(0.5));
-        float baseDepth = luminance * 0.8 + (1.0 - centerDist * 1.2) * 0.2;
-        baseDepth = clamp(baseDepth, 0.0, 1.0);
-        
-        // Add organic noise for body contours
-        float noise = snoise(vec3(uv * 4.0, time * 0.15)) * 0.15;
+        // Sample depth map (white = close, black = far)
+        float depth = 0.5;
+        if (hasDepthMap > 0.5) {
+          vec4 depthSample = texture2D(depthMap, uv);
+          depth = dot(depthSample.rgb, vec3(0.299, 0.587, 0.114));
+        }
+        vDepth = depth;
         
         // Subtle breathing animation
-        float breathe = sin(time * 0.8) * 0.015;
+        float breathe = sin(time * 0.8) * 0.008;
         
-        // Calculate final depth
-        vDepth = baseDepth + noise * 0.5;
-        float displacement = vDepth * depthScale + breathe;
+        // Calculate displacement from depth map
+        float displacement = depth * depthScale + breathe;
         
-        // Displace along Z axis for 3D pop
+        // Mouse parallax - areas closer to camera move more with mouse
+        vec2 mouseOffset = (mousePos - vec2(0.5)) * depth * 0.03;
+        
+        // Displace position
         vec3 newPosition = position;
         newPosition.z += displacement;
+        newPosition.xy += mouseOffset;
         
-        // Mouse/auto-reveal influence - subtle bulge toward cursor
-        vec2 mouseInfluence = mousePos - uv;
-        float mouseDist = length(mouseInfluence);
-        float mouseEffect = smoothstep(0.4, 0.0, mouseDist) * 0.03;
-        newPosition.z += mouseEffect;
+        // Calculate normals from depth gradient for lighting
+        float eps = 0.005;
+        float depthL = hasDepthMap > 0.5 ? dot(texture2D(depthMap, uv - vec2(eps, 0.0)).rgb, vec3(0.299, 0.587, 0.114)) : 0.5;
+        float depthR = hasDepthMap > 0.5 ? dot(texture2D(depthMap, uv + vec2(eps, 0.0)).rgb, vec3(0.299, 0.587, 0.114)) : 0.5;
+        float depthD = hasDepthMap > 0.5 ? dot(texture2D(depthMap, uv - vec2(0.0, eps)).rgb, vec3(0.299, 0.587, 0.114)) : 0.5;
+        float depthU = hasDepthMap > 0.5 ? dot(texture2D(depthMap, uv + vec2(0.0, eps)).rgb, vec3(0.299, 0.587, 0.114)) : 0.5;
         
-        // Calculate normals for lighting
-        float eps = 0.01;
-        float dzdx = (snoise(vec3((uv + vec2(eps, 0.0)) * 4.0, time * 0.15)) - 
-                      snoise(vec3((uv - vec2(eps, 0.0)) * 4.0, time * 0.15))) / (2.0 * eps);
-        float dzdy = (snoise(vec3((uv + vec2(0.0, eps)) * 4.0, time * 0.15)) - 
-                      snoise(vec3((uv - vec2(0.0, eps)) * 4.0, time * 0.15))) / (2.0 * eps);
-        vec3 perturbedNormal = normalize(vec3(-dzdx * depthScale, -dzdy * depthScale, 1.0));
+        float dzdx = (depthR - depthL) / (2.0 * eps);
+        float dzdy = (depthU - depthD) / (2.0 * eps);
+        vec3 perturbedNormal = normalize(vec3(-dzdx * depthScale * 2.0, -dzdy * depthScale * 2.0, 1.0));
         
         vNormal = normalize(normalMatrix * perturbedNormal);
         vec4 mvPosition = modelViewMatrix * vec4(newPosition, 1.0);
@@ -195,17 +145,18 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
       }
     `
 
-    // Fragment shader with overlay pulse and x-ray
+    // Fragment shader with depth-based roughness lighting
     const fragmentShader = `
       uniform sampler2D baseTexture;
       uniform sampler2D overlayTexture;
       uniform sampler2D xrayTexture;
+      uniform sampler2D depthMap;
+      uniform float hasDepthMap;
       uniform float time;
       uniform vec2 mousePos;
       uniform vec2 autoPos;
       uniform vec2 resolution;
       uniform float xrayRadius;
-      uniform float roughness;
       uniform float userActive;
       uniform vec2 xrayOffset;
       uniform float xrayScale;
@@ -214,83 +165,78 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
       varying vec3 vNormal;
       varying vec3 vViewPosition;
       varying float vDepth;
-      varying float vLuminance;
       
       // Gold color
-      const vec3 goldColor = vec3(0.792, 0.694, 0.443);
+      const vec3 goldColor = vec3(0.92, 0.78, 0.45);
       const vec3 lightDir = normalize(vec3(0.5, 0.8, 1.0));
       
       void main() {
         vec4 baseColor = texture2D(baseTexture, vUv);
         vec4 overlayColor = texture2D(overlayTexture, vUv);
         
+        // Alpha from base texture - punch out the player
+        float alpha = baseColor.a;
+        if (alpha < 0.01) discard;
+        
         // Overlay gloss effect - natural pulsing shine
-        float glossPulse = sin(time * 0.8) * 0.5 + 0.5; // Slow breathe 0-1
-        glossPulse = pow(glossPulse, 2.0); // Ease in/out for natural feel
+        float glossPulse = sin(time * 0.8) * 0.5 + 0.5;
+        glossPulse = pow(glossPulse, 2.0);
         
-        // Use SCREEN blend mode for glossy effect - overlay becomes visible shine
-        // Screen: 1 - (1-base) * (1-overlay)
+        // Screen blend for glossy effect
         vec3 screenBlend = vec3(1.0) - (vec3(1.0) - baseColor.rgb) * (vec3(1.0) - overlayColor.rgb);
-        vec4 compositeBase = vec4(mix(baseColor.rgb, screenBlend, overlayColor.a * glossPulse), baseColor.a);
+        vec4 compositeBase = vec4(mix(baseColor.rgb, screenBlend, overlayColor.a * glossPulse), alpha);
         
-        // Sample x-ray with offset and scale to align
+        // Sample x-ray with offset and scale
         vec2 xrayUV = (vUv - 0.5) * xrayScale + 0.5 + xrayOffset;
         vec4 xrayColor = texture2D(xrayTexture, xrayUV);
-        
-        // Check if xray UV is valid
         float xrayValid = step(0.0, xrayUV.x) * step(xrayUV.x, 1.0) * step(0.0, xrayUV.y) * step(xrayUV.y, 1.0);
         xrayColor = mix(compositeBase, xrayColor, xrayValid * xrayColor.a);
         
-        // Alpha from base
-        float alpha = baseColor.a;
-        
-        // Discard fully transparent pixels
-        if (alpha < 0.01) discard;
-        
-        // Only user hover x-ray circle (no auto-reveal x-ray)
+        // X-ray circle on hover
         float distToMouse = length(vUv - mousePos);
         float xrayMask = (1.0 - smoothstep(xrayRadius - 0.03, xrayRadius + 0.01, distToMouse)) * userActive;
         
-        // Mix base and x-ray based on hover mask only
         vec4 color = mix(compositeBase, xrayColor, xrayMask * xrayValid);
         
-        // === LIGHTING & ROUGHNESS for base image ===
+        // === ROUGHNESS-BASED LIGHTING ===
+        // Use depth map as roughness: darker = more reflective (lower roughness)
+        float roughness = 0.5;
+        if (hasDepthMap > 0.5) {
+          roughness = 1.0 - vDepth; // Invert: dark areas = shiny, light areas = matte
+        }
+        roughness = clamp(roughness * 0.8 + 0.1, 0.1, 0.9); // Range 0.1-0.9
+        
         vec3 normal = normalize(vNormal);
         vec3 viewDir = normalize(vViewPosition);
         
         // Diffuse lighting
         float NdotL = max(dot(normal, lightDir), 0.0);
-        float diffuse = NdotL * 0.3 + 0.7;
+        float diffuse = NdotL * 0.4 + 0.6;
         
-        // Specular (affected by roughness)
+        // Specular - more intense on low roughness (dark areas)
         vec3 halfDir = normalize(lightDir + viewDir);
         float NdotH = max(dot(normal, halfDir), 0.0);
-        float specPower = mix(64.0, 4.0, roughness);
-        float specular = pow(NdotH, specPower) * (1.0 - roughness) * 0.4;
+        float specPower = mix(128.0, 4.0, roughness); // Sharp spec on shiny areas
+        float specular = pow(NdotH, specPower) * (1.0 - roughness) * 0.6;
         
         // Rim lighting
         float rim = 1.0 - max(dot(viewDir, normal), 0.0);
-        rim = pow(rim, 3.0) * 0.25;
+        rim = pow(rim, 3.0) * 0.3 * (1.0 - roughness);
         
-        // Fresnel effect
-        float fresnel = pow(1.0 - max(dot(viewDir, normal), 0.0), 3.0);
-        float fresnelRoughness = fresnel * (1.0 - roughness) * 0.15;
+        // Fresnel effect - stronger on shiny surfaces
+        float fresnel = pow(1.0 - max(dot(viewDir, normal), 0.0), 4.0);
+        float fresnelEffect = fresnel * (1.0 - roughness) * 0.2;
         
         // Apply lighting
         vec3 litColor = color.rgb * diffuse;
         litColor += goldColor * specular * (1.0 - xrayMask);
         litColor += goldColor * rim * (1.0 - xrayMask);
-        litColor += goldColor * fresnelRoughness * (1.0 - xrayMask);
+        litColor += goldColor * fresnelEffect * (1.0 - xrayMask);
         
-        // Depth-based ambient occlusion
-        float ao = vDepth * 0.15 + 0.85;
-        litColor *= ao;
-        
-        // Gold shimmer in x-ray area
+        // Subtle gold shimmer in x-ray area
         if (xrayMask > 0.0) {
           float shimmer = sin(time * 3.0 + vUv.x * 20.0 + vUv.y * 20.0) * 0.05 + 0.95;
           litColor *= shimmer;
-          litColor = mix(litColor, litColor * vec3(1.05, 1.0, 0.9), xrayMask * 0.3);
         }
         
         gl_FragColor = vec4(litColor, alpha);
@@ -306,7 +252,7 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         return
       }
 
-      const { baseImage, overlayImage, xrayImage } = images
+      const { baseImage, overlayImage, xrayImage, depthMap } = images
 
       const scene = new THREE.Scene()
       
@@ -347,24 +293,34 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
       xrayTexture.minFilter = THREE.LinearFilter
       xrayTexture.magFilter = THREE.LinearFilter
 
+      // Create depth map texture if available
+      let depthTexture: THREE.Texture | null = null
+      if (depthMap) {
+        depthTexture = new THREE.Texture(depthMap)
+        depthTexture.needsUpdate = true
+        depthTexture.minFilter = THREE.LinearFilter
+        depthTexture.magFilter = THREE.LinearFilter
+      }
+
       const isMobile = container.clientWidth < 768
       const imgAspect = baseImage.width / baseImage.height
       
       let planeHeight = isMobile ? 1.4 : 1.6
       let planeWidth = planeHeight * imgAspect
 
-      // Uniforms with overlay and x-ray
+      // Uniforms with depth map for 3D parallax and roughness
       const uniforms = {
         baseTexture: { value: baseTexture },
         overlayTexture: { value: overlayTexture },
         xrayTexture: { value: xrayTexture },
+        depthMap: { value: depthTexture || baseTexture }, // Fallback to base if no depth
+        hasDepthMap: { value: depthTexture ? 1.0 : 0.0 },
         time: { value: 0 },
-        mousePos: { value: new THREE.Vector2(-1, -1) },
+        mousePos: { value: new THREE.Vector2(0.5, 0.5) },
         autoPos: { value: new THREE.Vector2(0.5, 0.55) },
         resolution: { value: new THREE.Vector2(container.clientWidth, container.clientHeight) },
         xrayRadius: { value: isMobile ? 0.015 : 0.04 },
-        depthScale: { value: 0.12 },
-        roughness: { value: 0.5 },
+        depthScale: { value: 0.15 },
         playerCenter: { value: new THREE.Vector2(0.5, 0.55) },
         userActive: { value: 0.0 },
         xrayOffset: { value: new THREE.Vector2(0.0, 0.0) },
