@@ -451,8 +451,8 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
       playerMesh.position.y = isMobile ? 0.15 : 0.05
       scene.add(playerMesh)
 
-      // Full-screen overlay for x-ray effects
-      const overlayGeometry = new THREE.PlaneGeometry(10, 10)
+      // Overlay for x-ray halo effects - same size as player mesh for alignment
+      const overlayGeometry = new THREE.PlaneGeometry(planeWidth, planeHeight)
       const overlayMaterial = new THREE.ShaderMaterial({
         uniforms,
         vertexShader: xrayOverlayVertexShader,
@@ -463,6 +463,7 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
       })
 
       const xrayMesh = new THREE.Mesh(overlayGeometry, overlayMaterial)
+      xrayMesh.position.y = playerMesh.position.y // Match player mesh position
       xrayMesh.position.z = 0.01
       scene.add(xrayMesh)
 
