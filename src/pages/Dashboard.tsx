@@ -29,12 +29,13 @@ import { CacheManager } from "@/lib/cacheManager";
 import { Hub } from "@/components/dashboard/Hub";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Cell, LabelList, ReferenceLine } from "recharts";
 import { Link } from "react-router-dom";
-import { PlayerClubInterest } from "@/components/PlayerClubInterest";
+
 import { getR90Grade, getXGGrade, getXAGrade, getRegainsGrade, getInterceptionsGrade, getXGChainGrade, getProgressivePassesGrade, getPPTurnoversRatioGrade } from "@/lib/gradeCalculations";
 import { downloadVideo } from "@/lib/videoDownload";
 import { PlayerPositionalGuides } from "@/components/PlayerPositionalGuides";
 import { ProtectedContracts } from "@/components/player/ProtectedContracts";
 import { PaymentOptions } from "@/components/player/PaymentOptions";
+import { PlayerTransferHub } from "@/components/player/TransferHub";
 
 interface Analysis {
   id: string;
@@ -1552,6 +1553,7 @@ const Dashboard = () => {
                     {activeTab === "invoices" && "Key Documents"}
                     {activeTab === "updates" && "Updates"}
                     {activeTab === "highlights" && "Highlights"}
+                    {activeTab === "transfer-hub" && "Transfer Hub"}
                   </span>
                   <ChevronDown className="ml-2 h-5 w-5" />
                 </Button>
@@ -1592,6 +1594,12 @@ const Dashboard = () => {
                   className="font-bebas uppercase text-base py-3 cursor-pointer text-gold hover:text-gold/80 hover:bg-gold/10"
                 >
                   Highlights
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => setActiveTab("transfer-hub")}
+                  className="font-bebas uppercase text-base py-3 cursor-pointer text-gold hover:text-gold/80 hover:bg-gold/10"
+                >
+                  Transfer Hub
                 </DropdownMenuItem>
                 <DropdownMenuItem 
                   onClick={() => setShowProfileModal(true)}
@@ -3913,7 +3921,7 @@ const Dashboard = () => {
               <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-0">
                 <CardContent className="container mx-auto px-4 pt-2">
                   <Tabs defaultValue="general" className="w-full">
-                    <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 gap-2 mb-6 bg-muted h-auto p-2">
+                    <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3 gap-2 mb-6 bg-muted h-auto p-2">
                       <TabsTrigger value="general" className="font-bebas uppercase text-sm">
                         General Updates
                       </TabsTrigger>
@@ -3922,9 +3930,6 @@ const Dashboard = () => {
                       </TabsTrigger>
                       <TabsTrigger value="offline" className="font-bebas uppercase text-sm">
                         Offline Access
-                      </TabsTrigger>
-                      <TabsTrigger value="club-interest" className="font-bebas uppercase text-sm">
-                        Club Interest
                       </TabsTrigger>
                     </TabsList>
 
@@ -3989,16 +3994,29 @@ const Dashboard = () => {
                       </div>
                     </TabsContent>
 
-                    <TabsContent value="club-interest" className="space-y-6 pl-6 pr-6">
-                      {playerData?.id ? (
-                        <PlayerClubInterest playerId={playerData.id} />
-                      ) : (
-                        <div className="py-8 text-center text-muted-foreground">
-                          Loading player data...
-                        </div>
-                      )}
-                    </TabsContent>
                   </Tabs>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="transfer-hub">
+              <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-0">
+                <CardHeader marble>
+                  <div className="container mx-auto px-4">
+                    <CardTitle className="font-heading tracking-tight flex items-center gap-2">
+                      <Lock className="h-5 w-5" />
+                      Transfer Hub
+                    </CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent className="container mx-auto px-4">
+                  {playerData?.id ? (
+                    <PlayerTransferHub playerId={playerData.id} />
+                  ) : (
+                    <div className="py-8 text-center text-muted-foreground">
+                      Loading player data...
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
