@@ -115,11 +115,11 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         // Subtle breathing animation
         float breathe = sin(time * 0.8) * 0.008;
         
-        // Calculate displacement from depth map
-        float displacement = depth * depthScale + breathe;
+        // Calculate displacement from depth map - MORE POP
+        float displacement = depth * depthScale * 1.5 + breathe;
         
-        // Mouse parallax - areas closer to camera move more with mouse
-        vec2 mouseOffset = (mousePos - vec2(0.5)) * depth * 0.03;
+        // Mouse parallax - WIDER MOVEMENT (increased from 0.03 to 0.12)
+        vec2 mouseOffset = (mousePos - vec2(0.5)) * depth * 0.12;
         
         // Displace position
         vec3 newPosition = position;
@@ -178,13 +178,15 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         float alpha = baseColor.a;
         if (alpha < 0.01) discard;
         
-        // Overlay gloss effect - natural pulsing shine
+        // Overlay gloss effect - SUBTLE to preserve texture
         float glossPulse = sin(time * 0.8) * 0.5 + 0.5;
-        glossPulse = pow(glossPulse, 2.0);
+        glossPulse = pow(glossPulse, 3.0); // Sharper falloff
         
-        // Screen blend for glossy effect
-        vec3 screenBlend = vec3(1.0) - (vec3(1.0) - baseColor.rgb) * (vec3(1.0) - overlayColor.rgb);
-        vec4 compositeBase = vec4(mix(baseColor.rgb, screenBlend, overlayColor.a * glossPulse), alpha);
+        // Use SOFT LIGHT blend instead of screen to preserve texture
+        // Soft light: enhances contrast without washing out colors
+        vec3 softLight = baseColor.rgb * (overlayColor.rgb + vec3(0.5));
+        softLight = clamp(softLight, 0.0, 1.0);
+        vec4 compositeBase = vec4(mix(baseColor.rgb, softLight, overlayColor.a * glossPulse * 0.4), alpha);
         
         // Sample x-ray with offset and scale
         vec2 xrayUV = (vUv - 0.5) * xrayScale + 0.5 + xrayOffset;
