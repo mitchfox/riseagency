@@ -812,8 +812,8 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
       })
 
       const playerMesh = new THREE.Mesh(geometry, material)
-      // Position: y offset for vertical centering, x offset to shift 5px left
-      playerMesh.position.x = -0.025
+      // Position: y offset for vertical centering, x offset shifted 3px more left
+      playerMesh.position.x = -0.04
       playerMesh.position.y = isMobile ? 0.15 : 0.05
       scene.add(playerMesh)
 
@@ -1168,7 +1168,6 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
     <div 
       ref={containerRef} 
       className={`relative w-full h-full cursor-none ${className}`}
-      style={{ marginLeft: '-3px' }}
     />
   )
 }
