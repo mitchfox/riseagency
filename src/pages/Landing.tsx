@@ -74,8 +74,8 @@ export default function Landing() {
       {/* Light Cone Background - revealed by X-Ray */}
       <LightConeBackground />
       
-      {/* RISE Logo at top left - where language selector was */}
-      <div className="absolute top-6 md:top-8 left-4 md:left-8 z-50">
+      {/* RISE Logo - center X, 2/3 down Y (where language selector originally was) */}
+      <div className="absolute left-1/2 transform -translate-x-1/2 z-50" style={{ top: '66.67%' }}>
         <img 
           src={riseLogoWhite} 
           alt="RISE Football Agency" 
@@ -85,8 +85,8 @@ export default function Landing() {
         />
       </div>
       
-      {/* Language Selector - centered on page */}
-      <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50">
+      {/* Language Selector - centered on page, moved down 5px */}
+      <div className="absolute left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50" style={{ top: 'calc(50% + 5px)' }}>
         <LanguageMapSelector onOpenChange={setLanguagePopupOpen} />
       </div>
       
