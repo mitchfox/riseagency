@@ -2,7 +2,6 @@ import { useState, useEffect, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Target, CheckSquare, Users, Calendar, Link2, TrendingUp, Settings, RotateCcw, Layers, Plus, Search, Megaphone, ClipboardList, BarChart3, FileText, Mail, Dumbbell, Bell, Clock, FolderOpen, MessageSquare, Briefcase, Globe, Receipt, UserPlus, Activity, Timer, Zap, Focus, Brain, ListTodo, Gauge, Workflow, Kanban, GitBranch, Repeat, Flag, Milestone, Trophy, Sparkles } from "lucide-react";
-import { StaffSchedule } from "./StaffSchedule";
 import { supabase } from "@/integrations/supabase/client";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -13,6 +12,8 @@ import { DndContext, DragEndEvent, DragOverEvent, closestCenter, PointerSensor, 
 import { SortableContext, horizontalListSortingStrategy, arrayMove } from "@dnd-kit/sortable";
 import { SortableWidget, WidgetLayout } from "./SortableWidget";
 import { RowDropZone } from "./RowDropZone";
+import { PersonalScheduleCalendar } from "./PersonalScheduleCalendar";
+import { PersonalScheduleFullscreen } from "./PersonalScheduleFullscreen";
 
 interface Goal {
   id: string;
@@ -105,6 +106,7 @@ export const StaffOverview = ({ isAdmin, userId }: { isAdmin: boolean; userId?: 
   const [layouts, setLayouts] = useState<WidgetLayout[]>(DEFAULT_LAYOUTS);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [newTaskInput, setNewTaskInput] = useState("");
+  const [scheduleFullscreen, setScheduleFullscreen] = useState(false);
   const isMobile = useIsMobile();
 
   const sensors = useSensors(
@@ -586,7 +588,14 @@ export const StaffOverview = ({ isAdmin, userId }: { isAdmin: boolean; userId?: 
       case "schedule":
         return (
           <div className="w-full h-full">
-            <StaffSchedule isAdmin={isAdmin} />
+            <PersonalScheduleCalendar 
+              onFullscreenToggle={() => setScheduleFullscreen(true)}
+              showFullscreenButton={true}
+            />
+            <PersonalScheduleFullscreen 
+              open={scheduleFullscreen} 
+              onOpenChange={setScheduleFullscreen} 
+            />
           </div>
         );
 
