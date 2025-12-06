@@ -433,11 +433,8 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         shadowAmount = clamp(shadowAmount, -0.15, 0.25);
         vec3 shadedBase = baseColor.rgb * (1.0 - shadowAmount);
         
-        // Gloss overlay
-        float glossPulse = sin(time * 0.6) * 0.5 + 0.5;
-        glossPulse = pow(glossPulse, 2.5);
-        vec3 glossHighlight = overlayColor.rgb * overlayColor.a * glossPulse * 0.5;
-        vec3 compositeColor = shadedBase + glossHighlight;
+        // Use base color directly without gold gloss overlay
+        vec3 compositeColor = shadedBase;
         
         // B&W layer with animated gloss
         if (hasBwLayer > 0.5 && bwLayerOpacity > 0.01) {
