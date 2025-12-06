@@ -43,6 +43,7 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
       const kitOverlayPromise = loadImage("/assets/player-kit-overlay.png")
       const kitDepthPromise = loadImage("/assets/player-kit-depth.png")
       const shadowPromise = loadImage("/assets/player-shadow.png")
+      const bwLayerPromise = loadImage("/assets/player-bw-layer.png")
 
       const response = await fetch("/assets/Website_Hero_RISE.zip")
       const zipData = await response.arrayBuffer()
@@ -72,13 +73,14 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         }
       })
 
-      const [depthMapImg, depthLightenedImg, depthDarkenedImg, kitOverlayImg, kitDepthImg, shadowImg] = await Promise.all([
+      const [depthMapImg, depthLightenedImg, depthDarkenedImg, kitOverlayImg, kitDepthImg, shadowImg, bwLayerImg] = await Promise.all([
         depthMapPromise, 
         depthLightenedPromise, 
         depthDarkenedPromise,
         kitOverlayPromise,
         kitDepthPromise,
         shadowPromise,
+        bwLayerPromise,
         ...imagePromises
       ])
       
@@ -91,7 +93,7 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         return null
       }
       
-      console.log("Images loaded:", { base: !!img5, overlay: !!img2, xray: !!img1, kitOverlay: !!kitOverlayImg, kitDepth: !!kitDepthImg, shadow: !!shadowImg })
+      console.log("Images loaded:", { base: !!img5, overlay: !!img2, xray: !!img1, kitOverlay: !!kitOverlayImg, kitDepth: !!kitDepthImg, shadow: !!shadowImg, bwLayer: !!bwLayerImg })
       
       return { 
         baseImage: img5, 
@@ -102,7 +104,8 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         depthDarkened: depthDarkenedImg,
         kitOverlay: kitOverlayImg,
         kitDepth: kitDepthImg,
-        shadowImage: shadowImg
+        shadowImage: shadowImg,
+        bwLayerImage: bwLayerImg
       }
     } catch (error) {
       console.error("Error loading images:", error)
@@ -134,6 +137,7 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
       uniform sampler2D shadowTexture;
       uniform sampler2D kitOverlayTexture;
       uniform sampler2D kitDepthTexture;
+      uniform sampler2D bwLayerTexture;
       uniform sampler2D depthMap;
       uniform sampler2D depthLightened;
       uniform sampler2D depthDarkened;
@@ -143,6 +147,7 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
       uniform float hasKitOverlay;
       uniform float hasKitDepth;
       uniform float hasShadow;
+      uniform float hasBwLayer;
       uniform float time;
       uniform vec2 mousePos;
       uniform float xrayRadius;
@@ -152,12 +157,13 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
       uniform vec2 shootingStarPos;
       uniform float shootingStarActive;
       uniform float kitShinePos;
+      uniform float bwLightPhase;
       
       varying vec2 vUv;
       
       const vec3 goldColor = vec3(0.92, 0.78, 0.45);
       const vec3 brightGold = vec3(1.0, 0.9, 0.5);
-      
+      const vec3 warmLight = vec3(1.0, 0.95, 0.85);
       void main() {
         // Sample all depth maps and combine
         float baseDepth = 0.5;
@@ -216,6 +222,44 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         // Additive blend for gold gloss highlights
         vec3 glossHighlight = overlayColor.rgb * overlayColor.a * glossPulse * 0.5;
         vec3 compositeColor = shadedBase + glossHighlight;
+        
+        // === B&W LAYER WITH ANIMATED LIGHT REFLECTIONS (behind kit) ===
+        if (hasBwLayer > 0.5) {
+          vec4 bwColor = texture2D(bwLayerTexture, parallaxUV);
+          
+          // Calculate brightness from B&W image - lighter areas are skin/face/arms
+          float bwBrightness = dot(bwColor.rgb, vec3(0.299, 0.587, 0.114));
+          
+          // Create animated light sweep - multiple waves for organic feel
+          float lightPhase1 = sin(bwLightPhase * 2.0 + vUv.x * 3.0 + vUv.y * 2.0) * 0.5 + 0.5;
+          float lightPhase2 = sin(bwLightPhase * 1.5 + vUv.x * -2.0 + vUv.y * 4.0) * 0.5 + 0.5;
+          float lightPhase3 = sin(bwLightPhase * 0.8 + vUv.y * 5.0) * 0.5 + 0.5;
+          
+          // Combine light phases
+          float combinedLight = (lightPhase1 * 0.5 + lightPhase2 * 0.3 + lightPhase3 * 0.2);
+          combinedLight = pow(combinedLight, 1.5); // Increase contrast
+          
+          // Focus on lighter areas (face/arms) - threshold for skin tones
+          float skinMask = smoothstep(0.35, 0.7, bwBrightness);
+          
+          // Animated specular highlights on skin
+          float specular = combinedLight * skinMask * bwColor.a;
+          
+          // Add warm rim light effect
+          vec3 rimLight = warmLight * specular * 0.4;
+          
+          // Add subtle gold reflection
+          vec3 goldReflection = goldColor * specular * 0.25;
+          
+          // Create pulsing glow on brightest areas (face highlights)
+          float highlightPulse = sin(bwLightPhase * 3.0) * 0.5 + 0.5;
+          float brightHighlights = smoothstep(0.65, 0.9, bwBrightness) * highlightPulse * bwColor.a;
+          vec3 brightGlow = brightGold * brightHighlights * 0.3;
+          
+          // Blend B&W layer behind current composite with light effects
+          vec3 litBwLayer = bwColor.rgb + rimLight + goldReflection + brightGlow;
+          compositeColor = mix(litBwLayer, compositeColor, 0.7);
+        }
         
         // === KIT OVERLAY - Always visible, with sweeping shine on top ===
         if (hasKitOverlay > 0.5) {
@@ -312,7 +356,7 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         return
       }
 
-      const { baseImage, overlayImage, xrayImage, depthMap, depthLightened, depthDarkened, kitOverlay, kitDepth, shadowImage } = images
+      const { baseImage, overlayImage, xrayImage, depthMap, depthLightened, depthDarkened, kitOverlay, kitDepth, shadowImage, bwLayerImage } = images
 
       const scene = new THREE.Scene()
       
@@ -404,6 +448,16 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         shadowTexture.minFilter = THREE.LinearFilter
         shadowTexture.magFilter = THREE.LinearFilter
       }
+      
+      // Create B&W layer texture
+      let bwLayerTexture: THREE.Texture | null = null
+      
+      if (bwLayerImage) {
+        bwLayerTexture = new THREE.Texture(bwLayerImage)
+        bwLayerTexture.needsUpdate = true
+        bwLayerTexture.minFilter = THREE.LinearFilter
+        bwLayerTexture.magFilter = THREE.LinearFilter
+      }
 
       const isMobile = container.clientWidth < 768
       const imgAspect = baseImage.width / baseImage.height
@@ -428,6 +482,8 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         hasKitOverlay: { value: kitOverlayTexture ? 1.0 : 0.0 },
         hasKitDepth: { value: kitDepthTexture ? 1.0 : 0.0 },
         hasShadow: { value: shadowTexture ? 1.0 : 0.0 },
+        bwLayerTexture: { value: bwLayerTexture || baseTexture },
+        hasBwLayer: { value: bwLayerTexture ? 1.0 : 0.0 },
         time: { value: 0 },
         mousePos: { value: new THREE.Vector2(0.5, 0.5) },
         autoPos: { value: new THREE.Vector2(0.5, 0.55) },
@@ -440,7 +496,8 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         xrayScale: { value: 1.0 },
         shootingStarPos: { value: new THREE.Vector2(-0.5, -0.5) },
         shootingStarActive: { value: 0.0 },
-        kitShinePos: { value: -1.0 }
+        kitShinePos: { value: -1.0 },
+        bwLightPhase: { value: 0.0 }
       }
 
       const geometry = new THREE.PlaneGeometry(planeWidth, planeHeight, 1, 1)
@@ -495,6 +552,8 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         starCycleTime += deltaTime
         shineCycleTime += deltaTime
         
+        // === B&W LAYER LIGHT ANIMATION - Continuous smooth animation ===
+        uniforms.bwLightPhase.value += deltaTime * 1.2  // Speed of light animation
         // Reset cycles
         if (starCycleTime >= STAR_CYCLE) {
           starCycleTime = 0
