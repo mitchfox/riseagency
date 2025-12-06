@@ -27,7 +27,8 @@ interface SortableWidgetProps {
   rowHeight: number;
 }
 
-const WIDTH_SNAPS = [25, 33, 50, 67, 75, 100];
+// More granular width snaps for flexible ratios (e.g., 60/40, 70/30, 20/40/40, etc.)
+const WIDTH_SNAPS = [20, 25, 30, 33, 35, 40, 45, 50, 55, 60, 65, 67, 70, 75, 80, 100];
 const HEIGHT_OPTIONS = [1, 2, 3];
 
 export const SortableWidget = ({
@@ -83,7 +84,7 @@ export const SortableWidget = ({
     const handleMouseMove = (moveEvent: MouseEvent) => {
       const deltaX = moveEvent.clientX - startX;
       const deltaPercent = (deltaX / containerWidth) * 100;
-      const newWidth = Math.max(25, Math.min(100, startWidthPercent + deltaPercent));
+      const newWidth = Math.max(20, Math.min(100, startWidthPercent + deltaPercent));
       setResizePreview({ width: snapToWidth(newWidth) });
     };
 
