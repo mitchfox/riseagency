@@ -296,103 +296,6 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
       }
     `
 
-    // X-ray overlay shader
-    const xrayOverlayVertexShader = `
-      varying vec2 vUv;
-      void main() {
-        vUv = uv;
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-      }
-    `
-
-    const xrayOverlayFragmentShader = `
-      uniform float time;
-      uniform vec2 mousePos;
-      uniform vec2 resolution;
-      uniform float xrayRadius;
-      uniform float userActive;
-      
-      varying vec2 vUv;
-      
-      const vec3 goldColor = vec3(0.92, 0.78, 0.45);
-      const vec3 whiteColor = vec3(1.0, 0.98, 0.92);
-      const float PI = 3.14159265359;
-      
-      // Smooth noise for organic effects
-      float hash(float n) { return fract(sin(n) * 43758.5453123); }
-      
-      void main() {
-        // Only show effects when user is hovering
-        if (userActive < 0.5) discard;
-        
-        // Use same coordinate system as main shader
-        vec2 delta = vUv - mousePos;
-        float distToMouse = length(delta);
-        float maxDist = xrayRadius + 0.08;
-        
-        if (distToMouse > maxDist) discard;
-        
-        vec3 color = vec3(0.0);
-        float alpha = 0.0;
-        
-        float borderDist = abs(distToMouse - xrayRadius);
-        float angle = atan(delta.y, delta.x);
-        
-        // === SHOOTING STAR / COMET EFFECT ===
-        
-        // Main comet head - bright leading point
-        float cometAngle = time * 2.5; // Speed of rotation
-        vec2 cometHeadPos = mousePos + vec2(cos(cometAngle), sin(cometAngle)) * xrayRadius;
-        float cometHeadDist = length(vUv - cometHeadPos);
-        
-        // Bright white core of comet head
-        float cometCore = smoothstep(0.012, 0.0, cometHeadDist);
-        color += whiteColor * cometCore * 1.5;
-        alpha = max(alpha, cometCore);
-        
-        // Golden glow around comet head
-        float cometGlow = smoothstep(0.025, 0.005, cometHeadDist) * 0.8;
-        color += goldColor * cometGlow;
-        alpha = max(alpha, cometGlow * 0.9);
-        
-        // === COMET TAIL (trailing arc) ===
-        float angleDiff = angle - cometAngle;
-        // Normalize angle difference to -PI to PI
-        angleDiff = mod(angleDiff + PI, 2.0 * PI) - PI;
-        
-        // Tail trails behind (negative angle difference)
-        float tailLength = 2.5; // How much of the circle the tail covers (in radians)
-        float tailFade = smoothstep(-tailLength, 0.0, angleDiff); // Fade from tail to head
-        tailFade = pow(tailFade, 0.5); // Sharper falloff near head
-        
-        // Only show tail on the ring
-        float onRing = smoothstep(0.008, 0.002, borderDist);
-        float tailEffect = onRing * (1.0 - tailFade) * 0.7;
-        
-        // Gradient from gold to transparent along tail
-        color += goldColor * tailEffect;
-        alpha = max(alpha, tailEffect * 0.8);
-        
-        // Subtle outer glow on the ring
-        float ringGlow = smoothstep(0.02, 0.005, borderDist) * 0.15;
-        color += goldColor * ringGlow;
-        alpha = max(alpha, ringGlow * 0.5);
-        
-        // === SPARKLE PARTICLES in tail ===
-        for (int i = 0; i < 4; i++) {
-          float sparkleOffset = float(i) * 0.5 + 0.3;
-          float sparkleAngle = cometAngle - sparkleOffset;
-          float sparkleRadius = xrayRadius + sin(time * 3.0 + float(i)) * 0.005;
-          vec2 sparklePos = mousePos + vec2(cos(sparkleAngle), sin(sparkleAngle)) * sparkleRadius;
-          float sparkleDist = length(vUv - sparklePos);
-          float sparkle = smoothstep(0.006, 0.001, sparkleDist) * (1.0 - float(i) * 0.2);
-          color += whiteColor * sparkle * 0.6;
-          alpha = max(alpha, sparkle * 0.7);
-        }
-        
-        gl_FragColor = vec4(color, alpha);
-      }
-    `
 
     // Initialize Three.js
     const initScene = async () => {
@@ -481,28 +384,12 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
       playerMesh.position.y = isMobile ? 0.15 : 0.05
       scene.add(playerMesh)
 
-      // Overlay for x-ray halo effects - same size as player mesh for alignment
-      const overlayGeometry = new THREE.PlaneGeometry(planeWidth, planeHeight)
-      const overlayMaterial = new THREE.ShaderMaterial({
-        uniforms,
-        vertexShader: xrayOverlayVertexShader,
-        fragmentShader: xrayOverlayFragmentShader,
-        transparent: true,
-        depthWrite: false,
-        blending: THREE.AdditiveBlending
-      })
-
-      const xrayMesh = new THREE.Mesh(overlayGeometry, overlayMaterial)
-      xrayMesh.position.y = playerMesh.position.y // Match player mesh position
-      xrayMesh.position.z = 0.01
-      scene.add(xrayMesh)
-
       sceneRef.current = {
         scene,
         camera,
         renderer,
         playerMesh,
-        xrayMesh,
+        xrayMesh: null,
         uniforms,
         animationId: 0
       }
