@@ -136,41 +136,42 @@ export default function Landing() {
             style={{ clipPath: 'polygon(50% 15%, 100% 100%, 0% 100%)' }}
           />
           
-          {/* Content container - positioned to align with triangle */}
-          <div className="relative z-10 px-4 md:px-8 pt-8 md:pt-6 pb-2 md:py-5">
+          {/* Content container - pushed down to align with triangle body */}
+          <div className="relative z-10 px-4 md:px-8 pt-16 md:pt-14 pb-2 md:py-5">
             {/* Desktop Layout */}
             <div className="hidden md:block">
-              {/* Language Selector at top - directly below triangle peak */}
-              <div className="flex justify-center pb-3 mb-3 border-b border-primary/40 mx-auto" style={{ maxWidth: '35%' }}>
+              {/* Language Selector at top - near triangle peak */}
+              <div className="flex justify-center pb-2 mb-2 mx-auto">
                 <LanguageMapSelector onOpenChange={setLanguagePopupOpen} />
               </div>
               
-              {/* Buttons below language selector - smaller */}
-              <div className="flex items-center justify-center gap-3 mb-4">
-                <Button 
-                  onClick={() => setShowRepresentation(true)}
-                  variant="outline"
-                  size="sm"
-                  className="font-bebas uppercase tracking-wider border-primary/50 text-primary hover:bg-primary/10 hover:text-primary px-3 h-7 text-xs"
-                  hoverEffect
-                >
-                  {t("landing.represent_me", "Represent Me")}
-                </Button>
-                
-                <Button 
-                  onClick={() => setShowDeclareInterest(true)}
-                  size="sm"
-                  className="btn-shine font-bebas uppercase tracking-wider px-3 h-7 text-xs"
-                  hoverEffect
-                >
-                  {t("landing.declare_interest", "Declare Interest In Star")}
-                </Button>
+              {/* Buttons row - with divider line meeting triangle edges */}
+              <div className="border-t border-primary/40 pt-3 pb-3 mx-auto" style={{ maxWidth: '42%' }}>
+                <div className="flex items-center justify-center gap-3">
+                  <Button 
+                    onClick={() => setShowRepresentation(true)}
+                    variant="outline"
+                    size="sm"
+                    className="font-bebas uppercase tracking-wider border-primary/50 text-primary hover:bg-primary/10 hover:text-primary px-3 h-7 text-xs"
+                    hoverEffect
+                  >
+                    {t("landing.represent_me", "Represent Me")}
+                  </Button>
+                  
+                  <Button 
+                    onClick={() => setShowDeclareInterest(true)}
+                    size="sm"
+                    className="btn-shine font-bebas uppercase tracking-wider px-3 h-7 text-xs"
+                    hoverEffect
+                  >
+                    {t("landing.declare_interest", "Declare Interest In Star")}
+                  </Button>
+                </div>
               </div>
               
-              {/* Menu Items - Two rows - wider line (further down triangle) */}
-              <div className="border-t border-primary/40 pt-3 mx-auto" style={{ maxWidth: '75%' }}>
-                {/* Top row: Players, Coaches, Clubs */}
-                <nav className="flex items-center justify-center gap-6 mb-2">
+              {/* Top menu row: Players, Coaches, Clubs - with divider line */}
+              <div className="border-t border-primary/40 pt-2 pb-2 mx-auto" style={{ maxWidth: '62%' }}>
+                <nav className="flex items-center justify-center gap-6">
                   {desktopNavLinks.slice(0, 3).map((link, index) => (
                     <div key={link.to} className="flex items-center">
                       <button
@@ -185,8 +186,10 @@ export default function Landing() {
                     </div>
                   ))}
                 </nav>
-                
-                {/* Bottom row: Agents, Scouts, Business, Media */}
+              </div>
+              
+              {/* Bottom menu row: Agents, Scouts, Business, Media - widest line */}
+              <div className="border-t border-primary/40 pt-2 mx-auto" style={{ maxWidth: '85%' }}>
                 <nav className="flex items-center justify-center gap-4">
                   {desktopNavLinks.slice(3).map((link, index) => (
                     <div key={link.to} className="flex items-center">
@@ -205,38 +208,39 @@ export default function Landing() {
               </div>
             </div>
 
-            {/* Mobile Layout - compact to prevent scroll */}
-            <div className="md:hidden flex flex-col items-center gap-1 mt-6">
-              {/* Language Selector at top - narrowest (near peak) */}
-              <div className="pb-1 mb-1 border-b border-primary/40 flex justify-center" style={{ width: '30%' }}>
+            {/* Mobile Layout - pushed down with proper divider lines */}
+            <div className="md:hidden flex flex-col items-center gap-0 mt-8">
+              {/* Language Selector at top - near peak */}
+              <div className="pb-1 mb-1 flex justify-center">
                 <LanguageMapSelector onOpenChange={setLanguagePopupOpen} />
               </div>
               
-              {/* Represent Me & Declare Interest Buttons - smaller */}
-              <div className="flex gap-2 mb-1">
-                <Button 
-                  onClick={() => setShowRepresentation(true)}
-                  variant="outline"
-                  size="sm"
-                  className="font-bebas uppercase tracking-wider border-primary/50 text-primary hover:bg-primary/10 hover:text-primary text-[10px] px-2 h-5"
-                  hoverEffect
-                >
-                  {t("landing.represent_me", "Represent Me")}
-                </Button>
-                <Button 
-                  onClick={() => setShowDeclareInterest(true)}
-                  size="sm"
-                  className="btn-shine font-bebas uppercase tracking-wider text-[10px] px-2 h-5"
-                  hoverEffect
-                >
-                  {t("landing.declare_interest_short", "Declare Interest")}
-                </Button>
+              {/* Buttons row - with divider line */}
+              <div className="border-t border-primary/40 pt-2 pb-2 flex justify-center" style={{ width: '45%' }}>
+                <div className="flex gap-2">
+                  <Button 
+                    onClick={() => setShowRepresentation(true)}
+                    variant="outline"
+                    size="sm"
+                    className="font-bebas uppercase tracking-wider border-primary/50 text-primary hover:bg-primary/10 hover:text-primary text-[10px] px-2 h-5"
+                    hoverEffect
+                  >
+                    {t("landing.represent_me", "Represent Me")}
+                  </Button>
+                  <Button 
+                    onClick={() => setShowDeclareInterest(true)}
+                    size="sm"
+                    className="btn-shine font-bebas uppercase tracking-wider text-[10px] px-2 h-5"
+                    hoverEffect
+                  >
+                    {t("landing.declare_interest_short", "Declare Interest")}
+                  </Button>
+                </div>
               </div>
               
-              {/* Navigation - Two rows */}
-              <div className="border-t border-primary/40 pt-1" style={{ width: '70%' }}>
-                {/* Top row: Players, Coaches, Clubs */}
-                <nav className="flex items-center justify-center gap-1 mb-1">
+              {/* Top row: Players, Coaches, Clubs - with divider */}
+              <div className="border-t border-primary/40 pt-1 pb-1" style={{ width: '65%' }}>
+                <nav className="flex items-center justify-center gap-1">
                   {mobileNavLinks.slice(0, 3).map((link, index) => (
                     <div key={link.to} className="flex items-center">
                       <button
@@ -251,8 +255,10 @@ export default function Landing() {
                     </div>
                   ))}
                 </nav>
-                
-                {/* Bottom row: Agents, Scouts, Business, Media */}
+              </div>
+              
+              {/* Bottom row: Agents, Scouts, Business, Media - widest */}
+              <div className="border-t border-primary/40 pt-1" style={{ width: '88%' }}>
                 <nav className="flex items-center justify-center gap-1">
                   {mobileNavLinks.slice(3).map((link, index) => (
                     <div key={link.to} className="flex items-center">
