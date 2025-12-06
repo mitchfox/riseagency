@@ -141,6 +141,7 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
       uniform float xrayScale;
       uniform vec2 shootingStarPos;
       uniform float shootingStarActive;
+      uniform float kitShinePos;
       
       varying vec2 vUv;
       
@@ -206,10 +207,23 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         vec3 glossHighlight = overlayColor.rgb * overlayColor.a * glossPulse * 0.5;
         vec3 compositeColor = shadedBase + glossHighlight;
         
-        // === KIT OVERLAY (gold jersey on top) ===
-        if (hasKitOverlay > 0.5) {
+        // === KIT OVERLAY with sweeping shine reveal ===
+        if (hasKitOverlay > 0.5 && kitShinePos >= 0.0) {
           vec4 kitColor = texture2D(kitOverlayTexture, parallaxUV);
-          compositeColor = mix(compositeColor, kitColor.rgb, kitColor.a);
+          
+          // Shine band that travels left to right
+          float shineWidth = 0.15;
+          float shineDist = abs(vUv.x - kitShinePos);
+          float shineMask = 1.0 - smoothstep(0.0, shineWidth, shineDist);
+          
+          // Add bright glow at the shine center
+          float shineGlow = (1.0 - smoothstep(0.0, shineWidth * 0.3, shineDist)) * 0.5;
+          
+          // Reveal kit overlay where shine passes
+          compositeColor = mix(compositeColor, kitColor.rgb, kitColor.a * shineMask);
+          
+          // Add bright gold shine highlight
+          compositeColor += brightGold * shineGlow * kitColor.a;
         }
         
         // === X-RAY EFFECT ===
@@ -374,7 +388,8 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         xrayOffset: { value: new THREE.Vector2(0.0, 0.0) },
         xrayScale: { value: 1.0 },
         shootingStarPos: { value: new THREE.Vector2(-0.5, -0.5) },
-        shootingStarActive: { value: 0.0 }
+        shootingStarActive: { value: 0.0 },
+        kitShinePos: { value: -1.0 }
       }
 
       const geometry = new THREE.PlaneGeometry(planeWidth, planeHeight, 1, 1)
@@ -411,6 +426,11 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
       const STAR_DURATION = 3.0  // seconds
       const STAR_CYCLE = 10.0   // seconds
       let starCycleTime = 0
+      
+      // Kit shine timing: 1s duration, 8s cycle
+      const SHINE_DURATION = 1.0  // seconds
+      const SHINE_CYCLE = 8.0   // seconds
+      let shineCycleTime = 0
 
       const animate = () => {
         animationId = requestAnimationFrame(animate)
@@ -420,10 +440,26 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         uniforms.time.value += deltaTime
         autoTime += deltaTime
         starCycleTime += deltaTime
+        shineCycleTime += deltaTime
         
-        // Reset cycle
+        // Reset cycles
         if (starCycleTime >= STAR_CYCLE) {
           starCycleTime = 0
+        }
+        if (shineCycleTime >= SHINE_CYCLE) {
+          shineCycleTime = 0
+        }
+        
+        // === KIT SHINE ANIMATION ===
+        // Sweep from left (-0.2) to right (1.2) over 1 second
+        if (shineCycleTime < SHINE_DURATION) {
+          const shineProgress = shineCycleTime / SHINE_DURATION
+          // Ease out for smooth motion
+          const easedShine = 1 - Math.pow(1 - shineProgress, 2)
+          const shinePos = -0.2 + easedShine * 1.4  // -0.2 to 1.2
+          uniforms.kitShinePos.value = shinePos
+        } else {
+          uniforms.kitShinePos.value = -1.0  // Hide shine
         }
         
         // === SHOOTING STAR ANIMATION ===
