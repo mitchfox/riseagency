@@ -541,33 +541,38 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         // The fluid cursor makes the player TRANSPARENT, revealing the actual page marble background
         // Color bands appear at the edge of the transparent area
         
-        // Band definitions (from center outward) - gold edge around transparent core
+        // Band definitions - ONLY apply to background areas (alpha < 0.1), NOT the player
         float coreTransparency = smoothstep(0.4, 0.75, fluidMask);  // Core becomes transparent
-        float goldBand = smoothstep(0.2, 0.4, fluidMask) * (1.0 - smoothstep(0.5, 0.7, fluidMask));  // Gold ring at edge
-        float greyBand = smoothstep(0.05, 0.2, fluidMask) * (1.0 - smoothstep(0.25, 0.45, fluidMask));  // Grey transition
+        float goldBand = 0.0;
+        float greyBand = 0.0;
+        
+        // Only show bands outside the player
+        if (alpha < 0.1) {
+          goldBand = smoothstep(0.2, 0.4, fluidMask) * (1.0 - smoothstep(0.5, 0.7, fluidMask));
+          greyBand = smoothstep(0.05, 0.2, fluidMask) * (1.0 - smoothstep(0.25, 0.45, fluidMask));
+          
+          // Directional stretch - color bands stretch in movement direction
+          vec2 velDir = normalize(cursorVelocity + vec2(0.0001));
+          float velMag = length(cursorVelocity);
+          vec2 toPixel = vUv - cursorBlobPos;
+          float alongVel = dot(toPixel, velDir);
+          float directionalStretch = 1.0 + max(0.0, alongVel) * velMag * 8.0;
+          
+          goldBand *= mix(1.0, directionalStretch, 0.4);
+          greyBand *= mix(1.0, directionalStretch, 0.6);
+          
+          // Shiny shimmer for gold band
+          float goldShimmer = sin(noiseTime * 1.2 + vUv.x * 12.0 + vUv.y * 10.0) * 0.2 + 0.9;
+          goldShimmer += sin(noiseTime * 2.0 + vUv.y * 18.0) * 0.1;
+          vec3 shinyGold = riseGold * goldShimmer * 1.15;
+          
+          // Apply gold/grey edge bands (only outside player)
+          compositeColor = mix(compositeColor, revealGrey, greyBand * 0.5);
+          compositeColor = mix(compositeColor, shinyGold, goldBand * 0.7);
+        }
         
         // NOW discard - only if no player AND no fluid effect active
         if (alpha < 0.01 && coreTransparency < 0.05) discard;
-        
-        // Directional stretch - color bands stretch in movement direction
-        vec2 velDir = normalize(cursorVelocity + vec2(0.0001));
-        float velMag = length(cursorVelocity);
-        vec2 toPixel = vUv - cursorBlobPos;
-        float alongVel = dot(toPixel, velDir);
-        float directionalStretch = 1.0 + max(0.0, alongVel) * velMag * 8.0;
-        
-        // Apply directional stretch to bands
-        goldBand *= mix(1.0, directionalStretch, 0.4);
-        greyBand *= mix(1.0, directionalStretch, 0.6);
-        
-        // Shiny shimmer for gold band
-        float goldShimmer = sin(noiseTime * 1.2 + vUv.x * 12.0 + vUv.y * 10.0) * 0.2 + 0.9;
-        goldShimmer += sin(noiseTime * 2.0 + vUv.y * 18.0) * 0.1;
-        vec3 shinyGold = riseGold * goldShimmer * 1.15;
-        
-        // Apply gold/grey edge bands to composite (NOT making it white - that's the page bg)
-        compositeColor = mix(compositeColor, revealGrey, greyBand * 0.5);
-        compositeColor = mix(compositeColor, shinyGold, goldBand * 0.7);
         
         // ============= ORIGINAL MOUSE SPOTLIGHT X-RAY =============
         float distToMouse = length(vUv - mousePos);
@@ -615,23 +620,19 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         if (alpha < 0.1) {
           // OUTSIDE PLAYER (background area)
           if (coreTransparency > 0.05) {
-            // Fluid hovering over background - show WHITE MARBLE from texture
-            vec3 marbleColor;
-            if (hasWhiteMarble > 0.5) {
-              // Sample the white marble texture with tiling
-              vec2 marbleUv = vUv * 2.0;
-              marbleColor = texture2D(whiteMarbleTexture, marbleUv).rgb;
+            // Fluid hovering over background - make TRANSPARENT so page content shows through
+            // The gold/grey bands at the edge will still be visible
+            float edgeBands = goldBand + greyBand;
+            if (edgeBands > 0.01) {
+              // Show the edge band colors with partial transparency
+              gl_FragColor = vec4(compositeColor, edgeBands * 0.8);
             } else {
-              // Fallback to procedural marble if texture not loaded
-              vec3 marbleBase = vec3(0.97, 0.97, 0.98);
-              float vein1 = sin(vUv.x * 25.0 + vUv.y * 18.0 + 0.5) * 0.015;
-              float vein2 = sin(vUv.y * 30.0 - vUv.x * 12.0) * 0.01;
-              marbleColor = marbleBase + vein1 + vein2;
+              // Core area - fully transparent to show page content (R90, programming, etc.)
+              gl_FragColor = vec4(0.0, 0.0, 0.0, 0.0);
             }
-            gl_FragColor = vec4(marbleColor, 1.0);
           } else {
-            // No fluid - show BLACK background
-            gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+            // No fluid - transparent background (let video show through)
+            gl_FragColor = vec4(0.0, 0.0, 0.0, 0.0);
           }
         } else {
           // INSIDE PLAYER - ALWAYS show normal player, NO EXCEPTIONS
