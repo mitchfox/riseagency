@@ -585,26 +585,19 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         }
         
         // ============= FINAL OUTPUT =============
-        // Black background, marble revealed THROUGH player where cursor fluid is active
+        // Outside player = BLACK OPAQUE (hides marble behind)
+        // Inside player with fluid = TRANSPARENT (reveals marble div behind)
+        // Inside player without fluid = normal opaque player
         if (alpha < 0.1) {
-          // Outside player - BLACK to match page
+          // Outside player - BLACK OPAQUE to hide marble behind
           gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+        } else if (coreTransparency > 0.05) {
+          // Fluid active - make player TRANSPARENT to reveal marble behind
+          float revealAlpha = alpha * (1.0 - coreTransparency * 0.92);
+          gl_FragColor = vec4(finalColor, revealAlpha);
         } else {
-          // Inside player
-          if (coreTransparency > 0.05) {
-            // Fluid active - reveal white marble THROUGH player
-            vec3 marbleBase = vec3(0.97, 0.97, 0.98);
-            // Subtle veining for marble texture
-            float vein1 = sin(vUv.x * 25.0 + vUv.y * 18.0 + 0.5) * 0.015;
-            float vein2 = sin(vUv.y * 30.0 - vUv.x * 12.0) * 0.01;
-            vec3 marbleColor = marbleBase + vein1 + vein2;
-            // Blend: more fluid = more marble visible through player
-            vec3 revealColor = mix(finalColor, marbleColor, coreTransparency * 0.95);
-            gl_FragColor = vec4(revealColor, alpha);
-          } else {
-            // No fluid - normal player
-            gl_FragColor = vec4(finalColor, alpha);
-          }
+          // No fluid - normal opaque player
+          gl_FragColor = vec4(finalColor, alpha);
         }
       }
     `
