@@ -59,15 +59,28 @@ export default function Landing() {
 
   return (
     <XRayProvider>
-    <div className="min-h-screen bg-black flex flex-col items-center justify-end relative overflow-hidden cursor-none md:cursor-none">
+    <div className="min-h-screen flex flex-col items-center justify-end relative overflow-hidden cursor-none md:cursor-none" style={{ background: 'linear-gradient(135deg, #f8f8f9 0%, #ffffff 30%, #f0f0f2 60%, #fafafa 100%)' }}>
+      {/* White marble background texture overlay */}
+      <div 
+        className="absolute inset-0 pointer-events-none z-0"
+        style={{
+          backgroundImage: `
+            radial-gradient(ellipse at 20% 30%, rgba(220, 215, 210, 0.3) 0%, transparent 50%),
+            radial-gradient(ellipse at 80% 70%, rgba(200, 195, 190, 0.25) 0%, transparent 45%),
+            radial-gradient(ellipse at 50% 50%, rgba(235, 230, 225, 0.2) 0%, transparent 60%)
+          `,
+          opacity: 0.6
+        }}
+      />
+      
       {/* Custom Landing Page Cursor */}
       <LandingCursor />
       
       {/* Data-driven Background */}
       <HomeBackground />
       
-      {/* RISE Logo at top center - adjusted position */}
-      <div className="absolute top-[14px] md:top-[22px] left-1/2 -translate-x-1/2 z-50" style={{ marginLeft: '-7px' }}>
+      {/* RISE Logo at top center - shifted 5px left */}
+      <div className="absolute top-[14px] md:top-[22px] z-50" style={{ left: 'calc(50% - 5px)', transform: 'translateX(-50%)' }}>
         <img 
           src={riseLogoWhite} 
           alt="RISE Football Agency" 
