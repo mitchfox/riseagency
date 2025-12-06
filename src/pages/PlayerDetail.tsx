@@ -214,21 +214,8 @@ const PlayerDetail = () => {
   };
 
   const ogImage = getPlayerOgImage(player.name);
-  // Use main domain for OG images to work across all subdomains
-  const getMainDomain = () => {
-    const hostname = window.location.hostname;
-    const parts = hostname.split('.');
-    // Handle subdomains: extract main domain (e.g., scouts.risefootballagency.com -> risefootballagency.com)
-    if (parts.length >= 3 && parts[0] !== 'www') {
-      return `${window.location.protocol}//${parts.slice(-2).join('.')}`;
-    }
-    // Handle www or no subdomain
-    if (parts.length >= 2 && parts[0] === 'www') {
-      return `${window.location.protocol}//${parts.slice(-2).join('.')}`;
-    }
-    return window.location.origin;
-  };
-  const mainDomain = getMainDomain();
+  // Use hardcoded main domain for OG images - social crawlers don't execute JS
+  const mainDomain = 'https://risefootballagency.com';
   const fullOgImage = ogImage.startsWith('http') ? ogImage : `${mainDomain}${ogImage}`;
 
   return (
