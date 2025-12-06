@@ -106,25 +106,37 @@ export default function Landing() {
       )}
 
       {/* Bottom Section - Triangular shape (wide base, point at top) */}
-      <div className="pb-4 md:pb-12 z-50 relative w-full pointer-events-auto">
-        <div className="relative max-w-6xl mx-auto">
+      <div className="pb-2 md:pb-12 z-50 relative w-full pointer-events-auto">
+        <div className="relative max-w-6xl mx-auto" style={{ minHeight: '220px' }}>
           {/* Triangle background - SVG that creates the actual triangle shape */}
           <svg 
             className="absolute inset-0 w-full h-full pointer-events-none"
             viewBox="0 0 100 100"
             preserveAspectRatio="none"
+            style={{ filter: 'blur(0px)' }}
           >
+            <defs>
+              <filter id="blur-filter" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur in="SourceGraphic" stdDeviation="0" />
+              </filter>
+            </defs>
             <polygon 
               points="50,0 100,100 0,100" 
-              fill="rgba(0,0,0,0.4)"
+              fill="rgba(0,0,0,0.55)"
               stroke="hsl(var(--primary) / 0.6)" 
               strokeWidth="0.5"
               vectorEffect="non-scaling-stroke"
             />
           </svg>
           
-          {/* Content container */}
-          <div className="relative z-10 px-4 md:px-8 py-4 md:py-5">
+          {/* Backdrop blur overlay matching triangle shape */}
+          <div 
+            className="absolute inset-0 backdrop-blur-sm pointer-events-none"
+            style={{ clipPath: 'polygon(50% 0%, 100% 100%, 0% 100%)' }}
+          />
+          
+          {/* Content container - pushed down with padding top */}
+          <div className="relative z-10 px-4 md:px-8 pt-8 md:pt-6 pb-2 md:py-5">
             {/* Desktop Layout */}
             <div className="hidden md:block">
               {/* Language Selector at top - centered */}
@@ -192,20 +204,20 @@ export default function Landing() {
               </div>
             </div>
 
-            {/* Mobile Layout */}
-            <div className="md:hidden flex flex-col items-center gap-1.5">
+            {/* Mobile Layout - compact to prevent scroll */}
+            <div className="md:hidden flex flex-col items-center gap-1">
               {/* Language Selector at top */}
-              <div className="pb-2 mb-1.5 border-b border-primary/40 flex justify-center" style={{ width: '40%' }}>
+              <div className="pb-1 mb-1 border-b border-primary/40 flex justify-center" style={{ width: '40%' }}>
                 <LanguageMapSelector onOpenChange={setLanguagePopupOpen} />
               </div>
               
               {/* Represent Me & Declare Interest Buttons - smaller */}
-              <div className="flex gap-2 mb-2">
+              <div className="flex gap-2 mb-1">
                 <Button 
                   onClick={() => setShowRepresentation(true)}
                   variant="outline"
                   size="sm"
-                  className="font-bebas uppercase tracking-wider border-primary/50 text-primary hover:bg-primary/10 hover:text-primary text-[10px] px-2 h-6"
+                  className="font-bebas uppercase tracking-wider border-primary/50 text-primary hover:bg-primary/10 hover:text-primary text-[10px] px-2 h-5"
                   hoverEffect
                 >
                   {t("landing.represent_me", "Represent Me")}
@@ -213,7 +225,7 @@ export default function Landing() {
                 <Button 
                   onClick={() => setShowDeclareInterest(true)}
                   size="sm"
-                  className="btn-shine font-bebas uppercase tracking-wider text-[10px] px-2 h-6"
+                  className="btn-shine font-bebas uppercase tracking-wider text-[10px] px-2 h-5"
                   hoverEffect
                 >
                   {t("landing.declare_interest_short", "Declare Interest")}
@@ -221,7 +233,7 @@ export default function Landing() {
               </div>
               
               {/* Navigation - Two rows */}
-              <div className="border-t border-primary/40 pt-2" style={{ width: '80%' }}>
+              <div className="border-t border-primary/40 pt-1" style={{ width: '80%' }}>
                 {/* Top row: Players, Coaches, Clubs */}
                 <nav className="flex items-center justify-center gap-1 mb-1">
                   {mobileNavLinks.slice(0, 3).map((link, index) => (
