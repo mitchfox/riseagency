@@ -1,6 +1,0 @@
-# Redirect social crawlers to pre-rendered OG pages
-/stars/tyrese-omotoye  /og-pages/tyrese-omotoye.html  200!  User-Agent=~(facebookexternalhit|Twitterbot|WhatsApp|LinkedInBot|Slackbot|Discordbot|TelegramBot)
-/stars/michael-vit-mulligan  /og-pages/michael-vit-mulligan.html  200!  User-Agent=~(facebookexternalhit|Twitterbot|WhatsApp|LinkedInBot|Slackbot|Discordbot|TelegramBot)
-
-# All other requests go to index.html for SPA routing
-/*  /index.html  200
