@@ -135,13 +135,8 @@ export default function Landing() {
               <LanguageMapSelector onOpenChange={setLanguagePopupOpen} />
             </div>
             
-            {/* Drag Navigator */}
-            <div className="mb-4">
-              <DragNavigator options={desktopNavLinks} />
-            </div>
-            
-            {/* Buttons at bottom */}
-            <div className="border-t border-primary/40 pt-3 flex items-center justify-between">
+            {/* Buttons below language selector */}
+            <div className="flex items-center justify-center gap-6 mb-4">
               <Button 
                 onClick={() => setShowRepresentation(true)}
                 variant="outline"
@@ -159,6 +154,43 @@ export default function Landing() {
                 {t("landing.declare_interest", "Declare Interest In Star")}
               </Button>
             </div>
+            
+            {/* Menu Items - Two rows */}
+            <div className="border-t border-primary/40 pt-3">
+              {/* Top row: Players, Coaches, Clubs */}
+              <nav className="flex items-center justify-center gap-6 mb-2">
+                {desktopNavLinks.slice(0, 3).map((link, index) => (
+                  <div key={link.to} className="flex items-center">
+                    <button
+                      onClick={() => navigateToRole(link.to)}
+                      className="px-3 py-1 text-[15px] font-bebas uppercase tracking-[0.2em] text-white/80 hover:text-primary transition-colors duration-300 whitespace-nowrap"
+                    >
+                      <HoverText text={t(link.labelKey, link.fallback)} />
+                    </button>
+                    {index < 2 && (
+                      <div className="w-px h-4 bg-primary/40 ml-6" />
+                    )}
+                  </div>
+                ))}
+              </nav>
+              
+              {/* Bottom row: Agents, Scouts, Business, Media */}
+              <nav className="flex items-center justify-center gap-4">
+                {desktopNavLinks.slice(3).map((link, index) => (
+                  <div key={link.to} className="flex items-center">
+                    <button
+                      onClick={() => navigateToRole(link.to)}
+                      className="px-3 py-1 text-[15px] font-bebas uppercase tracking-[0.2em] text-white/80 hover:text-primary transition-colors duration-300 whitespace-nowrap"
+                    >
+                      <HoverText text={t(link.labelKey, link.fallback)} />
+                    </button>
+                    {index < 3 && (
+                      <div className="w-px h-4 bg-primary/40 ml-4" />
+                    )}
+                  </div>
+                ))}
+              </nav>
+            </div>
           </div>
 
           {/* Mobile Layout - Hourglass bottom shape */}
@@ -168,25 +200,8 @@ export default function Landing() {
               <LanguageMapSelector onOpenChange={setLanguagePopupOpen} />
             </div>
             
-            {/* Navigation - horizontal scroll */}
-            <nav className="flex items-center justify-center gap-1 flex-wrap px-1">
-              {mobileNavLinks.map((link, index) => (
-                <div key={link.to} className="flex items-center">
-                  <button
-                    onClick={() => navigateToRole(link.to)}
-                    className="px-2 py-1 text-xs font-bebas uppercase tracking-[0.15em] text-white/80 hover:text-primary transition-colors duration-300 whitespace-nowrap"
-                  >
-                    <HoverText text={t(link.labelKey, link.fallback)} />
-                  </button>
-                  {index < mobileNavLinks.length - 1 && (
-                    <div className="w-px h-3 bg-primary/40" />
-                  )}
-                </div>
-              ))}
-            </nav>
-            
-            {/* Represent Me & Declare Interest Buttons at bottom */}
-            <div className="flex gap-2 mt-2 pt-2 border-t border-primary/40 w-full justify-center">
+            {/* Represent Me & Declare Interest Buttons */}
+            <div className="flex gap-2 mb-2">
               <Button 
                 onClick={() => setShowRepresentation(true)}
                 variant="outline"
@@ -204,6 +219,43 @@ export default function Landing() {
               >
                 {t("landing.declare_interest_short", "Declare Interest")}
               </Button>
+            </div>
+            
+            {/* Navigation - Two rows */}
+            <div className="border-t border-primary/40 pt-2 w-full">
+              {/* Top row: Players, Coaches, Clubs */}
+              <nav className="flex items-center justify-center gap-1 mb-1">
+                {mobileNavLinks.slice(0, 3).map((link, index) => (
+                  <div key={link.to} className="flex items-center">
+                    <button
+                      onClick={() => navigateToRole(link.to)}
+                      className="px-2 py-1 text-[13px] font-bebas uppercase tracking-[0.15em] text-white/80 hover:text-primary transition-colors duration-300 whitespace-nowrap"
+                    >
+                      <HoverText text={t(link.labelKey, link.fallback)} />
+                    </button>
+                    {index < 2 && (
+                      <div className="w-px h-3 bg-primary/40" />
+                    )}
+                  </div>
+                ))}
+              </nav>
+              
+              {/* Bottom row: Agents, Scouts, Business, Media */}
+              <nav className="flex items-center justify-center gap-1">
+                {mobileNavLinks.slice(3).map((link, index) => (
+                  <div key={link.to} className="flex items-center">
+                    <button
+                      onClick={() => navigateToRole(link.to)}
+                      className="px-2 py-1 text-[13px] font-bebas uppercase tracking-[0.15em] text-white/80 hover:text-primary transition-colors duration-300 whitespace-nowrap"
+                    >
+                      <HoverText text={t(link.labelKey, link.fallback)} />
+                    </button>
+                    {index < 3 && (
+                      <div className="w-px h-3 bg-primary/40" />
+                    )}
+                  </div>
+                ))}
+              </nav>
             </div>
           </div>
 
