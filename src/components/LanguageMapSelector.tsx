@@ -71,22 +71,22 @@ export const LanguageMapSelector = ({ onOpenChange }: LanguageMapSelectorProps) 
           {/* Backdrop */}
           <div className="absolute inset-0 bg-black/80" />
           
-          {/* Content - full width on mobile for larger map */}
+          {/* Content */}
           <div 
-            className="relative bg-black/95 border border-primary/30 w-full mx-0 md:max-w-4xl md:mx-4 overflow-hidden rounded-none md:rounded-lg"
+            className="relative bg-black/95 border border-primary/30 max-w-4xl mx-4 overflow-hidden rounded-lg"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Close Button */}
             <button
               type="button"
               onClick={() => handleOpenChange(false)}
-              className="absolute right-2 top-2 md:right-4 md:top-4 z-20 text-white/70 hover:text-white transition-colors"
+              className="absolute right-4 top-4 z-20 text-white/70 hover:text-white transition-colors"
             >
               <X className="h-5 w-5" />
             </button>
 
-            {/* Map container - square on mobile for better flag visibility */}
-            <div className="relative w-full aspect-[1/1.1] md:aspect-[16/10] overflow-hidden">
+            {/* Map container */}
+            <div className="relative w-full aspect-[16/10] overflow-hidden">
               {/* Europe Map Image */}
               <img 
                 src={europeMap} 
@@ -118,14 +118,14 @@ export const LanguageMapSelector = ({ onOpenChange }: LanguageMapSelectorProps) 
                   >
                     {/* Pulse animation for selected */}
                     {isSelected && (
-                      <span className="absolute inset-0 -m-1 md:-m-2 rounded-full bg-primary/30 animate-ping" />
+                      <span className="absolute inset-0 -m-2 rounded-full bg-primary/30 animate-ping" />
                     )}
                     
                     {/* Marker dot */}
                     <span 
                       className={`
                         relative flex items-center justify-center
-                        w-9 h-9 md:w-12 md:h-12 rounded-full
+                        w-10 h-10 md:w-12 md:h-12 rounded-full
                         transition-all duration-300 cursor-pointer
                         ${isSelected 
                           ? 'bg-primary text-black scale-110 shadow-lg shadow-primary/50' 
@@ -135,17 +135,17 @@ export const LanguageMapSelector = ({ onOpenChange }: LanguageMapSelectorProps) 
                         }
                       `}
                     >
-                      <span className="text-lg md:text-2xl">{region.flag}</span>
+                      <span className="text-xl md:text-2xl">{region.flag}</span>
                     </span>
                     
-                    {/* Label - hidden on mobile to prevent overlap */}
+                    {/* Label */}
                     <span 
                       className={`
-                        absolute left-1/2 -translate-x-1/2 top-full mt-0.5 md:mt-1
-                        whitespace-nowrap text-[10px] md:text-sm font-bebas uppercase tracking-wider
-                        px-1 md:px-2 py-0.5 rounded bg-black/90
-                        transition-all duration-300 hidden md:block
-                        ${isSelected || isHovered ? 'md:opacity-100 text-primary' : 'opacity-0 group-hover:opacity-100 text-white/70'}
+                        absolute left-1/2 -translate-x-1/2 top-full mt-1
+                        whitespace-nowrap text-xs md:text-sm font-bebas uppercase tracking-wider
+                        px-2 py-0.5 rounded bg-black/90
+                        transition-all duration-300
+                        ${isSelected || isHovered ? 'opacity-100 text-primary' : 'opacity-0 group-hover:opacity-100 text-white/70'}
                       `}
                     >
                       {region.nativeName}
@@ -155,18 +155,18 @@ export const LanguageMapSelector = ({ onOpenChange }: LanguageMapSelectorProps) 
               })}
               
               {/* Title */}
-              <div className="absolute top-2 md:top-4 left-0 right-0 text-center z-10">
-                <h3 className="text-lg md:text-2xl font-bebas uppercase tracking-[0.2em] md:tracking-[0.3em] text-primary">
+              <div className="absolute top-4 left-0 right-0 text-center z-10">
+                <h3 className="text-xl md:text-2xl font-bebas uppercase tracking-[0.3em] text-primary">
                   Select Language
                 </h3>
-                <p className="text-[10px] md:text-xs text-white/50 font-bebas tracking-wider mt-0.5 md:mt-1">
+                <p className="text-xs text-white/50 font-bebas tracking-wider mt-1">
                   Tap a flag to switch
                 </p>
               </div>
               
               {/* Current selection indicator */}
-              <div className="absolute bottom-2 md:bottom-4 left-0 right-0 text-center z-10">
-                <span className="text-xs md:text-sm font-bebas uppercase tracking-wider text-white/60 bg-black/80 px-3 py-1 rounded">
+              <div className="absolute bottom-4 left-0 right-0 text-center z-10">
+                <span className="text-sm font-bebas uppercase tracking-wider text-white/60 bg-black/80 px-3 py-1 rounded">
                   Current: <span className="text-primary">{selectedLanguage.flag} {selectedLanguage.nativeName}</span>
                 </span>
               </div>
