@@ -3,24 +3,31 @@ import { HelmetProvider } from "react-helmet-async";
 import App from "./App.tsx";
 import "./index.css";
 
-// Register service worker with update detection
+// Register service worker with update detection - wrapped in try-catch to prevent console errors
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js')
-      .then(registration => {
-        console.log('[PWA] Service Worker registered:', registration);
-        
-        // Check for updates on page load
-        registration.update();
-        
-        // Check for updates periodically (every 5 minutes)
-        setInterval(() => {
-          registration.update();
-        }, 5 * 60 * 1000);
-      })
-      .catch(error => {
-        console.log('[PWA] Service Worker registration failed:', error);
-      });
+  window.addEventListener('load', async () => {
+    try {
+      const registration = await navigator.serviceWorker.register('/sw.js');
+      console.log('[PWA] Service Worker registered');
+      
+      // Check for updates on page load - wrapped in try-catch
+      try {
+        await registration.update();
+      } catch {
+        // Silently ignore update errors - not critical
+      }
+      
+      // Check for updates periodically (every 5 minutes)
+      setInterval(async () => {
+        try {
+          await registration.update();
+        } catch {
+          // Silently ignore periodic update errors
+        }
+      }, 5 * 60 * 1000);
+    } catch {
+      // Silently fail - SW is not critical for app functionality
+    }
   });
 }
 
