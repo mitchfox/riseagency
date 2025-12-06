@@ -624,20 +624,22 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         // ============= FINAL OUTPUT =============
         // Outside player: black normally, white marble when fluid hovers
         // Inside player: ALWAYS normal player, NEVER touched
-        // PHANTOM MODE: Only reveal content INSIDE the bubble, nothing outside
+        // PHANTOM MODE: Only reveal content INSIDE the cursor blob, nothing outside
         if (alpha < 0.1) {
           // OUTSIDE PLAYER (background area)
           if (isPhantomMode > 0.5) {
-            // PHANTOM MODE - ONLY show content inside the phantom bubble, nothing else
-            // Check if this pixel is inside the phantom bubble
-            float phantomDist = length(vUv - phantomBubblePos);
-            float insidePhantom = 1.0 - smoothstep(phantomBubbleRadius * 0.8, phantomBubbleRadius, phantomDist);
+            // PHANTOM MODE - ONLY show content inside the cursor blob bubble, nothing else
+            // The cursor blob IS the phantom bubble - check if inside it
+            float phantomDist = length(vUv - cursorBlobPos);
+            float phantomRadius = 0.12; // Fixed bubble size for phantom
+            float insidePhantom = 1.0 - smoothstep(phantomRadius * 0.7, phantomRadius, phantomDist);
+            insidePhantom *= cursorBlobOpacity;
             
-            if (insidePhantom > 0.1 && phantomBubbleOpacity > 0.1) {
+            if (insidePhantom > 0.1) {
               // Inside the phantom bubble - make transparent to show R90/programming content
               gl_FragColor = vec4(0.0, 0.0, 0.0, 0.0);
             } else {
-              // Outside phantom bubble - keep completely hidden (black/transparent)
+              // Outside phantom bubble - completely hidden, show nothing
               discard;
             }
           } else if (coreTransparency > 0.05) {
