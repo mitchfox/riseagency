@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Target, CheckSquare, Users, Calendar, Link2, TrendingUp, Settings, RotateCcw, Layers, Plus, Search, Megaphone, ClipboardList, BarChart3, FileText, Mail, Dumbbell } from "lucide-react";
+import { Target, CheckSquare, Users, Calendar, Link2, TrendingUp, Settings, RotateCcw, Layers, Plus, Search, Megaphone, ClipboardList, BarChart3, FileText, Mail, Dumbbell, Bell, Clock, FolderOpen, MessageSquare, Briefcase, Globe, Receipt, UserPlus, Activity } from "lucide-react";
 import { StaffSchedule } from "./StaffSchedule";
 import { supabase } from "@/integrations/supabase/client";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -39,19 +39,34 @@ interface WidgetConfig {
 }
 
 const WIDGET_CONFIGS: WidgetConfig[] = [
+  // Default visible
   { id: "goals", title: "Quarter Goals", icon: Target, defaultVisible: true },
   { id: "todo", title: "To Do", icon: CheckSquare, defaultVisible: true },
   { id: "quicklinks", title: "Quick Links", icon: Link2, defaultVisible: true },
   { id: "financial", title: "Financial Projection", icon: TrendingUp, defaultVisible: true },
   { id: "schedule", title: "Schedule Calendar", icon: Calendar, defaultVisible: true },
   { id: "represented", title: "Represented Players", icon: Users, defaultVisible: true },
+  // General
+  { id: "notifications", title: "Recent Notifications", icon: Bell, defaultVisible: false },
+  { id: "activity", title: "Activity Feed", icon: Activity, defaultVisible: false },
+  { id: "messages", title: "Form Submissions", icon: MessageSquare, defaultVisible: false },
+  { id: "sitevisits", title: "Site Visits", icon: Globe, defaultVisible: false },
+  // Scouting & Players
   { id: "scouting", title: "Scouting Activity", icon: Search, defaultVisible: false },
-  { id: "marketing", title: "Marketing Campaigns", icon: Megaphone, defaultVisible: false },
   { id: "prospects", title: "Prospect Pipeline", icon: ClipboardList, defaultVisible: false },
+  { id: "newplayers", title: "New Player Signups", icon: UserPlus, defaultVisible: false },
+  // Marketing & Outreach
+  { id: "marketing", title: "Marketing Campaigns", icon: Megaphone, defaultVisible: false },
+  { id: "outreach", title: "Club Outreach", icon: Mail, defaultVisible: false },
+  // Performance & Analysis
   { id: "analytics", title: "Performance Analytics", icon: BarChart3, defaultVisible: false },
   { id: "reports", title: "Recent Reports", icon: FileText, defaultVisible: false },
-  { id: "outreach", title: "Club Outreach", icon: Mail, defaultVisible: false },
   { id: "coaching", title: "Coaching Sessions", icon: Dumbbell, defaultVisible: false },
+  // Organizational
+  { id: "invoices", title: "Pending Invoices", icon: Receipt, defaultVisible: false },
+  { id: "documents", title: "Recent Documents", icon: FolderOpen, defaultVisible: false },
+  { id: "deadlines", title: "Upcoming Deadlines", icon: Clock, defaultVisible: false },
+  { id: "projects", title: "Active Projects", icon: Briefcase, defaultVisible: false },
 ];
 
 const DEFAULT_LAYOUTS: WidgetLayout[] = [
@@ -688,6 +703,96 @@ export const StaffOverview = ({ isAdmin, userId }: { isAdmin: boolean; userId?: 
             <div className="text-center text-xs text-muted-foreground py-4">
               <Dumbbell className="h-8 w-8 mx-auto mb-2 opacity-50" />
               View coaching sessions and programmes
+            </div>
+          </div>
+        );
+
+      case "notifications":
+        return (
+          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'notifications' })}>
+            <div className="text-center text-xs text-muted-foreground py-4">
+              <Bell className="h-8 w-8 mx-auto mb-2 opacity-50" />
+              View recent notifications
+            </div>
+          </div>
+        );
+
+      case "activity":
+        return (
+          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'overview' })}>
+            <div className="text-center text-xs text-muted-foreground py-4">
+              <Activity className="h-8 w-8 mx-auto mb-2 opacity-50" />
+              Recent activity across the platform
+            </div>
+          </div>
+        );
+
+      case "messages":
+        return (
+          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'form-submissions' })}>
+            <div className="text-center text-xs text-muted-foreground py-4">
+              <MessageSquare className="h-8 w-8 mx-auto mb-2 opacity-50" />
+              View form submissions and messages
+            </div>
+          </div>
+        );
+
+      case "sitevisits":
+        return (
+          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'visitors' })}>
+            <div className="text-center text-xs text-muted-foreground py-4">
+              <Globe className="h-8 w-8 mx-auto mb-2 opacity-50" />
+              Monitor site visitor activity
+            </div>
+          </div>
+        );
+
+      case "newplayers":
+        return (
+          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'players' })}>
+            <div className="text-center text-xs text-muted-foreground py-4">
+              <UserPlus className="h-8 w-8 mx-auto mb-2 opacity-50" />
+              Track new player signups
+            </div>
+          </div>
+        );
+
+      case "invoices":
+        return (
+          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'invoices' })}>
+            <div className="text-center text-xs text-muted-foreground py-4">
+              <Receipt className="h-8 w-8 mx-auto mb-2 opacity-50" />
+              View pending invoices
+            </div>
+          </div>
+        );
+
+      case "documents":
+        return (
+          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'documents' })}>
+            <div className="text-center text-xs text-muted-foreground py-4">
+              <FolderOpen className="h-8 w-8 mx-auto mb-2 opacity-50" />
+              Access recent documents
+            </div>
+          </div>
+        );
+
+      case "deadlines":
+        return (
+          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'goalstasks' })}>
+            <div className="text-center text-xs text-muted-foreground py-4">
+              <Clock className="h-8 w-8 mx-auto mb-2 opacity-50" />
+              Track upcoming deadlines
+            </div>
+          </div>
+        );
+
+      case "projects":
+        return (
+          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'goalstasks' })}>
+            <div className="text-center text-xs text-muted-foreground py-4">
+              <Briefcase className="h-8 w-8 mx-auto mb-2 opacity-50" />
+              View active projects
             </div>
           </div>
         );
