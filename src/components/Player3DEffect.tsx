@@ -812,8 +812,8 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
       })
 
       const playerMesh = new THREE.Mesh(geometry, material)
-      // Position: y offset for vertical centering, x offset shifted 3px more left
-      playerMesh.position.x = -0.04
+      // Position: shifted left by ~3px (0.015 in normalized coords)
+      playerMesh.position.x = -0.015
       playerMesh.position.y = isMobile ? 0.15 : 0.05
       scene.add(playerMesh)
 
@@ -1011,8 +1011,8 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
           uniforms.kitShinePos.value = -1.0  // Hide shine
         }
         
-        // === SHOOTING STAR ANIMATION - FULL CIRCLE ===
-        // Complete circular path around the player image
+        // === SHOOTING STAR ANIMATION - 90° ARC FROM LEFT TO RIGHT ===
+        // Arc from 270° (left, off-screen) to 360° (right, off-screen)
         if (starCycleTime < STAR_DURATION) {
           const progress = starCycleTime / STAR_DURATION
           // Ease in-out for smooth motion
@@ -1020,14 +1020,14 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
             ? 2 * progress * progress 
             : 1 - Math.pow(-2 * progress + 2, 2) / 2
           
-          // FULL CIRCLE: 0° to 360° (complete revolution)
-          const startAngle = 0
-          const endAngle = Math.PI * 2  // Full 360°
+          // 90° arc: 270° to 360° (left off-screen to right off-screen)
+          const startAngle = Math.PI * 1.5  // 270° (left side)
+          const endAngle = Math.PI * 2      // 360° (right side)
           const currentAngle = startAngle + (endAngle - startAngle) * easedProgress
           
-          // Elliptical arc to cover the whole player area
-          const arcRadiusX = 0.45
-          const arcRadiusY = 0.42
+          // Large radius so start/end points are off-screen
+          const arcRadiusX = 0.85
+          const arcRadiusY = 0.75
           const centerX = 0.5
           const centerY = 0.5
           
