@@ -59,7 +59,6 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
 
       await Promise.all(imagePromises)
       
-      // Composite image 5 (base) with image 2 (overlay) on top
       const img5 = imageMap["5"]
       const img2 = imageMap["2"]
       const img1 = imageMap["1"]
@@ -69,27 +68,7 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         return null
       }
       
-      // Create canvas to composite images
-      const canvas = document.createElement("canvas")
-      canvas.width = img5.width
-      canvas.height = img5.height
-      const ctx = canvas.getContext("2d")
-      
-      if (!ctx) return null
-      
-      // Draw image 5 as base
-      ctx.drawImage(img5, 0, 0)
-      // Draw image 2 on top
-      ctx.drawImage(img2, 0, 0, img5.width, img5.height)
-      
-      // Convert canvas to image
-      const compositeImage = new Image()
-      await new Promise<void>((resolve) => {
-        compositeImage.onload = () => resolve()
-        compositeImage.src = canvas.toDataURL("image/png")
-      })
-      
-      return { baseImage: compositeImage, xrayImage: img1 }
+      return { baseImage: img5, overlayImage: img2, xrayImage: img1 }
     } catch (error) {
       console.error("Error loading zip:", error)
       return null
@@ -216,9 +195,10 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
       }
     `
 
-    // Fragment shader with gold tint x-ray - supports TWO simultaneous x-ray circles
+    // Fragment shader with overlay pulse and x-ray
     const fragmentShader = `
       uniform sampler2D baseTexture;
+      uniform sampler2D overlayTexture;
       uniform sampler2D xrayTexture;
       uniform float time;
       uniform vec2 mousePos;
@@ -242,6 +222,15 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
       
       void main() {
         vec4 baseColor = texture2D(baseTexture, vUv);
+        vec4 overlayColor = texture2D(overlayTexture, vUv);
+        
+        // Overlay pulse effect - shines on and off when NOT hovering
+        float overlayPulse = sin(time * 1.5) * 0.5 + 0.5; // 0 to 1 pulse
+        overlayPulse = smoothstep(0.2, 0.8, overlayPulse); // Sharper on/off
+        float overlayVisible = overlayPulse * (1.0 - userActive); // Hidden when hovering
+        
+        // Blend overlay on top of base with pulsing opacity
+        vec4 compositeBase = mix(baseColor, overlayColor, overlayColor.a * overlayVisible);
         
         // Sample x-ray with offset and scale to align
         vec2 xrayUV = (vUv - 0.5) * xrayScale + 0.5 + xrayOffset;
@@ -249,28 +238,20 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         
         // Check if xray UV is valid
         float xrayValid = step(0.0, xrayUV.x) * step(xrayUV.x, 1.0) * step(0.0, xrayUV.y) * step(xrayUV.y, 1.0);
-        xrayColor = mix(baseColor, xrayColor, xrayValid * xrayColor.a);
+        xrayColor = mix(compositeBase, xrayColor, xrayValid * xrayColor.a);
         
         // Alpha from base texture
-        float alpha = baseColor.a;
+        float alpha = max(baseColor.a, overlayColor.a * overlayVisible);
         
         // Discard fully transparent pixels
         if (alpha < 0.01) discard;
         
-        // Auto-reveal x-ray circle (hidden when user is hovering)
-        float distToAuto = length(vUv - autoPos);
-        float autoVisible = 1.0 - userActive;
-        float autoMask = (1.0 - smoothstep(xrayRadius - 0.03, xrayRadius + 0.01, distToAuto)) * autoVisible;
-        
-        // User hover x-ray circle (when active)
+        // Only user hover x-ray circle (no auto-reveal x-ray)
         float distToMouse = length(vUv - mousePos);
-        float userMask = (1.0 - smoothstep(xrayRadius - 0.03, xrayRadius + 0.01, distToMouse)) * userActive;
+        float xrayMask = (1.0 - smoothstep(xrayRadius - 0.03, xrayRadius + 0.01, distToMouse)) * userActive;
         
-        // Combined x-ray mask (max of both circles)
-        float xrayMask = max(autoMask, userMask);
-        
-        // Mix base and x-ray based on combined mask
-        vec4 color = mix(baseColor, xrayColor, xrayMask * xrayValid);
+        // Mix base and x-ray based on hover mask only
+        vec4 color = mix(compositeBase, xrayColor, xrayMask * xrayValid);
         
         // === LIGHTING & ROUGHNESS for base image ===
         vec3 normal = normalize(vNormal);
@@ -311,11 +292,6 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
           litColor = mix(litColor, litColor * vec3(1.05, 1.0, 0.9), xrayMask * 0.3);
         }
         
-        // Auto-reveal pulsing glow
-        float pulse = sin(time * 2.0) * 0.1 + 0.9;
-        float autoGlow = autoMask * pulse * 0.08;
-        litColor += goldColor * autoGlow;
-        
         gl_FragColor = vec4(litColor, alpha);
       }
     `
@@ -332,10 +308,8 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
     const xrayOverlayFragmentShader = `
       uniform float time;
       uniform vec2 mousePos;
-      uniform vec2 autoPos;
       uniform vec2 resolution;
       uniform float xrayRadius;
-      uniform vec2 playerCenter;
       uniform float userActive;
       
       varying vec2 vUv;
@@ -343,118 +317,47 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
       const vec3 goldColor = vec3(0.792, 0.694, 0.443);
       const float PI = 3.14159265359;
       
-      // Helper function to draw effects around a position
-      void drawXrayEffects(vec2 center, float mask, float intensity, inout vec3 color, inout float alpha, bool isUserHover) {
-        float borderDist = abs(length(vUv - center) - xrayRadius);
-        
-        if (isUserHover) {
-          // THIN SPINNING WHEEL effect for user hover
-          float angle = atan(vUv.y - center.y, vUv.x - center.x);
-          
-          // Spinning segments (like a wheel with gaps)
-          float segments = 12.0;
-          float spin = time * 3.0;
-          float segmentMask = sin((angle + spin) * segments) * 0.5 + 0.5;
-          segmentMask = smoothstep(0.3, 0.7, segmentMask);
-          
-          // Thin ring
-          float thinRing = smoothstep(0.006, 0.002, borderDist) * segmentMask;
-          
-          // Soft outer glow
-          float outerGlow = smoothstep(0.025, 0.005, borderDist) * 0.3 * segmentMask;
-          
-          float wheelEffect = (thinRing + outerGlow) * intensity;
-          color += goldColor * wheelEffect;
-          alpha = max(alpha, wheelEffect * 0.9);
-          
-          // Small spinning dots at the ring
-          for (int i = 0; i < 6; i++) {
-            float dotAngle = float(i) / 6.0 * 2.0 * PI + time * 4.0;
-            vec2 dotPos = center + vec2(cos(dotAngle), sin(dotAngle)) * xrayRadius;
-            float dotDist = length(vUv - dotPos);
-            float dotGlow = smoothstep(0.008, 0.002, dotDist) * intensity;
-            color += goldColor * dotGlow;
-            alpha = max(alpha, dotGlow);
-          }
-        } else {
-          // Subtle effect for auto-reveal (no thick border)
-          float cursorDist = length(vUv - center);
-          float cursorPulse = sin(time * 5.0) * 0.2 + 0.8;
-          float cursorGlow = smoothstep(0.015, 0.005, cursorDist) * cursorPulse * intensity * 0.5;
-          color += goldColor * cursorGlow;
-          alpha = max(alpha, cursorGlow * 0.7);
-        }
-      }
-      
       void main() {
-        // Check if we're near either circle
-        float distToAuto = length(vUv - autoPos);
+        // Only show effects when user is hovering
+        if (userActive < 0.5) discard;
+        
         float distToMouse = length(vUv - mousePos);
-        float maxDist = xrayRadius + 0.15;
+        float maxDist = xrayRadius + 0.05;
         
-        // When user is hovering, hide auto-reveal completely
-        float autoVisible = 1.0 - userActive;
-        
-        if (distToAuto > maxDist && distToMouse > maxDist) discard;
-        
-        float autoMask = (1.0 - smoothstep(xrayRadius - 0.03, xrayRadius, distToAuto)) * autoVisible;
-        float userMask = (1.0 - smoothstep(xrayRadius - 0.03, xrayRadius, distToMouse)) * userActive;
+        if (distToMouse > maxDist) discard;
         
         vec3 color = vec3(0.0);
         float alpha = 0.0;
         
-        // 5D Matrix lines from player center (always active with auto)
-        float angles[5];
-        angles[0] = -90.0 * PI / 180.0;
-        angles[1] = -162.0 * PI / 180.0;
-        angles[2] = -234.0 * PI / 180.0;
-        angles[3] = -306.0 * PI / 180.0;
-        angles[4] = -18.0 * PI / 180.0;
+        float borderDist = abs(distToMouse - xrayRadius);
         
-        for (int i = 0; i < 5; i++) {
-          float angle = angles[i];
-          vec2 lineDir = vec2(cos(angle), sin(angle));
-          float lineLength = 0.25 + sin(time * 2.5 + float(i) * 1.2) * 0.08;
-          vec2 lineEnd = playerCenter + lineDir * lineLength;
-          
-          vec2 pa = vUv - playerCenter;
-          vec2 ba = lineEnd - playerCenter;
-          float h = clamp(dot(pa, ba) / dot(ba, ba), 0.0, 1.0);
-          float lineDist = length(pa - ba * h);
-          
-          float lineGlow = smoothstep(0.006, 0.0, lineDist);
-          color += goldColor * lineGlow * 0.8 * autoMask;
-          alpha = max(alpha, lineGlow * 0.9 * autoMask);
-          
-          for (int p = 0; p < 6; p++) {
-            float particleProgress = fract(time * 0.5 + float(p) * 0.12 + float(i) * 0.2);
-            vec2 particlePos = playerCenter + lineDir * lineLength * particleProgress;
-            float particleDist = length(vUv - particlePos);
-            float particleGlow = smoothstep(0.012, 0.0, particleDist);
-            float particleAlpha = sin(particleProgress * PI) * 0.9;
-            color += goldColor * particleGlow * particleAlpha * autoMask;
-            alpha = max(alpha, particleGlow * particleAlpha * autoMask);
-          }
-          
-          float endDist = length(vUv - lineEnd);
-          float endGlow = smoothstep(0.018, 0.004, endDist);
-          color += goldColor * endGlow * autoMask;
-          alpha = max(alpha, endGlow * autoMask);
-        }
+        // THIN SPINNING WHEEL effect for user hover
+        float angle = atan(vUv.y - mousePos.y, vUv.x - mousePos.x);
         
-        // Center core
-        float coreDist = length(vUv - playerCenter);
-        float corePulse = sin(time * 3.0) * 0.3 + 0.7;
-        float coreGlow = smoothstep(0.022, 0.008, coreDist) * corePulse;
-        color += goldColor * coreGlow * autoMask;
-        alpha = max(alpha, coreGlow * autoMask);
+        // Spinning segments (like a wheel with gaps)
+        float segments = 12.0;
+        float spin = time * 3.0;
+        float segmentMask = sin((angle + spin) * segments) * 0.5 + 0.5;
+        segmentMask = smoothstep(0.3, 0.7, segmentMask);
         
-        // Draw effects for auto-reveal circle
-        drawXrayEffects(autoPos, autoMask, 0.6, color, alpha, false);
+        // Thin ring
+        float thinRing = smoothstep(0.006, 0.002, borderDist) * segmentMask;
         
-        // Draw effects for user hover circle (if active)
-        if (userActive > 0.5) {
-          drawXrayEffects(mousePos, userMask, 1.0, color, alpha, true);
+        // Soft outer glow
+        float outerGlow = smoothstep(0.025, 0.005, borderDist) * 0.3 * segmentMask;
+        
+        float wheelEffect = thinRing + outerGlow;
+        color += goldColor * wheelEffect;
+        alpha = max(alpha, wheelEffect * 0.9);
+        
+        // Small spinning dots at the ring
+        for (int i = 0; i < 6; i++) {
+          float dotAngle = float(i) / 6.0 * 2.0 * PI + time * 4.0;
+          vec2 dotPos = mousePos + vec2(cos(dotAngle), sin(dotAngle)) * xrayRadius;
+          float dotDist = length(vUv - dotPos);
+          float dotGlow = smoothstep(0.008, 0.002, dotDist);
+          color += goldColor * dotGlow;
+          alpha = max(alpha, dotGlow);
         }
         
         gl_FragColor = vec4(color, alpha);
@@ -464,12 +367,12 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
     // Initialize Three.js
     const initScene = async () => {
       const images = await loadImages()
-      if (!images || !images.baseImage || !images.xrayImage) {
+      if (!images || !images.baseImage || !images.overlayImage || !images.xrayImage) {
         setIsLoading(false)
         return
       }
 
-      const { baseImage, xrayImage } = images
+      const { baseImage, overlayImage, xrayImage } = images
 
       const scene = new THREE.Scene()
       
@@ -500,6 +403,11 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
       baseTexture.minFilter = THREE.LinearFilter
       baseTexture.magFilter = THREE.LinearFilter
 
+      const overlayTexture = new THREE.Texture(overlayImage)
+      overlayTexture.needsUpdate = true
+      overlayTexture.minFilter = THREE.LinearFilter
+      overlayTexture.magFilter = THREE.LinearFilter
+
       const xrayTexture = new THREE.Texture(xrayImage)
       xrayTexture.needsUpdate = true
       xrayTexture.minFilter = THREE.LinearFilter
@@ -511,22 +419,22 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
       let planeHeight = isMobile ? 1.4 : 1.6
       let planeWidth = planeHeight * imgAspect
 
-      // Uniforms with x-ray alignment adjustments - TWO separate positions
-      // Smaller xray radius on mobile
+      // Uniforms with overlay and x-ray
       const uniforms = {
         baseTexture: { value: baseTexture },
+        overlayTexture: { value: overlayTexture },
         xrayTexture: { value: xrayTexture },
         time: { value: 0 },
-        mousePos: { value: new THREE.Vector2(-1, -1) }, // User hover position
-        autoPos: { value: new THREE.Vector2(0.5, 0.55) }, // Auto-reveal position
+        mousePos: { value: new THREE.Vector2(-1, -1) },
+        autoPos: { value: new THREE.Vector2(0.5, 0.55) },
         resolution: { value: new THREE.Vector2(container.clientWidth, container.clientHeight) },
         xrayRadius: { value: isMobile ? 0.045 : 0.12 },
         depthScale: { value: 0.12 },
         roughness: { value: 0.5 },
         playerCenter: { value: new THREE.Vector2(0.5, 0.55) },
-        userActive: { value: 0.0 }, // Whether user is hovering
-        xrayOffset: { value: new THREE.Vector2(0.0, 0.0) }, // Same position for both images
-        xrayScale: { value: 1.0 } // Same scale for both images
+        userActive: { value: 0.0 },
+        xrayOffset: { value: new THREE.Vector2(0.0, 0.0) },
+        xrayScale: { value: 1.0 }
       }
 
       const geometry = new THREE.PlaneGeometry(planeWidth, planeHeight, 128, 128)
