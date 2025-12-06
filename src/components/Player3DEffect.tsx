@@ -26,9 +26,17 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
   const lastInteractionRef = useRef(0)
   const autoRevealPosRef = useRef({ x: 0.5, y: 0.5 })
 
-  // Load images from zip
+  // Load images from zip + custom depth map
   const loadImages = useCallback(async () => {
     try {
+      // Load custom depth map
+      const depthMapPromise = new Promise<HTMLImageElement | null>((resolve) => {
+        const img = new Image()
+        img.onload = () => resolve(img)
+        img.onerror = () => resolve(null)
+        img.src = "/assets/player-depth-map.png"
+      })
+
       const response = await fetch("/assets/Website_Hero_RISE.zip")
       const zipData = await response.arrayBuffer()
       const zip = await JSZip.loadAsync(zipData)
@@ -57,27 +65,27 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         }
       })
 
-      await Promise.all(imagePromises)
+      const [depthMapImg] = await Promise.all([depthMapPromise, ...imagePromises])
       
       const img5 = imageMap["5"]  // Base image
       const img2 = imageMap["2"]  // Gold overlay/gloss
       const img1 = imageMap["1"]  // X-ray image
-      const img7 = imageMap["7"]  // Depth map
       
       if (!img5 || !img2 || !img1) {
         console.error("Missing required images")
         return null
       }
       
-      // img7 is optional - depth map
+      console.log("Depth map loaded:", !!depthMapImg)
+      
       return { 
         baseImage: img5, 
         overlayImage: img2, 
         xrayImage: img1,
-        depthMap: img7 || null
+        depthMap: depthMapImg
       }
     } catch (error) {
-      console.error("Error loading zip:", error)
+      console.error("Error loading images:", error)
       return null
     }
   }, [])
