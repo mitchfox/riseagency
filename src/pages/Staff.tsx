@@ -51,6 +51,11 @@ import { StaffPushNotifications } from "@/components/staff/StaffPushNotification
 import { HighlightMaker } from "@/components/staff/HighlightMaker";
 import { useStaffNotifications } from "@/hooks/useStaffNotifications";
 import { TransferHub } from "@/components/staff/TransferHub";
+import { ExpensesManagement } from "@/components/staff/ExpensesManagement";
+import { TaxRecordsManagement } from "@/components/staff/TaxRecordsManagement";
+import { BudgetsManagement } from "@/components/staff/BudgetsManagement";
+import { FinancialReports } from "@/components/staff/FinancialReports";
+import { PaymentsManagement } from "@/components/staff/PaymentsManagement";
 
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
@@ -81,7 +86,13 @@ import {
   Settings,
   Languages,
   Film,
-  Building2
+  Building2,
+  Wallet,
+  Receipt,
+  Calculator,
+  PiggyBank,
+  TrendingUp,
+  FileSpreadsheet
 } from "lucide-react";
 
 const Staff = () => {
@@ -94,7 +105,7 @@ const Staff = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [isMarketeer, setIsMarketeer] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-  const [expandedSection, setExpandedSection] = useState<'overview' | 'schedule' | 'goalstasks' | 'staffschedules' | 'staffaccounts' | 'passwords' | 'pwainstall' | 'offlinemanager' | 'pushnotifications' | 'players' | 'playerlist' | 'recruitment' | 'playerdatabase' | 'scouts' | 'scoutingcentre' | 'blog' | 'betweenthelines' | 'coaching' | 'analysis' | 'highlightmaker' | 'marketing' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'cluboutreach' | 'legal' | 'languages' | 'sitemanagement' | 'transferhub' | null>('overview');
+  const [expandedSection, setExpandedSection] = useState<'overview' | 'schedule' | 'goalstasks' | 'staffschedules' | 'staffaccounts' | 'passwords' | 'pwainstall' | 'offlinemanager' | 'pushnotifications' | 'players' | 'playerlist' | 'recruitment' | 'playerdatabase' | 'scouts' | 'scoutingcentre' | 'blog' | 'betweenthelines' | 'coaching' | 'analysis' | 'highlightmaker' | 'marketing' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'cluboutreach' | 'legal' | 'languages' | 'sitemanagement' | 'transferhub' | 'payments' | 'expenses' | 'taxrecords' | 'financialreports' | 'budgets' | null>('overview');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   
   // Enable staff notifications
@@ -569,6 +580,20 @@ const Staff = () => {
       ]
     },
     {
+      id: 'financial',
+      title: 'Financial',
+      icon: Wallet,
+      locked: isMarketeer,
+      sections: [
+        { id: 'invoices', title: 'Invoices', icon: FileCheck },
+        { id: 'payments', title: 'Payments In/Out', icon: Receipt },
+        { id: 'expenses', title: 'Expenses', icon: Calculator },
+        { id: 'taxrecords', title: 'Tax Records', icon: FileSpreadsheet },
+        { id: 'budgets', title: 'Budgets', icon: PiggyBank },
+        { id: 'financialreports', title: 'Reports', icon: TrendingUp },
+      ]
+    },
+    {
       id: 'admin',
       title: 'Admin & Legal',
       icon: Scale,
@@ -576,7 +601,6 @@ const Staff = () => {
       sections: [
         { id: 'legal', title: 'Legal', icon: Scale },
         { id: 'languages', title: 'Languages', icon: Languages },
-        { id: 'invoices', title: 'Invoices', icon: FileCheck },
         ...(isAdmin ? [
           { id: 'sitemanagement', title: 'Site Management', icon: Settings },
           { id: 'passwords', title: 'Player Passwords', icon: Lock },
@@ -913,6 +937,11 @@ const Staff = () => {
                   {expandedSection === 'submissions' && <FormSubmissionsManagement isAdmin={isAdmin} />}
                   {expandedSection === 'visitors' && <SiteVisitorsManagement isAdmin={isAdmin} />}
                   {expandedSection === 'invoices' && <InvoiceManagement isAdmin={isAdmin} />}
+                  {expandedSection === 'payments' && <PaymentsManagement isAdmin={isAdmin} />}
+                  {expandedSection === 'expenses' && <ExpensesManagement isAdmin={isAdmin} />}
+                  {expandedSection === 'taxrecords' && <TaxRecordsManagement isAdmin={isAdmin} />}
+                  {expandedSection === 'budgets' && <BudgetsManagement isAdmin={isAdmin} />}
+                  {expandedSection === 'financialreports' && <FinancialReports isAdmin={isAdmin} />}
                   {expandedSection === 'updates' && <UpdatesManagement isAdmin={isAdmin} />}
                   {expandedSection === 'clubnetwork' && <ClubNetworkManagement />}
                   {expandedSection === 'transferhub' && <TransferHub isAdmin={isAdmin} />}
