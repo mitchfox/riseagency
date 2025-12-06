@@ -60,7 +60,7 @@ export default function Landing() {
 
   return (
     <XRayProvider>
-    <div className="min-h-screen bg-black flex flex-col items-center justify-end relative overflow-hidden cursor-none md:cursor-none">
+    <div className="bg-black flex flex-col items-center justify-end relative overflow-hidden cursor-none md:cursor-none" style={{ minHeight: '100dvh', height: '100dvh' }}>
       {/* Electric Wave Effect */}
       <ElectricWave />
       
