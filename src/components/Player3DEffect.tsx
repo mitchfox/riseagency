@@ -443,10 +443,15 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
           compositeColor = compositeColor + totalGloss;
         }
         
-        // Kit overlay
+        // Kit overlay with fluctuating transparency (1% to 35% every 6 seconds)
         if (hasKitOverlay > 0.5) {
           vec4 kitColor = texture2D(kitOverlayTexture, parallaxUV);
-          compositeColor = mix(compositeColor, kitColor.rgb, kitColor.a);
+          
+          // Fluctuate opacity between 0.01 (1%) and 0.35 (35%) over 6 seconds
+          float kitPulse = sin(time * 1.0472) * 0.5 + 0.5;  // 1.0472 = 2*PI/6 for 6 second cycle
+          float kitOpacity = mix(0.01, 0.35, kitPulse);
+          
+          compositeColor = mix(compositeColor, kitColor.rgb, kitColor.a * kitOpacity);
           
           float kitDepthVal = 0.5;
           if (hasKitDepth > 0.5) {
@@ -459,7 +464,7 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
             float shineMask = 1.0 - smoothstep(0.0, shineWidth, shineDist);
             shineMask *= kitDepthVal;
             float shineGlow = (1.0 - smoothstep(0.0, shineWidth * 0.3, shineDist)) * 0.6 * kitDepthVal;
-            compositeColor += brightGold * shineGlow * kitColor.a;
+            compositeColor += brightGold * shineGlow * kitColor.a * kitOpacity;
           }
         }
         
@@ -523,12 +528,12 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         vec3 marbleVein = vec3(0.88, 0.87, 0.89);
         vec3 marbleColor = mix(marbleWhite, marbleVein, marblePattern * 0.35);
         
-        // ============= PURE X-RAY REVEAL WITH OUTWARD COLOR BANDS =============
-        // The core shows PURE x-ray (what's behind) - no colors added
+        // ============= PURE WHITE MARBLE BACKGROUND REVEAL =============
+        // The fluid cursor reveals the white marble background (NOT x-ray)
         // Colors radiate OUTWARD from the reveal: gold -> grey -> white
         
         // Band definitions (from center outward)
-        float coreReveal = smoothstep(0.55, 0.85, fluidMask);  // Pure x-ray window
+        float coreReveal = smoothstep(0.55, 0.85, fluidMask);  // Pure marble window
         float goldBand = smoothstep(0.35, 0.55, fluidMask) * (1.0 - coreReveal);  // Shiny gold ring
         float greyBand = smoothstep(0.15, 0.35, fluidMask) * (1.0 - smoothstep(0.35, 0.55, fluidMask));  // Grey transition
         float whiteBand = smoothstep(0.0, 0.15, fluidMask) * (1.0 - smoothstep(0.15, 0.35, fluidMask));  // White outer edge
@@ -554,11 +559,8 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         vec3 goldGreyMix = mix(riseGold, revealGrey, 0.5);  // Transition color
         vec3 greyWhiteMix = mix(revealGrey, revealWhite, 0.6);  // Outer transition
         
-        // Build the reveal: start with marble background + x-ray blend
-        vec3 xrayOnMarble = mix(marbleColor, xrayColor.rgb, 0.85 * xrayValid);  // X-ray over marble
-        
-        // Pure core = x-ray reveal (what's actually behind)
-        vec3 revealColor = xrayOnMarble;
+        // Build the reveal: PURE WHITE MARBLE background (not x-ray)
+        vec3 revealColor = marbleColor;  // Core shows marble, not x-ray
         
         // Add color bands radiating OUTWARD (applied semi-transparently)
         // White outer edge (most transparent)
@@ -568,7 +570,7 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         // Gold band (closest to reveal, most visible)
         revealColor = mix(revealColor, shinyGold, goldBand * 0.6);
         
-        // Apply fluid reveal to composite
+        // Apply fluid reveal to composite - reveals white marble background
         compositeColor = mix(compositeColor, revealColor, fluidMask);
         
         // ============= ORIGINAL MOUSE SPOTLIGHT X-RAY =============
@@ -1009,8 +1011,8 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
           uniforms.kitShinePos.value = -1.0  // Hide shine
         }
         
-        // === SHOOTING STAR ANIMATION ===
-        // Arc from bottom-left (270°) to top-right (360°/0°)
+        // === SHOOTING STAR ANIMATION - FULL CIRCLE ===
+        // Complete circular path around the player image
         if (starCycleTime < STAR_DURATION) {
           const progress = starCycleTime / STAR_DURATION
           // Ease in-out for smooth motion
@@ -1018,19 +1020,19 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
             ? 2 * progress * progress 
             : 1 - Math.pow(-2 * progress + 2, 2) / 2
           
-          // Arc path: 270° to 360° (bottom to right, curving up)
-          // Center of arc is at (0.5, 0.5), radius extends beyond screen
-          const startAngle = Math.PI * 1.5  // 270° (bottom)
-          const endAngle = Math.PI * 2      // 360° (right/top)
+          // FULL CIRCLE: 0° to 360° (complete revolution)
+          const startAngle = 0
+          const endAngle = Math.PI * 2  // Full 360°
           const currentAngle = startAngle + (endAngle - startAngle) * easedProgress
           
-          // Large arc radius to sweep across the image
-          const arcRadius = 0.9
+          // Elliptical arc to cover the whole player area
+          const arcRadiusX = 0.45
+          const arcRadiusY = 0.42
           const centerX = 0.5
           const centerY = 0.5
           
-          const starX = centerX + Math.cos(currentAngle) * arcRadius
-          const starY = centerY + Math.sin(currentAngle) * arcRadius
+          const starX = centerX + Math.cos(currentAngle) * arcRadiusX
+          const starY = centerY + Math.sin(currentAngle) * arcRadiusY
           
           uniforms.shootingStarPos.value.set(starX, starY)
           uniforms.shootingStarActive.value = 1.0
