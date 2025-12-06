@@ -203,6 +203,7 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
       uniform vec2 ambientBlob3Pos;
       uniform float noiseTime;
       uniform float fluidPhase;
+      uniform float isPhantomMode;
       
       varying vec2 vUv;
       
@@ -542,12 +543,14 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         // Color bands appear at the edge of the transparent area
         
         // Band definitions - ONLY apply to background areas (alpha < 0.1), NOT the player
+        // REDUCED for phantom mode - no illumination, just reveal
+        float phantomReduction = isPhantomMode > 0.5 ? 0.0 : 1.0;
         float coreTransparency = smoothstep(0.4, 0.75, fluidMask);  // Core becomes transparent
         float goldBand = 0.0;
         float greyBand = 0.0;
         
-        // Only show bands outside the player
-        if (alpha < 0.1) {
+        // Only show bands outside the player - and only for manual interaction
+        if (alpha < 0.1 && phantomReduction > 0.0) {
           goldBand = smoothstep(0.2, 0.4, fluidMask) * (1.0 - smoothstep(0.5, 0.7, fluidMask));
           greyBand = smoothstep(0.05, 0.2, fluidMask) * (1.0 - smoothstep(0.25, 0.45, fluidMask));
           
@@ -590,16 +593,17 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         vec3 finalColor = mix(compositeColor, xrayWithShadow, totalXrayMask * xrayValid);
         
         // ============= FLUID BLOB GLOW EFFECTS =============
-        // Water glow around cursor blob
-        if (cursorBlobOpacity > 0.01) {
+        // Water glow around cursor blob - REDUCED for phantom mode
+        float glowMultiplier = isPhantomMode > 0.5 ? 0.0 : 1.0;
+        if (cursorBlobOpacity > 0.01 && glowMultiplier > 0.0) {
           float glowMask = waterBlob(vUv, cursorBlobPos, 0.22, 0.0);
           float outerGlow = smoothstep(0.0, 0.5, glowMask) * (1.0 - smoothstep(0.5, 1.0, glowMask));
-          finalColor += mix(revealGrey, riseGold, 0.3) * outerGlow * cursorBlobOpacity * 0.15 * alpha;
+          finalColor += mix(revealGrey, riseGold, 0.3) * outerGlow * cursorBlobOpacity * 0.15 * alpha * glowMultiplier;
         }
         
-        // Edge rim light
-        float rimLeft = smoothstep(0.1, 0.0, vUv.x) * max(0.0, shadowAmount) * 0.3;
-        float rimRight = smoothstep(0.9, 1.0, vUv.x) * max(0.0, -shadowAmount) * 0.3;
+        // Edge rim light - only for manual interaction
+        float rimLeft = smoothstep(0.1, 0.0, vUv.x) * max(0.0, shadowAmount) * 0.3 * glowMultiplier;
+        float rimRight = smoothstep(0.9, 1.0, vUv.x) * max(0.0, -shadowAmount) * 0.3 * glowMultiplier;
         finalColor += goldColor * (rimLeft + rimRight) * alpha;
         
         // Depth-based shading
@@ -608,8 +612,8 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
           finalColor *= depthShade;
         }
         
-        // Shimmer in revealed areas
-        if (fluidMask > 0.01 || totalXrayMask > 0.0) {
+        // Shimmer in revealed areas - reduced for phantom
+        if ((fluidMask > 0.01 || totalXrayMask > 0.0) && glowMultiplier > 0.0) {
           float shimmer = sin(time * 2.5 + vUv.x * 15.0 + vUv.y * 15.0) * 0.03 + 1.0;
           finalColor *= shimmer;
         }
@@ -824,7 +828,8 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         ambientBlob2Pos: { value: new THREE.Vector2(0.7, 0.6) },
         ambientBlob3Pos: { value: new THREE.Vector2(0.5, 0.3) },
         noiseTime: { value: 0.0 },
-        fluidPhase: { value: 0.0 }
+        fluidPhase: { value: 0.0 },
+        isPhantomMode: { value: 0.0 }
       }
 
       const geometry = new THREE.PlaneGeometry(planeWidth, planeHeight, 1, 1)
@@ -1101,6 +1106,9 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         uniforms.trailOpacity2.value = trail2Opacity
         uniforms.trailOpacity3.value = trail3Opacity
         uniforms.trailOpacity4.value = trail4Opacity
+        
+        // Set phantom mode - disables glow effects for phantom touches
+        uniforms.isPhantomMode.value = (!isUserActive && activePhantoms.length > 0) ? 1.0 : 0.0
         
         // === AUTONOMOUS AMBIENT BLOBS - Organic Lissajous with noise ===
         const ambientSpeed = 0.06
