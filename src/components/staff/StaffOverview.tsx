@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Target, CheckSquare, Users, Calendar, Link2, TrendingUp, Settings, RotateCcw, Layers, Plus } from "lucide-react";
+import { Target, CheckSquare, Users, Calendar, Link2, TrendingUp, Settings, RotateCcw, Layers, Plus, Search, Megaphone, ClipboardList, BarChart3, FileText, Mail, Dumbbell } from "lucide-react";
 import { StaffSchedule } from "./StaffSchedule";
 import { supabase } from "@/integrations/supabase/client";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -45,6 +45,13 @@ const WIDGET_CONFIGS: WidgetConfig[] = [
   { id: "financial", title: "Financial Projection", icon: TrendingUp, defaultVisible: true },
   { id: "schedule", title: "Schedule Calendar", icon: Calendar, defaultVisible: true },
   { id: "represented", title: "Represented Players", icon: Users, defaultVisible: true },
+  { id: "scouting", title: "Scouting Activity", icon: Search, defaultVisible: false },
+  { id: "marketing", title: "Marketing Campaigns", icon: Megaphone, defaultVisible: false },
+  { id: "prospects", title: "Prospect Pipeline", icon: ClipboardList, defaultVisible: false },
+  { id: "analytics", title: "Performance Analytics", icon: BarChart3, defaultVisible: false },
+  { id: "reports", title: "Recent Reports", icon: FileText, defaultVisible: false },
+  { id: "outreach", title: "Club Outreach", icon: Mail, defaultVisible: false },
+  { id: "coaching", title: "Coaching Sessions", icon: Dumbbell, defaultVisible: false },
 ];
 
 const DEFAULT_LAYOUTS: WidgetLayout[] = [
@@ -614,6 +621,76 @@ export const StaffOverview = ({ isAdmin, userId }: { isAdmin: boolean; userId?: 
           </div>
         );
       }
+
+      case "scouting":
+        return (
+          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'scouting-reports' })}>
+            <div className="text-center text-xs text-muted-foreground py-4">
+              <Search className="h-8 w-8 mx-auto mb-2 opacity-50" />
+              View scouting reports and player evaluations
+            </div>
+          </div>
+        );
+
+      case "marketing":
+        return (
+          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'campaigns' })}>
+            <div className="text-center text-xs text-muted-foreground py-4">
+              <Megaphone className="h-8 w-8 mx-auto mb-2 opacity-50" />
+              View active marketing campaigns
+            </div>
+          </div>
+        );
+
+      case "prospects":
+        return (
+          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'prospects' })}>
+            <div className="text-center text-xs text-muted-foreground py-4">
+              <ClipboardList className="h-8 w-8 mx-auto mb-2 opacity-50" />
+              Track prospect pipeline status
+            </div>
+          </div>
+        );
+
+      case "analytics":
+        return (
+          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'analytics' })}>
+            <div className="text-center text-xs text-muted-foreground py-4">
+              <BarChart3 className="h-8 w-8 mx-auto mb-2 opacity-50" />
+              View performance analytics
+            </div>
+          </div>
+        );
+
+      case "reports":
+        return (
+          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'player-analysis' })}>
+            <div className="text-center text-xs text-muted-foreground py-4">
+              <FileText className="h-8 w-8 mx-auto mb-2 opacity-50" />
+              Access recent player reports
+            </div>
+          </div>
+        );
+
+      case "outreach":
+        return (
+          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'outreach' })}>
+            <div className="text-center text-xs text-muted-foreground py-4">
+              <Mail className="h-8 w-8 mx-auto mb-2 opacity-50" />
+              Manage club outreach activities
+            </div>
+          </div>
+        );
+
+      case "coaching":
+        return (
+          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'coaching' })}>
+            <div className="text-center text-xs text-muted-foreground py-4">
+              <Dumbbell className="h-8 w-8 mx-auto mb-2 opacity-50" />
+              View coaching sessions and programmes
+            </div>
+          </div>
+        );
 
       default:
         return null;
