@@ -129,7 +129,7 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
       }
     `
 
-    // Fragment shader with multi-map parallax control and shooting star
+    // Fragment shader with multi-map parallax control, shooting star, and fluid X-ray reveal
     const fragmentShader = `
       uniform sampler2D baseTexture;
       uniform sampler2D overlayTexture;
@@ -160,11 +160,32 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
       uniform float bwLightPhase;
       uniform float bwLayerOpacity;
       
+      // Fluid X-ray reveal uniforms
+      uniform vec2 cursorBlobPos;
+      uniform float cursorBlobOpacity;
+      uniform vec2 cursorTrail1;
+      uniform vec2 cursorTrail2;
+      uniform float trailOpacity1;
+      uniform float trailOpacity2;
+      uniform vec2 ambientBlob1Pos;
+      uniform vec2 ambientBlob2Pos;
+      uniform vec2 ambientBlob3Pos;
+      
       varying vec2 vUv;
       
       const vec3 goldColor = vec3(0.92, 0.78, 0.45);
       const vec3 brightGold = vec3(1.0, 0.9, 0.5);
       const vec3 warmLight = vec3(1.0, 0.95, 0.85);
+      const vec3 revealWhite = vec3(1.0, 1.0, 1.0);
+      const vec3 revealGrey = vec3(0.7, 0.7, 0.75);
+      const vec3 riseGold = vec3(0.92, 0.78, 0.45);
+      
+      // Metaball influence function for fluid blob shapes
+      float metaballInfluence(vec2 uv, vec2 blobPos, float radius) {
+        float dist = length(uv - blobPos);
+        return pow(radius / max(dist, 0.001), 2.0);
+      }
+      
       void main() {
         // Sample all depth maps and combine
         float baseDepth = 0.5;
@@ -293,12 +314,40 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
           }
         }
         
-        // === X-RAY EFFECT ===
+        // === FLUID X-RAY REVEAL EFFECT ===
+        // Calculate metaball influences for fluid blob shapes
+        float fluidRevealMask = 0.0;
+        
+        // Cursor-controlled blobs (high opacity when active)
+        fluidRevealMask += metaballInfluence(vUv, cursorBlobPos, 0.15) * cursorBlobOpacity;
+        fluidRevealMask += metaballInfluence(vUv, cursorTrail1, 0.12) * trailOpacity1;
+        fluidRevealMask += metaballInfluence(vUv, cursorTrail2, 0.10) * trailOpacity2;
+        
+        // Autonomous ambient blobs (lower opacity - 40% of cursor)
+        fluidRevealMask += metaballInfluence(vUv, ambientBlob1Pos, 0.18) * 0.4;
+        fluidRevealMask += metaballInfluence(vUv, ambientBlob2Pos, 0.15) * 0.35;
+        fluidRevealMask += metaballInfluence(vUv, ambientBlob3Pos, 0.12) * 0.3;
+        
+        // Threshold for clean edges with smooth falloff
+        fluidRevealMask = smoothstep(0.5, 1.5, fluidRevealMask);
+        
+        // Sample x-ray/background for reveal
         vec2 xrayUV = (parallaxUV - 0.5) * xrayScale + 0.5 + xrayOffset;
         vec4 xrayColor = texture2D(xrayTexture, xrayUV);
         float xrayValid = step(0.0, xrayUV.x) * step(xrayUV.x, 1.0) * step(0.0, xrayUV.y) * step(xrayUV.y, 1.0);
         
-        // Mouse spotlight (no visible circle, just x-ray reveal)
+        // Color tinting for reveal - whites/greys with gold accents
+        vec3 revealTint = mix(revealGrey, revealWhite, fluidRevealMask * 0.5);
+        float goldAccent = sin(time * 0.8 + vUv.x * 5.0) * 0.3 + 0.3;
+        revealTint = mix(revealTint, riseGold, goldAccent * 0.3);
+        
+        // Blend x-ray with tint
+        vec3 tintedReveal = mix(xrayColor.rgb, revealTint, 0.15);
+        
+        // Apply fluid reveal - reveals through where mask is high
+        compositeColor = mix(compositeColor, tintedReveal, fluidRevealMask * xrayValid);
+        
+        // === ADDITIONAL MOUSE SPOTLIGHT X-RAY (original effect) ===
         float distToMouse = length(vUv - mousePos);
         float mouseXrayMask = (1.0 - smoothstep(0.0, xrayRadius + 0.02, distToMouse)) * userActive;
         
@@ -306,15 +355,13 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         float distToStar = length(vUv - shootingStarPos);
         float starXrayMask = (1.0 - smoothstep(0.0, 0.08, distToStar)) * shootingStarActive;
         
-        // Combine both x-ray masks
+        // Combine additional x-ray masks
         float totalXrayMask = max(mouseXrayMask, starXrayMask);
         
         // === SHADOW BEHIND X-RAY ===
-        // Sample shadow texture and blend it behind the x-ray reveal
         vec4 shadowColor = texture2D(shadowTexture, parallaxUV);
         vec3 xrayWithShadow = xrayColor.rgb;
         if (hasShadow > 0.5) {
-          // Shadow goes behind everything - blend based on shadow alpha
           xrayWithShadow = mix(shadowColor.rgb, xrayColor.rgb, xrayColor.a);
         }
         
@@ -328,6 +375,14 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
           finalColor += goldColor * starGlow * 0.3 * alpha;
         }
         
+        // === FLUID BLOB GLOW EFFECTS ===
+        // Add subtle glow around cursor blob
+        if (cursorBlobOpacity > 0.01) {
+          float cursorGlow = metaballInfluence(vUv, cursorBlobPos, 0.2) * cursorBlobOpacity;
+          cursorGlow = smoothstep(0.3, 1.0, cursorGlow) * 0.15;
+          finalColor += revealWhite * cursorGlow * alpha;
+        }
+        
         // === EDGE RIM LIGHT - subtle 3D pop ===
         float rimLeft = smoothstep(0.1, 0.0, vUv.x) * max(0.0, shadowAmount) * 0.3;
         float rimRight = smoothstep(0.9, 1.0, vUv.x) * max(0.0, -shadowAmount) * 0.3;
@@ -339,8 +394,8 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
           finalColor *= depthShade;
         }
         
-        // Gold shimmer in x-ray area
-        if (totalXrayMask > 0.0) {
+        // Gold shimmer in revealed areas
+        if (fluidRevealMask > 0.01 || totalXrayMask > 0.0) {
           float shimmer = sin(time * 2.5 + vUv.x * 15.0 + vUv.y * 15.0) * 0.03 + 1.0;
           finalColor *= shimmer;
         }
@@ -467,7 +522,7 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
       let planeHeight = isMobile ? 1.4 : 1.6
       let planeWidth = planeHeight * imgAspect
 
-      // Uniforms with all depth maps for 3D parallax control + shooting star + kit overlay
+      // Uniforms with all depth maps for 3D parallax control + shooting star + kit overlay + fluid reveal
       const uniforms = {
         baseTexture: { value: baseTexture },
         overlayTexture: { value: overlayTexture },
@@ -500,7 +555,17 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         shootingStarActive: { value: 0.0 },
         kitShinePos: { value: -1.0 },
         bwLightPhase: { value: 0.0 },
-        bwLayerOpacity: { value: 0.0 }
+        bwLayerOpacity: { value: 0.0 },
+        // Fluid X-ray reveal uniforms
+        cursorBlobPos: { value: new THREE.Vector2(-1, -1) },
+        cursorBlobOpacity: { value: 0.0 },
+        cursorTrail1: { value: new THREE.Vector2(-1, -1) },
+        cursorTrail2: { value: new THREE.Vector2(-1, -1) },
+        trailOpacity1: { value: 0.0 },
+        trailOpacity2: { value: 0.0 },
+        ambientBlob1Pos: { value: new THREE.Vector2(0.3, 0.4) },
+        ambientBlob2Pos: { value: new THREE.Vector2(0.7, 0.6) },
+        ambientBlob3Pos: { value: new THREE.Vector2(0.5, 0.3) }
       }
 
       const geometry = new THREE.PlaneGeometry(planeWidth, planeHeight, 1, 1)
@@ -544,6 +609,16 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
       const SHINE_DURATION = 2.0  // seconds
       const SHINE_CYCLE = 8.0   // seconds
       let shineCycleTime = 0
+      
+      // Fluid X-ray reveal state
+      let lastCursorMoveTime = 0
+      const cursorBlobTarget = { x: -1, y: -1 }
+      const cursorBlob = { x: -1, y: -1 }
+      const trail1 = { x: -1, y: -1 }
+      const trail2 = { x: -1, y: -1 }
+      let cursorOpacity = 0
+      let trail1Opacity = 0
+      let trail2Opacity = 0
 
       const animate = () => {
         animationId = requestAnimationFrame(animate)
@@ -572,6 +647,70 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         if (shineCycleTime >= SHINE_CYCLE) {
           shineCycleTime = 0
         }
+        
+        // === FLUID X-RAY REVEAL - CURSOR BLOBS ===
+        const timeSinceCursorMove = currentTime - lastCursorMoveTime
+        const rect = container.getBoundingClientRect()
+        const mouseX = (mouseRef.current.x - rect.left) / rect.width
+        const mouseY = 1 - (mouseRef.current.y - rect.top) / rect.height
+        
+        // Update cursor target when mouse moves
+        if (mouseX >= 0 && mouseX <= 1 && mouseY >= 0 && mouseY <= 1) {
+          const timeSinceInteractionCheck = currentTime - lastInteractionRef.current
+          if (timeSinceInteractionCheck < 100) {
+            cursorBlobTarget.x = mouseX
+            cursorBlobTarget.y = mouseY
+            lastCursorMoveTime = currentTime
+          }
+        }
+        
+        // Smooth cursor blob following
+        cursorBlob.x += (cursorBlobTarget.x - cursorBlob.x) * 0.1
+        cursorBlob.y += (cursorBlobTarget.y - cursorBlob.y) * 0.1
+        
+        // Trail positions follow with delay
+        trail1.x += (cursorBlob.x - trail1.x) * 0.05
+        trail1.y += (cursorBlob.y - trail1.y) * 0.05
+        trail2.x += (trail1.x - trail2.x) * 0.03
+        trail2.y += (trail1.y - trail2.y) * 0.03
+        
+        // Fade out after 1 second of no movement
+        if (timeSinceCursorMove > 1000) {
+          cursorOpacity = Math.max(0, cursorOpacity - 0.02)
+          trail1Opacity = Math.max(0, trail1Opacity - 0.015)
+          trail2Opacity = Math.max(0, trail2Opacity - 0.01)
+        } else {
+          cursorOpacity = Math.min(1, cursorOpacity + 0.1)
+          trail1Opacity = Math.min(0.8, trail1Opacity + 0.08)
+          trail2Opacity = Math.min(0.6, trail2Opacity + 0.06)
+        }
+        
+        // Update cursor blob uniforms
+        uniforms.cursorBlobPos.value.set(cursorBlob.x, cursorBlob.y)
+        uniforms.cursorBlobOpacity.value = cursorOpacity
+        uniforms.cursorTrail1.value.set(trail1.x, trail1.y)
+        uniforms.cursorTrail2.value.set(trail2.x, trail2.y)
+        uniforms.trailOpacity1.value = trail1Opacity
+        uniforms.trailOpacity2.value = trail2Opacity
+        
+        // === AUTONOMOUS AMBIENT BLOBS - Lissajous curves for organic movement ===
+        const ambientSpeed = 0.08
+        const t = uniforms.time.value
+        
+        // Blob 1 - larger, slower movement
+        const amb1X = 0.5 + Math.sin(t * ambientSpeed * 1.3) * 0.3
+        const amb1Y = 0.5 + Math.sin(t * ambientSpeed * 0.9 + 1.0) * 0.25
+        uniforms.ambientBlob1Pos.value.set(amb1X, amb1Y)
+        
+        // Blob 2 - medium, different phase
+        const amb2X = 0.5 + Math.sin(t * ambientSpeed * 0.7 + 2.5) * 0.35
+        const amb2Y = 0.5 + Math.cos(t * ambientSpeed * 1.1) * 0.3
+        uniforms.ambientBlob2Pos.value.set(amb2X, amb2Y)
+        
+        // Blob 3 - smaller, faster
+        const amb3X = 0.5 + Math.cos(t * ambientSpeed * 1.0 + 0.5) * 0.25
+        const amb3Y = 0.5 + Math.sin(t * ambientSpeed * 1.4 + 1.8) * 0.2
+        uniforms.ambientBlob3Pos.value.set(amb3X, amb3Y)
         
         // === KIT SHINE ANIMATION ===
         // Sweep from left (-0.2) to right (1.2) over 1 second
@@ -643,9 +782,6 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         // Handle user interaction separately
         if (isUserInteracting) {
           uniforms.userActive.value = Math.min(1, uniforms.userActive.value + 0.1)
-          const rect = container.getBoundingClientRect()
-          const mouseX = (mouseRef.current.x - rect.left) / rect.width
-          const mouseY = 1 - (mouseRef.current.y - rect.top) / rect.height
           uniforms.mousePos.value.set(mouseX, mouseY)
           xrayIntensity = Math.min(1, xrayIntensity + 0.05)
           
