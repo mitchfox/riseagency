@@ -105,22 +105,22 @@ export default function Landing() {
         </div>
       )}
 
-      {/* Bottom Section - Navigation + Drag Navigator + Language Selector - Hourglass Bottom Shape */}
+      {/* Bottom Section - Triangular shape (wide base, point at top) */}
       <div className="pb-4 md:pb-12 z-50 relative px-2 md:px-4 w-full pointer-events-auto">
         <div 
           className="bg-black/40 backdrop-blur-sm px-4 md:px-8 py-4 md:py-5 max-w-6xl mx-auto relative"
           style={{
-            clipPath: 'polygon(15% 0%, 85% 0%, 100% 100%, 0% 100%)',
+            clipPath: 'polygon(50% 0%, 100% 100%, 0% 100%)',
           }}
         >
-          {/* SVG border overlay for hourglass shape */}
+          {/* SVG border overlay for triangular shape */}
           <svg 
             className="absolute inset-0 w-full h-full pointer-events-none" 
             preserveAspectRatio="none"
             style={{ zIndex: 1 }}
           >
             <polygon 
-              points="15%,0% 85%,0% 100%,100% 0%,100%" 
+              points="50%,0% 100%,100% 0%,100%" 
               fill="none" 
               stroke="hsl(var(--primary) / 0.6)" 
               strokeWidth="2"
@@ -163,7 +163,7 @@ export default function Landing() {
                   <div key={link.to} className="flex items-center">
                     <button
                       onClick={() => navigateToRole(link.to)}
-                      className="px-3 py-1 text-[17px] font-bebas uppercase tracking-[0.2em] text-white/80 hover:text-primary transition-colors duration-300 whitespace-nowrap"
+                      className="px-3 py-1 text-[19px] font-bebas uppercase tracking-[0.2em] text-white/80 hover:text-primary transition-colors duration-300 whitespace-nowrap"
                     >
                       <HoverText text={t(link.labelKey, link.fallback)} />
                     </button>
@@ -180,7 +180,7 @@ export default function Landing() {
                   <div key={link.to} className="flex items-center">
                     <button
                       onClick={() => navigateToRole(link.to)}
-                      className="px-3 py-1 text-[17px] font-bebas uppercase tracking-[0.2em] text-white/80 hover:text-primary transition-colors duration-300 whitespace-nowrap"
+                      className="px-3 py-1 text-[19px] font-bebas uppercase tracking-[0.2em] text-white/80 hover:text-primary transition-colors duration-300 whitespace-nowrap"
                     >
                       <HoverText text={t(link.labelKey, link.fallback)} />
                     </button>
@@ -229,7 +229,7 @@ export default function Landing() {
                   <div key={link.to} className="flex items-center">
                     <button
                       onClick={() => navigateToRole(link.to)}
-                      className="px-2 py-1 text-[15px] font-bebas uppercase tracking-[0.15em] text-white/80 hover:text-primary transition-colors duration-300 whitespace-nowrap"
+                      className="px-2 py-1 text-[17px] font-bebas uppercase tracking-[0.15em] text-white/80 hover:text-primary transition-colors duration-300 whitespace-nowrap"
                     >
                       <HoverText text={t(link.labelKey, link.fallback)} />
                     </button>
@@ -246,7 +246,7 @@ export default function Landing() {
                   <div key={link.to} className="flex items-center">
                     <button
                       onClick={() => navigateToRole(link.to)}
-                      className="px-2 py-1 text-[15px] font-bebas uppercase tracking-[0.15em] text-white/80 hover:text-primary transition-colors duration-300 whitespace-nowrap"
+                      className="px-2 py-1 text-[17px] font-bebas uppercase tracking-[0.15em] text-white/80 hover:text-primary transition-colors duration-300 whitespace-nowrap"
                     >
                       <HoverText text={t(link.labelKey, link.fallback)} />
                     </button>

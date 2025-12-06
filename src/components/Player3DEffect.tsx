@@ -492,46 +492,49 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         }
         
         // ============= WATER-LIKE FLUID X-RAY REVEAL =============
+        // In phantom mode, skip ALL visual fluid effects - only the bubble content shows
         float fluidMask = 0.0;
         
-        // Main cursor water blob with connected lobes
-        float mainBlob = waterLobes(vUv, cursorBlobPos, 0.14, cursorVelocity, cursorSpeed, 0.0);
-        fluidMask += mainBlob * cursorBlobOpacity;
-        
-        // Fluid trail stretching backward in movement direction
-        float trail = fluidTrail(vUv, cursorBlobPos, cursorVelocity, cursorSpeed, 0.25, 0.04);
-        fluidMask = max(fluidMask, trail * cursorBlobOpacity * 0.9);
-        
-        // Splash droplets when moving fast
-        float splash = splashDroplets(vUv, cursorBlobPos, cursorVelocity, cursorSpeed, 0.12, 0.0);
-        fluidMask = max(fluidMask, splash * cursorBlobOpacity * 0.7);
-        
-        // Trailing water blobs with smooth SDF blending
-        float trail1Blob = waterBlob(vUv, cursorTrail1, 0.11, 1.0);
-        float trail1Lobes = waterLobes(vUv, cursorTrail1, 0.08, cursorVelocity, cursorSpeed * 0.5, 1.0);
-        fluidMask = max(fluidMask, max(trail1Blob, trail1Lobes) * trailOpacity1 * 0.85);
-        
-        float trail2Blob = waterBlob(vUv, cursorTrail2, 0.08, 2.0);
-        fluidMask = max(fluidMask, trail2Blob * trailOpacity2 * 0.7);
-        
-        float trail3Blob = waterBlob(vUv, cursorTrail3, 0.06, 3.0);
-        fluidMask = max(fluidMask, trail3Blob * trailOpacity3 * 0.55);
-        
-        float trail4Blob = waterBlob(vUv, cursorTrail4, 0.045, 4.0);
-        fluidMask = max(fluidMask, trail4Blob * trailOpacity4 * 0.4);
-        
-        // Autonomous ambient water blobs - smooth, flowing movement
-        float ambient1 = waterLobes(vUv, ambientBlob1Pos, 0.16, vec2(sin(noiseTime * 0.2), cos(noiseTime * 0.25)), 0.1, 5.0);
-        fluidMask = max(fluidMask, ambient1 * 0.35);
-        
-        float ambient2 = waterBlob(vUv, ambientBlob2Pos, 0.13, 6.0);
-        fluidMask = max(fluidMask, ambient2 * 0.3);
-        
-        float ambient3 = waterBlob(vUv, ambientBlob3Pos, 0.10, 7.0);
-        fluidMask = max(fluidMask, ambient3 * 0.25);
-        
-        // Clamp and smooth the combined mask
-        fluidMask = clamp(fluidMask, 0.0, 1.0);
+        if (isPhantomMode < 0.5) {
+          // Main cursor water blob with connected lobes
+          float mainBlob = waterLobes(vUv, cursorBlobPos, 0.14, cursorVelocity, cursorSpeed, 0.0);
+          fluidMask += mainBlob * cursorBlobOpacity;
+          
+          // Fluid trail stretching backward in movement direction
+          float trail = fluidTrail(vUv, cursorBlobPos, cursorVelocity, cursorSpeed, 0.25, 0.04);
+          fluidMask = max(fluidMask, trail * cursorBlobOpacity * 0.9);
+          
+          // Splash droplets when moving fast
+          float splash = splashDroplets(vUv, cursorBlobPos, cursorVelocity, cursorSpeed, 0.12, 0.0);
+          fluidMask = max(fluidMask, splash * cursorBlobOpacity * 0.7);
+          
+          // Trailing water blobs with smooth SDF blending
+          float trail1Blob = waterBlob(vUv, cursorTrail1, 0.11, 1.0);
+          float trail1Lobes = waterLobes(vUv, cursorTrail1, 0.08, cursorVelocity, cursorSpeed * 0.5, 1.0);
+          fluidMask = max(fluidMask, max(trail1Blob, trail1Lobes) * trailOpacity1 * 0.85);
+          
+          float trail2Blob = waterBlob(vUv, cursorTrail2, 0.08, 2.0);
+          fluidMask = max(fluidMask, trail2Blob * trailOpacity2 * 0.7);
+          
+          float trail3Blob = waterBlob(vUv, cursorTrail3, 0.06, 3.0);
+          fluidMask = max(fluidMask, trail3Blob * trailOpacity3 * 0.55);
+          
+          float trail4Blob = waterBlob(vUv, cursorTrail4, 0.045, 4.0);
+          fluidMask = max(fluidMask, trail4Blob * trailOpacity4 * 0.4);
+          
+          // Autonomous ambient water blobs - smooth, flowing movement
+          float ambient1 = waterLobes(vUv, ambientBlob1Pos, 0.16, vec2(sin(noiseTime * 0.2), cos(noiseTime * 0.25)), 0.1, 5.0);
+          fluidMask = max(fluidMask, ambient1 * 0.35);
+          
+          float ambient2 = waterBlob(vUv, ambientBlob2Pos, 0.13, 6.0);
+          fluidMask = max(fluidMask, ambient2 * 0.3);
+          
+          float ambient3 = waterBlob(vUv, ambientBlob3Pos, 0.10, 7.0);
+          fluidMask = max(fluidMask, ambient3 * 0.25);
+          
+          // Clamp and smooth the combined mask
+          fluidMask = clamp(fluidMask, 0.0, 1.0);
+        }
         
         // Sample x-ray texture
         vec2 xrayUV = (parallaxUV - 0.5) * xrayScale + 0.5 + xrayOffset;
