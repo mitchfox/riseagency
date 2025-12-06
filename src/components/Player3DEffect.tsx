@@ -401,7 +401,7 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         vec4 overlayColor = texture2D(overlayTexture, parallaxUV);
         
         float alpha = baseColor.a;
-        if (alpha < 0.01) discard;
+        // NOTE: discard moved AFTER fluidMask calculation - see below
         
         // Dynamic shadow
         float shadowAmount = (mousePos.x - 0.5) * 0.4;
@@ -523,6 +523,9 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         float coreTransparency = smoothstep(0.4, 0.75, fluidMask);  // Core becomes transparent
         float goldBand = smoothstep(0.2, 0.4, fluidMask) * (1.0 - smoothstep(0.5, 0.7, fluidMask));  // Gold ring at edge
         float greyBand = smoothstep(0.05, 0.2, fluidMask) * (1.0 - smoothstep(0.25, 0.45, fluidMask));  // Grey transition
+        
+        // NOW discard - only if no player AND no fluid effect active
+        if (alpha < 0.01 && coreTransparency < 0.05) discard;
         
         // Directional stretch - color bands stretch in movement direction
         vec2 velDir = normalize(cursorVelocity + vec2(0.0001));
