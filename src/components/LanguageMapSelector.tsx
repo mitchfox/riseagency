@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Globe, X } from "lucide-react";
 import europeMap from "@/assets/europe-outline.gif";
@@ -15,7 +15,7 @@ interface LanguageRegion {
   y: number;
 }
 
-// Positions are percentages - will adjust based on feedback
+// Positions are percentages - desktop positions based on map
 const languageRegions: LanguageRegion[] = [
   { code: "en", name: "English", nativeName: "English", flag: "🇬🇧", x: 30, y: 60 },
   { code: "es", name: "Spanish", nativeName: "Español", flag: "🇪🇸", x: 29, y: 87 },
@@ -29,6 +29,10 @@ const languageRegions: LanguageRegion[] = [
   { code: "tr", name: "Turkish", nativeName: "Türkçe", flag: "🇹🇷", x: 65, y: 90 },
 ];
 
+// Mobile positions adjusted for 140% map scale (centered in container)
+// Formula: containerX = (mapX + 20) / 1.4 to account for the scaled map
+const getMobileX = (mapX: number) => (mapX + 20) / 1.4;
+
 interface LanguageMapSelectorProps {
   onOpenChange?: (open: boolean) => void;
 }
@@ -36,10 +40,23 @@ interface LanguageMapSelectorProps {
 export const LanguageMapSelector = ({ onOpenChange }: LanguageMapSelectorProps) => {
   const { language, switchLanguage } = useLanguage();
   const [open, setOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Check if mobile on mount and resize
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const handleOpenChange = (newOpen: boolean) => {
     setOpen(newOpen);
     onOpenChange?.(newOpen);
+    // Check mobile state when opening
+    if (newOpen) {
+      setIsMobile(window.innerWidth < 768);
+    }
   };
   const [hoveredLang, setHoveredLang] = useState<LanguageCode | null>(null);
   
@@ -104,6 +121,8 @@ export const LanguageMapSelector = ({ onOpenChange }: LanguageMapSelectorProps) 
               {languageRegions.map((region) => {
                 const isSelected = language === region.code;
                 const isHovered = hoveredLang === region.code;
+                // Use adjusted X position on mobile for 140% scaled map
+                const displayX = isMobile ? getMobileX(region.x) : region.x;
                 
                 return (
                   <button
@@ -114,7 +133,7 @@ export const LanguageMapSelector = ({ onOpenChange }: LanguageMapSelectorProps) 
                     onMouseLeave={() => setHoveredLang(null)}
                     className="absolute transform -translate-x-1/2 -translate-y-1/2 group"
                     style={{ 
-                      left: `${region.x}%`, 
+                      left: `${displayX}%`, 
                       top: `${region.y}%`,
                       zIndex: isHovered || isSelected ? 20 : 10
                     }}
