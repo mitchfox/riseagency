@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Target, CheckSquare, Users, Calendar, Link2, TrendingUp, Settings, RotateCcw, Layers, Plus, Search, Megaphone, ClipboardList, BarChart3, FileText, Mail, Dumbbell, Bell, Clock, FolderOpen, MessageSquare, Briefcase, Globe, Receipt, UserPlus, Activity } from "lucide-react";
+import { Target, CheckSquare, Users, Calendar, Link2, TrendingUp, Settings, RotateCcw, Layers, Plus, Search, Megaphone, ClipboardList, BarChart3, FileText, Mail, Dumbbell, Bell, Clock, FolderOpen, MessageSquare, Briefcase, Globe, Receipt, UserPlus, Activity, Timer, Zap, Focus, Brain, ListTodo, Gauge, Workflow, Kanban, GitBranch, Repeat, Flag, Milestone, Trophy, Sparkles } from "lucide-react";
 import { StaffSchedule } from "./StaffSchedule";
 import { supabase } from "@/integrations/supabase/client";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -67,6 +67,21 @@ const WIDGET_CONFIGS: WidgetConfig[] = [
   { id: "documents", title: "Recent Documents", icon: FolderOpen, defaultVisible: false },
   { id: "deadlines", title: "Upcoming Deadlines", icon: Clock, defaultVisible: false },
   { id: "projects", title: "Active Projects", icon: Briefcase, defaultVisible: false },
+  // Advanced Productivity
+  { id: "pomodoro", title: "Focus Timer", icon: Timer, defaultVisible: false },
+  { id: "habits", title: "Daily Habits", icon: Repeat, defaultVisible: false },
+  { id: "priorities", title: "Priority Matrix", icon: Flag, defaultVisible: false },
+  { id: "milestones", title: "Key Milestones", icon: Milestone, defaultVisible: false },
+  { id: "workflows", title: "Active Workflows", icon: Workflow, defaultVisible: false },
+  { id: "kanban", title: "Kanban Board", icon: Kanban, defaultVisible: false },
+  { id: "sprints", title: "Sprint Progress", icon: GitBranch, defaultVisible: false },
+  { id: "velocity", title: "Team Velocity", icon: Gauge, defaultVisible: false },
+  { id: "focus", title: "Focus Sessions", icon: Focus, defaultVisible: false },
+  { id: "mindmap", title: "Ideas & Notes", icon: Brain, defaultVisible: false },
+  { id: "backlog", title: "Task Backlog", icon: ListTodo, defaultVisible: false },
+  { id: "automations", title: "Automations", icon: Zap, defaultVisible: false },
+  { id: "achievements", title: "Achievements", icon: Trophy, defaultVisible: false },
+  { id: "insights", title: "Productivity Insights", icon: Sparkles, defaultVisible: false },
 ];
 
 const DEFAULT_LAYOUTS: WidgetLayout[] = [
@@ -793,6 +808,146 @@ export const StaffOverview = ({ isAdmin, userId }: { isAdmin: boolean; userId?: 
             <div className="text-center text-xs text-muted-foreground py-4">
               <Briefcase className="h-8 w-8 mx-auto mb-2 opacity-50" />
               View active projects
+            </div>
+          </div>
+        );
+
+      case "pomodoro":
+        return (
+          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'goalstasks' })}>
+            <div className="text-center text-xs text-muted-foreground py-4">
+              <Timer className="h-8 w-8 mx-auto mb-2 opacity-50" />
+              Start a focus timer session
+            </div>
+          </div>
+        );
+
+      case "habits":
+        return (
+          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'goalstasks' })}>
+            <div className="text-center text-xs text-muted-foreground py-4">
+              <Repeat className="h-8 w-8 mx-auto mb-2 opacity-50" />
+              Track daily habits and routines
+            </div>
+          </div>
+        );
+
+      case "priorities":
+        return (
+          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'goalstasks' })}>
+            <div className="text-center text-xs text-muted-foreground py-4">
+              <Flag className="h-8 w-8 mx-auto mb-2 opacity-50" />
+              Eisenhower priority matrix
+            </div>
+          </div>
+        );
+
+      case "milestones":
+        return (
+          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'goalstasks' })}>
+            <div className="text-center text-xs text-muted-foreground py-4">
+              <Milestone className="h-8 w-8 mx-auto mb-2 opacity-50" />
+              Track key milestones
+            </div>
+          </div>
+        );
+
+      case "workflows":
+        return (
+          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'goalstasks' })}>
+            <div className="text-center text-xs text-muted-foreground py-4">
+              <Workflow className="h-8 w-8 mx-auto mb-2 opacity-50" />
+              Manage active workflows
+            </div>
+          </div>
+        );
+
+      case "kanban":
+        return (
+          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'goalstasks' })}>
+            <div className="text-center text-xs text-muted-foreground py-4">
+              <Kanban className="h-8 w-8 mx-auto mb-2 opacity-50" />
+              Visual task board
+            </div>
+          </div>
+        );
+
+      case "sprints":
+        return (
+          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'goalstasks' })}>
+            <div className="text-center text-xs text-muted-foreground py-4">
+              <GitBranch className="h-8 w-8 mx-auto mb-2 opacity-50" />
+              Track sprint progress
+            </div>
+          </div>
+        );
+
+      case "velocity":
+        return (
+          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'goalstasks' })}>
+            <div className="text-center text-xs text-muted-foreground py-4">
+              <Gauge className="h-8 w-8 mx-auto mb-2 opacity-50" />
+              Monitor team velocity
+            </div>
+          </div>
+        );
+
+      case "focus":
+        return (
+          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'goalstasks' })}>
+            <div className="text-center text-xs text-muted-foreground py-4">
+              <Focus className="h-8 w-8 mx-auto mb-2 opacity-50" />
+              Track deep work sessions
+            </div>
+          </div>
+        );
+
+      case "mindmap":
+        return (
+          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'goalstasks' })}>
+            <div className="text-center text-xs text-muted-foreground py-4">
+              <Brain className="h-8 w-8 mx-auto mb-2 opacity-50" />
+              Capture ideas and notes
+            </div>
+          </div>
+        );
+
+      case "backlog":
+        return (
+          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'goalstasks' })}>
+            <div className="text-center text-xs text-muted-foreground py-4">
+              <ListTodo className="h-8 w-8 mx-auto mb-2 opacity-50" />
+              View task backlog
+            </div>
+          </div>
+        );
+
+      case "automations":
+        return (
+          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'goalstasks' })}>
+            <div className="text-center text-xs text-muted-foreground py-4">
+              <Zap className="h-8 w-8 mx-auto mb-2 opacity-50" />
+              Manage automations
+            </div>
+          </div>
+        );
+
+      case "achievements":
+        return (
+          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'goalstasks' })}>
+            <div className="text-center text-xs text-muted-foreground py-4">
+              <Trophy className="h-8 w-8 mx-auto mb-2 opacity-50" />
+              View achievements and wins
+            </div>
+          </div>
+        );
+
+      case "insights":
+        return (
+          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'goalstasks' })}>
+            <div className="text-center text-xs text-muted-foreground py-4">
+              <Sparkles className="h-8 w-8 mx-auto mb-2 opacity-50" />
+              Productivity insights and trends
             </div>
           </div>
         );
