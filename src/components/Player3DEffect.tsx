@@ -224,13 +224,13 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         vec4 baseColor = texture2D(baseTexture, vUv);
         vec4 overlayColor = texture2D(overlayTexture, vUv);
         
-        // Overlay pulse effect - shines on and off when NOT hovering
-        float overlayPulse = sin(time * 1.5) * 0.5 + 0.5; // 0 to 1 pulse
-        overlayPulse = smoothstep(0.2, 0.8, overlayPulse); // Sharper on/off
-        float overlayVisible = overlayPulse * (1.0 - userActive); // Hidden when hovering
+        // Overlay gloss effect - natural pulsing shine, always active
+        float glossPulse = sin(time * 0.8) * 0.5 + 0.5; // Slow breathe 0-1
+        glossPulse = pow(glossPulse, 2.0); // Ease in/out for natural feel
+        float overlayStrength = glossPulse * 0.6 + 0.2; // Range 0.2 to 0.8
         
-        // Blend overlay on top of base with pulsing opacity
-        vec4 compositeBase = mix(baseColor, overlayColor, overlayColor.a * overlayVisible);
+        // Blend overlay on top of base with gloss opacity
+        vec4 compositeBase = mix(baseColor, overlayColor, overlayColor.a * overlayStrength);
         
         // Sample x-ray with offset and scale to align
         vec2 xrayUV = (vUv - 0.5) * xrayScale + 0.5 + xrayOffset;
@@ -240,8 +240,8 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         float xrayValid = step(0.0, xrayUV.x) * step(xrayUV.x, 1.0) * step(0.0, xrayUV.y) * step(xrayUV.y, 1.0);
         xrayColor = mix(compositeBase, xrayColor, xrayValid * xrayColor.a);
         
-        // Alpha from base texture
-        float alpha = max(baseColor.a, overlayColor.a * overlayVisible);
+        // Alpha from base and overlay
+        float alpha = max(baseColor.a, overlayColor.a * overlayStrength);
         
         // Discard fully transparent pixels
         if (alpha < 0.01) discard;
