@@ -1208,23 +1208,24 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         // Check if phantom touch is active
         const isPhantomActive = activePhantoms.length > 0 && cursorOpacity > 0.3
         
-        // Handle user interaction OR phantom touch
+        // Handle user interaction OR phantom touch for visual x-ray effect on player
         if (isUserInteracting || isPhantomActive) {
           uniforms.userActive.value = Math.min(1, uniforms.userActive.value + 0.1)
           uniforms.mousePos.value.set(mouseX, mouseY)
           xrayIntensity = Math.min(1, xrayIntensity + 0.05)
-          
-          // Show background stats when user is actively interacting OR phantom is active
-          setXrayState({
-            isActive: true,
-            intensity: isPhantomActive && !isUserInteracting ? cursorOpacity : xrayIntensity,
-            position: { x: cursorBlob.x, y: cursorBlob.y }
-          })
         } else {
           uniforms.userActive.value = Math.max(0, uniforms.userActive.value - 0.05)
           xrayIntensity = 0.7 + Math.sin(autoTime * 0.5) * 0.3
-          
-          // Hide background stats when not interacting
+        }
+        
+        // ONLY show background stats on REAL user interaction, NOT phantom
+        if (isUserInteracting) {
+          setXrayState({
+            isActive: true,
+            intensity: xrayIntensity,
+            position: { x: cursorBlob.x, y: cursorBlob.y }
+          })
+        } else {
           setXrayState({
             isActive: false,
             intensity: 0,
