@@ -234,9 +234,7 @@ export const LightConeBackground = () => {
             opacity="0.9"
           />
           
-          {/* Labels */}
-          <text x="8" y="8" fill="white" fontSize="2.5" opacity="0.5" fontFamily="monospace">future light cone</text>
-          <text x="8" y="94" fill="white" fontSize="2.5" opacity="0.5" fontFamily="monospace">past light cone</text>
+          {/* Labels removed */}
         </svg>
       )}
     </div>

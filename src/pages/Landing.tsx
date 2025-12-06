@@ -74,21 +74,20 @@ export default function Landing() {
       {/* Light Cone Background - revealed by X-Ray */}
       <LightConeBackground />
       
-      {/* RISE Logo at top center - shifted 5px left */}
-      <div 
-        className="absolute top-[14px] md:top-[22px] z-50"
-        style={{ 
-          left: '50%', 
-          transform: 'translateX(calc(-50% - 5px))' 
-        }}
-      >
+      {/* RISE Logo at top left - where language selector was */}
+      <div className="absolute top-6 md:top-8 left-4 md:left-8 z-50">
         <img 
           src={riseLogoWhite} 
           alt="RISE Football Agency" 
-          className="h-12 md:h-16 w-auto"
+          className="h-10 md:h-14 w-auto"
           loading="eager"
           fetchPriority="high"
         />
+      </div>
+      
+      {/* Language Selector - centered on page */}
+      <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50">
+        <LanguageMapSelector onOpenChange={setLanguagePopupOpen} />
       </div>
       
       {/* Portal link - subtle top right */}
@@ -122,10 +121,6 @@ export default function Landing() {
           <div className="relative z-10 px-4 md:px-8 pt-12 md:pt-10 pb-1 md:py-3">
             {/* Desktop Layout */}
             <div className="hidden md:block">
-              {/* Language Selector at top - near triangle peak */}
-              <div className="flex justify-center pb-2 mb-2 mx-auto">
-                <LanguageMapSelector onOpenChange={setLanguagePopupOpen} />
-              </div>
               
               {/* Buttons row - with divider line meeting triangle edges */}
               <div className="border-t border-primary/40 pt-3 pb-3 mx-auto" style={{ maxWidth: '42%' }}>
@@ -192,10 +187,6 @@ export default function Landing() {
 
             {/* Mobile Layout - pushed down with proper divider lines */}
             <div className="md:hidden flex flex-col items-center gap-0 mt-4">
-              {/* Language Selector at top - near peak */}
-              <div className="pb-1 mb-1 flex justify-center">
-                <LanguageMapSelector onOpenChange={setLanguagePopupOpen} />
-              </div>
               
               {/* Buttons row - with divider line */}
               <div className="border-t border-primary/40 pt-2 pb-2 flex justify-center" style={{ width: '45%' }}>
