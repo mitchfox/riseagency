@@ -106,162 +106,158 @@ export default function Landing() {
       )}
 
       {/* Bottom Section - Triangular shape (wide base, point at top) */}
-      <div className="pb-4 md:pb-12 z-50 relative px-2 md:px-4 w-full pointer-events-auto">
-        <div 
-          className="bg-black/40 backdrop-blur-sm px-4 md:px-8 py-4 md:py-5 max-w-6xl mx-auto relative overflow-hidden"
-          style={{
-            clipPath: 'polygon(50% 0%, 100% 100%, 0% 100%)',
-          }}
-        >
-          {/* SVG border overlay for triangular shape */}
+      <div className="pb-4 md:pb-12 z-50 relative w-full pointer-events-auto">
+        <div className="relative max-w-6xl mx-auto">
+          {/* Triangle background - SVG that creates the actual triangle shape */}
           <svg 
-            className="absolute inset-0 w-full h-full pointer-events-none" 
+            className="absolute inset-0 w-full h-full pointer-events-none"
             viewBox="0 0 100 100"
             preserveAspectRatio="none"
-            style={{ zIndex: 1 }}
           >
             <polygon 
               points="50,0 100,100 0,100" 
-              fill="none" 
+              fill="rgba(0,0,0,0.4)"
               stroke="hsl(var(--primary) / 0.6)" 
               strokeWidth="0.5"
               vectorEffect="non-scaling-stroke"
             />
           </svg>
           
-          {/* Desktop Layout */}
-          <div className="hidden md:block relative z-10">
-            {/* Language Selector at top - centered */}
-            <div className="flex justify-center pb-3 mb-3 border-b border-primary/40">
-              <LanguageMapSelector onOpenChange={setLanguagePopupOpen} />
-            </div>
-            
-            {/* Buttons below language selector - same size */}
-            <div className="flex items-center justify-center gap-4 mb-4">
-              <Button 
-                onClick={() => setShowRepresentation(true)}
-                variant="outline"
-                size="sm"
-                className="font-bebas uppercase tracking-wider border-primary/50 text-primary hover:bg-primary/10 hover:text-primary px-4 h-8 text-sm"
-                hoverEffect
-              >
-                {t("landing.represent_me", "Represent Me")}
-              </Button>
+          {/* Content container */}
+          <div className="relative z-10 px-4 md:px-8 py-4 md:py-5">
+            {/* Desktop Layout */}
+            <div className="hidden md:block">
+              {/* Language Selector at top - centered */}
+              <div className="flex justify-center pb-3 mb-3 border-b border-primary/40 mx-auto" style={{ maxWidth: '50%' }}>
+                <LanguageMapSelector onOpenChange={setLanguagePopupOpen} />
+              </div>
               
-              <Button 
-                onClick={() => setShowDeclareInterest(true)}
-                size="sm"
-                className="btn-shine font-bebas uppercase tracking-wider px-4 h-8 text-sm"
-                hoverEffect
-              >
-                {t("landing.declare_interest", "Declare Interest In Star")}
-              </Button>
-            </div>
-            
-            {/* Menu Items - Two rows */}
-            <div className="border-t border-primary/40 pt-3">
-              {/* Top row: Players, Coaches, Clubs */}
-              <nav className="flex items-center justify-center gap-6 mb-2">
-                {desktopNavLinks.slice(0, 3).map((link, index) => (
-                  <div key={link.to} className="flex items-center">
-                    <button
-                      onClick={() => navigateToRole(link.to)}
-                      className="px-3 py-1 text-[19px] font-bebas uppercase tracking-[0.2em] text-white/80 hover:text-primary transition-colors duration-300 whitespace-nowrap"
-                    >
-                      <HoverText text={t(link.labelKey, link.fallback)} />
-                    </button>
-                    {index < 2 && (
-                      <div className="w-px h-4 bg-primary/40 ml-6" />
-                    )}
-                  </div>
-                ))}
-              </nav>
+              {/* Buttons below language selector - smaller */}
+              <div className="flex items-center justify-center gap-3 mb-4">
+                <Button 
+                  onClick={() => setShowRepresentation(true)}
+                  variant="outline"
+                  size="sm"
+                  className="font-bebas uppercase tracking-wider border-primary/50 text-primary hover:bg-primary/10 hover:text-primary px-3 h-7 text-xs"
+                  hoverEffect
+                >
+                  {t("landing.represent_me", "Represent Me")}
+                </Button>
+                
+                <Button 
+                  onClick={() => setShowDeclareInterest(true)}
+                  size="sm"
+                  className="btn-shine font-bebas uppercase tracking-wider px-3 h-7 text-xs"
+                  hoverEffect
+                >
+                  {t("landing.declare_interest", "Declare Interest In Star")}
+                </Button>
+              </div>
               
-              {/* Bottom row: Agents, Scouts, Business, Media */}
-              <nav className="flex items-center justify-center gap-4">
-                {desktopNavLinks.slice(3).map((link, index) => (
-                  <div key={link.to} className="flex items-center">
-                    <button
-                      onClick={() => navigateToRole(link.to)}
-                      className="px-3 py-1 text-[19px] font-bebas uppercase tracking-[0.2em] text-white/80 hover:text-primary transition-colors duration-300 whitespace-nowrap"
-                    >
-                      <HoverText text={t(link.labelKey, link.fallback)} />
-                    </button>
-                    {index < 3 && (
-                      <div className="w-px h-4 bg-primary/40 ml-4" />
-                    )}
-                  </div>
-                ))}
-              </nav>
+              {/* Menu Items - Two rows */}
+              <div className="border-t border-primary/40 pt-3 mx-auto" style={{ maxWidth: '85%' }}>
+                {/* Top row: Players, Coaches, Clubs */}
+                <nav className="flex items-center justify-center gap-6 mb-2">
+                  {desktopNavLinks.slice(0, 3).map((link, index) => (
+                    <div key={link.to} className="flex items-center">
+                      <button
+                        onClick={() => navigateToRole(link.to)}
+                        className="px-3 py-1 text-[19px] font-bebas uppercase tracking-[0.2em] text-white/80 hover:text-primary transition-colors duration-300 whitespace-nowrap"
+                      >
+                        <HoverText text={t(link.labelKey, link.fallback)} />
+                      </button>
+                      {index < 2 && (
+                        <div className="w-px h-4 bg-primary/40 ml-6" />
+                      )}
+                    </div>
+                  ))}
+                </nav>
+                
+                {/* Bottom row: Agents, Scouts, Business, Media */}
+                <nav className="flex items-center justify-center gap-4">
+                  {desktopNavLinks.slice(3).map((link, index) => (
+                    <div key={link.to} className="flex items-center">
+                      <button
+                        onClick={() => navigateToRole(link.to)}
+                        className="px-3 py-1 text-[19px] font-bebas uppercase tracking-[0.2em] text-white/80 hover:text-primary transition-colors duration-300 whitespace-nowrap"
+                      >
+                        <HoverText text={t(link.labelKey, link.fallback)} />
+                      </button>
+                      {index < 3 && (
+                        <div className="w-px h-4 bg-primary/40 ml-4" />
+                      )}
+                    </div>
+                  ))}
+                </nav>
+              </div>
+            </div>
+
+            {/* Mobile Layout */}
+            <div className="md:hidden flex flex-col items-center gap-1.5">
+              {/* Language Selector at top */}
+              <div className="pb-2 mb-1.5 border-b border-primary/40 flex justify-center" style={{ width: '40%' }}>
+                <LanguageMapSelector onOpenChange={setLanguagePopupOpen} />
+              </div>
+              
+              {/* Represent Me & Declare Interest Buttons - smaller */}
+              <div className="flex gap-2 mb-2">
+                <Button 
+                  onClick={() => setShowRepresentation(true)}
+                  variant="outline"
+                  size="sm"
+                  className="font-bebas uppercase tracking-wider border-primary/50 text-primary hover:bg-primary/10 hover:text-primary text-[10px] px-2 h-6"
+                  hoverEffect
+                >
+                  {t("landing.represent_me", "Represent Me")}
+                </Button>
+                <Button 
+                  onClick={() => setShowDeclareInterest(true)}
+                  size="sm"
+                  className="btn-shine font-bebas uppercase tracking-wider text-[10px] px-2 h-6"
+                  hoverEffect
+                >
+                  {t("landing.declare_interest_short", "Declare Interest")}
+                </Button>
+              </div>
+              
+              {/* Navigation - Two rows */}
+              <div className="border-t border-primary/40 pt-2" style={{ width: '80%' }}>
+                {/* Top row: Players, Coaches, Clubs */}
+                <nav className="flex items-center justify-center gap-1 mb-1">
+                  {mobileNavLinks.slice(0, 3).map((link, index) => (
+                    <div key={link.to} className="flex items-center">
+                      <button
+                        onClick={() => navigateToRole(link.to)}
+                        className="px-2 py-1 text-[17px] font-bebas uppercase tracking-[0.15em] text-white/80 hover:text-primary transition-colors duration-300 whitespace-nowrap"
+                      >
+                        <HoverText text={t(link.labelKey, link.fallback)} />
+                      </button>
+                      {index < 2 && (
+                        <div className="w-px h-3 bg-primary/40" />
+                      )}
+                    </div>
+                  ))}
+                </nav>
+                
+                {/* Bottom row: Agents, Scouts, Business, Media */}
+                <nav className="flex items-center justify-center gap-1">
+                  {mobileNavLinks.slice(3).map((link, index) => (
+                    <div key={link.to} className="flex items-center">
+                      <button
+                        onClick={() => navigateToRole(link.to)}
+                        className="px-2 py-1 text-[17px] font-bebas uppercase tracking-[0.15em] text-white/80 hover:text-primary transition-colors duration-300 whitespace-nowrap"
+                      >
+                        <HoverText text={t(link.labelKey, link.fallback)} />
+                      </button>
+                      {index < 3 && (
+                        <div className="w-px h-3 bg-primary/40" />
+                      )}
+                    </div>
+                  ))}
+                </nav>
+              </div>
             </div>
           </div>
-
-          {/* Mobile Layout - Hourglass bottom shape */}
-          <div className="md:hidden flex flex-col items-center gap-1.5 relative z-10">
-            {/* Language Selector at top */}
-            <div className="pb-2 mb-1.5 border-b border-primary/40 w-full flex justify-center">
-              <LanguageMapSelector onOpenChange={setLanguagePopupOpen} />
-            </div>
-            
-            {/* Represent Me & Declare Interest Buttons - same size */}
-            <div className="flex gap-2 mb-2">
-              <Button 
-                onClick={() => setShowRepresentation(true)}
-                variant="outline"
-                size="sm"
-                className="font-bebas uppercase tracking-wider border-primary/50 text-primary hover:bg-primary/10 hover:text-primary text-xs px-2 h-7"
-                hoverEffect
-              >
-                {t("landing.represent_me", "Represent Me")}
-              </Button>
-              <Button 
-                onClick={() => setShowDeclareInterest(true)}
-                size="sm"
-                className="btn-shine font-bebas uppercase tracking-wider text-xs px-2 h-7"
-                hoverEffect
-              >
-                {t("landing.declare_interest_short", "Declare Interest")}
-              </Button>
-            </div>
-            
-            {/* Navigation - Two rows */}
-            <div className="border-t border-primary/40 pt-2 w-full">
-              {/* Top row: Players, Coaches, Clubs */}
-              <nav className="flex items-center justify-center gap-1 mb-1">
-                {mobileNavLinks.slice(0, 3).map((link, index) => (
-                  <div key={link.to} className="flex items-center">
-                    <button
-                      onClick={() => navigateToRole(link.to)}
-                      className="px-2 py-1 text-[17px] font-bebas uppercase tracking-[0.15em] text-white/80 hover:text-primary transition-colors duration-300 whitespace-nowrap"
-                    >
-                      <HoverText text={t(link.labelKey, link.fallback)} />
-                    </button>
-                    {index < 2 && (
-                      <div className="w-px h-3 bg-primary/40" />
-                    )}
-                  </div>
-                ))}
-              </nav>
-              
-              {/* Bottom row: Agents, Scouts, Business, Media */}
-              <nav className="flex items-center justify-center gap-1">
-                {mobileNavLinks.slice(3).map((link, index) => (
-                  <div key={link.to} className="flex items-center">
-                    <button
-                      onClick={() => navigateToRole(link.to)}
-                      className="px-2 py-1 text-[17px] font-bebas uppercase tracking-[0.15em] text-white/80 hover:text-primary transition-colors duration-300 whitespace-nowrap"
-                    >
-                      <HoverText text={t(link.labelKey, link.fallback)} />
-                    </button>
-                    {index < 3 && (
-                      <div className="w-px h-3 bg-primary/40" />
-                    )}
-                  </div>
-                ))}
-              </nav>
-            </div>
-          </div>
-
         </div>
       </div>
       
