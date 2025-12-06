@@ -226,9 +226,10 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         // Discard fully transparent pixels
         if (alpha < 0.01) discard;
         
-        // Auto-reveal x-ray circle (always active)
+        // Auto-reveal x-ray circle (hidden when user is hovering)
         float distToAuto = length(vUv - autoPos);
-        float autoMask = 1.0 - smoothstep(xrayRadius - 0.03, xrayRadius + 0.01, distToAuto);
+        float autoVisible = 1.0 - userActive;
+        float autoMask = (1.0 - smoothstep(xrayRadius - 0.03, xrayRadius + 0.01, distToAuto)) * autoVisible;
         
         // User hover x-ray circle (when active)
         float distToMouse = length(vUv - mousePos);
@@ -313,65 +314,44 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
       
       // Helper function to draw effects around a position
       void drawXrayEffects(vec2 center, float mask, float intensity, inout vec3 color, inout float alpha, bool isUserHover) {
-        // SHINING BORDER HALO - prominent gold ring around x-ray circle
         float borderDist = abs(length(vUv - center) - xrayRadius);
-        float borderPulse = sin(time * 4.0) * 0.3 + 0.7;
         
-        // Multi-layered glowing border for halo effect
-        float innerRing = smoothstep(0.02, 0.0, borderDist) * intensity;
-        float midRing = smoothstep(0.04, 0.01, borderDist) * intensity * 0.6;
-        float outerRing = smoothstep(0.08, 0.02, borderDist) * intensity * 0.3;
-        
-        // Combine rings with pulsing
-        float borderGlow = (innerRing + midRing + outerRing) * borderPulse;
-        
-        // Extra bright for user hover
         if (isUserHover) {
-          borderGlow *= 1.5;
-          // Animated shimmer around the ring
-          float shimmerAngle = atan(vUv.y - center.y, vUv.x - center.x);
-          float shimmer = sin(shimmerAngle * 8.0 + time * 6.0) * 0.3 + 0.7;
-          borderGlow *= shimmer;
-        }
-        
-        color += goldColor * borderGlow;
-        alpha = max(alpha, borderGlow * 0.95);
-        
-        // Cursor indicator
-        float cursorDist = length(vUv - center);
-        float cursorPulse = sin(time * 5.0) * 0.2 + 0.8;
-        float cursorGlow = smoothstep(0.018, 0.006, cursorDist) * cursorPulse * intensity;
-        color += goldColor * cursorGlow;
-        alpha = max(alpha, cursorGlow * 0.9);
-        
-        float ringDist = abs(cursorDist - 0.022);
-        float ringGlow = smoothstep(0.004, 0.0, ringDist) * cursorPulse * 0.6 * intensity;
-        color += goldColor * ringGlow;
-        alpha = max(alpha, ringGlow);
-        
-        // Falling particles
-        for (int i = 0; i < 12; i++) {
-          float particleAngle = float(i) / 12.0 * 2.0 * PI + time * 0.3;
-          float fallProgress = fract(time * 0.8 + float(i) * 0.15);
-          vec2 startPos = center + vec2(cos(particleAngle), sin(particleAngle)) * xrayRadius;
-          vec2 fallPos = startPos + vec2(sin(time * 2.0 + float(i)) * 0.02, fallProgress * 0.12);
-          float fallDist = length(vUv - fallPos);
-          float fallAlpha = (1.0 - fallProgress) * 0.6 * intensity;
-          float fallGlow = smoothstep(0.008, 0.0, fallDist) * fallAlpha;
-          color += goldColor * fallGlow;
-          alpha = max(alpha, fallGlow);
-        }
-        
-        // Rotating sparks
-        for (int i = 0; i < 8; i++) {
-          float sparkAngle = float(i) / 8.0 * 2.0 * PI + time * 2.0;
-          float sparkRadius = xrayRadius + 0.012 + sin(time * 5.0 + float(i)) * 0.006;
-          vec2 sparkPos = center + vec2(cos(sparkAngle), sin(sparkAngle)) * sparkRadius;
-          float sparkDist = length(vUv - sparkPos);
-          float sparkAlpha = (0.5 + sin(time * 8.0 + float(i) * 2.0) * 0.4) * intensity;
-          float sparkGlow = smoothstep(0.006, 0.0, sparkDist) * sparkAlpha;
-          color += goldColor * sparkGlow;
-          alpha = max(alpha, sparkGlow);
+          // THIN SPINNING WHEEL effect for user hover
+          float angle = atan(vUv.y - center.y, vUv.x - center.x);
+          
+          // Spinning segments (like a wheel with gaps)
+          float segments = 12.0;
+          float spin = time * 3.0;
+          float segmentMask = sin((angle + spin) * segments) * 0.5 + 0.5;
+          segmentMask = smoothstep(0.3, 0.7, segmentMask);
+          
+          // Thin ring
+          float thinRing = smoothstep(0.006, 0.002, borderDist) * segmentMask;
+          
+          // Soft outer glow
+          float outerGlow = smoothstep(0.025, 0.005, borderDist) * 0.3 * segmentMask;
+          
+          float wheelEffect = (thinRing + outerGlow) * intensity;
+          color += goldColor * wheelEffect;
+          alpha = max(alpha, wheelEffect * 0.9);
+          
+          // Small spinning dots at the ring
+          for (int i = 0; i < 6; i++) {
+            float dotAngle = float(i) / 6.0 * 2.0 * PI + time * 4.0;
+            vec2 dotPos = center + vec2(cos(dotAngle), sin(dotAngle)) * xrayRadius;
+            float dotDist = length(vUv - dotPos);
+            float dotGlow = smoothstep(0.008, 0.002, dotDist) * intensity;
+            color += goldColor * dotGlow;
+            alpha = max(alpha, dotGlow);
+          }
+        } else {
+          // Subtle effect for auto-reveal (no thick border)
+          float cursorDist = length(vUv - center);
+          float cursorPulse = sin(time * 5.0) * 0.2 + 0.8;
+          float cursorGlow = smoothstep(0.015, 0.005, cursorDist) * cursorPulse * intensity * 0.5;
+          color += goldColor * cursorGlow;
+          alpha = max(alpha, cursorGlow * 0.7);
         }
       }
       
@@ -381,9 +361,12 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         float distToMouse = length(vUv - mousePos);
         float maxDist = xrayRadius + 0.15;
         
+        // When user is hovering, hide auto-reveal completely
+        float autoVisible = 1.0 - userActive;
+        
         if (distToAuto > maxDist && distToMouse > maxDist) discard;
         
-        float autoMask = 1.0 - smoothstep(xrayRadius - 0.03, xrayRadius, distToAuto);
+        float autoMask = (1.0 - smoothstep(xrayRadius - 0.03, xrayRadius, distToAuto)) * autoVisible;
         float userMask = (1.0 - smoothstep(xrayRadius - 0.03, xrayRadius, distToMouse)) * userActive;
         
         vec3 color = vec3(0.0);
