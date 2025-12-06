@@ -160,13 +160,13 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         }
         
         // Combine: boost adds to depth, reduce subtracts from it
-        // Base multiplier: 0.04, boost can add up to +0.06, reduce can subtract up to -0.03
-        float parallaxStrength = 0.04 + (boostAmount * 0.06) - (reduceAmount * 0.02);
-        parallaxStrength = clamp(parallaxStrength, 0.01, 0.12);
+        // Reduced boost effect, increased base for more arm movement
+        float parallaxStrength = 0.06 + (boostAmount * 0.02) - (reduceAmount * 0.01);
+        parallaxStrength = clamp(parallaxStrength, 0.03, 0.09);
         
-        // Combined depth for parallax
-        float combinedDepth = baseDepth * (1.0 + boostAmount * 0.5 - reduceAmount * 0.3);
-        combinedDepth = clamp(combinedDepth, 0.0, 1.0);
+        // Combined depth - less aggressive modifiers for more even distribution
+        float combinedDepth = baseDepth * (1.0 + boostAmount * 0.15 - reduceAmount * 0.1);
+        combinedDepth = clamp(combinedDepth, 0.2, 1.0);
         
         // Parallax offset based on mouse position and combined depth
         vec2 parallaxOffset = (mousePos - vec2(0.5)) * combinedDepth * parallaxStrength;
