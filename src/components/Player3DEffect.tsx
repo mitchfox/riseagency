@@ -510,29 +510,42 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         vec4 xrayColor = texture2D(xrayTexture, xrayUV);
         float xrayValid = step(0.0, xrayUV.x) * step(xrayUV.x, 1.0) * step(0.0, xrayUV.y) * step(xrayUV.y, 1.0);
         
+        // ============= WHITE MARBLE BACKGROUND REVEAL =============
+        // Create marble texture using layered noise
+        float marble1 = snoise(vUv * 8.0 + noiseTime * 0.1) * 0.5 + 0.5;
+        float marble2 = snoise(vUv * 16.0 - noiseTime * 0.05) * 0.3;
+        float marble3 = snoise(vUv * 32.0 + vec2(noiseTime * 0.03, 0.0)) * 0.15;
+        float marblePattern = marble1 + marble2 + marble3;
+        marblePattern = smoothstep(0.3, 0.7, marblePattern);
+        
+        // White base with semi-transparent grey marble veins
+        vec3 marbleWhite = vec3(1.0, 1.0, 1.0);
+        vec3 marbleVein = vec3(0.85, 0.85, 0.88);
+        vec3 marbleColor = mix(marbleWhite, marbleVein, marblePattern * 0.4);
+        
         // ============= COLOR LAYERS: WHITE/GREY/GOLD =============
-        // Core intensity (center of blobs) - bright white
-        float coreIntensity = smoothstep(0.6, 1.0, fluidMask);
+        // Core intensity (center of blobs) - solid marble
+        float coreIntensity = smoothstep(0.5, 1.0, fluidMask);
         // Mid intensity - grey transition
-        float midIntensity = smoothstep(0.3, 0.6, fluidMask);
+        float midIntensity = smoothstep(0.25, 0.5, fluidMask);
         // Edge intensity - gold accent
-        float edgeIntensity = smoothstep(0.0, 0.35, fluidMask);
+        float edgeIntensity = smoothstep(0.0, 0.3, fluidMask);
         
-        // Build reveal color from layers
-        vec3 revealColor = xrayColor.rgb;
+        // Build reveal color - white marble background
+        vec3 revealColor = marbleColor;
         
-        // Edge layer: subtle gold shimmer
+        // Edge layer: subtle gold shimmer on marble
         float goldShimmer = sin(noiseTime * 0.8 + vUv.x * 8.0 + vUv.y * 6.0) * 0.15 + 0.85;
-        revealColor = mix(revealColor, mix(xrayColor.rgb, riseGold * goldShimmer, 0.25), edgeIntensity * 0.4);
+        revealColor = mix(revealColor, mix(marbleColor, riseGold * goldShimmer, 0.2), edgeIntensity * 0.5);
         
-        // Mid layer: grey tint
-        revealColor = mix(revealColor, mix(xrayColor.rgb, revealGrey, 0.15), midIntensity * 0.5);
+        // Mid layer: slight grey tint
+        revealColor = mix(revealColor, mix(marbleColor, revealGrey, 0.1), midIntensity * 0.3);
         
-        // Core layer: bright white highlight
-        revealColor = mix(revealColor, mix(xrayColor.rgb, revealWhite, 0.12), coreIntensity * 0.6);
+        // Core layer: pure white highlight
+        revealColor = mix(revealColor, revealWhite, coreIntensity * 0.4);
         
         // Apply fluid reveal to composite
-        compositeColor = mix(compositeColor, revealColor, fluidMask * xrayValid);
+        compositeColor = mix(compositeColor, revealColor, fluidMask * 0.95);
         
         // ============= ORIGINAL MOUSE SPOTLIGHT X-RAY =============
         float distToMouse = length(vUv - mousePos);
@@ -562,11 +575,11 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         }
         
         // ============= FLUID BLOB GLOW EFFECTS =============
-        // Organic glow around cursor blob
+        // Water glow around cursor blob using waterBlob function
         if (cursorBlobOpacity > 0.01) {
-          float glowMask = organicBlob(vUv, cursorBlobPos, 0.25, cursorVelocity, cursorSpeed, 0.0);
+          float glowMask = waterBlob(vUv, cursorBlobPos, 0.22, 0.0);
           float outerGlow = smoothstep(0.0, 0.5, glowMask) * (1.0 - smoothstep(0.5, 1.0, glowMask));
-          finalColor += mix(revealGrey, riseGold, 0.3) * outerGlow * cursorBlobOpacity * 0.2 * alpha;
+          finalColor += mix(revealGrey, riseGold, 0.3) * outerGlow * cursorBlobOpacity * 0.15 * alpha;
         }
         
         // Edge rim light
