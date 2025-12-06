@@ -812,8 +812,8 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
       })
 
       const playerMesh = new THREE.Mesh(geometry, material)
-      // Position: shifted left by ~3px (0.015 in normalized coords)
-      playerMesh.position.x = -0.015
+      // Position: shifted 3px left (using -0.02 for visible effect)
+      playerMesh.position.x = -0.02
       playerMesh.position.y = isMobile ? 0.15 : 0.05
       scene.add(playerMesh)
 
