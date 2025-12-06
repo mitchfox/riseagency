@@ -1029,9 +1029,9 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
             }
           }
         } else {
-          // Reset phantom timer when user interacts
+          // User is active - just reset phantom timer, DON'T clear active phantoms
+          // This allows overlapping phantoms to continue their animation
           lastPhantomTime = currentTime
-          activePhantoms.length = 0 // Clear all active phantoms
         }
         
         // Update cursor target and track velocity (for real user input)

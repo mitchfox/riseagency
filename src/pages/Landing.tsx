@@ -109,6 +109,7 @@ export default function Landing() {
       <div className="pb-2 md:pb-12 z-50 relative w-full pointer-events-auto">
         <div className="relative max-w-6xl mx-auto" style={{ minHeight: '220px' }}>
           {/* Triangle background - SVG that creates the actual triangle shape */}
+          {/* Point is at 50% horizontal, positioned to be directly above language selector */}
           <svg 
             className="absolute inset-0 w-full h-full pointer-events-none"
             viewBox="0 0 100 100"
@@ -121,7 +122,7 @@ export default function Landing() {
               </filter>
             </defs>
             <polygon 
-              points="50,0 100,100 0,100" 
+              points="50,15 100,100 0,100" 
               fill="rgba(0,0,0,0.55)"
               stroke="hsl(var(--primary) / 0.6)" 
               strokeWidth="0.5"
@@ -132,14 +133,14 @@ export default function Landing() {
           {/* Backdrop blur overlay matching triangle shape */}
           <div 
             className="absolute inset-0 backdrop-blur-sm pointer-events-none"
-            style={{ clipPath: 'polygon(50% 0%, 100% 100%, 0% 100%)' }}
+            style={{ clipPath: 'polygon(50% 15%, 100% 100%, 0% 100%)' }}
           />
           
-          {/* Content container - pushed down to bottom */}
-          <div className="relative z-10 px-4 md:px-8 pt-16 md:pt-12 pb-2 md:py-5">
+          {/* Content container - positioned to align with triangle */}
+          <div className="relative z-10 px-4 md:px-8 pt-8 md:pt-6 pb-2 md:py-5">
             {/* Desktop Layout */}
             <div className="hidden md:block">
-              {/* Language Selector at top - narrowest line (near triangle peak) */}
+              {/* Language Selector at top - directly below triangle peak */}
               <div className="flex justify-center pb-3 mb-3 border-b border-primary/40 mx-auto" style={{ maxWidth: '35%' }}>
                 <LanguageMapSelector onOpenChange={setLanguagePopupOpen} />
               </div>
