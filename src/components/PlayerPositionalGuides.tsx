@@ -6,7 +6,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Map } from "lucide-react";
+import { Map, Video } from "lucide-react";
 
 interface PositionalGuide {
   id: string;
@@ -14,6 +14,19 @@ interface PositionalGuide {
   phase: string;
   subcategory: string;
   content: string | null;
+  display_order: number;
+}
+
+interface MediaItem {
+  url: string;
+  caption?: string;
+}
+
+interface MediaGridRow {
+  id: string;
+  layout: string;
+  images: MediaItem[];
+  video_url?: string;
   display_order: number;
 }
 
@@ -42,11 +55,13 @@ const POSITION_LABELS: Record<string, string> = {
 export const PlayerPositionalGuides = () => {
   const [selectedPosition, setSelectedPosition] = useState<string>('');
   const [guides, setGuides] = useState<PositionalGuide[]>([]);
+  const [mediaData, setMediaData] = useState<Record<string, MediaGridRow[]>>({});
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (selectedPosition) {
       fetchGuides();
+      fetchMedia();
     }
   }, [selectedPosition]);
 
@@ -66,6 +81,38 @@ export const PlayerPositionalGuides = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const fetchMedia = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('positional_guide_media')
+        .select('*')
+        .eq('position', selectedPosition)
+        .order('display_order', { ascending: true });
+
+      if (error) throw error;
+
+      const grouped: Record<string, MediaGridRow[]> = {};
+      (data || []).forEach((row: any) => {
+        const key = `${row.phase}-${row.subcategory}`;
+        if (!grouped[key]) grouped[key] = [];
+        grouped[key].push({
+          id: row.id,
+          layout: row.layout,
+          images: (row.images || []) as MediaItem[],
+          video_url: row.video_url,
+          display_order: row.display_order
+        });
+      });
+      setMediaData(grouped);
+    } catch (error) {
+      console.error('Error fetching media:', error);
+    }
+  };
+
+  const getMediaForSubcategory = (phase: string, subcategory: string): MediaGridRow[] => {
+    return mediaData[`${phase}-${subcategory}`] || [];
   };
 
   const getGuideForSubcategory = (phase: string, subcategory: string) => {
@@ -161,8 +208,9 @@ export const PlayerPositionalGuides = () => {
                       {DEFAULT_SUBCATEGORIES[phase].map(subcategory => {
                         const guide = getGuideForSubcategory(phase, subcategory);
                         const points = parseBulletPoints(guide?.content || null);
+                        const mediaRows = getMediaForSubcategory(phase, subcategory);
 
-                        if (points.length === 0) return null;
+                        if (points.length === 0 && mediaRows.length === 0) return null;
 
                         return (
                           <div key={subcategory} className="space-y-2">
@@ -180,6 +228,26 @@ export const PlayerPositionalGuides = () => {
                                 </div>
                               ))}
                             </div>
+                            {/* Media Grid Display */}
+                            {mediaRows.map((row) => (
+                              <div key={row.id} className="relative border rounded-lg p-3 bg-muted/30">
+                                {row.video_url && (
+                                  <button
+                                    onClick={() => window.open(row.video_url, '_blank')}
+                                    className="absolute top-2 right-2 z-10 bg-primary/90 hover:bg-primary p-1.5 rounded-md transition-colors"
+                                  >
+                                    <Video className="h-4 w-4 text-primary-foreground" />
+                                  </button>
+                                )}
+                                <div className={`grid gap-2 ${row.layout === '1' ? 'grid-cols-1' : row.layout === '2' ? 'grid-cols-2' : 'grid-cols-3'}`}>
+                                  {row.images.map((img, idx) => (
+                                    <div key={idx} className="aspect-video bg-muted rounded-lg overflow-hidden">
+                                      <img src={img.url} alt="" className="w-full h-full object-cover" />
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            ))}
                           </div>
                         );
                       })}

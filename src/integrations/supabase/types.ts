@@ -2043,6 +2043,56 @@ export type Database = {
         }
         Relationships: []
       }
+      positional_guide_media: {
+        Row: {
+          created_at: string
+          display_order: number
+          guide_id: string | null
+          id: string
+          images: Json | null
+          layout: string
+          phase: string
+          position: string
+          subcategory: string
+          updated_at: string
+          video_url: string | null
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number
+          guide_id?: string | null
+          id?: string
+          images?: Json | null
+          layout?: string
+          phase: string
+          position: string
+          subcategory: string
+          updated_at?: string
+          video_url?: string | null
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          guide_id?: string | null
+          id?: string
+          images?: Json | null
+          layout?: string
+          phase?: string
+          position?: string
+          subcategory?: string
+          updated_at?: string
+          video_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "positional_guide_media_guide_id_fkey"
+            columns: ["guide_id"]
+            isOneToOne: false
+            referencedRelation: "positional_guides"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       positional_guides: {
         Row: {
           content: string | null
