@@ -129,7 +129,7 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
       }
     `
 
-    // Fragment shader with multi-map parallax control, shooting star, and fluid X-ray reveal
+    // Fragment shader with multi-map parallax control, shooting star, and organic fluid X-ray reveal
     const fragmentShader = `
       uniform sampler2D baseTexture;
       uniform sampler2D overlayTexture;
@@ -160,16 +160,24 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
       uniform float bwLightPhase;
       uniform float bwLayerOpacity;
       
-      // Fluid X-ray reveal uniforms
+      // Organic fluid X-ray reveal uniforms
       uniform vec2 cursorBlobPos;
       uniform float cursorBlobOpacity;
+      uniform vec2 cursorVelocity;
+      uniform float cursorSpeed;
       uniform vec2 cursorTrail1;
       uniform vec2 cursorTrail2;
+      uniform vec2 cursorTrail3;
+      uniform vec2 cursorTrail4;
       uniform float trailOpacity1;
       uniform float trailOpacity2;
+      uniform float trailOpacity3;
+      uniform float trailOpacity4;
       uniform vec2 ambientBlob1Pos;
       uniform vec2 ambientBlob2Pos;
       uniform vec2 ambientBlob3Pos;
+      uniform float noiseTime;
+      uniform float fluidPhase;
       
       varying vec2 vUv;
       
@@ -177,13 +185,158 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
       const vec3 brightGold = vec3(1.0, 0.9, 0.5);
       const vec3 warmLight = vec3(1.0, 0.95, 0.85);
       const vec3 revealWhite = vec3(1.0, 1.0, 1.0);
-      const vec3 revealGrey = vec3(0.7, 0.7, 0.75);
+      const vec3 revealGrey = vec3(0.75, 0.75, 0.78);
       const vec3 riseGold = vec3(0.92, 0.78, 0.45);
       
-      // Metaball influence function for fluid blob shapes
-      float metaballInfluence(vec2 uv, vec2 blobPos, float radius) {
-        float dist = length(uv - blobPos);
-        return pow(radius / max(dist, 0.001), 2.0);
+      // ============= SIMPLEX NOISE IMPLEMENTATION =============
+      vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+      vec2 mod289(vec2 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+      vec3 permute(vec3 x) { return mod289(((x * 34.0) + 1.0) * x); }
+      
+      float snoise(vec2 v) {
+        const vec4 C = vec4(0.211324865405187, 0.366025403784439,
+                           -0.577350269189626, 0.024390243902439);
+        vec2 i  = floor(v + dot(v, C.yy));
+        vec2 x0 = v -   i + dot(i, C.xx);
+        vec2 i1;
+        i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0);
+        vec4 x12 = x0.xyxy + C.xxzz;
+        x12.xy -= i1;
+        i = mod289(i);
+        vec3 p = permute(permute(i.y + vec3(0.0, i1.y, 1.0))
+                                + i.x + vec3(0.0, i1.x, 1.0));
+        vec3 m = max(0.5 - vec3(dot(x0, x0), dot(x12.xy, x12.xy),
+                                dot(x12.zw, x12.zw)), 0.0);
+        m = m * m;
+        m = m * m;
+        vec3 x = 2.0 * fract(p * C.www) - 1.0;
+        vec3 h = abs(x) - 0.5;
+        vec3 ox = floor(x + 0.5);
+        vec3 a0 = x - ox;
+        m *= 1.79284291400159 - 0.85373472095314 * (a0 * a0 + h * h);
+        vec3 g;
+        g.x = a0.x * x0.x + h.x * x0.y;
+        g.yz = a0.yz * x12.xz + h.yz * x12.yw;
+        return 130.0 * dot(m, g);
+      }
+      
+      // Fractal brownian motion for more organic noise
+      float fbm(vec2 p, float t) {
+        float value = 0.0;
+        float amplitude = 0.5;
+        float frequency = 1.0;
+        for (int i = 0; i < 4; i++) {
+          value += amplitude * snoise(p * frequency + t * 0.3);
+          frequency *= 2.0;
+          amplitude *= 0.5;
+        }
+        return value;
+      }
+      
+      // ============= ORGANIC FLUID BLOB FUNCTION =============
+      float organicBlob(vec2 uv, vec2 center, float baseRadius, vec2 velocity, float speed, float timeOffset) {
+        vec2 diff = uv - center;
+        float dist = length(diff);
+        float angle = atan(diff.y, diff.x);
+        
+        // Velocity-based directional stretching
+        float velAlignment = 0.0;
+        if (speed > 0.01) {
+          velAlignment = dot(normalize(diff + 0.001), velocity);
+        }
+        // Stretch blob backward in movement direction (creates trailing effect)
+        float stretch = 1.0 + speed * max(0.0, -velAlignment) * 3.0;
+        float stretchedDist = dist / mix(1.0, stretch, 0.7);
+        
+        // Multi-octave noise distortion for organic, irregular edges
+        float n1 = snoise(vec2(angle * 2.0 + noiseTime * 0.4 + timeOffset, noiseTime * 0.2)) * 0.4;
+        float n2 = snoise(vec2(angle * 4.0 - noiseTime * 0.3 + timeOffset * 2.0, noiseTime * 0.35)) * 0.25;
+        float n3 = snoise(vec2(angle * 8.0 + noiseTime * 0.5, noiseTime * 0.5 + timeOffset)) * 0.15;
+        float n4 = snoise(vec2(angle * 16.0, noiseTime * 0.7)) * 0.08;
+        
+        float noiseDistortion = n1 + n2 + n3 + n4;
+        
+        // Pulsing radius for organic breathing effect
+        float pulse = sin(noiseTime * 1.5 + timeOffset * 3.0) * 0.1 + 1.0;
+        
+        float distortedRadius = baseRadius * (1.0 + noiseDistortion) * pulse;
+        
+        // Soft falloff for fluid blending
+        float blob = 1.0 - smoothstep(distortedRadius * 0.3, distortedRadius, stretchedDist);
+        
+        return blob;
+      }
+      
+      // ============= SPLASH POCKET FUNCTION =============
+      // Creates smaller satellite blobs around main blob for splash effect
+      float splashPockets(vec2 uv, vec2 center, vec2 velocity, float speed, float baseRadius, float timeOffset) {
+        float splash = 0.0;
+        
+        // Generate splash pockets in velocity direction
+        for (int i = 0; i < 5; i++) {
+          float fi = float(i);
+          float pocketAngle = fi * 1.2566 + noiseTime * 0.2 + timeOffset; // ~72 degrees apart
+          
+          // Pockets spread out more with speed
+          float spreadDist = baseRadius * (0.8 + fi * 0.25) * (1.0 + speed * 2.0);
+          
+          // Add velocity bias - pockets extend more in movement direction
+          vec2 pocketOffset = vec2(cos(pocketAngle), sin(pocketAngle)) * spreadDist;
+          if (speed > 0.01) {
+            pocketOffset += velocity * spreadDist * (0.5 + fi * 0.2);
+          }
+          
+          vec2 pocketPos = center + pocketOffset;
+          float pocketRadius = baseRadius * (0.15 + snoise(vec2(fi * 3.0, noiseTime * 0.5)) * 0.08);
+          
+          // Organic pocket shape
+          float pocket = organicBlob(uv, pocketPos, pocketRadius, velocity, speed * 0.5, timeOffset + fi);
+          
+          // Fade pockets with distance
+          float distFade = 1.0 - fi * 0.15;
+          splash = max(splash, pocket * distFade * 0.6);
+        }
+        
+        return splash;
+      }
+      
+      // ============= TENDRIL FUNCTION =============
+      // Creates flowing tendrils extending from blob
+      float fluidTendrils(vec2 uv, vec2 center, vec2 velocity, float speed, float timeOffset) {
+        float tendrils = 0.0;
+        
+        for (int i = 0; i < 4; i++) {
+          float fi = float(i);
+          // Tendrils flow in velocity direction with some spread
+          float tendrilAngle = atan(velocity.y, velocity.x) + (fi - 1.5) * 0.5;
+          
+          // Length varies with speed and noise
+          float tendrilLength = (0.15 + speed * 0.4) * (1.0 + snoise(vec2(fi, noiseTime * 0.3)) * 0.3);
+          float tendrilWidth = 0.02 + snoise(vec2(fi * 2.0, noiseTime * 0.4)) * 0.01;
+          
+          // Create tendril as elongated shape
+          vec2 tendrilDir = vec2(cos(tendrilAngle), sin(tendrilAngle));
+          vec2 tendrilStart = center;
+          
+          // Distance along tendril direction
+          vec2 toPoint = uv - tendrilStart;
+          float alongTendril = dot(toPoint, tendrilDir);
+          float perpTendril = length(toPoint - tendrilDir * alongTendril);
+          
+          // Tendril shape - tapers toward end
+          if (alongTendril > 0.0 && alongTendril < tendrilLength) {
+            float taper = 1.0 - alongTendril / tendrilLength;
+            float tendrilMask = smoothstep(tendrilWidth * taper, 0.0, perpTendril);
+            
+            // Add noise to tendril edge
+            float edgeNoise = snoise(vec2(alongTendril * 20.0 + noiseTime, fi)) * 0.02;
+            tendrilMask *= smoothstep(tendrilWidth * taper + edgeNoise, 0.0, perpTendril);
+            
+            tendrils = max(tendrils, tendrilMask * taper * 0.5);
+          }
+        }
+        
+        return tendrils * speed;
       }
       
       void main() {
@@ -196,169 +349,177 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
           baseDepth = dot(texture2D(depthMap, vUv).rgb, vec3(0.299, 0.587, 0.114));
         }
         
-        // Lightened map = areas for MORE effect (brighter = more boost)
         if (hasDepthLightened > 0.5) {
           boostAmount = dot(texture2D(depthLightened, vUv).rgb, vec3(0.299, 0.587, 0.114));
         }
         
-        // Darkened map = areas for LESS effect (darker = more reduction)
         if (hasDepthDarkened > 0.5) {
           reduceAmount = 1.0 - dot(texture2D(depthDarkened, vUv).rgb, vec3(0.299, 0.587, 0.114));
         }
         
-        // Combine: boost adds to depth, reduce subtracts from it
         float parallaxStrength = 0.16 + (boostAmount * 0.02) - (reduceAmount * 0.01);
         parallaxStrength = clamp(parallaxStrength, 0.13, 0.19);
         
-        // Combined depth - less aggressive modifiers for more even distribution
         float combinedDepth = baseDepth * (1.0 + boostAmount * 0.15 - reduceAmount * 0.1);
         combinedDepth = clamp(combinedDepth, 0.2, 1.0);
         
-        // Zero out parallax in bottom-right corner (football area)
         float bottomRightMask = smoothstep(0.45, 0.65, vUv.x) * smoothstep(0.55, 0.30, vUv.y);
         combinedDepth *= (1.0 - bottomRightMask);
         
-        // Parallax offset based on mouse position and combined depth
         vec2 parallaxOffset = (mousePos - vec2(0.5)) * combinedDepth * parallaxStrength;
         vec2 parallaxUV = vUv - parallaxOffset;
         
-        // Sample base texture with parallax
         vec4 baseColor = texture2D(baseTexture, parallaxUV);
         vec4 overlayColor = texture2D(overlayTexture, parallaxUV);
         
-        // Alpha from base texture
         float alpha = baseColor.a;
         if (alpha < 0.01) discard;
         
-        // === DYNAMIC SHADOW based on cursor X position ===
+        // Dynamic shadow
         float shadowAmount = (mousePos.x - 0.5) * 0.4;
         shadowAmount = clamp(shadowAmount, -0.15, 0.25);
-        
-        // Apply shadow/highlight to base color
         vec3 shadedBase = baseColor.rgb * (1.0 - shadowAmount);
         
-        // === GLOSS OVERLAY (image 2) - subtle pulsing ===
+        // Gloss overlay
         float glossPulse = sin(time * 0.6) * 0.5 + 0.5;
         glossPulse = pow(glossPulse, 2.5);
-        
-        // Additive blend for gold gloss highlights
         vec3 glossHighlight = overlayColor.rgb * overlayColor.a * glossPulse * 0.5;
         vec3 compositeColor = shadedBase + glossHighlight;
         
-        // === B&W LAYER WITH ANIMATED GLOSS SHINE ===
+        // B&W layer with animated gloss
         if (hasBwLayer > 0.5 && bwLayerOpacity > 0.01) {
           vec4 bwColor = texture2D(bwLayerTexture, parallaxUV);
-          
-          // Calculate brightness from B&W image
           float bwBrightness = dot(bwColor.rgb, vec3(0.299, 0.587, 0.114));
           
-          // Sweeping gloss effect - diagonal shine across the image
-          float sweepAngle = 0.7; // Diagonal angle
+          float sweepAngle = 0.7;
           float sweepPos = vUv.x * cos(sweepAngle) + vUv.y * sin(sweepAngle);
-          float sweepPhase = mod(bwLightPhase * 0.3, 2.0); // Slower sweep
+          float sweepPhase = mod(bwLightPhase * 0.3, 2.0);
           float sweepCenter = sweepPhase - 0.5;
           
-          // Sharp glossy highlight band
           float glossWidth = 0.15;
           float glossDist = abs(sweepPos - sweepCenter);
           float glossStrength = 1.0 - smoothstep(0.0, glossWidth, glossDist);
-          glossStrength = pow(glossStrength, 2.0); // Sharper falloff
+          glossStrength = pow(glossStrength, 2.0);
           
-          // Core bright line in the center of the gloss
           float coreStrength = 1.0 - smoothstep(0.0, glossWidth * 0.2, glossDist);
-          
-          // Apply to lighter areas more (face/arms)
           float lightMask = smoothstep(0.3, 0.6, bwBrightness);
           
-          // Gloss colors - bright white core with warm gold edges
           vec3 glossCore = vec3(1.0, 1.0, 1.0) * coreStrength * lightMask * 1.2;
           vec3 glossEdge = brightGold * glossStrength * lightMask * 0.8;
           vec3 glossEffect = (glossCore + glossEdge) * bwColor.a;
           
-          // Add ambient shimmer on highlights
           float shimmer = sin(bwLightPhase * 4.0 + bwBrightness * 10.0) * 0.5 + 0.5;
           vec3 shimmerEffect = warmLight * shimmer * smoothstep(0.5, 0.8, bwBrightness) * 0.3 * bwColor.a;
           
-          // Combine and apply with opacity fade
           vec3 totalGloss = (glossEffect + shimmerEffect) * bwLayerOpacity;
           compositeColor = compositeColor + totalGloss;
         }
         
-        // === KIT OVERLAY - Always visible, with sweeping shine on top ===
+        // Kit overlay
         if (hasKitOverlay > 0.5) {
           vec4 kitColor = texture2D(kitOverlayTexture, parallaxUV);
-          
-          // Always show kit overlay
           compositeColor = mix(compositeColor, kitColor.rgb, kitColor.a);
           
-          // Sample kit depth map for shine intensity control
-          float kitDepth = 0.5;
+          float kitDepthVal = 0.5;
           if (hasKitDepth > 0.5) {
-            kitDepth = dot(texture2D(kitDepthTexture, parallaxUV).rgb, vec3(0.299, 0.587, 0.114));
+            kitDepthVal = dot(texture2D(kitDepthTexture, parallaxUV).rgb, vec3(0.299, 0.587, 0.114));
           }
           
-          // Add sweeping shine effect on top (only when active)
           if (kitShinePos >= 0.0) {
             float shineWidth = 0.15;
             float shineDist = abs(vUv.x - kitShinePos);
             float shineMask = 1.0 - smoothstep(0.0, shineWidth, shineDist);
-            
-            // Depth map controls intensity - brighter areas shine more
-            shineMask *= kitDepth;
-            
-            // Add bright glow at the shine center
-            float shineGlow = (1.0 - smoothstep(0.0, shineWidth * 0.3, shineDist)) * 0.6 * kitDepth;
-            
-            // Add bright gold shine highlight on top
+            shineMask *= kitDepthVal;
+            float shineGlow = (1.0 - smoothstep(0.0, shineWidth * 0.3, shineDist)) * 0.6 * kitDepthVal;
             compositeColor += brightGold * shineGlow * kitColor.a;
           }
         }
         
-        // === FLUID X-RAY REVEAL EFFECT ===
-        // Calculate metaball influences for fluid blob shapes
-        float fluidRevealMask = 0.0;
+        // ============= ORGANIC FLUID X-RAY REVEAL =============
+        float fluidMask = 0.0;
         
-        // Cursor-controlled blobs (high opacity when active)
-        fluidRevealMask += metaballInfluence(vUv, cursorBlobPos, 0.15) * cursorBlobOpacity;
-        fluidRevealMask += metaballInfluence(vUv, cursorTrail1, 0.12) * trailOpacity1;
-        fluidRevealMask += metaballInfluence(vUv, cursorTrail2, 0.10) * trailOpacity2;
+        // Main cursor blob with organic shape
+        float mainBlob = organicBlob(vUv, cursorBlobPos, 0.18, cursorVelocity, cursorSpeed, 0.0);
+        fluidMask += mainBlob * cursorBlobOpacity;
         
-        // Autonomous ambient blobs (lower opacity - 40% of cursor)
-        fluidRevealMask += metaballInfluence(vUv, ambientBlob1Pos, 0.18) * 0.4;
-        fluidRevealMask += metaballInfluence(vUv, ambientBlob2Pos, 0.15) * 0.35;
-        fluidRevealMask += metaballInfluence(vUv, ambientBlob3Pos, 0.12) * 0.3;
+        // Splash pockets around cursor
+        float cursorSplash = splashPockets(vUv, cursorBlobPos, cursorVelocity, cursorSpeed, 0.12, 0.0);
+        fluidMask += cursorSplash * cursorBlobOpacity * 0.8;
         
-        // Threshold for clean edges with smooth falloff
-        fluidRevealMask = smoothstep(0.5, 1.5, fluidRevealMask);
+        // Tendrils extending from cursor blob
+        float cursorTendrils = fluidTendrils(vUv, cursorBlobPos, cursorVelocity, cursorSpeed, 0.0);
+        fluidMask += cursorTendrils * cursorBlobOpacity;
         
-        // Sample x-ray/background for reveal
+        // Trailing blobs with organic shapes
+        float trail1Blob = organicBlob(vUv, cursorTrail1, 0.14, cursorVelocity, cursorSpeed * 0.7, 1.0);
+        fluidMask += trail1Blob * trailOpacity1 * 0.85;
+        fluidMask += splashPockets(vUv, cursorTrail1, cursorVelocity, cursorSpeed * 0.5, 0.08, 1.0) * trailOpacity1 * 0.5;
+        
+        float trail2Blob = organicBlob(vUv, cursorTrail2, 0.11, cursorVelocity, cursorSpeed * 0.5, 2.0);
+        fluidMask += trail2Blob * trailOpacity2 * 0.7;
+        fluidMask += splashPockets(vUv, cursorTrail2, cursorVelocity, cursorSpeed * 0.3, 0.06, 2.0) * trailOpacity2 * 0.4;
+        
+        float trail3Blob = organicBlob(vUv, cursorTrail3, 0.08, cursorVelocity, cursorSpeed * 0.3, 3.0);
+        fluidMask += trail3Blob * trailOpacity3 * 0.55;
+        
+        float trail4Blob = organicBlob(vUv, cursorTrail4, 0.06, cursorVelocity, cursorSpeed * 0.2, 4.0);
+        fluidMask += trail4Blob * trailOpacity4 * 0.4;
+        
+        // Autonomous ambient blobs - lower opacity, organic movement
+        float ambient1 = organicBlob(vUv, ambientBlob1Pos, 0.22, vec2(0.0), 0.0, 5.0);
+        float ambient1Splash = splashPockets(vUv, ambientBlob1Pos, vec2(sin(noiseTime * 0.3), cos(noiseTime * 0.4)), 0.15, 0.1, 5.0);
+        fluidMask += (ambient1 + ambient1Splash * 0.5) * 0.38;
+        
+        float ambient2 = organicBlob(vUv, ambientBlob2Pos, 0.18, vec2(0.0), 0.0, 6.0);
+        float ambient2Splash = splashPockets(vUv, ambientBlob2Pos, vec2(cos(noiseTime * 0.25), sin(noiseTime * 0.35)), 0.12, 0.08, 6.0);
+        fluidMask += (ambient2 + ambient2Splash * 0.4) * 0.32;
+        
+        float ambient3 = organicBlob(vUv, ambientBlob3Pos, 0.14, vec2(0.0), 0.0, 7.0);
+        fluidMask += ambient3 * 0.28;
+        
+        // Clamp and smooth the combined mask
+        fluidMask = clamp(fluidMask, 0.0, 1.0);
+        
+        // Sample x-ray texture
         vec2 xrayUV = (parallaxUV - 0.5) * xrayScale + 0.5 + xrayOffset;
         vec4 xrayColor = texture2D(xrayTexture, xrayUV);
         float xrayValid = step(0.0, xrayUV.x) * step(xrayUV.x, 1.0) * step(0.0, xrayUV.y) * step(xrayUV.y, 1.0);
         
-        // Color tinting for reveal - whites/greys with gold accents
-        vec3 revealTint = mix(revealGrey, revealWhite, fluidRevealMask * 0.5);
-        float goldAccent = sin(time * 0.8 + vUv.x * 5.0) * 0.3 + 0.3;
-        revealTint = mix(revealTint, riseGold, goldAccent * 0.3);
+        // ============= COLOR LAYERS: WHITE/GREY/GOLD =============
+        // Core intensity (center of blobs) - bright white
+        float coreIntensity = smoothstep(0.6, 1.0, fluidMask);
+        // Mid intensity - grey transition
+        float midIntensity = smoothstep(0.3, 0.6, fluidMask);
+        // Edge intensity - gold accent
+        float edgeIntensity = smoothstep(0.0, 0.35, fluidMask);
         
-        // Blend x-ray with tint
-        vec3 tintedReveal = mix(xrayColor.rgb, revealTint, 0.15);
+        // Build reveal color from layers
+        vec3 revealColor = xrayColor.rgb;
         
-        // Apply fluid reveal - reveals through where mask is high
-        compositeColor = mix(compositeColor, tintedReveal, fluidRevealMask * xrayValid);
+        // Edge layer: subtle gold shimmer
+        float goldShimmer = sin(noiseTime * 0.8 + vUv.x * 8.0 + vUv.y * 6.0) * 0.15 + 0.85;
+        revealColor = mix(revealColor, mix(xrayColor.rgb, riseGold * goldShimmer, 0.25), edgeIntensity * 0.4);
         
-        // === ADDITIONAL MOUSE SPOTLIGHT X-RAY (original effect) ===
+        // Mid layer: grey tint
+        revealColor = mix(revealColor, mix(xrayColor.rgb, revealGrey, 0.15), midIntensity * 0.5);
+        
+        // Core layer: bright white highlight
+        revealColor = mix(revealColor, mix(xrayColor.rgb, revealWhite, 0.12), coreIntensity * 0.6);
+        
+        // Apply fluid reveal to composite
+        compositeColor = mix(compositeColor, revealColor, fluidMask * xrayValid);
+        
+        // ============= ORIGINAL MOUSE SPOTLIGHT X-RAY =============
         float distToMouse = length(vUv - mousePos);
         float mouseXrayMask = (1.0 - smoothstep(0.0, xrayRadius + 0.02, distToMouse)) * userActive;
         
-        // === SHOOTING STAR X-RAY REVEAL ===
+        // Shooting star x-ray
         float distToStar = length(vUv - shootingStarPos);
         float starXrayMask = (1.0 - smoothstep(0.0, 0.08, distToStar)) * shootingStarActive;
         
-        // Combine additional x-ray masks
         float totalXrayMask = max(mouseXrayMask, starXrayMask);
         
-        // === SHADOW BEHIND X-RAY ===
+        // Shadow behind x-ray
         vec4 shadowColor = texture2D(shadowTexture, parallaxUV);
         vec3 xrayWithShadow = xrayColor.rgb;
         if (hasShadow > 0.5) {
@@ -367,7 +528,7 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         
         vec3 finalColor = mix(compositeColor, xrayWithShadow, totalXrayMask * xrayValid);
         
-        // === SHOOTING STAR GLOW ===
+        // Shooting star glow
         if (shootingStarActive > 0.0) {
           float starGlow = (1.0 - smoothstep(0.0, 0.12, distToStar)) * shootingStarActive;
           float starCore = (1.0 - smoothstep(0.0, 0.02, distToStar)) * shootingStarActive;
@@ -375,27 +536,27 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
           finalColor += goldColor * starGlow * 0.3 * alpha;
         }
         
-        // === FLUID BLOB GLOW EFFECTS ===
-        // Add subtle glow around cursor blob
+        // ============= FLUID BLOB GLOW EFFECTS =============
+        // Organic glow around cursor blob
         if (cursorBlobOpacity > 0.01) {
-          float cursorGlow = metaballInfluence(vUv, cursorBlobPos, 0.2) * cursorBlobOpacity;
-          cursorGlow = smoothstep(0.3, 1.0, cursorGlow) * 0.15;
-          finalColor += revealWhite * cursorGlow * alpha;
+          float glowMask = organicBlob(vUv, cursorBlobPos, 0.25, cursorVelocity, cursorSpeed, 0.0);
+          float outerGlow = smoothstep(0.0, 0.5, glowMask) * (1.0 - smoothstep(0.5, 1.0, glowMask));
+          finalColor += mix(revealGrey, riseGold, 0.3) * outerGlow * cursorBlobOpacity * 0.2 * alpha;
         }
         
-        // === EDGE RIM LIGHT - subtle 3D pop ===
+        // Edge rim light
         float rimLeft = smoothstep(0.1, 0.0, vUv.x) * max(0.0, shadowAmount) * 0.3;
         float rimRight = smoothstep(0.9, 1.0, vUv.x) * max(0.0, -shadowAmount) * 0.3;
         finalColor += goldColor * (rimLeft + rimRight) * alpha;
         
-        // Subtle depth-based shading for 3D feel
+        // Depth-based shading
         if (hasDepthMap > 0.5) {
           float depthShade = combinedDepth * 0.1 + 0.95;
           finalColor *= depthShade;
         }
         
-        // Gold shimmer in revealed areas
-        if (fluidRevealMask > 0.01 || totalXrayMask > 0.0) {
+        // Shimmer in revealed areas
+        if (fluidMask > 0.01 || totalXrayMask > 0.0) {
           float shimmer = sin(time * 2.5 + vUv.x * 15.0 + vUv.y * 15.0) * 0.03 + 1.0;
           finalColor *= shimmer;
         }
@@ -556,16 +717,24 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         kitShinePos: { value: -1.0 },
         bwLightPhase: { value: 0.0 },
         bwLayerOpacity: { value: 0.0 },
-        // Fluid X-ray reveal uniforms
+        // Organic fluid X-ray reveal uniforms
         cursorBlobPos: { value: new THREE.Vector2(-1, -1) },
         cursorBlobOpacity: { value: 0.0 },
+        cursorVelocity: { value: new THREE.Vector2(0, 0) },
+        cursorSpeed: { value: 0.0 },
         cursorTrail1: { value: new THREE.Vector2(-1, -1) },
         cursorTrail2: { value: new THREE.Vector2(-1, -1) },
+        cursorTrail3: { value: new THREE.Vector2(-1, -1) },
+        cursorTrail4: { value: new THREE.Vector2(-1, -1) },
         trailOpacity1: { value: 0.0 },
         trailOpacity2: { value: 0.0 },
+        trailOpacity3: { value: 0.0 },
+        trailOpacity4: { value: 0.0 },
         ambientBlob1Pos: { value: new THREE.Vector2(0.3, 0.4) },
         ambientBlob2Pos: { value: new THREE.Vector2(0.7, 0.6) },
-        ambientBlob3Pos: { value: new THREE.Vector2(0.5, 0.3) }
+        ambientBlob3Pos: { value: new THREE.Vector2(0.5, 0.3) },
+        noiseTime: { value: 0.0 },
+        fluidPhase: { value: 0.0 }
       }
 
       const geometry = new THREE.PlaneGeometry(planeWidth, planeHeight, 1, 1)
@@ -610,15 +779,22 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
       const SHINE_CYCLE = 8.0   // seconds
       let shineCycleTime = 0
       
-      // Fluid X-ray reveal state
+      // Organic fluid X-ray reveal state
       let lastCursorMoveTime = 0
       const cursorBlobTarget = { x: -1, y: -1 }
       const cursorBlob = { x: -1, y: -1 }
+      const prevCursorPos = { x: -1, y: -1 }
       const trail1 = { x: -1, y: -1 }
       const trail2 = { x: -1, y: -1 }
+      const trail3 = { x: -1, y: -1 }
+      const trail4 = { x: -1, y: -1 }
       let cursorOpacity = 0
       let trail1Opacity = 0
       let trail2Opacity = 0
+      let trail3Opacity = 0
+      let trail4Opacity = 0
+      const velocity = { x: 0, y: 0 }
+      let speed = 0
 
       const animate = () => {
         animationId = requestAnimationFrame(animate)
@@ -626,21 +802,22 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         const currentTime = Date.now()
         const deltaTime = 0.016
         uniforms.time.value += deltaTime
+        uniforms.noiseTime.value += deltaTime
+        uniforms.fluidPhase.value += deltaTime * 0.5
         autoTime += deltaTime
         starCycleTime += deltaTime
         shineCycleTime += deltaTime
         
-        // === B&W LAYER FADE ANIMATION - 3s fade in, 3s fade out (6s total cycle) ===
-        uniforms.bwLightPhase.value += deltaTime * 1.2  // Speed of light animation
-        const BW_FADE_CYCLE = 6.0  // 6 second total cycle
+        // === B&W LAYER FADE ANIMATION ===
+        uniforms.bwLightPhase.value += deltaTime * 1.2
+        const BW_FADE_CYCLE = 6.0
         const bwCycleTime = (uniforms.time.value % BW_FADE_CYCLE)
-        // 0-3s: fade in (0 to 1), 3-6s: fade out (1 to 0)
         if (bwCycleTime < 3.0) {
           uniforms.bwLayerOpacity.value = bwCycleTime / 3.0
         } else {
           uniforms.bwLayerOpacity.value = 1.0 - ((bwCycleTime - 3.0) / 3.0)
         }
-        // Reset cycles
+        
         if (starCycleTime >= STAR_CYCLE) {
           starCycleTime = 0
         }
@@ -648,68 +825,114 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
           shineCycleTime = 0
         }
         
-        // === FLUID X-RAY REVEAL - CURSOR BLOBS ===
+        // === ORGANIC FLUID X-RAY REVEAL ===
         const timeSinceCursorMove = currentTime - lastCursorMoveTime
         const rect = container.getBoundingClientRect()
         const mouseX = (mouseRef.current.x - rect.left) / rect.width
         const mouseY = 1 - (mouseRef.current.y - rect.top) / rect.height
         
-        // Update cursor target when mouse moves
+        // Update cursor target and track velocity
         if (mouseX >= 0 && mouseX <= 1 && mouseY >= 0 && mouseY <= 1) {
           const timeSinceInteractionCheck = currentTime - lastInteractionRef.current
           if (timeSinceInteractionCheck < 100) {
+            // Calculate velocity before updating target
+            if (cursorBlobTarget.x >= 0) {
+              velocity.x = mouseX - cursorBlobTarget.x
+              velocity.y = mouseY - cursorBlobTarget.y
+              speed = Math.sqrt(velocity.x * velocity.x + velocity.y * velocity.y)
+              
+              // Normalize velocity
+              if (speed > 0.001) {
+                velocity.x /= speed
+                velocity.y /= speed
+              }
+              // Scale speed for shader
+              speed = Math.min(speed * 15, 1.0)
+            }
+            
             cursorBlobTarget.x = mouseX
             cursorBlobTarget.y = mouseY
             lastCursorMoveTime = currentTime
           }
         }
         
-        // Smooth cursor blob following
-        cursorBlob.x += (cursorBlobTarget.x - cursorBlob.x) * 0.1
-        cursorBlob.y += (cursorBlobTarget.y - cursorBlob.y) * 0.1
+        // Store previous position for velocity calculation
+        prevCursorPos.x = cursorBlob.x
+        prevCursorPos.y = cursorBlob.y
         
-        // Trail positions follow with delay
-        trail1.x += (cursorBlob.x - trail1.x) * 0.05
-        trail1.y += (cursorBlob.y - trail1.y) * 0.05
-        trail2.x += (trail1.x - trail2.x) * 0.03
-        trail2.y += (trail1.y - trail2.y) * 0.03
+        // Smooth cursor blob following with fluid interpolation
+        cursorBlob.x += (cursorBlobTarget.x - cursorBlob.x) * 0.12
+        cursorBlob.y += (cursorBlobTarget.y - cursorBlob.y) * 0.12
         
-        // Fade out after 1 second of no movement
+        // Cascading trail positions with varying delays for fluid effect
+        trail1.x += (cursorBlob.x - trail1.x) * 0.08
+        trail1.y += (cursorBlob.y - trail1.y) * 0.08
+        trail2.x += (trail1.x - trail2.x) * 0.06
+        trail2.y += (trail1.y - trail2.y) * 0.06
+        trail3.x += (trail2.x - trail3.x) * 0.04
+        trail3.y += (trail2.y - trail3.y) * 0.04
+        trail4.x += (trail3.x - trail4.x) * 0.025
+        trail4.y += (trail3.y - trail4.y) * 0.025
+        
+        // Fade out after 1 second of no movement - organic collapse
         if (timeSinceCursorMove > 1000) {
-          cursorOpacity = Math.max(0, cursorOpacity - 0.02)
-          trail1Opacity = Math.max(0, trail1Opacity - 0.015)
-          trail2Opacity = Math.max(0, trail2Opacity - 0.01)
+          const fadeProgress = Math.min((timeSinceCursorMove - 1000) / 1500, 1.0)
+          const fadeMultiplier = 1.0 - fadeProgress * fadeProgress // Ease out
+          
+          cursorOpacity = Math.max(0, cursorOpacity * 0.97)
+          trail1Opacity = Math.max(0, trail1Opacity * 0.975)
+          trail2Opacity = Math.max(0, trail2Opacity * 0.98)
+          trail3Opacity = Math.max(0, trail3Opacity * 0.985)
+          trail4Opacity = Math.max(0, trail4Opacity * 0.99)
+          
+          // Decay speed when not moving
+          speed *= 0.92
         } else {
-          cursorOpacity = Math.min(1, cursorOpacity + 0.1)
-          trail1Opacity = Math.min(0.8, trail1Opacity + 0.08)
-          trail2Opacity = Math.min(0.6, trail2Opacity + 0.06)
+          // Ramp up opacity when cursor is moving
+          cursorOpacity = Math.min(1, cursorOpacity + 0.15)
+          trail1Opacity = Math.min(0.85, trail1Opacity + 0.12)
+          trail2Opacity = Math.min(0.7, trail2Opacity + 0.09)
+          trail3Opacity = Math.min(0.55, trail3Opacity + 0.07)
+          trail4Opacity = Math.min(0.4, trail4Opacity + 0.05)
         }
         
         // Update cursor blob uniforms
         uniforms.cursorBlobPos.value.set(cursorBlob.x, cursorBlob.y)
         uniforms.cursorBlobOpacity.value = cursorOpacity
+        uniforms.cursorVelocity.value.set(velocity.x, velocity.y)
+        uniforms.cursorSpeed.value = speed
         uniforms.cursorTrail1.value.set(trail1.x, trail1.y)
         uniforms.cursorTrail2.value.set(trail2.x, trail2.y)
+        uniforms.cursorTrail3.value.set(trail3.x, trail3.y)
+        uniforms.cursorTrail4.value.set(trail4.x, trail4.y)
         uniforms.trailOpacity1.value = trail1Opacity
         uniforms.trailOpacity2.value = trail2Opacity
+        uniforms.trailOpacity3.value = trail3Opacity
+        uniforms.trailOpacity4.value = trail4Opacity
         
-        // === AUTONOMOUS AMBIENT BLOBS - Lissajous curves for organic movement ===
-        const ambientSpeed = 0.08
+        // === AUTONOMOUS AMBIENT BLOBS - Organic Lissajous with noise ===
+        const ambientSpeed = 0.06
         const t = uniforms.time.value
         
-        // Blob 1 - larger, slower movement
-        const amb1X = 0.5 + Math.sin(t * ambientSpeed * 1.3) * 0.3
-        const amb1Y = 0.5 + Math.sin(t * ambientSpeed * 0.9 + 1.0) * 0.25
+        // Blob 1 - large, slow organic movement
+        const amb1NoiseX = Math.sin(t * 0.13) * 0.05
+        const amb1NoiseY = Math.cos(t * 0.17) * 0.04
+        const amb1X = 0.5 + Math.sin(t * ambientSpeed * 1.1) * 0.32 + amb1NoiseX
+        const amb1Y = 0.5 + Math.sin(t * ambientSpeed * 0.7 + 1.0) * 0.28 + amb1NoiseY
         uniforms.ambientBlob1Pos.value.set(amb1X, amb1Y)
         
-        // Blob 2 - medium, different phase
-        const amb2X = 0.5 + Math.sin(t * ambientSpeed * 0.7 + 2.5) * 0.35
-        const amb2Y = 0.5 + Math.cos(t * ambientSpeed * 1.1) * 0.3
+        // Blob 2 - medium, different phase with wobble
+        const amb2NoiseX = Math.sin(t * 0.19 + 2.0) * 0.04
+        const amb2NoiseY = Math.cos(t * 0.23 + 1.5) * 0.05
+        const amb2X = 0.5 + Math.sin(t * ambientSpeed * 0.6 + 2.5) * 0.38 + amb2NoiseX
+        const amb2Y = 0.5 + Math.cos(t * ambientSpeed * 0.9) * 0.32 + amb2NoiseY
         uniforms.ambientBlob2Pos.value.set(amb2X, amb2Y)
         
-        // Blob 3 - smaller, faster
-        const amb3X = 0.5 + Math.cos(t * ambientSpeed * 1.0 + 0.5) * 0.25
-        const amb3Y = 0.5 + Math.sin(t * ambientSpeed * 1.4 + 1.8) * 0.2
+        // Blob 3 - smaller, faster with more erratic movement
+        const amb3NoiseX = Math.sin(t * 0.31) * 0.06
+        const amb3NoiseY = Math.cos(t * 0.29 + 0.7) * 0.05
+        const amb3X = 0.5 + Math.cos(t * ambientSpeed * 0.85 + 0.5) * 0.28 + amb3NoiseX
+        const amb3Y = 0.5 + Math.sin(t * ambientSpeed * 1.2 + 1.8) * 0.24 + amb3NoiseY
         uniforms.ambientBlob3Pos.value.set(amb3X, amb3Y)
         
         // === KIT SHINE ANIMATION ===
