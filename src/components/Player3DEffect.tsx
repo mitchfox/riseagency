@@ -312,7 +312,31 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
       const float PI = 3.14159265359;
       
       // Helper function to draw effects around a position
-      void drawXrayEffects(vec2 center, float mask, float intensity, inout vec3 color, inout float alpha) {
+      void drawXrayEffects(vec2 center, float mask, float intensity, inout vec3 color, inout float alpha, bool isUserHover) {
+        // SHINING BORDER HALO - prominent gold ring around x-ray circle
+        float borderDist = abs(length(vUv - center) - xrayRadius);
+        float borderPulse = sin(time * 4.0) * 0.3 + 0.7;
+        
+        // Multi-layered glowing border for halo effect
+        float innerRing = smoothstep(0.02, 0.0, borderDist) * intensity;
+        float midRing = smoothstep(0.04, 0.01, borderDist) * intensity * 0.6;
+        float outerRing = smoothstep(0.08, 0.02, borderDist) * intensity * 0.3;
+        
+        // Combine rings with pulsing
+        float borderGlow = (innerRing + midRing + outerRing) * borderPulse;
+        
+        // Extra bright for user hover
+        if (isUserHover) {
+          borderGlow *= 1.5;
+          // Animated shimmer around the ring
+          float shimmerAngle = atan(vUv.y - center.y, vUv.x - center.x);
+          float shimmer = sin(shimmerAngle * 8.0 + time * 6.0) * 0.3 + 0.7;
+          borderGlow *= shimmer;
+        }
+        
+        color += goldColor * borderGlow;
+        alpha = max(alpha, borderGlow * 0.95);
+        
         // Cursor indicator
         float cursorDist = length(vUv - center);
         float cursorPulse = sin(time * 5.0) * 0.2 + 0.8;
@@ -412,11 +436,11 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         alpha = max(alpha, coreGlow * autoMask);
         
         // Draw effects for auto-reveal circle
-        drawXrayEffects(autoPos, autoMask, 0.6, color, alpha);
+        drawXrayEffects(autoPos, autoMask, 0.6, color, alpha, false);
         
         // Draw effects for user hover circle (if active)
         if (userActive > 0.5) {
-          drawXrayEffects(mousePos, userMask, 1.0, color, alpha);
+          drawXrayEffects(mousePos, userMask, 1.0, color, alpha, true);
         }
         
         gl_FragColor = vec4(color, alpha);

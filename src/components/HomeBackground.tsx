@@ -302,14 +302,6 @@ export const HomeBackground = () => {
             </div>
           </div>
 
-          {/* CENTER - Large R90 badge */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[1]">
-            <div className="text-center">
-              <div className="text-[120px] md:text-[180px] font-bebas text-primary leading-none">R90</div>
-              <div className="text-2xl md:text-4xl font-bebas text-foreground/50 tracking-[0.3em]">PERFORMANCE</div>
-            </div>
-          </div>
-
           {/* BOTTOM - Stats bar */}
           <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-6 md:gap-12 z-[1]">
             {reversedFormData.slice(0, 3).map((match, i) => (
