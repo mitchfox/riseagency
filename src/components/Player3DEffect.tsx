@@ -58,7 +58,38 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
       })
 
       await Promise.all(imagePromises)
-      return { baseImage: imageMap["7"], xrayImage: imageMap["7"] }
+      
+      // Composite image 5 (base) with image 2 (overlay) on top
+      const img5 = imageMap["5"]
+      const img2 = imageMap["2"]
+      const img1 = imageMap["1"]
+      
+      if (!img5 || !img2 || !img1) {
+        console.error("Missing required images")
+        return null
+      }
+      
+      // Create canvas to composite images
+      const canvas = document.createElement("canvas")
+      canvas.width = img5.width
+      canvas.height = img5.height
+      const ctx = canvas.getContext("2d")
+      
+      if (!ctx) return null
+      
+      // Draw image 5 as base
+      ctx.drawImage(img5, 0, 0)
+      // Draw image 2 on top
+      ctx.drawImage(img2, 0, 0, img5.width, img5.height)
+      
+      // Convert canvas to image
+      const compositeImage = new Image()
+      await new Promise<void>((resolve) => {
+        compositeImage.onload = () => resolve()
+        compositeImage.src = canvas.toDataURL("image/png")
+      })
+      
+      return { baseImage: compositeImage, xrayImage: img1 }
     } catch (error) {
       console.error("Error loading zip:", error)
       return null
