@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Globe, X } from "lucide-react";
 import europeMap from "@/assets/europe-outline.gif";
@@ -10,12 +10,11 @@ interface LanguageRegion {
   name: string;
   nativeName: string;
   flag: string;
-  // Position on map (percentage)
   x: number;
   y: number;
 }
 
-// Positions are percentages - desktop positions based on map
+// Positions as percentages of the map container
 const languageRegions: LanguageRegion[] = [
   { code: "en", name: "English", nativeName: "English", flag: "🇬🇧", x: 30, y: 60 },
   { code: "es", name: "Spanish", nativeName: "Español", flag: "🇪🇸", x: 29, y: 87 },
@@ -29,10 +28,6 @@ const languageRegions: LanguageRegion[] = [
   { code: "tr", name: "Turkish", nativeName: "Türkçe", flag: "🇹🇷", x: 65, y: 90 },
 ];
 
-// Mobile positions adjusted for 140% map scale (centered in container)
-// Formula: containerX = (mapX + 20) / 1.4 to account for the scaled map
-const getMobileX = (mapX: number) => (mapX + 20) / 1.4;
-
 interface LanguageMapSelectorProps {
   onOpenChange?: (open: boolean) => void;
 }
@@ -40,25 +35,12 @@ interface LanguageMapSelectorProps {
 export const LanguageMapSelector = ({ onOpenChange }: LanguageMapSelectorProps) => {
   const { language, switchLanguage } = useLanguage();
   const [open, setOpen] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
-
-  // Check if mobile on mount and resize
-  useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768);
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
+  const [hoveredLang, setHoveredLang] = useState<LanguageCode | null>(null);
 
   const handleOpenChange = (newOpen: boolean) => {
     setOpen(newOpen);
     onOpenChange?.(newOpen);
-    // Check mobile state when opening
-    if (newOpen) {
-      setIsMobile(window.innerWidth < 768);
-    }
   };
-  const [hoveredLang, setHoveredLang] = useState<LanguageCode | null>(null);
   
   const selectedLanguage = languageRegions.find(l => l.code === language) || languageRegions[0];
 
@@ -89,9 +71,9 @@ export const LanguageMapSelector = ({ onOpenChange }: LanguageMapSelectorProps) 
           {/* Backdrop */}
           <div className="absolute inset-0 bg-black/80" />
           
-          {/* Content */}
+          {/* Content - full width on mobile for larger map */}
           <div 
-            className="relative bg-black/95 border border-primary/30 w-full max-w-4xl mx-2 md:mx-4 overflow-visible rounded-lg"
+            className="relative bg-black/95 border border-primary/30 w-full mx-0 md:max-w-4xl md:mx-4 overflow-hidden rounded-none md:rounded-lg"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Close Button */}
@@ -103,16 +85,14 @@ export const LanguageMapSelector = ({ onOpenChange }: LanguageMapSelectorProps) 
               <X className="h-5 w-5" />
             </button>
 
-            <div className="relative w-full aspect-[4/5] md:aspect-[16/10] overflow-visible">
-              {/* Europe Map Image - larger on mobile, can overflow */}
-              <div className="absolute inset-0 flex items-center justify-center overflow-visible">
-                <img 
-                  src={europeMap} 
-                  alt="Europe Map"
-                  className="w-[140%] md:w-full h-auto object-contain opacity-60"
-                  style={{ maxWidth: 'none' }}
-                />
-              </div>
+            {/* Map container - square on mobile for better flag visibility */}
+            <div className="relative w-full aspect-[1/1.1] md:aspect-[16/10] overflow-hidden">
+              {/* Europe Map Image */}
+              <img 
+                src={europeMap} 
+                alt="Europe Map"
+                className="absolute inset-0 w-full h-full object-contain opacity-60"
+              />
               
               {/* Overlay gradient */}
               <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60 pointer-events-none" />
@@ -121,8 +101,6 @@ export const LanguageMapSelector = ({ onOpenChange }: LanguageMapSelectorProps) 
               {languageRegions.map((region) => {
                 const isSelected = language === region.code;
                 const isHovered = hoveredLang === region.code;
-                // Use adjusted X position on mobile for 140% scaled map
-                const displayX = isMobile ? getMobileX(region.x) : region.x;
                 
                 return (
                   <button
@@ -133,7 +111,7 @@ export const LanguageMapSelector = ({ onOpenChange }: LanguageMapSelectorProps) 
                     onMouseLeave={() => setHoveredLang(null)}
                     className="absolute transform -translate-x-1/2 -translate-y-1/2 group"
                     style={{ 
-                      left: `${displayX}%`, 
+                      left: `${region.x}%`, 
                       top: `${region.y}%`,
                       zIndex: isHovered || isSelected ? 20 : 10
                     }}
@@ -147,7 +125,7 @@ export const LanguageMapSelector = ({ onOpenChange }: LanguageMapSelectorProps) 
                     <span 
                       className={`
                         relative flex items-center justify-center
-                        w-8 h-8 md:w-12 md:h-12 rounded-full
+                        w-9 h-9 md:w-12 md:h-12 rounded-full
                         transition-all duration-300 cursor-pointer
                         ${isSelected 
                           ? 'bg-primary text-black scale-110 shadow-lg shadow-primary/50' 
@@ -157,7 +135,7 @@ export const LanguageMapSelector = ({ onOpenChange }: LanguageMapSelectorProps) 
                         }
                       `}
                     >
-                      <span className="text-base md:text-2xl">{region.flag}</span>
+                      <span className="text-lg md:text-2xl">{region.flag}</span>
                     </span>
                     
                     {/* Label - hidden on mobile to prevent overlap */}
