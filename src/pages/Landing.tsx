@@ -67,7 +67,7 @@ export default function Landing() {
       <HomeBackground />
       
       {/* RISE Logo at top center - adjusted position */}
-      <div className="absolute top-[14px] md:top-[22px] left-1/2 -translate-x-1/2 ml-[-2px] z-50">
+      <div className="absolute top-[14px] md:top-[22px] left-1/2 -translate-x-1/2 z-50" style={{ marginLeft: '-7px' }}>
         <img 
           src={riseLogoWhite} 
           alt="RISE Football Agency" 
