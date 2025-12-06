@@ -314,15 +314,21 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
       
       varying vec2 vUv;
       
-      const vec3 goldColor = vec3(0.792, 0.694, 0.443);
+      const vec3 goldColor = vec3(0.92, 0.78, 0.45);
+      const vec3 whiteColor = vec3(1.0, 0.98, 0.92);
       const float PI = 3.14159265359;
+      
+      // Smooth noise for organic effects
+      float hash(float n) { return fract(sin(n) * 43758.5453123); }
       
       void main() {
         // Only show effects when user is hovering
         if (userActive < 0.5) discard;
         
-        float distToMouse = length(vUv - mousePos);
-        float maxDist = xrayRadius + 0.05;
+        // Use same coordinate system as main shader
+        vec2 delta = vUv - mousePos;
+        float distToMouse = length(delta);
+        float maxDist = xrayRadius + 0.08;
         
         if (distToMouse > maxDist) discard;
         
@@ -330,34 +336,58 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         float alpha = 0.0;
         
         float borderDist = abs(distToMouse - xrayRadius);
+        float angle = atan(delta.y, delta.x);
         
-        // THIN SPINNING WHEEL effect for user hover
-        float angle = atan(vUv.y - mousePos.y, vUv.x - mousePos.x);
+        // === SHOOTING STAR / COMET EFFECT ===
         
-        // Spinning segments (like a wheel with gaps)
-        float segments = 12.0;
-        float spin = time * 3.0;
-        float segmentMask = sin((angle + spin) * segments) * 0.5 + 0.5;
-        segmentMask = smoothstep(0.3, 0.7, segmentMask);
+        // Main comet head - bright leading point
+        float cometAngle = time * 2.5; // Speed of rotation
+        vec2 cometHeadPos = mousePos + vec2(cos(cometAngle), sin(cometAngle)) * xrayRadius;
+        float cometHeadDist = length(vUv - cometHeadPos);
         
-        // Thin ring
-        float thinRing = smoothstep(0.006, 0.002, borderDist) * segmentMask;
+        // Bright white core of comet head
+        float cometCore = smoothstep(0.012, 0.0, cometHeadDist);
+        color += whiteColor * cometCore * 1.5;
+        alpha = max(alpha, cometCore);
         
-        // Soft outer glow
-        float outerGlow = smoothstep(0.025, 0.005, borderDist) * 0.3 * segmentMask;
+        // Golden glow around comet head
+        float cometGlow = smoothstep(0.025, 0.005, cometHeadDist) * 0.8;
+        color += goldColor * cometGlow;
+        alpha = max(alpha, cometGlow * 0.9);
         
-        float wheelEffect = thinRing + outerGlow;
-        color += goldColor * wheelEffect;
-        alpha = max(alpha, wheelEffect * 0.9);
+        // === COMET TAIL (trailing arc) ===
+        float angleDiff = angle - cometAngle;
+        // Normalize angle difference to -PI to PI
+        angleDiff = mod(angleDiff + PI, 2.0 * PI) - PI;
         
-        // Small spinning dots at the ring
-        for (int i = 0; i < 6; i++) {
-          float dotAngle = float(i) / 6.0 * 2.0 * PI + time * 4.0;
-          vec2 dotPos = mousePos + vec2(cos(dotAngle), sin(dotAngle)) * xrayRadius;
-          float dotDist = length(vUv - dotPos);
-          float dotGlow = smoothstep(0.008, 0.002, dotDist);
-          color += goldColor * dotGlow;
-          alpha = max(alpha, dotGlow);
+        // Tail trails behind (negative angle difference)
+        float tailLength = 2.5; // How much of the circle the tail covers (in radians)
+        float tailFade = smoothstep(-tailLength, 0.0, angleDiff); // Fade from tail to head
+        tailFade = pow(tailFade, 0.5); // Sharper falloff near head
+        
+        // Only show tail on the ring
+        float onRing = smoothstep(0.008, 0.002, borderDist);
+        float tailEffect = onRing * (1.0 - tailFade) * 0.7;
+        
+        // Gradient from gold to transparent along tail
+        color += goldColor * tailEffect;
+        alpha = max(alpha, tailEffect * 0.8);
+        
+        // Subtle outer glow on the ring
+        float ringGlow = smoothstep(0.02, 0.005, borderDist) * 0.15;
+        color += goldColor * ringGlow;
+        alpha = max(alpha, ringGlow * 0.5);
+        
+        // === SPARKLE PARTICLES in tail ===
+        for (int i = 0; i < 4; i++) {
+          float sparkleOffset = float(i) * 0.5 + 0.3;
+          float sparkleAngle = cometAngle - sparkleOffset;
+          float sparkleRadius = xrayRadius + sin(time * 3.0 + float(i)) * 0.005;
+          vec2 sparklePos = mousePos + vec2(cos(sparkleAngle), sin(sparkleAngle)) * sparkleRadius;
+          float sparkleDist = length(vUv - sparklePos);
+          float sparkle = smoothstep(0.006, 0.001, sparkleDist) * (1.0 - float(i) * 0.2);
+          color += whiteColor * sparkle * 0.6;
+          alpha = max(alpha, sparkle * 0.7);
         }
         
         gl_FragColor = vec4(color, alpha);
