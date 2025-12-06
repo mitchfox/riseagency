@@ -454,6 +454,8 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
       })
 
       const playerMesh = new THREE.Mesh(geometry, material)
+      // Position: y offset for vertical centering, x offset -0.01 to shift 5px left
+      playerMesh.position.x = -0.01
       playerMesh.position.y = isMobile ? 0.15 : 0.05
       scene.add(playerMesh)
 
