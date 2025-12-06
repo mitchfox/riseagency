@@ -101,26 +101,7 @@ export default function Landing() {
           className="absolute inset-0 pointer-events-none"
           style={{ transform: 'translateX(-3px)' }}
         >
-          {/* White marble - positioned BEHIND the player canvas */}
-          <div 
-            className="absolute inset-0 z-0"
-            style={{
-              background: 'linear-gradient(135deg, #f8f8f9 0%, #ffffff 30%, #f0f0f2 60%, #fafafa 100%)',
-            }}
-          >
-            <div 
-              className="absolute inset-0"
-              style={{
-                backgroundImage: `
-                  radial-gradient(ellipse at 20% 30%, rgba(220, 215, 210, 0.4) 0%, transparent 50%),
-                  radial-gradient(ellipse at 80% 70%, rgba(200, 195, 190, 0.35) 0%, transparent 45%),
-                  radial-gradient(ellipse at 50% 50%, rgba(235, 230, 225, 0.3) 0%, transparent 60%)
-                `,
-              }}
-            />
-          </div>
-          {/* Player canvas on top - becomes transparent where fluid is active */}
-          <LazyPlayer3D className="pointer-events-auto relative z-10" />
+          <LazyPlayer3D className="pointer-events-auto" />
         </div>
       )}
 
