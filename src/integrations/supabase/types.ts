@@ -2897,6 +2897,33 @@ export type Database = {
           },
         ]
       }
+      whatsapp_quick_messages: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          id: string
+          message_content: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          id?: string
+          message_content: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          id?: string
+          message_content?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       players_public: {

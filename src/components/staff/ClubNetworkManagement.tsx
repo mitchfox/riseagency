@@ -12,6 +12,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { QuickMessageSection } from './QuickMessageSection';
+
 interface Contact {
   id: string;
   name: string;
@@ -171,6 +173,9 @@ const ClubNetworkManagement = () => {
 
   return (
     <div className="space-y-8">
+      {/* Quick WhatsApp Message Section */}
+      <QuickMessageSection />
+
       <div>
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-semibold">Club Network Contacts</h2>
