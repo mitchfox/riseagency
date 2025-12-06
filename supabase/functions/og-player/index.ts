@@ -9,11 +9,11 @@ const corsHeaders = {
 const playerData: Record<string, { name: string; image: string }> = {
   'tyrese-omotoye': {
     name: 'Tyrese Omotoye',
-    image: 'https://risefootballagency.com/og-tyrese-omotoye.png',
+    image: 'https://riseagency.lovable.app/og-tyrese-omotoye.png',
   },
   'michael-vit-mulligan': {
     name: 'Michael Vit Mulligan', 
-    image: 'https://risefootballagency.com/og-michael-vit-mulligan.png',
+    image: 'https://riseagency.lovable.app/og-michael-vit-mulligan.png',
   },
 };
 
@@ -38,7 +38,7 @@ serve(async (req) => {
     const player = playerData[playerSlug.toLowerCase()];
     const playerName = player?.name || playerSlug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
     const ogImage = player?.image || defaultImage;
-    const playerUrl = `https://risefootballagency.com/stars/${playerSlug}`;
+    const playerUrl = `https://riseagency.lovable.app/stars/${playerSlug}`;
 
     const html = `<!DOCTYPE html>
 <html lang="en">
