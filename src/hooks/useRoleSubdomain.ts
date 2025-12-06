@@ -67,12 +67,13 @@ export const useRoleSubdomain = () => {
 
   const getRoleUrl = (role: Exclude<RoleSubdomain, null>) => {
     const hostname = window.location.hostname;
-    const protocol = window.location.protocol;
     
-    // For localhost, just return the route
-    if (hostname === 'localhost' || /^\d+\.\d+\.\d+\.\d+$/.test(hostname)) {
+    // For localhost, lovable.app preview, or IP addresses, just return the route
+    if (hostname === 'localhost' || /^\d+\.\d+\.\d+\.\d+$/.test(hostname) || hostname.includes('lovable.app')) {
       return roleConfigs[role].route;
     }
+    
+    const protocol = window.location.protocol;
     
     // Extract base domain
     const parts = hostname.split('.');

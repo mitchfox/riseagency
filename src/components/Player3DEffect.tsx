@@ -1194,17 +1194,20 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         // Always update auto position
         uniforms.autoPos.value.set(autoRevealPosRef.current.x, autoRevealPosRef.current.y)
         
-        // Handle user interaction separately
-        if (isUserInteracting) {
+        // Check if phantom touch is active
+        const isPhantomActive = activePhantoms.length > 0 && cursorOpacity > 0.3
+        
+        // Handle user interaction OR phantom touch
+        if (isUserInteracting || isPhantomActive) {
           uniforms.userActive.value = Math.min(1, uniforms.userActive.value + 0.1)
           uniforms.mousePos.value.set(mouseX, mouseY)
           xrayIntensity = Math.min(1, xrayIntensity + 0.05)
           
-          // Only show background stats when user is actively interacting
+          // Show background stats when user is actively interacting OR phantom is active
           setXrayState({
             isActive: true,
-            intensity: xrayIntensity,
-            position: { x: uniforms.mousePos.value.x, y: uniforms.mousePos.value.y }
+            intensity: isPhantomActive && !isUserInteracting ? cursorOpacity : xrayIntensity,
+            position: { x: cursorBlob.x, y: cursorBlob.y }
           })
         } else {
           uniforms.userActive.value = Math.max(0, uniforms.userActive.value - 0.05)
