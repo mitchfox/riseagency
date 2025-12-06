@@ -6,8 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, FileText, Scale, Download } from "lucide-react";
+import { Plus, Pencil, Trash2, FileText, Scale, Download, Wallet } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import PaymentsManagement from "./PaymentsManagement";
 
 interface LegalDocument {
   id: string;
@@ -37,7 +38,7 @@ const LegalManagement = ({ isAdmin }: LegalManagementProps) => {
     file_url: '',
     effective_date: '',
   });
-  const [activeTab, setActiveTab] = useState<'contract' | 'regulation'>('contract');
+  const [activeTab, setActiveTab] = useState<'contract' | 'regulation' | 'payments'>('contract');
 
   useEffect(() => {
     fetchDocuments();
@@ -168,17 +169,21 @@ const LegalManagement = ({ isAdmin }: LegalManagementProps) => {
 
   return (
     <div className="space-y-6">
-      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'contract' | 'regulation')}>
-        <TabsList className="grid w-full grid-cols-2">
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)}>
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="contract" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
             <FileText className="h-3 w-3 sm:h-4 sm:w-4" />
             <span className="hidden xs:inline">Contracts ({contracts.length})</span>
-            <span className="xs:hidden">Contracts ({contracts.length})</span>
+            <span className="xs:hidden">Contracts</span>
           </TabsTrigger>
           <TabsTrigger value="regulation" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
             <Scale className="h-3 w-3 sm:h-4 sm:w-4" />
-            <span className="hidden xs:inline">Rules & Regulations ({regulations.length})</span>
-            <span className="xs:hidden">Rules ({regulations.length})</span>
+            <span className="hidden xs:inline">Rules ({regulations.length})</span>
+            <span className="xs:hidden">Rules</span>
+          </TabsTrigger>
+          <TabsTrigger value="payments" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+            <Wallet className="h-3 w-3 sm:h-4 sm:w-4" />
+            <span>Payments</span>
           </TabsTrigger>
         </TabsList>
 
@@ -326,6 +331,10 @@ const LegalManagement = ({ isAdmin }: LegalManagementProps) => {
               ))}
             </div>
           )}
+        </TabsContent>
+
+        <TabsContent value="payments" className="space-y-4">
+          <PaymentsManagement isAdmin={isAdmin} />
         </TabsContent>
       </Tabs>
 

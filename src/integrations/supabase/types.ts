@@ -202,6 +202,57 @@ export type Database = {
         }
         Relationships: []
       }
+      bank_details: {
+        Row: {
+          account_name: string | null
+          account_number: string | null
+          bank_name: string | null
+          created_at: string
+          iban: string | null
+          id: string
+          is_default: boolean | null
+          notes: string | null
+          payment_type: string
+          paypal_email: string | null
+          sort_code: string | null
+          swift_bic: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          account_name?: string | null
+          account_number?: string | null
+          bank_name?: string | null
+          created_at?: string
+          iban?: string | null
+          id?: string
+          is_default?: boolean | null
+          notes?: string | null
+          payment_type: string
+          paypal_email?: string | null
+          sort_code?: string | null
+          swift_bic?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          account_name?: string | null
+          account_number?: string | null
+          bank_name?: string | null
+          created_at?: string
+          iban?: string | null
+          id?: string
+          is_default?: boolean | null
+          notes?: string | null
+          payment_type?: string
+          paypal_email?: string | null
+          sort_code?: string | null
+          swift_bic?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       blog_posts: {
         Row: {
           author_id: string
@@ -1182,6 +1233,73 @@ export type Database = {
             foreignKeyName: "fk_notif_prefs_player"
             columns: ["player_id"]
             isOneToOne: true
+            referencedRelation: "players_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payments: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string
+          description: string | null
+          id: string
+          invoice_id: string | null
+          payment_date: string
+          payment_method: string | null
+          player_id: string | null
+          reference: string | null
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          currency?: string
+          description?: string | null
+          id?: string
+          invoice_id?: string | null
+          payment_date?: string
+          payment_method?: string | null
+          player_id?: string | null
+          reference?: string | null
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          description?: string | null
+          id?: string
+          invoice_id?: string | null
+          payment_date?: string
+          payment_method?: string | null
+          player_id?: string | null
+          reference?: string | null
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
             referencedRelation: "players_public"
             referencedColumns: ["id"]
           },

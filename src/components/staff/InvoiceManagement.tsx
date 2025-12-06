@@ -5,13 +5,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, FileText, Copy, Check } from "lucide-react";
+import { Plus, Pencil, Trash2, FileText, Copy, Check, MoreHorizontal, CheckCircle, CreditCard, DollarSign } from "lucide-react";
 import { format } from "date-fns";
 
 interface Invoice {
@@ -57,6 +58,13 @@ export const InvoiceManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   const [editingPaymentId, setEditingPaymentId] = useState<string | null>(null);
   const [editingPaymentValue, setEditingPaymentValue] = useState("");
   const [editingPaymentCurrency, setEditingPaymentCurrency] = useState("GBP");
+  
+  // Pay amount dialog
+  const [payAmountDialogOpen, setPayAmountDialogOpen] = useState(false);
+  const [payingInvoice, setPayingInvoice] = useState<Invoice | null>(null);
+  const [payAmount, setPayAmount] = useState("");
+  const [payCurrency, setPayCurrency] = useState("GBP");
+  const [payMethod, setPayMethod] = useState("");
   
   // Simple conversion rates (GBP base)
   const conversionRates: Record<string, number> = {
@@ -322,6 +330,81 @@ export const InvoiceManagement = ({ isAdmin }: { isAdmin: boolean }) => {
     fetchInvoices();
   };
 
+  // Settle invoice (mark as fully paid)
+  const handleSettleInvoice = async (invoice: Invoice) => {
+    const { error } = await supabase
+      .from('invoices')
+      .update({ 
+        amount_paid: invoice.amount,
+        status: 'paid'
+      })
+      .eq('id', invoice.id);
+
+    if (error) {
+      toast.error("Error settling invoice");
+      return;
+    }
+
+    toast.success("Invoice settled");
+    fetchInvoices();
+  };
+
+  // Open pay amount dialog
+  const openPayDialog = (invoice: Invoice) => {
+    setPayingInvoice(invoice);
+    const remaining = invoice.amount - (invoice.amount_paid || 0);
+    setPayAmount(remaining.toFixed(2));
+    setPayCurrency(invoice.currency);
+    setPayMethod("");
+    setPayAmountDialogOpen(true);
+  };
+
+  // Handle pay amount submission
+  const handlePayAmount = async () => {
+    if (!payingInvoice) return;
+    
+    const amount = parseFloat(payAmount) || 0;
+    if (amount <= 0) {
+      toast.error("Please enter a valid amount");
+      return;
+    }
+
+    // Convert to invoice currency if different
+    const convertedAmount = convertCurrency(amount, payCurrency, payingInvoice.currency);
+    const newTotal = (payingInvoice.amount_paid || 0) + convertedAmount;
+    const newStatus = newTotal >= payingInvoice.amount ? "paid" : payingInvoice.status;
+
+    const { error } = await supabase
+      .from('invoices')
+      .update({ 
+        amount_paid: newTotal,
+        status: newStatus
+      })
+      .eq('id', payingInvoice.id);
+
+    if (error) {
+      toast.error("Error recording payment");
+      return;
+    }
+
+    // Also record in payments table
+    await supabase.from('payments').insert({
+      type: 'in',
+      amount: amount,
+      currency: payCurrency,
+      description: `Payment for invoice ${payingInvoice.invoice_number}`,
+      payment_method: payMethod || null,
+      invoice_id: payingInvoice.id,
+      player_id: payingInvoice.player_id,
+      payment_date: new Date().toISOString().split('T')[0]
+    });
+
+    toast.success("Payment recorded");
+    setPayAmountDialogOpen(false);
+    setPayingInvoice(null);
+    fetchInvoices();
+  };
+
   const resetForm = () => {
     setEditingInvoice(null);
     setFormData({
@@ -365,6 +448,56 @@ export const InvoiceManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   const handlePlayerSelect = (playerId: string) => {
     setSelectedPlayer(playerId);
     setActiveSubTab("invoices");
+  };
+
+  // Quick actions renderer
+  const renderQuickActions = (invoice: Invoice) => {
+    const remaining = invoice.amount - (invoice.amount_paid || 0);
+    const isPaid = invoice.status === 'paid' || remaining <= 0;
+    
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button size="icon" variant="ghost" className="h-8 w-8">
+            <MoreHorizontal className="w-4 h-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          {!isPaid && (
+            <>
+              <DropdownMenuItem onClick={() => openPayDialog(invoice)}>
+                <CreditCard className="w-4 h-4 mr-2" />
+                Record Payment
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleSettleInvoice(invoice)}>
+                <CheckCircle className="w-4 h-4 mr-2" />
+                Settle Invoice
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+            </>
+          )}
+          <DropdownMenuItem onClick={() => handleEdit(invoice)}>
+            <Pencil className="w-4 h-4 mr-2" />
+            Edit
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => handleDuplicate(invoice)}>
+            <Copy className="w-4 h-4 mr-2" />
+            Duplicate
+          </DropdownMenuItem>
+          {invoice.pdf_url && (
+            <DropdownMenuItem onClick={() => window.open(invoice.pdf_url!, '_blank')}>
+              <FileText className="w-4 h-4 mr-2" />
+              View PDF
+            </DropdownMenuItem>
+          )}
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={() => handleDelete(invoice.id)} className="text-destructive">
+            <Trash2 className="w-4 h-4 mr-2" />
+            Delete
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
   };
 
   return (
@@ -512,42 +645,19 @@ export const InvoiceManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                   </TableCell>
                                   <TableCell>{getStatusBadge(invoice.status)}</TableCell>
                                   <TableCell>
-                                    <div className="flex gap-1">
-                                      {invoice.pdf_url && (
+                                    <div className="flex gap-1 items-center">
+                                      {invoice.status !== 'paid' && remaining > 0 && (
                                         <Button
-                                          size="icon"
-                                          variant="ghost"
-                                          className="h-8 w-8"
-                                          onClick={() => window.open(invoice.pdf_url!, '_blank')}
+                                          size="sm"
+                                          variant="outline"
+                                          className="h-7 text-xs"
+                                          onClick={() => openPayDialog(invoice)}
                                         >
-                                          <FileText className="w-3.5 h-3.5" />
+                                          <DollarSign className="w-3 h-3 mr-1" />
+                                          Pay
                                         </Button>
                                       )}
-                                      <Button
-                                        size="icon"
-                                        variant="ghost"
-                                        className="h-8 w-8"
-                                        onClick={() => handleDuplicate(invoice)}
-                                        title="Duplicate invoice"
-                                      >
-                                        <Copy className="w-3.5 h-3.5" />
-                                      </Button>
-                                      <Button
-                                        size="icon"
-                                        variant="ghost"
-                                        className="h-8 w-8"
-                                        onClick={() => handleEdit(invoice)}
-                                      >
-                                        <Pencil className="w-3.5 h-3.5" />
-                                      </Button>
-                                      <Button
-                                        size="icon"
-                                        variant="ghost"
-                                        className="h-8 w-8"
-                                        onClick={() => handleDelete(invoice.id)}
-                                      >
-                                        <Trash2 className="w-3.5 h-3.5" />
-                                      </Button>
+                                      {renderQuickActions(invoice)}
                                     </div>
                                   </TableCell>
                                 </TableRow>
@@ -806,42 +916,19 @@ export const InvoiceManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                 </TableCell>
                                 <TableCell>{getStatusBadge(invoice.status)}</TableCell>
                                 <TableCell>
-                                  <div className="flex gap-1">
-                                    {invoice.pdf_url && (
+                                  <div className="flex gap-1 items-center">
+                                    {invoice.status !== 'paid' && remaining > 0 && (
                                       <Button
-                                        size="icon"
-                                        variant="ghost"
-                                        className="h-8 w-8"
-                                        onClick={() => window.open(invoice.pdf_url!, '_blank')}
+                                        size="sm"
+                                        variant="outline"
+                                        className="h-7 text-xs"
+                                        onClick={() => openPayDialog(invoice)}
                                       >
-                                        <FileText className="w-3.5 h-3.5" />
+                                        <DollarSign className="w-3 h-3 mr-1" />
+                                        Pay
                                       </Button>
                                     )}
-                                    <Button
-                                      size="icon"
-                                      variant="ghost"
-                                      className="h-8 w-8"
-                                      onClick={() => handleDuplicate(invoice)}
-                                      title="Duplicate invoice"
-                                    >
-                                      <Copy className="w-3.5 h-3.5" />
-                                    </Button>
-                                    <Button
-                                      size="icon"
-                                      variant="ghost"
-                                      className="h-8 w-8"
-                                      onClick={() => handleEdit(invoice)}
-                                    >
-                                      <Pencil className="w-3.5 h-3.5" />
-                                    </Button>
-                                    <Button
-                                      size="icon"
-                                      variant="ghost"
-                                      className="h-8 w-8"
-                                      onClick={() => handleDelete(invoice.id)}
-                                    >
-                                      <Trash2 className="w-3.5 h-3.5" />
-                                    </Button>
+                                    {renderQuickActions(invoice)}
                                   </div>
                                 </TableCell>
                               </TableRow>
@@ -1085,6 +1172,57 @@ export const InvoiceManagement = ({ isAdmin }: { isAdmin: boolean }) => {
               </Button>
             </div>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Pay Amount Dialog */}
+      <Dialog open={payAmountDialogOpen} onOpenChange={setPayAmountDialogOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Record Payment</DialogTitle>
+            <DialogDescription>
+              {payingInvoice && `Invoice: ${payingInvoice.invoice_number}`}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Amount</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={payAmount}
+                  onChange={(e) => setPayAmount(e.target.value)}
+                />
+              </div>
+              <div>
+                <Label>Currency</Label>
+                <Select value={payCurrency} onValueChange={setPayCurrency}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="GBP">GBP</SelectItem>
+                    <SelectItem value="EUR">EUR</SelectItem>
+                    <SelectItem value="USD">USD</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div>
+              <Label>Payment Method</Label>
+              <Select value={payMethod} onValueChange={setPayMethod}>
+                <SelectTrigger><SelectValue placeholder="Select method" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
+                  <SelectItem value="card">Card</SelectItem>
+                  <SelectItem value="paypal">PayPal</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setPayAmountDialogOpen(false)}>Cancel</Button>
+              <Button onClick={handlePayAmount}>Record Payment</Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
