@@ -149,18 +149,24 @@ export const HomeBackground = () => {
   const reversedFormData = [...formData].reverse();
   const speedProgress = ((displaySpeed - baseSpeed) / (maxSpeed - baseSpeed)) * 100;
 
+  // Calculate visibility based on x-ray intensity
+  const xrayOpacity = xrayState.isActive ? xrayState.intensity : 0;
+
   return (
     <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
       {/* Subtle gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-b from-background/50 via-background/30 to-background/50 z-0" />
       
-      {/* Only show data when loaded */}
-      {isLoaded && (
+      {/* Only show data when loaded AND x-ray is active */}
+      {isLoaded && xrayOpacity > 0 && (
         <>
           {/* LEFT COLUMN - R90 & Actions */}
-          <div className="absolute left-4 md:left-8 top-24 bottom-32 w-[200px] md:w-[280px] flex flex-col gap-8 z-[1] animate-fade-in">
+          <div 
+            className="absolute left-4 md:left-8 top-24 bottom-32 w-[200px] md:w-[280px] flex flex-col gap-8 z-[1] transition-opacity duration-300"
+            style={{ opacity: xrayOpacity * 0.5 }}
+          >
         {/* R90 Form Chart */}
-        <div className="opacity-[0.35]">
+        <div>
           <div className="font-bebas text-sm uppercase tracking-widest text-primary mb-3 border-b border-primary/30 pb-1">
             R90 Form
           </div>
@@ -182,7 +188,7 @@ export const HomeBackground = () => {
         </div>
 
         {/* Action Highlights */}
-        <div className="opacity-[0.30]">
+        <div>
           <div className="font-bebas text-sm uppercase tracking-widest text-primary mb-3 border-b border-primary/30 pb-1">
             Positive Actions
           </div>
@@ -205,12 +211,12 @@ export const HomeBackground = () => {
       </div>
 
       {/* RIGHT COLUMN - Programming & Stats */}
-      <div className="absolute right-4 md:right-8 top-24 bottom-32 w-[200px] md:w-[280px] flex flex-col gap-6 z-[1]">
+      <div 
+        className="absolute right-4 md:right-8 top-24 bottom-32 w-[200px] md:w-[280px] flex flex-col gap-6 z-[1] transition-opacity duration-300"
+        style={{ opacity: xrayOpacity * 0.6 }}
+      >
         {/* TOP SPEED - Dynamic */}
-        <div 
-          className="transition-opacity duration-300"
-          style={{ opacity: xrayState.isActive ? 0.6 : 0.25 }}
-        >
+        <div>
           <div className="font-bebas text-sm uppercase tracking-widest text-primary mb-3 border-b border-primary/30 pb-1">
             Top Speed
           </div>
@@ -250,7 +256,7 @@ export const HomeBackground = () => {
 
         {/* Gym Program */}
         {sessionExercises.length > 0 && (
-          <div className="opacity-[0.35]">
+          <div>
             <div className="font-bebas text-sm uppercase tracking-widest text-primary mb-3 border-b border-primary/30 pb-1">
               {sessionName || "Training Program"}
             </div>
@@ -269,7 +275,7 @@ export const HomeBackground = () => {
         )}
 
         {/* More Actions */}
-        <div className="opacity-[0.25]">
+        <div>
           <div className="font-bebas text-xs uppercase tracking-widest text-primary/80 mb-2">
             More Highlights
           </div>
@@ -289,7 +295,10 @@ export const HomeBackground = () => {
       </div>
 
       {/* CENTER - Large R90 badge */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-[0.08] z-[1]">
+      <div 
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[1] transition-opacity duration-300"
+        style={{ opacity: xrayOpacity * 0.15 }}
+      >
         <div className="text-center">
           <div className="text-[120px] md:text-[180px] font-bebas text-primary leading-none">R90</div>
           <div className="text-2xl md:text-4xl font-bebas text-foreground/50 tracking-[0.3em]">PERFORMANCE</div>
@@ -297,7 +306,10 @@ export const HomeBackground = () => {
       </div>
 
       {/* BOTTOM - Stats bar */}
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-6 md:gap-12 opacity-[0.25] z-[1]">
+      <div 
+        className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-6 md:gap-12 z-[1] transition-opacity duration-300"
+        style={{ opacity: xrayOpacity * 0.4 }}
+      >
         {reversedFormData.slice(0, 3).map((match, i) => (
           <div key={i} className="text-center">
             <div 
