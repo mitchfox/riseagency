@@ -558,3 +558,20 @@ a:hover .hover-text-letter-clone,
 .btn-shine:hover .hover-text-letter-clone {
   transform: translateY(0) !important;
 }
+
+/* Flashcard 3D flip animation */
+.perspective-1000 {
+  perspective: 1000px;
+}
+
+.transform-style-3d {
+  transform-style: preserve-3d;
+}
+
+.backface-hidden {
+  backface-visibility: hidden;
+}
+
+.rotate-y-180 {
+  transform: rotateY(180deg);
+}

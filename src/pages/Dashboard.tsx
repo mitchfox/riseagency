@@ -36,6 +36,7 @@ import { PlayerPositionalGuides } from "@/components/PlayerPositionalGuides";
 import { ProtectedContracts } from "@/components/player/ProtectedContracts";
 import { PaymentOptions } from "@/components/player/PaymentOptions";
 import { PlayerTransferHub } from "@/components/player/TransferHub";
+import { CognisanceSection } from "@/components/portal/CognisanceSection";
 
 interface Analysis {
   id: string;
@@ -1696,6 +1697,9 @@ const Dashboard = () => {
                   <TabsTrigger value="positional-guides" className="font-bebas uppercase text-sm sm:text-base">
                     Positional Guides
                   </TabsTrigger>
+                  <TabsTrigger value="cognisance" className="font-bebas uppercase text-sm sm:text-base">
+                    Cognisance
+                  </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="performance">
@@ -2050,6 +2054,23 @@ const Dashboard = () => {
                   <PlayerPositionalGuides />
                 </TabsContent>
 
+                <TabsContent value="cognisance">
+                  <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 border-t-[2px] border-t-[hsl(43,49%,61%)] border-b-0">
+                    <CardHeader marble>
+                      <div className="container mx-auto px-4">
+                        <CardTitle className="font-heading tracking-tight">
+                          Cognisance
+                        </CardTitle>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="container mx-auto px-4 py-8">
+                      <CognisanceSection 
+                        playerId={playerData?.id || ""} 
+                        playerPosition={playerData?.position}
+                      />
+                    </CardContent>
+                  </Card>
+                </TabsContent>
 
                 <TabsContent value="form">
                   <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 border-t-[2px] border-t-[hsl(43,49%,61%)] border-b-0">
