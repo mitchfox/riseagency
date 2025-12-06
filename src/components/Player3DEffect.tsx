@@ -427,8 +427,8 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
       const STAR_CYCLE = 10.0   // seconds
       let starCycleTime = 0
       
-      // Kit shine timing: 1s duration, 8s cycle
-      const SHINE_DURATION = 1.0  // seconds
+      // Kit shine timing: 2s duration, 8s cycle
+      const SHINE_DURATION = 2.0  // seconds
       const SHINE_CYCLE = 8.0   // seconds
       let shineCycleTime = 0
 
