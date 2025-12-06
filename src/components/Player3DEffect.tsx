@@ -40,6 +40,7 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
       const depthMapPromise = loadImage("/assets/player-depth-map.png")
       const depthLightenedPromise = loadImage("/assets/player-depth-lightened.png")
       const depthDarkenedPromise = loadImage("/assets/player-depth-darkened.png")
+      const kitOverlayPromise = loadImage("/assets/player-kit-overlay.png")
 
       const response = await fetch("/assets/Website_Hero_RISE.zip")
       const zipData = await response.arrayBuffer()
@@ -69,10 +70,11 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         }
       })
 
-      const [depthMapImg, depthLightenedImg, depthDarkenedImg] = await Promise.all([
+      const [depthMapImg, depthLightenedImg, depthDarkenedImg, kitOverlayImg] = await Promise.all([
         depthMapPromise, 
         depthLightenedPromise, 
         depthDarkenedPromise,
+        kitOverlayPromise,
         ...imagePromises
       ])
       
@@ -85,7 +87,7 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         return null
       }
       
-      console.log("Depth maps loaded:", { base: !!depthMapImg, lightened: !!depthLightenedImg, darkened: !!depthDarkenedImg })
+      console.log("Images loaded:", { base: !!img5, overlay: !!img2, xray: !!img1, kitOverlay: !!kitOverlayImg })
       
       return { 
         baseImage: img5, 
@@ -93,7 +95,8 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         xrayImage: img1,
         depthMap: depthMapImg,
         depthLightened: depthLightenedImg,
-        depthDarkened: depthDarkenedImg
+        depthDarkened: depthDarkenedImg,
+        kitOverlay: kitOverlayImg
       }
     } catch (error) {
       console.error("Error loading images:", error)
@@ -122,12 +125,14 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
       uniform sampler2D baseTexture;
       uniform sampler2D overlayTexture;
       uniform sampler2D xrayTexture;
+      uniform sampler2D kitOverlayTexture;
       uniform sampler2D depthMap;
       uniform sampler2D depthLightened;
       uniform sampler2D depthDarkened;
       uniform float hasDepthMap;
       uniform float hasDepthLightened;
       uniform float hasDepthDarkened;
+      uniform float hasKitOverlay;
       uniform float time;
       uniform vec2 mousePos;
       uniform float xrayRadius;
@@ -201,6 +206,12 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         vec3 glossHighlight = overlayColor.rgb * overlayColor.a * glossPulse * 0.5;
         vec3 compositeColor = shadedBase + glossHighlight;
         
+        // === KIT OVERLAY (gold jersey on top) ===
+        if (hasKitOverlay > 0.5) {
+          vec4 kitColor = texture2D(kitOverlayTexture, parallaxUV);
+          compositeColor = mix(compositeColor, kitColor.rgb, kitColor.a);
+        }
+        
         // === X-RAY EFFECT ===
         vec2 xrayUV = (parallaxUV - 0.5) * xrayScale + 0.5 + xrayOffset;
         vec4 xrayColor = texture2D(xrayTexture, xrayUV);
@@ -257,7 +268,7 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         return
       }
 
-      const { baseImage, overlayImage, xrayImage, depthMap, depthLightened, depthDarkened } = images
+      const { baseImage, overlayImage, xrayImage, depthMap, depthLightened, depthDarkened, kitOverlay } = images
 
       const scene = new THREE.Scene()
       
@@ -323,6 +334,15 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         depthDarkenedTexture.minFilter = THREE.LinearFilter
         depthDarkenedTexture.magFilter = THREE.LinearFilter
       }
+      
+      // Create kit overlay texture
+      let kitOverlayTexture: THREE.Texture | null = null
+      if (kitOverlay) {
+        kitOverlayTexture = new THREE.Texture(kitOverlay)
+        kitOverlayTexture.needsUpdate = true
+        kitOverlayTexture.minFilter = THREE.LinearFilter
+        kitOverlayTexture.magFilter = THREE.LinearFilter
+      }
 
       const isMobile = container.clientWidth < 768
       const imgAspect = baseImage.width / baseImage.height
@@ -330,17 +350,19 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
       let planeHeight = isMobile ? 1.4 : 1.6
       let planeWidth = planeHeight * imgAspect
 
-      // Uniforms with all depth maps for 3D parallax control + shooting star
+      // Uniforms with all depth maps for 3D parallax control + shooting star + kit overlay
       const uniforms = {
         baseTexture: { value: baseTexture },
         overlayTexture: { value: overlayTexture },
         xrayTexture: { value: xrayTexture },
+        kitOverlayTexture: { value: kitOverlayTexture || baseTexture },
         depthMap: { value: depthTexture || baseTexture },
         depthLightened: { value: depthLightenedTexture || baseTexture },
         depthDarkened: { value: depthDarkenedTexture || baseTexture },
         hasDepthMap: { value: depthTexture ? 1.0 : 0.0 },
         hasDepthLightened: { value: depthLightenedTexture ? 1.0 : 0.0 },
         hasDepthDarkened: { value: depthDarkenedTexture ? 1.0 : 0.0 },
+        hasKitOverlay: { value: kitOverlayTexture ? 1.0 : 0.0 },
         time: { value: 0 },
         mousePos: { value: new THREE.Vector2(0.5, 0.5) },
         autoPos: { value: new THREE.Vector2(0.5, 0.55) },
