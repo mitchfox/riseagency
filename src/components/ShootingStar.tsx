@@ -25,24 +25,26 @@ export const ShootingStar = ({ className = '' }: ShootingStarProps) => {
         const elapsed = currentTime - startTime;
         const progress = Math.min(elapsed / ANIMATION_DURATION, 1);
         
-        // Ease in-out
+        // Ease in-out for smooth motion
         const easedProgress = progress < 0.5 
           ? 2 * progress * progress 
           : 1 - Math.pow(-2 * progress + 2, 2) / 2;
         
-        // 90° arc from 270° to 360° (left to right, bottom arc)
-        const startAngle = Math.PI * 1.5;  // 270° (left)
-        const endAngle = Math.PI * 2;      // 360° (right)
-        const currentAngle = startAngle + (endAngle - startAngle) * easedProgress;
+        // Arc from bottom-left (225°) to top-right (45°) - counterclockwise through top
+        // 225° -> 180° -> 135° -> 90° -> 45° (180° arc through the top)
+        const startAngle = Math.PI * 1.25;  // 225° (bottom-left)
+        const endAngle = Math.PI * 0.25;    // 45° (top-right)
+        // Going counterclockwise means decreasing angle
+        const currentAngle = startAngle - (startAngle - endAngle) * easedProgress;
         
-        // Ellipse centered on screen with large radius to go off-screen
+        // Ellipse centered on screen with large radius
         const centerX = window.innerWidth / 2;
-        const centerY = window.innerHeight * 0.45; // Slightly above center
-        const radiusX = window.innerWidth * 0.65;  // Wide enough to start/end off-screen
-        const radiusY = window.innerHeight * 0.4;
+        const centerY = window.innerHeight / 2;
+        const radiusX = window.innerWidth * 0.6;
+        const radiusY = window.innerHeight * 0.5;
         
         const x = centerX + Math.cos(currentAngle) * radiusX;
-        const y = centerY + Math.sin(currentAngle) * radiusY;
+        const y = centerY - Math.sin(currentAngle) * radiusY; // Negative because screen Y is inverted
         
         setPosition({ x, y });
         
@@ -75,6 +77,10 @@ export const ShootingStar = ({ className = '' }: ShootingStarProps) => {
 
   if (!isAnimating) return null;
 
+  // RiseGold color: rgb(235, 199, 115) / #ebc773 / hsl(43, 73%, 69%)
+  const riseGold = '#ebc773';
+  const riseGoldLight = '#f5dca0';
+
   return (
     <div 
       className={`fixed pointer-events-none z-[100] ${className}`}
@@ -84,31 +90,33 @@ export const ShootingStar = ({ className = '' }: ShootingStarProps) => {
         transform: 'translate(-50%, -50%)',
       }}
     >
-      {/* Star core */}
+      {/* Star core - risegold */}
       <div 
         className="absolute rounded-full"
         style={{
-          width: '8px',
-          height: '8px',
-          background: 'radial-gradient(circle, #fff 0%, #ffe066 50%, #d4a84b 100%)',
+          width: '10px',
+          height: '10px',
+          background: `radial-gradient(circle, ${riseGoldLight} 0%, ${riseGold} 60%, #d4a84b 100%)`,
           boxShadow: `
-            0 0 10px 5px rgba(255, 230, 102, 0.8),
-            0 0 20px 10px rgba(212, 168, 75, 0.6),
-            0 0 40px 20px rgba(212, 168, 75, 0.3)
+            0 0 8px 4px ${riseGold}cc,
+            0 0 16px 8px ${riseGold}99,
+            0 0 32px 16px ${riseGold}44
           `,
         }}
       />
-      {/* Trail */}
+      {/* Trail - risegold gradient */}
       <div 
         className="absolute"
         style={{
-          width: '60px',
-          height: '3px',
-          left: '-60px',
-          top: '2.5px',
-          background: 'linear-gradient(to right, transparent 0%, rgba(212, 168, 75, 0.3) 30%, rgba(255, 230, 102, 0.8) 100%)',
+          width: '80px',
+          height: '4px',
+          left: '-75px',
+          top: '3px',
+          background: `linear-gradient(to right, transparent 0%, ${riseGold}33 30%, ${riseGold}aa 70%, ${riseGoldLight} 100%)`,
           borderRadius: '2px',
           filter: 'blur(1px)',
+          transform: 'rotate(-45deg)',
+          transformOrigin: 'right center',
         }}
       />
     </div>
