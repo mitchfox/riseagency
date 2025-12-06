@@ -117,7 +117,7 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
       }
     `
 
-    // Fragment shader with multi-map parallax control
+    // Fragment shader with multi-map parallax control and shooting star
     const fragmentShader = `
       uniform sampler2D baseTexture;
       uniform sampler2D overlayTexture;
@@ -134,10 +134,13 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
       uniform float userActive;
       uniform vec2 xrayOffset;
       uniform float xrayScale;
+      uniform vec2 shootingStarPos;
+      uniform float shootingStarActive;
       
       varying vec2 vUv;
       
       const vec3 goldColor = vec3(0.92, 0.78, 0.45);
+      const vec3 brightGold = vec3(1.0, 0.9, 0.5);
       
       void main() {
         // Sample all depth maps and combine
@@ -160,7 +163,6 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         }
         
         // Combine: boost adds to depth, reduce subtracts from it
-        // Reduced boost effect, increased base for more arm movement
         float parallaxStrength = 0.06 + (boostAmount * 0.02) - (reduceAmount * 0.01);
         parallaxStrength = clamp(parallaxStrength, 0.03, 0.09);
         
@@ -168,7 +170,7 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         float combinedDepth = baseDepth * (1.0 + boostAmount * 0.15 - reduceAmount * 0.1);
         combinedDepth = clamp(combinedDepth, 0.2, 1.0);
         
-        // Zero out parallax in bottom-right corner (football area) - earlier fade
+        // Zero out parallax in bottom-right corner (football area)
         float bottomRightMask = smoothstep(0.45, 0.65, vUv.x) * smoothstep(0.55, 0.30, vUv.y);
         combinedDepth *= (1.0 - bottomRightMask);
         
@@ -204,10 +206,26 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         vec4 xrayColor = texture2D(xrayTexture, xrayUV);
         float xrayValid = step(0.0, xrayUV.x) * step(xrayUV.x, 1.0) * step(0.0, xrayUV.y) * step(xrayUV.y, 1.0);
         
+        // Mouse spotlight (no visible circle, just x-ray reveal)
         float distToMouse = length(vUv - mousePos);
-        float xrayMask = (1.0 - smoothstep(xrayRadius - 0.02, xrayRadius + 0.01, distToMouse)) * userActive;
+        float mouseXrayMask = (1.0 - smoothstep(0.0, xrayRadius + 0.02, distToMouse)) * userActive;
         
-        vec3 finalColor = mix(compositeColor, xrayColor.rgb, xrayMask * xrayValid * xrayColor.a);
+        // === SHOOTING STAR X-RAY REVEAL ===
+        float distToStar = length(vUv - shootingStarPos);
+        float starXrayMask = (1.0 - smoothstep(0.0, 0.08, distToStar)) * shootingStarActive;
+        
+        // Combine both x-ray masks
+        float totalXrayMask = max(mouseXrayMask, starXrayMask);
+        
+        vec3 finalColor = mix(compositeColor, xrayColor.rgb, totalXrayMask * xrayValid * xrayColor.a);
+        
+        // === SHOOTING STAR GLOW ===
+        if (shootingStarActive > 0.0) {
+          float starGlow = (1.0 - smoothstep(0.0, 0.12, distToStar)) * shootingStarActive;
+          float starCore = (1.0 - smoothstep(0.0, 0.02, distToStar)) * shootingStarActive;
+          finalColor += brightGold * starCore * 0.8 * alpha;
+          finalColor += goldColor * starGlow * 0.3 * alpha;
+        }
         
         // === EDGE RIM LIGHT - subtle 3D pop ===
         float rimLeft = smoothstep(0.1, 0.0, vUv.x) * max(0.0, shadowAmount) * 0.3;
@@ -221,7 +239,7 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         }
         
         // Gold shimmer in x-ray area
-        if (xrayMask > 0.0) {
+        if (totalXrayMask > 0.0) {
           float shimmer = sin(time * 2.5 + vUv.x * 15.0 + vUv.y * 15.0) * 0.03 + 1.0;
           finalColor *= shimmer;
         }
@@ -312,7 +330,7 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
       let planeHeight = isMobile ? 1.4 : 1.6
       let planeWidth = planeHeight * imgAspect
 
-      // Uniforms with all depth maps for 3D parallax control
+      // Uniforms with all depth maps for 3D parallax control + shooting star
       const uniforms = {
         baseTexture: { value: baseTexture },
         overlayTexture: { value: overlayTexture },
@@ -327,12 +345,14 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         mousePos: { value: new THREE.Vector2(0.5, 0.5) },
         autoPos: { value: new THREE.Vector2(0.5, 0.55) },
         resolution: { value: new THREE.Vector2(container.clientWidth, container.clientHeight) },
-        xrayRadius: { value: isMobile ? 0.015 : 0.04 },
+        xrayRadius: { value: isMobile ? 0.06 : 0.08 },
         depthScale: { value: 0.15 },
         playerCenter: { value: new THREE.Vector2(0.5, 0.55) },
         userActive: { value: 0.0 },
         xrayOffset: { value: new THREE.Vector2(0.0, 0.0) },
-        xrayScale: { value: 1.0 }
+        xrayScale: { value: 1.0 },
+        shootingStarPos: { value: new THREE.Vector2(-0.5, -0.5) },
+        shootingStarActive: { value: 0.0 }
       }
 
       const geometry = new THREE.PlaneGeometry(planeWidth, planeHeight, 1, 1)
@@ -364,13 +384,55 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
       const autoRevealSpeed = 0.15
       let autoTime = Math.random() * 100
       let xrayIntensity = 0
+      
+      // Shooting star timing: 3s duration, 10s cycle
+      const STAR_DURATION = 3.0  // seconds
+      const STAR_CYCLE = 10.0   // seconds
+      let starCycleTime = 0
 
       const animate = () => {
         animationId = requestAnimationFrame(animate)
         
         const currentTime = Date.now()
-        uniforms.time.value += 0.016
-        autoTime += 0.016
+        const deltaTime = 0.016
+        uniforms.time.value += deltaTime
+        autoTime += deltaTime
+        starCycleTime += deltaTime
+        
+        // Reset cycle
+        if (starCycleTime >= STAR_CYCLE) {
+          starCycleTime = 0
+        }
+        
+        // === SHOOTING STAR ANIMATION ===
+        // Arc from bottom-left (270°) to top-right (360°/0°)
+        if (starCycleTime < STAR_DURATION) {
+          const progress = starCycleTime / STAR_DURATION
+          // Ease in-out for smooth motion
+          const easedProgress = progress < 0.5 
+            ? 2 * progress * progress 
+            : 1 - Math.pow(-2 * progress + 2, 2) / 2
+          
+          // Arc path: 270° to 360° (bottom to right, curving up)
+          // Center of arc is at (0.5, 0.5), radius extends beyond screen
+          const startAngle = Math.PI * 1.5  // 270° (bottom)
+          const endAngle = Math.PI * 2      // 360° (right/top)
+          const currentAngle = startAngle + (endAngle - startAngle) * easedProgress
+          
+          // Large arc radius to sweep across the image
+          const arcRadius = 0.9
+          const centerX = 0.5
+          const centerY = 0.5
+          
+          const starX = centerX + Math.cos(currentAngle) * arcRadius
+          const starY = centerY + Math.sin(currentAngle) * arcRadius
+          
+          uniforms.shootingStarPos.value.set(starX, starY)
+          uniforms.shootingStarActive.value = 1.0
+        } else {
+          uniforms.shootingStarActive.value = 0.0
+          uniforms.shootingStarPos.value.set(-1, -1)
+        }
         
         const timeSinceInteraction = currentTime - lastInteractionRef.current
         const isUserInteracting = timeSinceInteraction < 2000
