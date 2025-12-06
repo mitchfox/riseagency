@@ -98,7 +98,7 @@ export default function Landing() {
       {/* 3D Player Effect - Over Video (hidden when language popup is open) */}
       {!languagePopupOpen && (
         <div 
-          className="absolute inset-0 pointer-events-none"
+          className="absolute inset-0 pointer-events-none z-10"
           style={{ transform: 'translateX(-3px)' }}
         >
           <LazyPlayer3D className="pointer-events-auto" />
