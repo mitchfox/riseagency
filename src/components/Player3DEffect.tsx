@@ -575,17 +575,24 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
           const mouseY = 1 - (mouseRef.current.y - rect.top) / rect.height
           uniforms.mousePos.value.set(mouseX, mouseY)
           xrayIntensity = Math.min(1, xrayIntensity + 0.05)
+          
+          // Only show background stats when user is actively interacting
+          setXrayState({
+            isActive: true,
+            intensity: xrayIntensity,
+            position: { x: uniforms.mousePos.value.x, y: uniforms.mousePos.value.y }
+          })
         } else {
           uniforms.userActive.value = Math.max(0, uniforms.userActive.value - 0.05)
           xrayIntensity = 0.7 + Math.sin(autoTime * 0.5) * 0.3
+          
+          // Hide background stats when not interacting
+          setXrayState({
+            isActive: false,
+            intensity: 0,
+            position: { x: 0.5, y: 0.5 }
+          })
         }
-        
-        // Update context for HomeBackground
-        setXrayState({
-          isActive: true,
-          intensity: xrayIntensity,
-          position: { x: uniforms.mousePos.value.x, y: uniforms.mousePos.value.y }
-        })
         
         renderer.render(scene, camera)
         
