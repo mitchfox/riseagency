@@ -214,8 +214,22 @@ const PlayerDetail = () => {
   };
 
   const ogImage = getPlayerOgImage(player.name);
-  const siteUrl = window.location.origin;
-  const fullOgImage = ogImage.startsWith('http') ? ogImage : `${siteUrl}${ogImage}`;
+  // Use main domain for OG images to work across all subdomains
+  const getMainDomain = () => {
+    const hostname = window.location.hostname;
+    const parts = hostname.split('.');
+    // Handle subdomains: extract main domain (e.g., scouts.risefootballagency.com -> risefootballagency.com)
+    if (parts.length >= 3 && parts[0] !== 'www') {
+      return `${window.location.protocol}//${parts.slice(-2).join('.')}`;
+    }
+    // Handle www or no subdomain
+    if (parts.length >= 2 && parts[0] === 'www') {
+      return `${window.location.protocol}//${parts.slice(-2).join('.')}`;
+    }
+    return window.location.origin;
+  };
+  const mainDomain = getMainDomain();
+  const fullOgImage = ogImage.startsWith('http') ? ogImage : `${mainDomain}${ogImage}`;
 
   return (
     <>
@@ -224,7 +238,7 @@ const PlayerDetail = () => {
         <meta property="og:title" content={`${player.name} | RISE Football Agency`} />
         <meta property="og:description" content={`${player.name} - Professional football player represented by RISE Football Agency.`} />
         <meta property="og:image" content={fullOgImage} />
-        <meta property="og:url" content={`${siteUrl}/stars/${playername}`} />
+        <meta property="og:url" content={`${mainDomain}/stars/${playername}`} />
         <meta property="og:type" content="profile" />
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content={`${player.name} | RISE Football Agency`} />
