@@ -139,8 +139,8 @@ export default function Landing() {
           <div className="relative z-10 px-4 md:px-8 pt-16 md:pt-12 pb-2 md:py-5">
             {/* Desktop Layout */}
             <div className="hidden md:block">
-              {/* Language Selector at top - centered */}
-              <div className="flex justify-center pb-3 mb-3 border-b border-primary/40 mx-auto" style={{ maxWidth: '70%' }}>
+              {/* Language Selector at top - narrowest line (near triangle peak) */}
+              <div className="flex justify-center pb-3 mb-3 border-b border-primary/40 mx-auto" style={{ maxWidth: '35%' }}>
                 <LanguageMapSelector onOpenChange={setLanguagePopupOpen} />
               </div>
               
@@ -166,8 +166,8 @@ export default function Landing() {
                 </Button>
               </div>
               
-              {/* Menu Items - Two rows */}
-              <div className="border-t border-primary/40 pt-3 mx-auto" style={{ maxWidth: '95%' }}>
+              {/* Menu Items - Two rows - wider line (further down triangle) */}
+              <div className="border-t border-primary/40 pt-3 mx-auto" style={{ maxWidth: '75%' }}>
                 {/* Top row: Players, Coaches, Clubs */}
                 <nav className="flex items-center justify-center gap-6 mb-2">
                   {desktopNavLinks.slice(0, 3).map((link, index) => (
@@ -206,8 +206,8 @@ export default function Landing() {
 
             {/* Mobile Layout - compact to prevent scroll */}
             <div className="md:hidden flex flex-col items-center gap-1 mt-6">
-              {/* Language Selector at top */}
-              <div className="pb-1 mb-1 border-b border-primary/40 flex justify-center" style={{ width: '55%' }}>
+              {/* Language Selector at top - narrowest (near peak) */}
+              <div className="pb-1 mb-1 border-b border-primary/40 flex justify-center" style={{ width: '30%' }}>
                 <LanguageMapSelector onOpenChange={setLanguagePopupOpen} />
               </div>
               
@@ -233,7 +233,7 @@ export default function Landing() {
               </div>
               
               {/* Navigation - Two rows */}
-              <div className="border-t border-primary/40 pt-1" style={{ width: '90%' }}>
+              <div className="border-t border-primary/40 pt-1" style={{ width: '70%' }}>
                 {/* Top row: Players, Coaches, Clubs */}
                 <nav className="flex items-center justify-center gap-1 mb-1">
                   {mobileNavLinks.slice(0, 3).map((link, index) => (
