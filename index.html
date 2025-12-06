@@ -51,8 +51,10 @@
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="preload" href="/assets/Website_Hero_RISE.zip" as="fetch" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=BBH+Sans+Bartle&display=swap" rel="stylesheet">
+    <link rel="preload" href="/RISEWhite.png" as="image" fetchpriority="high">
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=BBH+Sans+Bartle&display=swap" as="style">
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=BBH+Sans+Bartle&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=BBH+Sans+Bartle&display=swap" rel="stylesheet"></noscript>
     <link rel="icon" type="image/x-icon" href="https://storage.googleapis.com/gpt-engineer-file-uploads/blxFQX1QtlSc3qNcPxWdCZ730Tf1/uploads/1761325700904-RISEWhite-100.jpg">
     
     <!-- PWA Manifest - Set BEFORE any scripts run -->
@@ -80,7 +82,7 @@
         align-items: center;
         justify-content: center;
         z-index: 9999;
-        transition: opacity 4s ease-out;
+        transition: opacity 0.5s ease-out;
       }
       #loading-splash.hidden {
         opacity: 0;
@@ -107,6 +109,9 @@
       <img 
         src="/RISEWhite.png" 
         alt="RISE"
+        width="200"
+        height="112"
+        fetchpriority="high"
         style="width: 200px; height: auto; animation: pulse 2s ease-in-out infinite;"
       />
     </div>
