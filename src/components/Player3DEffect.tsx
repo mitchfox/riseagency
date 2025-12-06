@@ -665,14 +665,6 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
     <div 
       ref={containerRef} 
       className={`relative w-full h-full cursor-none ${className}`}
-    >
-      {isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="text-primary font-bebas tracking-wider animate-pulse">
-            LOADING...
-          </div>
-        </div>
-      )}
-    </div>
+    />
   )
 }
