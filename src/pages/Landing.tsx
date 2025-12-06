@@ -135,8 +135,8 @@ export default function Landing() {
             style={{ clipPath: 'polygon(50% 0%, 100% 100%, 0% 100%)' }}
           />
           
-          {/* Content container - pushed down with padding top */}
-          <div className="relative z-10 px-4 md:px-8 pt-8 md:pt-6 pb-2 md:py-5">
+          {/* Content container - pushed DOWN toward bottom of triangle */}
+          <div className="relative z-10 px-4 md:px-8 pt-2 md:pt-4 pb-3 md:pb-5 flex flex-col justify-end" style={{ minHeight: '200px' }}>
             {/* Desktop Layout */}
             <div className="hidden md:block">
               {/* Language Selector at top - centered */}

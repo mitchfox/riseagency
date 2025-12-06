@@ -624,10 +624,24 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         // ============= FINAL OUTPUT =============
         // Outside player: black normally, white marble when fluid hovers
         // Inside player: ALWAYS normal player, NEVER touched
+        // PHANTOM MODE: Only reveal content INSIDE the bubble, nothing outside
         if (alpha < 0.1) {
           // OUTSIDE PLAYER (background area)
-          if (coreTransparency > 0.05) {
-            // Fluid hovering over background - make TRANSPARENT so page content shows through
+          if (isPhantomMode > 0.5) {
+            // PHANTOM MODE - ONLY show content inside the phantom bubble, nothing else
+            // Check if this pixel is inside the phantom bubble
+            float phantomDist = length(vUv - phantomBubblePos);
+            float insidePhantom = 1.0 - smoothstep(phantomBubbleRadius * 0.8, phantomBubbleRadius, phantomDist);
+            
+            if (insidePhantom > 0.1 && phantomBubbleOpacity > 0.1) {
+              // Inside the phantom bubble - make transparent to show R90/programming content
+              gl_FragColor = vec4(0.0, 0.0, 0.0, 0.0);
+            } else {
+              // Outside phantom bubble - keep completely hidden (black/transparent)
+              discard;
+            }
+          } else if (coreTransparency > 0.05) {
+            // MANUAL MODE - Fluid hovering over background - make TRANSPARENT so page content shows through
             // The gold/grey bands at the edge will still be visible
             float edgeBands = goldBand + greyBand;
             if (edgeBands > 0.01) {
