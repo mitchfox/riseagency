@@ -106,17 +106,23 @@ export default function Landing() {
       )}
 
       {/* Bottom Section - Triangular shape (wide base, point at top) */}
-      <div className="pb-2 md:pb-8 z-50 relative w-full pointer-events-auto">
-        <div className="relative max-w-6xl mx-auto" style={{ minHeight: '240px' }}>
+      <div className="pb-2 md:pb-12 z-50 relative w-full pointer-events-auto">
+        <div className="relative max-w-6xl mx-auto" style={{ minHeight: '220px' }}>
           {/* Triangle background - SVG that creates the actual triangle shape */}
           <svg 
             className="absolute inset-0 w-full h-full pointer-events-none"
             viewBox="0 0 100 100"
             preserveAspectRatio="none"
+            style={{ filter: 'blur(0px)' }}
           >
+            <defs>
+              <filter id="blur-filter" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur in="SourceGraphic" stdDeviation="0" />
+              </filter>
+            </defs>
             <polygon 
               points="50,0 100,100 0,100" 
-              fill="rgba(0,0,0,0.6)"
+              fill="rgba(0,0,0,0.55)"
               stroke="hsl(var(--primary) / 0.6)" 
               strokeWidth="0.5"
               vectorEffect="non-scaling-stroke"
@@ -129,13 +135,10 @@ export default function Landing() {
             style={{ clipPath: 'polygon(50% 0%, 100% 100%, 0% 100%)' }}
           />
           
-          {/* Content container - spacer at top pushes content DOWN */}
-          <div className="relative z-10 px-4 md:px-8 h-full flex flex-col">
-            {/* Top spacer - pushes everything down */}
-            <div className="flex-1 min-h-[60px] md:min-h-[80px]" />
-            
+          {/* Content container - pushed down with padding top */}
+          <div className="relative z-10 px-4 md:px-8 pt-8 md:pt-6 pb-2 md:py-5">
             {/* Desktop Layout */}
-            <div className="hidden md:block pb-4">
+            <div className="hidden md:block">
               {/* Language Selector at top - centered */}
               <div className="flex justify-center pb-3 mb-3 border-b border-primary/40 mx-auto" style={{ maxWidth: '50%' }}>
                 <LanguageMapSelector onOpenChange={setLanguagePopupOpen} />
@@ -202,8 +205,8 @@ export default function Landing() {
             </div>
 
             {/* Mobile Layout - compact to prevent scroll */}
-            <div className="md:hidden flex flex-col items-center gap-1 pb-2">
-              {/* Language Selector */}
+            <div className="md:hidden flex flex-col items-center gap-1">
+              {/* Language Selector at top */}
               <div className="pb-1 mb-1 border-b border-primary/40 flex justify-center" style={{ width: '40%' }}>
                 <LanguageMapSelector onOpenChange={setLanguagePopupOpen} />
               </div>
