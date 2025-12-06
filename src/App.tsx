@@ -90,49 +90,51 @@ const App = () => {
             <ScrollToTop />
             <PageTransition>
               {(displayLocation) => (
-                <Routes location={displayLocation}>
-                  <Route path="/" element={<Home />} />
-                  {createLocalizedRoutes('/players', <Index />)}
-                  <Route path="/intro" element={<Intro />} />
-                  
-                  {/* Localized routes */}
-                  {createLocalizedRoutes('/stars', <Stars />)}
-                  {createLocalizedDynamicRoutes('/stars/:playername', <PlayerDetail />)}
-                  {createLocalizedRoutes('/clubs', <Clubs />)}
-                  {createLocalizedRoutes('/coaches', <Coaches />)}
-                  {createLocalizedRoutes('/scouts', <Scouts />)}
-                  {createLocalizedRoutes('/agents', <Agents />)}
-                  {createLocalizedRoutes('/business', <Business />)}
-                  {createLocalizedRoutes('/media', <Media />)}
-                  {createLocalizedRoutes('/performance', <Performance />)}
-                  {createLocalizedRoutes('/news', <News />)}
-                  {createLocalizedDynamicRoutes('/news/:articleId', <News />)}
-                  {createLocalizedRoutes('/between-the-lines', <BetweenTheLines />)}
-                  {createLocalizedDynamicRoutes('/between-the-lines/:articleId', <News />)}
-                  {createLocalizedRoutes('/contact', <Contact />)}
-                  {createLocalizedRoutes('/about', <About />)}
-                  {createLocalizedRoutes('/login', <Login />)}
-                  {createLocalizedRoutes('/portal', <Dashboard />)}
-                  
-                  {/* Non-localized routes */}
-                  <Route path="/playersmore" element={<Players />} />
-                  <Route path="/players-list" element={<PlayersList />} />
-                  <Route path="/players-draft" element={<PlayersDraft />} />
-                  <Route path="/club-network" element={<ClubNetwork />} />
-                  <Route path="/staff" element={<Staff />} />
-                  <Route path="/scout-portal" element={<ScoutPortal />} />
-                  <Route path="/potential" element={<Potential />} />
-                  <Route path="/realise-potential" element={<RealisePotential />} />
-                  <Route path="/performance-report/:slug" element={<PerformanceReport />} />
-                  <Route path="/analysis/:analysisId" element={<AnalysisViewer />} />
-                  <Route path="/import-program" element={<ImportProgramCSV />} />
-                  <Route path="/replace-program" element={<ReplaceProgram />} />
-                  <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-                  <Route path="/terms-of-service" element={<TermsOfService />} />
-                  <Route path="/pdf-viewer" element={<PDFViewer />} />
-                  {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
+                <main>
+                  <Routes location={displayLocation}>
+                    <Route path="/" element={<Home />} />
+                    {createLocalizedRoutes('/players', <Index />)}
+                    <Route path="/intro" element={<Intro />} />
+                    
+                    {/* Localized routes */}
+                    {createLocalizedRoutes('/stars', <Stars />)}
+                    {createLocalizedDynamicRoutes('/stars/:playername', <PlayerDetail />)}
+                    {createLocalizedRoutes('/clubs', <Clubs />)}
+                    {createLocalizedRoutes('/coaches', <Coaches />)}
+                    {createLocalizedRoutes('/scouts', <Scouts />)}
+                    {createLocalizedRoutes('/agents', <Agents />)}
+                    {createLocalizedRoutes('/business', <Business />)}
+                    {createLocalizedRoutes('/media', <Media />)}
+                    {createLocalizedRoutes('/performance', <Performance />)}
+                    {createLocalizedRoutes('/news', <News />)}
+                    {createLocalizedDynamicRoutes('/news/:articleId', <News />)}
+                    {createLocalizedRoutes('/between-the-lines', <BetweenTheLines />)}
+                    {createLocalizedDynamicRoutes('/between-the-lines/:articleId', <News />)}
+                    {createLocalizedRoutes('/contact', <Contact />)}
+                    {createLocalizedRoutes('/about', <About />)}
+                    {createLocalizedRoutes('/login', <Login />)}
+                    {createLocalizedRoutes('/portal', <Dashboard />)}
+                    
+                    {/* Non-localized routes */}
+                    <Route path="/playersmore" element={<Players />} />
+                    <Route path="/players-list" element={<PlayersList />} />
+                    <Route path="/players-draft" element={<PlayersDraft />} />
+                    <Route path="/club-network" element={<ClubNetwork />} />
+                    <Route path="/staff" element={<Staff />} />
+                    <Route path="/scout-portal" element={<ScoutPortal />} />
+                    <Route path="/potential" element={<Potential />} />
+                    <Route path="/realise-potential" element={<RealisePotential />} />
+                    <Route path="/performance-report/:slug" element={<PerformanceReport />} />
+                    <Route path="/analysis/:analysisId" element={<AnalysisViewer />} />
+                    <Route path="/import-program" element={<ImportProgramCSV />} />
+                    <Route path="/replace-program" element={<ReplaceProgram />} />
+                    <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                    <Route path="/terms-of-service" element={<TermsOfService />} />
+                    <Route path="/pdf-viewer" element={<PDFViewer />} />
+                    {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </main>
               )}
             </PageTransition>
             </TransitionProvider>
