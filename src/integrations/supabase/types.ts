@@ -1948,6 +1948,7 @@ export type Database = {
           category: string | null
           club: string | null
           club_logo: string | null
+          contracts_password: string | null
           created_at: string | null
           email: string | null
           highlighted_match: Json | null
@@ -1971,6 +1972,7 @@ export type Database = {
           category?: string | null
           club?: string | null
           club_logo?: string | null
+          contracts_password?: string | null
           created_at?: string | null
           email?: string | null
           highlighted_match?: Json | null
@@ -1994,6 +1996,7 @@ export type Database = {
           category?: string | null
           club?: string | null
           club_logo?: string | null
+          contracts_password?: string | null
           created_at?: string | null
           email?: string | null
           highlighted_match?: Json | null

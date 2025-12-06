@@ -33,7 +33,8 @@ import { PlayerClubInterest } from "@/components/PlayerClubInterest";
 import { getR90Grade, getXGGrade, getXAGrade, getRegainsGrade, getInterceptionsGrade, getXGChainGrade, getProgressivePassesGrade, getPPTurnoversRatioGrade } from "@/lib/gradeCalculations";
 import { downloadVideo } from "@/lib/videoDownload";
 import { PlayerPositionalGuides } from "@/components/PlayerPositionalGuides";
-
+import { ProtectedContracts } from "@/components/player/ProtectedContracts";
+import { PaymentOptions } from "@/components/player/PaymentOptions";
 
 interface Analysis {
   id: string;
@@ -3358,9 +3359,12 @@ const Dashboard = () => {
               <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-0">
                 <CardContent className="container mx-auto px-4 pt-2">
                   <Tabs defaultValue="invoices" className="w-full">
-                    <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3 gap-2 mb-0 bg-muted h-auto p-2">
+                    <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 gap-2 mb-0 bg-muted h-auto p-2">
                   <TabsTrigger value="invoices" className="font-bebas uppercase text-sm sm:text-base">
                     Invoices
+                  </TabsTrigger>
+                  <TabsTrigger value="payment" className="font-bebas uppercase text-sm sm:text-base">
+                    Make Payment
                   </TabsTrigger>
                   <TabsTrigger value="contracts" className="font-bebas uppercase text-sm sm:text-base">
                     Contracts
@@ -3551,19 +3555,39 @@ const Dashboard = () => {
                   </Card>
                 </TabsContent>
 
-                <TabsContent value="contracts">
+                <TabsContent value="payment">
                   <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 border-t-[2px] border-t-[hsl(43,49%,61%)] border-b-0">
                     <CardHeader marble>
                       <div className="container mx-auto px-4">
                         <CardTitle className="font-heading tracking-tight">
+                          Make a Payment
+                        </CardTitle>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="container mx-auto px-4">
+                      <PaymentOptions />
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+
+                <TabsContent value="contracts">
+                  <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 border-t-[2px] border-t-[hsl(43,49%,61%)] border-b-0">
+                    <CardHeader marble>
+                      <div className="container mx-auto px-4">
+                        <CardTitle className="font-heading tracking-tight flex items-center gap-2">
+                          <Lock className="h-5 w-5" />
                           Contracts
                         </CardTitle>
                       </div>
                     </CardHeader>
                     <CardContent className="container mx-auto px-4">
-                      <div className="py-8 text-center text-muted-foreground">
-                        No contracts available yet.
-                      </div>
+                      {playerData?.id ? (
+                        <ProtectedContracts playerId={playerData.id} />
+                      ) : (
+                        <div className="py-8 text-center text-muted-foreground">
+                          Loading...
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
                 </TabsContent>
