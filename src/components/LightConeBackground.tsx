@@ -10,88 +10,78 @@ export const LightConeBackground = () => {
   const maskX = xrayState.position.x * 100;
   const maskY = xrayState.position.y * 100;
   const topConeMaskStyle = xrayOpacity > 0 ? {
-    WebkitMaskImage: `radial-gradient(circle 300px at ${maskX}% ${100 - maskY}%, black 0%, transparent 100%)`,
-    maskImage: `radial-gradient(circle 300px at ${maskX}% ${100 - maskY}%, black 0%, transparent 100%)`,
+    WebkitMaskImage: `radial-gradient(circle 400px at ${maskX}% ${100 - maskY}%, black 0%, transparent 100%)`,
+    maskImage: `radial-gradient(circle 400px at ${maskX}% ${100 - maskY}%, black 0%, transparent 100%)`,
   } : {};
 
   return (
-    <div className="fixed inset-0 overflow-hidden pointer-events-none z-[2]">
-      {/* Bottom cone - ALWAYS VISIBLE */}
+    <div className="fixed inset-0 overflow-hidden pointer-events-none z-[1]">
+      {/* Bottom cone - ALWAYS VISIBLE - aligned with menu cone */}
       <svg 
         className="absolute inset-0 w-full h-full"
         viewBox="0 0 100 100"
-        preserveAspectRatio="xMidYMid meet"
-        style={{ opacity: 0.6 }}
+        preserveAspectRatio="none"
+        style={{ opacity: 0.5 }}
       >
         <defs>
           {/* Gradient for past cone (bottom) */}
           <linearGradient id="pastConeGradientAlways" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.5" />
-            <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0.08" />
+            <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.4" />
+            <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0.05" />
           </linearGradient>
-          
-          {/* Glow filter */}
-          <filter id="coneGlowAlways" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur in="SourceGraphic" stdDeviation="0.3" result="blur" />
-            <feMerge>
-              <feMergeNode in="blur" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
         </defs>
         
-        <g transform="translate(50, 50)">
-          {/* Past Light Cone (bottom) - ALWAYS VISIBLE */}
-          <ellipse 
-            cx="0" 
-            cy="35" 
-            rx="18" 
-            ry="4"
-            fill="none"
-            stroke="hsl(var(--primary))"
-            strokeWidth="0.2"
-            opacity="0.5"
-          />
-          <line 
-            x1="0" y1="0" 
-            x2="-18" y2="35"
-            stroke="hsl(var(--primary))"
-            strokeWidth="0.15"
-            opacity="0.6"
-          />
-          <line 
-            x1="0" y1="0" 
-            x2="18" y2="35"
-            stroke="hsl(var(--primary))"
-            strokeWidth="0.15"
-            opacity="0.6"
-          />
-          {/* Past cone fill */}
-          <path 
-            d="M 0,0 L -18,35 A 18 4 0 0 0 18,35 Z"
-            fill="url(#pastConeGradientAlways)"
-            opacity="0.4"
-          />
-          
-          {/* Center point - where cones meet */}
-          <circle 
-            cx="0" 
-            cy="0" 
-            r="1"
-            fill="hsl(var(--primary))"
-            opacity="0.7"
-            filter="url(#coneGlowAlways)"
-          />
-          
-          {/* Partial axes visible at center */}
-          <line 
-            x1="-8" y1="0" 
-            x2="8" y2="0"
-            stroke="hsl(var(--primary))"
-            strokeWidth="0.1"
-            opacity="0.4"
-          />
-        </g>
+        {/* Past Light Cone (bottom) - matches menu triangle position */}
+        {/* Point at center (50, 50), expands to full width at bottom */}
+        <path 
+          d="M 50,50 L 100,100 Q 75,102 50,102 Q 25,102 0,100 Z"
+          fill="url(#pastConeGradientAlways)"
+          opacity="0.5"
+        />
+        {/* Cone edge lines */}
+        <line 
+          x1="50" y1="50" 
+          x2="0" y2="100"
+          stroke="hsl(var(--primary))"
+          strokeWidth="0.3"
+          opacity="0.4"
+        />
+        <line 
+          x1="50" y1="50" 
+          x2="100" y2="100"
+          stroke="hsl(var(--primary))"
+          strokeWidth="0.3"
+          opacity="0.4"
+        />
+        {/* Bottom ellipse for 3D effect */}
+        <ellipse 
+          cx="50" 
+          cy="101" 
+          rx="50" 
+          ry="3"
+          fill="none"
+          stroke="hsl(var(--primary))"
+          strokeWidth="0.2"
+          opacity="0.3"
+        />
+        
+        {/* Center point hint */}
+        <circle 
+          cx="50" 
+          cy="50" 
+          r="1"
+          fill="hsl(var(--primary))"
+          opacity="0.5"
+        />
+        
+        {/* Partial x-axis visible at center */}
+        <line 
+          x1="42" y1="50" 
+          x2="58" y2="50"
+          stroke="hsl(var(--primary))"
+          strokeWidth="0.15"
+          opacity="0.3"
+        />
       </svg>
 
       {/* Top cone and full axes - ONLY VISIBLE WITH X-RAY */}
@@ -99,22 +89,22 @@ export const LightConeBackground = () => {
         <svg 
           className="absolute inset-0 w-full h-full"
           viewBox="0 0 100 100"
-          preserveAspectRatio="xMidYMid meet"
+          preserveAspectRatio="none"
           style={{ 
-            opacity: xrayOpacity * 0.8,
+            opacity: xrayOpacity * 0.7,
             ...topConeMaskStyle
           }}
         >
           <defs>
             {/* Gradient for future cone (top) */}
             <linearGradient id="futureConeGradient" x1="0%" y1="100%" x2="0%" y2="0%">
-              <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.5" />
-              <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0.08" />
+              <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.4" />
+              <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0.05" />
             </linearGradient>
             
             {/* Glow filter */}
             <filter id="coneGlow" x="-50%" y="-50%" width="200%" height="200%">
-              <feGaussianBlur in="SourceGraphic" stdDeviation="0.3" result="blur" />
+              <feGaussianBlur in="SourceGraphic" stdDeviation="0.5" result="blur" />
               <feMerge>
                 <feMergeNode in="blur" />
                 <feMergeNode in="SourceGraphic" />
@@ -122,113 +112,112 @@ export const LightConeBackground = () => {
             </filter>
           </defs>
           
-          <g transform="translate(50, 50)">
-            {/* Future Light Cone (top) - pointing up */}
-            <ellipse 
-              cx="0" 
-              cy="-35" 
-              rx="18" 
-              ry="4"
-              fill="none"
-              stroke="hsl(var(--primary))"
-              strokeWidth="0.2"
-              opacity="0.6"
-            />
-            <line 
-              x1="0" y1="0" 
-              x2="-18" y2="-35"
-              stroke="hsl(var(--primary))"
-              strokeWidth="0.15"
-              opacity="0.8"
-            />
-            <line 
-              x1="0" y1="0" 
-              x2="18" y2="-35"
-              stroke="hsl(var(--primary))"
-              strokeWidth="0.15"
-              opacity="0.8"
-            />
-            {/* Future cone fill */}
-            <path 
-              d="M 0,0 L -18,-35 A 18 4 0 0 1 18,-35 Z"
-              fill="url(#futureConeGradient)"
-              opacity="0.4"
-            />
-            
-            {/* X-axis (horizontal) */}
-            <line 
-              x1="-25" y1="0" 
-              x2="25" y2="0"
-              stroke="hsl(var(--primary))"
-              strokeWidth="0.15"
-              opacity="0.9"
-              filter="url(#coneGlow)"
-            />
-            <text x="26" y="1" fill="hsl(var(--primary))" fontSize="3" opacity="0.8" fontFamily="monospace">x</text>
-            
-            {/* Y-axis (vertical going into depth - shown as diagonal) */}
-            <line 
-              x1="0" y1="8" 
-              x2="0" y2="-8"
-              stroke="hsl(48, 96%, 53%)"
-              strokeWidth="0.15"
-              opacity="0.7"
-            />
-            <text x="1" y="-9" fill="hsl(48, 96%, 53%)" fontSize="3" opacity="0.8" fontFamily="monospace">y</text>
-            
-            {/* Z-axis (depth - shown as diagonal) */}
-            <line 
-              x1="-12" y1="6" 
-              x2="12" y2="-6"
-              stroke="hsl(142, 76%, 50%)"
-              strokeWidth="0.15"
-              opacity="0.7"
-            />
-            <text x="13" y="-7" fill="hsl(142, 76%, 50%)" fontSize="3" opacity="0.8" fontFamily="monospace">z</text>
-            
-            {/* Time axis (vertical through cones) */}
-            <line 
-              x1="0" y1="-40" 
-              x2="0" y2="40"
-              stroke="white"
-              strokeWidth="0.1"
-              opacity="0.5"
-              strokeDasharray="1,1"
-            />
-            <text x="1" y="-41" fill="white" fontSize="2.5" opacity="0.7" fontFamily="monospace">time</text>
-            
-            {/* Center point glow */}
-            <circle 
-              cx="0" 
-              cy="0" 
-              r="1.5"
-              fill="hsl(var(--primary))"
-              opacity="0.9"
-              filter="url(#coneGlow)"
-            />
-            <circle 
-              cx="0" 
-              cy="0" 
-              r="0.8"
-              fill="white"
-              opacity="0.9"
-            />
-            
-            {/* Coordinate plane hints (square at center) */}
-            <rect 
-              x="-10" y="-5" 
-              width="20" height="10"
-              fill="none"
-              stroke="hsl(var(--primary))"
-              strokeWidth="0.1"
-              opacity="0.3"
-              transform="rotate(-15)"
-            />
-            
-            {/* Labels */}
-            <text x="-8" y="-28" fill="white" fontSize="2" opacity="0.5" fontFamily="monospace">future light cone</text>
-            <text x="-6" y="30" fill="white" fontSize="2" opacity="0.5" fontFamily="monospace">past light cone</text>
-          </g>
+          {/* Future Light Cone (top) - mirrors the bottom cone */}
+          <path 
+            d="M 50,50 L 100,0 Q 75,-2 50,-2 Q 25,-2 0,0 Z"
+            fill="url(#futureConeGradient)"
+            opacity="0.5"
+          />
+          {/* Cone edge lines */}
+          <line 
+            x1="50" y1="50" 
+            x2="0" y2="0"
+            stroke="hsl(var(--primary))"
+            strokeWidth="0.3"
+            opacity="0.6"
+          />
+          <line 
+            x1="50" y1="50" 
+            x2="100" y2="0"
+            stroke="hsl(var(--primary))"
+            strokeWidth="0.3"
+            opacity="0.6"
+          />
+          {/* Top ellipse for 3D effect */}
+          <ellipse 
+            cx="50" 
+            cy="-1" 
+            rx="50" 
+            ry="3"
+            fill="none"
+            stroke="hsl(var(--primary))"
+            strokeWidth="0.2"
+            opacity="0.4"
+          />
+          
+          {/* X-axis (horizontal) - full width */}
+          <line 
+            x1="5" y1="50" 
+            x2="95" y2="50"
+            stroke="hsl(var(--primary))"
+            strokeWidth="0.25"
+            opacity="0.8"
+            filter="url(#coneGlow)"
+          />
+          <text x="96" y="51" fill="hsl(var(--primary))" fontSize="3" opacity="0.8" fontFamily="monospace">x</text>
+          
+          {/* Y-axis (depth - diagonal) */}
+          <line 
+            x1="35" y1="58" 
+            x2="65" y2="42"
+            stroke="hsl(48, 96%, 53%)"
+            strokeWidth="0.2"
+            opacity="0.6"
+          />
+          <text x="66" y="41" fill="hsl(48, 96%, 53%)" fontSize="3" opacity="0.7" fontFamily="monospace">y</text>
+          
+          {/* Z-axis (depth - other diagonal) */}
+          <line 
+            x1="35" y1="42" 
+            x2="65" y2="58"
+            stroke="hsl(142, 76%, 50%)"
+            strokeWidth="0.2"
+            opacity="0.6"
+          />
+          <text x="66" y="59" fill="hsl(142, 76%, 50%)" fontSize="3" opacity="0.7" fontFamily="monospace">z</text>
+          
+          {/* Time axis (vertical through cones) */}
+          <line 
+            x1="50" y1="0" 
+            x2="50" y2="100"
+            stroke="white"
+            strokeWidth="0.15"
+            opacity="0.4"
+            strokeDasharray="2,2"
+          />
+          <text x="51" y="4" fill="white" fontSize="2.5" opacity="0.6" fontFamily="monospace">time</text>
+          
+          {/* Center point glow */}
+          <circle 
+            cx="50" 
+            cy="50" 
+            r="2"
+            fill="hsl(var(--primary))"
+            opacity="0.9"
+            filter="url(#coneGlow)"
+          />
+          <circle 
+            cx="50" 
+            cy="50" 
+            r="1"
+            fill="white"
+            opacity="0.9"
+          />
+          
+          {/* Coordinate plane hint at center */}
+          <rect 
+            x="40" y="45" 
+            width="20" height="10"
+            fill="none"
+            stroke="hsl(var(--primary))"
+            strokeWidth="0.15"
+            opacity="0.25"
+            transform="rotate(-10, 50, 50)"
+          />
+          
+          {/* Labels */}
+          <text x="8" y="8" fill="white" fontSize="2.5" opacity="0.5" fontFamily="monospace">future light cone</text>
+          <text x="8" y="94" fill="white" fontSize="2.5" opacity="0.5" fontFamily="monospace">past light cone</text>
         </svg>
       )}
     </div>
