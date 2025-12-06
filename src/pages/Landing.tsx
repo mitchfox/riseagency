@@ -12,7 +12,7 @@ import { RepresentationDialog } from "@/components/RepresentationDialog";
 import { DeclareInterestPlayerDialog } from "@/components/DeclareInterestPlayerDialog";
 import { Button } from "@/components/ui/button";
 import { useRoleSubdomain, pathToRole, RoleSubdomain } from "@/hooks/useRoleSubdomain";
-import { ShootingStar } from "@/components/ShootingStar";
+import { ElectricWave } from "@/components/ElectricWave";
 import riseLogoWhite from "@/assets/logo.png";
 
 export default function Landing() {
@@ -61,8 +61,8 @@ export default function Landing() {
   return (
     <XRayProvider>
     <div className="min-h-screen bg-black flex flex-col items-center justify-end relative overflow-hidden cursor-none md:cursor-none">
-      {/* Shooting Star - separate HTML element above everything */}
-      <ShootingStar />
+      {/* Electric Wave Effect */}
+      <ElectricWave />
       
       {/* Custom Landing Page Cursor */}
       <LandingCursor />
