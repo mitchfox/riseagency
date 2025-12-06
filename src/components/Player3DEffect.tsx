@@ -515,28 +515,14 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         vec4 xrayColor = texture2D(xrayTexture, xrayUV);
         float xrayValid = step(0.0, xrayUV.x) * step(xrayUV.x, 1.0) * step(0.0, xrayUV.y) * step(xrayUV.y, 1.0);
         
-        // ============= WHITE MARBLE BACKGROUND =============
-        // Create subtle marble texture for the reveal background
-        float marble1 = snoise(vUv * 6.0 + noiseTime * 0.05) * 0.5 + 0.5;
-        float marble2 = snoise(vUv * 12.0 - noiseTime * 0.03) * 0.25;
-        float marble3 = snoise(vUv * 24.0) * 0.12;
-        float marblePattern = marble1 + marble2 + marble3;
-        marblePattern = smoothstep(0.35, 0.65, marblePattern);
+        // ============= TRANSPARENT REVEAL TO SHOW PAGE BACKGROUND =============
+        // The fluid cursor makes the player TRANSPARENT, revealing the actual page marble background
+        // Color bands appear at the edge of the transparent area
         
-        // White base with semi-transparent grey marble veins
-        vec3 marbleWhite = vec3(0.98, 0.98, 0.99);
-        vec3 marbleVein = vec3(0.88, 0.87, 0.89);
-        vec3 marbleColor = mix(marbleWhite, marbleVein, marblePattern * 0.35);
-        
-        // ============= PURE WHITE MARBLE BACKGROUND REVEAL =============
-        // The fluid cursor reveals the white marble background (NOT x-ray)
-        // Colors radiate OUTWARD from the reveal: gold -> grey -> white
-        
-        // Band definitions (from center outward)
-        float coreReveal = smoothstep(0.55, 0.85, fluidMask);  // Pure marble window
-        float goldBand = smoothstep(0.35, 0.55, fluidMask) * (1.0 - coreReveal);  // Shiny gold ring
-        float greyBand = smoothstep(0.15, 0.35, fluidMask) * (1.0 - smoothstep(0.35, 0.55, fluidMask));  // Grey transition
-        float whiteBand = smoothstep(0.0, 0.15, fluidMask) * (1.0 - smoothstep(0.15, 0.35, fluidMask));  // White outer edge
+        // Band definitions (from center outward) - gold edge around transparent core
+        float coreTransparency = smoothstep(0.4, 0.75, fluidMask);  // Core becomes transparent
+        float goldBand = smoothstep(0.2, 0.4, fluidMask) * (1.0 - smoothstep(0.5, 0.7, fluidMask));  // Gold ring at edge
+        float greyBand = smoothstep(0.05, 0.2, fluidMask) * (1.0 - smoothstep(0.25, 0.45, fluidMask));  // Grey transition
         
         // Directional stretch - color bands stretch in movement direction
         vec2 velDir = normalize(cursorVelocity + vec2(0.0001));
@@ -545,43 +531,24 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         float alongVel = dot(toPixel, velDir);
         float directionalStretch = 1.0 + max(0.0, alongVel) * velMag * 8.0;
         
-        // Apply directional stretch to outer bands
+        // Apply directional stretch to bands
         goldBand *= mix(1.0, directionalStretch, 0.4);
         greyBand *= mix(1.0, directionalStretch, 0.6);
-        whiteBand *= mix(1.0, directionalStretch, 0.8);
         
-        // Shiny shimmer for gold band (reflective water effect)
+        // Shiny shimmer for gold band
         float goldShimmer = sin(noiseTime * 1.2 + vUv.x * 12.0 + vUv.y * 10.0) * 0.2 + 0.9;
         goldShimmer += sin(noiseTime * 2.0 + vUv.y * 18.0) * 0.1;
         vec3 shinyGold = riseGold * goldShimmer * 1.15;
         
-        // Color definitions for bands
-        vec3 goldGreyMix = mix(riseGold, revealGrey, 0.5);  // Transition color
-        vec3 greyWhiteMix = mix(revealGrey, revealWhite, 0.6);  // Outer transition
-        
-        // Build the reveal: PURE WHITE MARBLE background (not x-ray)
-        vec3 revealColor = marbleColor;  // Core shows marble, not x-ray
-        
-        // Add color bands radiating OUTWARD (applied semi-transparently)
-        // White outer edge (most transparent)
-        revealColor = mix(revealColor, greyWhiteMix, whiteBand * 0.35);
-        // Grey band
-        revealColor = mix(revealColor, goldGreyMix, greyBand * 0.45);
-        // Gold band (closest to reveal, most visible)
-        revealColor = mix(revealColor, shinyGold, goldBand * 0.6);
-        
-        // Apply fluid reveal to composite - reveals white marble background
-        compositeColor = mix(compositeColor, revealColor, fluidMask);
+        // Apply gold/grey edge bands to composite (NOT making it white - that's the page bg)
+        compositeColor = mix(compositeColor, revealGrey, greyBand * 0.5);
+        compositeColor = mix(compositeColor, shinyGold, goldBand * 0.7);
         
         // ============= ORIGINAL MOUSE SPOTLIGHT X-RAY =============
         float distToMouse = length(vUv - mousePos);
         float mouseXrayMask = (1.0 - smoothstep(0.0, xrayRadius + 0.02, distToMouse)) * userActive;
         
-        // Shooting star x-ray
-        float distToStar = length(vUv - shootingStarPos);
-        float starXrayMask = (1.0 - smoothstep(0.0, 0.08, distToStar)) * shootingStarActive;
-        
-        float totalXrayMask = max(mouseXrayMask, starXrayMask);
+        float totalXrayMask = mouseXrayMask;
         
         // Shadow behind x-ray
         vec4 shadowColor = texture2D(shadowTexture, parallaxUV);
@@ -592,16 +559,8 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         
         vec3 finalColor = mix(compositeColor, xrayWithShadow, totalXrayMask * xrayValid);
         
-        // Shooting star glow
-        if (shootingStarActive > 0.0) {
-          float starGlow = (1.0 - smoothstep(0.0, 0.12, distToStar)) * shootingStarActive;
-          float starCore = (1.0 - smoothstep(0.0, 0.02, distToStar)) * shootingStarActive;
-          finalColor += brightGold * starCore * 0.8 * alpha;
-          finalColor += goldColor * starGlow * 0.3 * alpha;
-        }
-        
         // ============= FLUID BLOB GLOW EFFECTS =============
-        // Water glow around cursor blob using waterBlob function
+        // Water glow around cursor blob
         if (cursorBlobOpacity > 0.01) {
           float glowMask = waterBlob(vUv, cursorBlobPos, 0.22, 0.0);
           float outerGlow = smoothstep(0.0, 0.5, glowMask) * (1.0 - smoothstep(0.5, 1.0, glowMask));
@@ -625,7 +584,11 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
           finalColor *= shimmer;
         }
         
-        gl_FragColor = vec4(finalColor, alpha);
+        // ============= MAKE PLAYER TRANSPARENT WHERE FLUID IS =============
+        // This reveals the actual white marble page background behind
+        float revealAlpha = alpha * (1.0 - coreTransparency * 0.92);
+        
+        gl_FragColor = vec4(finalColor, revealAlpha);
       }
     `
 
