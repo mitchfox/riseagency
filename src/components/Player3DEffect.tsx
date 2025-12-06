@@ -498,6 +498,7 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
       let planeWidth = planeHeight * imgAspect
 
       // Uniforms with x-ray alignment adjustments - TWO separate positions
+      // Smaller xray radius on mobile
       const uniforms = {
         baseTexture: { value: baseTexture },
         xrayTexture: { value: xrayTexture },
@@ -505,7 +506,7 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         mousePos: { value: new THREE.Vector2(-1, -1) }, // User hover position
         autoPos: { value: new THREE.Vector2(0.5, 0.55) }, // Auto-reveal position
         resolution: { value: new THREE.Vector2(container.clientWidth, container.clientHeight) },
-        xrayRadius: { value: 0.12 },
+        xrayRadius: { value: isMobile ? 0.08 : 0.12 },
         depthScale: { value: 0.12 },
         roughness: { value: 0.5 },
         playerCenter: { value: new THREE.Vector2(0.5, 0.55) },
