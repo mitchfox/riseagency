@@ -135,8 +135,8 @@ export default function Landing() {
             style={{ clipPath: 'polygon(50% 0%, 100% 100%, 0% 100%)' }}
           />
           
-          {/* Content container - pushed down with padding top */}
-          <div className="relative z-10 px-4 md:px-8 pt-8 md:pt-6 pb-2 md:py-5">
+          {/* Content container - pushed down to bottom */}
+          <div className="relative z-10 px-4 md:px-8 pt-16 md:pt-12 pb-2 md:py-5">
             {/* Desktop Layout */}
             <div className="hidden md:block">
               {/* Language Selector at top - centered */}
@@ -205,7 +205,7 @@ export default function Landing() {
             </div>
 
             {/* Mobile Layout - compact to prevent scroll */}
-            <div className="md:hidden flex flex-col items-center gap-1">
+            <div className="md:hidden flex flex-col items-center gap-1 mt-6">
               {/* Language Selector at top */}
               <div className="pb-1 mb-1 border-b border-primary/40 flex justify-center" style={{ width: '40%' }}>
                 <LanguageMapSelector onOpenChange={setLanguagePopupOpen} />
