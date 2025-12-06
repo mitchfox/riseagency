@@ -214,8 +214,8 @@ const PlayerDetail = () => {
   };
 
   const ogImage = getPlayerOgImage(player.name);
-  // Use hardcoded main domain for OG images - social crawlers don't execute JS
-  const mainDomain = 'https://risefootballagency.com';
+  // Use Lovable domain for OG images
+  const mainDomain = 'https://riseagency.lovable.app';
   const fullOgImage = ogImage.startsWith('http') ? ogImage : `${mainDomain}${ogImage}`;
 
   return (
