@@ -12,6 +12,7 @@ import { RepresentationDialog } from "@/components/RepresentationDialog";
 import { DeclareInterestPlayerDialog } from "@/components/DeclareInterestPlayerDialog";
 import { Button } from "@/components/ui/button";
 import { useRoleSubdomain, pathToRole, RoleSubdomain } from "@/hooks/useRoleSubdomain";
+import { ShootingStar } from "@/components/ShootingStar";
 import riseLogoWhite from "@/assets/logo.png";
 
 export default function Landing() {
@@ -59,7 +60,43 @@ export default function Landing() {
 
   return (
     <XRayProvider>
-    <div className="min-h-screen bg-black flex flex-col items-center justify-end relative overflow-hidden cursor-none md:cursor-none">
+    {/* Full-page white marble background - revealed through player transparency */}
+    <div 
+      className="fixed inset-0 z-0"
+      style={{
+        background: 'linear-gradient(135deg, #f8f8f9 0%, #ffffff 30%, #f0f0f2 60%, #fafafa 100%)',
+      }}
+    >
+      {/* Marble texture overlay */}
+      <div 
+        className="absolute inset-0"
+        style={{
+          backgroundImage: `
+            radial-gradient(ellipse at 20% 30%, rgba(220, 215, 210, 0.4) 0%, transparent 50%),
+            radial-gradient(ellipse at 80% 70%, rgba(200, 195, 190, 0.35) 0%, transparent 45%),
+            radial-gradient(ellipse at 50% 50%, rgba(235, 230, 225, 0.3) 0%, transparent 60%),
+            radial-gradient(ellipse at 30% 80%, rgba(210, 205, 200, 0.25) 0%, transparent 40%),
+            radial-gradient(ellipse at 70% 20%, rgba(225, 220, 215, 0.3) 0%, transparent 50%)
+          `,
+        }}
+      />
+      {/* Subtle veins */}
+      <div 
+        className="absolute inset-0 opacity-20"
+        style={{
+          backgroundImage: `
+            linear-gradient(45deg, transparent 40%, rgba(180, 175, 170, 0.3) 45%, transparent 50%),
+            linear-gradient(-45deg, transparent 40%, rgba(190, 185, 180, 0.2) 45%, transparent 50%)
+          `,
+          backgroundSize: '60px 60px',
+        }}
+      />
+    </div>
+    
+    <div className="min-h-screen bg-transparent flex flex-col items-center justify-end relative overflow-hidden cursor-none md:cursor-none z-10">
+      {/* Shooting Star - separate HTML element above everything */}
+      <ShootingStar />
+      
       {/* Custom Landing Page Cursor */}
       <LandingCursor />
       
