@@ -32,6 +32,7 @@ import { Link } from "react-router-dom";
 import { PlayerClubInterest } from "@/components/PlayerClubInterest";
 import { getR90Grade, getXGGrade, getXAGrade, getRegainsGrade, getInterceptionsGrade, getXGChainGrade, getProgressivePassesGrade, getPPTurnoversRatioGrade } from "@/lib/gradeCalculations";
 import { downloadVideo } from "@/lib/videoDownload";
+import { PlayerPositionalGuides } from "@/components/PlayerPositionalGuides";
 
 
 interface Analysis {
@@ -1683,6 +1684,9 @@ const Dashboard = () => {
                   <TabsTrigger value="schemes" className="font-bebas uppercase text-sm sm:text-base">
                     Schemes
                   </TabsTrigger>
+                  <TabsTrigger value="positional-guides" className="font-bebas uppercase text-sm sm:text-base">
+                    Positional Guides
+                  </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="performance">
@@ -2031,6 +2035,10 @@ const Dashboard = () => {
                       )}
                     </CardContent>
                   </Card>
+                </TabsContent>
+
+                <TabsContent value="positional-guides">
+                  <PlayerPositionalGuides />
                 </TabsContent>
 
 

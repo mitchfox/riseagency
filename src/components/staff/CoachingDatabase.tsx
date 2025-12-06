@@ -17,9 +17,10 @@ import { ExerciseDatabaseSelector } from "./ExerciseDatabaseSelector";
 import { R90RatingsManagement } from "./R90RatingsManagement";
 import { TacticalSchemes } from "./TacticalSchemes";
 import { SchemeEditor } from "./SchemeEditor";
+import { PositionalGuides } from "./PositionalGuides";
 
 
-type TableType = 'coaching_sessions' | 'coaching_programmes' | 'coaching_drills' | 'coaching_exercises' | 'coaching_analysis' | 'psychological_sessions' | 'coaching_aphorisms' | 'r90_ratings' | 'tactical_schemes' | 'performance_statistics' | 'scheme_view';
+type TableType = 'coaching_sessions' | 'coaching_programmes' | 'coaching_drills' | 'coaching_exercises' | 'coaching_analysis' | 'psychological_sessions' | 'coaching_aphorisms' | 'r90_ratings' | 'tactical_schemes' | 'performance_statistics' | 'scheme_view' | 'positional_guides';
 
 interface Exercise {
   name: string;
@@ -143,6 +144,13 @@ const tableConfigs = {
     icon: Target,
     color: 'indigo',
   },
+  positional_guides: {
+    label: 'Positional Guides',
+    singular: 'Guide',
+    fields: [],
+    icon: Target,
+    color: 'teal',
+  },
 };
 
 const getScoreColor = (score: number | string | null) => {
@@ -230,8 +238,8 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
   }, [currentPage]);
 
   const fetchCategories = async () => {
-    // Skip for aphorisms, tactical schemes, performance statistics, and scheme view as they don't have category/tags
-    if (activeTab === 'coaching_aphorisms' || activeTab === 'tactical_schemes' || activeTab === 'performance_statistics' || activeTab === 'scheme_view') {
+    // Skip for aphorisms, tactical schemes, performance statistics, scheme view, and positional guides as they don't have category/tags
+    if (activeTab === 'coaching_aphorisms' || activeTab === 'tactical_schemes' || activeTab === 'performance_statistics' || activeTab === 'scheme_view' || activeTab === 'positional_guides') {
       return;
     }
     
@@ -284,8 +292,8 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
   };
 
   const fetchItems = async () => {
-    // Skip fetching for tabs that don't use the database
-    if (activeTab === 'scheme_view' || activeTab === 'tactical_schemes') {
+    // Skip fetching for tabs that don't use the database list view
+    if (activeTab === 'scheme_view' || activeTab === 'tactical_schemes' || activeTab === 'positional_guides') {
       setItems([]);
       setTotalItems(0);
       setLoading(false);
@@ -886,6 +894,8 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
               <TacticalSchemes isAdmin={isAdmin} />
             ) : key === 'scheme_view' ? (
               <SchemeEditor />
+            ) : key === 'positional_guides' ? (
+              <PositionalGuides isAdmin={isAdmin} />
             ) : (
               <>
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-end gap-4">
