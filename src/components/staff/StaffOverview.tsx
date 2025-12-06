@@ -186,7 +186,7 @@ export const StaffOverview = ({ isAdmin, userId }: { isAdmin: boolean; userId?: 
         // Proportionally adjust other widgets
         const proportion = l.widthPercent / totalOtherWidth;
         const adjustment = widthDelta * proportion;
-        const newWidth = Math.max(25, l.widthPercent - adjustment);
+        const newWidth = Math.max(20, l.widthPercent - adjustment);
         return { ...l, widthPercent: newWidth };
       }
       return l;
