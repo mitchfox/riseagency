@@ -428,7 +428,7 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         mousePos: { value: new THREE.Vector2(-1, -1) },
         autoPos: { value: new THREE.Vector2(0.5, 0.55) },
         resolution: { value: new THREE.Vector2(container.clientWidth, container.clientHeight) },
-        xrayRadius: { value: isMobile ? 0.045 : 0.12 },
+        xrayRadius: { value: isMobile ? 0.015 : 0.04 },
         depthScale: { value: 0.12 },
         roughness: { value: 0.5 },
         playerCenter: { value: new THREE.Vector2(0.5, 0.55) },
