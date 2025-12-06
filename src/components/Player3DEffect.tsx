@@ -443,13 +443,13 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
           compositeColor = compositeColor + totalGloss;
         }
         
-        // Kit overlay with fluctuating transparency (1% to 35% every 6 seconds)
+        // Kit overlay with fluctuating transparency (55% to 100% every 6 seconds)
         if (hasKitOverlay > 0.5) {
           vec4 kitColor = texture2D(kitOverlayTexture, parallaxUV);
           
-          // Fluctuate opacity between 0.01 (1%) and 0.35 (35%) over 6 seconds
+          // Fluctuate opacity between 0.55 (55%) and 1.0 (100%) over 6 seconds
           float kitPulse = sin(time * 1.0472) * 0.5 + 0.5;  // 1.0472 = 2*PI/6 for 6 second cycle
-          float kitOpacity = mix(0.01, 0.35, kitPulse);
+          float kitOpacity = mix(0.55, 1.0, kitPulse);
           
           compositeColor = mix(compositeColor, kitColor.rgb, kitColor.a * kitOpacity);
           
@@ -1168,6 +1168,7 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
     <div 
       ref={containerRef} 
       className={`relative w-full h-full cursor-none ${className}`}
+      style={{ marginLeft: '-3px' }}
     />
   )
 }
