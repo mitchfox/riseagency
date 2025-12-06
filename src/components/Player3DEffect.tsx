@@ -895,12 +895,12 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
       let speed = 0
       
       // Phantom touch (auto-swipe) state - supports multiple overlapping swipes
-      const PHANTOM_INTERVAL = 2000 // 2 seconds
+      const PHANTOM_INTERVAL = 2000 // 2 seconds between new phantoms
       let lastPhantomTime = Date.now()
-      const phantomDuration = 800 // Duration of each phantom swipe
       
       interface PhantomSwipe {
         startTime: number
+        duration: number // Variable duration per swipe
         start: { x: number; y: number }
         end: { x: number; y: number }
       }
@@ -912,12 +912,23 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         const startX = cursorBlobTarget.x >= 0 ? cursorBlobTarget.x : 0.5
         const startY = cursorBlobTarget.y >= 0 ? cursorBlobTarget.y : 0.5
         
+        // Random duration: mix of short (800ms-1500ms) and long (3000ms-5000ms)
+        const isLongSwipe = Math.random() < 0.3 // 30% chance of long swipe
+        const duration = isLongSwipe 
+          ? 3000 + Math.random() * 2000  // 3-5 seconds
+          : 800 + Math.random() * 700    // 0.8-1.5 seconds
+        
+        // Longer swipes travel further
+        const baseLength = isLongSwipe ? 0.3 : 0.15
+        const lengthVariance = isLongSwipe ? 0.3 : 0.25
+        
         // Random direction and length
         const angle = Math.random() * Math.PI * 2
-        const length = 0.15 + Math.random() * 0.25
+        const length = baseLength + Math.random() * lengthVariance
         
         return {
           startTime: Date.now(),
+          duration,
           start: { x: startX, y: startY },
           end: {
             x: Math.max(0.1, Math.min(0.9, startX + Math.cos(angle) * length)),
@@ -980,7 +991,7 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
           for (let i = activePhantoms.length - 1; i >= 0; i--) {
             const phantom = activePhantoms[i]
             const phantomElapsed = currentTime - phantom.startTime
-            const phantomProgress = phantomElapsed / phantomDuration
+            const phantomProgress = phantomElapsed / phantom.duration
             
             if (phantomProgress >= 1) {
               activePhantoms.splice(i, 1)
@@ -992,7 +1003,7 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
             // Get the newest phantom (last in array since we push new ones)
             const newestPhantom = activePhantoms[activePhantoms.length - 1]
             const phantomElapsed = currentTime - newestPhantom.startTime
-            const phantomProgress = phantomElapsed / phantomDuration
+            const phantomProgress = phantomElapsed / newestPhantom.duration
             
             // Ease in-out for smooth motion
             const easedProgress = phantomProgress < 0.5
