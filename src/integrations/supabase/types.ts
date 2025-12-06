@@ -1922,6 +1922,39 @@ export type Database = {
         }
         Relationships: []
       }
+      positional_guides: {
+        Row: {
+          content: string | null
+          created_at: string | null
+          display_order: number | null
+          id: string
+          phase: string
+          position: string
+          subcategory: string
+          updated_at: string | null
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          phase: string
+          position: string
+          subcategory: string
+          updated_at?: string | null
+        }
+        Update: {
+          content?: string | null
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          phase?: string
+          position?: string
+          subcategory?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string | null
