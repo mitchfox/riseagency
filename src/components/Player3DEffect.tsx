@@ -26,16 +26,20 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
   const lastInteractionRef = useRef(0)
   const autoRevealPosRef = useRef({ x: 0.5, y: 0.5 })
 
-  // Load images from zip + custom depth map
+  // Load images from zip + custom depth maps
   const loadImages = useCallback(async () => {
     try {
-      // Load custom depth map
-      const depthMapPromise = new Promise<HTMLImageElement | null>((resolve) => {
+      // Load all depth maps in parallel
+      const loadImage = (src: string) => new Promise<HTMLImageElement | null>((resolve) => {
         const img = new Image()
         img.onload = () => resolve(img)
         img.onerror = () => resolve(null)
-        img.src = "/assets/player-depth-map.png"
+        img.src = src
       })
+
+      const depthMapPromise = loadImage("/assets/player-depth-map.png")
+      const depthLightenedPromise = loadImage("/assets/player-depth-lightened.png")
+      const depthDarkenedPromise = loadImage("/assets/player-depth-darkened.png")
 
       const response = await fetch("/assets/Website_Hero_RISE.zip")
       const zipData = await response.arrayBuffer()
@@ -65,7 +69,12 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         }
       })
 
-      const [depthMapImg] = await Promise.all([depthMapPromise, ...imagePromises])
+      const [depthMapImg, depthLightenedImg, depthDarkenedImg] = await Promise.all([
+        depthMapPromise, 
+        depthLightenedPromise, 
+        depthDarkenedPromise,
+        ...imagePromises
+      ])
       
       const img5 = imageMap["5"]  // Base image
       const img2 = imageMap["2"]  // Gold overlay/gloss
@@ -76,13 +85,15 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         return null
       }
       
-      console.log("Depth map loaded:", !!depthMapImg)
+      console.log("Depth maps loaded:", { base: !!depthMapImg, lightened: !!depthLightenedImg, darkened: !!depthDarkenedImg })
       
       return { 
         baseImage: img5, 
         overlayImage: img2, 
         xrayImage: img1,
-        depthMap: depthMapImg
+        depthMap: depthMapImg,
+        depthLightened: depthLightenedImg,
+        depthDarkened: depthDarkenedImg
       }
     } catch (error) {
       console.error("Error loading images:", error)
@@ -106,13 +117,17 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
       }
     `
 
-    // Clean fragment shader with parallax, shadow, and gloss
+    // Fragment shader with multi-map parallax control
     const fragmentShader = `
       uniform sampler2D baseTexture;
       uniform sampler2D overlayTexture;
       uniform sampler2D xrayTexture;
       uniform sampler2D depthMap;
+      uniform sampler2D depthLightened;
+      uniform sampler2D depthDarkened;
       uniform float hasDepthMap;
+      uniform float hasDepthLightened;
+      uniform float hasDepthDarkened;
       uniform float time;
       uniform vec2 mousePos;
       uniform float xrayRadius;
@@ -125,14 +140,36 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
       const vec3 goldColor = vec3(0.92, 0.78, 0.45);
       
       void main() {
-        // Sample depth for parallax offset
-        float depth = 0.5;
+        // Sample all depth maps and combine
+        float baseDepth = 0.5;
+        float boostAmount = 0.0;
+        float reduceAmount = 0.0;
+        
         if (hasDepthMap > 0.5) {
-          depth = dot(texture2D(depthMap, vUv).rgb, vec3(0.299, 0.587, 0.114));
+          baseDepth = dot(texture2D(depthMap, vUv).rgb, vec3(0.299, 0.587, 0.114));
         }
         
-        // Parallax offset based on mouse position and depth
-        vec2 parallaxOffset = (mousePos - vec2(0.5)) * depth * 0.04;
+        // Lightened map = areas for MORE effect (brighter = more boost)
+        if (hasDepthLightened > 0.5) {
+          boostAmount = dot(texture2D(depthLightened, vUv).rgb, vec3(0.299, 0.587, 0.114));
+        }
+        
+        // Darkened map = areas for LESS effect (darker = more reduction)
+        if (hasDepthDarkened > 0.5) {
+          reduceAmount = 1.0 - dot(texture2D(depthDarkened, vUv).rgb, vec3(0.299, 0.587, 0.114));
+        }
+        
+        // Combine: boost adds to depth, reduce subtracts from it
+        // Base multiplier: 0.04, boost can add up to +0.06, reduce can subtract up to -0.03
+        float parallaxStrength = 0.04 + (boostAmount * 0.06) - (reduceAmount * 0.02);
+        parallaxStrength = clamp(parallaxStrength, 0.01, 0.12);
+        
+        // Combined depth for parallax
+        float combinedDepth = baseDepth * (1.0 + boostAmount * 0.5 - reduceAmount * 0.3);
+        combinedDepth = clamp(combinedDepth, 0.0, 1.0);
+        
+        // Parallax offset based on mouse position and combined depth
+        vec2 parallaxOffset = (mousePos - vec2(0.5)) * combinedDepth * parallaxStrength;
         vec2 parallaxUV = vUv - parallaxOffset;
         
         // Sample base texture with parallax
@@ -144,8 +181,7 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         if (alpha < 0.01) discard;
         
         // === DYNAMIC SHADOW based on cursor X position ===
-        // More shadow when cursor is on the right, less on left
-        float shadowAmount = (mousePos.x - 0.5) * 0.4; // -0.2 to +0.2
+        float shadowAmount = (mousePos.x - 0.5) * 0.4;
         shadowAmount = clamp(shadowAmount, -0.15, 0.25);
         
         // Apply shadow/highlight to base color
@@ -170,14 +206,13 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         vec3 finalColor = mix(compositeColor, xrayColor.rgb, xrayMask * xrayValid * xrayColor.a);
         
         // === EDGE RIM LIGHT - subtle 3D pop ===
-        // Brighter on left edge when shadow on right
         float rimLeft = smoothstep(0.1, 0.0, vUv.x) * max(0.0, shadowAmount) * 0.3;
         float rimRight = smoothstep(0.9, 1.0, vUv.x) * max(0.0, -shadowAmount) * 0.3;
         finalColor += goldColor * (rimLeft + rimRight) * alpha;
         
         // Subtle depth-based shading for 3D feel
         if (hasDepthMap > 0.5) {
-          float depthShade = depth * 0.1 + 0.95;
+          float depthShade = combinedDepth * 0.1 + 0.95;
           finalColor *= depthShade;
         }
         
@@ -200,7 +235,7 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         return
       }
 
-      const { baseImage, overlayImage, xrayImage, depthMap } = images
+      const { baseImage, overlayImage, xrayImage, depthMap, depthLightened, depthDarkened } = images
 
       const scene = new THREE.Scene()
       
@@ -241,13 +276,30 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
       xrayTexture.minFilter = THREE.LinearFilter
       xrayTexture.magFilter = THREE.LinearFilter
 
-      // Create depth map texture if available
+      // Create depth map textures
       let depthTexture: THREE.Texture | null = null
+      let depthLightenedTexture: THREE.Texture | null = null
+      let depthDarkenedTexture: THREE.Texture | null = null
+      
       if (depthMap) {
         depthTexture = new THREE.Texture(depthMap)
         depthTexture.needsUpdate = true
         depthTexture.minFilter = THREE.LinearFilter
         depthTexture.magFilter = THREE.LinearFilter
+      }
+      
+      if (depthLightened) {
+        depthLightenedTexture = new THREE.Texture(depthLightened)
+        depthLightenedTexture.needsUpdate = true
+        depthLightenedTexture.minFilter = THREE.LinearFilter
+        depthLightenedTexture.magFilter = THREE.LinearFilter
+      }
+      
+      if (depthDarkened) {
+        depthDarkenedTexture = new THREE.Texture(depthDarkened)
+        depthDarkenedTexture.needsUpdate = true
+        depthDarkenedTexture.minFilter = THREE.LinearFilter
+        depthDarkenedTexture.magFilter = THREE.LinearFilter
       }
 
       const isMobile = container.clientWidth < 768
@@ -256,13 +308,17 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
       let planeHeight = isMobile ? 1.4 : 1.6
       let planeWidth = planeHeight * imgAspect
 
-      // Uniforms with depth map for 3D parallax and roughness
+      // Uniforms with all depth maps for 3D parallax control
       const uniforms = {
         baseTexture: { value: baseTexture },
         overlayTexture: { value: overlayTexture },
         xrayTexture: { value: xrayTexture },
-        depthMap: { value: depthTexture || baseTexture }, // Fallback to base if no depth
+        depthMap: { value: depthTexture || baseTexture },
+        depthLightened: { value: depthLightenedTexture || baseTexture },
+        depthDarkened: { value: depthDarkenedTexture || baseTexture },
         hasDepthMap: { value: depthTexture ? 1.0 : 0.0 },
+        hasDepthLightened: { value: depthLightenedTexture ? 1.0 : 0.0 },
+        hasDepthDarkened: { value: depthDarkenedTexture ? 1.0 : 0.0 },
         time: { value: 0 },
         mousePos: { value: new THREE.Vector2(0.5, 0.5) },
         autoPos: { value: new THREE.Vector2(0.5, 0.55) },
