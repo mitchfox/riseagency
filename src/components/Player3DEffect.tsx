@@ -885,6 +885,28 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
       let trail4Opacity = 0
       const velocity = { x: 0, y: 0 }
       let speed = 0
+      
+      // Phantom touch (auto-swipe) state
+      const PHANTOM_INTERVAL = 3500 // 3.5 seconds
+      let lastPhantomTime = Date.now()
+      let phantomActive = false
+      let phantomStartTime = 0
+      const phantomDuration = 800 // Duration of each phantom swipe
+      let phantomStart = { x: 0, y: 0 }
+      let phantomEnd = { x: 0, y: 0 }
+      
+      const generatePhantomSwipe = () => {
+        // Random start position
+        phantomStart.x = 0.2 + Math.random() * 0.6
+        phantomStart.y = 0.2 + Math.random() * 0.6
+        
+        // Random direction and length
+        const angle = Math.random() * Math.PI * 2
+        const length = 0.15 + Math.random() * 0.25
+        
+        phantomEnd.x = Math.max(0.1, Math.min(0.9, phantomStart.x + Math.cos(angle) * length))
+        phantomEnd.y = Math.max(0.1, Math.min(0.9, phantomStart.y + Math.sin(angle) * length))
+      }
 
       const animate = () => {
         animationId = requestAnimationFrame(animate)
@@ -918,32 +940,84 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         // === ORGANIC FLUID X-RAY REVEAL ===
         const timeSinceCursorMove = currentTime - lastCursorMoveTime
         const rect = container.getBoundingClientRect()
-        const mouseX = (mouseRef.current.x - rect.left) / rect.width
-        const mouseY = 1 - (mouseRef.current.y - rect.top) / rect.height
+        let mouseX = (mouseRef.current.x - rect.left) / rect.width
+        let mouseY = 1 - (mouseRef.current.y - rect.top) / rect.height
         
-        // Update cursor target and track velocity
-        if (mouseX >= 0 && mouseX <= 1 && mouseY >= 0 && mouseY <= 1) {
-          const timeSinceInteractionCheck = currentTime - lastInteractionRef.current
-          if (timeSinceInteractionCheck < 100) {
-            // Calculate velocity before updating target
+        // Check if user is actively interacting
+        const userTimeSinceInteraction = currentTime - lastInteractionRef.current
+        const isUserActive = userTimeSinceInteraction < 500
+        
+        // === PHANTOM TOUCH (Auto-swipe when user inactive) ===
+        if (!isUserActive) {
+          const timeSincePhantom = currentTime - lastPhantomTime
+          
+          if (!phantomActive && timeSincePhantom >= PHANTOM_INTERVAL) {
+            // Start a new phantom swipe
+            phantomActive = true
+            phantomStartTime = currentTime
+            generatePhantomSwipe()
+          }
+          
+          if (phantomActive) {
+            const phantomElapsed = currentTime - phantomStartTime
+            const phantomProgress = Math.min(phantomElapsed / phantomDuration, 1)
+            
+            // Ease in-out for smooth motion
+            const easedProgress = phantomProgress < 0.5
+              ? 2 * phantomProgress * phantomProgress
+              : 1 - Math.pow(-2 * phantomProgress + 2, 2) / 2
+            
+            // Interpolate phantom position
+            mouseX = phantomStart.x + (phantomEnd.x - phantomStart.x) * easedProgress
+            mouseY = phantomStart.y + (phantomEnd.y - phantomStart.y) * easedProgress
+            
+            // Update velocity for phantom
             if (cursorBlobTarget.x >= 0) {
               velocity.x = mouseX - cursorBlobTarget.x
               velocity.y = mouseY - cursorBlobTarget.y
               speed = Math.sqrt(velocity.x * velocity.x + velocity.y * velocity.y)
-              
-              // Normalize velocity
               if (speed > 0.001) {
                 velocity.x /= speed
                 velocity.y /= speed
               }
-              // Scale speed for shader
               speed = Math.min(speed * 15, 1.0)
             }
             
             cursorBlobTarget.x = mouseX
             cursorBlobTarget.y = mouseY
             lastCursorMoveTime = currentTime
+            
+            if (phantomProgress >= 1) {
+              phantomActive = false
+              lastPhantomTime = currentTime
+            }
           }
+        } else {
+          // Reset phantom timer when user interacts
+          lastPhantomTime = currentTime
+          phantomActive = false
+        }
+        
+        // Update cursor target and track velocity (for real user input)
+        if (isUserActive && mouseX >= 0 && mouseX <= 1 && mouseY >= 0 && mouseY <= 1) {
+          // Calculate velocity before updating target
+          if (cursorBlobTarget.x >= 0) {
+            velocity.x = mouseX - cursorBlobTarget.x
+            velocity.y = mouseY - cursorBlobTarget.y
+            speed = Math.sqrt(velocity.x * velocity.x + velocity.y * velocity.y)
+            
+            // Normalize velocity
+            if (speed > 0.001) {
+              velocity.x /= speed
+              velocity.y /= speed
+            }
+            // Scale speed for shader
+            speed = Math.min(speed * 15, 1.0)
+          }
+          
+          cursorBlobTarget.x = mouseX
+          cursorBlobTarget.y = mouseY
+          lastCursorMoveTime = currentTime
         }
         
         // Store previous position for velocity calculation
