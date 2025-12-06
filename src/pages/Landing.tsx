@@ -122,7 +122,7 @@ export default function Landing() {
                 <Button 
                   onClick={() => setShowRepresentation(true)}
                   variant="outline"
-                  className="font-bebas uppercase tracking-wider border-primary/50 text-primary hover:bg-primary/10 px-6"
+                  className="font-bebas uppercase tracking-wider border-primary/50 text-primary hover:bg-primary/10 hover:text-primary px-6"
                   hoverEffect
                 >
                   {t("landing.represent_me", "Represent Me")}
@@ -151,7 +151,7 @@ export default function Landing() {
                 onClick={() => setShowRepresentation(true)}
                 variant="outline"
                 size="sm"
-                className="font-bebas uppercase tracking-wider border-primary/50 text-primary hover:bg-primary/10 text-xs px-3"
+                className="font-bebas uppercase tracking-wider border-primary/50 text-primary hover:bg-primary/10 hover:text-primary text-xs px-3"
                 hoverEffect
               >
                 {t("landing.represent_me", "Represent Me")}
