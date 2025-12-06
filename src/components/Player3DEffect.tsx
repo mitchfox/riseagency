@@ -158,6 +158,7 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
       uniform float shootingStarActive;
       uniform float kitShinePos;
       uniform float bwLightPhase;
+      uniform float bwLayerOpacity;
       
       varying vec2 vUv;
       
@@ -256,9 +257,10 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
           float brightHighlights = smoothstep(0.65, 0.9, bwBrightness) * highlightPulse * bwColor.a;
           vec3 brightGlow = brightGold * brightHighlights * 0.3;
           
-          // Blend B&W layer behind current composite with light effects
+          // Blend B&W layer behind current composite with light effects, modulated by opacity
           vec3 litBwLayer = bwColor.rgb + rimLight + goldReflection + brightGlow;
-          compositeColor = mix(litBwLayer, compositeColor, 0.7);
+          float blendFactor = mix(1.0, 0.7, bwLayerOpacity);
+          compositeColor = mix(litBwLayer, compositeColor, blendFactor);
         }
         
         // === KIT OVERLAY - Always visible, with sweeping shine on top ===
@@ -497,7 +499,8 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         shootingStarPos: { value: new THREE.Vector2(-0.5, -0.5) },
         shootingStarActive: { value: 0.0 },
         kitShinePos: { value: -1.0 },
-        bwLightPhase: { value: 0.0 }
+        bwLightPhase: { value: 0.0 },
+        bwLayerOpacity: { value: 0.0 }
       }
 
       const geometry = new THREE.PlaneGeometry(planeWidth, planeHeight, 1, 1)
@@ -552,8 +555,16 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         starCycleTime += deltaTime
         shineCycleTime += deltaTime
         
-        // === B&W LAYER LIGHT ANIMATION - Continuous smooth animation ===
+        // === B&W LAYER FADE ANIMATION - 3s fade in, 3s fade out (6s total cycle) ===
         uniforms.bwLightPhase.value += deltaTime * 1.2  // Speed of light animation
+        const BW_FADE_CYCLE = 6.0  // 6 second total cycle
+        const bwCycleTime = (uniforms.time.value % BW_FADE_CYCLE)
+        // 0-3s: fade in (0 to 1), 3-6s: fade out (1 to 0)
+        if (bwCycleTime < 3.0) {
+          uniforms.bwLayerOpacity.value = bwCycleTime / 3.0
+        } else {
+          uniforms.bwLayerOpacity.value = 1.0 - ((bwCycleTime - 3.0) / 3.0)
+        }
         // Reset cycles
         if (starCycleTime >= STAR_CYCLE) {
           starCycleTime = 0
