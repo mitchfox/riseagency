@@ -105,65 +105,67 @@ export default function Landing() {
         </div>
       )}
 
-      {/* Bottom Section - Navigation + Drag Navigator + Language Selector in Golden Box */}
+      {/* Bottom Section - Navigation + Drag Navigator + Language Selector - Hourglass Bottom Shape */}
       <div className="pb-4 md:pb-12 z-50 relative px-2 md:px-4 w-full pointer-events-auto">
-        <div className="border-2 border-primary/60 bg-black/40 backdrop-blur-sm px-4 md:px-8 py-4 md:py-5 max-w-6xl mx-auto">
+        <div 
+          className="bg-black/40 backdrop-blur-sm px-4 md:px-8 py-4 md:py-5 max-w-6xl mx-auto relative"
+          style={{
+            clipPath: 'polygon(15% 0%, 85% 0%, 100% 100%, 0% 100%)',
+          }}
+        >
+          {/* SVG border overlay for hourglass shape */}
+          <svg 
+            className="absolute inset-0 w-full h-full pointer-events-none" 
+            preserveAspectRatio="none"
+            style={{ zIndex: 1 }}
+          >
+            <polygon 
+              points="15%,0% 85%,0% 100%,100% 0%,100%" 
+              fill="none" 
+              stroke="hsl(var(--primary) / 0.6)" 
+              strokeWidth="2"
+              vectorEffect="non-scaling-stroke"
+            />
+          </svg>
           
           {/* Desktop Layout */}
-          <div className="hidden md:block">
+          <div className="hidden md:block relative z-10">
+            {/* Language Selector at top - centered */}
+            <div className="flex justify-center pb-3 mb-3 border-b border-primary/40">
+              <LanguageMapSelector onOpenChange={setLanguagePopupOpen} />
+            </div>
+            
             {/* Drag Navigator */}
             <div className="mb-4">
               <DragNavigator options={desktopNavLinks} />
             </div>
             
-            {/* Language Selector centered, buttons on either side */}
-            <div className="border-t border-primary/40 pt-3 flex items-center">
-              <div className="flex-1 flex justify-start">
-                <Button 
-                  onClick={() => setShowRepresentation(true)}
-                  variant="outline"
-                  className="font-bebas uppercase tracking-wider border-primary/50 text-primary hover:bg-primary/10 hover:text-primary px-6"
-                  hoverEffect
-                >
-                  {t("landing.represent_me", "Represent Me")}
-                </Button>
-              </div>
-              
-              <LanguageMapSelector onOpenChange={setLanguagePopupOpen} />
-              
-              <div className="flex-1 flex justify-end">
-                <Button 
-                  onClick={() => setShowDeclareInterest(true)}
-                  className="btn-shine font-bebas uppercase tracking-wider px-6"
-                  hoverEffect
-                >
-                  {t("landing.declare_interest", "Declare Interest In Star")}
-                </Button>
-              </div>
-            </div>
-          </div>
-
-          {/* Mobile Layout - Compact horizontal scroll */}
-          <div className="md:hidden flex flex-col items-center gap-1.5">
-            {/* Represent Me & Declare Interest Buttons */}
-            <div className="flex gap-2 mb-2">
+            {/* Buttons at bottom */}
+            <div className="border-t border-primary/40 pt-3 flex items-center justify-between">
               <Button 
                 onClick={() => setShowRepresentation(true)}
                 variant="outline"
-                size="sm"
-                className="font-bebas uppercase tracking-wider border-primary/50 text-primary hover:bg-primary/10 hover:text-primary text-xs px-3"
+                className="font-bebas uppercase tracking-wider border-primary/50 text-primary hover:bg-primary/10 hover:text-primary px-6"
                 hoverEffect
               >
                 {t("landing.represent_me", "Represent Me")}
               </Button>
+              
               <Button 
                 onClick={() => setShowDeclareInterest(true)}
-                size="sm"
-                className="btn-shine font-bebas uppercase tracking-wider text-xs px-3"
+                className="btn-shine font-bebas uppercase tracking-wider px-6"
                 hoverEffect
               >
-                {t("landing.declare_interest_short", "Declare Interest")}
+                {t("landing.declare_interest", "Declare Interest In Star")}
               </Button>
+            </div>
+          </div>
+
+          {/* Mobile Layout - Hourglass bottom shape */}
+          <div className="md:hidden flex flex-col items-center gap-1.5 relative z-10">
+            {/* Language Selector at top */}
+            <div className="pb-2 mb-1.5 border-b border-primary/40 w-full flex justify-center">
+              <LanguageMapSelector onOpenChange={setLanguagePopupOpen} />
             </div>
             
             {/* Navigation - horizontal scroll */}
@@ -183,9 +185,25 @@ export default function Landing() {
               ))}
             </nav>
             
-            {/* Language Selector - Below with divider */}
-            <div className="pt-2.5 border-t border-primary/40 w-full flex justify-center">
-              <LanguageMapSelector onOpenChange={setLanguagePopupOpen} />
+            {/* Represent Me & Declare Interest Buttons at bottom */}
+            <div className="flex gap-2 mt-2 pt-2 border-t border-primary/40 w-full justify-center">
+              <Button 
+                onClick={() => setShowRepresentation(true)}
+                variant="outline"
+                size="sm"
+                className="font-bebas uppercase tracking-wider border-primary/50 text-primary hover:bg-primary/10 hover:text-primary text-xs px-3"
+                hoverEffect
+              >
+                {t("landing.represent_me", "Represent Me")}
+              </Button>
+              <Button 
+                onClick={() => setShowDeclareInterest(true)}
+                size="sm"
+                className="btn-shine font-bebas uppercase tracking-wider text-xs px-3"
+                hoverEffect
+              >
+                {t("landing.declare_interest_short", "Declare Interest")}
+              </Button>
             </div>
           </div>
 
