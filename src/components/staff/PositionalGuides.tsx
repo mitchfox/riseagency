@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { Plus, Edit, Trash2, Save, Map } from "lucide-react";
+import { MediaGridEditor } from "./MediaGridEditor";
 
 interface PositionalGuide {
   id: string;
@@ -19,6 +20,19 @@ interface PositionalGuide {
   display_order: number;
   created_at: string;
   updated_at: string;
+}
+
+interface MediaItem {
+  url: string;
+  caption?: string;
+}
+
+interface MediaGridRow {
+  id: string;
+  layout: string;
+  images: MediaItem[];
+  video_url?: string;
+  display_order: number;
 }
 
 const POSITIONS = ['GK', 'CB', 'FB', 'CDM', 'CM', 'CAM', 'W', 'CF'] as const;
@@ -46,6 +60,7 @@ const POSITION_LABELS: Record<string, string> = {
 export const PositionalGuides = ({ isAdmin }: { isAdmin: boolean }) => {
   const [selectedPosition, setSelectedPosition] = useState<string>(POSITIONS[0]);
   const [guides, setGuides] = useState<PositionalGuide[]>([]);
+  const [mediaData, setMediaData] = useState<Record<string, MediaGridRow[]>>({});
   const [loading, setLoading] = useState(false);
   const [editingGuide, setEditingGuide] = useState<PositionalGuide | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -56,6 +71,7 @@ export const PositionalGuides = ({ isAdmin }: { isAdmin: boolean }) => {
 
   useEffect(() => {
     fetchGuides();
+    fetchMedia();
   }, [selectedPosition]);
 
   const fetchGuides = async () => {
@@ -75,6 +91,39 @@ export const PositionalGuides = ({ isAdmin }: { isAdmin: boolean }) => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const fetchMedia = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('positional_guide_media')
+        .select('*')
+        .eq('position', selectedPosition)
+        .order('display_order', { ascending: true });
+
+      if (error) throw error;
+
+      // Group media by phase-subcategory key
+      const grouped: Record<string, MediaGridRow[]> = {};
+      (data || []).forEach((row: any) => {
+        const key = `${row.phase}-${row.subcategory}`;
+        if (!grouped[key]) grouped[key] = [];
+        grouped[key].push({
+          id: row.id,
+          layout: row.layout,
+          images: (row.images || []) as MediaItem[],
+          video_url: row.video_url,
+          display_order: row.display_order
+        });
+      });
+      setMediaData(grouped);
+    } catch (error) {
+      console.error('Error fetching media:', error);
+    }
+  };
+
+  const getMediaForSubcategory = (phase: string, subcategory: string): MediaGridRow[] => {
+    return mediaData[`${phase}-${subcategory}`] || [];
   };
 
   const getGuideForSubcategory = (phase: string, subcategory: string) => {
@@ -335,6 +384,16 @@ export const PositionalGuides = ({ isAdmin }: { isAdmin: boolean }) => {
                                 </Button>
                               </div>
                             )}
+
+                            {/* Media Grid */}
+                            <MediaGridEditor
+                              position={selectedPosition}
+                              phase={phase}
+                              subcategory={subcategory}
+                              mediaRows={getMediaForSubcategory(phase, subcategory)}
+                              onUpdate={fetchMedia}
+                              isAdmin={isAdmin}
+                            />
                           </CardContent>
                         </Card>
                       );
