@@ -584,20 +584,17 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
           finalColor *= shimmer;
         }
         
-        // ============= CRITICAL: BLACK OUTSIDE PLAYER, WHITE MARBLE ONLY WHERE FLUID =============
+        // ============= FINAL OUTPUT =============
+        // Outside player = BLACK OPAQUE (hide marble behind)
+        // Inside player with fluid = TRANSPARENT (reveal marble behind)
+        // Inside player without fluid = normal player (opaque)
         if (alpha < 0.1) {
-          // Outside player - BLACK OPAQUE
+          // Outside player - BLACK OPAQUE to match page background
           gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
-        } else if (coreTransparency > 0.05) {
-          // Inside player WHERE FLUID IS ACTIVE - show WHITE MARBLE
-          vec3 marbleColor = vec3(0.97, 0.97, 0.98);
-          float vein = sin(vUv.x * 20.0 + vUv.y * 15.0) * 0.02;
-          marbleColor += vein;
-          vec3 revealColor = mix(finalColor, marbleColor, coreTransparency * 0.95);
-          gl_FragColor = vec4(revealColor, alpha);
         } else {
-          // Inside player, NO fluid - show normal player
-          gl_FragColor = vec4(finalColor, alpha);
+          // Inside player - make transparent where fluid is active
+          float revealAlpha = alpha * (1.0 - coreTransparency * 0.92);
+          gl_FragColor = vec4(finalColor, revealAlpha);
         }
       }
     `
