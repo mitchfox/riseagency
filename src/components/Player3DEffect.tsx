@@ -224,14 +224,14 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         vec4 baseColor = texture2D(baseTexture, vUv);
         vec4 overlayColor = texture2D(overlayTexture, vUv);
         
-        // Overlay gloss effect - natural pulsing shine using ADDITIVE blending
+        // Overlay gloss effect - natural pulsing shine
         float glossPulse = sin(time * 0.8) * 0.5 + 0.5; // Slow breathe 0-1
         glossPulse = pow(glossPulse, 2.0); // Ease in/out for natural feel
-        float overlayStrength = glossPulse * 0.8; // Range 0 to 0.8
         
-        // ADD overlay on top of base for gloss/shine effect (screen blend)
-        vec3 glossAddition = overlayColor.rgb * overlayColor.a * overlayStrength;
-        vec4 compositeBase = vec4(baseColor.rgb + glossAddition, baseColor.a);
+        // Use SCREEN blend mode for glossy effect - overlay becomes visible shine
+        // Screen: 1 - (1-base) * (1-overlay)
+        vec3 screenBlend = vec3(1.0) - (vec3(1.0) - baseColor.rgb) * (vec3(1.0) - overlayColor.rgb);
+        vec4 compositeBase = vec4(mix(baseColor.rgb, screenBlend, overlayColor.a * glossPulse), baseColor.a);
         
         // Sample x-ray with offset and scale to align
         vec2 xrayUV = (vUv - 0.5) * xrayScale + 0.5 + xrayOffset;
