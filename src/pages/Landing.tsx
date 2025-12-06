@@ -66,8 +66,8 @@ export default function Landing() {
       {/* Data-driven Background */}
       <HomeBackground />
       
-      {/* RISE Logo at top center */}
-      <div className="absolute top-6 md:top-8 left-1/2 -translate-x-1/2 z-50">
+      {/* RISE Logo at top center - moved up 7px */}
+      <div className="absolute top-[17px] md:top-[25px] left-1/2 -translate-x-1/2 z-50">
         <img 
           src={riseLogoWhite} 
           alt="RISE Football Agency" 
@@ -103,8 +103,8 @@ export default function Landing() {
               <DragNavigator options={desktopNavLinks} />
             </div>
             
-            {/* Language Selector with buttons on either side */}
-            <div className="border-t border-primary/40 pt-3 flex items-center justify-between">
+            {/* Language Selector centered, buttons on either side */}
+            <div className="border-t border-primary/40 pt-3 flex items-center justify-center">
               <Button 
                 onClick={() => setShowRepresentation(true)}
                 variant="outline"
@@ -114,7 +114,9 @@ export default function Landing() {
                 {t("landing.represent_me", "Represent Me")}
               </Button>
               
-              <LanguageMapSelector onOpenChange={setLanguagePopupOpen} />
+              <div className="flex-1 flex justify-center">
+                <LanguageMapSelector onOpenChange={setLanguagePopupOpen} />
+              </div>
               
               <Button 
                 onClick={() => setShowDeclareInterest(true)}

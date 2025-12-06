@@ -212,32 +212,34 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         vec3 glossHighlight = overlayColor.rgb * overlayColor.a * glossPulse * 0.5;
         vec3 compositeColor = shadedBase + glossHighlight;
         
-        // === KIT OVERLAY with sweeping shine reveal using depth map ===
-        if (hasKitOverlay > 0.5 && kitShinePos >= 0.0) {
+        // === KIT OVERLAY - Always visible, with sweeping shine on top ===
+        if (hasKitOverlay > 0.5) {
           vec4 kitColor = texture2D(kitOverlayTexture, parallaxUV);
           
-          // Sample kit depth map for intensity control
+          // Always show kit overlay
+          compositeColor = mix(compositeColor, kitColor.rgb, kitColor.a);
+          
+          // Sample kit depth map for shine intensity control
           float kitDepth = 0.5;
           if (hasKitDepth > 0.5) {
             kitDepth = dot(texture2D(kitDepthTexture, parallaxUV).rgb, vec3(0.299, 0.587, 0.114));
           }
           
-          // Shine band that travels left to right, modulated by depth
-          float shineWidth = 0.15;
-          float shineDist = abs(vUv.x - kitShinePos);
-          float shineMask = 1.0 - smoothstep(0.0, shineWidth, shineDist);
-          
-          // Depth map controls intensity - brighter areas shine more
-          shineMask *= kitDepth;
-          
-          // Add bright glow at the shine center
-          float shineGlow = (1.0 - smoothstep(0.0, shineWidth * 0.3, shineDist)) * 0.6 * kitDepth;
-          
-          // Reveal kit overlay where shine passes
-          compositeColor = mix(compositeColor, kitColor.rgb, kitColor.a * shineMask);
-          
-          // Add bright gold shine highlight
-          compositeColor += brightGold * shineGlow * kitColor.a;
+          // Add sweeping shine effect on top (only when active)
+          if (kitShinePos >= 0.0) {
+            float shineWidth = 0.15;
+            float shineDist = abs(vUv.x - kitShinePos);
+            float shineMask = 1.0 - smoothstep(0.0, shineWidth, shineDist);
+            
+            // Depth map controls intensity - brighter areas shine more
+            shineMask *= kitDepth;
+            
+            // Add bright glow at the shine center
+            float shineGlow = (1.0 - smoothstep(0.0, shineWidth * 0.3, shineDist)) * 0.6 * kitDepth;
+            
+            // Add bright gold shine highlight on top
+            compositeColor += brightGold * shineGlow * kitColor.a;
+          }
         }
         
         // === X-RAY EFFECT ===
