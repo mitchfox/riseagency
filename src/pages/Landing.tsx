@@ -167,7 +167,7 @@ export default function Landing() {
             </nav>
             
             {/* Language Selector - Below with divider */}
-            <div className="pt-2 border-t border-primary/40 w-full flex justify-center">
+            <div className="pt-2.5 border-t border-primary/40 w-full flex justify-center">
               <LanguageMapSelector onOpenChange={setLanguagePopupOpen} />
             </div>
           </div>
