@@ -63,24 +63,6 @@ export const LightConeBackground = () => {
           strokeWidth="0.25"
           opacity="0.4"
         />
-        
-        {/* Center point hint */}
-        <circle 
-          cx="50" 
-          cy="50" 
-          r="1"
-          fill="hsl(var(--primary))"
-          opacity="0.6"
-        />
-        
-        {/* Partial x-axis visible at center */}
-        <line 
-          x1="42" y1="50" 
-          x2="58" y2="50"
-          stroke="hsl(var(--primary))"
-          strokeWidth="0.15"
-          opacity="0.4"
-        />
       </svg>
 
       {/* Top cone and full axes with planes - ONLY VISIBLE WITH X-RAY */}
