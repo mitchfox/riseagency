@@ -47,6 +47,10 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
       const kitDepthPromise = loadImage("/assets/player-kit-depth.png")
       const shadowPromise = loadImage("/assets/player-shadow.png")
       const bwLayerPromise = loadImage("/assets/player-bw-layer.png")
+      
+      // Import white marble from assets
+      const whiteMarbleModule = await import("@/assets/white-marble.png")
+      const whiteMarblePromise = loadImage(whiteMarbleModule.default)
 
       // Yield before heavy zip processing
       await yieldToMain();
@@ -90,7 +94,7 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         if (i % 3 === 0) await yieldToMain();
       }
 
-      const [depthMapImg, depthLightenedImg, depthDarkenedImg, kitOverlayImg, kitDepthImg, shadowImg, bwLayerImg] = await Promise.all([
+      const [depthMapImg, depthLightenedImg, depthDarkenedImg, kitOverlayImg, kitDepthImg, shadowImg, bwLayerImg, whiteMarbleImg] = await Promise.all([
         depthMapPromise, 
         depthLightenedPromise, 
         depthDarkenedPromise,
@@ -98,6 +102,7 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         kitDepthPromise,
         shadowPromise,
         bwLayerPromise,
+        whiteMarblePromise,
         ...imagePromises
       ])
       
@@ -110,7 +115,7 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         return null
       }
       
-      console.log("Images loaded:", { base: !!img5, overlay: !!img2, xray: !!img1, kitOverlay: !!kitOverlayImg, kitDepth: !!kitDepthImg, shadow: !!shadowImg, bwLayer: !!bwLayerImg })
+      console.log("Images loaded:", { base: !!img5, overlay: !!img2, xray: !!img1, kitOverlay: !!kitOverlayImg, kitDepth: !!kitDepthImg, shadow: !!shadowImg, bwLayer: !!bwLayerImg, whiteMarble: !!whiteMarbleImg })
       
       return { 
         baseImage: img5, 
@@ -122,7 +127,8 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         kitOverlay: kitOverlayImg,
         kitDepth: kitDepthImg,
         shadowImage: shadowImg,
-        bwLayerImage: bwLayerImg
+        bwLayerImage: bwLayerImg,
+        whiteMarbleImage: whiteMarbleImg
       }
     } catch (error) {
       console.error("Error loading images:", error)
@@ -155,6 +161,7 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
       uniform sampler2D kitOverlayTexture;
       uniform sampler2D kitDepthTexture;
       uniform sampler2D bwLayerTexture;
+      uniform sampler2D whiteMarbleTexture;
       uniform sampler2D depthMap;
       uniform sampler2D depthLightened;
       uniform sampler2D depthDarkened;
@@ -165,6 +172,7 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
       uniform float hasKitDepth;
       uniform float hasShadow;
       uniform float hasBwLayer;
+      uniform float hasWhiteMarble;
       uniform float time;
       uniform vec2 mousePos;
       uniform float xrayRadius;
@@ -610,11 +618,19 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         if (alpha < 0.1) {
           // OUTSIDE PLAYER (background area)
           if (coreTransparency > 0.05) {
-            // Fluid hovering over background - show WHITE MARBLE
-            vec3 marbleBase = vec3(0.97, 0.97, 0.98);
-            float vein1 = sin(vUv.x * 25.0 + vUv.y * 18.0 + 0.5) * 0.015;
-            float vein2 = sin(vUv.y * 30.0 - vUv.x * 12.0) * 0.01;
-            vec3 marbleColor = marbleBase + vein1 + vein2;
+            // Fluid hovering over background - show WHITE MARBLE from texture
+            vec3 marbleColor;
+            if (hasWhiteMarble > 0.5) {
+              // Sample the white marble texture with tiling
+              vec2 marbleUv = vUv * 2.0;
+              marbleColor = texture2D(whiteMarbleTexture, marbleUv).rgb;
+            } else {
+              // Fallback to procedural marble if texture not loaded
+              vec3 marbleBase = vec3(0.97, 0.97, 0.98);
+              float vein1 = sin(vUv.x * 25.0 + vUv.y * 18.0 + 0.5) * 0.015;
+              float vein2 = sin(vUv.y * 30.0 - vUv.x * 12.0) * 0.01;
+              marbleColor = marbleBase + vein1 + vein2;
+            }
             gl_FragColor = vec4(marbleColor, 1.0);
           } else {
             // No fluid - show BLACK background
@@ -636,7 +652,7 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         return
       }
 
-      const { baseImage, overlayImage, xrayImage, depthMap, depthLightened, depthDarkened, kitOverlay, kitDepth, shadowImage, bwLayerImage } = images
+      const { baseImage, overlayImage, xrayImage, depthMap, depthLightened, depthDarkened, kitOverlay, kitDepth, shadowImage, bwLayerImage, whiteMarbleImage } = images
 
       const scene = new THREE.Scene()
       
@@ -738,6 +754,18 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         bwLayerTexture.minFilter = THREE.LinearFilter
         bwLayerTexture.magFilter = THREE.LinearFilter
       }
+      
+      // Create white marble texture
+      let whiteMarbleTexture: THREE.Texture | null = null
+      
+      if (whiteMarbleImage) {
+        whiteMarbleTexture = new THREE.Texture(whiteMarbleImage)
+        whiteMarbleTexture.needsUpdate = true
+        whiteMarbleTexture.minFilter = THREE.LinearFilter
+        whiteMarbleTexture.magFilter = THREE.LinearFilter
+        whiteMarbleTexture.wrapS = THREE.RepeatWrapping
+        whiteMarbleTexture.wrapT = THREE.RepeatWrapping
+      }
 
       const isMobile = container.clientWidth < 768
       const imgAspect = baseImage.width / baseImage.height
@@ -764,6 +792,8 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         hasShadow: { value: shadowTexture ? 1.0 : 0.0 },
         bwLayerTexture: { value: bwLayerTexture || baseTexture },
         hasBwLayer: { value: bwLayerTexture ? 1.0 : 0.0 },
+        whiteMarbleTexture: { value: whiteMarbleTexture || baseTexture },
+        hasWhiteMarble: { value: whiteMarbleTexture ? 1.0 : 0.0 },
         time: { value: 0 },
         mousePos: { value: new THREE.Vector2(0.5, 0.5) },
         autoPos: { value: new THREE.Vector2(0.5, 0.55) },
