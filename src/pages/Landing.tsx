@@ -171,18 +171,25 @@ function LandingContent() {
       {/* Light Cone Background - revealed by X-Ray */}
       <LightConeBackground />
       
-      {/* RISE Logo - center X, 2/3 down Y, adjusted 3px right and 14px up */}
+      {/* Hidden text revealed by X-ray - REALISE POTENTIAL */}
+      <div className="absolute top-16 md:top-20 left-1/2 transform -translate-x-1/2 z-[5] pointer-events-none">
+        <span className="font-bebas text-4xl md:text-6xl lg:text-7xl tracking-[0.3em] text-white/90 uppercase whitespace-nowrap">
+          REALISE POTENTIAL
+        </span>
+      </div>
+      
+      {/* RISE Logo - center X, 2/3 down Y, adjusted 3px right and 24px up (was 14px) */}
       <div className="absolute z-50" style={{
-      top: 'calc(66.67% - 14px)',
+      top: 'calc(66.67% - 24px)',
       left: 'calc(50% + 3px)',
       transform: 'translateX(-50%)'
     }}>
         <img src={riseLogoWhite} alt="RISE Football Agency" className="h-10 md:h-14 w-auto" loading="eager" fetchPriority="high" />
       </div>
       
-      {/* Language Selector - centered on page, moved down 42px */}
+      {/* Language Selector - centered on page, moved down 52px (was 42px) */}
       <div className="absolute left-1/2 z-50" style={{
-      top: 'calc(50% + 42px)',
+      top: 'calc(50% + 52px)',
       transform: 'translate(-50%, -50%)'
     }}>
         <LanguageMapSelector onOpenChange={setLanguagePopupOpen} className="mx-[20px]" />

@@ -224,16 +224,16 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         return 130.0 * dot(m, g);
       }
       
-      // Flow-based FBM for smooth organic distortion (NOT radial)
+      // Flow-based FBM for smooth organic distortion (NOT radial) - HIGH RESOLUTION
       float flowFBM(vec2 p, float t) {
         float value = 0.0;
         float amplitude = 0.5;
         vec2 flow = vec2(t * 0.15, t * 0.1);
-        for (int i = 0; i < 3; i++) {
+        for (int i = 0; i < 5; i++) {
           value += amplitude * snoise(p + flow);
-          p *= 2.1;
-          flow *= 1.3;
-          amplitude *= 0.5;
+          p *= 2.0;
+          flow *= 1.25;
+          amplitude *= 0.55;
         }
         return value;
       }
@@ -260,60 +260,62 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
       }
       
       // ============= MAIN WATER BLOB FUNCTION =============
-      // Creates smooth, organic water-like blob using SDF with flow distortion
+      // Creates smooth, organic water-like blob using SDF with flow distortion - HIGH RESOLUTION
       float waterBlob(vec2 uv, vec2 center, float baseRadius, float timeOffset) {
-        // Flow-based distortion applied to UV space (NOT radial like before)
+        // Flow-based distortion applied to UV space (NOT radial like before) - MORE DETAIL
         vec2 flowDistort = vec2(
-          flowFBM(uv * 4.0 + timeOffset, noiseTime * 0.8) * 0.04,
-          flowFBM(uv * 4.0 + timeOffset + 100.0, noiseTime * 0.7) * 0.04
+          flowFBM(uv * 8.0 + timeOffset, noiseTime * 0.8) * 0.035,
+          flowFBM(uv * 8.0 + timeOffset + 100.0, noiseTime * 0.7) * 0.035
         );
         vec2 distortedUV = uv + flowDistort;
         
         // Base circle SDF
         float dist = circleSDF(distortedUV, center, baseRadius);
         
-        // Add flowing edge distortion (smooth waves, not spiky)
-        float edgeWave = flowFBM(uv * 6.0 + center * 3.0 + timeOffset, noiseTime * 0.5) * 0.025;
-        dist += edgeWave;
+        // Add flowing edge distortion (smooth waves, not spiky) - HIGHER DETAIL
+        float edgeWave = flowFBM(uv * 12.0 + center * 5.0 + timeOffset, noiseTime * 0.5) * 0.02;
+        float edgeWave2 = flowFBM(uv * 20.0 + center * 8.0 + timeOffset * 1.5, noiseTime * 0.7) * 0.01;
+        dist += edgeWave + edgeWave2;
         
-        // Soft, smooth edge
-        return 1.0 - smoothstep(-0.02, 0.04, dist);
+        // Sharper, more defined edge
+        return 1.0 - smoothstep(-0.015, 0.03, dist);
       }
       
       // ============= CONNECTED WATER LOBES =============
-      // Creates 2-3 smaller connected blobs that merge into main mass
+      // Creates 2-3 smaller connected blobs that merge into main mass - HIGH RESOLUTION
       float waterLobes(vec2 uv, vec2 center, float baseRadius, vec2 velocity, float speed, float timeOffset) {
         float combinedSDF = circleSDF(uv, center, baseRadius);
         
-        // Generate 3 connected lobes with noise-driven positions
-        for (int i = 0; i < 3; i++) {
+        // Generate 4 connected lobes with noise-driven positions for more detail
+        for (int i = 0; i < 4; i++) {
           float fi = float(i);
           
-          // Lobe offset driven by smooth noise (not angle-based)
+          // Lobe offset driven by smooth noise (not angle-based) - MORE DETAIL
           vec2 lobeOffset = vec2(
-            snoise(vec2(fi * 3.0 + timeOffset, noiseTime * 0.3)) * 0.12,
-            snoise(vec2(fi * 3.0 + 50.0 + timeOffset, noiseTime * 0.25)) * 0.12
+            snoise(vec2(fi * 3.5 + timeOffset, noiseTime * 0.35)) * 0.14,
+            snoise(vec2(fi * 3.5 + 50.0 + timeOffset, noiseTime * 0.28)) * 0.14
           );
           
           // Add velocity bias - lobes extend more in movement direction
           if (speed > 0.02) {
-            lobeOffset += velocity * (0.06 + fi * 0.03);
+            lobeOffset += velocity * (0.07 + fi * 0.025);
           }
           
           vec2 lobeCenter = center + lobeOffset;
-          float lobeRadius = baseRadius * (0.4 + snoise(vec2(fi, noiseTime * 0.4)) * 0.15);
+          float lobeRadius = baseRadius * (0.35 + snoise(vec2(fi, noiseTime * 0.45)) * 0.18);
           
           float lobeSDF = circleSDF(uv, lobeCenter, lobeRadius);
           
-          // Smooth-min blend creates organic connection
-          combinedSDF = smin(combinedSDF, lobeSDF, 0.08);
+          // Smooth-min blend creates organic connection - tighter blend
+          combinedSDF = smin(combinedSDF, lobeSDF, 0.06);
         }
         
-        // Apply flow distortion to the combined SDF
-        float flowDistort = flowFBM(uv * 5.0 + timeOffset, noiseTime * 0.6) * 0.02;
-        combinedSDF += flowDistort;
+        // Apply flow distortion to the combined SDF - HIGHER RESOLUTION
+        float flowDistort = flowFBM(uv * 10.0 + timeOffset, noiseTime * 0.6) * 0.018;
+        float flowDistort2 = flowFBM(uv * 18.0 + timeOffset * 1.3, noiseTime * 0.8) * 0.008;
+        combinedSDF += flowDistort + flowDistort2;
         
-        return 1.0 - smoothstep(-0.015, 0.035, combinedSDF);
+        return 1.0 - smoothstep(-0.012, 0.028, combinedSDF);
       }
       
       // ============= FLUID TRAIL (Capsule-based) =============
