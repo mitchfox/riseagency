@@ -102,7 +102,7 @@ export const LanguageMapSelector = ({ onOpenChange, className }: LanguageMapSele
       {/* Modal Overlay - rendered via portal to escape overflow:hidden */}
       {open && createPortal(
         <div 
-          className="fixed inset-0 z-[9999] flex items-end justify-center pb-20 md:pb-24"
+          className="fixed inset-0 z-[99] flex items-end justify-center pb-20 md:pb-24"
           onClick={() => handleOpenChange(false)}
         >
           {/* Backdrop */}
@@ -110,7 +110,7 @@ export const LanguageMapSelector = ({ onOpenChange, className }: LanguageMapSele
           
           {/* Content */}
           <div 
-            className="relative bg-black/95 border border-primary/30 max-w-4xl w-full mx-4 overflow-hidden rounded-lg"
+            className="relative bg-black/95 border border-primary/30 max-w-4xl w-full mx-4 overflow-hidden rounded-lg z-[9999]"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Close Button */}

@@ -184,7 +184,7 @@ function LandingContent() {
       </div>
       
       {/* Language Selector - centered on page, moved down 72px, right 10px */}
-      <div className="absolute z-[100] pointer-events-auto" style={{
+      <div className="absolute z-[50] pointer-events-auto" style={{
       top: 'calc(50% + 72px)',
       left: 'calc(50% + 10px)',
       transform: 'translate(-50%, -50%)'
@@ -261,6 +261,13 @@ function LandingContent() {
                     </div>)}
                 </nav>
               </div>
+              
+              {/* Select role text */}
+              <div className="text-center pt-2">
+                <span className="text-xs font-bebas uppercase tracking-[0.2em] text-white/40">
+                  Select Your Role To Enter Site
+                </span>
+              </div>
             </div>
 
             {/* Mobile Layout - pushed down with proper divider lines */}
@@ -306,6 +313,13 @@ function LandingContent() {
                       {index < 3 && <div className="w-px h-3 bg-primary/40" />}
                     </div>)}
                 </nav>
+              </div>
+              
+              {/* Select role text - mobile */}
+              <div className="text-center pt-1">
+                <span className="text-[10px] font-bebas uppercase tracking-[0.15em] text-white/40">
+                  Select Your Role To Enter Site
+                </span>
               </div>
             </div>
           </div>
