@@ -14,6 +14,8 @@ import { Building2, FileText, Users, TrendingUp, MessageSquare, Plus, Loader2, S
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ClubOutreachManagement } from "./ClubOutreachManagement";
+import { TransferStatusManagement } from "./TransferStatusManagement";
+import { AgentNotesManagement } from "./AgentNotesManagement";
 
 interface Player {
   id: string;
@@ -107,7 +109,7 @@ export const TransferHub = ({ isAdmin }: { isAdmin: boolean }) => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 gap-2 h-auto p-2 bg-muted">
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-5 gap-2 h-auto p-2 bg-muted">
           <TabsTrigger value="outreach" className="font-medium text-sm">
             <Building2 className="h-4 w-4 mr-2" />
             Club Outreach
@@ -118,7 +120,11 @@ export const TransferHub = ({ isAdmin }: { isAdmin: boolean }) => {
           </TabsTrigger>
           <TabsTrigger value="market" className="font-medium text-sm">
             <TrendingUp className="h-4 w-4 mr-2" />
-            Market Status
+            Transfer Status
+          </TabsTrigger>
+          <TabsTrigger value="notes" className="font-medium text-sm">
+            <MessageSquare className="h-4 w-4 mr-2" />
+            Agent Notes
           </TabsTrigger>
           <TabsTrigger value="contracts" className="font-medium text-sm">
             <FileText className="h-4 w-4 mr-2" />
@@ -180,21 +186,11 @@ export const TransferHub = ({ isAdmin }: { isAdmin: boolean }) => {
         </TabsContent>
 
         <TabsContent value="market" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5" />
-                Market Activity
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8 text-muted-foreground">
-                <TrendingUp className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p className="text-lg font-medium mb-2">Market Intelligence</p>
-                <p className="text-sm">Track transfer market activity, rumours, and valuations for your players.</p>
-              </div>
-            </CardContent>
-          </Card>
+          <TransferStatusManagement players={players} selectedPlayer={selectedPlayer} />
+        </TabsContent>
+
+        <TabsContent value="notes" className="mt-6">
+          <AgentNotesManagement players={players} selectedPlayer={selectedPlayer} />
         </TabsContent>
 
         <TabsContent value="contracts" className="mt-6">

@@ -9,6 +9,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Lock, Unlock, Building2, FileText, TrendingUp, MessageSquare, Key } from "lucide-react";
 import { toast } from "sonner";
 import { PlayerClubInterest } from "@/components/PlayerClubInterest";
+import { PlayerTransferStatus } from "./PlayerTransferStatus";
+import { PlayerAgentNotes } from "./PlayerAgentNotes";
 
 interface PlayerTransferHubProps {
   playerId: string;
@@ -176,51 +178,11 @@ export const PlayerTransferHub = ({ playerId }: PlayerTransferHubProps) => {
         </TabsContent>
 
         <TabsContent value="status" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5" />
-                Your Transfer Status
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                <div className="text-center py-6 border rounded-lg bg-muted/30">
-                  <p className="text-lg font-semibold text-primary mb-2">Active Representation</p>
-                  <p className="text-sm text-muted-foreground">
-                    We are actively working on your behalf to find the best opportunities.
-                  </p>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="border rounded-lg p-4">
-                    <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Market Position</p>
-                    <p className="text-lg font-semibold">Actively Marketed</p>
-                  </div>
-                  <div className="border rounded-lg p-4">
-                    <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Agent Activity</p>
-                    <p className="text-lg font-semibold">High Priority</p>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <PlayerTransferStatus playerId={playerId} />
         </TabsContent>
 
         <TabsContent value="notes" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <MessageSquare className="h-5 w-5" />
-                Notes from Your Agent
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8 text-muted-foreground">
-                <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p className="text-sm">No notes yet. Your agent will update you here with important information.</p>
-              </div>
-            </CardContent>
-          </Card>
+          <PlayerAgentNotes playerId={playerId} />
         </TabsContent>
       </Tabs>
 
