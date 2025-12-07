@@ -3,16 +3,8 @@ import { useXRay } from "@/contexts/XRayContext";
 export const LightConeBackground = () => {
   const { xrayState } = useXRay();
   
-  // Calculate visibility based on x-ray intensity
+  // Calculate visibility based on x-ray intensity - NO MASK, full page visibility
   const xrayOpacity = xrayState.isActive ? xrayState.intensity : 0;
-  
-  // Create radial mask centered on x-ray position (only for top cone)
-  const maskX = xrayState.position.x * 100;
-  const maskY = xrayState.position.y * 100;
-  const topConeMaskStyle = xrayOpacity > 0 ? {
-    WebkitMaskImage: `radial-gradient(circle 400px at ${maskX}% ${100 - maskY}%, black 0%, transparent 100%)`,
-    maskImage: `radial-gradient(circle 400px at ${maskX}% ${100 - maskY}%, black 0%, transparent 100%)`,
-  } : {};
 
   return (
     <div className="fixed inset-0 overflow-hidden pointer-events-none z-[1]">
@@ -65,15 +57,14 @@ export const LightConeBackground = () => {
         />
       </svg>
 
-      {/* Top cone and full axes with planes - ONLY VISIBLE WITH X-RAY */}
+      {/* Top cone and full axes with planes - ONLY VISIBLE WITH X-RAY - NO MASK */}
       {xrayOpacity > 0 && (
         <svg 
           className="absolute inset-0 w-full h-full"
           viewBox="0 0 100 100"
           preserveAspectRatio="none"
           style={{ 
-            opacity: xrayOpacity * 0.8,
-            ...topConeMaskStyle
+            opacity: xrayOpacity * 0.9
           }}
         >
           <defs>
@@ -126,78 +117,81 @@ export const LightConeBackground = () => {
             opacity="0.5"
           />
           
-          {/* ===== AXIS PLANES ===== */}
+          {/* ===== 3D AXIS PLANES - Proper isometric perspective ===== */}
           
-          {/* XY Plane (horizontal rectangle at center) */}
+          {/* XY Plane - Horizontal plane at origin, viewed from above at angle */}
+          {/* Forms a diamond/rhombus shape in isometric view */}
           <polygon 
-            points="30,40 70,40 70,60 30,60"
+            points="50,42 75,50 50,58 25,50"
             fill="hsl(var(--primary))"
-            opacity="0.08"
+            opacity="0.25"
             stroke="hsl(var(--primary))"
-            strokeWidth="0.15"
+            strokeWidth="0.3"
           />
           
-          {/* XZ Plane (tilted rectangle - green tint) */}
+          {/* XZ Plane - Vertical plane facing viewer (front wall) */}
+          {/* Green-tinted, stands upright */}
           <polygon 
-            points="30,50 50,38 70,50 50,62"
+            points="25,50 50,42 50,25 25,33"
             fill="hsl(142, 76%, 50%)"
-            opacity="0.06"
+            opacity="0.2"
             stroke="hsl(142, 76%, 50%)"
-            strokeWidth="0.15"
+            strokeWidth="0.3"
           />
           
-          {/* YZ Plane (vertical rectangle - yellow tint) */}
+          {/* YZ Plane - Vertical plane perpendicular to viewer (side wall) */}
+          {/* Yellow-tinted, goes into depth */}
           <polygon 
-            points="50,35 60,42 50,65 40,58"
+            points="50,42 75,50 75,33 50,25"
             fill="hsl(48, 96%, 53%)"
-            opacity="0.06"
+            opacity="0.2"
             stroke="hsl(48, 96%, 53%)"
-            strokeWidth="0.15"
+            strokeWidth="0.3"
           />
           
           {/* ===== AXES ===== */}
           
-          {/* X-axis (horizontal) - full width */}
+          {/* X-axis - goes left from origin (isometric left) */}
           <line 
-            x1="5" y1="50" 
-            x2="95" y2="50"
+            x1="50" y1="50" 
+            x2="10" y2="66"
             stroke="hsl(var(--primary))"
-            strokeWidth="0.25"
+            strokeWidth="0.4"
             opacity="0.9"
             filter="url(#coneGlow)"
           />
-          <text x="96" y="51" fill="hsl(var(--primary))" fontSize="3" opacity="0.8" fontFamily="monospace">x</text>
+          <text x="6" y="70" fill="hsl(var(--primary))" fontSize="3" opacity="0.9" fontFamily="monospace" fontWeight="bold">x</text>
           
-          {/* Y-axis (vertical at center going up/down slightly) */}
+          {/* Y-axis - goes up from origin (vertical) */}
           <line 
-            x1="50" y1="35" 
-            x2="50" y2="65"
+            x1="50" y1="50" 
+            x2="50" y2="15"
             stroke="hsl(48, 96%, 53%)"
-            strokeWidth="0.25"
-            opacity="0.7"
+            strokeWidth="0.4"
+            opacity="0.9"
           />
-          <text x="51" y="33" fill="hsl(48, 96%, 53%)" fontSize="3" opacity="0.7" fontFamily="monospace">y</text>
+          <text x="52" y="12" fill="hsl(48, 96%, 53%)" fontSize="3" opacity="0.9" fontFamily="monospace" fontWeight="bold">y</text>
           
-          {/* Z-axis (depth - diagonal) */}
+          {/* Z-axis - goes right from origin (isometric right/depth) */}
           <line 
-            x1="38" y1="58" 
-            x2="62" y2="42"
+            x1="50" y1="50" 
+            x2="90" y2="66"
             stroke="hsl(142, 76%, 50%)"
-            strokeWidth="0.25"
-            opacity="0.7"
+            strokeWidth="0.4"
+            opacity="0.9"
           />
-          <text x="63" y="40" fill="hsl(142, 76%, 50%)" fontSize="3" opacity="0.7" fontFamily="monospace">z</text>
+          <text x="92" y="70" fill="hsl(142, 76%, 50%)" fontSize="3" opacity="0.9" fontFamily="monospace" fontWeight="bold">z</text>
           
-          {/* Time axis (vertical through cones) */}
+          {/* Time axis (vertical through cones - dashed) */}
           <line 
             x1="50" y1="0" 
             x2="50" y2="100"
             stroke="white"
-            strokeWidth="0.15"
-            opacity="0.4"
+            strokeWidth="0.2"
+            opacity="0.5"
             strokeDasharray="2,2"
           />
-          <text x="52" y="4" fill="white" fontSize="2.5" opacity="0.6" fontFamily="monospace">time</text>
+          <text x="52" y="4" fill="white" fontSize="2.5" opacity="0.7" fontFamily="monospace">time</text>
           
           {/* Center point glow */}
           <circle 
@@ -215,8 +209,6 @@ export const LightConeBackground = () => {
             fill="white"
             opacity="0.9"
           />
-          
-          {/* Labels removed */}
         </svg>
       )}
     </div>
