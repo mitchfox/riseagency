@@ -209,10 +209,6 @@ function LandingContent() {
         <div className="relative max-w-6xl mx-auto" style={{
         minHeight: '180px'
       }}>
-          {/* Subtle backdrop for menu readability */}
-          <div className="absolute inset-0 backdrop-blur-sm pointer-events-none bg-black/30" style={{
-          clipPath: 'polygon(50% 15%, 100% 100%, 0% 100%)'
-        }} />
           
           {/* Content container - pushed down to align with triangle body */}
           <div className="relative z-10 px-4 md:px-8 pt-12 md:pt-10 pb-1 md:py-3">
