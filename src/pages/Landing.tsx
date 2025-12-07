@@ -180,7 +180,7 @@ function LandingContent() {
       left: 'calc(50% + 3px)',
       transform: 'translateX(-50%)'
     }}>
-        <img src={riseLogoWhite} alt="RISE Football Agency" className="h-10 md:h-14 w-auto" loading="eager" fetchPriority="high" />
+        <img src={riseLogoWhite} alt="RISE Football Agency" className="h-[46px] md:h-[64px] w-auto" loading="eager" fetchPriority="high" />
       </div>
       
       {/* Language Selector - centered on page, moved down 76px, right 11px */}
@@ -224,11 +224,11 @@ function LandingContent() {
               maxWidth: '42%'
             }}>
                 <div className="flex items-center justify-center gap-3">
-                  <Button onClick={() => setShowRepresentation(true)} variant="outline" size="sm" className="font-bebas uppercase tracking-wider border-primary/50 text-primary hover:bg-primary/10 hover:text-primary px-3 h-7 text-xs" hoverEffect>
+                  <Button onClick={() => setShowRepresentation(true)} variant="outline" size="sm" className="font-bebas uppercase tracking-wider border-primary/50 text-primary hover:bg-primary/10 hover:text-primary px-3.5 h-8 text-sm" hoverEffect>
                     {t("landing.represent_me", "Represent Me")}
                   </Button>
                   
-                  <Button onClick={() => setShowDeclareInterest(true)} size="sm" className="btn-shine font-bebas uppercase tracking-wider px-3 h-7 text-xs" hoverEffect>
+                  <Button onClick={() => setShowDeclareInterest(true)} size="sm" className="btn-shine font-bebas uppercase tracking-wider px-3.5 h-8 text-sm" hoverEffect>
                     {t("landing.declare_interest", "Declare Interest In Star")}
                   </Button>
                 </div>
@@ -271,10 +271,10 @@ function LandingContent() {
               width: '45%'
             }}>
                 <div className="flex gap-2">
-                  <Button onClick={() => setShowRepresentation(true)} variant="outline" size="sm" className="font-bebas uppercase tracking-wider border-primary/50 text-primary hover:bg-primary/10 hover:text-primary text-[10px] px-2 h-5" hoverEffect>
+                  <Button onClick={() => setShowRepresentation(true)} variant="outline" size="sm" className="font-bebas uppercase tracking-wider border-primary/50 text-primary hover:bg-primary/10 hover:text-primary text-[11.5px] px-2.5 h-6" hoverEffect>
                     {t("landing.represent_me", "Represent Me")}
                   </Button>
-                  <Button onClick={() => setShowDeclareInterest(true)} size="sm" className="btn-shine font-bebas uppercase tracking-wider text-[10px] px-2 h-5" hoverEffect>
+                  <Button onClick={() => setShowDeclareInterest(true)} size="sm" className="btn-shine font-bebas uppercase tracking-wider text-[11.5px] px-2.5 h-6" hoverEffect>
                     {t("landing.declare_interest_short", "Declare Interest")}
                   </Button>
                 </div>
