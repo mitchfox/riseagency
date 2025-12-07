@@ -812,7 +812,7 @@ const Staff = () => {
         </button>
 
         {/* Left Sidebar - Fixed */}
-        <div className={`fixed ${isMobile ? 'top-16' : 'top-16'} left-0 bottom-0 border-r bg-muted/30 backdrop-blur-sm flex flex-col items-start py-4 gap-2 overflow-y-auto z-10 transition-all duration-300 ${
+        <div className={`fixed ${isMobile ? 'top-16' : 'top-16'} left-0 bottom-0 border-r bg-muted/30 backdrop-blur-sm flex flex-col items-start py-4 gap-2 overflow-y-auto scrollbar-thin z-10 transition-all duration-300 ${
           sidebarCollapsed ? 'w-0 border-0 opacity-0 pointer-events-none' : 'w-14 md:w-24'
         }`}>
           {/* Search Button */}
@@ -909,7 +909,7 @@ const Staff = () => {
         </div>
 
         {/* Main Content Area */}
-        <main className={`flex-1 overflow-y-auto relative z-10 transition-all duration-300 pt-20 ${
+        <main className={`flex-1 overflow-y-auto scrollbar-thin relative z-10 transition-all duration-300 pt-20 ${
           sidebarCollapsed ? 'ml-0' : 'ml-14 md:ml-24'
         } ${isMobile ? 'pb-[60px]' : ''}`}>
           {expandedSection ? (
@@ -990,7 +990,7 @@ const Staff = () => {
                   <Menu className="h-5 w-5" />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="left" className="w-64 p-4 overflow-y-auto">
+              <SheetContent side="left" className="w-64 p-4 overflow-y-auto scrollbar-thin">
                 <div className="space-y-6">
                   {filteredCategories.map((category) => (
                     <div key={category.id} className="space-y-2">
