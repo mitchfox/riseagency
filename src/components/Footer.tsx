@@ -38,16 +38,16 @@ export const Footer = () => {
                 {t("footer.stars", "Stars")}
               </LocalizedLink>
               <SubdomainLink role="players" className="text-muted-foreground hover:text-primary transition-colors">
-                {t("footer.players", "Players")}
+                {t("footer.players", "Player")}
               </SubdomainLink>
               <SubdomainLink role="clubs" className="text-muted-foreground hover:text-primary transition-colors">
-                {t("footer.clubs", "Clubs")}
+                {t("footer.clubs", "Club")}
               </SubdomainLink>
               <SubdomainLink role="coaches" className="text-muted-foreground hover:text-primary transition-colors">
-                {t("footer.coaches", "Coaches")}
+                {t("footer.coaches", "Coach")}
               </SubdomainLink>
               <SubdomainLink role="scouts" className="text-muted-foreground hover:text-primary transition-colors">
-                {t("footer.scouts", "Scouts")}
+                {t("footer.scouts", "Scout")}
               </SubdomainLink>
               <LocalizedLink to="/performance" className="text-muted-foreground hover:text-primary transition-colors">
                 {t("footer.realise_potential", "Realise Potential")}
