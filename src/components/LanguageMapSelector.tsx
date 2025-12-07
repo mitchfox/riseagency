@@ -9,24 +9,26 @@ interface LanguageRegion {
   code: LanguageCode;
   name: string;
   nativeName: string;
-  flag: string;
+  flagCode: string;
   // Position on map (percentage)
   x: number;
   y: number;
 }
 
+const getFlagUrl = (flagCode: string) => `https://flagcdn.com/w40/${flagCode}.png`;
+
 // Positions are percentages - will adjust based on feedback
 const languageRegions: LanguageRegion[] = [
-  { code: "en", name: "English", nativeName: "English", flag: "🇬🇧", x: 30, y: 60 },
-  { code: "es", name: "Spanish", nativeName: "Español", flag: "🇪🇸", x: 29, y: 87 },
-  { code: "pt", name: "Portuguese", nativeName: "Português", flag: "🇵🇹", x: 25, y: 90 },
-  { code: "fr", name: "French", nativeName: "Français", flag: "🇫🇷", x: 34, y: 73 },
-  { code: "de", name: "German", nativeName: "Deutsch", flag: "🇩🇪", x: 43, y: 63 },
-  { code: "it", name: "Italian", nativeName: "Italiano", flag: "🇮🇹", x: 43, y: 80 },
-  { code: "pl", name: "Polish", nativeName: "Polski", flag: "🇵🇱", x: 50, y: 62 },
-  { code: "cs", name: "Czech", nativeName: "Čeština", flag: "🇨🇿", x: 47, y: 70 },
-  { code: "ru", name: "Russian", nativeName: "Русский", flag: "🇷🇺", x: 67, y: 50 },
-  { code: "tr", name: "Turkish", nativeName: "Türkçe", flag: "🇹🇷", x: 65, y: 90 },
+  { code: "en", name: "English", nativeName: "English", flagCode: "gb", x: 30, y: 60 },
+  { code: "es", name: "Spanish", nativeName: "Español", flagCode: "es", x: 29, y: 87 },
+  { code: "pt", name: "Portuguese", nativeName: "Português", flagCode: "pt", x: 25, y: 90 },
+  { code: "fr", name: "French", nativeName: "Français", flagCode: "fr", x: 34, y: 73 },
+  { code: "de", name: "German", nativeName: "Deutsch", flagCode: "de", x: 43, y: 63 },
+  { code: "it", name: "Italian", nativeName: "Italiano", flagCode: "it", x: 43, y: 80 },
+  { code: "pl", name: "Polish", nativeName: "Polski", flagCode: "pl", x: 50, y: 62 },
+  { code: "cs", name: "Czech", nativeName: "Čeština", flagCode: "cz", x: 47, y: 70 },
+  { code: "ru", name: "Russian", nativeName: "Русский", flagCode: "ru", x: 67, y: 50 },
+  { code: "tr", name: "Turkish", nativeName: "Türkçe", flagCode: "tr", x: 65, y: 90 },
 ];
 
 interface LanguageMapSelectorProps {
@@ -59,7 +61,7 @@ export const LanguageMapSelector = ({ onOpenChange, className }: LanguageMapSele
         onClick={() => handleOpenChange(true)}
         className="flex items-center gap-1.5 text-xs md:text-sm font-bebas uppercase tracking-wider text-foreground hover:text-primary transition-all duration-300 focus:outline-none cursor-pointer"
       >
-        <span className="text-base">{selectedLanguage.flag}</span>
+        <img src={getFlagUrl(selectedLanguage.flagCode)} alt={selectedLanguage.name} className="w-5 h-auto rounded-sm" />
         <span>{selectedLanguage.code.toUpperCase()}</span>
         <Globe className="w-3 h-3 ml-0.5" />
       </button>
@@ -136,7 +138,7 @@ export const LanguageMapSelector = ({ onOpenChange, className }: LanguageMapSele
                         }
                       `}
                     >
-                      <span className="text-xl md:text-2xl">{region.flag}</span>
+                      <img src={getFlagUrl(region.flagCode)} alt={region.name} className="w-6 h-auto md:w-7 rounded-sm" />
                     </span>
                     
                     {/* Label */}
@@ -168,7 +170,7 @@ export const LanguageMapSelector = ({ onOpenChange, className }: LanguageMapSele
               {/* Current selection indicator */}
               <div className="absolute bottom-4 left-0 right-0 text-center">
                 <span className="text-sm font-bebas uppercase tracking-wider text-white/60">
-                  Current: <span className="text-primary">{selectedLanguage.flag} {selectedLanguage.nativeName}</span>
+                  Current: <span className="text-primary inline-flex items-center gap-1"><img src={getFlagUrl(selectedLanguage.flagCode)} alt="" className="w-4 h-auto rounded-sm" /> {selectedLanguage.nativeName}</span>
                 </span>
               </div>
             </div>
