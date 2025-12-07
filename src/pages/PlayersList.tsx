@@ -358,7 +358,6 @@ const PlayersList = () => {
       <DeclareInterestPlayerDialog 
         open={declareInterestOpen} 
         onOpenChange={setDeclareInterestOpen}
-        starsOnly
       />
       
       <ContactDialog 
