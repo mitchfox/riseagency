@@ -201,7 +201,7 @@ function LandingContent() {
       {!languagePopupOpen && <div className="absolute inset-0 pointer-events-none z-10" style={{
       transform: 'translateX(-3px)'
     }}>
-          <LazyPlayer3D className="pointer-events-auto" />
+          <LazyPlayer3D className="pointer-events-none" />
         </div>}
 
       {/* Bottom Section - Menu area */}
