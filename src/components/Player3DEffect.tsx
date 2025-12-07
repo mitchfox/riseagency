@@ -927,44 +927,6 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
       let trail4Opacity = 0
       
       let lastCursorMoveTime = Date.now()
-      
-      // Phantom touch (auto-swipe) timing
-      let lastPhantomTime = Date.now()
-      const PHANTOM_INTERVAL = 1200
-      
-      interface PhantomSwipe {
-        startTime: number
-        duration: number
-        start: { x: number; y: number }
-        end: { x: number; y: number }
-      }
-      const activePhantoms: PhantomSwipe[] = []
-      
-      const generatePhantomSwipe = (): PhantomSwipe => {
-        const startX = cursorBlobTarget.x >= 0 ? cursorBlobTarget.x : 0.5
-        const startY = cursorBlobTarget.y >= 0 ? cursorBlobTarget.y : 0.5
-        
-        const isLongSwipe = Math.random() < 0.3
-        const duration = isLongSwipe 
-          ? 3000 + Math.random() * 2000
-          : 800 + Math.random() * 700
-        
-        const baseLength = isLongSwipe ? 0.3 : 0.15
-        const lengthVariance = isLongSwipe ? 0.3 : 0.25
-        
-        const angle = Math.random() * Math.PI * 2
-        const length = baseLength + Math.random() * lengthVariance
-        
-        return {
-          startTime: Date.now(),
-          duration,
-          start: { x: startX, y: startY },
-          end: {
-            x: Math.max(0.1, Math.min(0.9, startX + Math.cos(angle) * length)),
-            y: Math.max(0.1, Math.min(0.9, startY + Math.sin(angle) * length))
-          }
-        }
-      }
 
       const animate = () => {
         animationId = requestAnimationFrame(animate)
@@ -1012,58 +974,6 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         const userTimeSinceInteraction = currentTime - lastInteractionRef.current
         const isUserActive = userTimeSinceInteraction < 500
         
-        // === PHANTOM TOUCH (Auto-swipe when user inactive) ===
-        if (!isUserActive) {
-          const timeSincePhantom = currentTime - lastPhantomTime
-          
-          if (timeSincePhantom >= PHANTOM_INTERVAL) {
-            activePhantoms.push(generatePhantomSwipe())
-            lastPhantomTime = currentTime
-          }
-          
-          // Remove completed phantoms
-          for (let i = activePhantoms.length - 1; i >= 0; i--) {
-            const phantom = activePhantoms[i]
-            const phantomElapsed = currentTime - phantom.startTime
-            const phantomProgress = phantomElapsed / phantom.duration
-            
-            if (phantomProgress >= 1) {
-              activePhantoms.splice(i, 1)
-            }
-          }
-          
-          // Follow the newest phantom
-          if (activePhantoms.length > 0) {
-            const newestPhantom = activePhantoms[activePhantoms.length - 1]
-            const phantomElapsed = currentTime - newestPhantom.startTime
-            const phantomProgress = phantomElapsed / newestPhantom.duration
-            
-            const easedProgress = phantomProgress < 0.5
-              ? 2 * phantomProgress * phantomProgress
-              : 1 - Math.pow(-2 * phantomProgress + 2, 2) / 2
-            
-            mouseX = newestPhantom.start.x + (newestPhantom.end.x - newestPhantom.start.x) * easedProgress
-            mouseY = newestPhantom.start.y + (newestPhantom.end.y - newestPhantom.start.y) * easedProgress
-            
-            // Update velocity for phantom
-            if (cursorBlobTarget.x >= 0) {
-              velocity.x = mouseX - cursorBlobTarget.x
-              velocity.y = mouseY - cursorBlobTarget.y
-              speed = Math.sqrt(velocity.x * velocity.x + velocity.y * velocity.y)
-              if (speed > 0.001) {
-                velocity.x /= speed
-                velocity.y /= speed
-              }
-              speed = Math.min(speed * 15, 1.0)
-            }
-            
-            cursorBlobTarget.x = mouseX
-            cursorBlobTarget.y = mouseY
-            lastCursorMoveTime = currentTime
-          }
-        } else {
-          lastPhantomTime = currentTime
-        }
         
         // Update cursor target and track velocity (for real user input)
         if (isUserActive) {
@@ -1132,30 +1042,13 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         xrayOverlayUniforms.trailOpacity3.value = trail3Opacity
         xrayOverlayUniforms.trailOpacity4.value = trail4Opacity
         
-        // Set phantom mode
-        xrayOverlayUniforms.isPhantomMode.value = (!isUserActive && activePhantoms.length > 0) ? 1.0 : 0.0
+        // Disable phantom mode - only cursor interaction
+        xrayOverlayUniforms.isPhantomMode.value = 0.0
         
-        // === AUTONOMOUS AMBIENT BLOBS ===
-        const ambientSpeed = 0.06
-        const t = uniforms.time.value
-        
-        const amb1NoiseX = Math.sin(t * 0.13) * 0.05
-        const amb1NoiseY = Math.cos(t * 0.17) * 0.04
-        const amb1X = 0.5 + Math.sin(t * ambientSpeed * 1.1) * 0.32 + amb1NoiseX
-        const amb1Y = 0.5 + Math.sin(t * ambientSpeed * 0.7 + 1.0) * 0.28 + amb1NoiseY
-        xrayOverlayUniforms.ambientBlob1Pos.value.set(amb1X, amb1Y)
-        
-        const amb2NoiseX = Math.sin(t * 0.19 + 2.0) * 0.04
-        const amb2NoiseY = Math.cos(t * 0.23 + 1.5) * 0.05
-        const amb2X = 0.5 + Math.sin(t * ambientSpeed * 0.6 + 2.5) * 0.38 + amb2NoiseX
-        const amb2Y = 0.5 + Math.cos(t * ambientSpeed * 0.9) * 0.32 + amb2NoiseY
-        xrayOverlayUniforms.ambientBlob2Pos.value.set(amb2X, amb2Y)
-        
-        const amb3NoiseX = Math.sin(t * 0.31) * 0.06
-        const amb3NoiseY = Math.cos(t * 0.29 + 0.7) * 0.05
-        const amb3X = 0.5 + Math.cos(t * ambientSpeed * 0.85 + 0.5) * 0.28 + amb3NoiseX
-        const amb3Y = 0.5 + Math.sin(t * ambientSpeed * 1.2 + 1.8) * 0.24 + amb3NoiseY
-        xrayOverlayUniforms.ambientBlob3Pos.value.set(amb3X, amb3Y)
+        // Hide ambient blobs by moving them off-screen
+        xrayOverlayUniforms.ambientBlob1Pos.value.set(-2, -2)
+        xrayOverlayUniforms.ambientBlob2Pos.value.set(-2, -2)
+        xrayOverlayUniforms.ambientBlob3Pos.value.set(-2, -2)
         
         // === KIT SHINE ANIMATION ===
         if (shineCycleTime < SHINE_DURATION) {
@@ -1217,11 +1110,8 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         
         uniforms.autoPos.value.set(autoRevealPosRef.current.x, autoRevealPosRef.current.y)
         
-        // Check if phantom touch is active
-        const isPhantomActive = activePhantoms.length > 0 && cursorOpacity > 0.3
-        
         // Handle user interaction for player mesh x-ray
-        if (isUserInteracting || isPhantomActive) {
+        if (isUserInteracting) {
           uniforms.userActive.value = Math.min(1, uniforms.userActive.value + 0.1)
           
           // Map screen coordinates to player-local coordinates for the player mesh shader
