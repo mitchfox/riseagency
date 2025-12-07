@@ -174,19 +174,19 @@ function LandingContent() {
         </span>
       </div>
       
-      {/* RISE Logo - center X, 2/3 down Y, adjusted 3px right and 28px up */}
+      {/* RISE Logo - center X, 2/3 down Y, adjusted 3px right and 32px up */}
       <div className="absolute z-50" style={{
-      top: 'calc(66.67% - 28px)',
+      top: 'calc(66.67% - 32px)',
       left: 'calc(50% + 3px)',
       transform: 'translateX(-50%)'
     }}>
         <img src={riseLogoWhite} alt="RISE Football Agency" className="h-[46px] md:h-[64px] w-auto" loading="eager" fetchPriority="high" />
       </div>
       
-      {/* Language Selector - centered on page, moved down 76px, right 11px */}
+      {/* Language Selector - centered on page, moved down 72px, right 10px */}
       <div className="absolute z-50" style={{
-      top: 'calc(50% + 76px)',
-      left: 'calc(50% + 11px)',
+      top: 'calc(50% + 72px)',
+      left: 'calc(50% + 10px)',
       transform: 'translate(-50%, -50%)'
     }}>
         <LanguageMapSelector onOpenChange={setLanguagePopupOpen} className="mx-[20px]" />
