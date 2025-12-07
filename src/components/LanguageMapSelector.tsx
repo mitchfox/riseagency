@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Globe, X } from "lucide-react";
 import europeMap from "@/assets/europe-outline.gif";
@@ -66,8 +67,8 @@ export const LanguageMapSelector = ({ onOpenChange, className }: LanguageMapSele
         <Globe className="w-3 h-3 ml-0.5" />
       </button>
 
-      {/* Modal Overlay */}
-      {open && (
+      {/* Modal Overlay - rendered via portal to escape overflow:hidden */}
+      {open && createPortal(
         <div 
           className="fixed inset-0 z-[9999] flex items-end justify-center pb-20 md:pb-24"
           onClick={() => handleOpenChange(false)}
@@ -175,7 +176,8 @@ export const LanguageMapSelector = ({ onOpenChange, className }: LanguageMapSele
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );
