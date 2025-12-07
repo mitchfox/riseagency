@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { format, addDays, startOfWeek, isSameDay, parseISO, addWeeks } from "date-fns";
+import { format, addDays, startOfWeek, startOfMonth, isSameDay, parseISO, addWeeks, addMonths, getDaysInMonth, getDay } from "date-fns";
 import { Calendar, ChevronLeft, ChevronRight, Plus, Trash2, Clock, X, Maximize2 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -36,6 +36,8 @@ interface PersonalScheduleCalendarProps {
   showFullscreenButton?: boolean;
 }
 
+type ViewMode = 'week' | 'month';
+
 export const PersonalScheduleCalendar = ({ 
   isFullscreen = false, 
   onFullscreenToggle,
@@ -48,6 +50,7 @@ export const PersonalScheduleCalendar = ({
   const [showAddEvent, setShowAddEvent] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [expandedDays, setExpandedDays] = useState<Set<string>>(new Set());
+  const [viewMode, setViewMode] = useState<ViewMode>('week');
   const isMobile = useIsMobile();
 
   const [newEvent, setNewEvent] = useState({
@@ -153,17 +156,49 @@ export const PersonalScheduleCalendar = ({
 
   const generateCalendarWeeks = () => {
     const today = new Date();
-    const currentWeekStart = startOfWeek(today, { weekStartsOn: 1 });
-    const offsetWeekStart = addWeeks(currentWeekStart, weekOffset * (isFullscreen ? 4 : 2));
-    const weeks = [];
-    const numWeeks = isFullscreen ? 4 : 2;
+    
+    if (viewMode === 'month') {
+      // Month view: show all weeks of the current month
+      const currentMonth = addMonths(startOfMonth(today), weekOffset);
+      const daysInMonth = getDaysInMonth(currentMonth);
+      const firstDayOfMonth = getDay(currentMonth);
+      // Adjust for Monday start (0 = Monday, 6 = Sunday)
+      const adjustedFirstDay = firstDayOfMonth === 0 ? 6 : firstDayOfMonth - 1;
+      
+      const weeks = [];
+      const monthStart = startOfWeek(currentMonth, { weekStartsOn: 1 });
+      const numWeeks = Math.ceil((daysInMonth + adjustedFirstDay) / 7);
+      
+      for (let i = 0; i < numWeeks; i++) {
+        weeks.push(addDays(monthStart, i * 7));
+      }
+      return weeks;
+    } else {
+      // Week view: show 2 or 4 weeks
+      const currentWeekStart = startOfWeek(today, { weekStartsOn: 1 });
+      const offsetWeekStart = addWeeks(currentWeekStart, weekOffset * (isFullscreen ? 4 : 2));
+      const weeks = [];
+      const numWeeks = isFullscreen ? 4 : 2;
 
-    for (let i = 0; i < numWeeks; i++) {
-      const weekStart = addDays(offsetWeekStart, i * 7);
-      weeks.push(weekStart);
+      for (let i = 0; i < numWeeks; i++) {
+        const weekStart = addDays(offsetWeekStart, i * 7);
+        weeks.push(weekStart);
+      }
+      return weeks;
     }
-
-    return weeks;
+  };
+  
+  const getNavigationLabel = () => {
+    if (viewMode === 'month') {
+      const currentMonth = addMonths(startOfMonth(new Date()), weekOffset);
+      return format(currentMonth, 'MMMM yyyy');
+    } else {
+      if (weekOffset === 0) return 'This week';
+      const multiplier = isFullscreen ? 4 : 2;
+      return weekOffset > 0 
+        ? `${weekOffset * multiplier} weeks ahead` 
+        : `${Math.abs(weekOffset * multiplier)} weeks ago`;
+    }
   };
 
   const getEventsForDay = (date: Date): CalendarEvent[] => {
@@ -210,7 +245,7 @@ export const PersonalScheduleCalendar = ({
   return (
     <div className={`space-y-4 ${isFullscreen ? 'h-full flex flex-col' : ''}`}>
       {/* Header */}
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex items-center justify-between gap-2 flex-wrap">
         <div className="flex items-center gap-2">
           <Button 
             onClick={() => setWeekOffset(weekOffset - 1)} 
@@ -220,8 +255,8 @@ export const PersonalScheduleCalendar = ({
           >
             <ChevronLeft className={isMobile ? "w-3 h-3" : "w-4 h-4"} />
           </Button>
-          <p className={`text-muted-foreground ${isMobile ? "text-xs" : ""}`}>
-            {weekOffset === 0 ? 'This week' : weekOffset > 0 ? `${weekOffset * (isFullscreen ? 4 : 2)} weeks ahead` : `${Math.abs(weekOffset * (isFullscreen ? 4 : 2))} weeks ago`}
+          <p className={`text-muted-foreground min-w-[100px] text-center ${isMobile ? "text-xs" : ""}`}>
+            {getNavigationLabel()}
           </p>
           <Button 
             onClick={() => setWeekOffset(weekOffset + 1)} 
@@ -234,6 +269,26 @@ export const PersonalScheduleCalendar = ({
         </div>
         
         <div className="flex items-center gap-2">
+          {/* View Mode Toggle */}
+          <div className="flex rounded-md border border-border overflow-hidden">
+            <Button
+              variant={viewMode === 'week' ? 'default' : 'ghost'}
+              size="sm"
+              className={`h-7 px-2 text-xs rounded-none ${viewMode === 'week' ? '' : 'hover:bg-muted'}`}
+              onClick={() => { setViewMode('week'); setWeekOffset(0); }}
+            >
+              Week
+            </Button>
+            <Button
+              variant={viewMode === 'month' ? 'default' : 'ghost'}
+              size="sm"
+              className={`h-7 px-2 text-xs rounded-none ${viewMode === 'month' ? '' : 'hover:bg-muted'}`}
+              onClick={() => { setViewMode('month'); setWeekOffset(0); }}
+            >
+              Month
+            </Button>
+          </div>
+          
           {!isFullscreen && (
             <Button 
               onClick={() => {

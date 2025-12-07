@@ -24,6 +24,7 @@ import { PriorityMatrixWidget } from "./widgets/PriorityMatrixWidget";
 import { IdeasNotesWidget } from "./widgets/IdeasNotesWidget";
 import { FormSubmissionsWidget } from "./widgets/FormSubmissionsWidget";
 import { ProductivityInsightsWidget } from "./widgets/ProductivityInsightsWidget";
+import { QuickLinksWidget } from "./widgets/QuickLinksWidget";
 
 interface Goal {
   id: string;
@@ -560,25 +561,7 @@ export const StaffOverview = ({ isAdmin, userId }: { isAdmin: boolean; userId?: 
         );
 
       case "quicklinks":
-        return (
-          <div className="space-y-1.5">
-            <Button className="w-full justify-start h-7 text-xs bg-primary hover:bg-primary/90 text-primary-foreground" size="sm">
-              Player Portal
-            </Button>
-            <Button className="w-full justify-start h-7 text-xs bg-primary hover:bg-primary/90 text-primary-foreground" size="sm">
-              Club Network
-            </Button>
-            <Button className="w-full justify-start h-7 text-xs bg-primary hover:bg-primary/90 text-primary-foreground" size="sm">
-              Analysis Tools
-            </Button>
-            <Button className="w-full justify-start h-7 text-xs bg-primary hover:bg-primary/90 text-primary-foreground" size="sm">
-              Marketing Hub
-            </Button>
-            <Button className="w-full justify-start h-7 text-xs bg-primary hover:bg-primary/90 text-primary-foreground" size="sm">
-              Legal Docs
-            </Button>
-          </div>
-        );
+        return <QuickLinksWidget userId={userId} />;
 
       case "financial":
         return (
