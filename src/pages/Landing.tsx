@@ -198,9 +198,9 @@ function LandingContent() {
       </div>
       
       
-      {/* Language Selector - centered on page, moved down 75px, right 10px, 1.5x bigger */}
+      {/* Language Selector - centered on page, moved down 80px, right 10px, 1.5x bigger */}
       <div className="absolute z-[50] pointer-events-auto" style={{
-      top: 'calc(50% + 75px)',
+      top: 'calc(50% + 80px)',
       left: 'calc(50% + 10px)',
       transform: 'translate(-50%, -50%) scale(1.5)'
     }}>
@@ -212,9 +212,10 @@ function LandingContent() {
         {t("header.portal", "Portal")}
       </Link>
       
-      {/* 3D Player Effect - Over Video (hidden when language popup is open) */}
-      {!languagePopupOpen && <div className="absolute inset-0 pointer-events-none z-10" style={{
-      transform: 'translateX(-3px)'
+      {/* 3D Player Effect - Behind the bottom menu area */}
+      {!languagePopupOpen && <div className="absolute inset-0 pointer-events-none z-[5]" style={{
+      transform: 'translateX(-3px)',
+      clipPath: 'inset(0 0 35% 0)'
     }}>
           <LazyPlayer3D className="pointer-events-none" />
         </div>}
