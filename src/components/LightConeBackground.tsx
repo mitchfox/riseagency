@@ -10,7 +10,7 @@ export const LightConeBackground = () => {
   const bubbleRadius = 15; // Percentage of screen
 
   return (
-    <div className="fixed inset-0 overflow-hidden pointer-events-none z-[1]">
+    <div className="fixed inset-0 overflow-hidden pointer-events-none z-[8]">
       {/* Bottom cone - ALWAYS VISIBLE - aligned with menu cone */}
       <svg 
         className="absolute inset-0 w-full h-full"
