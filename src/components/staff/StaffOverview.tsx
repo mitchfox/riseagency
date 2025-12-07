@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Target, CheckSquare, Users, Calendar, Link2, TrendingUp, Settings, RotateCcw, Layers, Plus, Search, Megaphone, ClipboardList, BarChart3, FileText, Mail, Dumbbell, Bell, Clock, FolderOpen, MessageSquare, Briefcase, Globe, Receipt, UserPlus, Activity, Timer, Zap, Focus, Brain, ListTodo, Gauge, Workflow, Kanban, GitBranch, Repeat, Flag, Milestone, Trophy, Sparkles } from "lucide-react";
+import { Target, CheckSquare, Users, Calendar, Link2, TrendingUp, Settings, RotateCcw, Layers, Plus, Search, Megaphone, ClipboardList, BarChart3, FileText, Mail, Dumbbell, Bell, Clock, FolderOpen, MessageSquare, Briefcase, Globe, Receipt, UserPlus, Activity, Timer, Zap, Focus, Brain, ListTodo, Gauge, Workflow, Kanban, GitBranch, Repeat, Flag, Milestone, Trophy, Sparkles, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -9,12 +9,19 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
 import { DndContext, DragEndEvent, DragOverEvent, closestCenter, PointerSensor, useSensor, useSensors, DragOverlay, rectIntersection } from "@dnd-kit/core";
 import { SortableContext, horizontalListSortingStrategy, arrayMove } from "@dnd-kit/sortable";
 import { SortableWidget, WidgetLayout } from "./SortableWidget";
 import { RowDropZone } from "./RowDropZone";
 import { PersonalScheduleCalendar } from "./PersonalScheduleCalendar";
 import { PersonalScheduleFullscreen } from "./PersonalScheduleFullscreen";
+import { useScoutingWidget, useProspectsWidget, useInvoicesWidget, useReportsWidget, useSiteVisitsWidget, useMarketingWidget, useOutreachWidget, useNewPlayersWidget, useFormSubmissionsWidget, useCoachingWidget } from "./widgets/useWidgetData";
+import { FocusTimerWidget } from "./widgets/FocusTimerWidget";
+import { DailyHabitsWidget } from "./widgets/DailyHabitsWidget";
+import { KanbanWidget } from "./widgets/KanbanWidget";
+import { PriorityMatrixWidget } from "./widgets/PriorityMatrixWidget";
+import { IdeasNotesWidget } from "./widgets/IdeasNotesWidget";
 
 interface Goal {
   id: string;
@@ -109,6 +116,18 @@ export const StaffOverview = ({ isAdmin, userId }: { isAdmin: boolean; userId?: 
   const [newTaskInput, setNewTaskInput] = useState("");
   const [scheduleFullscreen, setScheduleFullscreen] = useState(false);
   const isMobile = useIsMobile();
+
+  // Widget data hooks
+  const scoutingData = useScoutingWidget();
+  const prospectsData = useProspectsWidget();
+  const invoicesData = useInvoicesWidget();
+  const reportsData = useReportsWidget();
+  const siteVisitsData = useSiteVisitsWidget();
+  const marketingData = useMarketingWidget();
+  const outreachData = useOutreachWidget();
+  const newPlayersData = useNewPlayersWidget();
+  const formSubmissionsData = useFormSubmissionsWidget();
+  const coachingData = useCoachingWidget();
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -664,71 +683,184 @@ export const StaffOverview = ({ isAdmin, userId }: { isAdmin: boolean; userId?: 
 
       case "scouting":
         return (
-          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'scouting-reports' })}>
-            <div className="text-center text-xs text-muted-foreground py-4">
-              <Search className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              View scouting reports and player evaluations
-            </div>
+          <div className="space-y-2 px-1 cursor-pointer h-full" onClick={() => setSearchParams({ section: 'scouting-reports' })}>
+            {scoutingData.loading ? (
+              <div className="flex items-center justify-center py-4"><Loader2 className="h-4 w-4 animate-spin" /></div>
+            ) : scoutingData.data ? (
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs font-medium">Scouting Reports</span>
+                  <Badge variant="outline" className="text-[10px]">{scoutingData.data.pendingReviews} pending</Badge>
+                </div>
+                {scoutingData.data.recentReports.slice(0, 3).map(report => (
+                  <div key={report.id} className="flex items-center justify-between p-1.5 bg-muted/30 rounded text-[10px]">
+                    <span className="truncate">{report.player_name}</span>
+                    <Badge variant="outline" className={`text-[9px] ${report.status === 'pending' ? 'bg-amber-500/20' : 'bg-emerald-500/20'}`}>
+                      {report.status}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center text-xs text-muted-foreground py-4">
+                <Search className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                No scouting reports yet
+              </div>
+            )}
           </div>
         );
 
       case "marketing":
         return (
-          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'campaigns' })}>
-            <div className="text-center text-xs text-muted-foreground py-4">
-              <Megaphone className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              View active marketing campaigns
-            </div>
+          <div className="space-y-2 px-1 cursor-pointer h-full" onClick={() => setSearchParams({ section: 'campaigns' })}>
+            {marketingData.loading ? (
+              <div className="flex items-center justify-center py-4"><Loader2 className="h-4 w-4 animate-spin" /></div>
+            ) : marketingData.data ? (
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs font-medium">Campaigns</span>
+                  <Badge variant="outline" className="text-[10px] bg-emerald-500/20">{marketingData.data.active} active</Badge>
+                </div>
+                {marketingData.data.recent.map(campaign => (
+                  <div key={campaign.id} className="p-1.5 bg-muted/30 rounded text-[10px]">
+                    <span className="truncate block">{campaign.title}</span>
+                    <span className="text-muted-foreground">{campaign.status}</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center text-xs text-muted-foreground py-4">
+                <Megaphone className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                No campaigns yet
+              </div>
+            )}
           </div>
         );
 
       case "prospects":
         return (
-          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'prospects' })}>
-            <div className="text-center text-xs text-muted-foreground py-4">
-              <ClipboardList className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              Track prospect pipeline status
-            </div>
+          <div className="space-y-2 px-1 cursor-pointer h-full" onClick={() => setSearchParams({ section: 'prospects' })}>
+            {prospectsData.loading ? (
+              <div className="flex items-center justify-center py-4"><Loader2 className="h-4 w-4 animate-spin" /></div>
+            ) : prospectsData.data ? (
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs font-medium">Prospects</span>
+                  <Badge variant="outline" className="text-[10px]">{prospectsData.data.total} total</Badge>
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {Object.entries(prospectsData.data.byStage).map(([stage, count]) => (
+                    <Badge key={stage} variant="outline" className="text-[9px]">{stage}: {count}</Badge>
+                  ))}
+                </div>
+                {prospectsData.data.recent.map(prospect => (
+                  <div key={prospect.id} className="p-1.5 bg-muted/30 rounded text-[10px] truncate">
+                    {prospect.name}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center text-xs text-muted-foreground py-4">
+                <ClipboardList className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                No prospects yet
+              </div>
+            )}
           </div>
         );
 
       case "analytics":
         return (
           <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'analytics' })}>
-            <div className="text-center text-xs text-muted-foreground py-4">
-              <BarChart3 className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              View performance analytics
+            <div className="grid grid-cols-2 gap-2">
+              <div className="p-2 bg-primary/10 rounded text-center">
+                <div className="text-lg font-bold text-primary">{reportsData.data?.total || 0}</div>
+                <div className="text-[10px] text-muted-foreground">Reports</div>
+              </div>
+              <div className="p-2 bg-emerald-500/10 rounded text-center">
+                <div className="text-lg font-bold text-emerald-500">{scoutingData.data?.totalReports || 0}</div>
+                <div className="text-[10px] text-muted-foreground">Scouting</div>
+              </div>
             </div>
           </div>
         );
 
       case "reports":
         return (
-          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'player-analysis' })}>
-            <div className="text-center text-xs text-muted-foreground py-4">
-              <FileText className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              Access recent player reports
-            </div>
+          <div className="space-y-2 px-1 cursor-pointer h-full" onClick={() => setSearchParams({ section: 'player-analysis' })}>
+            {reportsData.loading ? (
+              <div className="flex items-center justify-center py-4"><Loader2 className="h-4 w-4 animate-spin" /></div>
+            ) : reportsData.data ? (
+              <div className="space-y-2">
+                <span className="text-xs font-medium">Recent Analysis</span>
+                {reportsData.data.recent.slice(0, 3).map(report => (
+                  <div key={report.id} className="flex items-center justify-between p-1.5 bg-muted/30 rounded text-[10px]">
+                    <span className="truncate">vs {report.opponent || 'Unknown'}</span>
+                    {report.r90_score && <Badge variant="outline" className="text-[9px]">{report.r90_score}</Badge>}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center text-xs text-muted-foreground py-4">
+                <FileText className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                No reports yet
+              </div>
+            )}
           </div>
         );
 
       case "outreach":
         return (
-          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'outreach' })}>
-            <div className="text-center text-xs text-muted-foreground py-4">
-              <Mail className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              Manage club outreach activities
-            </div>
+          <div className="space-y-2 px-1 cursor-pointer h-full" onClick={() => setSearchParams({ section: 'outreach' })}>
+            {outreachData.loading ? (
+              <div className="flex items-center justify-center py-4"><Loader2 className="h-4 w-4 animate-spin" /></div>
+            ) : outreachData.data ? (
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs font-medium">Club Outreach</span>
+                  <Badge variant="outline" className="text-[10px]">{outreachData.data.total} total</Badge>
+                </div>
+                {outreachData.data.recent.map(outreach => (
+                  <div key={outreach.id} className="flex items-center justify-between p-1.5 bg-muted/30 rounded text-[10px]">
+                    <span className="truncate">{outreach.club_name}</span>
+                    <Badge variant="outline" className="text-[9px]">{outreach.status}</Badge>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center text-xs text-muted-foreground py-4">
+                <Mail className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                No outreach yet
+              </div>
+            )}
           </div>
         );
 
       case "coaching":
         return (
           <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'coaching' })}>
-            <div className="text-center text-xs text-muted-foreground py-4">
-              <Dumbbell className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              View coaching sessions and programmes
-            </div>
+            {coachingData.loading ? (
+              <div className="flex items-center justify-center py-4"><Loader2 className="h-4 w-4 animate-spin" /></div>
+            ) : coachingData.data ? (
+              <div className="grid grid-cols-3 gap-2">
+                <div className="p-2 bg-primary/10 rounded text-center">
+                  <div className="text-lg font-bold text-primary">{coachingData.data.sessions}</div>
+                  <div className="text-[9px] text-muted-foreground">Sessions</div>
+                </div>
+                <div className="p-2 bg-emerald-500/10 rounded text-center">
+                  <div className="text-lg font-bold text-emerald-500">{coachingData.data.exercises}</div>
+                  <div className="text-[9px] text-muted-foreground">Exercises</div>
+                </div>
+                <div className="p-2 bg-amber-500/10 rounded text-center">
+                  <div className="text-lg font-bold text-amber-500">{coachingData.data.programmes}</div>
+                  <div className="text-[9px] text-muted-foreground">Programmes</div>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center text-xs text-muted-foreground py-4">
+                <Dumbbell className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                No coaching data
+              </div>
+            )}
           </div>
         );
 
@@ -737,58 +869,140 @@ export const StaffOverview = ({ isAdmin, userId }: { isAdmin: boolean; userId?: 
           <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'notifications' })}>
             <div className="text-center text-xs text-muted-foreground py-4">
               <Bell className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              View recent notifications
+              No new notifications
             </div>
           </div>
         );
 
       case "activity":
         return (
-          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'overview' })}>
-            <div className="text-center text-xs text-muted-foreground py-4">
-              <Activity className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              Recent activity across the platform
+          <div className="space-y-2 px-1">
+            <div className="grid grid-cols-2 gap-2">
+              <div className="p-2 bg-primary/10 rounded text-center">
+                <div className="text-lg font-bold text-primary">{players.length}</div>
+                <div className="text-[10px] text-muted-foreground">Players</div>
+              </div>
+              <div className="p-2 bg-emerald-500/10 rounded text-center">
+                <div className="text-lg font-bold text-emerald-500">{goals.length}</div>
+                <div className="text-[10px] text-muted-foreground">Goals</div>
+              </div>
             </div>
           </div>
         );
 
       case "messages":
         return (
-          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'form-submissions' })}>
-            <div className="text-center text-xs text-muted-foreground py-4">
-              <MessageSquare className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              View form submissions and messages
-            </div>
+          <div className="space-y-2 px-1 cursor-pointer h-full" onClick={() => setSearchParams({ section: 'form-submissions' })}>
+            {formSubmissionsData.loading ? (
+              <div className="flex items-center justify-center py-4"><Loader2 className="h-4 w-4 animate-spin" /></div>
+            ) : formSubmissionsData.data ? (
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs font-medium">Form Submissions</span>
+                  <Badge variant="outline" className="text-[10px]">{formSubmissionsData.data.total}</Badge>
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {Object.entries(formSubmissionsData.data.byType).map(([type, count]) => (
+                    <Badge key={type} variant="outline" className="text-[9px]">{type}: {count}</Badge>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="text-center text-xs text-muted-foreground py-4">
+                <MessageSquare className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                No submissions
+              </div>
+            )}
           </div>
         );
 
       case "sitevisits":
         return (
-          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'visitors' })}>
-            <div className="text-center text-xs text-muted-foreground py-4">
-              <Globe className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              Monitor site visitor activity
-            </div>
+          <div className="space-y-2 px-1 cursor-pointer h-full" onClick={() => setSearchParams({ section: 'visitors' })}>
+            {siteVisitsData.loading ? (
+              <div className="flex items-center justify-center py-4"><Loader2 className="h-4 w-4 animate-spin" /></div>
+            ) : siteVisitsData.data ? (
+              <div className="space-y-2">
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="p-2 bg-primary/10 rounded text-center">
+                    <div className="text-lg font-bold text-primary">{siteVisitsData.data.today}</div>
+                    <div className="text-[10px] text-muted-foreground">Today</div>
+                  </div>
+                  <div className="p-2 bg-emerald-500/10 rounded text-center">
+                    <div className="text-lg font-bold text-emerald-500">{siteVisitsData.data.week}</div>
+                    <div className="text-[10px] text-muted-foreground">This Week</div>
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  {siteVisitsData.data.recentPaths.slice(0, 3).map((path, i) => (
+                    <div key={i} className="text-[10px] text-muted-foreground truncate">{path}</div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="text-center text-xs text-muted-foreground py-4">
+                <Globe className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                No visits
+              </div>
+            )}
           </div>
         );
 
       case "newplayers":
         return (
-          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'players' })}>
-            <div className="text-center text-xs text-muted-foreground py-4">
-              <UserPlus className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              Track new player signups
-            </div>
+          <div className="space-y-2 px-1 cursor-pointer h-full" onClick={() => setSearchParams({ section: 'players' })}>
+            {newPlayersData.loading ? (
+              <div className="flex items-center justify-center py-4"><Loader2 className="h-4 w-4 animate-spin" /></div>
+            ) : newPlayersData.data ? (
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs font-medium">New Players</span>
+                  <Badge variant="outline" className="text-[10px] bg-emerald-500/20">{newPlayersData.data.thisMonth} this month</Badge>
+                </div>
+                {newPlayersData.data.recent.map(player => (
+                  <div key={player.id} className="flex items-center justify-between p-1.5 bg-muted/30 rounded text-[10px]">
+                    <span className="truncate">{player.name}</span>
+                    <span className="text-muted-foreground">{player.position}</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center text-xs text-muted-foreground py-4">
+                <UserPlus className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                No new players
+              </div>
+            )}
           </div>
         );
 
       case "invoices":
         return (
-          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'invoices' })}>
-            <div className="text-center text-xs text-muted-foreground py-4">
-              <Receipt className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              View pending invoices
-            </div>
+          <div className="space-y-2 px-1 cursor-pointer h-full" onClick={() => setSearchParams({ section: 'invoices' })}>
+            {invoicesData.loading ? (
+              <div className="flex items-center justify-center py-4"><Loader2 className="h-4 w-4 animate-spin" /></div>
+            ) : invoicesData.data ? (
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs font-medium">Pending Invoices</span>
+                  <Badge variant="outline" className="text-[10px] bg-amber-500/20">{invoicesData.data.pending}</Badge>
+                </div>
+                <div className="p-2 bg-amber-500/10 rounded text-center">
+                  <div className="text-lg font-bold text-amber-600">€{invoicesData.data.total.toLocaleString()}</div>
+                  <div className="text-[10px] text-muted-foreground">Outstanding</div>
+                </div>
+                {invoicesData.data.recent.map(invoice => (
+                  <div key={invoice.id} className="flex items-center justify-between p-1.5 bg-muted/30 rounded text-[10px]">
+                    <span>{invoice.invoice_number}</span>
+                    <span className="font-medium">{invoice.currency} {invoice.amount}</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center text-xs text-muted-foreground py-4">
+                <Receipt className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                No pending invoices
+              </div>
+            )}
           </div>
         );
 
@@ -823,34 +1037,13 @@ export const StaffOverview = ({ isAdmin, userId }: { isAdmin: boolean; userId?: 
         );
 
       case "pomodoro":
-        return (
-          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'goalstasks' })}>
-            <div className="text-center text-xs text-muted-foreground py-4">
-              <Timer className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              Start a focus timer session
-            </div>
-          </div>
-        );
+        return <FocusTimerWidget />;
 
       case "habits":
-        return (
-          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'goalstasks' })}>
-            <div className="text-center text-xs text-muted-foreground py-4">
-              <Repeat className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              Track daily habits and routines
-            </div>
-          </div>
-        );
+        return <DailyHabitsWidget />;
 
       case "priorities":
-        return (
-          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'goalstasks' })}>
-            <div className="text-center text-xs text-muted-foreground py-4">
-              <Flag className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              Eisenhower priority matrix
-            </div>
-          </div>
-        );
+        return <PriorityMatrixWidget />;
 
       case "milestones":
         return (
@@ -873,14 +1066,7 @@ export const StaffOverview = ({ isAdmin, userId }: { isAdmin: boolean; userId?: 
         );
 
       case "kanban":
-        return (
-          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'goalstasks' })}>
-            <div className="text-center text-xs text-muted-foreground py-4">
-              <Kanban className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              Visual task board
-            </div>
-          </div>
-        );
+        return <KanbanWidget />;
 
       case "sprints":
         return (
@@ -903,21 +1089,10 @@ export const StaffOverview = ({ isAdmin, userId }: { isAdmin: boolean; userId?: 
         );
 
       case "focus":
-        return (
-          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'goalstasks' })}>
-            <div className="text-center text-xs text-muted-foreground py-4">
-              <Focus className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              Track deep work sessions
-            </div>
-          </div>
-        );
+        return <FocusTimerWidget />;
 
       case "mindmap":
-        return (
-          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'goalstasks' })}>
-            <div className="text-center text-xs text-muted-foreground py-4">
-              <Brain className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              Capture ideas and notes
+        return <IdeasNotesWidget />;
             </div>
           </div>
         );
