@@ -26,22 +26,24 @@ interface LanguageRegion {
   code: LanguageCode;
   name: string;
   nativeName: string;
-  flag: string;
+  flagCode: string;
   x: number;
   y: number;
 }
 
+const getFlagUrl = (flagCode: string) => `https://flagcdn.com/w40/${flagCode}.png`;
+
 const languageRegions: LanguageRegion[] = [
-  { code: "en", name: "English", nativeName: "English", flag: "🇬🇧", x: 30, y: 60 },
-  { code: "es", name: "Spanish", nativeName: "Español", flag: "🇪🇸", x: 29, y: 87 },
-  { code: "pt", name: "Portuguese", nativeName: "Português", flag: "🇵🇹", x: 25, y: 90 },
-  { code: "fr", name: "French", nativeName: "Français", flag: "🇫🇷", x: 34, y: 73 },
-  { code: "de", name: "German", nativeName: "Deutsch", flag: "🇩🇪", x: 43, y: 63 },
-  { code: "it", name: "Italian", nativeName: "Italiano", flag: "🇮🇹", x: 43, y: 80 },
-  { code: "pl", name: "Polish", nativeName: "Polski", flag: "🇵🇱", x: 50, y: 62 },
-  { code: "cs", name: "Czech", nativeName: "Čeština", flag: "🇨🇿", x: 47, y: 70 },
-  { code: "ru", name: "Russian", nativeName: "Русский", flag: "🇷🇺", x: 67, y: 50 },
-  { code: "tr", name: "Turkish", nativeName: "Türkçe", flag: "🇹🇷", x: 65, y: 90 },
+  { code: "en", name: "English", nativeName: "English", flagCode: "gb", x: 30, y: 60 },
+  { code: "es", name: "Spanish", nativeName: "Español", flagCode: "es", x: 29, y: 87 },
+  { code: "pt", name: "Portuguese", nativeName: "Português", flagCode: "pt", x: 25, y: 90 },
+  { code: "fr", name: "French", nativeName: "Français", flagCode: "fr", x: 34, y: 73 },
+  { code: "de", name: "German", nativeName: "Deutsch", flagCode: "de", x: 43, y: 63 },
+  { code: "it", name: "Italian", nativeName: "Italiano", flagCode: "it", x: 43, y: 80 },
+  { code: "pl", name: "Polish", nativeName: "Polski", flagCode: "pl", x: 50, y: 62 },
+  { code: "cs", name: "Czech", nativeName: "Čeština", flagCode: "cz", x: 47, y: 70 },
+  { code: "ru", name: "Russian", nativeName: "Русский", flagCode: "ru", x: 67, y: 50 },
+  { code: "tr", name: "Turkish", nativeName: "Türkçe", flagCode: "tr", x: 65, y: 90 },
 ];
 
 export const RadialMenu = () => {
@@ -58,16 +60,16 @@ export const RadialMenu = () => {
   const closeButtonRef = useRef<HTMLButtonElement>(null);
 
   const languages = [
-    { code: "en" as const, name: "ENG", flag: "🇬🇧" },
-    { code: "es" as const, name: "ESP", flag: "🇪🇸" },
-    { code: "pt" as const, name: "POR", flag: "🇵🇹" },
-    { code: "fr" as const, name: "FRA", flag: "🇫🇷" },
-    { code: "de" as const, name: "DEU", flag: "🇩🇪" },
-    { code: "it" as const, name: "ITA", flag: "🇮🇹" },
-    { code: "pl" as const, name: "POL", flag: "🇵🇱" },
-    { code: "cs" as const, name: "ČES", flag: "🇨🇿" },
-    { code: "ru" as const, name: "РУС", flag: "🇷🇺" },
-    { code: "tr" as const, name: "TÜR", flag: "🇹🇷" },
+    { code: "en" as const, name: "ENG", flagCode: "gb" },
+    { code: "es" as const, name: "ESP", flagCode: "es" },
+    { code: "pt" as const, name: "POR", flagCode: "pt" },
+    { code: "fr" as const, name: "FRA", flagCode: "fr" },
+    { code: "de" as const, name: "DEU", flagCode: "de" },
+    { code: "it" as const, name: "ITA", flagCode: "it" },
+    { code: "pl" as const, name: "POL", flagCode: "pl" },
+    { code: "cs" as const, name: "ČES", flagCode: "cz" },
+    { code: "ru" as const, name: "РУС", flagCode: "ru" },
+    { code: "tr" as const, name: "TÜR", flagCode: "tr" },
   ];
 
   const selectedLanguage = languages.find(l => l.code === language) || languages[0];
@@ -530,7 +532,7 @@ export const RadialMenu = () => {
               className="flex items-center gap-1 font-bebas uppercase tracking-wider text-primary hover:text-primary/80 transition-all duration-300 focus:outline-none"
               style={{ fontSize: `${isMobile ? centerSize * 0.165 * 0.7 : centerSize * 0.09375}px` }}
             >
-              <span style={{ fontSize: `${isMobile ? centerSize * 0.225 * 0.7 : centerSize * 0.13125}px` }}>{selectedLanguage.flag}</span>
+              <img src={getFlagUrl(selectedLanguage.flagCode)} alt={selectedLanguage.name} className="rounded-sm" style={{ height: `${isMobile ? centerSize * 0.225 * 0.7 : centerSize * 0.13125}px`, width: 'auto' }} />
               <span>{selectedLanguage.name}</span>
               <ChevronDown 
                 className="transition-transform duration-300"
@@ -622,7 +624,7 @@ export const RadialMenu = () => {
                         }
                       `}
                     >
-                      <span className="text-xl md:text-2xl">{region.flag}</span>
+                      <img src={getFlagUrl(region.flagCode)} alt={region.name} className="w-6 h-auto md:w-7 rounded-sm" />
                     </span>
                     
                     {/* Label */}
@@ -654,7 +656,7 @@ export const RadialMenu = () => {
               {/* Current selection indicator */}
               <div className="absolute bottom-4 left-0 right-0 text-center">
                 <span className="text-sm font-bebas uppercase tracking-wider text-white/60">
-                  Current: <span className="text-primary">{languageRegions.find(l => l.code === language)?.flag} {languageRegions.find(l => l.code === language)?.nativeName}</span>
+                  Current: <span className="text-primary inline-flex items-center gap-1"><img src={getFlagUrl(languageRegions.find(l => l.code === language)?.flagCode || 'gb')} alt="" className="w-4 h-auto rounded-sm" /> {languageRegions.find(l => l.code === language)?.nativeName}</span>
                 </span>
               </div>
             </div>
