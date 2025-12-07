@@ -9,9 +9,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Building, User, Briefcase, Clock, MessageSquare, Loader2 } from "lucide-react";
+import { Plus, Building, User, Briefcase, Clock, MessageSquare, Loader2, UserCircle } from "lucide-react";
 import { format } from "date-fns";
 
 interface ClubOutreach {
@@ -39,6 +40,18 @@ interface Player {
   name: string;
 }
 
+interface PlayerSubmission {
+  id: string;
+  player_id: string;
+  club_name: string;
+  contact_name: string | null;
+  contact_role: string | null;
+  status: string;
+  notes: string | null;
+  created_at: string;
+  player?: { id: string; name: string };
+}
+
 // Group outreach records by club
 interface ClubGroup {
   clubName: string;
@@ -59,8 +72,10 @@ export const ClubOutreachManagement = () => {
   const [outreachRecords, setOutreachRecords] = useState<ClubOutreach[]>([]);
   const [clubGroups, setClubGroups] = useState<ClubGroup[]>([]);
   const [players, setPlayers] = useState<Player[]>([]);
+  const [playerSubmissions, setPlayerSubmissions] = useState<PlayerSubmission[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedClubFilter, setSelectedClubFilter] = useState<string>("all");
+  const [activeView, setActiveView] = useState<"staff" | "player">("staff");
   
   // Add dialog state
   const [addDialogOpen, setAddDialogOpen] = useState(false);
@@ -94,13 +109,28 @@ export const ClubOutreachManagement = () => {
         .order("name");
       setPlayers(playersData || []);
 
-      // Fetch outreach records
+      // Fetch outreach records (staff-created)
       const { data: outreachData, error } = await supabase
         .from("club_outreach")
         .select("*")
         .order("club_name", { ascending: true });
 
       if (error) throw error;
+
+      // Fetch player submissions (player-created)
+      const { data: submissionsData, error: submissionsError } = await supabase
+        .from("player_club_submissions")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (submissionsError) throw submissionsError;
+
+      // Enrich player submissions with player names
+      const enrichedSubmissions = (submissionsData || []).map(record => ({
+        ...record,
+        player: playersData?.find(p => p.id === record.player_id)
+      }));
+      setPlayerSubmissions(enrichedSubmissions);
 
       // Join player names
       const enrichedData = (outreachData || []).map(record => ({
@@ -292,6 +322,10 @@ export const ClubOutreachManagement = () => {
     ? clubGroups 
     : clubGroups.filter(g => g.clubName.toLowerCase().includes(selectedClubFilter.toLowerCase()));
 
+  const filteredPlayerSubmissions = selectedClubFilter === "all"
+    ? playerSubmissions
+    : playerSubmissions.filter(s => s.club_name.toLowerCase().includes(selectedClubFilter.toLowerCase()));
+
   return (
     <div className="space-y-6">
       <Card>
@@ -316,63 +350,140 @@ export const ClubOutreachManagement = () => {
           </div>
         </CardHeader>
         <CardContent>
-          {loading ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin" />
-            </div>
-          ) : clubGroups.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              No outreach records yet. Click "Add Outreach" to create one.
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Club</TableHead>
-                  <TableHead>Players</TableHead>
-                  <TableHead>Contact</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Latest Update</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredGroups.map(group => (
-                  <TableRow
-                    key={group.clubName}
-                    className="cursor-pointer hover:bg-muted/50"
-                    onClick={() => handleOpenClubDetail(group)}
-                  >
-                    <TableCell className="font-medium">{group.clubName}</TableCell>
-                    <TableCell>
-                      <div className="flex flex-wrap gap-1">
-                        {group.records.map(r => (
-                          <Badge key={r.id} variant="outline" className="text-xs">
-                            {r.player?.name || "Unknown"}
+          <Tabs value={activeView} onValueChange={(v) => setActiveView(v as "staff" | "player")} className="w-full">
+            <TabsList className="grid w-full grid-cols-2 mb-4">
+              <TabsTrigger value="staff" className="flex items-center gap-2">
+                <Briefcase className="h-4 w-4" />
+                Staff Outreach
+                {clubGroups.length > 0 && (
+                  <Badge variant="secondary" className="ml-1">{clubGroups.length}</Badge>
+                )}
+              </TabsTrigger>
+              <TabsTrigger value="player" className="flex items-center gap-2">
+                <UserCircle className="h-4 w-4" />
+                Player Submissions
+                {playerSubmissions.length > 0 && (
+                  <Badge variant="secondary" className="ml-1 bg-green-500/20 text-green-400">{playerSubmissions.length}</Badge>
+                )}
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="staff">
+              {loading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin" />
+                </div>
+              ) : clubGroups.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  No outreach records yet. Click "Add Outreach" to create one.
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Club</TableHead>
+                      <TableHead>Players</TableHead>
+                      <TableHead>Contact</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Latest Update</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredGroups.map(group => (
+                      <TableRow
+                        key={group.clubName}
+                        className="cursor-pointer hover:bg-muted/50"
+                        onClick={() => handleOpenClubDetail(group)}
+                      >
+                        <TableCell className="font-medium">{group.clubName}</TableCell>
+                        <TableCell>
+                          <div className="flex flex-wrap gap-1">
+                            {group.records.map(r => (
+                              <Badge key={r.id} variant="outline" className="text-xs">
+                                {r.player?.name || "Unknown"}
+                              </Badge>
+                            ))}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          {group.contactName ? (
+                            <span>
+                              {group.contactName}
+                              {group.contactRole && <span className="text-muted-foreground"> ({group.contactRole})</span>}
+                            </span>
+                          ) : "-"}
+                        </TableCell>
+                        <TableCell>
+                          <Badge className={statusConfig[group.records[0]?.status]?.color || "bg-muted"}>
+                            {statusConfig[group.records[0]?.status]?.label || group.records[0]?.status}
                           </Badge>
-                        ))}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      {group.contactName ? (
-                        <span>
-                          {group.contactName}
-                          {group.contactRole && <span className="text-muted-foreground"> ({group.contactRole})</span>}
-                        </span>
-                      ) : "-"}
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={statusConfig[group.records[0]?.status]?.color || "bg-muted"}>
-                        {statusConfig[group.records[0]?.status]?.label || group.records[0]?.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="max-w-[300px] truncate">
-                      {group.records[0]?.latest_update || "-"}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
+                        </TableCell>
+                        <TableCell className="max-w-[300px] truncate">
+                          {group.records[0]?.latest_update || "-"}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </TabsContent>
+
+            <TabsContent value="player">
+              {loading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin" />
+                </div>
+              ) : playerSubmissions.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  No player submissions yet. Players can add clubs they've contacted from their portal.
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Player</TableHead>
+                      <TableHead>Club</TableHead>
+                      <TableHead>Contact</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Notes</TableHead>
+                      <TableHead>Date Added</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredPlayerSubmissions.map(submission => (
+                      <TableRow key={submission.id}>
+                        <TableCell>
+                          <Badge variant="outline" className="bg-green-500/10 text-green-400 border-green-500/30">
+                            {submission.player?.name || "Unknown"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="font-medium">{submission.club_name}</TableCell>
+                        <TableCell>
+                          {submission.contact_name ? (
+                            <span>
+                              {submission.contact_name}
+                              {submission.contact_role && <span className="text-muted-foreground"> ({submission.contact_role})</span>}
+                            </span>
+                          ) : "-"}
+                        </TableCell>
+                        <TableCell>
+                          <Badge className={statusConfig[submission.status]?.color || "bg-muted"}>
+                            {statusConfig[submission.status]?.label || submission.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="max-w-[250px] truncate">
+                          {submission.notes || "-"}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground text-sm">
+                          {format(new Date(submission.created_at), "MMM d, yyyy")}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
 
