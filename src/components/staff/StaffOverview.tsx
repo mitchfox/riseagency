@@ -8,6 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { DndContext, DragEndEvent, DragOverEvent, closestCenter, PointerSensor, useSensor, useSensors, DragOverlay, rectIntersection } from "@dnd-kit/core";
 import { SortableContext, horizontalListSortingStrategy, arrayMove } from "@dnd-kit/sortable";
 import { SortableWidget, WidgetLayout } from "./SortableWidget";
@@ -968,55 +969,57 @@ export const StaffOverview = ({ isAdmin, userId }: { isAdmin: boolean; userId?: 
 
   return (
     <div className="relative">
-      {/* Customize Button */}
+      {/* Preferences Button */}
       <div className="absolute -top-12 right-0 z-10">
         <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
           <DialogTrigger asChild>
             <Button variant="outline" size="sm" className="gap-2">
               <Settings className="h-4 w-4" />
-              Customize
+              Preferences
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-lg">
+          <DialogContent className="sm:max-w-lg max-h-[80vh]">
             <DialogHeader>
-              <DialogTitle>Customize Overview</DialogTitle>
+              <DialogTitle>Preferences</DialogTitle>
             </DialogHeader>
             <Tabs defaultValue="widgets" className="w-full">
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="widgets">Widgets</TabsTrigger>
                 <TabsTrigger value="layout">Layout</TabsTrigger>
               </TabsList>
-              <TabsContent value="widgets" className="space-y-4 py-4">
-                <p className="text-sm text-muted-foreground">
+              <TabsContent value="widgets" className="py-4">
+                <p className="text-sm text-muted-foreground mb-4">
                   Toggle widgets to show or hide them from your overview dashboard.
                 </p>
-                <div className="space-y-3">
-                  {WIDGET_CONFIGS.map((widget) => {
-                    const Icon = widget.icon;
-                    const isVisible = visibleWidgets.includes(widget.id);
-                    return (
-                      <div 
-                        key={widget.id} 
-                        className={`flex items-center justify-between p-3 rounded-lg border transition-colors ${
-                          isVisible ? 'border-primary/30 bg-primary/5' : 'border-border bg-muted/30'
-                        }`}
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className={`p-2 rounded ${isVisible ? 'bg-primary/20' : 'bg-muted'}`}>
-                            <Icon className={`h-4 w-4 ${isVisible ? 'text-primary' : 'text-muted-foreground'}`} />
+                <ScrollArea className="h-[350px] pr-4">
+                  <div className="space-y-3">
+                    {WIDGET_CONFIGS.map((widget) => {
+                      const Icon = widget.icon;
+                      const isVisible = visibleWidgets.includes(widget.id);
+                      return (
+                        <div 
+                          key={widget.id} 
+                          className={`flex items-center justify-between p-3 rounded-lg border transition-colors ${
+                            isVisible ? 'border-primary/30 bg-primary/5' : 'border-border bg-muted/30'
+                          }`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className={`p-2 rounded ${isVisible ? 'bg-primary/20' : 'bg-muted'}`}>
+                              <Icon className={`h-4 w-4 ${isVisible ? 'text-primary' : 'text-muted-foreground'}`} />
+                            </div>
+                            <span className={`font-medium ${isVisible ? '' : 'text-muted-foreground'}`}>
+                              {widget.title}
+                            </span>
                           </div>
-                          <span className={`font-medium ${isVisible ? '' : 'text-muted-foreground'}`}>
-                            {widget.title}
-                          </span>
+                          <Switch
+                            checked={isVisible}
+                            onCheckedChange={() => toggleWidgetVisibility(widget.id)}
+                          />
                         </div>
-                        <Switch
-                          checked={isVisible}
-                          onCheckedChange={() => toggleWidgetVisibility(widget.id)}
-                        />
-                      </div>
-                    );
-                  })}
-                </div>
+                      );
+                    })}
+                  </div>
+                </ScrollArea>
               </TabsContent>
               <TabsContent value="layout" className="space-y-4 py-4">
                 <p className="text-sm text-muted-foreground">
@@ -1072,10 +1075,10 @@ export const StaffOverview = ({ isAdmin, userId }: { isAdmin: boolean; userId?: 
             <Settings className="h-12 w-12 text-muted-foreground mb-4" />
             <h3 className="text-lg font-semibold mb-2">No widgets visible</h3>
             <p className="text-sm text-muted-foreground mb-4">
-              Click "Customize" to add widgets to your overview
+              Click "Preferences" to add widgets to your overview
             </p>
             <Button onClick={() => setSettingsOpen(true)}>
-              Customize Dashboard
+              Open Preferences
             </Button>
           </div>
         ) : (
