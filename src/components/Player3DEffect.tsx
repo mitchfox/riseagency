@@ -188,7 +188,9 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
       
       const vec3 riseGold = vec3(0.92, 0.78, 0.45);
       const vec3 revealGrey = vec3(0.75, 0.75, 0.78);
+      const vec3 revealWhite = vec3(1.0, 1.0, 1.0);
       const vec3 brightGold = vec3(1.0, 0.9, 0.5);
+      const vec3 warmLight = vec3(1.0, 0.95, 0.85);
       
       // ============= SIMPLEX NOISE IMPLEMENTATION =============
       vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
@@ -222,7 +224,7 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         return 130.0 * dot(m, g);
       }
       
-      // Flow-based FBM for smooth organic distortion
+      // Flow-based FBM for smooth organic distortion (NOT radial)
       float flowFBM(vec2 p, float t) {
         float value = 0.0;
         float amplitude = 0.5;
@@ -237,15 +239,19 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
       }
       
       // ============= SDF FUNCTIONS FOR TRUE FLUID BLENDING =============
+      
+      // Smooth minimum - creates organic metaball-like blending
       float smin(float a, float b, float k) {
         float h = max(k - abs(a - b), 0.0) / k;
         return min(a, b) - h * h * k * 0.25;
       }
       
+      // Circle SDF
       float circleSDF(vec2 p, vec2 center, float radius) {
         return length(p - center) - radius;
       }
       
+      // Capsule/pill SDF for elongated fluid trails
       float capsuleSDF(vec2 p, vec2 a, vec2 b, float r) {
         vec2 pa = p - a;
         vec2 ba = b - a;
@@ -253,79 +259,120 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         return length(pa - ba * h) - r;
       }
       
-      // Water blob with flow distortion
+      // ============= MAIN WATER BLOB FUNCTION =============
+      // Creates smooth, organic water-like blob using SDF with flow distortion
       float waterBlob(vec2 uv, vec2 center, float baseRadius, float timeOffset) {
+        // Flow-based distortion applied to UV space (NOT radial like before)
         vec2 flowDistort = vec2(
           flowFBM(uv * 4.0 + timeOffset, noiseTime * 0.8) * 0.04,
           flowFBM(uv * 4.0 + timeOffset + 100.0, noiseTime * 0.7) * 0.04
         );
         vec2 distortedUV = uv + flowDistort;
+        
+        // Base circle SDF
         float dist = circleSDF(distortedUV, center, baseRadius);
+        
+        // Add flowing edge distortion (smooth waves, not spiky)
         float edgeWave = flowFBM(uv * 6.0 + center * 3.0 + timeOffset, noiseTime * 0.5) * 0.025;
         dist += edgeWave;
+        
+        // Soft, smooth edge
         return 1.0 - smoothstep(-0.02, 0.04, dist);
       }
       
-      // Water lobes - connected organic blobs
+      // ============= CONNECTED WATER LOBES =============
+      // Creates 2-3 smaller connected blobs that merge into main mass
       float waterLobes(vec2 uv, vec2 center, float baseRadius, vec2 velocity, float speed, float timeOffset) {
         float combinedSDF = circleSDF(uv, center, baseRadius);
         
+        // Generate 3 connected lobes with noise-driven positions
         for (int i = 0; i < 3; i++) {
           float fi = float(i);
+          
+          // Lobe offset driven by smooth noise (not angle-based)
           vec2 lobeOffset = vec2(
             snoise(vec2(fi * 3.0 + timeOffset, noiseTime * 0.3)) * 0.12,
             snoise(vec2(fi * 3.0 + 50.0 + timeOffset, noiseTime * 0.25)) * 0.12
           );
+          
+          // Add velocity bias - lobes extend more in movement direction
           if (speed > 0.02) {
             lobeOffset += velocity * (0.06 + fi * 0.03);
           }
+          
           vec2 lobeCenter = center + lobeOffset;
           float lobeRadius = baseRadius * (0.4 + snoise(vec2(fi, noiseTime * 0.4)) * 0.15);
+          
           float lobeSDF = circleSDF(uv, lobeCenter, lobeRadius);
+          
+          // Smooth-min blend creates organic connection
           combinedSDF = smin(combinedSDF, lobeSDF, 0.08);
         }
         
+        // Apply flow distortion to the combined SDF
         float flowDistort = flowFBM(uv * 5.0 + timeOffset, noiseTime * 0.6) * 0.02;
         combinedSDF += flowDistort;
+        
         return 1.0 - smoothstep(-0.015, 0.035, combinedSDF);
       }
       
-      // Fluid trail
+      // ============= FLUID TRAIL (Capsule-based) =============
+      // Creates elongated, connected trail stretching in movement direction
       float fluidTrail(vec2 uv, vec2 headPos, vec2 velocity, float speed, float maxLength, float width) {
         if (speed < 0.02) return 0.0;
+        
+        // Trail extends backward from head position
         float trailLen = maxLength * speed;
         vec2 tailPos = headPos - velocity * trailLen;
+        
+        // Capsule SDF with tapered width
         float dist = capsuleSDF(uv, headPos, tailPos, width);
+        
+        // Add subtle wave distortion along the trail
         float waveDistort = snoise(vec2(dot(uv - headPos, velocity) * 20.0, noiseTime)) * 0.01;
         dist += waveDistort;
+        
         return 1.0 - smoothstep(-0.01, 0.02, dist);
       }
       
-      // Splash droplets
+      // ============= SPLASH DROPLETS (SDF-based) =============
+      // Creates small satellite droplets that connect to main mass
       float splashDroplets(vec2 uv, vec2 center, vec2 velocity, float speed, float baseRadius, float timeOffset) {
         float splash = 0.0;
+        
+        // Only create splash when moving
         if (speed < 0.05) return 0.0;
+        
         float baseSDF = circleSDF(uv, center, baseRadius * 1.2);
         
         for (int i = 0; i < 4; i++) {
           float fi = float(i);
+          
+          // Droplets positioned with noise, biased toward velocity direction
           vec2 dropOffset = vec2(
             snoise(vec2(fi * 5.0 + timeOffset, noiseTime * 0.5)) * 0.1,
             snoise(vec2(fi * 5.0 + 30.0 + timeOffset, noiseTime * 0.4)) * 0.1
           );
           dropOffset += velocity * (0.1 + fi * 0.05) * speed;
+          
           vec2 dropCenter = center + dropOffset;
           float dropRadius = 0.02 + snoise(vec2(fi * 2.0, noiseTime * 0.6)) * 0.01;
+          
           float dropSDF = circleSDF(uv, dropCenter, dropRadius);
+          
+          // Blend with main mass using smooth-min
           float connectedSDF = smin(baseSDF, dropSDF, 0.05);
+          
+          // Only show the droplet contribution
           float dropMask = 1.0 - smoothstep(-0.01, 0.02, dropSDF);
           splash = max(splash, dropMask * 0.7);
         }
+        
         return splash * speed;
       }
       
       void main() {
-        // Skip rendering in phantom mode (no visual glow)
+        // In phantom mode, skip ALL visual fluid effects
         float fluidMask = 0.0;
         
         if (isPhantomMode < 0.5) {
@@ -333,7 +380,7 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
           float mainBlob = waterLobes(vUv, cursorBlobPos, 0.14, cursorVelocity, cursorSpeed, 0.0);
           fluidMask += mainBlob * cursorBlobOpacity;
           
-          // Fluid trail stretching backward
+          // Fluid trail stretching backward in movement direction
           float trail = fluidTrail(vUv, cursorBlobPos, cursorVelocity, cursorSpeed, 0.25, 0.04);
           fluidMask = max(fluidMask, trail * cursorBlobOpacity * 0.9);
           
@@ -341,7 +388,7 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
           float splash = splashDroplets(vUv, cursorBlobPos, cursorVelocity, cursorSpeed, 0.12, 0.0);
           fluidMask = max(fluidMask, splash * cursorBlobOpacity * 0.7);
           
-          // Trailing water blobs
+          // Trailing water blobs with smooth SDF blending
           float trail1Blob = waterBlob(vUv, cursorTrail1, 0.11, 1.0);
           float trail1Lobes = waterLobes(vUv, cursorTrail1, 0.08, cursorVelocity, cursorSpeed * 0.5, 1.0);
           fluidMask = max(fluidMask, max(trail1Blob, trail1Lobes) * trailOpacity1 * 0.85);
@@ -355,7 +402,7 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
           float trail4Blob = waterBlob(vUv, cursorTrail4, 0.045, 4.0);
           fluidMask = max(fluidMask, trail4Blob * trailOpacity4 * 0.4);
           
-          // Autonomous ambient water blobs
+          // Autonomous ambient water blobs - smooth, flowing movement
           float ambient1 = waterLobes(vUv, ambientBlob1Pos, 0.16, vec2(sin(noiseTime * 0.2), cos(noiseTime * 0.25)), 0.1, 5.0);
           fluidMask = max(fluidMask, ambient1 * 0.35);
           
@@ -365,13 +412,17 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
           float ambient3 = waterBlob(vUv, ambientBlob3Pos, 0.10, 7.0);
           fluidMask = max(fluidMask, ambient3 * 0.25);
           
+          // Clamp and smooth the combined mask
           fluidMask = clamp(fluidMask, 0.0, 1.0);
         }
         
-        // Core becomes transparent to show page content
+        // ============= TRANSPARENT REVEAL TO SHOW PAGE BACKGROUND =============
+        // The fluid cursor makes the area TRANSPARENT, revealing the actual page marble background
+        // Color bands appear at the edge of the transparent area
+        
         float coreTransparency = smoothstep(0.4, 0.75, fluidMask);
         
-        // Color bands at the edges
+        // Gold and grey bands at the edges - shiny metallic look
         float goldBand = smoothstep(0.2, 0.4, fluidMask) * (1.0 - smoothstep(0.5, 0.7, fluidMask));
         float greyBand = smoothstep(0.05, 0.2, fluidMask) * (1.0 - smoothstep(0.25, 0.45, fluidMask));
         
@@ -385,29 +436,41 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         goldBand *= mix(1.0, directionalStretch, 0.4);
         greyBand *= mix(1.0, directionalStretch, 0.6);
         
-        // Shiny shimmer for gold band
+        // Shiny shimmer for gold band - animated highlights
         float goldShimmer = sin(noiseTime * 1.2 + vUv.x * 12.0 + vUv.y * 10.0) * 0.2 + 0.9;
         goldShimmer += sin(noiseTime * 2.0 + vUv.y * 18.0) * 0.1;
         vec3 shinyGold = riseGold * goldShimmer * 1.15;
         
-        // Build output color
-        vec3 color = vec3(0.0);
-        color = mix(color, revealGrey, greyBand * 0.6);
-        color = mix(color, shinyGold, goldBand * 0.8);
+        // Build composite color - start black, add bands
+        vec3 compositeColor = vec3(0.0);
+        compositeColor = mix(compositeColor, revealGrey, greyBand * 0.5);
+        compositeColor = mix(compositeColor, shinyGold, goldBand * 0.7);
         
-        // Edge glow
+        // Water glow around cursor blob - subtle ambient illumination
         float glowMask = waterBlob(vUv, cursorBlobPos, 0.22, 0.0);
         float outerGlow = smoothstep(0.0, 0.5, glowMask) * (1.0 - smoothstep(0.5, 1.0, glowMask));
-        color += mix(revealGrey, riseGold, 0.3) * outerGlow * cursorBlobOpacity * 0.15;
+        compositeColor += mix(revealGrey, riseGold, 0.3) * outerGlow * cursorBlobOpacity * 0.15;
         
-        // Final output: transparent core to reveal page content, colored edges
+        // Inner white glow at the very center
+        float innerGlow = smoothstep(0.6, 0.9, fluidMask);
+        compositeColor += revealWhite * innerGlow * 0.3;
+        
+        // ============= FINAL OUTPUT =============
+        // Edge bands with alpha, core is fully transparent to reveal page content
         float edgeBands = goldBand + greyBand;
-        if (coreTransparency > 0.05 && edgeBands < 0.01) {
-          // Core area - fully transparent
-          gl_FragColor = vec4(0.0, 0.0, 0.0, 0.0);
-        } else if (edgeBands > 0.01) {
-          // Edge bands visible
-          gl_FragColor = vec4(color, edgeBands * 0.8);
+        
+        if (coreTransparency > 0.05) {
+          if (edgeBands > 0.01) {
+            // Show the edge band colors with partial transparency
+            gl_FragColor = vec4(compositeColor, edgeBands * 0.9 + innerGlow * 0.4);
+          } else {
+            // Core area - fully transparent to show page content (marble, R90 stats, etc.)
+            gl_FragColor = vec4(0.0, 0.0, 0.0, 0.0);
+          }
+        } else if (edgeBands > 0.01 || outerGlow > 0.01) {
+          // Outer glow region
+          float glowAlpha = max(edgeBands * 0.8, outerGlow * cursorBlobOpacity * 0.3);
+          gl_FragColor = vec4(compositeColor, glowAlpha);
         } else {
           // No effect - fully transparent
           gl_FragColor = vec4(0.0, 0.0, 0.0, 0.0);
