@@ -47,23 +47,23 @@ function LandingContent() {
   const desktopNavLinks = [{
     to: "/players",
     labelKey: "landing.nav_players",
-    fallback: "PLAYERS"
+    fallback: "PLAYER"
   }, {
     to: "/coaches",
     labelKey: "landing.nav_coaches",
-    fallback: "COACHES"
+    fallback: "COACH"
   }, {
     to: "/clubs",
     labelKey: "landing.nav_clubs",
-    fallback: "CLUBS"
+    fallback: "CLUB"
   }, {
     to: "/agents",
     labelKey: "landing.nav_agents",
-    fallback: "AGENTS"
+    fallback: "AGENT"
   }, {
     to: "/scouts",
     labelKey: "landing.nav_scouts",
-    fallback: "SCOUTS"
+    fallback: "SCOUT"
   }, {
     to: "/business",
     labelKey: "landing.nav_business",
@@ -78,23 +78,23 @@ function LandingContent() {
   const mobileNavLinks = [{
     to: "/players",
     labelKey: "landing.nav_players",
-    fallback: "PLAYERS"
+    fallback: "PLAYER"
   }, {
     to: "/coaches",
     labelKey: "landing.nav_coaches",
-    fallback: "COACHES"
+    fallback: "COACH"
   }, {
     to: "/clubs",
     labelKey: "landing.nav_clubs",
-    fallback: "CLUBS"
+    fallback: "CLUB"
   }, {
     to: "/agents",
     labelKey: "landing.nav_agents",
-    fallback: "AGENTS"
+    fallback: "AGENT"
   }, {
     to: "/scouts",
     labelKey: "landing.nav_scouts",
-    fallback: "SCOUTS"
+    fallback: "SCOUT"
   }, {
     to: "/business",
     labelKey: "landing.nav_business",

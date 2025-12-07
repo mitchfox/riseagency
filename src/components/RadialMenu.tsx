@@ -93,11 +93,11 @@ export const RadialMenu = () => {
 
   const allRoles: Array<{ key: string | null; labelKey: string; fallback: string }> = [
     { key: null, labelKey: "roles.main", fallback: "Main" },
-    { key: "players", labelKey: "roles.players", fallback: "Players" },
-    { key: "clubs", labelKey: "roles.clubs", fallback: "Clubs" },
-    { key: "scouts", labelKey: "roles.scouts", fallback: "Scouts" },
-    { key: "agents", labelKey: "roles.agents", fallback: "Agents" },
-    { key: "coaches", labelKey: "roles.coaches", fallback: "Coaches" },
+    { key: "players", labelKey: "roles.players", fallback: "Player" },
+    { key: "clubs", labelKey: "roles.clubs", fallback: "Club" },
+    { key: "scouts", labelKey: "roles.scouts", fallback: "Scout" },
+    { key: "agents", labelKey: "roles.agents", fallback: "Agent" },
+    { key: "coaches", labelKey: "roles.coaches", fallback: "Coach" },
     { key: "media", labelKey: "roles.media", fallback: "Media" },
     { key: "business", labelKey: "roles.business", fallback: "Business" },
   ];
@@ -173,11 +173,11 @@ export const RadialMenu = () => {
 
   // Role selection menu items
   const roleMenuItems: MenuItem[] = [
-    { to: "/playersmore", labelKey: "roles.players", fallback: "PLAYERS", Icon: Users, angle: 0 },
-    { to: "/clubs", labelKey: "roles.clubs", fallback: "CLUBS", Icon: Trophy, angle: 51.4 },
-    { to: "/scouts", labelKey: "roles.scouts", fallback: "SCOUTS", Icon: Search, angle: 102.8 },
-    { to: "/agents", labelKey: "roles.agents", fallback: "AGENTS", Icon: Briefcase, angle: 154.3 },
-    { to: "/coaches", labelKey: "roles.coaches", fallback: "COACHES", Icon: Target, angle: 205.7 },
+    { to: "/playersmore", labelKey: "roles.players", fallback: "PLAYER", Icon: Users, angle: 0 },
+    { to: "/clubs", labelKey: "roles.clubs", fallback: "CLUB", Icon: Trophy, angle: 51.4 },
+    { to: "/scouts", labelKey: "roles.scouts", fallback: "SCOUT", Icon: Search, angle: 102.8 },
+    { to: "/agents", labelKey: "roles.agents", fallback: "AGENT", Icon: Briefcase, angle: 154.3 },
+    { to: "/coaches", labelKey: "roles.coaches", fallback: "COACH", Icon: Target, angle: 205.7 },
     { to: "/media", labelKey: "roles.media", fallback: "MEDIA", Icon: Newspaper, angle: 257.1 },
     { to: "/business", labelKey: "roles.business", fallback: "BUSINESS", Icon: Package, angle: 308.5 },
   ];
