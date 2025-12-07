@@ -52,7 +52,30 @@ export const LanguageMapSelector = ({ onOpenChange, className }: LanguageMapSele
   const selectedLanguage = languageRegions.find(l => l.code === language) || languageRegions[0];
   const pendingLangData = pendingLanguage ? languageRegions.find(l => l.code === pendingLanguage) : null;
 
+  // Find flags that overlap with a given flag (within ~12% distance)
+  const getOverlappingFlags = (code: LanguageCode) => {
+    const current = languageRegions.find(r => r.code === code);
+    if (!current) return [];
+    
+    return languageRegions.filter(r => {
+      if (r.code === code) return false;
+      const distance = Math.sqrt(
+        Math.pow(r.x - current.x, 2) + Math.pow(r.y - current.y, 2)
+      );
+      return distance < 12; // Within 12% distance = overlapping
+    });
+  };
+
   const handleFlagClick = (code: LanguageCode) => {
+    // If clicking the same flag that's already pending, cycle to next overlapping flag
+    if (pendingLanguage === code) {
+      const overlapping = getOverlappingFlags(code);
+      if (overlapping.length > 0) {
+        // Cycle to next overlapping flag
+        setPendingLanguage(overlapping[0].code);
+        return;
+      }
+    }
     setPendingLanguage(code);
   };
 
