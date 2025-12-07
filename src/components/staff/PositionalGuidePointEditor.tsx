@@ -85,6 +85,22 @@ export const PositionalGuidePointEditor = ({
     setParagraphs(newParagraphs);
   };
 
+  const handleParagraphPaste = (e: React.ClipboardEvent<HTMLTextAreaElement>, index: number) => {
+    const nativeEvent = e.nativeEvent as ClipboardEvent & { ctrlKey?: boolean; metaKey?: boolean };
+    if (nativeEvent.ctrlKey || nativeEvent.metaKey) {
+      // Ctrl/Cmd + paste: plain text (strip extra whitespace/line breaks)
+      e.preventDefault();
+      const text = e.clipboardData.getData('text/plain').replace(/\s+/g, ' ').trim();
+      const textarea = e.currentTarget;
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const currentValue = paragraphs[index];
+      const newValue = currentValue.substring(0, start) + text + currentValue.substring(end);
+      handleParagraphChange(index, newValue);
+    }
+    // Normal paste: browser default preserves line breaks
+  };
+
   const handleRemoveParagraph = (index: number) => {
     if (paragraphs.length <= 1) return;
     const newParagraphs = paragraphs.filter((_, i) => i !== index);
@@ -250,6 +266,7 @@ export const PositionalGuidePointEditor = ({
                     <Textarea
                       value={para}
                       onChange={(e) => handleParagraphChange(idx, e.target.value)}
+                      onPaste={(e) => handleParagraphPaste(e, idx)}
                       placeholder={`Paragraph ${idx + 1}...`}
                       rows={3}
                       className="flex-1"
