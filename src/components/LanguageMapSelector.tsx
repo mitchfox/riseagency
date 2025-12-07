@@ -46,12 +46,20 @@ export const LanguageMapSelector = ({ onOpenChange, className }: LanguageMapSele
     onOpenChange?.(newOpen);
   };
   const [hoveredLang, setHoveredLang] = useState<LanguageCode | null>(null);
+  const [pendingLanguage, setPendingLanguage] = useState<LanguageCode | null>(null);
   
   const selectedLanguage = languageRegions.find(l => l.code === language) || languageRegions[0];
+  const pendingLangData = pendingLanguage ? languageRegions.find(l => l.code === pendingLanguage) : null;
 
-  const handleSelectLanguage = (code: LanguageCode) => {
-    switchLanguage(code);
-    handleOpenChange(false);
+  const handleFlagClick = (code: LanguageCode) => {
+    setPendingLanguage(code);
+  };
+
+  const handleConfirm = () => {
+    if (pendingLanguage) {
+      switchLanguage(pendingLanguage);
+      handleOpenChange(false);
+    }
   };
 
   return (
@@ -102,26 +110,26 @@ export const LanguageMapSelector = ({ onOpenChange, className }: LanguageMapSele
               <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60" />
               
               {/* Language markers */}
-              {languageRegions.map((region) => {
-                const isSelected = language === region.code;
+                {languageRegions.map((region) => {
+                const isPending = pendingLanguage === region.code;
                 const isHovered = hoveredLang === region.code;
                 
                 return (
                   <button
                     key={region.code}
                     type="button"
-                    onClick={() => handleSelectLanguage(region.code)}
+                    onClick={() => handleFlagClick(region.code)}
                     onMouseEnter={() => setHoveredLang(region.code)}
                     onMouseLeave={() => setHoveredLang(null)}
                     className="absolute transform -translate-x-1/2 -translate-y-1/2 group"
                     style={{ 
                       left: `${region.x}%`, 
                       top: `${region.y}%`,
-                      zIndex: isHovered || isSelected ? 20 : 10
+                      zIndex: isHovered || isPending ? 20 : 10
                     }}
                   >
-                    {/* Pulse animation for selected */}
-                    {isSelected && (
+                    {/* Pulse animation for pending selection */}
+                    {isPending && (
                       <span className="absolute inset-0 -m-2 rounded-full bg-primary/30 animate-ping" />
                     )}
                     
@@ -131,7 +139,7 @@ export const LanguageMapSelector = ({ onOpenChange, className }: LanguageMapSele
                         relative flex items-center justify-center
                         w-10 h-10 md:w-12 md:h-12 rounded-full
                         transition-all duration-300 cursor-pointer
-                        ${isSelected 
+                        ${isPending 
                           ? 'bg-primary text-black scale-110 shadow-lg shadow-primary/50' 
                           : isHovered 
                             ? 'bg-primary/80 text-black scale-105' 
@@ -140,19 +148,6 @@ export const LanguageMapSelector = ({ onOpenChange, className }: LanguageMapSele
                       `}
                     >
                       <img src={getFlagUrl(region.flagCode)} alt={region.name} className="w-6 h-auto md:w-7 rounded-sm" />
-                    </span>
-                    
-                    {/* Label */}
-                    <span 
-                      className={`
-                        absolute left-1/2 -translate-x-1/2 top-full mt-1
-                        whitespace-nowrap text-xs md:text-sm font-bebas uppercase tracking-wider
-                        px-2 py-0.5 rounded bg-black/80
-                        transition-all duration-300
-                        ${isSelected || isHovered ? 'opacity-100 text-primary' : 'opacity-0 group-hover:opacity-100 text-white/70'}
-                      `}
-                    >
-                      {region.nativeName}
                     </span>
                   </button>
                 );
@@ -168,11 +163,26 @@ export const LanguageMapSelector = ({ onOpenChange, className }: LanguageMapSele
                 </p>
               </div>
               
-              {/* Current selection indicator */}
+              {/* Confirmation button */}
               <div className="absolute bottom-4 left-0 right-0 text-center">
-                <span className="text-sm font-bebas uppercase tracking-wider text-white/60">
-                  Current: <span className="text-primary inline-flex items-center gap-1"><img src={getFlagUrl(selectedLanguage.flagCode)} alt="" className="w-4 h-auto rounded-sm" /> {selectedLanguage.nativeName}</span>
-                </span>
+                {pendingLangData ? (
+                  <div className="flex flex-col items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={handleConfirm}
+                      className="px-6 py-2 bg-primary text-black font-bebas uppercase tracking-wider text-lg rounded hover:bg-primary/90 transition-colors"
+                    >
+                      Enter in {pendingLangData.nativeName}
+                    </button>
+                    <span className="text-xs text-white/50 font-bebas tracking-wider">
+                      {pendingLangData.name}
+                    </span>
+                  </div>
+                ) : (
+                  <span className="text-sm font-bebas uppercase tracking-wider text-white/40">
+                    Select a language
+                  </span>
+                )}
               </div>
             </div>
           </div>
