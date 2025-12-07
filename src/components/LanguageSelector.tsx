@@ -9,17 +9,19 @@ import {
 import { useLanguage } from "@/contexts/LanguageContext";
 
 const languages = [
-  { code: "en" as const, name: "ENG", flag: "🇬🇧" },
-  { code: "es" as const, name: "ESP", flag: "🇪🇸" },
-  { code: "pt" as const, name: "POR", flag: "🇵🇹" },
-  { code: "fr" as const, name: "FRA", flag: "🇫🇷" },
-  { code: "de" as const, name: "DEU", flag: "🇩🇪" },
-  { code: "it" as const, name: "ITA", flag: "🇮🇹" },
-  { code: "pl" as const, name: "POL", flag: "🇵🇱" },
-  { code: "cs" as const, name: "ČES", flag: "🇨🇿" },
-  { code: "ru" as const, name: "РУС", flag: "🇷🇺" },
-  { code: "tr" as const, name: "TÜR", flag: "🇹🇷" },
+  { code: "en" as const, name: "ENG", flagCode: "gb" },
+  { code: "es" as const, name: "ESP", flagCode: "es" },
+  { code: "pt" as const, name: "POR", flagCode: "pt" },
+  { code: "fr" as const, name: "FRA", flagCode: "fr" },
+  { code: "de" as const, name: "DEU", flagCode: "de" },
+  { code: "it" as const, name: "ITA", flagCode: "it" },
+  { code: "pl" as const, name: "POL", flagCode: "pl" },
+  { code: "cs" as const, name: "ČES", flagCode: "cz" },
+  { code: "ru" as const, name: "РУС", flagCode: "ru" },
+  { code: "tr" as const, name: "TÜR", flagCode: "tr" },
 ];
+
+const getFlagUrl = (flagCode: string) => `https://flagcdn.com/w40/${flagCode}.png`;
 
 const languageUrlSubdomains: Record<string, string> = {
   en: "en",
@@ -71,7 +73,7 @@ export const LanguageSelector = () => {
         if (!open) setSelectedLang(null);
       }}>
         <DropdownMenuTrigger className="flex items-center gap-1.5 text-xs md:text-sm font-bebas uppercase tracking-wider text-foreground hover:text-primary transition-all duration-300 focus:outline-none">
-          <span className="text-base">{currentLanguage.flag}</span>
+          <img src={getFlagUrl(currentLanguage.flagCode)} alt={currentLanguage.name} className="w-5 h-auto rounded-sm" />
           <span>{currentLanguage.name}</span>
           <ChevronDown className="w-3 h-3" />
         </DropdownMenuTrigger>
@@ -91,7 +93,7 @@ export const LanguageSelector = () => {
                 language === lang.code ? "text-primary" : "text-foreground"
               }`}
             >
-              <span className="text-base">{lang.flag}</span>
+              <img src={getFlagUrl(lang.flagCode)} alt={lang.name} className="w-5 h-auto rounded-sm" />
               <span>{lang.name}</span>
             </DropdownMenuItem>
           ))}
