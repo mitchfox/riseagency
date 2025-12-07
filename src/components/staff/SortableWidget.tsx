@@ -33,6 +33,10 @@ const MAX_WIDTH_PERCENT = 100;
 const MIN_HEIGHT_PX = 150;
 const MAX_HEIGHT_PX = 800;
 
+// Width snap points for grid-like layouts
+const WIDTH_SNAP_POINTS = [20, 25, 30, 33, 40, 50, 60, 66, 70, 75, 80, 100];
+const SNAP_THRESHOLD = 3; // Snap when within 3% of a snap point
+
 export const SortableWidget = ({
   id,
   layout,
@@ -80,8 +84,16 @@ export const SortableWidget = ({
     const handleMouseMove = (moveEvent: MouseEvent) => {
       const deltaX = moveEvent.clientX - startX;
       const deltaPercent = (deltaX / containerWidth) * 100;
-      // Free-form width, no snapping
-      const newWidth = Math.max(MIN_WIDTH_PERCENT, Math.min(MAX_WIDTH_PERCENT, startWidthPercent + deltaPercent));
+      let newWidth = Math.max(MIN_WIDTH_PERCENT, Math.min(MAX_WIDTH_PERCENT, startWidthPercent + deltaPercent));
+      
+      // Snap to nearest snap point if within threshold
+      for (const snapPoint of WIDTH_SNAP_POINTS) {
+        if (Math.abs(newWidth - snapPoint) <= SNAP_THRESHOLD) {
+          newWidth = snapPoint;
+          break;
+        }
+      }
+      
       setResizePreview({ width: Math.round(newWidth) });
     };
 
