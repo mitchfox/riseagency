@@ -168,8 +168,8 @@ function LandingContent() {
       <LightConeBackground />
       
       {/* Hidden text revealed by X-ray - REALISE POTENTIAL - behind overlay at z-[1], moved up 25px */}
-      <div className="absolute top-16 md:top-20 left-1/2 transform -translate-x-1/2 z-[1] pointer-events-none" style={{ marginTop: '-25px' }}>
-        <span className="font-bebas text-4xl md:text-6xl lg:text-7xl tracking-[0.3em] text-white/90 uppercase whitespace-nowrap">
+      <div className="absolute top-16 md:top-20 left-1/2 transform -translate-x-1/2 z-[1]" style={{ marginTop: '-25px' }}>
+        <span className="font-bebas text-4xl md:text-6xl lg:text-7xl tracking-[0.3em] text-white/90 uppercase whitespace-nowrap pointer-events-auto">
           <HoverText text="REALISE POTENTIAL" />
         </span>
       </div>
