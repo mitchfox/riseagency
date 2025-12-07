@@ -1283,8 +1283,10 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
       
       const isMobile = container.clientWidth < 768
       if (playerMesh) {
+        // Only adjust vertical position, don't reset any other state
         playerMesh.position.y = isMobile ? 0.15 : 0.05
       }
+      // Don't reset cursor or phantom swipe positions on resize
     }
 
     window.addEventListener("mousemove", handleMouseMove)

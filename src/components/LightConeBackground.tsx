@@ -3,8 +3,11 @@ import { useXRay } from "@/contexts/XRayContext";
 export const LightConeBackground = () => {
   const { xrayState } = useXRay();
   
-  // Calculate visibility based on x-ray intensity - NO MASK, full page visibility
+  // X-ray cursor bubble mask - only reveal within cursor radius
   const xrayOpacity = xrayState.isActive ? xrayState.intensity : 0;
+  const cursorX = xrayState.position.x * 100;
+  const cursorY = xrayState.position.y * 100;
+  const bubbleRadius = 15; // Percentage of screen
 
   return (
     <div className="fixed inset-0 overflow-hidden pointer-events-none z-[1]">
@@ -57,7 +60,7 @@ export const LightConeBackground = () => {
         />
       </svg>
 
-      {/* Top cone and full axes with planes - ONLY VISIBLE WITH X-RAY - NO MASK */}
+      {/* Top cone and full axes with planes - REVEALED BY CURSOR BUBBLE MASK */}
       {xrayOpacity > 0 && (
         <svg 
           className="absolute inset-0 w-full h-full"
@@ -68,6 +71,16 @@ export const LightConeBackground = () => {
           }}
         >
           <defs>
+            {/* Cursor bubble radial mask - reveals only within cursor radius */}
+            <radialGradient id="cursorBubbleMask" cx={`${cursorX}%`} cy={`${cursorY}%`} r={`${bubbleRadius}%`}>
+              <stop offset="0%" stopColor="white" stopOpacity="1" />
+              <stop offset="70%" stopColor="white" stopOpacity="0.6" />
+              <stop offset="100%" stopColor="white" stopOpacity="0" />
+            </radialGradient>
+            <mask id="xrayBubbleMask">
+              <rect x="0" y="0" width="100" height="100" fill="url(#cursorBubbleMask)" />
+            </mask>
+            
             {/* Gradient for future cone (top) */}
             <linearGradient id="futureConeGradient" x1="0%" y1="100%" x2="0%" y2="0%">
               <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.5" />
@@ -83,6 +96,9 @@ export const LightConeBackground = () => {
               </feMerge>
             </filter>
           </defs>
+          
+          {/* Apply cursor bubble mask to all x-ray content */}
+          <g mask="url(#xrayBubbleMask)">
           
           {/* Future Light Cone (top) - mirrors the bottom cone */}
           <path 
@@ -209,6 +225,7 @@ export const LightConeBackground = () => {
             fill="white"
             opacity="0.9"
           />
+          </g>
         </svg>
       )}
     </div>
