@@ -212,10 +212,9 @@ function LandingContent() {
         {t("header.portal", "Portal")}
       </Link>
       
-      {/* 3D Player Effect - Behind the bottom menu area */}
+      {/* 3D Player Effect - Behind the bottom menu area (lower z-index so cone appears on top) */}
       {!languagePopupOpen && <div className="absolute inset-0 pointer-events-none z-[5]" style={{
-      transform: 'translateX(-3px)',
-      clipPath: 'inset(0 0 35% 0)'
+      transform: 'translateX(-3px)'
     }}>
           <LazyPlayer3D className="pointer-events-none" />
         </div>}
