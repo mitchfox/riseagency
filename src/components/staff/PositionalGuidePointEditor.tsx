@@ -307,8 +307,9 @@ export const PositionalGuidePointEditor = ({
                   </button>
                 </div>
               ) : (
-                <label className="flex flex-col items-center justify-center h-32 bg-muted/50 border-2 border-dashed border-muted-foreground/30 rounded-lg cursor-pointer hover:border-primary/50 transition-colors">
+                <div className="h-32 bg-muted/50 border-2 border-dashed border-muted-foreground/30 rounded-lg hover:border-primary/50 transition-colors">
                   <input
+                    id="video-upload"
                     type="file"
                     accept="video/*"
                     className="hidden"
@@ -318,15 +319,23 @@ export const PositionalGuidePointEditor = ({
                     }}
                     disabled={uploadingVideo}
                   />
-                  {uploadingVideo ? (
-                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                  ) : (
-                    <>
-                      <Video className="h-8 w-8 text-muted-foreground mb-2" />
-                      <span className="text-sm text-muted-foreground">Upload Video</span>
-                    </>
-                  )}
-                </label>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="w-full h-full flex flex-col items-center justify-center"
+                    onClick={() => document.getElementById('video-upload')?.click()}
+                    disabled={uploadingVideo}
+                  >
+                    {uploadingVideo ? (
+                      <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                    ) : (
+                      <>
+                        <Video className="h-8 w-8 text-muted-foreground mb-2" />
+                        <span className="text-sm text-muted-foreground">Upload Video</span>
+                      </>
+                    )}
+                  </Button>
+                </div>
               )}
             </div>
           </div>
@@ -390,8 +399,9 @@ export const PositionalGuidePointEditor = ({
                             </button>
                           </>
                         ) : (
-                          <label className="absolute inset-0 flex flex-col items-center justify-center cursor-pointer">
+                          <div className="absolute inset-0 flex flex-col items-center justify-center">
                             <input
+                              id={`image-upload-${slotIndex}`}
                               type="file"
                               accept="image/*"
                               className="hidden"
@@ -401,17 +411,25 @@ export const PositionalGuidePointEditor = ({
                               }}
                               disabled={uploading}
                             />
-                            {uploading ? (
-                              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                            ) : (
-                              <>
-                                <Upload className="h-6 w-6 text-muted-foreground mb-1" />
-                                <span className="text-xs text-muted-foreground font-medium">
-                                  Slot {slotIndex + 1}
-                                </span>
-                              </>
-                            )}
-                          </label>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              className="w-full h-full flex flex-col items-center justify-center"
+                              onClick={() => document.getElementById(`image-upload-${slotIndex}`)?.click()}
+                              disabled={uploading}
+                            >
+                              {uploading ? (
+                                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                              ) : (
+                                <>
+                                  <Upload className="h-6 w-6 text-muted-foreground mb-1" />
+                                  <span className="text-xs text-muted-foreground font-medium">
+                                    Slot {slotIndex + 1}
+                                  </span>
+                                </>
+                              )}
+                            </Button>
+                          </div>
                         )}
                       </div>
                     );
