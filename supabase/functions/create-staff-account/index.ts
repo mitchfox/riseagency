@@ -68,16 +68,6 @@ serve(async (req) => {
       );
     }
 
-    if (!reset_password && !password) {
-      return new Response(
-        JSON.stringify({ error: "Password is required for new accounts" }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
-    }
-
     // Validate role
     if (!["admin", "staff", "marketeer"].includes(role)) {
       return new Response(
@@ -183,6 +173,17 @@ serve(async (req) => {
         }
       );
     } else {
+      // Password is required for new accounts
+      if (!password) {
+        return new Response(
+          JSON.stringify({ error: "Password is required for new accounts" }),
+          {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
+      }
+      
       // Create new user account
       const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
         email,
