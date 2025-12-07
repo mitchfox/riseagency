@@ -67,7 +67,7 @@ export const LanguageSelector = () => {
   };
 
   return (
-    <div className="relative">
+    <div className="relative translate-x-[2px] translate-y-[2px]">
       <DropdownMenu open={isOpen} onOpenChange={(open) => {
         setIsOpen(open);
         if (!open) setSelectedLang(null);
