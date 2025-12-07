@@ -661,29 +661,32 @@ export const PersonalScheduleCalendar = ({
 
       {/* Add Event Dialog */}
       <Dialog open={showAddEvent} onOpenChange={setShowAddEvent}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="w-[95vw] max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Calendar className="h-5 w-5" />
-              Add Event {selectedDate && `- ${format(selectedDate, 'MMM d, yyyy')}`}
+            <DialogTitle className="flex items-center gap-2 text-lg">
+              <Calendar className="h-5 w-5 text-primary" />
+              Add Event {selectedDate && `- ${format(selectedDate, 'EEEE, MMM d, yyyy')}`}
             </DialogTitle>
           </DialogHeader>
           
-          <div className="space-y-4">
+          <div className="space-y-5 py-2">
+            {/* Title - full width, prominent */}
             <div className="space-y-2">
-              <Label>Title *</Label>
+              <Label className="text-sm font-medium">Title *</Label>
               <Input
-                placeholder="Event title"
+                placeholder="Enter event title"
                 value={newEvent.title}
                 onChange={(e) => setNewEvent({ ...newEvent, title: e.target.value })}
+                className="h-12 text-base"
               />
             </div>
             
-            <div className="grid grid-cols-2 gap-4">
+            {/* Category and Notes row - stack on mobile */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Category</Label>
+                <Label className="text-sm font-medium">Category</Label>
                 <select
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  className="flex h-12 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                   value={newEvent.category}
                   onChange={(e) => setNewEvent({ ...newEvent, category: e.target.value })}
                 >
@@ -696,49 +699,55 @@ export const PersonalScheduleCalendar = ({
               </div>
               
               <div className="space-y-2">
-                <Label>Notes</Label>
+                <Label className="text-sm font-medium">Notes (optional)</Label>
                 <Input
-                  placeholder="Optional notes"
+                  placeholder="Add notes"
                   value={newEvent.description}
                   onChange={(e) => setNewEvent({ ...newEvent, description: e.target.value })}
+                  className="h-12 text-base"
                 />
               </div>
             </div>
             
+            {/* Time inputs row - always side by side */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Start Time</Label>
+                <Label className="text-sm font-medium">Start Time</Label>
                 <Input
                   type="time"
                   value={newEvent.start_time}
                   onChange={(e) => setNewEvent({ ...newEvent, start_time: e.target.value })}
+                  className="h-12 text-base"
                 />
               </div>
               <div className="space-y-2">
-                <Label>End Time</Label>
+                <Label className="text-sm font-medium">End Time</Label>
                 <Input
                   type="time"
                   value={newEvent.end_time}
                   onChange={(e) => setNewEvent({ ...newEvent, end_time: e.target.value })}
+                  className="h-12 text-base"
                 />
               </div>
             </div>
             
-            <div className="flex items-center gap-2">
+            {/* Recurring checkbox */}
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
               <input
                 type="checkbox"
                 id="is_ongoing_personal"
                 checked={newEvent.is_ongoing}
                 onChange={(e) => setNewEvent({ ...newEvent, is_ongoing: e.target.checked })}
-                className="h-4 w-4 rounded border-input"
+                className="h-5 w-5 rounded border-input"
               />
-              <Label htmlFor="is_ongoing_personal" className="cursor-pointer">
-                Recurring (shows every day)
+              <Label htmlFor="is_ongoing_personal" className="cursor-pointer text-sm">
+                Recurring event (shows every day)
               </Label>
             </div>
             
-            <Button onClick={addEvent} className="w-full">
-              <Plus className="h-4 w-4 mr-2" />
+            {/* Add button - large and prominent */}
+            <Button onClick={addEvent} className="w-full h-12 text-base font-medium">
+              <Plus className="h-5 w-5 mr-2" />
               Add Event
             </Button>
           </div>
