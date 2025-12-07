@@ -171,14 +171,15 @@ function LandingContent() {
       
       {/* Top Center Logo - disappears on xray or when hovering REALISE POTENTIAL area */}
       <div 
-        className={`absolute top-4 md:top-6 left-1/2 transform -translate-x-1/2 z-[55] transition-opacity duration-500 ${
+        className={`absolute top-4 md:top-6 z-[55] transition-opacity duration-500 ${
           xrayState.isActive || topLogoHovered ? 'opacity-0 pointer-events-none' : 'opacity-100'
         }`}
+        style={{ left: 'calc(50% - 3px)', transform: 'translateX(-50%)' }}
       >
         <img 
           src={riseLogoWhite} 
           alt="RISE Football Agency" 
-          className="h-[32px] md:h-[42px] w-auto" 
+          className="h-[42px] md:h-[55px] w-auto" 
           loading="eager" 
           fetchPriority="high" 
         />
@@ -196,20 +197,12 @@ function LandingContent() {
         </span>
       </div>
       
-      {/* RISE Logo - center X, 2/3 down Y, adjusted 3px right and 32px up */}
-      <div className="absolute z-50" style={{
-      top: 'calc(66.67% - 32px)',
-      left: 'calc(50% + 3px)',
-      transform: 'translateX(-50%)'
-    }}>
-        <img src={riseLogoWhite} alt="RISE Football Agency" className="h-[46px] md:h-[64px] w-auto" loading="eager" fetchPriority="high" />
-      </div>
       
-      {/* Language Selector - centered on page, moved down 72px, right 10px */}
+      {/* Language Selector - centered on page, moved down 75px, right 10px, 1.5x bigger */}
       <div className="absolute z-[50] pointer-events-auto" style={{
-      top: 'calc(50% + 72px)',
+      top: 'calc(50% + 75px)',
       left: 'calc(50% + 10px)',
-      transform: 'translate(-50%, -50%)'
+      transform: 'translate(-50%, -50%) scale(1.5)'
     }}>
         <LanguageMapSelector onOpenChange={setLanguagePopupOpen} className="mx-[20px]" />
       </div>
