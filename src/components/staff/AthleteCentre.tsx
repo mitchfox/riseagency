@@ -135,14 +135,14 @@ export const AthleteCentre = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-4">
+    <div className="space-y-4 md:space-y-6">
+      <div className="flex flex-col gap-3 md:gap-4">
         <div>
-          <h2 className="text-2xl font-bold flex items-center gap-2">
-            <User className="h-6 w-6" />
+          <h2 className="text-xl md:text-2xl font-bold flex items-center gap-2">
+            <User className="h-5 w-5 md:h-6 md:w-6" />
             Athlete Centre
           </h2>
-          <p className="text-muted-foreground mt-1">
+          <p className="text-sm md:text-base text-muted-foreground mt-1">
             Comprehensive player development hub
           </p>
         </div>
@@ -154,23 +154,23 @@ export const AthleteCentre = () => {
               <Button
                 key={player.id}
                 variant={selectedPlayer === player.id ? "default" : "outline"}
-                className={`flex items-center gap-3 h-auto py-3 px-4 shrink-0 ${
+                className={`flex items-center gap-2 md:gap-3 h-auto py-2 md:py-3 px-3 md:px-4 shrink-0 ${
                   selectedPlayer === player.id 
                     ? "bg-primary text-primary-foreground" 
                     : "hover:bg-muted"
                 }`}
                 onClick={() => setSelectedPlayer(player.id)}
               >
-                <div className="w-10 h-10 rounded-full bg-muted overflow-hidden flex items-center justify-center">
+                <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-muted overflow-hidden flex items-center justify-center">
                   {player.image_url ? (
                     <img src={player.image_url} alt={player.name} className="w-full h-full object-cover" />
                   ) : (
-                    <User className="h-5 w-5 text-muted-foreground" />
+                    <User className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground" />
                   )}
                 </div>
                 <div className="text-left">
-                  <div className="font-semibold">{player.name}</div>
-                  <div className="text-xs opacity-80">{player.position}</div>
+                  <div className="font-semibold text-sm md:text-base">{player.name}</div>
+                  <div className="text-[10px] md:text-xs opacity-80">{player.position}</div>
                 </div>
               </Button>
             ))}
@@ -181,22 +181,22 @@ export const AthleteCentre = () => {
 
       {selectedPlayer && currentPlayer && (
         <Card className="border-2">
-          <CardHeader className="border-b bg-muted/30">
-            <div className="flex items-center gap-4">
-              <div className="w-16 h-16 rounded-full bg-muted overflow-hidden flex items-center justify-center border-2 border-primary">
+          <CardHeader className="border-b bg-muted/30 p-3 md:p-6">
+            <div className="flex items-center gap-3 md:gap-4">
+              <div className="w-12 h-12 md:w-16 md:h-16 rounded-full bg-muted overflow-hidden flex items-center justify-center border-2 border-primary shrink-0">
                 {currentPlayer.image_url ? (
                   <img src={currentPlayer.image_url} alt={currentPlayer.name} className="w-full h-full object-cover" />
                 ) : (
-                  <User className="h-8 w-8 text-muted-foreground" />
+                  <User className="h-6 w-6 md:h-8 md:w-8 text-muted-foreground" />
                 )}
               </div>
-              <div>
-                <CardTitle className="text-xl">{currentPlayer.name}</CardTitle>
-                <div className="flex items-center gap-2 mt-1">
-                  <Badge variant="outline">{currentPlayer.position}</Badge>
-                  <Badge variant="secondary">{currentPlayer.age} yrs</Badge>
+              <div className="min-w-0">
+                <CardTitle className="text-lg md:text-xl truncate">{currentPlayer.name}</CardTitle>
+                <div className="flex flex-wrap items-center gap-1 md:gap-2 mt-1">
+                  <Badge variant="outline" className="text-xs">{currentPlayer.position}</Badge>
+                  <Badge variant="secondary" className="text-xs">{currentPlayer.age} yrs</Badge>
                   {currentPlayer.club && (
-                    <Badge variant="secondary">{currentPlayer.club}</Badge>
+                    <Badge variant="secondary" className="text-xs hidden sm:inline-flex">{currentPlayer.club}</Badge>
                   )}
                 </div>
               </div>
@@ -204,147 +204,152 @@ export const AthleteCentre = () => {
           </CardHeader>
           <CardContent className="p-0">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <div className="border-b">
-                <TabsList className="w-full justify-start h-auto p-0 bg-transparent rounded-none">
-                  <TabsTrigger 
-                    value="scouting" 
-                    className="data-[state=active]:bg-primary/10 data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-6 py-3"
-                  >
-                    <ClipboardList className="h-4 w-4 mr-2" />
-                    Scouting Reports
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="programming" 
-                    className="data-[state=active]:bg-primary/10 data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-6 py-3"
-                  >
-                    <Dumbbell className="h-4 w-4 mr-2" />
-                    Programming
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="analysis" 
-                    className="data-[state=active]:bg-primary/10 data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-6 py-3"
-                  >
-                    <LineChart className="h-4 w-4 mr-2" />
-                    Analysis
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="focuses" 
-                    className="data-[state=active]:bg-primary/10 data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-6 py-3"
-                  >
-                    <Target className="h-4 w-4 mr-2" />
-                    Development Focuses
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="longterm" 
-                    className="data-[state=active]:bg-primary/10 data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-6 py-3"
-                  >
-                    <Calendar className="h-4 w-4 mr-2" />
-                    Long-Term Plan
-                  </TabsTrigger>
-                </TabsList>
+              <div className="border-b overflow-hidden">
+                <ScrollArea className="w-full">
+                  <TabsList className="w-max min-w-full justify-start h-auto p-0 bg-transparent rounded-none">
+                    <TabsTrigger 
+                      value="scouting" 
+                      className="data-[state=active]:bg-primary/10 data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-3 md:px-6 py-2 md:py-3 text-xs md:text-sm whitespace-nowrap"
+                    >
+                      <ClipboardList className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
+                      <span className="hidden xs:inline">Scouting</span>
+                      <span className="xs:hidden">Scout</span>
+                    </TabsTrigger>
+                    <TabsTrigger 
+                      value="programming" 
+                      className="data-[state=active]:bg-primary/10 data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-3 md:px-6 py-2 md:py-3 text-xs md:text-sm whitespace-nowrap"
+                    >
+                      <Dumbbell className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
+                      <span className="hidden sm:inline">Programming</span>
+                      <span className="sm:hidden">Prog</span>
+                    </TabsTrigger>
+                    <TabsTrigger 
+                      value="analysis" 
+                      className="data-[state=active]:bg-primary/10 data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-3 md:px-6 py-2 md:py-3 text-xs md:text-sm whitespace-nowrap"
+                    >
+                      <LineChart className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
+                      Analysis
+                    </TabsTrigger>
+                    <TabsTrigger 
+                      value="focuses" 
+                      className="data-[state=active]:bg-primary/10 data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-3 md:px-6 py-2 md:py-3 text-xs md:text-sm whitespace-nowrap"
+                    >
+                      <Target className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
+                      <span className="hidden md:inline">Development </span>Focuses
+                    </TabsTrigger>
+                    <TabsTrigger 
+                      value="longterm" 
+                      className="data-[state=active]:bg-primary/10 data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-3 md:px-6 py-2 md:py-3 text-xs md:text-sm whitespace-nowrap"
+                    >
+                      <Calendar className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
+                      <span className="hidden md:inline">Long-Term </span>Plan
+                    </TabsTrigger>
+                  </TabsList>
+                  <ScrollBar orientation="horizontal" />
+                </ScrollArea>
               </div>
 
-              <div className="p-6">
+              <div className="p-3 md:p-6">
                 <TabsContent value="scouting" className="mt-0">
                   <PlayerScoutingReports playerId={selectedPlayer} playerName={currentPlayer.name} />
                 </TabsContent>
 
-                <TabsContent value="programming" className="mt-0 space-y-4">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold">Training Programs</h3>
-                    <Button variant="outline" size="sm">
+                <TabsContent value="programming" className="mt-0 space-y-3 md:space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3 md:mb-4">
+                    <h3 className="text-base md:text-lg font-semibold">Training Programs</h3>
+                    <Button variant="outline" size="sm" className="w-full sm:w-auto">
                       View All Programs
                     </Button>
                   </div>
                   
                   {programs.length > 0 ? (
-                    <div className="grid gap-4">
+                    <div className="grid gap-3 md:gap-4">
                       {programs.map((program) => (
                         <div
                           key={program.id}
-                          className={`p-4 rounded-lg border ${
+                          className={`p-3 md:p-4 rounded-lg border ${
                             program.is_current 
                               ? "bg-primary/5 border-primary" 
                               : "bg-muted/30"
                           }`}
                         >
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <div className="flex items-center gap-2">
-                                <h4 className="font-semibold">{program.program_name}</h4>
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="min-w-0">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <h4 className="font-semibold text-sm md:text-base truncate">{program.program_name}</h4>
                                 {program.is_current && (
-                                  <Badge className="bg-primary">Current</Badge>
+                                  <Badge className="bg-primary text-xs">Current</Badge>
                                 )}
                               </div>
                               {program.phase_name && (
-                                <p className="text-sm text-muted-foreground mt-1">
+                                <p className="text-xs md:text-sm text-muted-foreground mt-1 truncate">
                                   Phase: {program.phase_name}
                                 </p>
                               )}
                             </div>
-                            <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                            <ChevronRight className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground shrink-0" />
                           </div>
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <div className="text-center py-8 text-muted-foreground">
-                      <Dumbbell className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                      <p>No programs assigned yet</p>
+                    <div className="text-center py-6 md:py-8 text-muted-foreground">
+                      <Dumbbell className="h-10 w-10 md:h-12 md:w-12 mx-auto mb-3 md:mb-4 opacity-50" />
+                      <p className="text-sm md:text-base">No programs assigned yet</p>
                     </div>
                   )}
                 </TabsContent>
 
-                <TabsContent value="analysis" className="mt-0 space-y-4">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold">Performance Analysis</h3>
-                    <Button variant="outline" size="sm">
+                <TabsContent value="analysis" className="mt-0 space-y-3 md:space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3 md:mb-4">
+                    <h3 className="text-base md:text-lg font-semibold">Performance Analysis</h3>
+                    <Button variant="outline" size="sm" className="w-full sm:w-auto">
                       View All Analysis
                     </Button>
                   </div>
 
                   {analyses.length > 0 ? (
-                    <div className="grid gap-3">
+                    <div className="grid gap-2 md:gap-3">
                       {analyses.map((analysis) => (
                         <div
                           key={analysis.id}
-                          className="p-4 rounded-lg bg-muted/30 border hover:border-primary/50 transition-colors cursor-pointer"
+                          className="p-3 md:p-4 rounded-lg bg-muted/30 border hover:border-primary/50 transition-colors cursor-pointer"
                         >
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <div className="flex items-center gap-2">
-                                <span className="font-medium">
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="min-w-0">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <span className="font-medium text-sm md:text-base truncate">
                                   vs {analysis.opponent || "Unknown"}
                                 </span>
                                 {analysis.r90_score && (
-                                  <Badge variant="outline">
+                                  <Badge variant="outline" className="text-xs">
                                     R90: {analysis.r90_score.toFixed(1)}
                                   </Badge>
                                 )}
                               </div>
-                              <p className="text-sm text-muted-foreground mt-1">
+                              <p className="text-xs md:text-sm text-muted-foreground mt-1">
                                 {format(new Date(analysis.analysis_date), "MMM dd, yyyy")}
                               </p>
                             </div>
-                            <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                            <ChevronRight className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground shrink-0" />
                           </div>
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <div className="text-center py-8 text-muted-foreground">
-                      <LineChart className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                      <p>No analysis reports yet</p>
+                    <div className="text-center py-6 md:py-8 text-muted-foreground">
+                      <LineChart className="h-10 w-10 md:h-12 md:w-12 mx-auto mb-3 md:mb-4 opacity-50" />
+                      <p className="text-sm md:text-base">No analysis reports yet</p>
                     </div>
                   )}
                 </TabsContent>
 
-                <TabsContent value="focuses" className="mt-0 space-y-4">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold">Development Focuses</h3>
+                <TabsContent value="focuses" className="mt-0 space-y-3 md:space-y-4">
+                  <div className="flex items-center justify-between mb-3 md:mb-4">
+                    <h3 className="text-base md:text-lg font-semibold">Development Focuses</h3>
                   </div>
 
-                  <div className="space-y-4">
+                  <div className="space-y-3 md:space-y-4">
                     <Textarea
                       placeholder="Enter key areas of focus for this player's development...
 
@@ -355,14 +360,14 @@ Examples:
 • Develop leadership skills on the pitch"
                       value={focuses}
                       onChange={(e) => setFocuses(e.target.value)}
-                      className="min-h-[200px] resize-none"
+                      className="min-h-[150px] md:min-h-[200px] resize-none text-sm md:text-base"
                     />
                     <div className="flex justify-end">
-                      <Button onClick={handleSaveFocuses} disabled={saving}>
+                      <Button onClick={handleSaveFocuses} disabled={saving} size="sm" className="md:size-default">
                         {saving ? (
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          <Loader2 className="h-3 w-3 md:h-4 md:w-4 mr-2 animate-spin" />
                         ) : (
-                          <Save className="h-4 w-4 mr-2" />
+                          <Save className="h-3 w-3 md:h-4 md:w-4 mr-2" />
                         )}
                         Save Focuses
                       </Button>
@@ -370,12 +375,12 @@ Examples:
                   </div>
                 </TabsContent>
 
-                <TabsContent value="longterm" className="mt-0 space-y-4">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold">Long-Term Development Plan</h3>
+                <TabsContent value="longterm" className="mt-0 space-y-3 md:space-y-4">
+                  <div className="flex items-center justify-between mb-3 md:mb-4">
+                    <h3 className="text-base md:text-lg font-semibold">Long-Term Development Plan</h3>
                   </div>
 
-                  <div className="space-y-4">
+                  <div className="space-y-3 md:space-y-4">
                     <Textarea
                       placeholder="Outline the long-term development trajectory for this player...
 
@@ -386,14 +391,14 @@ Examples:
 • Career pathway notes and milestones"
                       value={longTermPlan}
                       onChange={(e) => setLongTermPlan(e.target.value)}
-                      className="min-h-[200px] resize-none"
+                      className="min-h-[150px] md:min-h-[200px] resize-none text-sm md:text-base"
                     />
                     <div className="flex justify-end">
-                      <Button onClick={handleSaveLongTermPlan} disabled={saving}>
+                      <Button onClick={handleSaveLongTermPlan} disabled={saving} size="sm" className="md:size-default">
                         {saving ? (
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          <Loader2 className="h-3 w-3 md:h-4 md:w-4 mr-2 animate-spin" />
                         ) : (
-                          <Save className="h-4 w-4 mr-2" />
+                          <Save className="h-3 w-3 md:h-4 md:w-4 mr-2" />
                         )}
                         Save Plan
                       </Button>
