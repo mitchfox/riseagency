@@ -1944,6 +1944,7 @@ export type Database = {
       players: {
         Row: {
           age: number
+          agent_notes: string | null
           bio: string | null
           category: string | null
           club: string | null
@@ -1963,11 +1964,14 @@ export type Database = {
           position: string
           preferred_currency: string | null
           representation_status: string | null
+          transfer_priority: string | null
+          transfer_status: string | null
           updated_at: string | null
           visible_on_stars_page: boolean | null
         }
         Insert: {
           age: number
+          agent_notes?: string | null
           bio?: string | null
           category?: string | null
           club?: string | null
@@ -1987,11 +1991,14 @@ export type Database = {
           position: string
           preferred_currency?: string | null
           representation_status?: string | null
+          transfer_priority?: string | null
+          transfer_status?: string | null
           updated_at?: string | null
           visible_on_stars_page?: boolean | null
         }
         Update: {
           age?: number
+          agent_notes?: string | null
           bio?: string | null
           category?: string | null
           club?: string | null
@@ -2011,6 +2018,8 @@ export type Database = {
           position?: string
           preferred_currency?: string | null
           representation_status?: string | null
+          transfer_priority?: string | null
+          transfer_status?: string | null
           updated_at?: string | null
           visible_on_stars_page?: boolean | null
         }
