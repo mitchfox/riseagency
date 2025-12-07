@@ -31,9 +31,10 @@ const languageRegions: LanguageRegion[] = [
 
 interface LanguageMapSelectorProps {
   onOpenChange?: (open: boolean) => void;
+  className?: string;
 }
 
-export const LanguageMapSelector = ({ onOpenChange }: LanguageMapSelectorProps) => {
+export const LanguageMapSelector = ({ onOpenChange, className }: LanguageMapSelectorProps) => {
   const { language, switchLanguage } = useLanguage();
   const [open, setOpen] = useState(false);
 
